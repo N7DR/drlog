@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: bands-modes.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -115,6 +115,21 @@ string frequency::display_string(void) const
   return (to_string(khz) + "."s + to_string(hhz));
 }
 
+/*! \brief      Return frequency in MHz as string (with 3 dp)
+    \return     string of the frequency in MHz, to three decimal placex ([xxxx].yyy)
+*/
+string frequency::display_string_MHz(void) const
+{ //const string POINT { "."s };    // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
+
+  unsigned int mhz { _hz / 1'000'000 };
+  unsigned int khz { ( (_hz / 1000) - (mhz * 1000) ) };
+
+  const string mhz_str { to_string(mhz) };
+  const string khz_str { pad_leftz(khz, 3) };
+
+  return (mhz_str + "."s + khz_str);
+}
+
 /// return lower band edge that corresponds to frequency
 frequency frequency::lower_band_edge(void) const
 { const static map<BAND, frequency> edge_map { { BAND_160, frequency(1.8) },
@@ -135,6 +150,7 @@ frequency frequency::lower_band_edge(void) const
 }
 
 /// is the frequency within a band?
+#if 0
 bool frequency::is_within_ham_band(void) const
 { return ( (BAND(*this) != BAND_160) or ( (_hz >= 1'800'000) and (_hz <= 2'000'000) ) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 
@@ -145,6 +161,7 @@ bool frequency::is_within_ham_band(void) const
 
 // return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 }
+#endif
 
 /// difference in two frequencies, always +ve
 frequency frequency::difference(const frequency& f2) const
@@ -155,4 +172,11 @@ frequency frequency::difference(const frequency& f2) const
   rv.hz(d);
 
   return rv;
+}
+
+/// ostream << frequency
+ostream& operator<<(ostream& ost, const frequency& f)
+{ ost << f.hz();
+
+  return ost;
 }

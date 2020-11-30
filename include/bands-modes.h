@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 167 2020-09-19 19:43:49Z  $
+// $Id: bands-modes.h 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -135,6 +135,12 @@ extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    //
 
      Frequency may be in Hz, kHz or MHz.
 */
+/*!  \brief     Convert a frequency to a band
+     \param  f  frequency
+     \return    band corresponding to <i>f</i>
+
+     Frequency may be in Hz, kHz or MHz.
+*/
 template<class T> const BAND to_BAND(T f)
 { if (f <= 0)
     return MIN_BAND;
@@ -158,19 +164,19 @@ template<class T> const BAND to_BAND(T f)
   if ( (f >= 7'000'000) and (f <= 7'300'000) )
     return BAND_40;
 
-  if ( (f >= 1'010'000) and (f <= 10'150'000) )
+  if ( (f == 10'000'000) or ((f >= 10'100'000) and (f <= 10'150'000)) )
     return BAND_30;
 
   if ( (f >= 14'000'000) and (f <= 14'350'000) )
     return BAND_20;
 
-  if ( (f >= 18'068'000) and (f <= 18'168'000) )
+  if ( (f == 18'000'000) or ((f >= 18'068'000) and (f <= 18'168'000)) )
     return BAND_17;
 
   if ( (f >= 21'000'000) and (f <= 21'450'000) )
     return BAND_15;
 
-  if ( (f >= 24'890'000) and (f <= 24'990'000) )
+  if ( (f == 24'000'000) or ((f >= 24'890'000) and (f <= 24'990'000)) )
     return BAND_12;
 
   if ( (f >= 28'000'000) and (f <= 29'700'000) )
@@ -189,7 +195,8 @@ class frequency
 {
 protected:
 
-  unsigned int _hz { 0 };      ///< the actual frequency, in Hz
+//  unsigned int _hz { 0 };      ///< the actual frequency, in Hz
+  uint32_t _hz { 0 };      ///< the actual frequency, in Hz
 
 public:
 
@@ -221,7 +228,7 @@ public:
   explicit frequency(const enum BAND b);
 
 /// set frequency in Hz
-  inline void hz(const unsigned int n)
+  inline void hz(const uint32_t n)
     { _hz = n; }
 
 /// get frequency in Hz
@@ -257,6 +264,11 @@ public:
 */
   std::string display_string(void) const;
 
+/*! \brief      Return frequency in MHz as string (with 3 dp)
+    \return     string of the frequency in MHz, to three decimal placex ([xxxx].yyy)
+*/
+  std::string display_string_MHz(void) const;
+
 /*! \brief      Convert to BAND
     \return     BAND in which the frequency is located
 
@@ -266,7 +278,8 @@ public:
     { return to_BAND(hz()); }
 
 /// is the frequency within a band?
-  bool is_within_ham_band(void) const;
+  inline bool is_within_ham_band(void) const
+    { return ( (BAND(*this) != BAND_160) or ( (_hz >= 1'800'000) and (_hz <= 2'000'000) ) ); }    // check if BAND_160, because that's the returned band if frequency is outside a band
 
 /// return lower band edge that corresponds to frequency
   frequency lower_band_edge(void) const;
@@ -304,6 +317,9 @@ public:
     { ar & _hz;
     }
 };
+
+/// ostream << frequency
+std::ostream& operator<<(std::ostream& ost, const frequency& f);
 
 /*!  \brief         Convert the string representation of a frequency to a band
      \param  str    any string representation of a frequency, such that the string can be converted to a frequency object

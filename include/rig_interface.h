@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 171 2020-11-15 16:02:32Z  $
+// $Id: rig_interface.h 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,18 +41,19 @@ constexpr int RIG_UNABLE_TO_OPEN       { -1 },    ///< unable to access rig
               RIG_UNEXPECTED_RESPONSE  { -8 },    ///< received unexpected response from rig
               RIG_MISC_ERROR           { -9 };    ///< other error
 
-constexpr bool RESPONSE_EXPECTED    { true },               ///< raw K3 command expects a response
-               NO_RESPONSE_EXPECTED { !RESPONSE_EXPECTED }; ///< raw K3 command does not expect a response
+//constexpr bool RESPONSE_EXPECTED    { true },               ///< raw K3 command expects a response
+//               NO_RESPONSE_EXPECTED { !RESPONSE_EXPECTED }; ///< raw K3 command does not expect a response
+
+enum class RESPONSE { EXPECTED,
+                      NOT_EXPECTED
+                    };
 
 /// the two VFOs
 enum class VFO { A,                       ///< VFO A
                  B                        ///< VFO B
                };
 
-using DRLOG_CLOCK     = std::chrono::system_clock;
-//using DRLOG_TIMEPOINT = DRLOG_CLOCK::time_point;
-
-//constexpr std::chrono::milliseconds QRG_GUARD_TIME_MS { 1000 };     // guard time for QRG changes, in milliseconds
+using DRLOG_CLOCK = std::chrono::system_clock;
 
 // ---------------------------------------- rig_status -------------------------
 
@@ -403,14 +404,15 @@ public:
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
 
-/*! \brief                      Send a raw command to the rig
-    \param  cmd                 the command to send
-    \param  response_expected   whether a response is expected
-    \return                     the response from the rig, or the empty string
-*/
-  const std::string raw_command(const std::string& cmd,
-                                const bool response_expected = NO_RESPONSE_EXPECTED);
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \param  expected_len    expected length of response
+    \return                 the response from the rig, or the empty string
 
+    Currently any expected length is ignored; the routine looks for the concluding ";" instead
+*/
+  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0);
 #endif
 
 #if defined(NEW_RAW_COMMAND)

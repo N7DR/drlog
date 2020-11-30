@@ -361,29 +361,37 @@ location_info guess_zones(const string& call, const location_info& li)
       }
     }
   }
-  else
+
 // if it's a W, then make a guess as to the CQ and ITU zones
-  { if (rv.canonical_prefix() == "K"s)
-    { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
-      { rv.zones( W_CQ[from_string<unsigned int>(string(1, call[posn]))], W_ITU[from_string<unsigned int>(string(1, call[posn]))] );
+  if (rv.canonical_prefix() == "K"s)
+  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
+    { rv.zones( W_CQ[from_string<unsigned int>(string(1, call[posn]))], W_ITU[from_string<unsigned int>(string(1, call[posn]))] );
 
 // lat/long for W zones
-        switch (rv.cq_zone())
-        { case 3 :
-            rv.latitude_longitude(40.79, 115.54);
-            break;
+      switch (rv.cq_zone())
+      { case 3 :
+          rv.latitude_longitude(40.79, 115.54);
+          break;
 
-          case 4 :
-            rv.latitude_longitude(39.12, 101.98);
-            break;
+        case 4 :
+          rv.latitude_longitude(39.12, 101.98);
+          break;
 
-          case 5 :
-            rv.latitude_longitude(36.55, 79.65);
-            break;
-        }
+        case 5 :
+          rv.latitude_longitude(36.55, 79.65);
+          break;
       }
     }
   }
+
+  if (rv.canonical_prefix() == "VK"s)
+  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
+    { unsigned int call_area { from_string<unsigned int>(string(1, call[posn])) };
+
+      if ( (call_area == 6) or (call_area == 8) )
+        rv.cq_zone(29);                             // I don't know why this isn't in the cty.dat file
+    }
+  }  
 
   return rv;
 }

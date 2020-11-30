@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: drlog.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2077,7 +2077,7 @@ void* display_rig_status(void* vp)
       
 // get the bandmap version number
         const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
-        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, STATUS_REPLY_LENGTH) };          // K3 returns 38 characters
+        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };          // K3 returns 38 characters
 
         if (status_str.length() == STATUS_REPLY_LENGTH)                                                          // do something only if it's the correct length
         { const frequency f                   { from_string<double>(substring(status_str, 2, 11)) };           // frequency of VFO A
@@ -6570,7 +6570,7 @@ bool p3_screenshot(void)
 void* p3_screenshot_thread(void* vp)
 { alert("Dumping P3 image"s);
 
-  const string image { rig.raw_command("#BMP;"s, true) };
+  const string image { rig.raw_command("#BMP;"s, RESPONSE::EXPECTED) };
 
 //  write_file(image, "complete-response");
 

@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: string_functions.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-extern ofstream ost;                   ///< for debugging, info
+//extern ofstream ost;                   ///< for debugging, info
 
 const string     EOL      { "\n" };       ///< end-of-line marker as string
 constexpr char   EOL_CHAR { '\n' };       ///< end-of-line marker as character
@@ -146,12 +146,12 @@ string substring(const string& str, const size_t start_posn, const size_t length
 { if (str.size() > start_posn)
     return str.substr(start_posn, length);
 
-   ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << ", length = " << length << endl;  // log the problem
+//   ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << ", length = " << length << endl;  // log the problem
 
   return string();
 }
 
-/*! \brief                      Provide a formatted date/time string
+/*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion oft he string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
@@ -529,6 +529,37 @@ string delimited_substring(const string& cs, const char delim_1, const char deli
     return string();
   
   return ( (return_delimiters == DELIMITERS::DROP) ? cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) : cs.substr(posn_1, posn_2 - posn_1) ) ;
+}
+
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+string delimited_substring(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
+  const size_t posn_2 { cs.find(delim_2, posn_1 + length_to_skip) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
+                                                                          : posn_2 + posn_1 + delim_2.length()
+                                };
+  
+//  return cs.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
+  return cs.substr(posn_1 + length_to_skip, length_to_return);
 }
 
 /*! \brief                      Obtain all occurrences of a delimited substring
@@ -1084,7 +1115,7 @@ string base_call(const string& callsign)
 /*! \brief      Provide a formatted date string: YYYYMMDD
     \return     current UTC date in the format: YYYYMMDD
 */
-string YYYYMMDD(void)
+string YYYYMMDD_utc(void)
 { const string dts { date_time_string() };
 
   return (dts.substr(0, 4) + dts.substr(5, 2) + dts.substr(8, 2));
@@ -1114,6 +1145,7 @@ string remove_substrings(const string& cs, const vector<string>& vs)
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
+#if 0
 string delimited_substring(const string& cs, const string& delim_1, const string& delim_2)
 { const size_t posn_1 { cs.find(delim_1) };
   
@@ -1127,6 +1159,7 @@ string delimited_substring(const string& cs, const string& delim_1, const string
   
   return cs.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
 }
+#endif
 
 /*! \brief              Obtain all occurrences of a delimited substring
     \param  cs          original string
@@ -1134,6 +1167,7 @@ string delimited_substring(const string& cs, const string& delim_1, const string
     \param  delim_2     closing delimiter
     \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
 */
+#if 0
 vector<string> delimited_substrings(const string& cs, const string& delim_1, const string& delim_2)
 { vector<string> rv;
 
@@ -1152,6 +1186,42 @@ vector<string> delimited_substrings(const string& cs, const string& delim_1, con
       return rv;                            // no more ending delimiters
 
     rv.push_back( sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length()) );
+    cs_start_posn += (posn_2 + delim_2.length());
+  }
+
+  return rv;
+}
+#endif
+
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+vector<string> delimited_substrings(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
+{ vector<string> rv;
+
+  size_t cs_start_posn { 0 };
+
+  while (!substring(cs, cs_start_posn).empty())
+  { const string sstring { substring(cs, cs_start_posn) };
+    const size_t posn_1  { sstring.find(delim_1) };
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 { sstring.find(delim_2, posn_1 + delim_1.length()) };
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    if (return_delimiters == DELIMITERS::DROP)
+      rv += sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
+    else
+      rv += sstring.substr(posn_1, posn_2 + delim_2.length() - posn_1);
+      
     cs_start_posn += (posn_2 + delim_2.length());
   }
 

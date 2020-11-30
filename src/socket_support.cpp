@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: socket_support.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -278,20 +278,23 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
 { SAFELOCK(_tcp_socket);
 
   if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
-    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Errno = "s + to_string(errno) + "; "s + strerror(errno));
+  { const string address { dotted_decimal_address(*(sockaddr*)(&local_address)) };
+
+    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
+  }
 
   _bound_address = local_address;
 }
 
-/*! \brief          Connect to the far-end
+/*! \brief          Connect to the far end
     \param  adr     distal address
 */
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
 
-  const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
+//  const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
 
-  if (status == 0)
+  if (const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) }; status == 0)
   { _destination = adr; 
     _destination_is_set = true;
   }

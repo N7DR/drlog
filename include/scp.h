@@ -1,4 +1,4 @@
-// $Id: scp.h 161 2020-07-31 16:19:50Z  $
+// $Id: scp.h 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,9 +69,6 @@ public:
 /// construct from a drmaster object
   inline explicit scp_database(const drmaster& drm)
     { init_from_calls(drm.calls()); }
-
-/// destructor
-//  inline virtual ~scp_database(void) = default;
 
 /// populate the database from a vector of calls
   inline void init_from_calls(const std::vector<std::string>& calls)

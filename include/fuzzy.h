@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 160 2020-07-25 16:01:11Z  $
+// $Id: fuzzy.h 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,9 +65,6 @@ public:
     \param  drm     <i>drmaster</i> object from which to construct
 */
   explicit fuzzy_database(const drmaster& drm);
-  
-/// destructor
-//  inline virtual ~fuzzy_database(void) = default;
 
 /*! \brief          Add the calls in a vector to the database
     \param  calls   calls to be added
@@ -83,7 +80,7 @@ public:
     Does nothing if the call is already in the database
 */
   inline void add_call(const std::string& call)
-    { _db[ _to_valid_size(call.length()) ].insert(call); }
+    { _db[ _to_valid_size(call.length()) ] += call; }
 
 /*! \brief          Remove a call from the database
     \param  call    call to be removed
@@ -93,15 +90,6 @@ public:
 */
   inline bool remove_call(const std::string& call)
     { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
-
-/*! \brief          Remove a call from the database
-    \param  call    call to be removed
-    \return         whether <i>call</i> was actually removed
-
-    Does nothing and returns <i>false</i> if <i>call</i> is not in the database
-*/
-//  inline bool operator-=(const std::string& call)
-//    { return remove_call(call); }
 
 /*! \brief          Is a call in the database?
     \param  call    call to be removed
@@ -142,7 +130,7 @@ public:
 
 /// add a database to those that are consulted
   inline void add_db(fuzzy_database& db)
-    { _vec.push_back(&db); }
+    { _vec += &db; }
 
 /// add a database to those that are consulted
   inline void operator+=(fuzzy_database& db)

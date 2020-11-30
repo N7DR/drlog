@@ -1,4 +1,4 @@
-// $Id: string_functions.h 171 2020-11-15 16:02:32Z  $
+// $Id: string_functions.h 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,9 +62,6 @@ constexpr char SPACE_CHAR { ' ' };
 constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
-//enum pad_direction { PAD_LEFT,                  ///< pad to the left
-//                     PAD_RIGHT                  ///< pad to the right
-//                   };
 enum class PAD { LEFT,                  ///< pad to the left
                  RIGHT                  ///< pad to the right
                };
@@ -101,7 +98,7 @@ std::vector<std::string> from_csv(std::experimental::string_view line);
 */
 std::string duplicate_char(const std::string& s, const char c = '"');
 
-/*! \brief                      Provide a formatted date/time string
+/*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
@@ -468,7 +465,7 @@ std::string remove_char(const std::string& cs, const char char_to_remove);
 */
 inline std::string remove_char(std::string& s, const char char_to_remove)
   { return remove_char(static_cast<const std::string>(s), char_to_remove); }
-
+  
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
     \param  char_to_remove  character to be removed from <i>cs</i>
@@ -519,17 +516,35 @@ std::string remove_char_from_delimited_substrings(const std::string& cs, const c
 */
 std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 
-/*! \brief              Obtain a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             substring between <i>delim_1</i> and <i>delim_2</i>
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
   
     Returns the empty string if the delimiters do not exist, or if
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-std::string delimited_substring(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
+std::string delimited_substring(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
+
+/*! \brief              Obtain all occurrences of a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+//std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
+
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
 
 /*! \brief                      Obtain all occurrences of a delimited substring
     \param  cs                  original string
@@ -539,14 +554,6 @@ std::string delimited_substring(const std::string& cs, const std::string& delim_
     \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
 */
 std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
-
-/*! \brief              Obtain all occurrences of a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
-*/
-std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
 
 /*! \brief          Join the elements of a container of strings, using a provided separator
     \param  ct      container of strings
@@ -906,7 +913,6 @@ inline std::string truncate_before_first(const std::string& str, const char c)
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-//const size_t find_and_go_to_end_of(const std::string& str, const std::string& target);
 size_t find_and_go_to_end_of(const std::experimental::string_view str, const std::experimental::string_view target);
 
 /*! \brief              Get the base portion of a call
@@ -917,10 +923,10 @@ size_t find_and_go_to_end_of(const std::experimental::string_view str, const std
 */
 std::string base_call(const std::string& callsign);
 
-/*! \brief                      Provide a formatted date string: YYYYMMDD
-    \return                     current UTC date in the format: YYYYMMDD
+/*! \brief      Provide a formatted date string: YYYYMMDD
+    \return     current UTC date in the format: YYYYMMDD
 */
-std::string YYYYMMDD(void);
+std::string YYYYMMDD_utc(void);
 
 /*! \brief      Remove all instances of several substrings (sequentially) from a string
     \param  cs  original string

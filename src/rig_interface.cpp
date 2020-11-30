@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: rig_interface.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -390,7 +390,7 @@ bool rig_interface::split_enabled(void)
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) }; transmit_vfo.length() >= 4)
+    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
 
     _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -513,7 +513,7 @@ void rig_interface::rit(const int hz)
 { if (!_rig_connected)                          // do nothing if no rig is connected
     return;
 
-// hamlib's behaviour anent the K3 is not what we want
+// hamlib's behaviour anent the K3 is brain dead if hz == 0
   if (_model == RIG_MODEL_K3)
   { if (hz == 0)                                // just clear the RIT/XIT
       raw_command("RC;"s);
@@ -538,7 +538,7 @@ void rig_interface::rit(const int hz)
 int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
   { //const string value { raw_command("RO;"s, 8) };
-    const string value { raw_command("RO;"s, RESPONSE_EXPECTED) };
+    const string value { raw_command("RO;"s, RESPONSE::EXPECTED) };
 
     if (value.length() != 8)
     { _error_alert("Invalid rig response in rit(): "s + value);
@@ -585,7 +585,7 @@ void rig_interface::rit_disable(void)
 bool rig_interface::rit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { const string response { raw_command("RT;"s, RESPONSE_EXPECTED) };
+    { const string response { raw_command("RT;"s, RESPONSE::EXPECTED) };
 
       if (response.length() != 4)
         throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled(): "s + response);  // handle this error upstairs
@@ -626,7 +626,7 @@ void rig_interface::xit_disable(void)
 bool rig_interface::xit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { const string response { raw_command("XT;"s, RESPONSE_EXPECTED) };
+    { const string response { raw_command("XT;"s, RESPONSE::EXPECTED) };
 
       if (response.length() != 4)
         throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
@@ -684,7 +684,7 @@ void rig_interface::lock(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-    raw_command("LK1;"s, 0);
+    raw_command("LK1;"s, RESPONSE::NOT_EXPECTED);
   else
   { constexpr int v { 1 };
 
@@ -698,7 +698,7 @@ void rig_interface::unlock(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-    raw_command("LK0;"s, 0);
+    raw_command("LK0;"s, RESPONSE::NOT_EXPECTED);
   else
   { constexpr int v { 0 };
 
@@ -712,14 +712,14 @@ void rig_interface::unlock(void)
 */
 void rig_interface::sub_receiver(const bool b)
 { if (_model == RIG_MODEL_K3)
-    raw_command( b ? "SB1;"s : "SB0;"s, 0);
+    raw_command( (b ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED);
 }
 
 /// is sub-receiver on?
 bool rig_interface::sub_receiver(void)
 { if (_model == RIG_MODEL_K3)
   { try
-    { const string str { raw_command("SB;"s, true) };
+    { const string str { raw_command("SB;"s, RESPONSE::EXPECTED) };
 
       if (str.length() < 3)
         throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response"s);
@@ -763,7 +763,7 @@ void rig_interface::keyer_speed(const int wpm)
   if (_model == RIG_MODEL_K3)
   { string cmd { "KS"s + pad_left(to_string(wpm), 3, '0') + ";"s };
 
-    raw_command(cmd, 0);
+    raw_command(cmd, RESPONSE::NOT_EXPECTED);
   }
   else
   { value_t v;
@@ -780,7 +780,7 @@ int rig_interface::keyer_speed(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { const string status_str { raw_command("KS;"s, 6) };
+  { const string status_str { raw_command("KS;"s, RESPONSE::EXPECTED, 6) };
 
     return from_string<int>(substring(status_str, 2, 3));
   }
@@ -797,15 +797,20 @@ int rig_interface::keyer_speed(void)
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
 
-/*! \brief                      Send a raw command to the rig
-    \param  cmd                 the command to send
-    \param  response_expected   whether a response is expected
-    \return                     the response from the rig, or the empty string
-*/
-const string rig_interface::raw_command(const string& cmd, const bool response_expected)
-{ struct rig_state* rs_p { &(_rigp->state) };
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \param  expected_len    expected length of response
+    \return                 the response from the rig, or the empty string
 
-  const int fd           { _file_descriptor() };
+    Currently any expected length is ignored; the routine looks for the concluding ";" instead
+*/
+string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len)
+{ const bool response_expected { expectation == RESPONSE::EXPECTED };
+
+  struct rig_state* rs_p { &(_rigp->state) };
+
+  const int fd { _file_descriptor() };
 
   constexpr int INBUF_SIZE { 1000 };        // size of input buffer
 
@@ -1126,7 +1131,7 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 /// is the VFO locked?
 bool rig_interface::is_locked(void)
 { if (_model == RIG_MODEL_K3)
-  { const string status_str  { raw_command("LK;"s, 4) };
+  { const string status_str  { raw_command("LK;"s, RESPONSE::EXPECTED, 4) };
     const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
 
     return (status_char == '1');
@@ -1150,7 +1155,7 @@ int rig_interface::bandwidth(void)
 { if (!_rig_connected)
     return 0;
 
-  const string status_str { raw_command("BW;"s, 7) };
+  const string status_str { raw_command("BW;"s, RESPONSE::EXPECTED, 7) };
 
   return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
@@ -1219,7 +1224,7 @@ bool rig_interface::is_transmitting(void)
   { bool rv { true };                                        // default: be paranoid
 
     if (_model == RIG_MODEL_K3)
-    { const string response { raw_command("TQ;"s, 4) };
+    { const string response { raw_command("TQ;"s, RESPONSE::EXPECTED, 4) };
 
       if (response.length() < 4)
       { // because this happens so often, don't report it
@@ -1246,7 +1251,7 @@ bool rig_interface::test(void)
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string response { raw_command("IC;"s, 8) };
+    { const string response { raw_command("IC;"s, RESPONSE::EXPECTED, 8) };
 
       if (response.length() < 8)
         _error_alert("Unable to retrieve rig icons and status"s);
@@ -1338,7 +1343,7 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 bool rig_interface::rx_ant(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string result { raw_command("AR;", true) };
+    { const string result { raw_command("AR;", RESPONSE::EXPECTED) };
 
       if ( (result != "AR0;"s) and (result != "AR1;"s) )
         ost << "ERROR in rx_ant(): result = " << result << endl;

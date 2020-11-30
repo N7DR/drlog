@@ -1,4 +1,4 @@
-// $Id: audio.cpp 164 2020-08-16 19:57:42Z  $
+// $Id: audio.cpp 174 2020-11-30 20:28:40Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -225,7 +225,8 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for "s + _pcm_name);
   }
 
-  size_t n = _period_size_in_frames;
+  size_t n { _period_size_in_frames };
+
   err = snd_pcm_sw_params_set_avail_min(_handle, swparams, n);
 
   if (err < 0)
@@ -273,7 +274,6 @@ void audio_recorder::_set_params(void)
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
   _audio_buf = (u_char *)malloc(_period_size_in_bytes);
-//  _audio_buf = (u_char *)malloc(_period_size_in_bytes * 2); // try doubling the size of the ring buffer
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
@@ -915,7 +915,7 @@ void data_chunk::write_to_file(FILE* fp) const
     \return     string containing the fmt chunk
 */
 string fmt_chunk::to_string(void) const
-{ string rv = "fmt " + create_string(' ', 20);
+{ string rv { "fmt "s + create_string(' ', 20) };
 
   rv = replace_substring(rv, 4, _subchunk_1_size);
   rv = replace_substring(rv, 8, _audio_format);
@@ -932,9 +932,7 @@ string fmt_chunk::to_string(void) const
     \param  fp  file pointer
 */
 void fmt_chunk::write_to_file(FILE* fp) const
-{ //const string str { to_string() };
-
-  if (const string str { to_string() }; fwrite(str.c_str(), str.size(), 1, fp) != 1)
+{ if (const string str { to_string() }; fwrite(str.c_str(), str.size(), 1, fp) != 1)
   { ost << "Error writing fmt chunk in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing fmt chunk in WAV file");
   }
