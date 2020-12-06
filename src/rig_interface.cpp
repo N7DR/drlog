@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 174 2020-11-30 20:28:40Z  $
+// $Id: rig_interface.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -98,8 +98,7 @@ void rig_interface::_error_alert(const string& msg)
     Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::_rig_frequency(const frequency& f, const VFO v)
-{ //std::chrono::milliseconds RETRY_TIME = min( milliseconds(1), (QRG_GUARD_TIME_MS / 10) );
-  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };
+{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };      // period between retries
 
   if (f.is_within_ham_band())
   { switch (v)
@@ -118,17 +117,13 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       bool retry { true };
 
       while (retry)
-      { int status;
+      { //const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) };
 
-        { //SAFELOCK(_rig);
-
-          status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
-        }
-
+ //       status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
  //       if (status == RIG_OK)
  //         _time_last_commanded_frequency = DRLOG_CLOCK::now();
  //       else
-        if (status != RIG_OK)
+        if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
         if (_rig_frequency(v) != f)     // explicitly check the frequency
@@ -214,7 +209,7 @@ void rig_interface::prepare(const drlog_context& context)
     _model = RIG_MODEL_K3;
 
   if (_model == RIG_MODEL_DUMMY and !rig_type.empty())
-    _error_alert("Unknown rig: "s + rig_type);
+    _error_alert("Unknown rig type: "s + rig_type);
 
   _rigp = rig_init(_model);
 
@@ -435,7 +430,7 @@ unsigned int rig_interface::baud_rate(void)
     Throws exception if <i>bits</i> is not 7 or 8
 */
 void rig_interface::data_bits(const unsigned int bits)
-{ if (bits < 7 or bits > 8)
+{ if ( (bits < 7) or (bits > 8) )
     throw rig_interface_error(RIG_INVALID_DATA_BITS, "Attempt to set invalid number of data bits: "s + to_string(bits));
 
   SAFELOCK(_rig);
@@ -519,7 +514,8 @@ void rig_interface::rit(const int hz)
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_left(to_string(positive_hz), 4, '0') };
+//      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_left(to_string(positive_hz), 4, '0') };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
 
       raw_command("RO"s + hz_str + ";"s);
     }

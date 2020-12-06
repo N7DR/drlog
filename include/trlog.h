@@ -1,4 +1,4 @@
-// $Id: trlog.h 157 2020-05-21 18:14:13Z  $
+// $Id: trlog.h 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,8 @@
 
 // Copyright owners:
 //    N7DR
+
+#if 1
 
 /*! \file   trlog.h
 
@@ -26,10 +28,10 @@
     \brief  Encapsulates a QSO number and a callsign
 */
 
-struct QSO_CALL
-{ int _qso;                 ///< QSO number
-  std::string _call;        ///< callsign
-};
+//struct QSO_CALL
+//{ int         _qso;         ///< QSO number
+//  std::string _call;        ///< callsign
+//};
 
 // -----------  tr_record  ----------------
 
@@ -49,7 +51,7 @@ protected:
 
     \return characters converted to an integer
 */
-  inline const int _convert_to_int(const int posn, const int len) const
+  inline int _convert_to_int(const int posn, const int len) const
     { return from_string<int>( substring(_record, posn, len) ); }
 
 public:
@@ -83,11 +85,11 @@ public:
 // retrieve information
 
 /// callsign
-  inline const std::string call(void) const
+  inline std::string call(void) const
     { return remove_trailing_spaces(to_upper(substring(_record, 29, 14))); }
 
 /// mode
-  inline const MODE mode(void) const
+  inline MODE mode(void) const
     { return ( (_record[3] == 'C') ? MODE_CW : MODE_SSB ); }
 
   const BAND band(void) const;           ///< band
@@ -169,3 +171,5 @@ public:
 };
 
 #endif
+
+#endif  // 0

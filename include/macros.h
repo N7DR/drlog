@@ -1,4 +1,4 @@
-// $Id: macros.h 172 2020-11-22 14:55:05Z  $
+// $Id: macros.h 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1509,7 +1509,7 @@ inline void operator+=(D& d1, const E& element)
     Does nothing if the deque is empty
 */
 template <typename D>
-void operator--(D& d1, int) // int for post-decrement
+void operator--(D& d1 /*, int*/) // int for post-decrement
   requires is_deque_v<D>
 { if (!d1.empty())
     d1.pop_front();

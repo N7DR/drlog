@@ -1,4 +1,4 @@
-// $Id: qso.h 167 2020-09-19 19:43:49Z  $
+// $Id: qso.h 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,6 +176,16 @@ public:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
   void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
+
+/*! \brief              Read fields from a line in the disk log
+    \param  str         line from log file
+
+    line in disk log looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    Performs a skeletal setting of values, without using the rules for the contest
+*/
+  void populate_from_verbose_format(const std::string& str);
 
 /*! \brief                  Does the QSO match an expression for a received exchange field?
     \param  rule_to_match   boolean rule to attempt to match

@@ -1,4 +1,4 @@
-// $Id: audio.cpp 174 2020-11-30 20:28:40Z  $
+// $Id: audio.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -381,7 +381,7 @@ void* audio_recorder::_capture(void*)
 create_file:
   wav_file* wfp { new wav_file };
 
-  wfp->name(_base_filename + "-"s + date_time_string(INCLUDE_SECONDS));
+  wfp->name(_base_filename + "-"s + date_time_string(SECONDS::INCLUDE));
   wfp->open();
 
 #if 0

@@ -178,12 +178,12 @@ class tcp_socket
 {
 protected:
 
-  sockaddr_storage  _bound_address;             ///< address to which port is bound
-  sockaddr_storage  _destination;               ///< destination
+  sockaddr_storage  _bound_address;                                 ///< address to which port is bound
+  sockaddr_storage  _destination;                                   ///< destination
   bool              _destination_is_set { false };                  ///< is the destination known?
   bool              _force_closure      { false };                  ///< force closure of socket in destructor, even for a pre-existing socket
-  bool              _preexisting_socket;        ///< whether <i>_sock</i> exists outside the object
-  SOCKET            _sock;                      ///< encapsulated socket
+  bool              _preexisting_socket { false };                  ///< whether <i>_sock</i> exists outside the object
+  SOCKET            _sock;                                          ///< encapsulated socket
   pt_mutex          _tcp_socket_mutex  { "UNNAMED TCP SOCKET"s };   ///< mutex to control access
   unsigned int      _timeout_in_tenths { 600 };                     ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 

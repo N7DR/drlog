@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 172 2020-11-22 14:55:05Z  $
+// $Id: cluster.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -483,7 +483,8 @@ void monitored_posts::operator+=(const dx_post& post)
 
   while (_entries.size() > _max_entries)  // should happen only once at most
   { //_entries.pop_front();
-    _entries--;
+    //_entries--;
+    --_entries;
     _is_dirty = true;                     // should be unnecessary, since should already be true
   }
 }
@@ -494,7 +495,7 @@ void monitored_posts::operator+=(const dx_post& post)
 void monitored_posts::operator+=(const string& new_call)
 { SAFELOCK(monitored_posts);
 
-  _callsigns.insert(new_call);
+  _callsigns += new_call;
 }
 
 /*! \brief                  Remove a call from the set of those being monitored
@@ -532,7 +533,7 @@ vector<string> monitored_posts::to_strings(void) const
 
   SAFELOCK(monitored_posts);
 
-  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv.push_back(mpe.to_string()); } );
+  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv += (mpe.to_string()); } );
 
   return rv;
 }

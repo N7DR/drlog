@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: drmaster.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -759,7 +759,7 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     rv.cw_power(cw_power());
 
   if (rv.date().empty())
-    rv.date(substring(date_time_string(), 0, 8));
+    rv.date(substring(date_time_string(SECONDS::NO_INCLUDE), 0, 8));
 
   if (rv.iota().empty())
     rv.iota(iota());

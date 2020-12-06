@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 174 2020-11-30 20:28:40Z  $
+// $Id: drlog.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1980,7 +1980,7 @@ void* display_date_and_time(void* vp)
         }
       }
 
-      const string dts { date_time_string() };
+      const string dts { date_time_string(SECONDS::NO_INCLUDE) };
 
 // if a new hour, then possibly create screenshot
       if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
@@ -2383,7 +2383,7 @@ void* process_rbn_info(void* vp)
                       recent_mult_calls += target;
 
                       while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                        recent_mult_calls--;
+                        --recent_mult_calls;
 
                       cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
 
@@ -4108,9 +4108,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.is_control('=')))
   { ost << "quick QSY to " << quick_qsy_info.first.display_string() << endl;
     
-    rig.rig_frequency(quick_qsy_info.first);
-    rig.rig_mode(quick_qsy_info.second);
+    pair<frequency, MODE> old_quick_qsy_info { quick_qsy_info };
+    pair<frequency, MODE> new_quick_qsy_info { get_frequency_and_mode() };
+
+    rig.rig_frequency(old_quick_qsy_info.first);
+    rig.rig_mode(old_quick_qsy_info.second);
+
+    quick_qsy_info = new_quick_qsy_info;        // where we were, so we can quickly return
+
+    win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                  <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second]; 
     
+    update_based_on_frequency_change(old_quick_qsy_info.first, old_quick_qsy_info.second);
+
     processed = true;
   }
 
@@ -5697,6 +5707,7 @@ void* simulator_thread(void* vp)
   int           max_n_qsos { get<1>(params) };
 
   tr_log trl(filename);
+//dr_log trl(filename);
   string last_frequency;
 
   const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : trl.number_of_qsos()) };    // either apply a limit or run them all
@@ -6148,7 +6159,7 @@ void* auto_backup(void* vp)
       const string&                        directory     { get<0>(*tsss_p) };
       const string&                        filename      { get<1>(*tsss_p) };
       const string&                        qtc_filename  { get<2>(*tsss_p) };
-      const string                         dts           { date_time_string() };
+      const string                         dts           { date_time_string(SECONDS::NO_INCLUDE) };
       const string                         suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
       const string                         complete_name { directory + "/"s + filename + "-"s + suffix };
 
@@ -6204,7 +6215,7 @@ void start_of_thread(const string& name)
 void exit_drlog(void)
 { ost << "Inside exit_drlog()" << endl;
 
-  const string dts    { date_time_string() };
+  const string dts    { date_time_string(SECONDS::NO_INCLUDE) };
   const string suffix { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
 
   dump_screen("screenshot-EXIT-"s + suffix);
@@ -7122,7 +7133,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Sent QTC "s < qtc_id < " to "s <= series.destination();
       ost << "Sent QTC batch " << qtc_id << " to " << series.destination() << endl;
 
-      series.date(substring(date_time_string(), 0, 10));
+      series.date(substring(date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
@@ -7152,7 +7163,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Aborted sending QTC "s < qtc_id < " to "s <= series.destination();
 
-      series.date(substring(date_time_string(), 0, 10));
+      series.date(substring(date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
@@ -7781,18 +7792,14 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     mbe_copy = my_bandmap_entry;
   }
 
-//  const bool changed_frequency { (f.display_string() != my_bandmap_entry.freq().display_string()) };
   const bool changed_frequency { (f.display_string() != mbe_copy.freq().display_string()) };
   const bool in_call_window    { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
   if (changed_frequency)
   { time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
-//    my_bandmap_entry.freq(f);   // also updates the band
-//    display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
     mbe_copy.freq(f);   // also updates the band
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
-//    bandmap& bm { bandmaps[my_bandmap_entry.band()] };
     bandmap& bm { bandmaps[mbe_copy.band()] };
 
     bm += mbe_copy;
@@ -8232,7 +8239,7 @@ void update_quick_qsy(void)
 { quick_qsy_info = get_frequency_and_mode();
 
   win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                <= pad_left(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+                <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];  
 }
 
 /// update the window containing the sizes of the bandmaps
@@ -8364,11 +8371,11 @@ if we received a QSL -- even if I didn't send one -- that should count for somet
 void adif3_build_old_log(void)
 {
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
-  const string dts            { date_time_string() };
+  const string dts            { date_time_string(SECONDS::NO_INCLUDE) };
   const string today          { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };
   const int    itoday         { from_string<int>(today) };
   const auto   old_qso_limit  { context.old_qso_age_limit() };         // number of years
-  const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10000)) }; // date before which QSOs don't count
+  const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10'000)) }; // date before which QSOs don't count
   const bool   limit_old_qsos { old_qso_limit != 0 };  // whether to limit old qsos
 
   auto add_record_to_olog = [](const adif3_record& rec)

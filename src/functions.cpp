@@ -1,4 +1,4 @@
-// $Id: functions.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: functions.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,7 +99,7 @@ float bearing(const float& lat1, const float& long1, const float& lat2, const fl
     or day at the given location
 */
 string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
-{ const string date_string { date_time_string().substr(0, 10) };
+{ const string date_string { date_time_string(SECONDS::NO_INCLUDE).substr(0, 10) };
 
   const int year  { from_string<int>(date_string.substr(0, 4)) };
   const int month { from_string<int>(date_string.substr(5, 2)) };

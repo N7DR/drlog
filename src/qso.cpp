@@ -1,4 +1,4 @@
-// $Id: qso.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: qso.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -216,6 +216,114 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   }
 
   _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
+  _epoch_time = _to_epoch_time(_date, _utc);
+}
+
+/*! \brief              Read fields from a line in the disk log
+    \param  str         line from log file
+
+    line in disk log looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    Performs a skeletal setting of values, without using the rules for the contest
+*/
+void QSO::populate_from_verbose_format(const string& str)
+{
+// build a vector of name/value pairs
+  size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
+
+  vector<pair<string, string> > name_value;
+
+  while (cur_posn != string::npos)
+    name_value += next_name_value_pair(str, cur_posn);
+
+  _sent_exchange.clear();
+  _received_exchange.clear();
+
+  for (const auto& nv : name_value)
+  { bool processed { false };
+
+    const string& name  { nv.first };
+    const string& value { nv.second };
+
+    if (!processed and (name == "number"s))
+       processed = ( _number = from_string<decltype(_number)>(value), true );
+
+    if (!processed and (name == "date"s))
+      processed = ( _date = value, true );
+
+    if (!processed and (name == "utc"s))
+      processed = ( _utc = value, true );
+
+    if (!processed and (name == "mode"s))
+      processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
+
+    if (!processed and (name == "frequency"s))               // old version
+    { _frequency_tx = value;
+
+      const double    f    { from_string<double>(_frequency_tx) };
+      const frequency freq { f };
+
+      processed = ( _band = static_cast<BAND>(freq), true );
+    }
+
+    if (!processed and (name == "frequency-tx"s))
+    { _frequency_tx = value;
+
+      if (!_frequency_tx.empty())
+      { const double    f    { from_string<double>(_frequency_tx) };
+        const frequency freq { f };
+
+        _band = static_cast<BAND>(freq);
+      }
+      processed = true;
+    }
+
+    if (!processed and (name == "frequency-rx"s))
+    { _frequency_rx = value;
+
+      if (!_frequency_rx.empty())
+      { }                                       // add something here when we actually use frequency-rx
+
+      processed = true;
+    }
+
+    if (!processed and (name == "hiscall"s))
+    { _callsign = value;
+      _canonical_prefix = location_db.canonical_prefix(_callsign);
+      _continent = location_db.continent(_callsign);
+      processed = true;
+    }
+
+    if (!processed and (name == "mycall"s))
+      processed = ( _my_call = value, true );
+
+    if (!processed and (starts_with(name, "sent-"s)))
+      processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
+
+    if (!processed and (starts_with(name, "received-"s)))
+    { const string name_upper { to_upper(name.substr(9)) };
+
+      //if (!(rules.all_known_field_names() > name_upper))
+      //{ ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
+      //  alert("Unknown exch field: "s + name_upper);
+      //}
+
+      //const bool is_possible_mult { rules.is_exchange_mult(name_upper) };
+
+      //if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
+        //statistics.add_known_exchange_mult(name_upper, value);
+
+      //const bool           is_mult { is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false };
+//      const received_field rf      { name_upper, value , is_possible_mult, is_mult };
+      const received_field rf { name_upper, value , false, false };    // just populate name and value
+
+      _received_exchange += rf;
+      processed = true;
+    }
+  }
+
+//  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 

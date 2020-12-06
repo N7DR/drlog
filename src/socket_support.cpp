@@ -56,11 +56,8 @@ void tcp_socket::_close_the_socket(void)
 
 /// default constructor
 tcp_socket::tcp_socket(void)  :
-//  _destination_is_set(false),
-//  _force_closure(false),
-  _preexisting_socket(false),
+//  _preexisting_socket(false),
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
-//  _timeout_in_tenths(600)                     // 1 minute
 { try
   { 
 // enable re-use
@@ -71,7 +68,7 @@ tcp_socket::tcp_socket(void)  :
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
 
-    const struct linger lgr { 1, 0 };
+    const struct linger lgr { 1, 0 };  // close blocks, but with timeout = 0 seconds; https://www.gnu.org/software/libc/manual/html_node/Socket_002dLevel-Options.html
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
@@ -130,11 +127,8 @@ tcp_socket::tcp_socket(SOCKET* sp) :
     \param  sock    socket
 */
 tcp_socket::tcp_socket(SOCKET sock) :
-//  _destination_is_set(false),
-//  _force_closure(false),
   _preexisting_socket(true),
   _sock(sock)
-//  _timeout_in_tenths(600)                     // 1 minute
 {  }
 
 /*! \brief                                  Construct and initialise with useful values

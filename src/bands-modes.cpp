@@ -93,6 +93,7 @@ frequency::frequency(const enum BAND b)
                                                  { BAND_12,  24'890'000 },
                                                  { BAND_10,  28'000'000 }
                                                };
+
   _hz = MUM_VALUE(hz_map, b, 1'800'000);           // default to 160m
 }
 
@@ -102,9 +103,7 @@ frequency::frequency(const enum BAND b)
     Sets the frequency to the low edge of the band <i>b</i>
 */
 string frequency::display_string(void) const
-{ //const string POINT(".");                                      // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
-
-  unsigned int khz { _hz / 1000 };
+{ unsigned int khz { _hz / 1000 };
   unsigned int hhz { ( ( _hz - (khz * 1000) ) / 10 + 5 ) / 10 };  // first decimal place in kHz frequency
 
   if (hhz == 10)
@@ -119,9 +118,7 @@ string frequency::display_string(void) const
     \return     string of the frequency in MHz, to three decimal placex ([xxxx].yyy)
 */
 string frequency::display_string_MHz(void) const
-{ //const string POINT { "."s };    // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
-
-  unsigned int mhz { _hz / 1'000'000 };
+{ unsigned int mhz { _hz / 1'000'000 };
   unsigned int khz { ( (_hz / 1000) - (mhz * 1000) ) };
 
   const string mhz_str { to_string(mhz) };
@@ -144,24 +141,8 @@ frequency frequency::lower_band_edge(void) const
                                                { BAND_10,  frequency(28.0) }
                                              };
 
-//  const BAND b { BAND(*this) };
-
   return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
 }
-
-/// is the frequency within a band?
-#if 0
-bool frequency::is_within_ham_band(void) const
-{ return ( (BAND(*this) != BAND_160) or ( (_hz >= 1'800'000) and (_hz <= 2'000'000) ) );    // check if BAND_160, because that's the returned band if frequency is outside a band
-
-//  const BAND b { BAND(*this) };
-
-//  if (b != BAND_160)
-//    return true;
-
-// return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
-}
-#endif
 
 /// difference in two frequencies, always +ve
 frequency frequency::difference(const frequency& f2) const

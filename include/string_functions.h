@@ -1,4 +1,4 @@
-// $Id: string_functions.h 174 2020-11-30 20:28:40Z  $
+// $Id: string_functions.h 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,7 +59,7 @@ static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUV
 
 constexpr char SPACE_CHAR { ' ' };
 
-constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
+//constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -70,6 +70,11 @@ enum class PAD { LEFT,                  ///< pad to the left
 enum class DELIMITERS { KEEP,                   ///< include the delimiters in the output
                         DROP                    ///< do not include the delimiters in the output
                       };
+
+/// whether to include seconds
+enum class SECONDS { INCLUDE, 
+                     NO_INCLUDE
+                   };
 
 // error numbers
 constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
@@ -102,7 +107,8 @@ std::string duplicate_char(const std::string& s, const char c = '"');
     \param  include_seconds     whether to include the portion of the string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
+//std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
+std::string date_time_string(const SECONDS include_seconds);
 
 /*! \brief          Convert struct tm pointer to formatted string
     \param  format  format to be used
@@ -529,14 +535,6 @@ std::string delimited_substring(const std::string& cs, const char delim_1, const
 */
 std::string delimited_substring(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
 
-/*! \brief              Obtain all occurrences of a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
-*/
-//std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
-
 /*! \brief                      Obtain all occurrences of a delimited substring
     \param  cs                  original string
     \param  delim_1             opening delimiter
@@ -934,18 +932,6 @@ std::string YYYYMMDD_utc(void);
     \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
 */
 std::string remove_substrings(const std::string& cs, const std::vector<std::string>& vs);
-
-#if 0
-https://stackoverflow.com/questions/650162/why-the-switch-statement-cannot-be-applied-on-strings
-constexpr unsigned int hash(const char *s, int off = 0) {                        
-    return !s[off] ? 5381 : (hash(s, off+1)*33) ^ s[off];                           
-}                                                                                
-
-switch( hash(str) ){
-case hash("one") : // do something
-case hash("two") : // do something
-}
-#endif
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                

@@ -1,4 +1,4 @@
-// $Id: trlog.cpp 157 2020-05-21 18:14:13Z  $
+// $Id: trlog.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,8 @@
 
 // Copyright owners:
 //    N7DR
+
+#if 1
 
 /*! \file   trlog.cpp
 
@@ -24,6 +26,15 @@
 #include <cstring>
 
 using namespace std;
+
+/*! \class  QSO_CALL
+    \brief  Encapsulates a QSO number and a callsign
+*/
+
+struct QSO_CALL
+{ int         _qso;         ///< QSO number
+  std::string _call;        ///< callsign
+};
 
 // -----------  tr_record  ----------------
 
@@ -318,6 +329,9 @@ void tr_log::sort_by_call(void)
 // Now delete the old file and reference the new one
   fclose(_fp);               // automatically deletes the file
   _fp = tmpfp;
+
+// delete the table
+  delete [] table;
 }
 
 /// return record number <i>n</i>
@@ -350,3 +364,5 @@ void tr_log::write(const tr_record& trr, const int n)
   if (status != 1)
     throw exception();
 }
+
+#endif      // 0

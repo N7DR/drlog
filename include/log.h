@@ -1,4 +1,4 @@
-// $Id: log.h 168 2020-10-07 18:34:59Z  $
+// $Id: log.h 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -295,8 +295,7 @@ public:
     \param  w               window to be used by this extract
 */
   explicit inline log_extract(window& w) :
-    _win(w) //,
-//    _win_size(0)                                  // don't set the size yet, since the size of w may not be set
+    _win(w)
   { }                                       // don't set the size yet, since the size of w may not be set
 
 /// prepare for use; this MUST be called before the object is used
@@ -339,7 +338,7 @@ public:
 */
   inline void add_without_limit(const QSO& qso)
   { SAFELOCK(_extract);
-    _qsos.push_back(qso);
+    _qsos += qso;
   }
 
 /// clear the extract

@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 174 2020-11-30 20:28:40Z  $
+// $Id: string_functions.cpp 175 2020-12-06 17:44:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,14 +91,14 @@ vector<string> from_csv(experimental::string_view line)
       { if (this_char == comma)
         { if (posn < line.size() - 1)   // make sure there's at least one unread character
           { if (const char next_char { line[posn + 1] }; next_char == comma)
-            { rv += string();   // empty value
+            { rv += EMPTY_STR;   // empty value
               posn++;
             }
             else
               posn++;
           }
           else                        // we've finished with a comma; this is really an error, we just assume an empty last field
-          { rv += string();   // empty value
+          { rv += EMPTY_STR;   // empty value
             posn++;
           }
         }
@@ -123,8 +123,8 @@ string duplicate_char(const string& s, const char c)
   { next_posn = s.find(c, start_posn);
 
     if (next_posn != string::npos)
-    { rv += s.substr(start_posn, next_posn - start_posn + 1);
-      rv += c;
+    { rv += (s.substr(start_posn, next_posn - start_posn + 1) + c);
+//      rv += c;
       start_posn = next_posn + 1;
     }
   } while (next_posn != string::npos);
@@ -143,19 +143,20 @@ string duplicate_char(const string& s, const char c)
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
 string substring(const string& str, const size_t start_posn, const size_t length)
-{ if (str.size() > start_posn)
-    return str.substr(start_posn, length);
+{ return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR );
 
-//   ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << ", length = " << length << endl;  // log the problem
+//  if (str.size() > start_posn)
+//    return str.substr(start_posn, length);
 
-  return string();
+//  return string();
 }
 
 /*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion oft he string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-string date_time_string(const bool include_seconds)
+//string date_time_string(const bool include_seconds)
+string date_time_string(const SECONDS include_seconds)
 { constexpr size_t TIME_BUF_LEN { 26 };
 
   const time_t now { time(NULL) };            // get the time from the kernel
@@ -169,7 +170,7 @@ string date_time_string(const bool include_seconds)
   asctime_r(&structured_time, buf.data());                     // convert to ASCII
 
   const string ascii_time { buf.data(), TIME_BUF_LEN };
-  const string _utc       { ascii_time.substr(11, (include_seconds ? 8 : 5)) };                            // hh:mm[:ss]
+  const string _utc       { ascii_time.substr(11, ( (include_seconds == SECONDS::INCLUDE) ? 8 : 5)) };                            // hh:mm[:ss]
   const string _date      { to_string(structured_time.tm_year + 1900) + "-"s + pad_leftz((structured_time.tm_mon + 1), 2) + "-"s + pad_leftz(structured_time.tm_mday, 2) };   // yyyy-mm-dd
 
   return (_date + "T"s + _utc);
@@ -1116,7 +1117,7 @@ string base_call(const string& callsign)
     \return     current UTC date in the format: YYYYMMDD
 */
 string YYYYMMDD_utc(void)
-{ const string dts { date_time_string() };
+{ const string dts { date_time_string(SECONDS::NO_INCLUDE) };
 
   return (dts.substr(0, 4) + dts.substr(5, 2) + dts.substr(8, 2));
 }
