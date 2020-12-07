@@ -195,7 +195,6 @@ class frequency
 {
 protected:
 
-//  unsigned int _hz { 0 };      ///< the actual frequency, in Hz
   uint32_t _hz { 0 };      ///< the actual frequency, in Hz
 
 public:
@@ -228,7 +227,7 @@ public:
   explicit frequency(const enum BAND b);
 
 /// set frequency in Hz
-  inline void hz(const uint32_t n)
+  inline void hz(const decltype(_hz) n)
     { _hz = n; }
 
 /// get frequency in Hz

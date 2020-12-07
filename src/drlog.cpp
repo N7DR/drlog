@@ -206,7 +206,7 @@ bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_k
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_quick_qsy(void);                                                                                            ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
-void update_qsls_window(const string& = EMPTY_STR);                                                                            ///< QSL information from old QSOs
+void update_qsls_window(const string& = EMPTY_STR);                                                                     ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                                                                     ///< the head of the QTC queue
 void update_rate_window(void);                                                                                          ///< Update the QSO and score values in <i>win_rate</i>
 void update_recording_status_window(void);                                                                              ///< update the RECORDING STATUS window
@@ -497,7 +497,8 @@ fuzzy_databases fuzzy_dbs;                      ///< container for the fuzzy dat
 pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
           thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
           
-pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
+//pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
+map<BAND, pair<frequency, MODE>> quick_qsy_map;
 
 /// define wrappers to pass parameters to threads
 
@@ -763,6 +764,13 @@ int main(int argc, char** argv)
     shift_poll                      = context.shift_poll();
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
+
+// set up initial quick qsy information
+//pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
+//map<BAND, pair<frequency, MODE>> quick_qsy_map;
+
+    for (int n { static_cast<int>(MIN_BAND) }; n <= static_cast<int>(MAX_BAND); ++n)
+      quick_qsy_map[static_cast<BAND>(n)] = pair<frequency, MODE> { BOTTOM_OF_BAND.at(static_cast<BAND>(n)), MODE_CW };
 
 // possibly configure audio recording
     if (allow_audio_recording and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
@@ -1226,8 +1234,12 @@ int main(int argc, char** argv)
   
 // QUICK QSY window
     win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
-    win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                  <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];  
+    
+    { const pair<frequency, MODE>& quick_qsy_info { quick_qsy_map.at(safe_get_band()) };
+
+      win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                    <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
+    }
   
 // QSLs window
     win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
@@ -4106,15 +4118,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
-  { ost << "quick QSY to " << quick_qsy_info.first.display_string() << endl;
+  { //ost << "quick QSY to " << quick_qsy_info.first.display_string() << endl;
     
-    pair<frequency, MODE> old_quick_qsy_info { quick_qsy_info };
+    pair<frequency, MODE> old_quick_qsy_info { quick_qsy_map.at(safe_get_band()) };
     pair<frequency, MODE> new_quick_qsy_info { get_frequency_and_mode() };
 
     rig.rig_frequency(old_quick_qsy_info.first);
     rig.rig_mode(old_quick_qsy_info.second);
 
-    quick_qsy_info = new_quick_qsy_info;        // where we were, so we can quickly return
+    const pair<frequency, MODE>& quick_qsy_info { new_quick_qsy_info };        // where we were, so we can quickly return
+
+    quick_qsy_map[safe_get_band()] = new_quick_qsy_info;
 
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
                   <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second]; 
@@ -8236,7 +8250,9 @@ void update_system_memory(void)
 
 /// update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
 void update_quick_qsy(void)
-{ quick_qsy_info = get_frequency_and_mode();
+{ const pair<frequency, MODE> quick_qsy_info = get_frequency_and_mode();
+
+  quick_qsy_map[BAND(quick_qsy_info.first)] = quick_qsy_info;
 
   win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
                 <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];  
