@@ -557,7 +557,7 @@ location_info location_database::info(const string& callpart) const
                                                              };
 
 // see if it's some guy already in the db but now signing /QRP
-  if (callsign.length() >= 5 and last(callsign, 4) == "/QRP"s)
+  if ( (callsign.length() >= 5) and (last(callsign, 4) == "/QRP"s) )
   { const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
@@ -573,11 +573,11 @@ location_info location_database::info(const string& callpart) const
   }
 
 // /MM and /AM are in no country
-  if (last(callsign, 3) == "/AM"s or last(callsign, 3) == "/MM"s)
+  if ( (last(callsign, 3) == "/AM"s) or (last(callsign, 3) == "/MM"s) )
     return insert_best_info(location_info());
   
 // try to determine the canonical prefix
-  if (!contains(callsign, "/"s) or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
+  if (!contains(callsign, "/"s) or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
@@ -797,7 +797,7 @@ auto location_database::countries(void) const -> unordered_set<string>
 //  result_of<decltype(&location_database::countries)(location_database, void) const>::type rv;
 //    std::result_of<decltype(&C::Func)(C, char, int&)>::type g = 3.14;  // https://en.cppreference.com/w/cpp/types/result_of
 
-  FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv.insert((prefix_li.second).canonical_prefix()); } );  // there are a lot more entries in the db than there are countries
+  FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
 
   return rv;
 }
@@ -895,7 +895,7 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
       { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
 
         for (const auto& sstring : substrings)
-          _data.insert( { sstring, russian_data_per_substring(sstring, line) } );
+          _data += { sstring, russian_data_per_substring(sstring, line) };
       }
     }
   }

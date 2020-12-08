@@ -58,7 +58,6 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
- #if 1
       if (contains(this_pair.second, ":"s))
       { const vector<string> fields = split_string(this_pair.second, ":"s);
 
@@ -70,13 +69,13 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
         call_column = from_string<unsigned int>(fields[1]) - 1;      // adjust to wrt 0
         field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
       }
-#endif
 
       for (const auto& line : lines)                                // each line should now be space-separated columns
         if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() > max(call_column, field_column))
-          call_value_map.insert( { this_pair.at(call_column), this_pair.at(field_column) } );
+//          call_value_map.insert( { this_pair.at(call_column), this_pair.at(field_column) } );
+          call_value_map += { this_pair.at(call_column), this_pair.at(field_column) };
 
-      _db.insert( { to_upper(field_name), call_value_map } );
+      _db += { to_upper(field_name), call_value_map };
     }
 
     catch (...)
@@ -99,11 +98,12 @@ string exchange_field_prefill::prefill_data(const string& field_name, const stri
   if (it == _db.cend())
     return string();
 
-  const unordered_map<string /* callsign */, string /* value */>& field_map   { it->second };
+  const unordered_map<string /* callsign */, string /* value */>& field_map { it->second };
 
   return MUM_VALUE(field_map, callsign);
 }
 
+/// ostream << exchange_field_prefill
 ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 {
 //  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
@@ -183,7 +183,7 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   bool possible { true };
 
 // check all except the last character
-  for (size_t n = 0; n < str.length() - 1; ++n) // note the "<" and -1
+  for (size_t n { 0 }; n < str.length() - 1; ++n) // note the "<" and -1
     if (possible)
       possible = (isdigit(str[n]));
 
@@ -1114,22 +1114,21 @@ case hash("two") : // do something
                                                                                        { "IS"s,   "EU024"s },
                                                                                        { "IT9"s,  "EU025"s }, // WAE country only
                                                                                        { "JW"s,   "EU026"s },
-                                                                                         { "JX"s,   "EU022"s },
-                                                                                         { "J3"s,   "NA024"s },
-                                                                                         { "J6"s,   "NA108"s },
-                                                                                         { "J7"s,   "NA101"s },
-                                                                                         { "J8"s,   "NA109"s },
-                                                                                         { "KP1"s,  "NA098"s },
-                                                                                         { "KP2"s,  "NA106"s },
-                                                                                         { "KP4"s,  "NA099"s },
-                                                                                         { "KP5"s,  "NA095"s },
-                                                                                         { "OH0"s,  "EU002"s },
-                                                                                         { "OJ0"s,  "EU053"s },
-                                                                                         { "OX"s,   "NA018"s },
-                                                                                         { "OY"s,   "EU018"s },
-                                                                                         { "PJ5"s,  "NA145"s },
-                                                                                         { "R1FJ"s, "EU019"s },
-                                                                                         { "OX"s,   "NA018"s },
+                                                                                       { "JX"s,   "EU022"s },
+                                                                                       { "J3"s,   "NA024"s },
+                                                                                       { "J6"s,   "NA108"s },
+                                                                                       { "J7"s,   "NA101"s },
+                                                                                       { "J8"s,   "NA109"s },
+                                                                                       { "KP1"s,  "NA098"s },
+                                                                                       { "KP2"s,  "NA106"s },
+                                                                                       { "KP4"s,  "NA099"s },
+                                                                                       { "KP5"s,  "NA095"s },
+                                                                                       { "OH0"s,  "EU002"s },
+                                                                                       { "OJ0"s,  "EU053"s },
+                                                                                       { "OX"s,   "NA018"s },
+                                                                                       { "OY"s,   "EU018"s },
+                                                                                       { "PJ5"s,  "NA145"s },
+                                                                                       { "R1FJ"s, "EU019"s },
                                                                                          { "SV5"s,  "EU001"s },
                                                                                          { "SV9"s,  "EU015"s },
                                                                                          { "TI9"s,  "NA012"s },

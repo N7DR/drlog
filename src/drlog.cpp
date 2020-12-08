@@ -8248,7 +8248,7 @@ void update_system_memory(void)
   }
 }
 
-/// update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
+/// update value of <i>quick_qsy_info</i> and write it to <i>win_quick_qsy</i>
 void update_quick_qsy(void)
 { const pair<frequency, MODE> quick_qsy_info = get_frequency_and_mode();
 
@@ -8270,7 +8270,7 @@ void update_bandmap_size_window(void)
     { const cursor c_posn { 0, line_nr++ };
 
       win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)            // low band is on bottom
-                       < pad_left(to_string(bandmaps[b].displayed_entries().size()), 5);
+                       < pad_left(bandmaps[b].displayed_entries().size(), 5);
     }
 
     win_bandmap_size.refresh();
@@ -8291,8 +8291,10 @@ pair<float, float> latitude_and_longitude(const string& callsign)
   if (is_valid_grid_designation(grid_name))
   { const grid_square grid { grid_name };
   
-    rv.first = grid.latitude();
-    rv.second = grid.longitude();
+//    rv.first = grid.latitude();
+//    rv.second = grid.longitude();
+
+    rv = { grid.latitude(), grid.longitude() };
   }
   else
   { const location_info li { location_db.info(callsign) };
@@ -8302,8 +8304,10 @@ pair<float, float> latitude_and_longitude(const string& callsign)
     if (li == default_li)
       return rv;
       
-    rv.first = location_db.latitude(callsign);
-    rv.second = -location_db.longitude(callsign);    // minus sign to get in the correct direction
+//    rv.first = location_db.latitude(callsign);
+//    rv.second = -location_db.longitude(callsign);    // minus sign to get in the correct direction
+
+    rv = { location_db.latitude(callsign), -location_db.longitude(callsign) };    // minus sign to get in the correct direction
   }
   
   return rv;
@@ -8344,7 +8348,7 @@ void do_not_show(const string& callsign)
     A returned index of -1 implies that there are no QSOs after the target date 
 */
 pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const int target_idate)
-{ for (int n = 0; n < static_cast<int>(vqsos.size()); ++n)
+{ for (int n { 0 }; n < static_cast<int>(vqsos.size()); ++n)
     if (vqsos[n].idate() >= target_idate)
       return { vqsos[n], n };
       
@@ -8361,7 +8365,7 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
 */
 pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_record>& vqsos, const int target_idate, const int index_last_marked_qso)
 { if (index_last_marked_qso != static_cast<int>(vqsos.size() - 1))                                    // make sure the last marked qso wasn't the last qso in the vector
-    for (int n = index_last_marked_qso + 1; n < static_cast<int>(vqsos.size()); ++n)
+    for (int n { index_last_marked_qso + 1 }; n < static_cast<int>(vqsos.size()); ++n)
       if ( (vqsos[n].idate() >= target_idate) or vqsos[n].confirmed())
         return { vqsos[n], n };
       
@@ -8428,8 +8432,7 @@ void adif3_build_old_log(void)
         { vector<adif3_record> matching_qsos { old_adif3_log.matching_qsos(callsign) }; // don't make const because it's going to be sorted
 
           if (!matching_qsos.empty())       // should always be true
-          { //sort(matching_qsos.begin(), matching_qsos.end(), compare_adif3_records);    // in chronological order
-            SORT(matching_qsos, compare_adif3_records);
+          { SORT(matching_qsos, compare_adif3_records);    // in chronological order
 
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
@@ -8437,10 +8440,8 @@ void adif3_build_old_log(void)
             { const bandmode bmode { BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) };
 
               if (auto it { bmode_records.find(bmode) }; it == bmode_records.end())
-//                bmode_records.insert( { bmode, { rec } } );
                 bmode_records += { bmode, { rec } };
               else
-//                it->second.push_back(rec);
                 it->second += rec;
             }
 

@@ -98,7 +98,7 @@ void rig_interface::_error_alert(const string& msg)
     Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::_rig_frequency(const frequency& f, const VFO v)
-{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };      // period between retries
+{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries
 
   if (f.is_within_ham_band())
   { switch (v)
@@ -1309,11 +1309,18 @@ VFO rig_interface::tx_vfo(void)
     \param  hz  desired bandwidth, in Hz
 */
 void rig_interface::bandwidth_a(const unsigned int hz)
-{ if (_rig_connected)
+{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries for the brain-dead K3
+
+  if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
     { const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
 
       raw_command("BW"s + k3_bw_units + ";"s);
+
+      while (bandwidth() != static_cast<int>(hz))       // the K3 is brain-dead
+      { sleep_for(RETRY_TIME);
+        raw_command("BW"s + k3_bw_units + ";"s);
+      }
     }
   }
 }
