@@ -408,6 +408,16 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CQ AUTO RIT"s)
       _cq_auto_rit = is_true;
 
+// CW BANDWIDTH
+    if (LHS == "CW BANDWIDTH"s)
+    { const vector<string> bw { remove_peripheral_spaces(split_string(RHS, "/"s)) };
+
+      if (bw.size() == 2)
+      { _cw_bandwidth_narrow = from_string<decltype(_cw_bandwidth_narrow)>(bw[0]);
+        _cw_bandwidth_wide = from_string<decltype(_cw_bandwidth_wide)>(bw[1]);
+      }
+    }
+
 // CW PRIORITY
     if (LHS == "CW PRIORITY"s)
       _cw_priority = from_string<decltype(_cw_priority)>(RHS);

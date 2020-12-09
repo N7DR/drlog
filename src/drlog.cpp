@@ -310,6 +310,8 @@ bandmap_buffer          bm_buffer;                                  ///< global 
 
 set<BAND>               call_history_bands;                         ///< bands displayed in CALL HISTORY window
 drlog_context           context;                                    ///< context taken from configuration file
+int                     cw_bandwidth_narrow;                        ///< narrow CW bandwidth
+int                     cw_bandwidth_wide;                          ///< wide CW bandwidth
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
@@ -742,6 +744,8 @@ int main(int argc, char** argv)
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
     call_history_bands              = context.call_history_bands();
+    cw_bandwidth_narrow             = context.cw_bandwidth_narrow();
+    cw_bandwidth_wide               = context.cw_bandwidth_wide();
     cw_speed_change                 = context.cw_speed_change();
     display_grid                    = context.display_grid();
     home_exchange_window            = context.home_exchange_window();
@@ -8548,14 +8552,17 @@ bool is_daylight(const string& sunrise_time, const string& sunset_time, const st
   return false;  // should never reach here
 }
 
-/*! \brief      Toggle 50Hz/200Hz bandwidth if on CW
+/*! \brief      Toggle narrow/wide bandwidth if on CW
     \return     true
 
-    Sets bandwidth to 200 Hz if it's not 50 Hz
+    Sets bandwidth to the wide bandwidth if it's not equal to the narrow bandwidth
 */
 bool cw_toggle_bandwidth(void)
-{ if (safe_get_mode() == MODE_CW)
-    rig.bandwidth( (rig.bandwidth() == 200) ? 50 : 200 );
+{ constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
+
+  if (safe_get_mode() == MODE_CW)
+//    rig.bandwidth( (rig.bandwidth() == 200) ? 50 : 200 );
+    rig.bandwidth( (abs(rig.bandwidth() - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
 
   return true;
 }

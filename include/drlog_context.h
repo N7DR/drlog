@@ -133,6 +133,8 @@ protected:
   bool                                         _cq_auto_lock                            { false };                      ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit                             { false };                      ///< whether to enable RIT in CQ mode
   std::string                                  _cty_filename                            { "cty.dat"s };                 ///< filename for country data
+  int                                          _cw_bandwidth_narrow                     { 100 };                        ///< narrow CW bandwidth (Hz)
+  int                                          _cw_bandwidth_wide                       { 400 };                        ///< wide CW bandwidth (Hz)
   int                                          _cw_priority                             { -1 };                         ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
   unsigned int                                 _cw_speed                                { 29 };                         ///< speed in WPM
   unsigned int                                 _cw_speed_change                         { 3 };                          ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN
@@ -394,6 +396,8 @@ public:
   CONTEXTREAD(cq_auto_lock);                     ///< whether to lock the transmitter in CQ mode
   CONTEXTREAD(cq_auto_rit);                      ///< whether to enable RIT in CQ mode
   CONTEXTREAD(cty_filename);                     ///< filename of country file (default = "cty.dat")
+  CONTEXTREAD(cw_bandwidth_narrow);              ///< narrow CW bandwidth (Hz)
+  CONTEXTREAD(cw_bandwidth_wide);                ///< wide CW bandwidth (Hz)
   CONTEXTREAD(cw_priority);                      ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
   CONTEXTREAD(cw_speed);                         ///< speed in WPM
   CONTEXTREAD(cw_speed_change);                  ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN

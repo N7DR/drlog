@@ -1310,6 +1310,7 @@ VFO rig_interface::tx_vfo(void)
 */
 void rig_interface::bandwidth_a(const unsigned int hz)
 { constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries for the brain-dead K3
+  constexpr int                       PRECISION  { 50 };
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
@@ -1317,7 +1318,8 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 
       raw_command("BW"s + k3_bw_units + ";"s);
 
-      while (bandwidth() != static_cast<int>(hz))       // the K3 is brain-dead
+ //     while (bandwidth() != static_cast<int>(hz))       // the K3 is brain-dead
+      while (abs(bandwidth() - static_cast<int>(hz)) > PRECISION)       // the K3 is brain-dead
       { sleep_for(RETRY_TIME);
         raw_command("BW"s + k3_bw_units + ";"s);
       }
