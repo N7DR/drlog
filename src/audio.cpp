@@ -1,4 +1,4 @@
-// $Id: audio.cpp 175 2020-12-06 17:44:13Z  $
+// $Id: audio.cpp 176 2020-12-13 18:28:41Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -152,7 +152,7 @@ void audio_recorder::_set_params(void)
     _buffer_time = min(_buffer_time, static_cast<unsigned int>(500'000));
   }
 
-  if (_period_time == 0 and _period_frames == 0)
+  if ( (_period_time == 0) and (_period_frames == 0) )
   { if (_buffer_time > 0)
       _period_time = _buffer_time / 4;
     else
@@ -288,14 +288,16 @@ void audio_recorder::_set_params(void)
     \return         total number of bytes read
 */
 ssize_t audio_recorder::_pcm_read(u_char* data)
-{ size_t result { 0 };
+{ constexpr int RETRY_MS { 100 };               // retry time in milliseconds
+
+  size_t result { 0 };
   size_t count  { _period_size_in_frames };
 
   while (count > 0)
   { const ssize_t r { _readi_func(_handle, data, count) };
 
     if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
-    { snd_pcm_wait(_handle, 100);   // wait for 100 ms, then try again
+    { snd_pcm_wait(_handle, RETRY_MS);   // wait for 100 ms, then try again
     }
     else if (r == -EPIPE)           // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
     { if (++_xrun_counter == _xrun_threshhold)

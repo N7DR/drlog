@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 175 2020-12-06 17:44:13Z  $
+// $Id: drlog.cpp 176 2020-12-13 18:28:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -421,6 +421,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
+       win_query,                       ///< query matches
        win_quick_qsy,                   ///< QRG and mode for ctrl-=
        win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
@@ -491,6 +492,7 @@ scp_databases scp_dbs;                          ///< container for the SCP datab
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
+vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_matches;  ///< query matches
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
@@ -532,7 +534,7 @@ bool mm_country_mults    { false };            ///< can /MM stns be country mult
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
-    \param  match_vector    output vector of pairs of calls and colours (in display order)
+    \param  match_vector    OUTPUT vector of pairs of calls and colours (in display order)
     \param  win             window to be updated
     \param  callsign        (partial) callsign to be matched
 
@@ -1235,6 +1237,9 @@ int main(int argc, char** argv)
 // POST MONITOR window
     win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
     mp.max_entries(win_monitored_posts.height());               // set the size of the queue
+
+// QUERY window
+    win_query.init(context.window_info("QUERY"s), WINDOW_NO_CURSOR);
   
 // QUICK QSY window
     win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);

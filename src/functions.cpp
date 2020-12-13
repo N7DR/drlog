@@ -1,4 +1,4 @@
-// $Id: functions.cpp 175 2020-12-06 17:44:13Z  $
+// $Id: functions.cpp 176 2020-12-13 18:28:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -173,6 +173,5 @@ string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
   if (hrs >= 24)
     hrs -= 24;
 
-//  return ( pad_string(to_string(hrs), 2, PAD::LEFT, '0') + ":"s + pad_string(to_string(mins), 2, PAD::LEFT, '0') );
   return ( pad_leftz(hrs, 2) + ":"s + pad_leftz(mins, 2) );
 }
