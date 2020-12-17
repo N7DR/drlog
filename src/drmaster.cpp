@@ -67,7 +67,7 @@ master_dta::master_dta(const string& filename)
 
 // extract all the calls
   while (pointer < contents.length())
-    tmp_calls.push_back(_get_call(contents, pointer));      // modified pointer
+    tmp_calls += _get_call(contents, pointer);      // modified pointer
 
 // remove duplicates
 //  sort(tmp_calls.begin(), tmp_calls.end());
@@ -519,7 +519,8 @@ trmaster::trmaster(const string& filename)
       if (_records.find(call) != _records.end())
         record += _records[call];
 
-      _records.insert( { call, record } );
+//      _records.insert( { call, record } );
+      _records += { call, record };
     }
   }
   else              // not binary
@@ -527,7 +528,7 @@ trmaster::trmaster(const string& filename)
 
     FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
 
-                                             _records.insert( { record.call(), record } );
+                                             _records += { record.call(), record };
                                             } );
   }
 }
@@ -538,7 +539,6 @@ vector<string> trmaster::calls(void) const
 
   FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
 
-  //sort(rv.begin(), rv.end());
   SORT(rv, compare_calls);      // added compare_calls 201101
 
   return rv;
@@ -572,7 +572,7 @@ r = SKCC state/province/country
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
 string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
-{ for (vector<string>::const_iterator cit = fields.cbegin(); cit != fields.cend(); ++cit)
+{ for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
   { if (starts_with(*cit, field_indicator))
       return (cit->substr(field_indicator.length()));
   }

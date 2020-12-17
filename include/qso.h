@@ -75,6 +75,14 @@ protected:
 */
   bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
 
+/*! \brief      Process a name/value pair from a drlog log line to insert values in the QSO object
+    \param  nv  name and value to be processed
+    \return     whether <i>nv</i> was processed
+
+    Does not process fields whose name begins with "received-"
+*/
+  bool _process_name_value_pair(const std::pair<std::string, std::string>& nv);
+
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
@@ -149,7 +157,7 @@ public:
     
 /// return a single date-and-time string
   inline std::string date_and_time(void) const
-    { return _date + "T"s + _utc; }
+    { return (_date + "T"s + _utc); }
     
 /// is this QSO earlier than another one? 
   inline bool earlier_than(const QSO& qso) const
@@ -183,7 +191,7 @@ public:
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 
-    Performs a skeletal setting of values, without using the rules for the contest
+    Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
   void populate_from_verbose_format(const std::string& str);
 

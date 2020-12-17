@@ -62,6 +62,76 @@ bool QSO::_is_received_field_optional(const string& field_name, const vector<exc
   return false;             // keep the compiler happy
 }
 
+/*! \brief      Process a name/value pair from a drlog log line to insert values in the QSO object
+    \param  nv  name and value to be processed
+    \return     whether <i>nv</i> was processed
+
+    Does not process fields whose name begins with "received-"
+*/
+bool QSO::_process_name_value_pair(const pair<string, string>& nv)
+{ bool processed { false };
+
+  const string& name  { nv.first };
+  const string& value { nv.second };
+
+  if (!processed and (name == "number"s))
+    processed = ( _number = from_string<decltype(_number)>(value), true );
+
+  if (!processed and (name == "date"s))
+    processed = ( _date = value, true );
+
+  if (!processed and (name == "utc"s))
+    processed = ( _utc = value, true );
+
+  if (!processed and (name == "mode"s))
+    processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
+
+  if (!processed and (name == "frequency"s))               // old version
+  { _frequency_tx = value;
+
+    const double    f    { from_string<double>(_frequency_tx) };
+    const frequency freq { f };
+
+    processed = ( _band = static_cast<BAND>(freq), true );
+  }
+
+  if (!processed and (name == "frequency-tx"s))
+  { _frequency_tx = value;
+
+    if (!_frequency_tx.empty())
+    { const double    f    { from_string<double>(_frequency_tx) };
+      const frequency freq { f };
+
+      _band = static_cast<BAND>(freq);
+    }
+    processed = true;
+  }
+
+  if (!processed and (name == "frequency-rx"s))
+  { _frequency_rx = value;
+
+    if (!_frequency_rx.empty())
+    { }                                       // add something here when we actually use frequency-rx
+
+    processed = true;
+  }
+
+  if (!processed and (name == "hiscall"s))
+  { _callsign = value;
+    _canonical_prefix = location_db.canonical_prefix(_callsign);
+    _continent = location_db.continent(_callsign);
+    processed = true;
+  }
+
+  if (!processed and (name == "mycall"s))
+    processed = ( _my_call = value, true );
+
+  if (!processed and (starts_with(name, "sent-"s)))
+    processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
+
+  return processed;
+}
+
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
@@ -134,7 +204,13 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   _received_exchange.clear();
 
   for (const auto& nv : name_value)
-  { bool processed { false };
+  { bool processed { _process_name_value_pair(nv) };
+
+//    ost << "name = " << nv.first << ", value = " << nv.second << endl;
+//    ost << "Processed = " << boolalpha << processed << endl;
+
+#if 0
+    bool processed { false };
 
     const string& name  { nv.first };
     const string& value { nv.second };
@@ -193,9 +269,15 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
     if (!processed and (starts_with(name, "sent-"s)))
       processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
+#endif
+
+    const string& name  { nv.first };
+    const string& value { nv.second };
 
     if (!processed and (starts_with(name, "received-"s)))
     { const string name_upper { to_upper(name.substr(9)) };
+
+//      ost << "name_upper = " << name_upper << endl;
 
       if (!(rules.all_known_field_names() > name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
@@ -203,6 +285,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       }
 
       const bool is_possible_mult { rules.is_exchange_mult(name_upper) };
+
+ //     ost << "is_possible_mult = " << is_possible_mult << endl;
 
       if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
         statistics.add_known_exchange_mult(name_upper, value);
@@ -215,7 +299,22 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     }
   }
 
+#if 0
+// DEBUG print received exchange fields
+// WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
+  for (const auto& rf : _received_exchange)
+  { ost << "field: name = " << rf.name()
+        << ", value = " << rf.value()
+        << ", is_possible_mult = " << rf.is_possible_mult()
+        << ", is_mult = " << rf.is_mult()
+        << endl;
+  } 
+#endif
+
   _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
+
+//  ost << "_is_country_mult = " << _is_country_mult << endl;
+
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
@@ -225,7 +324,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 
-    Performs a skeletal setting of values, without using the rules for the contest
+    Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
 void QSO::populate_from_verbose_format(const string& str)
 {
@@ -241,7 +340,10 @@ void QSO::populate_from_verbose_format(const string& str)
   _received_exchange.clear();
 
   for (const auto& nv : name_value)
-  { bool processed { false };
+  { bool processed { _process_name_value_pair(nv) };
+
+#if 0
+    bool processed { false };
 
     const string& name  { nv.first };
     const string& value { nv.second };
@@ -300,30 +402,20 @@ void QSO::populate_from_verbose_format(const string& str)
 
     if (!processed and (starts_with(name, "sent-"s)))
       processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
+#endif
+
+    const string& name  { nv.first };
+    const string& value { nv.second };
 
     if (!processed and (starts_with(name, "received-"s)))
-    { const string name_upper { to_upper(name.substr(9)) };
-
-      //if (!(rules.all_known_field_names() > name_upper))
-      //{ ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
-      //  alert("Unknown exch field: "s + name_upper);
-      //}
-
-      //const bool is_possible_mult { rules.is_exchange_mult(name_upper) };
-
-      //if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
-        //statistics.add_known_exchange_mult(name_upper, value);
-
-      //const bool           is_mult { is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false };
-//      const received_field rf      { name_upper, value , is_possible_mult, is_mult };
-      const received_field rf { name_upper, value , false, false };    // just populate name and value
+    { const string         name_upper { to_upper(name.substr(9)) };
+      const received_field rf         { name_upper, value , false, false };    // just populate name and value
 
       _received_exchange += rf;
       processed = true;
     }
   }
 
-//  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
@@ -356,7 +448,7 @@ void QSO::populate_from_log_line(const string& str)
 
   const vector<exchange_field> exchange_fields { rules.expanded_exch(_callsign, _mode) };
 
-  for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
+  for (size_t n { 0 }; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
     const string& field_value { vec[n] };
 
@@ -701,7 +793,7 @@ string QSO::verbose_format(void) const
 
   rv = "QSO: "s;
   
-  rv += "number="s + pad_left(to_string(_number), NUMBER_WIDTH);
+  rv += "number="s + pad_left(_number, NUMBER_WIDTH);
   rv += " date="s + _date;
   rv += " utc="s + _utc;
   rv += " hiscall="s + pad_right(_callsign, CALLSIGN_WIDTH);

@@ -60,53 +60,15 @@ const int tr_record::month(void) const
 
   const string tmps { substring(_record, 10, 3) };
 
-  try
-  { return month_nr.at(tmps);
-  }
+  return MUM_VALUE(month_nr, tmps, 0);
 
-  catch (...)
-  { return 0;       // error
-  }
+//  try
+//  { return month_nr.at(tmps);
+//  }
 
-#if 0
-  if (tmps == "JAN"s)
-    return 1;
-
-  if (tmps == "FEB"s)
-    return 2;
-
-  if (tmps == "MAR"s)
-    return 3;
-
-  if (tmps == "APR"s)
-    return 4;
-
-  if (tmps == "MAY"s)
-    return 5;
-
-  if (tmps == "JUN"s)
-    return 6;
-
-  if (tmps == "JUL"s)
-    return 7;
-
-  if (tmps == "AUG"s)
-    return 8;
-
-  if (tmps == "SEP"s)
-    return 9;
-
-  if (tmps == "OCT"s)
-    return 10;
-
-  if (tmps == "NOV"s)
-    return 11;
-
-  if (tmps == "DEC"s)
-    return 12;
-
-  return 0;    // error
-#endif
+//  catch (...)
+//  { return 0;       // error
+//  }
 }
 
 /// four-digit year
@@ -217,16 +179,6 @@ const string tr_record::frequency(void) const
 /// the received exchange; maximum of four characters
 const string tr_record::exchange_received(void) const
 { const string tmp { substring(_record, 53, 4) };
-
-//  char tmp[5];
-
-//  tmp[0] = _record[53];
-//  tmp[1] = _record[54];
-//  tmp[2] = _record[55];
-//  tmp[3] = _record[56];
-//  tmp[4] = 0;
-
-//  string rv(&tmp[0]);
 
   return remove_peripheral_spaces(tmp);
 }

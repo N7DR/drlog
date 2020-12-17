@@ -169,6 +169,28 @@ using base_type = typename std::remove_cv<typename std::remove_reference<T>::typ
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 
+//(std::is_same_v<typename T::value_type, U>)
+//template< typename T1, typename T2 >
+//struct is_type
+//  { constexpr static bool value { false }; };
+
+#if 0
+template< typename T1, typename T2 >
+struct is_type
+  { constexpr static bool value { std::is_same_v<base_type<T1>, base_type<T2>> }; };
+
+template< typename T1, typename T2 >
+  constexpr bool is_type_v = is_type<T1, T2>::value;
+#endif
+
+//template< typename T1, typename T2 >
+//struct is_same_type      { enum { result = false }; };
+
+//template< typename T>
+//struct is_same_type<T,T> { enum { result = true }; };
+
+
+#if 1
 // is a type a deque?
 template<class T>
 struct is_deque
@@ -180,6 +202,8 @@ struct is_deque<std::deque<T>>
 
 template<class T>
 constexpr bool is_deque_v = is_deque<T>::value;
+#endif
+
 
 // is a type int?
 template<class T>
@@ -234,12 +258,12 @@ template<class T>
 struct is_set 
   { constexpr static bool value { false }; };
 
-template<class T>
-struct is_set<std::set<T>> 
+template<class T, class C, class A>
+struct is_set<std::set<T, C, A>> 
   { constexpr static bool value { true }; };
 
-template< class T>
-constexpr bool is_set_v = is_set<T>::value;
+template<class T>
+constexpr bool is_set_v { is_set<T>::value };
 
 // is a type an unordered map?
 template<class T>
@@ -254,17 +278,17 @@ template< class T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 
 // is a type a map or unordered map?
-template<class T>
-struct is_mum 
-  { constexpr static bool value { false }; };
+//template<class T>
+//struct is_mum 
+//  { constexpr static bool value { false }; };
 
-template<class K, class V>
-struct is_mum<std::map<K, V>> 
-  { constexpr static bool value { true }; };
+//template<class K, class V>
+//struct is_mum<std::map<K, V>> operator>
+//  { constexpr static bool value { true }; };
 
-template<class K, class V>
-struct is_mum<std::unordered_map<K, V>> 
-  { constexpr static bool value { true }; };
+//template<class K, class V>
+//struct is_mum<std::unordered_map<K, V>> 
+//  { constexpr static bool value { true }; };
 
 template<class T>
 constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
@@ -282,20 +306,22 @@ template< class T>
 constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
 // is a type a set or unordered set?
+//template<class T>
+//struct is_sus 
+//  { constexpr static bool value { false }; };
+
+//template<class T, class C, class A>
+//struct is_sus<std::set<T, C, A>> 
+//  { constexpr static bool value { true }; };
+
+//template<class T>
+//struct is_sus<std::unordered_set<T>> 
+//  { constexpr static bool value { true }; };
+
+//template< class T>
+//constexpr bool is_sus_v = is_sus<T>::value;
 template<class T>
-struct is_sus 
-  { constexpr static bool value { false }; };
-
-template<class T, class C, class A>
-struct is_sus<std::set<T, C, A>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_sus<std::unordered_set<T>> 
-  { constexpr static bool value { true }; };
-
-template< class T>
-constexpr bool is_sus_v = is_sus<T>::value;
+constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
 
 // is a type a multimap or unordered multimap?
 template<class T>
@@ -922,6 +948,22 @@ bool operator>(const T& s, const U& v)
   requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
   { return s.find(v) != s.cend(); }
 
+/// union of two sets of the same type
+template<class T>
+T operator+(const T& s1, const T& s2)
+  requires (is_set_v<T>)
+  { //T rv { s1 };
+
+    //for (const auto& el2 : s2)
+    //  rv += el2;
+
+    T rv;
+
+    std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
+
+    return rv;
+  }
+
 /*! \brief      Is an object a key of a map or unordered_map and, if so, return the value (or the default-constructed value)
     \param  m   map or unordered_map to be searched
     \param  k   target key
@@ -1135,7 +1177,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
     \param  m           destination MUM
     \param  element     element to insert
 */
-/* The perceived "wisdom" is that requires clauses are clearer than SFINAE,. In this casem that is clearly untrue.
+/* The perceived "wisdom" is that requires clauses are clearer than SFINAE,. In this case, that is clearly untrue.
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>
@@ -1492,6 +1534,7 @@ inline void operator+=(Q& q1, const E& element)
 template <typename D>
 inline void operator+=(D& d1, typename D::value_type&& element)
   requires is_deque_v<D>
+//  requires is_type_v<std::deque, D>
 { d1.emplace_back(std::forward<typename D::value_type>(element)); }
 
 /*! \brief              Append an element to a deque
@@ -1501,6 +1544,7 @@ inline void operator+=(D& d1, typename D::value_type&& element)
 template <typename D, typename E>
 inline void operator+=(D& d1, const E& element)
   requires is_deque_v<D> and (std::is_convertible_v<E, typename D::value_type>)
+//  requires is_type_v<std::deque, D> and (std::is_convertible_v<E, typename D::value_type>)
 { d1.push_back(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 
@@ -1511,6 +1555,7 @@ inline void operator+=(D& d1, const E& element)
 template <typename D>
 void operator--(D& d1 /*, int*/) // int for post-decrement
   requires is_deque_v<D>
+//  requires is_type_v<std::deque, D>
 { if (!d1.empty())
     d1.pop_front();
 }

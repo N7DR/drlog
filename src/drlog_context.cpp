@@ -83,7 +83,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
     if (auto& pbb { _per_band_points[m] }; !contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
     { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-        pbb.insert( { static_cast<BAND>(n), RHS } );
+        pbb += { static_cast<BAND>(n), RHS };
     }
     else                                                        // not all bands
     { const size_t left_bracket_posn  { lhs.find('[') };
@@ -94,7 +94,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
       { const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
         const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
-        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb.insert( { BAND_FROM_NAME[b_str], RHS } ); } );
+        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
       }
     }
   }
@@ -216,7 +216,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { if (!RHS.empty())
       { vector<string> filters { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
-        sort(filters.begin(), filters.end(), compare_calls);    // put the entries into callsign order
+        SORT(filters, compare_calls);    // put the entries into callsign order
         _bandmap_filter = filters;
       }
     }
@@ -290,11 +290,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"s)
-    { const string bands_str { rhs };
+    { const string         bands_str     { rhs };
       const vector<string> bands_str_vec { remove_peripheral_spaces(split_string(bands_str, ","s)) };
       
       for (const auto& band_str : bands_str_vec)
-        _call_history_bands.insert(BAND_FROM_NAME[band_str]); 
+        _call_history_bands += BAND_FROM_NAME[band_str]; 
     }
 
 // CALL OK NOW MESSAGE
@@ -357,7 +357,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         if (!contains(lhs, "["s) or contains(lhs, "[*]"s))             // for all bands
         { string new_str;
 
-          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+          for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
           { new_str += str_vec[n];
 
             if (n != str_vec.size() - 1)
@@ -366,8 +366,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
           tmp_str = to_upper(remove_peripheral_spaces(new_str));
 
-          for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-            _per_band_country_mult_factor.insert( { static_cast<BAND>(n), from_string<int>(tmp_str) } );
+          for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
+            _per_band_country_mult_factor += { static_cast<BAND>(n), from_string<int>(tmp_str) };
         }
         else    // not all bands
         { const string         bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
@@ -378,7 +378,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
             string new_str;
 
-            for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+            for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
             { new_str += str_vec[n];
 
               if (n != str_vec.size() - 1)
@@ -386,7 +386,7 @@ void drlog_context::_process_configuration_file(const string& filename)
             }
 
             tmp_str = to_upper(remove_peripheral_spaces(new_str));
-            _per_band_country_mult_factor.insert( { b, from_string<int>(tmp_str) } );
+            _per_band_country_mult_factor += { b, from_string<int>(tmp_str) };
           }
         }
       }

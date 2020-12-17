@@ -10,7 +10,7 @@
 
 /*! \file   fuzzy.cpp
 
-    Objects and functions related to the fuzzzy function
+    Objects and functions related to the fuzzy function
 */
 
 #include "fuzzy.h"

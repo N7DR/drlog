@@ -117,13 +117,7 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       bool retry { true };
 
       while (retry)
-      { //const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) };
-
- //       status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
- //       if (status == RIG_OK)
- //         _time_last_commanded_frequency = DRLOG_CLOCK::now();
- //       else
-        if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
+      { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
         if (_rig_frequency(v) != f)     // explicitly check the frequency
@@ -164,6 +158,7 @@ frequency rig_interface::_rig_frequency(const VFO v)
 
     *** Should be modified to provide guaranteed graceful exit during program shutdown
 */
+#if 0
 void* rig_interface::_poll_thread_function(void* vp)
 { while (true)
   { _status.freq(rig_frequency());
@@ -174,11 +169,13 @@ void* rig_interface::_poll_thread_function(void* vp)
 
   return nullptr;
 }
+#endif
 
 /*! \brief          static wrapper for function to poll rig for status
     \param  this_p  the <i>this</i> pointer, in order to allow static member access to a real object
     \return         nullptr
 */
+#if 0
 void* rig_interface::_static_poll_thread_function(void* this_p)
 { rig_interface* bufp { static_cast<rig_interface*>(this_p) };
 
@@ -186,6 +183,7 @@ void* rig_interface::_static_poll_thread_function(void* this_p)
 
   return nullptr;
 }
+#endif
 
 // ---------------------------------------- rig_interface -------------------------
 
@@ -744,11 +742,13 @@ void rig_interface::sub_receiver_toggle(void)
 }
 
 /// return most recent rig status
+#if 0
 rig_status rig_interface::status(void)
 { SAFELOCK(_rig);
 
   return _status;
 }
+#endif
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
@@ -757,7 +757,8 @@ void rig_interface::keyer_speed(const int wpm)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { string cmd { "KS"s + pad_left(to_string(wpm), 3, '0') + ";"s };
+  { //string cmd { "KS"s + pad_left(to_string(wpm), 3, '0') + ";"s };
+    const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
 
     raw_command(cmd, RESPONSE::NOT_EXPECTED);
   }
@@ -1314,11 +1315,11 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
+    { //const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
+      const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
       raw_command("BW"s + k3_bw_units + ";"s);
 
- //     while (bandwidth() != static_cast<int>(hz))       // the K3 is brain-dead
       while (abs(bandwidth() - static_cast<int>(hz)) > PRECISION)       // the K3 is brain-dead
       { sleep_for(RETRY_TIME);
         raw_command("BW"s + k3_bw_units + ";"s);
@@ -1333,7 +1334,8 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 void rig_interface::bandwidth_b(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
+    { //const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
+      const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
       raw_command("BW$"s + k3_bw_units + ";"s);
     }

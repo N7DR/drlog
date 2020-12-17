@@ -30,6 +30,7 @@
 #include "memory.h"
 #include "parallel_port.h"
 #include "procfs.h"
+#include "query.h"
 #include "qso.h"
 #include "qtc.h"
 #include "rate.h"
@@ -421,7 +422,9 @@ window win_band_mode,                   ///< the band and mode indicator
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
-       win_query,                       ///< query matches
+//       win_query,                       ///< query matches
+       win_query_1,                     ///< query 1 matches
+       win_query_n,                     ///< query n matches
        win_quick_qsy,                   ///< QRG and mode for ctrl-=
        win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
@@ -492,11 +495,15 @@ scp_databases scp_dbs;                          ///< container for the SCP datab
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
-vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_matches;  ///< query matches
+//vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_matches;  ///< query matches
+vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_1_matches;  ///< query 1 matches
+vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_n_matches;  ///< query n matches
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
 fuzzy_databases fuzzy_dbs;                      ///< container for the fuzzy databases
+
+query_database  query_db;                       ///< database for query matches
 
 pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
           thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
@@ -670,6 +677,26 @@ inline void update_recording_status_window(void)
 inline void update_scp_window(const string& callsign)
   { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
 
+/*! \brief              Update the query window with matches for a particular call
+    \param  callsign    callsign against which to generate the query matches
+*/
+//inline void update_query_window(const string& callsign)
+//  { update_matches_window(query_db[callsign], query_matches, win_query, callsign); }
+
+// \brief                  Update the SCP or fuzzy window and vector of matches
+//    \param  matches         container of matches
+//    \param  match_vector    OUTPUT vector of pairs of calls and colours (in display order)
+//    \param  win             window to be updated
+//    \param  callsign        (partial) callsign to be matched
+
+
+inline void update_query_windows(const string& callsign)
+  { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
+
+    update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
+    update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
+  }
+
 /*! \brief      Am I sending CW?
     \return     whether I appear to be sending CW
 
@@ -806,7 +833,7 @@ int main(int argc, char** argv)
 
     const cty_data& country_data { *country_data_p };
 
-// read drmaster database
+// read drmaster database-- right now, the object is not deleted
     try
     { drm_p = new drmaster(context.path(), context.drmaster_filename());
     }
@@ -856,6 +883,9 @@ int main(int argc, char** argv)
     fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
     fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
 
+// build query database from the drmaster information
+    query_db = drm.unordered_calls();
+
 // possibly build name database from the drmaster information (not the same as the names used in exchanges)
     if (context.window_info("NAME"s).defined())    // does the config file define a NAME window?
     { const vector<string> drm_calls { drm.unordered_calls() };   // we don't need them to be ordered
@@ -863,6 +893,8 @@ int main(int argc, char** argv)
       for (const auto& this_call : drm_calls)
         names[this_call] = drm[this_call].name();
     }
+
+// I think it should be safe to delete the drmaster object now
 
 // define the rules for this contest
     try
@@ -1239,8 +1271,14 @@ int main(int argc, char** argv)
     mp.max_entries(win_monitored_posts.height());               // set the size of the queue
 
 // QUERY window
-    win_query.init(context.window_info("QUERY"s), WINDOW_NO_CURSOR);
+//    win_query.init(context.window_info("QUERY"s), WINDOW_NO_CURSOR);
   
+// QUERY 1 window
+    win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
+
+// QUERY N window
+    win_query_n.init(context.window_info("QUERY N"s), WINDOW_NO_CURSOR);
+
 // QUICK QSY window
     win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
     
@@ -1593,7 +1631,8 @@ int main(int argc, char** argv)
 
           statistics.add_qso(qso, logbk, rules);
           logbk += qso;
-          rate.insert(qso.epoch_time(), statistics.points(rules));
+//          rate.insert(qso.epoch_time(), statistics.points(rules));
+          rate += { qso.epoch_time(), statistics.points(rules) };
         }
 
 // rebuild the history
@@ -4197,14 +4236,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_grid <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
     else
-    { //const string current_contents { remove_peripheral_spaces(win.read()) };
-
-      if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
+    { if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
       { display_call_info(current_contents);
 
         if (!in_scp_matching)
         { update_scp_window(current_contents);
           update_fuzzy_window(current_contents);
+          update_query_windows(current_contents);
         }
       }
     }
@@ -5999,7 +6037,8 @@ void rescore(const contest_rules& rules)
     new_logbk += qso;
 
 // redo the historical Q-count and score... this is relatively time-consuming
-    rate.insert(qso.epoch_time(), statistics.points(rules));
+//    rate.insert(qso.epoch_time(), statistics.points(rules));
+    rate += { qso.epoch_time(), statistics.points(rules) };
   }
 }
 
@@ -6154,12 +6193,13 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 
   const vector<QSO> q_vec { logbk.as_vector() };
 
-  int n_qsos { 0 };
+//  int n_qsos { 0 };
 
   for (const auto& qso : q_vec)
   { statistics.add_qso(qso, l, rules);
     q_history += qso;
-    rate.insert(qso.epoch_time(), ++n_qsos, statistics.points(rules));
+//    rate.insert(qso.epoch_time(), ++n_qsos, statistics.points(rules));
+    rate += { qso.epoch_time(), statistics.points(rules) };
     
     if (using_best_dx)
       update_best_dx(qso.received_exchange("GRID"s), qso.callsign());

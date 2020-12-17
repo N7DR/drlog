@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 172 2020-11-22 14:55:05Z  $
+// $Id: drlog_context.h 177 2020-12-13 19:11:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -433,9 +433,10 @@ public:
   unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
-    const auto cit { _guard_band.find(m) };
+    return MUM_VALUE(_guard_band, m, 1000);
+//    const auto cit { _guard_band.find(m) };
 
-    return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
+//    return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
 
   CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)

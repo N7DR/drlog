@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 174 2020-11-30 20:28:40Z  $
+// $Id: bands-modes.h 177 2020-12-13 19:11:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -135,12 +135,6 @@ extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    //
 
      Frequency may be in Hz, kHz or MHz.
 */
-/*!  \brief     Convert a frequency to a band
-     \param  f  frequency
-     \return    band corresponding to <i>f</i>
-
-     Frequency may be in Hz, kHz or MHz.
-*/
 template<class T> const BAND to_BAND(T f)
 { if (f <= 0)
     return MIN_BAND;
@@ -192,10 +186,11 @@ template<class T> const BAND to_BAND(T f)
 */
 
 class frequency
-{
+{ using HZ_TYPE = uint32_t;     // type used to hold the value in hertz
+
 protected:
 
-  uint32_t _hz { 0 };      ///< the actual frequency, in Hz
+  HZ_TYPE _hz { 0 };      ///< the actual frequency, in Hz
 
 public:
 

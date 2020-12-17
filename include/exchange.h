@@ -23,8 +23,6 @@
 #include <string>
 #include <vector>
 
-//#include <boost/regex.hpp>    // because libstdc++ support for regex is currently essentially nonexistent, even though it's in the standard
-
 class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
@@ -69,7 +67,7 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-  inline bool prefill_data_exists(const std::string& field_name)
+  inline bool prefill_data_exists(const std::string& field_name) const
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -80,9 +78,10 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-  std::string prefill_data(const std::string& field_name, const std::string& callsign);
+  std::string prefill_data(const std::string& field_name, const std::string& callsign) const;
 };
 
+/// ostream << exchange_field_prefill
 std::ostream& operator<<(std::ostream& ost, const exchange_field_prefill& epf);
 
 // -------------------------  parsed_exchange_field  ---------------------------
@@ -104,12 +103,6 @@ public:
 
 /// default constructor
   parsed_exchange_field(void) = default;
-//  inline parsed_exchange_field(void) :
-//    _name(),
-//    _value(),
-//    _is_mult(false),
-//    _mult_value()
-//  { }
 
 /*! \brief      Constructor
     \param  nm  field name

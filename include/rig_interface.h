@@ -41,9 +41,6 @@ constexpr int RIG_UNABLE_TO_OPEN       { -1 },    ///< unable to access rig
               RIG_UNEXPECTED_RESPONSE  { -8 },    ///< received unexpected response from rig
               RIG_MISC_ERROR           { -9 };    ///< other error
 
-//constexpr bool RESPONSE_EXPECTED    { true },               ///< raw K3 command expects a response
-//               NO_RESPONSE_EXPECTED { !RESPONSE_EXPECTED }; ///< raw K3 command does not expect a response
-
 enum class RESPONSE { EXPECTED,
                       NOT_EXPECTED
                     };
@@ -79,8 +76,8 @@ protected:
   RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
   bool                                    _rig_connected               { false };                       ///< is a rig connected?
   pt_mutex                                _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
-  unsigned int                            _rig_poll_interval           { 1'000 };                       ///< interval between polling for rig status, in milliseconds
-  rig_status                              _status                      { frequency(14'000), MODE_CW };  ///< most recent rig frequency and mode from the periodic poll
+//  unsigned int                            _rig_poll_interval           { 1'000 };                       ///< interval between polling for rig status, in milliseconds
+//  rig_status                              _status                      { frequency(14'000), MODE_CW };  ///< most recent rig frequency and mode from the periodic poll
   pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
 
 //  DRLOG_TIMEPOINT                         _time_last_commanded_frequency { };                           ///< time of most recent frequency command (defaults to the epoch)
@@ -100,13 +97,13 @@ protected:
 
     Sets the frequency and mode in the <i>_status</i> object
 */
-  void* _poll_thread_function(void* vp);
+//  void* _poll_thread_function(void* vp);
 
 /*! \brief          Static wrapper for function to poll rig for status
     \param  this_p  the this pointer, in order to allow static member access to a real object
     \return         nullptr
 */
-  static void* _static_poll_thread_function(void* this_p);
+//  static void* _static_poll_thread_function(void* this_p);
 
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig

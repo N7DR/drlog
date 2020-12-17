@@ -75,16 +75,37 @@ public:
     _data.insert(tp);
   }
 
+//  void operator+=(std::pair<time_t, PAIR_NQSOS_POINTS>&& tp)
+//  { SAFELOCK(_rate);
+//    _data.insert(tp);
+//  }
+
+// this is a template in order to allow += { int, int }
+//  template <typename T>
+//  void operator+=(T&& t_tp)
+//  { SAFELOCK(_rate);
+//    _data += t_tp;
+//  }
+
 /*! \brief      Insert information into <i>_data</i>
     \param  t   epoch
     \param  np  number of points at epoch <i>t</i>
     \return     Whether insertion was successful
 
-    Assumes that the number of QSOs is one greatert han the current number in <i>_data</i>
+    Assumes that the number of QSOs is one greater than the current number in <i>_data</i>
 */
   bool insert(const time_t t, const unsigned int np)
   { SAFELOCK(_rate);
     return _data.insert( { t, { (_data.size() + 1), np } } ).second;
+  }
+
+/*! \brief          Insert information into <i>_data</i>
+    \param  t_np    epoch, points at epoch
+*/
+  void operator+=(const std::pair<time_t, const unsigned int>&& t_np)
+  { SAFELOCK(_rate);
+//    _data.insert( { t_np.first, { (_data.size() + 1), t_np.second } } );
+    _data += { t_np.first, { (_data.size() + 1), t_np.second } };
   }
 
 /// number of values in <i>_data</i>

@@ -1,3 +1,6 @@
+# drlog.cpp : query.h
+# query.h : macros.h
+
 # makefile for drlog
 
 CC = ccache g++
@@ -232,6 +235,9 @@ src/procfs.cpp : include/procfs.h
 	
 src/pthread_support.cpp : include/log_message.h include/pthread_support.h include/string_functions.h
 	touch src/pthread_support.cpp
+
+src/query.cpp : include/query.h include/string_functions.h
+	touch src/query.cpp
 	
 src/qso.cpp : include/bands-modes.h include/cty_data.h include/exchange.h include/qso.h include/statistics.h \
               include/string_functions.h
@@ -354,6 +360,9 @@ bin/procfs.o : src/procfs.cpp
 bin/pthread_support.o : src/pthread_support.cpp
 	$(CC) $(CFLAGS) -o $@ src/pthread_support.cpp
 
+bin/query.o : src/query.cpp
+	$(CC) $(CFLAGS) -o $@ src/query.cpp
+
 bin/qso.o : src/qso.cpp
 	$(CC) $(CFLAGS) -o $@ src/qso.cpp
 
@@ -398,7 +407,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
             bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
             bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
-            bin/procfs.o bin/pthread_support.o bin/qso.o \
+            bin/procfs.o bin/pthread_support.o bin/query.o bin/qso.o \
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
             bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
             bin/version.o bin/x_error.o
@@ -407,7 +416,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
 	bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
 	bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
-	bin/procfs.o bin/pthread_support.o bin/qso.o \
+	bin/procfs.o bin/pthread_support.o bin/query.o bin/qso.o \
 	bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
 	bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
 	bin/version.o bin/x_error.o \

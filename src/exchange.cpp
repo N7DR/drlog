@@ -92,7 +92,7 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
+string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign) const
 { const auto it { _db.find(field_name) };
 
   if (it == _db.cend())
