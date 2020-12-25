@@ -108,7 +108,7 @@ public:
 
 /// empty the database
   inline void clear(void)
-    { _db.fill(std::set<std::string>()); }
+    { _db.fill( std::set<std::string> { } ); }
 };
 
 // -----------  fuzzy_databases  ----------------

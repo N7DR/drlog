@@ -20,6 +20,7 @@
 
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 // -----------  query_database  ----------------
@@ -29,41 +30,57 @@
 */
 
 class query_database
-{
+{ using QUERY_DB_TYPE = std::unordered_set<std::string>;
+
 protected:
 
-  std::set<std::string> _qdb;                // the basic container of calls;
-  std::set<std::string> _dynamic_qdb;        // the dynamic container of worked calls;
+  QUERY_DB_TYPE _qdb;                // the basic container of calls;
+  QUERY_DB_TYPE _dynamic_qdb;        // the dynamic container of worked calls;
 
+/*! \brief                  Return all calls that match a regex (string) expression
+    \param      expression  expression against which to compare
+    \return                 all calls that matches <i>expression</i>
+*/
   std::set<std::string> _query(const std::string& expression) const;
 
 public:
 
+/// default constructor
   query_database(void) = default;
 
+/// construct from a vector of calls
   explicit query_database(const std::vector<std::string>& calls) :
     _qdb(calls.cbegin(), calls.cend())
     { }
 
+/// query_database = vector of calls
   inline void operator=(const std::vector<std::string>& calls)
     { _qdb.clear();
       std::copy(calls.cbegin(), calls.cend(), std::inserter(_qdb, _qdb.end())); 
     }
 
+/// add a container of calls
   inline void operator+=(const decltype(_qdb)& calls)
     { std::copy(calls.cbegin(), calls.cend(), std::inserter(_qdb, _qdb.end())); }
 
+/*! \brief          Possibly add a call to the dynamic database
+    \param  call    call to add
+    
+    <i>call<i> is added to the dynamic database iff it is not already present in either database
+*/
   void operator+=(const std::string& call);
 
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         query matches for <i>key</i>
+
+    The returned pair comprises: q1, qn
 */
   std::pair<std::set<std::string> /* q1 */, std::set<std::string> /* qn */> operator[](const std::string& key) const;
 
-  std::set<std::string> q_1(const std::string& key) const;
-
-  std::set<std::string> q_n(const std::string& key) const;
+/// clear the dynamic database
+  inline void clear_dynamic_database(void)
+    { _dynamic_qdb.clear(); }
 };
 
 #endif    // QUERY_H

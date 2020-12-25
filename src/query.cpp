@@ -26,6 +26,10 @@ using namespace std;
     \brief  The database for the query function
 */
 
+/*! \brief      Return all calls that match a regex (string) expression
+    \param      expression  expression against which to compare
+    \return     all calls that matches <i>expression</i>
+*/
 set<string> query_database::_query(const string& expression) const
 { set<string> rv { };
   
@@ -42,6 +46,11 @@ set<string> query_database::_query(const string& expression) const
   return rv;
 }
 
+/*! \brief          Possibly add a call to the dynamic database
+    \param  call    call to add
+    
+    <i>call<i> is added to the dynamic database iff it is not already present in either database
+*/
 void query_database::operator+=(const std::string& call)
 { if (!( _qdb > call))
     _dynamic_qdb += call;
@@ -50,6 +59,8 @@ void query_database::operator+=(const std::string& call)
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         query matches for <i>key</i>
+
+    The returned pair comprises: q1, qn
 */
 pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](const string& key) const
 { set<string> rv_1 { };
@@ -63,80 +74,8 @@ pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](cons
 
 // remove any elements in rv_1 from rv_2
   for (const auto& el1 : rv_1)
-    rv_2.erase(el1);
+//    rv_2.erase(el1);
+    rv_2 -= el1;
 
   return { rv_1, rv_2 };
-
-//return ( q_1(key) + q_n(key) );
-
-#if 0
-  set<string> rv { };
-
-  if (!contains(key, '?'))
-    return rv;
-
-// start with ? == a single character
-  const string target { replace_char(key, '?', '.') };
-  const regex  rgx_1  { target };
-
-  FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_1))
-                                                     rv += callsign;
-                                                 } );
-
-  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_1))
-                                                             rv += callsign;
-                                                         } );
-
-  const regex rgx_2 { replace(key, "?"s, ".{2,}"s) };     // two or more characters
-
-  FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_2))
-                                                     rv += callsign;
-                                                 } );
-
-  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_2))
-                                                             rv += callsign;
-                                                         } );
- 
-  return rv;
-#endif
-}
-
-set<string> query_database::q_1(const string& key) const
-{ set<string> rv { };
-
-  if (!contains(key, '?'))
-    return rv;
-
-// start with ? == a single character
-  const string target { replace_char(key, '?', '.') };
-  const regex  rgx_1  { target };
-
-  FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_1))
-                                                     rv += callsign;
-                                                 } );
-
-  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_1))
-                                                             rv += callsign;
-                                                         } );
- 
-  return rv;
-}
-
-set<string> query_database::q_n(const string& key) const
-{ set<string> rv { };
-
-  if (!contains(key, '?'))
-    return rv;
-
-  const regex rgx_2 { replace(key, "?"s, ".{2,}"s) };     // two or more characters
-
-  FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_2))
-                                                     rv += callsign;
-                                                 } );
-
-  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx_2))
-                                                             rv += callsign;
-                                                         } );
- 
-  return rv;
 }

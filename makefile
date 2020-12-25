@@ -109,6 +109,9 @@ include/procfs.h : include/string_functions.h
 include/pthread_support.h : include/macros.h include/x_error.h
 	touch include/pthread_support.h
 	
+include/query.h : include/macros.h
+	touch include/query.h
+
 include/qso.h : include/drlog_context.h include/macros.h include/rules.h
 	touch include/qso.h
 	
@@ -183,8 +186,8 @@ src/diskfile.cpp : include/diskfile.h
 src/drlog.cpp : include/audio.h include/bandmap.h include/bands-modes.h include/cluster.h include/command_line.h \
                 include/cty_data.h include/cw_buffer.h include/diskfile.h include/drlog_context.h include/exchange.h \
                 include/functions.h include/fuzzy.h include/grid.h include/keyboard.h include/log.h \
-                include/memory.h \
-                include/log_message.h include/parallel_port.h include/procfs.h include/qso.h include/qtc.h include/rate.h \
+                include/log_message.h include/memory.h \
+                include/parallel_port.h include/procfs.h include/query.h include/qso.h include/qtc.h include/rate.h \
                 include/rig_interface.h include/rules.h include/scp.h include/screen.h include/serialization.h \
                 include/socket_support.h include/statistics.h include/string_functions.h include/trlog.h include/version.h
 	touch src/drlog.cpp

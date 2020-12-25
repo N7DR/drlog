@@ -8,7 +8,7 @@
 /*! \file   drlog.cpp
 
     The main program for drlog
- */
+*/
 
 #include "adif3.h"
 #include "audio.h"
@@ -206,6 +206,7 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
 bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);     ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
+void update_query_windows(const string& callsign);                                                                      ///< Update the Q1 and QN windows
 void update_quick_qsy(void);                                                                                            ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
 void update_qsls_window(const string& = EMPTY_STR);                                                                     ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                                                                     ///< the head of the QTC queue
@@ -466,7 +467,7 @@ cw_messages cwm;                            ///< pre-defined CW messages
 
 contest_rules rules;                    ///< the rules for this contest
 cw_buffer*       cw_p { nullptr };      ///< pointer to buffer that holds outbound CW message
-drmaster*       drm_p { nullptr };      ///< pointer to drmaster information
+drmaster*       drm_p { nullptr };      ///< pointer to drmaster information; also used by exchange.cpp
 dx_cluster* cluster_p { nullptr };      ///< pointer to cluster information
 dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
 
@@ -495,7 +496,6 @@ scp_databases scp_dbs;                          ///< container for the SCP datab
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
-//vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_matches;  ///< query matches
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_1_matches;  ///< query 1 matches
 vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_n_matches;  ///< query n matches
 
@@ -508,7 +508,6 @@ query_database  query_db;                       ///< database for query matches
 pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
           thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
           
-//pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
 map<BAND, pair<frequency, MODE>> quick_qsy_map;
 
 /// define wrappers to pass parameters to threads
@@ -690,12 +689,12 @@ inline void update_scp_window(const string& callsign)
 //    \param  callsign        (partial) callsign to be matched
 
 
-inline void update_query_windows(const string& callsign)
-  { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
-
-    update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
-    update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
-  }
+//inline void update_query_windows(const string& callsign)
+//  { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
+//
+//    update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
+//    update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
+//  }
 
 /*! \brief      Am I sending CW?
     \return     whether I appear to be sending CW
@@ -834,6 +833,8 @@ int main(int argc, char** argv)
     const cty_data& country_data { *country_data_p };
 
 // read drmaster database-- right now, the object is not deleted
+  { //drmaster*       drm_p { nullptr };      ///< pointer to drmaster information
+    
     try
     { drm_p = new drmaster(context.path(), context.drmaster_filename());
     }
@@ -895,6 +896,7 @@ int main(int argc, char** argv)
     }
 
 // I think it should be safe to delete the drmaster object now
+  }
 
 // define the rules for this contest
     try
@@ -6490,7 +6492,7 @@ bool swap_rit_xit(void)
     \param  qso     the QSO to add
 */
 void add_qso(const QSO& qso)
-{ statistics.add_qso(qso, logbk, rules);    // add it to the running statistics before we add it to the log so we can check for dupes against the current log
+{ statistics.add_qso(qso, logbk, rules);    // add it to the running statistics before we add it to the log so that we can check for dupes against the current log
   logbk += qso;
 
 // add it to the QSO history
@@ -6504,9 +6506,12 @@ void add_qso(const QSO& qso)
   if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
     fuzzy_dynamic_db.add_call(qso.callsign());
 
+// and the query database
+  query_db += qso.callsign();
+
 // add to the rates
-  rate.insert(qso.epoch_time(), statistics.points(rules));
-//  rate += { qso.epoch_time(), statistics.points(rules) };
+//  rate.insert(qso.epoch_time(), statistics.points(rules));
+  rate += { qso.epoch_time(), statistics.points(rules) };
 }
 
 /*! \brief              Update the individual_messages window with the message (if any) associated with a call
@@ -7928,21 +7933,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm { bandmaps[safe_get_band()] };
 
-// should lock the bm here? Not sure if this will fix the (non-fatal) race condition... :-(
-// not certain exactly what sequence leads to the race
-
-/*
- nope, doesn't fix it; I /think/ I've seen ity happen once since installing this. But will
- keep this here and try to watch carefully what happens, to try to be sure that it's not fixed.
-
-  it /seems/ to be when doing a keyboard-based QSY (e.g. with ; or ') at the same time
-  as processing an rbn-based update...
-
-  the QSY is performed and the bm is updated on screen, including the QSY, but a moment later the bm
-  is rewritten without the QSY [I think]
-
-*/
-  safelock bm_lock(bm._bandmap_mutex); // this seems to lock everything; presumably, a race condition with the mutexes
+  safelock bm_lock(bm._bandmap_mutex);
 
   if (const bandmap_entry be { (bm.*fn_p)( dirn ) }; !be.empty())  // get and process the next non-empty stn/mult, according to the function
   { rig.rig_frequency(be.freq());
@@ -7955,7 +7946,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
     update_based_on_frequency_change(be.freq(), safe_get_mode());   // update win_bandmap, and other windows
 
-    SAFELOCK(dupe_check);
+    SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
   }
 
@@ -8340,9 +8331,6 @@ pair<float, float> latitude_and_longitude(const string& callsign)
   if (is_valid_grid_designation(grid_name))
   { const grid_square grid { grid_name };
   
-//    rv.first = grid.latitude();
-//    rv.second = grid.longitude();
-
     rv = { grid.latitude(), grid.longitude() };
   }
   else
@@ -8352,9 +8340,6 @@ pair<float, float> latitude_and_longitude(const string& callsign)
 
     if (li == default_li)
       return rv;
-      
-//    rv.first = location_db.latitude(callsign);
-//    rv.second = -location_db.longitude(callsign);    // minus sign to get in the correct direction
 
     rv = { location_db.latitude(callsign), -location_db.longitude(callsign) };    // minus sign to get in the correct direction
   }
@@ -8606,7 +8591,6 @@ bool cw_toggle_bandwidth(void)
 { constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
 
   if (safe_get_mode() == MODE_CW)
-//    rig.bandwidth( (rig.bandwidth() == 200) ? 50 : 200 );
     rig.bandwidth( (abs(rig.bandwidth() - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
 
   return true;
@@ -8635,4 +8619,17 @@ void set_active_window(const ACTIVE_WINDOW aw)
       win_active_p = &win_log_extract;
       break;
   }
+}
+
+/*! \brief              Update the query windows with Q1 and QN matches for a particular call
+    \param  callsign    callsign against which to generate the query matches
+
+    Q1 = each question mark represents a single character
+    QN = each question mark represents one or more characters
+*/
+void update_query_windows(const string& callsign)
+{ const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
+
+  update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
+  update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
 }

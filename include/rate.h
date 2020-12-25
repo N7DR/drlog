@@ -72,20 +72,9 @@ public:
 */
   void operator+=(const std::pair<time_t, PAIR_NQSOS_POINTS>& tp)
   { SAFELOCK(_rate);
-    _data.insert(tp);
-  }
-
-//  void operator+=(std::pair<time_t, PAIR_NQSOS_POINTS>&& tp)
-//  { SAFELOCK(_rate);
 //    _data.insert(tp);
-//  }
-
-// this is a template in order to allow += { int, int }
-//  template <typename T>
-//  void operator+=(T&& t_tp)
-//  { SAFELOCK(_rate);
-//    _data += t_tp;
-//  }
+    _data += tp;
+  }
 
 /*! \brief      Insert information into <i>_data</i>
     \param  t   epoch
@@ -104,7 +93,6 @@ public:
 */
   void operator+=(const std::pair<time_t, const unsigned int>&& t_np)
   { SAFELOCK(_rate);
-//    _data.insert( { t_np.first, { (_data.size() + 1), t_np.second } } );
     _data += { t_np.first, { (_data.size() + 1), t_np.second } };
   }
 
@@ -136,7 +124,7 @@ public:
 /*! \brief      Return the number of QSOs and points at the current epoch
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-  /* std::pair<unsigned int, unsigned int> */ PAIR_NQSOS_POINTS current_qsos_and_score(void);
+  PAIR_NQSOS_POINTS current_qsos_and_score(void);
 
 /// Return the number of QSOs at the epoch <i>t</i>
   unsigned int qsos(const time_t t);

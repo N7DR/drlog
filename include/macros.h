@@ -1373,6 +1373,15 @@ inline void operator+=(C& sus, const T& element)
   requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
   { sus.insert(element); }
 
+/*! \brief              Remove an element from a set or unordered set
+    \param  sus         destination set or unordered set
+    \param  element     element to remove
+*/
+template <typename C, typename T>
+inline void operator-=(C& sus, const T& element)
+  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+  { sus.erase(element); }
+
 /*! \brief              Add an element to a set
     \param  s           destination set
     \param  element     element to insert
