@@ -14,7 +14,7 @@
 */
 
 #include "query.h"
-#include "string_functions.h"
+//#include "string_functions.h"
 
 #include <regex>
 
@@ -30,21 +30,26 @@ using namespace std;
     \param      expression  expression against which to compare
     \return     all calls that matches <i>expression</i>
 */
+#if 0
 set<string> query_database::_query(const string& expression) const
-{ set<string> rv { };
+{ //set<string> rv { };
   
-  const regex rgx { expression };
+//  const regex rgx { expression };
 
-  FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
-                                                     rv += callsign;
-                                                 } );
+ // FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
+ //                                                    rv += callsign;
+ //                                                } );
+  set<string> rv { regex_matches<set<string>>(_qdb, expression) + regex_matches<set<string>>(_dynamic_qdb, expression) };
 
-  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
-                                                             rv += callsign;
-                                                         } );
+//  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
+//                                                             rv += callsign;
+//                                                         } );
+
+//  rv += regex_matches<set<string>>(_dynamic_qdb, expression);
  
   return rv;
 }
+#endif
 
 /*! \brief          Possibly add a call to the dynamic database
     \param  call    call to add

@@ -5543,8 +5543,12 @@ void populate_win_info(const string& callsign)
   if (display_grid)
   { const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
 
+    win_grid < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
     if (!grid_name.empty())
-      win_grid < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= grid_name;
+      win_grid < grid_name;
+
+    win_grid.refresh();
   }
 
   if (!names.empty())    // if we have some names from the drmaster file
@@ -6595,7 +6599,7 @@ string callsign_mult_value(const string& callsign_mult_name, const string& calls
     \param  display_extract     whether to update the LOG EXTRACT window
 
     Updates the following windows:
-      info
+      info (see populate_win_info for other populated windows)
       batch messages
       individual messages
       extract

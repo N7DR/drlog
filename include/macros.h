@@ -1390,6 +1390,18 @@ template <typename F, typename S>
 inline void operator+=(std::set<std::pair<F, S>>& s, const std::pair<F, S>& element)
   { s.insert(element); }
 
+/*! \brief        insert one MUM/SUS into another
+    \param  dest  destination MUM/SUS
+    \param  src   source MUM/SUS
+    \return       <i>dest</i> with <i>src</i> inserted
+*/
+template <typename MUMD, typename MUMS>
+  requires ( ( (is_mum_v<MUMD>) and (is_mum_v<MUMS>) and
+             (std::is_same_v<typename MUMD::key_type, typename MUMS::key_type>) and (std::is_same_v<typename MUMD::mapped_type, typename MUMS::mapped_type>) ) or
+             ( (is_sus_v<MUMD>) and (is_sus_v<MUMS>) and (std::is_same_v<typename MUMD::value_type, typename MUMS::value_type>) ) )
+inline void operator+=(MUMD& dest, const MUMS& src)
+  { dest.insert(src.cbegin(), src.cend()); }
+
 /*! \brief        Append one vector to another
     \param  dest  destination vector
     \param  src   source vector

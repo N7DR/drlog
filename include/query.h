@@ -17,6 +17,7 @@
 */
 
 #include "macros.h"
+#include "string_functions.h"
 
 #include <set>
 #include <string>
@@ -41,7 +42,8 @@ protected:
     \param      expression  expression against which to compare
     \return                 all calls that matches <i>expression</i>
 */
-  std::set<std::string> _query(const std::string& expression) const;
+  inline std::set<std::string> _query(const std::string& expression) const
+    { return std::set<std::string> { regex_matches<std::set<std::string>>(_qdb, expression) + regex_matches<std::set<std::string>>(_dynamic_qdb, expression) }; }
 
 public:
 

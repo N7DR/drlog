@@ -1085,7 +1085,7 @@ case hash("two") : // do something
     return insert_value(drm_line.qth());    // F (and French territories) QTH is the dept
 
   if (field_name == "GRID"s)
-    return insert_value(drm_line.grid());
+    return insert_value(substring(drm_line.grid(), 0, 4));  // only first four characters are used
 
   if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
     return insert_value(drm_line.qth());    // I think that this should work

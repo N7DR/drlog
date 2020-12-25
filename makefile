@@ -1,6 +1,3 @@
-# drlog.cpp : query.h
-# query.h : macros.h
-
 # makefile for drlog
 
 CC = ccache g++
@@ -109,7 +106,7 @@ include/procfs.h : include/string_functions.h
 include/pthread_support.h : include/macros.h include/x_error.h
 	touch include/pthread_support.h
 	
-include/query.h : include/macros.h
+include/query.h : include/macros.h include/string_functions.h
 	touch include/query.h
 
 include/qso.h : include/drlog_context.h include/macros.h include/rules.h
@@ -239,7 +236,7 @@ src/procfs.cpp : include/procfs.h
 src/pthread_support.cpp : include/log_message.h include/pthread_support.h include/string_functions.h
 	touch src/pthread_support.cpp
 
-src/query.cpp : include/query.h include/string_functions.h
+src/query.cpp : include/query.h
 	touch src/query.cpp
 	
 src/qso.cpp : include/bands-modes.h include/cty_data.h include/exchange.h include/qso.h include/statistics.h \

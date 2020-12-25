@@ -24,6 +24,7 @@
 #include <deque>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <experimental/string_view>
@@ -932,6 +933,23 @@ std::string YYYYMMDD_utc(void);
     \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
 */
 std::string remove_substrings(const std::string& cs, const std::vector<std::string>& vs);
+
+/*! \brief              Return all strings from a container that match a particular regular expression string
+    \param  container   container of strings
+    \param  s           regular expression string
+    \return             All the elements of <i>container</i> that match <i>s</i>
+*/
+template <class T, class C>
+T regex_matches(const C& container, const std::string& s)
+{ T rv;
+     
+  const std::regex rgx { s };
+
+  FOR_ALL(container, [=, &rv](const std::string& callsign) { if (regex_match(callsign, rgx))
+                                                               rv += callsign;
+                                                           } );
+  return rv;
+}
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                

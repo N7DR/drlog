@@ -1029,7 +1029,9 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
   try
   { const EFT& eft { _exchange_field_eft.at(field_name) };
 
-    return eft.regex_expression().empty();
+ //   return eft.regex_expression().empty();
+    return eft.regex_str().empty();
+
   }
 
   catch (...)
