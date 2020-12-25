@@ -741,6 +741,23 @@ QSO logbook::remove_last_qso(void)
   return rv;
 }
 
+//https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
+//for(  multimap<char,int>::iterator it = mymm.begin(), end = mymm.end(); it != end; it = mymm.upper_bound(it->first))
+//  {
+//      cout << it->first << ' ' << it->second << endl;
+//  }
+
+set<string> logbook::calls(void) const
+{ SAFELOCK(_log);
+
+  set<string> rv { };
+
+  for (auto it { _log.cbegin() }; it != _log.cend(); it = _log.upper_bound(it->first))
+    rv += it->first;
+
+  return rv;
+}
+
 // -----------  log_extract  ----------------
 
 /*! \class  log_extract

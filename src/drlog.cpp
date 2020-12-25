@@ -168,6 +168,7 @@ bool process_keypress_F5(void);                                                 
 bool p3_screenshot(void);                                                               ///< Start a thread to take a snapshot of a P3
 void p3_span(const unsigned int khz_span);                                              ///< set the span of a P3
 
+void rebuild_dynamic_call_databases(const logbook& logbk);                              ///< rebuild dynamic portions of SCP, fuzzy and query databases
 void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
@@ -177,7 +178,6 @@ memory_entry recall_memory(const unsigned int n);   ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
-//bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
@@ -675,26 +675,6 @@ inline void update_recording_status_window(void)
 */
 inline void update_scp_window(const string& callsign)
   { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
-
-/*! \brief              Update the query window with matches for a particular call
-    \param  callsign    callsign against which to generate the query matches
-*/
-//inline void update_query_window(const string& callsign)
-//  { update_matches_window(query_db[callsign], query_matches, win_query, callsign); }
-
-// \brief                  Update the SCP or fuzzy window and vector of matches
-//    \param  matches         container of matches
-//    \param  match_vector    OUTPUT vector of pairs of calls and colours (in display order)
-//    \param  win             window to be updated
-//    \param  callsign        (partial) callsign to be matched
-
-
-//inline void update_query_windows(const string& callsign)
-//  { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
-//
-//    update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
-//    update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
-//  }
 
 /*! \brief      Am I sending CW?
     \return     whether I appear to be sending CW
@@ -1644,20 +1624,39 @@ int main(int argc, char** argv)
         rescore(rules);
         update_rate_window();
 
-        scp_dynamic_db.clear();       // clears cache of parent
-        fuzzy_dynamic_db.clear();
+ //       scp_dynamic_db.clear();       // clears cache of parent
+ //       fuzzy_dynamic_db.clear();
+ //       query_db.clear_dynamic_database();
 
-        const vector<QSO> qso_vec { logbk.as_vector() };
+//        const vector<QSO> qso_vec { logbk.as_vector() };
 
-        for (const auto& qso : qso_vec)
-        { const string& callsign { qso.callsign() };
+//        for (const auto& qso : qso_vec)
+//        { const string& callsign { qso.callsign() };
 
-          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-            scp_dynamic_db.add_call(callsign);
+//          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+//            scp_dynamic_db.add_call(callsign);
 
-          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-            fuzzy_dynamic_db.add_call(callsign);
-        }
+//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+//            fuzzy_dynamic_db.add_call(callsign);
+//        }
+
+        rebuild_dynamic_call_databases(logbk);
+
+//        scp_dynamic_db.clear();     // clears cache of parent
+//        fuzzy_dynamic_db.clear();
+//        query_db.clear_dynamic_database();
+
+//        const set<string> calls_in_log { logbk.calls() };
+
+//        for (const string& callsign : calls_in_log)
+//        { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+//            scp_dynamic_db.add_call(callsign);
+
+//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+//            fuzzy_dynamic_db.add_call(callsign);
+
+//          query_db += callsign;
+//        }
 
         if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
           win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -3669,11 +3668,24 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rescore(rules);
         update_rate_window();
 
-        if (!scp_db.contains(qso.callsign()))
-          scp_dbs -= qso.callsign();
+        rebuild_dynamic_call_databases(logbk);
 
-        if (!fuzzy_db.contains(qso.callsign()))
-          fuzzy_dbs -= qso.callsign();
+// this isn't right: shouldn't automatically delete the call because maybe this wasn't the only QSO with it &&&
+//        scp_dynamic_db.clear();     // clears cache of parent
+//        fuzzy_dynamic_db.clear();
+//        query_db.clear_dynamic_database();
+
+//        const set<string> calls_in_log { logbk.calls() };
+
+//        for (const string& callsign : calls_in_log)
+//        { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+//            scp_dynamic_db.add_call(callsign);
+
+//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+//            fuzzy_dynamic_db.add_call(callsign);
+
+//          query_db += callsign;
+//        }
 
 // display the current statistics
         display_statistics(statistics.summary_string(rules));
@@ -5207,20 +5219,41 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         rescore(rules);
         update_rate_window();
 
-        scp_dynamic_db.clear();     // clears cache of parent
-        fuzzy_dynamic_db.clear();
+ //       scp_dynamic_db.clear();     // clears cache of parent
+ //       fuzzy_dynamic_db.clear();
+ //       query_db.clear_dynamic_database();
 
-        const vector<QSO> qso_vec { logbk.as_vector() };
+//        const vector<QSO> qso_vec { logbk.as_vector() };
 
-        for (const auto& qso : qso_vec)
-        { const string& callsign { qso.callsign() };
+//        for (const auto& qso : qso_vec)
+//        { const string& callsign { qso.callsign() };
 
-          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-            scp_dynamic_db.add_call(callsign);
+//          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+//            scp_dynamic_db.add_call(callsign);
 
-          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-            fuzzy_dynamic_db.add_call(callsign);
-        }
+//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+//            fuzzy_dynamic_db.add_call(callsign);
+
+//          query_db += callsign;
+//        }
+
+        rebuild_dynamic_call_databases(logbk);
+
+ //       scp_dynamic_db.clear();     // clears cache of parent
+ //       fuzzy_dynamic_db.clear();
+ //       query_db.clear_dynamic_database();
+
+ //       const set<string> calls_in_log { logbk.calls() };
+
+ //       for (const string& callsign : calls_in_log)
+ //       { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+ //           scp_dynamic_db.add_call(callsign);
+
+ //         if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+ //           fuzzy_dynamic_db.add_call(callsign);
+
+ //         query_db += callsign;
+ //       }
 
 // all the QSOs are added; now display the last few in the log window
         editable_log.recent_qsos(logbk, true);
@@ -8636,4 +8669,22 @@ void update_query_windows(const string& callsign)
 
   update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
   update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
+}
+
+void rebuild_dynamic_call_databases(const logbook& logbk)
+{ scp_dynamic_db.clear();     // clears cache of parent
+  fuzzy_dynamic_db.clear();
+  query_db.clear_dynamic_database();
+
+  const set<string> calls_in_log { logbk.calls() };
+
+  for (const string& callsign : calls_in_log)
+  { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+      scp_dynamic_db.add_call(callsign);
+
+    if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+      fuzzy_dynamic_db.add_call(callsign);
+
+    query_db += callsign;
+  }
 }

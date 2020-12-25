@@ -262,6 +262,8 @@ public:
 */
   std::vector<QSO> match_exchange(const std::string& target) const;
 
+  std::set<std::string> calls(void) const;
+
 /// serialise logbook
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
