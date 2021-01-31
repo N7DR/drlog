@@ -72,10 +72,11 @@ public:
 
 /// populate the database from a vector of calls
   inline void init_from_calls(const std::vector<std::string>& calls)
-    { FOR_ALL(calls, [&] (const std::string& this_call) { add_call(this_call); } ); }
+    { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
 
 /// add a call to the database
-  void add_call(const std::string& call);
+  void operator+=(const std::string& call);
+//  void add_call(const std::string& call);
   
 /// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
   unsigned int remove_call(const std::string& call);

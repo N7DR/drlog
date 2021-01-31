@@ -1,4 +1,4 @@
-// $Id: exchange.h 170 2020-10-26 16:44:33Z  $
+// $Id: exchange.h 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -149,11 +149,11 @@ class parsed_ss_exchange
 {
 protected:
 
-  unsigned int _serno;          ///< serial number
-  char         _prec;           ///< precedence
-  std::string  _callsign;       ///< callsign
-  std::string  _check;          ///< check (2 digits)
-  std::string  _section;        ///< section
+  unsigned int _serno    { 0 };          ///< serial number
+  char         _prec     { 'Z' };        ///< precedence
+  std::string  _callsign { };            ///< callsign
+  std::string  _check    { "XX"s };      ///< check (2 digits)
+  std::string  _section  { "AAA"s };     ///< section
 
 /*! \brief          Does a string possibly contain a serial number?
     \param  str     string to check

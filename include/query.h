@@ -1,4 +1,4 @@
-// $Id$
+// $Id: query.h 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

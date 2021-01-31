@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 176 2020-12-13 18:28:41Z  $
+// $Id: exchange.cpp 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,7 +59,7 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
       unsigned int field_column { 1 };
 
       if (contains(this_pair.second, ":"s))
-      { const vector<string> fields = split_string(this_pair.second, ":"s);
+      { const vector<string> fields { split_string(this_pair.second, ":"s) };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
@@ -72,7 +72,6 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
 
       for (const auto& line : lines)                                // each line should now be space-separated columns
         if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() > max(call_column, field_column))
-//          call_value_map.insert( { this_pair.at(call_column), this_pair.at(field_column) } );
           call_value_map += { this_pair.at(call_column), this_pair.at(field_column) };
 
       _db += { to_upper(field_name), call_value_map };
@@ -202,11 +201,7 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
     \param  received_fields     separated strings from the exchange
 */
 parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
-  _callsign(call),
-  _prec('Z'),
-  _check("XX"s),
-  _serno(0),
-  _section("AAA"s)
+  _callsign(call)
 { using INDEX_TYPE = uint8_t;
 
   if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
@@ -222,7 +217,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   { if ( (received_fields[1].length() == 2) and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
     { _prec = received_fields[0][0];
       _check = received_fields[1];
-      copy_received_fields = vector<string>(received_fields.begin() + 2, received_fields.end());
+      copy_received_fields = vector<string>(received_fields.cbegin() + 2, received_fields.cend());
       is_special = true;
     }
   }
@@ -235,7 +230,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_serno(field))
-      possible_sernos.push_back(index);
+      possible_sernos += index;
 
     index++;
   }
@@ -246,7 +241,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_prec(field))
-      possible_prec.push_back(index);
+      possible_prec += index;
 
     index++;
   }
@@ -1085,7 +1080,11 @@ case hash("two") : // do something
     return insert_value(drm_line.qth());    // F (and French territories) QTH is the dept
 
   if (field_name == "GRID"s)
-    return insert_value(substring(drm_line.grid(), 0, 4));  // only first four characters are used
+  { const string grid_value { drm_line.grid() };
+
+    return insert_value( (grid_value.length() > 4) ? substring(grid_value, 0, 4) : grid_value );
+  }
+//    return insert_value(substring(drm_line.grid(), 0, 4));  // only first four characters are used
 
   if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
     return insert_value(drm_line.qth());    // I think that this should work
@@ -1129,17 +1128,17 @@ case hash("two") : // do something
                                                                                        { "OY"s,   "EU018"s },
                                                                                        { "PJ5"s,  "NA145"s },
                                                                                        { "R1FJ"s, "EU019"s },
-                                                                                         { "SV5"s,  "EU001"s },
-                                                                                         { "SV9"s,  "EU015"s },
-                                                                                         { "TI9"s,  "NA012"s },
-                                                                                         { "TF"s,   "EU021"s },
-                                                                                         { "TK"s,   "EU014"s },
-                                                                                         { "VO1"s,  "NA027"s },
-                                                                                         { "VP2E"s, "NA022"s },
-                                                                                         { "VP2M"s, "NA103"s },
-                                                                                         { "VP2V"s, "NA023"s },
-                                                                                         { "VP9"s,  "NA005"s },
-                                                                                         { "VY2"s,  "NA029"s },
+                                                                                       { "SV5"s,  "EU001"s },
+                                                                                       { "SV9"s,  "EU015"s },
+                                                                                       { "TI9"s,  "NA012"s },
+                                                                                       { "TF"s,   "EU021"s },
+                                                                                       { "TK"s,   "EU014"s },
+                                                                                       { "VO1"s,  "NA027"s },
+                                                                                       { "VP2E"s, "NA022"s },
+                                                                                       { "VP2M"s, "NA103"s },
+                                                                                       { "VP2V"s, "NA023"s },
+                                                                                       { "VP9"s,  "NA005"s },
+                                                                                       { "VY2"s,  "NA029"s },
                                                                                          { "V2"s,   "NA100"s },
                                                                                          { "V4"s,   "NA104"s },
                                                                                          { "XE4"s,  "NA030"s },

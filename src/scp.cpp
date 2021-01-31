@@ -36,7 +36,8 @@ scp_database::scp_database(const string& filename)
 }
 
 /// add a call
-void scp_database::add_call(const string& call)
+//void scp_database::add_call(const string& call)
+void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
     for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
       (_db[substring(call, start_index, 2)]).insert(call);

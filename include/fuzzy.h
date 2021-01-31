@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 174 2020-11-30 20:28:40Z  $
+// $Id: fuzzy.h 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,7 +43,7 @@ protected:
     \param  sz  size that may need to be forced to change
     \return     <i>sz</i>, or a value within the legal range
 
-    The purpose of this is to include calls with more or fewer characters than the boundaries
+    The purpose of this is to include calls that contain more or fewer characters than the boundaries
     into the correct element of the <i>_db</i> array
 */
   inline size_t _to_valid_size(const size_t sz) const
@@ -72,14 +72,14 @@ public:
     Does nothing for any calls already in the database
 */
   inline void init_from_calls(const std::vector<std::string>& calls)
-    { FOR_ALL(calls, [&] (const std::string& this_call) { add_call(this_call); } ); }
+    { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
 
 /*! \brief          Add a call to the database
     \param  call    call to be added
 
     Does nothing if the call is already in the database
 */
-  inline void add_call(const std::string& call)
+  inline void operator+=(const std::string& call)
     { _db[ _to_valid_size(call.length()) ] += call; }
 
 /*! \brief          Remove a call from the database
@@ -101,8 +101,6 @@ public:
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
-
-    This would use regex, except that g++ doesn't support that yet :-( :-(
 */
   std::set<std::string> operator[](const std::string& key) const;
 

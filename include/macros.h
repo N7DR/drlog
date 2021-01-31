@@ -1,4 +1,4 @@
-// $Id: macros.h 175 2020-12-06 17:44:13Z  $
+// $Id: macros.h 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1368,9 +1368,18 @@ inline void operator+=(C& sus, T&& element)
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-template <typename C, typename T>
-inline void operator+=(C& sus, const T& element)
-  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+//template <typename C, typename T>
+//inline void operator+=(C& sus, const T& element)
+//  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+//  { sus.insert(element); }
+
+/*! \brief              Add an element to a set or unordered set
+    \param  sus         destination set or unordered set
+    \param  element     element to insert
+*/
+template <typename C>
+inline void operator+=(C& sus, const typename C::value_type& element)
+  requires is_sus_v<C>
   { sus.insert(element); }
 
 /*! \brief              Remove an element from a set or unordered set

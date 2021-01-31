@@ -130,14 +130,14 @@ public:
     \param  v   value to which to set the user parameter
 */
   inline void user(const int n, const std::string& v)
-    { _user[n - 1] = v; }
+    { _user.at(n - 1) = v; }
 
 /*!     \brief  get a user parameter
         \param  n  parameter number (with respect to 1)
         \return  the string associated with user parameter <i>n</i> (with respect to 1)
 */
   inline std::string user(const int n) const
-    { return _user[n - 1]; }
+    { return _user.at(n - 1); }
 
 /*! \brief          Merge with another trmaster_line
     \param  trml    line to be merged
@@ -153,7 +153,7 @@ public:
     New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
 */
   inline void operator+=(const trmaster_line& ln)
-    { *this = *this + ln; }
+    { *this = (*this + ln); }
 };
 
 /*! \brief          Output a line from a TRMASTER file to a stream
@@ -276,11 +276,11 @@ public:
 
 /// set user parameters; wrt 1
   inline void user(const int n, const std::string& v)
-    { _user[n - 1] = v; }
+    { _user.at(n - 1) = v; }
 
 /// get user parameters; wrt 1
   inline std::string user(const int n) const
-    { return _user[n - 1]; }
+    { return _user.at(n - 1); }
 
 /// set hit count
   inline void hit_count(const int n)

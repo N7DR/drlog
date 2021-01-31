@@ -1,4 +1,4 @@
-// $Id: string_functions.h 175 2020-12-06 17:44:13Z  $
+// $Id: string_functions.h 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,9 +58,8 @@ static const std::string DIGITS                        { "0123456789"s };       
 static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };     ///< convenient place to hold all digits and upper case letters
 static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };               ///< convenient place to hold all upper case letters
 
+constexpr char BACKSLASH_CHAR { '\\' };
 constexpr char SPACE_CHAR { ' ' };
-
-//constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -252,6 +251,13 @@ inline bool contains_upper_case_letter(const std::string& str)
 */
 bool contains_digit(const std::string& str);
 
+/*! \brief          Does a string contain only digits?
+    \param  str     string to test
+    \return         whether <i>str</i> comprises only digits
+*/
+inline bool is_digits(const std::string& str)
+  { return (str.find_first_not_of(DIGITS) == std::string::npos); }
+
 /*! \brief              Pad a string to a particular size
     \param  s           original string
     \param  len         length of returned string
@@ -334,6 +340,47 @@ inline std::string read_file(const std::string& filename, const std::vector<std:
 inline void write_file(const std::string& cs, const std::string& filename)
   { std::ofstream(filename.c_str(), std::ofstream::binary) << cs; }
 
+/*! \brief      Does a string begin with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> begins with <i>ss</i>
+
+    See https://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a
+*/
+inline bool starts_with(const std::string& cs, const std::string& ss)
+  { return (cs.rfind(ss, 0) == 0); }
+
+/*! \brief      Does a string begin with one of a number of particular substrings?
+    \param  cs  string to test
+    \param  ss  substrings to look for
+    \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
+*/
+template <typename T>
+bool starts_with(const std::string& cs, const T& ss)
+  requires (is_string_v<typename T::value_type>)
+{ for (const auto& str : ss)
+    if (starts_with(cs, str))
+      return true;
+
+  return false;
+}
+
+/*! \brief      Does a string begin with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> begins with <i>ss</i>
+*/
+inline bool begins_with(const std::string& cs, const std::string& ss)
+  { return (starts_with(cs, ss) ); }
+
+/*! \brief      Does a string end with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> ends with <i>ss</i>
+*/
+inline bool ends_with(const std::string& cs, const std::string& ss)
+  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
+
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
     \param  n   number of chars to remove
@@ -344,6 +391,16 @@ inline void write_file(const std::string& cs, const std::string& filename)
 */
 inline std::string remove_from_end(const std::string& s, const unsigned int n)
   { return ( (n >= s.length()) ? std::string() : s.substr(0, s.length() - n) ); }
+
+/*! \brief      Remove characters if present at the end of a string
+    \param  s   original string
+    \param  e   string to remove
+    \return     <i>s</i> with the <i>e</i> removed, if it was present
+
+    If <i>e</i> is not present, just returns <i>s</i>
+*/
+inline std::string remove_from_end(const std::string& s, const std::string& e)
+  { return ( ends_with(s, e) ? remove_from_end(s, e.length()) : s ); }
 
 /*! \brief              Split a string into components
     \param  cs          original string
@@ -650,47 +707,6 @@ inline std::string to_upper(const std::string& cs)
 inline std::string to_lower(const std::string& cs)
   { return transform_string(cs, std::tolower); }
 
-/*! \brief      Does a string begin with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> begins with <i>ss</i>
-
-    See https://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a
-*/
-inline bool starts_with(const std::string& cs, const std::string& ss)
-  { return (cs.rfind(ss, 0) == 0); }
-
-/*! \brief      Does a string begin with one of a number of particular substrings?
-    \param  cs  string to test
-    \param  ss  substrings to look for
-    \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
-*/
-template <typename T>
-bool starts_with(const std::string& cs, const T& ss)
-  requires (is_string_v<typename T::value_type>)
-{ for (const auto& str : ss)
-    if (starts_with(cs, str))
-      return true;
-
-  return false;
-}
-
-/*! \brief      Does a string begin with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> begins with <i>ss</i>
-*/
-inline bool begins_with(const std::string& cs, const std::string& ss)
-  { return (starts_with(cs, ss) ); }
-
-/*! \brief      Does a string end with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> ends with <i>ss</i>
-*/
-inline bool ends_with(const std::string& cs, const std::string& ss)
-  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
-
 /*! \brief              Is a call a maritime mobile?
     \param  callsign    call to test
     \return             whether <i>callsign</i> appears to be a maritime mobile
@@ -950,6 +966,14 @@ T regex_matches(const C& container, const std::string& s)
                                                            } );
   return rv;
 }
+
+/*! \brief          Return the number of times that a particular character occurs in a particular string
+    \param  str     the string to test
+    \param  c       the target character
+    \return         the number of times that <i>c</i> appears in <i>str</i>
+*/
+inline size_t number_of_occurrences(const std::string& str, const char c)
+  { return static_cast<size_t>(std::count(str.begin(), str.end(), c)); }
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                

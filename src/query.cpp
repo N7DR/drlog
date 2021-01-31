@@ -1,4 +1,4 @@
-// $Id: query.cpp 176 2020-12-13 18:28:41Z  $
+// $Id: query.cpp 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,9 +14,6 @@
 */
 
 #include "query.h"
-//#include "string_functions.h"
-
-#include <regex>
 
 using namespace std;
 
@@ -25,31 +22,6 @@ using namespace std;
 /*! \class  query_database
     \brief  The database for the query function
 */
-
-/*! \brief      Return all calls that match a regex (string) expression
-    \param      expression  expression against which to compare
-    \return     all calls that matches <i>expression</i>
-*/
-#if 0
-set<string> query_database::_query(const string& expression) const
-{ //set<string> rv { };
-  
-//  const regex rgx { expression };
-
- // FOR_ALL(_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
- //                                                    rv += callsign;
- //                                                } );
-  set<string> rv { regex_matches<set<string>>(_qdb, expression) + regex_matches<set<string>>(_dynamic_qdb, expression) };
-
-//  FOR_ALL(_dynamic_qdb, [=, &rv](const string& callsign) { if (regex_match(callsign, rgx))
-//                                                             rv += callsign;
-//                                                         } );
-
-//  rv += regex_matches<set<string>>(_dynamic_qdb, expression);
- 
-  return rv;
-}
-#endif
 
 /*! \brief          Possibly add a call to the dynamic database
     \param  call    call to add
@@ -79,7 +51,6 @@ pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](cons
 
 // remove any elements in rv_1 from rv_2
   for (const auto& el1 : rv_1)
-//    rv_2.erase(el1);
     rv_2 -= el1;
 
   return { rv_1, rv_2 };

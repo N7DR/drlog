@@ -61,32 +61,37 @@ protected:
 
 public:
 
+/*! \brief              Add a pair of equivalent fields
+    \param  ch1_ch2     pair: first element of choice, second element of choice
+*/
+  void operator+=(const std::pair<std::string, std::string>& ch1_ch2);
+
 /*! \brief          Add a pair of equivalent fields
     \param  ch1     first element of choice
     \param  ch2     second element of choice
 */
-  void add(const std::string& ch1, const std::string& ch2);
+//  void add(const std::string& ch1, const std::string& ch2);
 
 /*! \brief              Add a pair of equivalent fields
     \param  ch1_ch2     pair: first element of choice, second element of choice
 */
-  inline void add(const std::pair<std::string, std::string>& ch1_ch2)
-    { add(ch1_ch2.first, ch1_ch2.second); }
+//  inline void add(const std::pair<std::string, std::string>& ch1_ch2)
+//    { add(ch1_ch2.first, ch1_ch2.second); }
 
 /*! \brief          Add a pair of equivalent fields
     \param  chvec   A two-element vector of equivalent fields
 
     Throws exception if <i>chvec</i> does not have exactly two elements
 */
-  void add(const std::vector<std::string>& chvec);
+//  void add(const std::vector<std::string>& chvec);
 
 /*! \brief              Add a pair of equivalent fields in the form "FIELD1+FIELD2"
     \param  ch1_ch2     the two fields, separated by a plus sign
 
     Throws exception if <i>ch1_ch2<i> appears to be malformed
 */
-  inline void add(const std::string& ch1_ch2)
-    { add(remove_peripheral_spaces(split_string(ch1_ch2, "+"s))); }
+  void operator+=(const std::string& ch1_ch2);
+//    { add(remove_peripheral_spaces(split_string(ch1_ch2, "+"s))); }
 
 /*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
     \param  ch1_ch2     the two fields, separated by a plus sign

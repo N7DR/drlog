@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 176 2020-12-13 18:28:41Z  $
+// $Id: drlog.cpp 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -4250,8 +4250,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_grid <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
     else
-    { if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
-      { display_call_info(current_contents);
+    { //if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
+      if (const string current_contents { remove_char(remove_peripheral_spaces(win.read()), BACKSLASH_CHAR) }; current_contents != original_contents)   // remove any \ characters
+      { //const bool contains_backslash = contains(current_contents, "\\"s);
+    
+        display_call_info(current_contents);
 
         if (!in_scp_matching)
         { update_scp_window(current_contents);
@@ -6537,11 +6540,11 @@ void add_qso(const QSO& qso)
 
 // possibly add it to the dynamic SCP database
   if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-    scp_dynamic_db.add_call(qso.callsign());
+    scp_dynamic_db += qso.callsign();
 
 // and the fuzzy database
   if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
-    fuzzy_dynamic_db.add_call(qso.callsign());
+    fuzzy_dynamic_db += qso.callsign();
 
 // and the query database
   query_db += qso.callsign();
@@ -8665,12 +8668,17 @@ void set_active_window(const ACTIVE_WINDOW aw)
     QN = each question mark represents one or more characters
 */
 void update_query_windows(const string& callsign)
-{ const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
+{ if (win_query_1 or win_query_n)
+  { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
 
-  update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
-  update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign); 
+    update_matches_window(q_1_matches, query_1_matches, win_query_1, callsign);
+    update_matches_window(q_n_matches, query_n_matches, win_query_n, callsign);
+  }
 }
 
+/*! \brief          Rebuild the dynamic SCP, fuzzy and query databases
+    \param  logbk   the logbook to be used to rebuild the databases
+*/
 void rebuild_dynamic_call_databases(const logbook& logbk)
 { scp_dynamic_db.clear();     // clears cache of parent
   fuzzy_dynamic_db.clear();
@@ -8680,10 +8688,10 @@ void rebuild_dynamic_call_databases(const logbook& logbk)
 
   for (const string& callsign : calls_in_log)
   { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-      scp_dynamic_db.add_call(callsign);
+      scp_dynamic_db += callsign;
 
     if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-      fuzzy_dynamic_db.add_call(callsign);
+      fuzzy_dynamic_db += callsign;
 
     query_db += callsign;
   }

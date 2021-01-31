@@ -154,7 +154,8 @@ void window::_init(const window_information& wi, const unsigned int flags)
     _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
 
     if (!_wp)
-    { ost << "Error creating window; aborting" << endl;
+    { ost << "Error creating window; aborting" << endl
+          << "  requested x, y, w, h = " << _x << ", " << _y << ", " << _width << ", " << _height << endl;
       sleep(2);
       exit(-1);
     }

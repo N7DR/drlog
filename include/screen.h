@@ -667,7 +667,11 @@ window& operator<(const T n)
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-std::string properties(const std::string& name = std::string());
+  std::string properties(const std::string& name = std::string());
+
+/// convert to bool
+  inline operator bool(void) const
+    { return valid(); }
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
 /* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());

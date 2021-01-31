@@ -1,4 +1,4 @@
-// $Id: rules.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: rules.cpp 178 2020-12-27 16:26:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,27 +44,49 @@ using MSI = std::map<std::string, unsigned int>;                    ///< syntact
     Assumes that CHOICEs are in pairs
 */
 
+/*! \brief              Add a pair of equivalent fields
+    \param  ch1_ch2     pair: first element of choice, second element of choice
+*/
+void choice_equivalents::operator+=(const std::pair<std::string, std::string>& ch1_ch2)
+{ _choices[ch1_ch2.first] = ch1_ch2.second;
+  _choices[ch1_ch2.second] = ch1_ch2.first;
+}
+
+/*! \brief              Add a pair of equivalent fields in the form "FIELD1+FIELD2"
+    \param  ch1_ch2     the two fields, separated by a plus sign
+
+    Throws exception if <i>ch1_ch2<i> appears to be malformed
+*/
+void choice_equivalents::operator+=(const std::string& ch1_ch2)
+{ if (number_of_occurrences(ch1_ch2, '+') != 1)
+    throw exception();
+
+  const vector<string> vec { remove_peripheral_spaces(split_string(ch1_ch2, "+"s)) };
+
+  *this += { vec[0], vec[1] };
+}
+
 /*! \brief          Add a pair of equivalent fields
     \param  ch1     first element of choice
     \param  ch2     second element of choice
 */
-void choice_equivalents::add(const string& ch1, const string& ch2)
-{ _choices[ch1] = ch2;
-  _choices[ch2] = ch1;
-}
+//void choice_equivalents::add(const string& ch1, const string& ch2)
+//{ _choices[ch1] = ch2;
+//  _choices[ch2] = ch1;
+//}
 
 /*! \brief          Add a pair of equivalent fields
     \param  chvec   A two-element vector of equivalent fields
 
     Throws exception if <i>chvec</i> does not have exactly two elements
 */
-void choice_equivalents::add(const vector<string>& chvec)
-{ if (chvec.size() != 2)
-    throw exception();
-
-  _choices[chvec[0]] = chvec[1];
-  _choices[chvec[1]] = chvec[0];
-}
+//void choice_equivalents::add(const vector<string>& chvec)
+//{ if (chvec.size() != 2)
+//    throw exception();
+//
+//  _choices[chvec[0]] = chvec[1];
+//  _choices[chvec[1]] = chvec[0];
+//}
 
 /*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
     \param  ch1_ch2     the two fields, separated by a plus sign
@@ -72,8 +94,10 @@ void choice_equivalents::add(const vector<string>& chvec)
     If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
 */
 void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FIELD2"
-{ if (contains(ch1_ch2, "+"s))
-    add(ch1_ch2);
+{ //if (contains(ch1_ch2, "+"s))
+  //  add(ch1_ch2);
+  if (number_of_occurrences(ch1_ch2, '+') == 1)
+    *this += ch1_ch2;
 }
 
 // -------------------------  exchange_field_values  ---------------------------
@@ -600,7 +624,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         else
         { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null prefix implies applies to all
 
-          choice_equivalents_this_mode_and_cp.add(field.name());
+ //         choice_equivalents_this_mode_and_cp.add(field.name());
+         choice_equivalents_this_mode_and_cp += field.name();
 
  //         ost << "Added CHOICE field in rules::_init() for cp [" << prefix << "] : " << field << endl;
 
