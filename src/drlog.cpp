@@ -79,6 +79,27 @@ enum class KNOWN_MULT { FORCE_KNOWN,
                         NO_FORCE_KNOWN
                       };
 
+
+
+//array<unordered_map<string, frequency>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
+
+/*
+template <class K, class V> // P = parameter; D = data in the database
+class TS_unordered_map : public std::unordered_map<K, V>
+{
+protected:
+
+  pt_mutex ptm { "DEFAULT TS UNORDERED MAP"s };
+
+public:
+
+  inline void rename(const std::string& nm)
+    { ptm.rename(nm); }
+
+};
+*/
+
+
 // needed for WRAPPER_3 definition of memory_entry
 ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 { ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
@@ -330,8 +351,8 @@ bool                    home_exchange_window { false };             ///< whether
 int                     inactivity_timer;                           ///< how long to record with no activity
 bool                    is_ss { false };                            ///< ss is special
 
-logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
-unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
+logbook                                   logbk;                    ///< the log; can't be called "log" if mathcalls.h is in the compilation path
+unsigned short                            long_t { 0 };             ///< do not send long Ts at beginning of serno
 
 unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
 memory_information      meminfo;                                    ///< to monitor the state of memory
@@ -408,6 +429,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_exchange,                    ///< QSO exchange received from other station
        win_fuzzy,                       ///< fuzzy lookups
        win_grid,                        ///< grid square
+       win_last_qrg,                    ///< last QRG of a posted call
        win_log_extract,                 ///< to show earlier QSOs
        win_name,                        ///< name of operator
        win_indices,                     ///< geomagnetic indices
@@ -482,6 +504,10 @@ ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the 
 
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
+
+array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
+//array<pt_mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
+array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
 
 call_history q_history;                         ///< history of calls worked
 
@@ -717,9 +743,11 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
-// rename the mutexes in the bandmaps
+// rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
-    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+  { bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+//    last_posted_qrg_mutex[n].rename("LAST_POSTED_QRG: "s + BAND_NAME.at(n));
+  }
 
   command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
@@ -1218,6 +1246,9 @@ int main(int argc, char** argv)
 // INFO window
     win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
     win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
+
+// LAST QRG window
+    win_last_qrg.init(context.window_info("LAST QRG"s), WINDOW_NO_CURSOR);
 
 // LOCAL TIME window
     win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
@@ -2383,6 +2414,20 @@ void* process_rbn_info(void* vp)
               const string&                 poster      { post.poster() };
               const pair<string, frequency> target      { dx_callsign, post.freq() };
 
+// record as the most recent QRG for this station
+              const int band_nr { static_cast<int>(BAND(post.freq())) };
+
+//              unordered_map<string, frequency>& qrg_map = last_posted_qrg[band_nr];
+              unordered_map<string, string>& qrg_map = last_posted_qrg[band_nr];
+
+              { lock_guard lck(last_posted_qrg_mutex[band_nr]);
+
+//                qrg_map[dx_callsign] = post.freq();
+                qrg_map[dx_callsign] = post.frequency_str();
+
+//                ost << "mapped " << dx_callsign << " to: " << post.frequency_str() << endl;
+              }
+
               bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
               be.callsign(dx_callsign);
@@ -2659,10 +2704,12 @@ void* prune_bandmap(void* vp)
     ALT-K         -- toggle CW
     ALT-M         -- change mode
     ALT-Q         -- send QTC
+    ALT-Y -- delete last QSO
     ALT-KP_4      -- decrement bandmap column offset
     ALT-KP_6      -- increment bandmap column offset
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
+    ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
     CTRL-I        -- refresh geomagnetic indices
@@ -2670,6 +2717,7 @@ void* prune_bandmap(void* vp)
     CTRL-S        -- send to scratchpad
     CTRL-ENTER    -- assume it's a call or partial call and go to the call if it's in the bandmap
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
+    CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     ESCAPE
     F10           -- toggle filter_remaining_country_mults
     F11           -- band map filtering
@@ -2677,13 +2725,12 @@ void* prune_bandmap(void* vp)
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
     KP-           -- centre RIT if on SSB and RIT is on
+    SHIFT (RIT control)
     SPACE -- generally, dupe check
 
-    CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
-    ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
+
 //    KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
-    SHIFT (RIT control)
-    ALT-Y -- delete last QSO
+
     CURSOR UP -- go to log window
     CURSOR DOWN -- possibly replace call with SCP info
     CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
@@ -2706,6 +2753,8 @@ void* prune_bandmap(void* vp)
     KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     TAB -- switch between CQ and SAP mode
+    CTRL-G -- display QRG of call
+    ALT-G go to the frequency in win_last_qrg
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -4234,6 +4283,38 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       default :
         processed = true;
     }
+  }
+
+// CTRL-G -- display QRG of call
+  if (!processed and (e.is_control('g')))
+  { const BAND b       { safe_get_band() };
+    const int  band_nr { static_cast<int>(b) };
+
+    lock_guard lg(last_posted_qrg_mutex[band_nr]);
+
+    const auto it { last_posted_qrg[band_nr].find(original_contents) };
+
+    if (it != last_posted_qrg[band_nr].end())
+      win_last_qrg < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < original_contents < ": "s <= it->second;
+    else
+      win_last_qrg <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+    processed = true;
+  }
+
+// ALT-G go to the frequency in win_last_qrg
+  if (!processed and (e.is_alt('g')))
+  { const string contents = win_last_qrg.read();
+    const size_t posn = contents.find(':');
+
+    if ((posn != string::npos) and (posn != (contents.size() - 1)))
+    { const string    fstr { remove_peripheral_spaces(substring(contents, posn + 1)) };
+      const frequency f    { fstr };
+
+      rig.rig_frequency(f);
+    }
+
+    processed = true;
   }
 
 // finished processing a keypress

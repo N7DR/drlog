@@ -46,7 +46,7 @@ enum BAND { BAND_160 = 0,
           };
 
 constexpr unsigned int NUMBER_OF_BANDS { MAX_BAND + 1 };                          ///< how many bands does drlog know about?
-constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                               ///< how many bands does drlog know about?
+constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                       ///< how many bands does drlog know about?
 
 static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                               "80"s,

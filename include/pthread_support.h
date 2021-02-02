@@ -306,11 +306,16 @@ protected:
 public:
 
 /*! \brief      Constructor
-    \param  nm  Name of the mutex (now required, so that it is available in stack traces)
+    \param  nm  Name of the mutex (now strongly desired, so that it is available in stack traces)
 */
   inline explicit pt_mutex(const std::string& nm) :
     _name(nm)
     { pthread_mutex_init(&_mutex, NULL); }
+
+/// default construtor, use ONLY for building containers of mutexes that are then renamed
+// this is needed because we can't build a container of non-default-constructed mutexes
+//  inline pt_mutex(void)
+//    { pthread_mutex_init(&_mutex, NULL); }
     
 /// forbid copying
   pt_mutex(const pt_mutex&) = delete;
