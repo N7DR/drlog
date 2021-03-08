@@ -46,6 +46,8 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
 
+constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward) that is applied to MY_MARKER before inserting it 
+
 const string        MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 const string        MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
 
@@ -417,7 +419,7 @@ void bandmap::_insert(const bandmap_entry& be)
   if (be.is_my_marker())
   { my_marker_copy = be;
 
-    my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - 1));     // make it 1Hz less than actual value 
+    my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - MY_MARKER_BIAS));     // make it 1Hz less than actual value 
   }
 
 //  const bandmap_entry* bep { be.is_my_marker() ? &my_marker_copy : &be };   // point to the right bandmap_entry object
@@ -930,15 +932,15 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 
   const BM_ENTRIES fe { displayed_entries() };
 
-  auto cit { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
-  if (cit == fe.cend())             // should never be true
+  if (marker_it == fe.cend())             // should never be true
     return bandmap_entry();
 
-  const string target_freq_str { cit->frequency_str() };
+  const string target_freq_str { marker_it->frequency_str() };
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
-  { auto crit { prev(reverse_iterator<decltype(cit)>(cit)) };             // Josuttis First ed. p. 66f.
+  { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis First ed. p. 66f.
 
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ) }; // move away from my frequency, in downwards direction
 
@@ -951,13 +953,16 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   }
 
   if (dirn == BANDMAP_DIRECTION::UP)
-  { const auto cit2 { find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
+  { const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
     { const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
 
       if (cit3 != fe.cend())
-        return (*cit3);
+      { // 210227 DEBUG issue where we don't move
+        ost << "needed; upward; marker frequency string = " << *marker_it << ", returning " << *cit3 << endl;
+         return (*cit3);
+      }
     }
   }
 
@@ -986,6 +991,11 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
 
   if (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq())
     return rv;
+
+// the logic here (for DOWN; UP is just the inverse) is to mark the highest frequency
+// and then step down through the bandmap; if bm freq is >= the target then mark the
+// frequency and keep going; if bm freq < the target, return the most recently marked
+// frequency
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
   { if (f <= fe.front().freq())         // all frequencies are higher than the target

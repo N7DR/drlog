@@ -1,4 +1,4 @@
-// $Id: log.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: log.cpp 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,7 +91,8 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
     vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
-    current_received_exchange.push_back( { field_name, value, false, false });
+//    current_received_exchange.push_back( { field_name, value, false, false });
+    current_received_exchange += { field_name, value, false, false };
     qso.received_exchange(current_received_exchange);
   }
 }
@@ -102,8 +103,11 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 void logbook::operator+=(const QSO& q)
 { SAFELOCK(_log);
 
-  _log.insert( { q.callsign(), q } );
-  _log_vec.push_back(q);
+//  _log.insert( { q.callsign(), q } );
+  _log += { q.callsign(), q };
+ 
+//  _log_vec.push_back(q);
+  _log_vec += q;
 }
 
 /*! \brief      Return an individual QSO by number (wrt 1)
@@ -140,7 +144,8 @@ void logbook::operator-=(const unsigned int n)
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
 
-  FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
+//  FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
+  FOR_ALL(_log_vec, [&](const QSO& qso) { _log += { qso.callsign(), qso }; } );
 }
 
 /*! \brief          All the QSOs with a particular call, in chronological order
@@ -154,7 +159,8 @@ vector<QSO> logbook::worked(const string& call) const
 
   { SAFELOCK(_log);
   
-    for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv.push_back(qso.second); } );
+//    for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv.push_back(qso.second); } );
+    for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv += qso.second; } );
   }
 
   SORT(rv, qso_sort_by_time);    // put in chronological order

@@ -1,4 +1,4 @@
-// $Id: screen.cpp 168 2020-10-07 18:34:59Z  $
+// $Id: screen.cpp 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -691,7 +691,7 @@ vector<string> window::snapshot(void)
 { vector<string> rv;
 
   for (size_t n { static_cast<size_t>(height() - 1) }; n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
-    rv.push_back(getline(n));
+    rv += getline(n);
 
   return rv;
 }
@@ -824,7 +824,7 @@ string window::properties(const string& name)
     
     rv += "  number of lines in snapshot = "s + to_string(lines.size()) + EOL;
     
-    for (size_t n = 0; n < lines.size(); ++n)
+    for (size_t n { 0 }; n < lines.size(); ++n)
       rv += "    ["s + to_string(n) + "]: "s + lines[n] + EOL;
   }
   
@@ -899,7 +899,7 @@ bool window::common_processing(const keyboard_event& e)
     \return     the number of the colour pair
 */
 PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
-{ _colours.push_back(fgbg);
+{ _colours += fgbg;
 
   const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
@@ -945,42 +945,6 @@ pair<COLOUR_TYPE, COLOUR_TYPE> cpair::fgbg(const PAIR_NUMBER_TYPE pair_nr) const
 
   return { static_cast<COLOUR_TYPE>(f), static_cast<COLOUR_TYPE>(b) };
 }
-
-/*! \brief              Get the foreground colour of a pair
-    \param  pair_nr     number of the pair
-    \return             the foreground colour of the pair number <i>pair_nr</i>
-*/
-#if 0
-COLOUR_TYPE cpair::fg(const PAIR_NUMBER_TYPE pair_nr) const
-{ short f;      // defined to be short in the man page for pair_content
-  short b;      // defined to be short in the man page for pair_content
-
-//  const auto status { pair_content(pair_nr, &f, &b) };
-  
-  if (const auto status { pair_content(pair_nr, &f, &b) }; status == ERR)
-    ost << "Error extracting foreground colour from colour pair number " << pair_nr << endl;
-
-  return static_cast<COLOUR_TYPE>(f);
-}
-#endif
-
-/*! \brief              Get the background colour of a pair
-    \param  pair_nr     number of the pair
-    \return             the background colour of the pair number <i>pair_nr</i>
-*/
-#if 0
-COLOUR_TYPE cpair::bg(const PAIR_NUMBER_TYPE pair_nr) const
-{ short f;      // defined to be short in the man page for pair_content
-  short b;      // defined to be short in the man page for pair_content
-
-//  const auto status { pair_content(pair_nr, &f, &b) };
-
-  if (const auto status { pair_content(pair_nr, &f, &b) }; status == ERR)
-    ost << "Error extracting background colour from colour pair number " << pair_nr << endl;
-
-  return static_cast<COLOUR_TYPE>(b);
-}
-#endif
 
 /*! \brief          Convert the name of a colour to a colour
     \param  str     name of a colour

@@ -32,10 +32,10 @@ class message_stream
 {
 protected:
 
-  std::ofstream     _ost;                       ///< the output stream
-  std::ofstream     _err;                       ///< the error stream
+  std::ofstream _ost;                       ///< the output stream
+  std::ofstream _err;                       ///< the error stream
   
-  pt_mutex          _message_stream_mutex;      ///< mutex for the stream
+  pt_mutex      _message_stream_mutex;      ///< mutex for the stream
 
 public:
 
@@ -46,7 +46,7 @@ public:
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-  message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
+  message_stream(const std::string& filename, const std::string& error_name = "drlog-errors"s);
 
 /*! \brief          Write a generic object to a <i>message_stream</i> object
     \param  obj     object to write

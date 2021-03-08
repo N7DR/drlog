@@ -1,4 +1,4 @@
-// $Id: macros.h 178 2020-12-27 16:26:16Z  $
+// $Id: macros.h 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -278,18 +278,6 @@ template< class T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 
 // is a type a map or unordered map?
-//template<class T>
-//struct is_mum 
-//  { constexpr static bool value { false }; };
-
-//template<class K, class V>
-//struct is_mum<std::map<K, V>> operator>
-//  { constexpr static bool value { true }; };
-
-//template<class K, class V>
-//struct is_mum<std::unordered_map<K, V>> 
-//  { constexpr static bool value { true }; };
-
 template<class T>
 constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
 
@@ -306,17 +294,6 @@ template< class T>
 constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
 // is a type a set or unordered set?
-//template<class T>
-//struct is_sus 
-//  { constexpr static bool value { false }; };
-
-//template<class T, class C, class A>
-//struct is_sus<std::set<T, C, A>> 
-//  { constexpr static bool value { true }; };
-
-//template<class T>
-//struct is_sus<std::unordered_set<T>> 
-//  { constexpr static bool value { true }; };
 
 //template< class T>
 //constexpr bool is_sus_v = is_sus<T>::value;

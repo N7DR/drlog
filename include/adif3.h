@@ -253,6 +253,10 @@ public:
     { return _elements.empty(); }
 };
 
+/// ostream << adif3_record
+inline std::ostream& operator<<(std::ostream& ost, const adif3_record& rec)
+  { return (ost << rec.to_string()); }
+
 /*! \brief         Is one ADIF3 record chronologically earlier than another
     \param  rec1   first record
     \param  rec2   second record

@@ -1,4 +1,4 @@
-// $Id: scp.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: scp.cpp 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -76,7 +76,7 @@ SCP_SET scp_database::operator[](const string& key)
   
     for (const auto& cache_callsign : _last_result)
       if (::contains(cache_callsign, key))
-        rv.insert(cache_callsign);
+        rv += cache_callsign;
       
     _last_key = key;
     _last_result = rv;
@@ -91,7 +91,7 @@ SCP_SET scp_database::operator[](const string& key)
 
   for (const auto& callsign : calls)
     if (::contains(callsign, key))
-      rv.insert(callsign);
+      rv += callsign;
     
   _last_key = key;
   _last_result = rv;
@@ -120,7 +120,7 @@ void scp_database::clear_cache(void)
 void scp_databases::remove_call(const string& call)
 { bool removed { false };
 
-  for (size_t n = 0; (n < _vec.size() and !removed); ++n)   // in priority order
+  for (size_t n { 0 }; (n < _vec.size() and !removed); ++n)   // in priority order
   { const size_t rev { _vec.size() - 1 - n };               // reverse the order
 
     removed = _vec[rev]->remove_call(call);
@@ -129,7 +129,7 @@ void scp_databases::remove_call(const string& call)
 
 /// add a database to those that are consulted
 void scp_databases::add_db(scp_database& db)
-{ _vec.push_back(&db);
+{ _vec += (&db);
   db.add_parent(*this);
 }
 
@@ -159,7 +159,7 @@ SCP_SET scp_databases::operator[](const string& key)
 
     for (const auto& cache_callsign : _last_result)
       if (::contains(cache_callsign, key))
-        rv.insert(cache_callsign);
+        rv += cache_callsign;
 
     _last_key = key;
     _last_result = rv;
@@ -177,7 +177,7 @@ SCP_SET scp_databases::operator[](const string& key)
 
     for (const auto& callsign : calls)
       if (::contains(callsign, key))
-        rv.insert(callsign);
+        rv += callsign;
   }
 
   _last_key = key;

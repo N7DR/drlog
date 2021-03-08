@@ -1,4 +1,4 @@
-// $Id: screen.h 171 2020-11-15 16:02:32Z  $
+// $Id: screen.h 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -270,7 +270,7 @@ protected:
     Does not change _fg/_bg because I can't find a guaranteed way to go from a big integer that
     combines the two colours to the individual colours
 */
-    window& _default_colours(const chtype fgbg);
+  window& _default_colours(const chtype fgbg);
 
 /*! \brief          Perform basic initialisation
     \param  wi      window information
@@ -512,7 +512,6 @@ window& operator<(const T& sus)
 
   std::vector<std::string> v { sus.cbegin(), sus.cend() };
 
-//  sort(v.begin(), v.end(), compare_calls);
   SORT(v, compare_calls);
 
   return (*this < v);
@@ -535,20 +534,6 @@ window& operator<(const T n)
   requires (std::is_integral_v<T>)
     { return (*this < to_string(n)); }
 
-/*! \brief      Write an integer to a window
-    \param  n   integer to write
-    \return     the window
-*/
-//  inline window& operator<(const int n)
-//    { return (*this < to_string(n)); }
-
-/*! \brief      Write a uint64_t to a window
-    \param  n   uint64_t to write
-    \return     the window
-*/
-//  inline window& operator<(const uint64_t n)
-//    { return (*this < to_string(n)); }
-  
 /*! \brief              Set the colour pair
     \param  pair_nr     number of the new colour pair
     \return             the window
@@ -672,31 +657,6 @@ window& operator<(const T n)
 /// convert to bool
   inline operator bool(void) const
     { return valid(); }
-
-// http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
-/* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());
-template
-    < template<typename ELEM, typename ALLOC=std::allocator<ELEM> > class Container
-    >
-  window& operator<(const Container<std::string>& vec)
-  { 
-// ****************************** HERE ***************************
-// start with the simplest case
-//    for (unsigned int n = 0; n < vec.size(); ++n)
-    int idx = 0;
-    
-    for (typename Container<std::string>::const_iterator cit = vec.begin(); cit != vec.end(); ++cit)
-    { *this < (*cit);
-  
-      if (idx != vec.size() - 1)
-        *this < " ";
-      idx++;
-    }
-  
-    return *this;
-  }
-*/
-
 };
 
 /*! \brief          Move the cursor in a window

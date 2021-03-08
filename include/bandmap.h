@@ -339,22 +339,22 @@ class bandmap_entry
 {
 protected:
 
-  enum BAND                                                 _band;                              ///< band
-  std::string                                               _callsign;                          ///< call
-  std::string                                               _canonical_prefix;                  ///< canonical prefix corresponding to the call
-  std::string                                               _continent;                         ///< continent corresponding to the call
-  time_t                                                    _expiration_time  { 0 };                   ///< time at which this entry expires (in seconds since the epoch)
-  frequency                                                 _freq;                              ///< QRG
-  std::string                                               _frequency_str;                     ///< QRG (kHz, to 1 dp)
-  bool                                                      _is_needed { true };                         ///< do we need this call?
-  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;           ///< details of needed callsign mults
-  needed_mult_details<std::string>                          _is_needed_country_mult;            ///< details of needed country mults
-  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;           ///< details of needed exchange mults
-  enum MODE                                                 _mode;                              ///< mode
-  bool                                                      _mult_status_is_known { false };              ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
-  enum BANDMAP_ENTRY_SOURCE                                 _source;                            ///< the source of this entry
-  time_t                                                    _time;                              ///< time (in seconds since the epoch) at which the object was created
-  time_t                                                    _time_of_earlier_bandmap_entry { 0 };     ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
+  enum BAND                                                 _band;                                  ///< band
+  std::string                                               _callsign;                              ///< call
+  std::string                                               _canonical_prefix;                      ///< canonical prefix corresponding to the call
+  std::string                                               _continent;                             ///< continent corresponding to the call
+  time_t                                                    _expiration_time  { 0 };                ///< time at which this entry expires (in seconds since the epoch)
+  frequency                                                 _freq;                                  ///< QRG
+  std::string                                               _frequency_str;                         ///< QRG (kHz, to 1 dp)
+  bool                                                      _is_needed { true };                    ///< do we need this call?
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;               ///< details of needed callsign mults
+  needed_mult_details<std::string>                          _is_needed_country_mult;                ///< details of needed country mults
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;               ///< details of needed exchange mults
+  enum MODE                                                 _mode;                                  ///< mode
+  bool                                                      _mult_status_is_known { false };        ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
+  enum BANDMAP_ENTRY_SOURCE                                 _source;                                ///< the source of this entry
+  time_t                                                    _time;                                  ///< time (in seconds since the epoch) at which the object was created
+  time_t                                                    _time_of_earlier_bandmap_entry { 0 };   ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
 
 public:
 
@@ -1125,6 +1125,9 @@ public:
 
   inline void rename_mutex(const std::string& new_name)
     { _bandmap_mutex.rename(new_name); }
+
+// dump to output file
+  void dump(void);
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 

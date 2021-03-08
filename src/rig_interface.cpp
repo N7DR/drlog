@@ -120,13 +120,17 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
-        if (_rig_frequency(v) != f)     // explicitly check the frequency
+        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
+        { ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
           sleep_for(RETRY_TIME);
+        }
         else
           retry = false;
       }
     }
   }
+  else
+    _error_alert("Commanded frequency is not within ham band: "s + to_string(f.hz()) + " Hz"s);
 }
 
 /*! \brief      Get the frequency of a VFO
@@ -149,41 +153,6 @@ frequency rig_interface::_rig_frequency(const VFO v)
     return frequency(hz);
   }
 }
-
-/*! \brief      Thread function used to poll rig for status, forever
-    \param  vp  unused (should be nullptr)
-    \return     nullptr
-
-    Sets the frequency and mode in the <i>_status</i> object
-
-    *** Should be modified to provide guaranteed graceful exit during program shutdown
-*/
-#if 0
-void* rig_interface::_poll_thread_function(void* vp)
-{ while (true)
-  { _status.freq(rig_frequency());
-    _status.mode(rig_mode());
-
-    sleep_for(milliseconds(_rig_poll_interval));
-  }
-
-  return nullptr;
-}
-#endif
-
-/*! \brief          static wrapper for function to poll rig for status
-    \param  this_p  the <i>this</i> pointer, in order to allow static member access to a real object
-    \return         nullptr
-*/
-#if 0
-void* rig_interface::_static_poll_thread_function(void* this_p)
-{ rig_interface* bufp { static_cast<rig_interface*>(this_p) };
-
-  bufp->_poll_thread_function(nullptr);
-
-  return nullptr;
-}
-#endif
 
 // ---------------------------------------- rig_interface -------------------------
 
@@ -273,6 +242,9 @@ void rig_interface::rig_mode(const MODE m)
 
     { SAFELOCK(_rig);
       status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+
+ //     if (m == MODE_SSB)
+ //       ost << "tmp_mode = " << tmp_mode << ", tmp_bandwidth = " << tmp_bandwidth << endl;
     }
 
     if (status != RIG_OK)
@@ -300,7 +272,16 @@ void rig_interface::rig_mode(const MODE m)
       { const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
         const pbwidth_t bandwidth_to_set { (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth };
 
+//        if (m == MODE_SSB)
+//          ost << "new_bandwidth = " << new_bandwidth << ", bandwidth_to_set = " << bandwidth_to_set << endl;
+
         status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, bandwidth_to_set) ;
+ //       ost << "setting mode: " << hamlib_m << " with bandwidth = " << 1800 << endl;
+
+//        bandwidth(1800);
+
+//        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, (pbwidth_t)1800);
+//        ost << "after rig_set_mode()" << endl;
 
         if (status != RIG_OK)
           _error_alert("Error setting mode"s);
@@ -512,7 +493,6 @@ void rig_interface::rit(const int hz)
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-//      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_left(to_string(positive_hz), 4, '0') };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
 
       raw_command("RO"s + hz_str + ";"s);
@@ -531,8 +511,7 @@ void rig_interface::rit(const int hz)
 /// get rit offset (in Hz)
 int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
-  { //const string value { raw_command("RO;"s, 8) };
-    const string value { raw_command("RO;"s, RESPONSE::EXPECTED) };
+  { const string value { raw_command("RO;"s, RESPONSE::EXPECTED) };
 
     if (value.length() != 8)
     { _error_alert("Invalid rig response in rit(): "s + value);
@@ -741,15 +720,6 @@ void rig_interface::sub_receiver_toggle(void)
     sub_receiver_enable();
 }
 
-/// return most recent rig status
-#if 0
-rig_status rig_interface::status(void)
-{ SAFELOCK(_rig);
-
-  return _status;
-}
-#endif
-
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
@@ -757,8 +727,7 @@ void rig_interface::keyer_speed(const int wpm)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { //string cmd { "KS"s + pad_left(to_string(wpm), 3, '0') + ";"s };
-    const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
+  { const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
 
     raw_command(cmd, RESPONSE::NOT_EXPECTED);
   }

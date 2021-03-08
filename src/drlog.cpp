@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: drlog.cpp 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,13 +130,13 @@ WRAPPER_3(memory_entry,
 deque<memory_entry> memories;
 
 // some forward declarations; others, that depend on these, occur later
-string active_window_name(void);                                  ///< Return the name of the active window in printable form
-void   add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
-void   adif3_build_old_log(void);                                 ///< build the old log from an ADIF3 file
-void   alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW/* const bool show_time = true */);     ///< Alert the user
-void   allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
-void   archive_data(void);                                        ///< Send data to the archive file
-void   audio_error_alert(const string& msg);                      ///< Alert the user to an audio-related error
+string active_window_name(void);                                                ///< Return the name of the active window in printable form
+void   add_qso(const QSO& qso);                                                 ///< Add a QSO into the all the objects that need to know about it
+void   adif3_build_old_log(void);                                               ///< build the old log from an ADIF3 file
+void   alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
+void   allow_for_callsign_mults(QSO& qso);                                      ///< Add info to QSO if callsign mults are in use; may change qso
+void   archive_data(void);                                                      ///< Send data to the archive file
+void   audio_error_alert(const string& msg);                                    ///< Alert the user to an audio-related error
 
 string bearing(const string& callsign);   ///< Return the bearing to a station
 
@@ -445,7 +445,6 @@ window win_band_mode,                   ///< the band and mode indicator
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
-//       win_query,                       ///< query matches
        win_query_1,                     ///< query 1 matches
        win_query_n,                     ///< query n matches
        win_quick_qsy,                   ///< QRG and mode for ctrl-=
@@ -483,7 +482,6 @@ log_extract extract(win_log_extract);       ///< earlier QSOs with a station
 
 // some windows are accessed from multiple threads
 pt_mutex band_mode_mutex { "BAND/MODE WINDOW"s };                   ///< mutex for win_band_mode
-//pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
 
 cw_messages cwm;                            ///< pre-defined CW messages
 
@@ -506,7 +504,6 @@ array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///<
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
-//array<pt_mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
 array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
 
 call_history q_history;                         ///< history of calls worked
@@ -745,9 +742,7 @@ int main(int argc, char** argv)
 
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
-  { bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
-//    last_posted_qrg_mutex[n].rename("LAST_POSTED_QRG: "s + BAND_NAME.at(n));
-  }
+    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
 
   command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
@@ -806,9 +801,6 @@ int main(int argc, char** argv)
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
 // set up initial quick qsy information
-//pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
-//map<BAND, pair<frequency, MODE>> quick_qsy_map;
-
     for (int n { static_cast<int>(MIN_BAND) }; n <= static_cast<int>(MAX_BAND); ++n)
       quick_qsy_map[static_cast<BAND>(n)] = pair<frequency, MODE> { BOTTOM_OF_BAND.at(static_cast<BAND>(n)), MODE_CW };
 
@@ -841,9 +833,7 @@ int main(int argc, char** argv)
     const cty_data& country_data { *country_data_p };
 
 // read drmaster database-- right now, the object is not deleted
-  { //drmaster*       drm_p { nullptr };      ///< pointer to drmaster information
-    
-    try
+  { try
     { drm_p = new drmaster(context.path(), context.drmaster_filename());
     }
 
@@ -2701,12 +2691,15 @@ void* prune_bandmap(void* vp)
     \param  e   keyboard event to process
 */
 /*  KP numbers    -- CW messages
+    ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
     ALT-K         -- toggle CW
     ALT-M         -- change mode
     ALT-Q         -- send QTC
-    ALT-Y -- delete last QSO
+    ALT-Y         -- delete last QSO
     ALT-KP_4      -- decrement bandmap column offset
     ALT-KP_6      -- increment bandmap column offset
+    ALT-KP+       -- increment octothorpe
+    ALT-KP-       -- decrement octothorpe
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
@@ -2715,9 +2708,13 @@ void* prune_bandmap(void* vp)
     CTRL-I        -- refresh geomagnetic indices
     CTRL-Q        -- swap QSL and QUICK QSL messages
     CTRL-S        -- send to scratchpad
+    CTRL-KP+      -- increment qso number
+    CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
     CTRL-ENTER    -- assume it's a call or partial call and go to the call if it's in the bandmap
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
+    CURSOR UP     -- go to log window
+    CURSOR DOWN   -- possibly replace call with SCP info
     ESCAPE
     F10           -- toggle filter_remaining_country_mults
     F11           -- band map filtering
@@ -2728,15 +2725,12 @@ void* prune_bandmap(void* vp)
     SHIFT (RIT control)
     SPACE -- generally, dupe check
 
+    ; -- down to next stn that matches the N7DR criteria
+    ' -- up to next stn that matches the N7DR criteria
 
 //    KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
 
-    CURSOR UP -- go to log window
-    CURSOR DOWN -- possibly replace call with SCP info
-    CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
-    ALT-KP+ -- increment octothorpe
-    ALT-KP- -- decrement octothorpe
-    CTRL-KP+ -- increment qso number
+
     CTRL-KP- -- decrement qso number
     BACKSLASH -- send to the scratchpad
     ALT--> -- VFO A -> VFO B
@@ -2826,6 +2820,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
         last_frequency = DEFAULT_FREQUENCIES.at(bmode);
+
+// workaround for hamlib bug that causes freeze if we attempt to set mode to LSB/USB when
+// our old bandwidth was not 1800
+      if (cur_mode == MODE_SSB)
+        rig.bandwidth(1800);
 
       rig.rig_frequency(last_frequency);
 
@@ -3918,7 +3917,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_control('p'))
     processed = (dump_screen(), true);
 
-// ALT-D -- debug dump
+//  ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
   if (!processed and e.is_alt('d'))
     processed = debug_dump();
 
@@ -4331,11 +4330,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_grid <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
     else
-    { //if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
-      if (const string current_contents { remove_char(remove_peripheral_spaces(win.read()), BACKSLASH_CHAR) }; current_contents != original_contents)   // remove any \ characters
-      { //const bool contains_backslash = contains(current_contents, "\\"s);
-    
-        display_call_info(current_contents);
+    { if (const string current_contents { remove_char(remove_peripheral_spaces(win.read()), BACKSLASH_CHAR) }; current_contents != original_contents)   // remove any \ characters
+      { display_call_info(current_contents);
 
         if (!in_scp_matching)
         { update_scp_window(current_contents);
@@ -4351,14 +4347,16 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     \param  wp  pointer to window associated with the event
     \param  e   keyboard event to process
 */
-/*  PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
-    ALT-K -- toggle CW
+/*  ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
+    ALT-K         -- toggle CW
+    ALT-KP_4      -- decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
+
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     CTRL-S -- send contents of CALL window to scratchpad
     ESCAPE
     COMMA -- place contents of call window into this window, preceeded by a dot
     FULL STOP
-    ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
-    ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
+    ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
     SHIFT -- RIT control
     ALT-S -- toggle sub receiver
     CTRL-B -- fast bandwidth
@@ -6943,6 +6941,8 @@ bool debug_dump(void)
     ost << str;
   }
 
+  alert("DEBUG info written"s);
+
   return true;
 }
 
@@ -7986,7 +7986,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 
   if (changed_frequency)
   { time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
-    mbe_copy.freq(f);   // also updates the band
+    mbe_copy.freq(f);           // also updates the band
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
     bandmap& bm { bandmaps[mbe_copy.band()] };
@@ -8005,7 +8005,6 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-//    const string nearby_callsign { bm.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m)) };
     const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
 
     if (!nearby_callsign.empty())
@@ -8565,12 +8564,16 @@ void adif3_build_old_log(void)
       { olog.increment_n_qsls(callsign);
         olog.qsl_received(callsign, b, m);
       }
+
+ //     if (callsign == "OH3RF"s)
+ //       ost << "ADDED RECORD: " << rec.to_string() << endl;
+
     };
 
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
-  { const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());
+  { const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());       // this is not necessarily in chronological order
 
     alert("read " + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: " + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
@@ -8589,6 +8592,12 @@ void adif3_build_old_log(void)
           if (!matching_qsos.empty())       // should always be true
           { SORT(matching_qsos, compare_adif3_records);    // in chronological order
 
+/*
+            if (callsign == "OH3RF"s)
+            { for (const auto rec : matching_qsos)
+                ost << "MATCHING QSO AFTER SORTING: " << rec << endl;
+            }
+*/
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
             for (const auto& rec : matching_qsos)
@@ -8600,7 +8609,7 @@ void adif3_build_old_log(void)
                 it->second += rec;
             }
 
-// now for each differemt band/mode
+// now for each different band/mode
             for ( const auto& [bmode, vrec] : bmode_records )
             { adif3_record last_marked_qso       { vrec[0] };
               int          index_last_marked_qso { 0 };
@@ -8623,7 +8632,11 @@ void adif3_build_old_log(void)
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
                 for (int n { index_last_marked_qso }; n < static_cast<int>(vrec.size()); ++n)
-                  add_record_to_olog(vrec[n]);
+                { //if (callsign == "OH3RF"s)
+                  //  ost << "ADDING RECORD NUMBER " << n << " TO LOG: " << vrec[n] << endl;
+
+                   add_record_to_olog(vrec[n]);
+                }
             }
           }
           else  // no matching QSOs; should never happen

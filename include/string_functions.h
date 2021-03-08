@@ -1,4 +1,4 @@
-// $Id: string_functions.h 178 2020-12-27 16:26:16Z  $
+// $Id: string_functions.h 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -208,7 +208,7 @@ template <typename T>
 
   u_char* cp { (u_char*)(&value) };
 
-  for (size_t n = 0; n < value_size; ++n)
+  for (size_t n { 0 }; n < value_size; ++n)
   { if ( (start_posn + n) < rv.size() )
       rv[start_posn + n] = cp[n];
   }
@@ -502,7 +502,7 @@ template <typename T>
 T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
-  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
+  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
 }
@@ -539,7 +539,7 @@ template <typename T>
 T remove_char(T& t, const char char_to_remove)
 { typename std::remove_const<T>::type rv;
 
-  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv.push_back(remove_char(cs, char_to_remove)); } );
+  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -550,13 +550,6 @@ T remove_char(T& t, const char char_to_remove)
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
 std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
-
-/*! \brief                      Remove all instances of particular characters from a string
-    \param  cs                  original string
-    \param  chars_to_remove     vector whose elements are to be removed from <i>s</i>
-    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
-*/
-//std::string remove_chars(const std::string& cs, const std::vector<char>& chars_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
@@ -729,7 +722,7 @@ std::string separated_string(const T n, const std::string& sep = ","s)
   std::string rv;
 
   while (!tmp.empty())
-  { for (unsigned int N = 0; N < 3 and !tmp.empty(); ++N)
+  { for (unsigned int N { 0 }; N < 3 and !tmp.empty(); ++N)
     { rv = std::string(1, last_char(tmp)) + rv;
       tmp = tmp.substr(0, tmp.length() - 1);
     }

@@ -99,8 +99,6 @@ frequency::frequency(const enum BAND b)
 
 /*! \brief      return string suitable for use in bandmap
     \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
-
-    Sets the frequency to the low edge of the band <i>b</i>
 */
 string frequency::display_string(void) const
 { unsigned int khz { _hz / 1000 };

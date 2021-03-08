@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: fuzzy.cpp 179 2021-02-22 15:55:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,48 +65,12 @@ set<string> fuzzy_database::operator[](const string& key) const
   if (key.find_first_not_of(CALLSIGN_CHARS) != string::npos)
     return rv;
 
-//  vector<string> regex_str_vec;
-
-//  for (unsigned int posn { 0 }; posn < n_chars; ++posn)
-//  { const string str { key.substr(0, posn) + '.' + key.substr(posn + 1) };
-//    
-//    regex_str_vec += str;
-//  }
-
-//  set<string> rv { };
-
   const set<string>& ss { _db[ _to_valid_size(key.length()) ] };
 
   for (size_t posn { 0 }; posn < key.length(); ++posn)
-//  { const string str { key.substr(0, posn) + '.' + key.substr(posn + 1) };
-
     rv += regex_matches<set<string>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );
-//  }
 
   return rv;
-
-#if 0
-  set<string> rv;
-
-  const set<string>& ss { _db[ _to_valid_size(key.length()) ] };
-  
-  for (const auto& str : ss)
-  { for (unsigned int posn = 0; posn < key.length(); ++posn)
-    { bool match { ( (posn == 0) or (substring(key, 0, posn) == substring(str, 0, posn)) ) };  // 2nd term is always true if posn = 0
-      
-      if (match)
-      { if (posn != key.length() -1 )
-          match = (substring(key, posn + 1) == substring(str, posn + 1));
-
-        if (match)
-          if (key != str)           // don't include if the match is exact
-            rv.insert(str);
-      }
-    }
-  }
-  
-  return rv;
-#endif
 }
 
 // -----------  fuzzy_databases  ----------------
@@ -135,15 +99,10 @@ set<string> fuzzy_databases::operator[](const string& key)
   if (key.length() < 3)
     return rv;
 
-//  set<string> rv;
-
   for (const auto& db_p : _vec)
   { const fuzzy_database& db { *db_p };
 
     rv += db[key];
-//    const set<string>& calls { db[key] };
-
-//    copy(calls.cbegin(), calls.cend(), inserter(rv, rv.begin()));
   }
 
   return rv;
