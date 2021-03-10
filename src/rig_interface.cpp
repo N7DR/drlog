@@ -216,7 +216,7 @@ void rig_interface::prepare(const drlog_context& context)
 /*! \brief      Set mode
     \param  m   new mode
 
-    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
+    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  { 200 };
@@ -227,74 +227,81 @@ void rig_interface::rig_mode(const MODE m)
   _last_commanded_mode = m;
 
   if (_rig_connected)
-  { 
+  { if (_model == RIG_MODEL_K3)
+    { switch(m)
+      { case MODE_CW :
+          raw_command("MD3;"s);
+          break;
+
+        case MODE_SSB :
+          { const string mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"s : "MD2;"s };
+
+            raw_command(mode_cmd);
+            break;
+          }
+
+        default :
+          break;
+      }
+    }
+    else    // not K3
+    {
 // set correct hamlib mode 
-    rmode_t hamlib_m { RIG_MODE_CW };
+      rmode_t hamlib_m { RIG_MODE_CW };
 
-    if (m == MODE_SSB)
-      hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
+      if (m == MODE_SSB)
+        hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
 
-    int status;
+      int status;
 
 // hamlib, for reasons I can't guess, sets both the mode and the bandwidth in a single command
-    pbwidth_t tmp_bandwidth;
-    rmode_t   tmp_mode;
+      pbwidth_t tmp_bandwidth;
+      rmode_t   tmp_mode;
 
-    { SAFELOCK(_rig);
-      status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+      { SAFELOCK(_rig);
+        status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+      }
 
- //     if (m == MODE_SSB)
- //       ost << "tmp_mode = " << tmp_mode << ", tmp_bandwidth = " << tmp_bandwidth << endl;
-    }
-
-    if (status != RIG_OK)
-      _error_alert("Error getting mode prior to setting mode");
-    else
-    {  switch (tmp_mode)
-      { case RIG_MODE_CW:
+      if (status != RIG_OK)
+        _error_alert("Error getting mode prior to setting mode");
+      else
+      { switch (tmp_mode)
+        { case RIG_MODE_CW:
           last_cw_bandwidth = tmp_bandwidth;
           break;
 
-        case RIG_MODE_LSB:
-        case RIG_MODE_USB:
-          last_ssb_bandwidth = tmp_bandwidth;
-          break;
+          case RIG_MODE_LSB:
+          case RIG_MODE_USB:
+            last_ssb_bandwidth = tmp_bandwidth;
+            break;
 
-        default:
-          break;
-      }
+          default:
+            break;
+        }
 
-      bool retry { true };
+        bool retry { true };
 
-      SAFELOCK(_rig);       // hold the lock until we receive positive confirmation that the rig is properly set to correct mode and bandwidth
+        SAFELOCK(_rig);       // hold the lock until we receive positive confirmation that the rig is properly set to correct mode and bandwidth
 
-      while (retry)
-      { const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
-        const pbwidth_t bandwidth_to_set { (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth };
+        while (retry)
+        { const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
+          const pbwidth_t bandwidth_to_set { (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth };
 
-//        if (m == MODE_SSB)
-//          ost << "new_bandwidth = " << new_bandwidth << ", bandwidth_to_set = " << bandwidth_to_set << endl;
+          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, bandwidth_to_set) ;
 
-        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, bandwidth_to_set) ;
- //       ost << "setting mode: " << hamlib_m << " with bandwidth = " << 1800 << endl;
+          if (status != RIG_OK)
+            _error_alert("Error setting mode"s);
 
-//        bandwidth(1800);
+          status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
 
-//        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, (pbwidth_t)1800);
-//        ost << "after rig_set_mode()" << endl;
+          if (status != RIG_OK)
+            _error_alert("Error getting mode after setting mode"s);
 
-        if (status != RIG_OK)
-          _error_alert("Error setting mode"s);
-
-        status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
-
-        if (status != RIG_OK)
-          _error_alert("Error getting mode after setting mode"s);
-
-        if ( (tmp_mode != hamlib_m) or (tmp_bandwidth != new_bandwidth) )   // explicitly check the mode and bandwidth
-          sleep_for(RETRY_TIME);
-        else
-          retry = false;                                                    // we're done
+          if ( (tmp_mode != hamlib_m) or (tmp_bandwidth != new_bandwidth) )   // explicitly check the mode and bandwidth
+            sleep_for(RETRY_TIME);
+          else
+            retry = false;                                                    // we're done
+        }
       }
     }
   }

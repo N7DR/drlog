@@ -2827,8 +2827,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // workaround for hamlib bug that causes freeze if we attempt to set mode to LSB/USB when
 // our old bandwidth was not 1800
-      if (cur_mode == MODE_SSB)
-        rig.bandwidth(1800);
+//      if (cur_mode == MODE_SSB)
+//        rig.bandwidth(1800);
 
       rig.rig_frequency(last_frequency);
 

@@ -259,7 +259,7 @@ public:
 /*! \brief      Set mode
     \param  m   new mode
 
-    Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
   void rig_mode(const MODE m);
 
