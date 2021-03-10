@@ -1121,13 +1121,17 @@ public:
 */
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
 
+/*! \brief          Write a <i>bandmap</i> object to a window
+    \param  win     window to which to write
+    \return         the window
+*/
   window& write_to_window(window& win);
 
+/*! \brief          Rename the mutex associated with this bandmap
+    \param  new_name    the new name of the mutex
+*/
   inline void rename_mutex(const std::string& new_name)
     { _bandmap_mutex.rename(new_name); }
-
-// dump to output file
-  void dump(void);
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 

@@ -66,37 +66,13 @@ void choice_equivalents::operator+=(const std::string& ch1_ch2)
   *this += { vec[0], vec[1] };
 }
 
-/*! \brief          Add a pair of equivalent fields
-    \param  ch1     first element of choice
-    \param  ch2     second element of choice
-*/
-//void choice_equivalents::add(const string& ch1, const string& ch2)
-//{ _choices[ch1] = ch2;
-//  _choices[ch2] = ch1;
-//}
-
-/*! \brief          Add a pair of equivalent fields
-    \param  chvec   A two-element vector of equivalent fields
-
-    Throws exception if <i>chvec</i> does not have exactly two elements
-*/
-//void choice_equivalents::add(const vector<string>& chvec)
-//{ if (chvec.size() != 2)
-//    throw exception();
-//
-//  _choices[chvec[0]] = chvec[1];
-//  _choices[chvec[1]] = chvec[0];
-//}
-
 /*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
     \param  ch1_ch2     the two fields, separated by a plus sign
 
     If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
 */
 void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FIELD2"
-{ //if (contains(ch1_ch2, "+"s))
-  //  add(ch1_ch2);
-  if (number_of_occurrences(ch1_ch2, '+') == 1)
+{ if (number_of_occurrences(ch1_ch2, '+') == 1)
     *this += ch1_ch2;
 }
 
@@ -114,7 +90,6 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
 */
 void exchange_field_values::add_canonical_value(const string& cv)
 { if (_values.find(cv) == _values.end())
-//    _values.insert( { cv, set<string>( { cv } ) } );
     _values += { cv, set<string>( { cv } ) };
 }
 
@@ -127,7 +102,6 @@ void exchange_field_values::add_canonical_value(const string& cv)
 void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
 
-//  _values[cv].insert(v);
   _values[cv] += v;
 }
 

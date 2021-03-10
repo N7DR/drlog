@@ -1118,8 +1118,10 @@ bool rig_interface::is_locked(void)
     \return     the current audio bandwidth, in hertz
 */
 int rig_interface::bandwidth(void)
-{ if (!_rig_connected)
+{ if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return 0;
+
+  SAFELOCK(_rig);
 
   const string status_str { raw_command("BW;"s, RESPONSE::EXPECTED, 7) };
 
@@ -1134,10 +1136,6 @@ frequency rig_interface::get_last_frequency(const bandmode bm)
 { SAFELOCK(_rig);
 
   return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not prsent in the map
-
-//  const auto cit { _last_frequency.find( { b, m } ) };
-
-//  return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1309,6 +1307,22 @@ void rig_interface::bandwidth_b(const unsigned int hz)
       raw_command("BW$"s + k3_bw_units + ";"s);
     }
   }
+}
+
+/*! \brief      Get audio centre frequency, in Hz
+    \return     The audio centre frequency, in Hz
+
+    Works only with K3
+*/
+unsigned int rig_interface::centre_frequency(void)
+{ if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
+    return 0;
+
+  SAFELOCK(_rig);
+
+  const string status_str { raw_command("IS;"s, RESPONSE::EXPECTED, 8) };
+
+  return ( (status_str.size() < 8) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Is an RX antenna in use?

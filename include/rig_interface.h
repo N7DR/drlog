@@ -506,6 +506,13 @@ public:
 /// toggle whether the RX antenna is in use
   inline void toggle_rx_ant(void)
     { rx_ant_toggle(); }
+
+/*! \brief      Get audio centre frequency, in Hz
+    \return     The audio centre frequency, in Hz
+
+    Works only with K3
+*/
+  unsigned int centre_frequency(void);
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

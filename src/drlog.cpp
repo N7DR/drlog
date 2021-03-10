@@ -2237,6 +2237,8 @@ void* display_rig_status(void* vp)
           const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp()->bandwidth()) };
           const string frequency_b_str { f_b.display_string() };
 
+          const string centre_str      { to_string(rig_status_thread_parameters.rigp()->centre_frequency()) };
+
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
 
@@ -2267,6 +2269,8 @@ void* display_rig_status(void* vp)
             win_rig < rit_xit_str;
           else
             win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
+
+           win_rig < centre_str;
 
 // don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
           if (bandwidth_str.size() <= 4)
