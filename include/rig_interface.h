@@ -50,6 +50,15 @@ enum class VFO { A,                       ///< VFO A
                  B                        ///< VFO B
                };
 
+/// tap or hold
+enum class PRESS { TAP,
+                   HOLD
+                 };
+
+//constexpr int K3_BUTTON_NOTCH { 32 };
+enum class K3_BUTTON { NOTCH = 32
+                     };
+
 using DRLOG_CLOCK = std::chrono::system_clock;
 
 // ---------------------------------------- rig_status -------------------------
@@ -513,6 +522,21 @@ public:
     Works only with K3
 */
   unsigned int centre_frequency(void);
+
+/// is notch enabled?
+  bool notch_enabled(const std::string& ds_result = std::string());
+
+/// place K3 into extended mode
+  void k3_extended_mode(void);
+
+/// emulate tapping or holding a K3 button
+  void k3_press_button(const K3_BUTTON n, const PRESS torh);
+
+  inline void k3_tap(const K3_BUTTON n)
+    { k3_press_button(n, PRESS::TAP); }
+
+  inline void k3_hold(const K3_BUTTON n)
+    { k3_press_button(n, PRESS::HOLD); }
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

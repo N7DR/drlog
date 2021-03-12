@@ -2155,17 +2155,24 @@ void* display_rig_status(void* vp)
 
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       if (ok_to_poll_k3)
-      { constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
+      { constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
+        constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
       
+// force into extended mode -- it's ridiculous to do this all the time, but there seems to be no way to be sure we haven't turned the rig on/off
+// currently needed in order to obtain notch info, hence only SSB, but force it anyway
+        rig_status_thread_parameters.rigp() -> k3_extended_mode();
+
 // get the bandmap version number
         const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
-        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };          // K3 returns 38 characters
+        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
+        const string   ds_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
 
-        if (status_str.length() == STATUS_REPLY_LENGTH)                                                          // do something only if it's the correct length
-        { const frequency f                   { from_string<double>(substring(status_str, 2, 11)) };           // frequency of VFO A
-          const frequency target              { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };    // frequency in CQ mode
-          const frequency f_b                 { rig.rig_frequency_b() };                                          // frequency of VFO B
-          const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };     // explicitly set to SAP mode if we have QSYed
+        if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == DS_REPLY_LENGTH) )              // do something only if it's the correct length
+        { const frequency  f                  { from_string<double>(substring(status_str, 2, 11)) };                    // frequency of VFO A
+          const frequency  target             { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };             // frequency in CQ mode
+          const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
+          const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
+          const bool       notch              { (rig_status_thread_parameters.rigp())->notch_enabled(ds_reply_str) };   // really only needed in SSB
 
           if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
             enter_sap_mode();                                                                   // switch to SAP if we've moved
@@ -2275,6 +2282,9 @@ void* display_rig_status(void* vp)
 // don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
           if (bandwidth_str.size() <= 4)
             win_rig < "   "s < bandwidth_str;
+
+          if (notch)
+            win_rig < " N"s;
 
           win_rig.refresh();
         }
@@ -2698,6 +2708,7 @@ void* prune_bandmap(void* vp)
     ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
     ALT-K         -- toggle CW
     ALT-M         -- change mode
+    ALT-N         -- toggle notch status if on SSB
     ALT-Q         -- send QTC
     ALT-Y         -- delete last QSO
     ALT-KP_4      -- decrement bandmap column offset
@@ -2707,12 +2718,14 @@ void* prune_bandmap(void* vp)
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
+    BACKSLASH     -- send to the scratchpad
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
     CTRL-I        -- refresh geomagnetic indices
     CTRL-Q        -- swap QSL and QUICK QSL messages
     CTRL-S        -- send to scratchpad
     CTRL-KP+      -- increment qso number
+    CTRL-KP- -- decrement qso number
     CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
     CTRL-ENTER    -- assume it's a call or partial call and go to the call if it's in the bandmap
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
@@ -2735,8 +2748,6 @@ void* prune_bandmap(void* vp)
 //    KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
 
 
-    CTRL-KP- -- decrement qso number
-    BACKSLASH -- send to the scratchpad
     ALT--> -- VFO A -> VFO B
     ALT-<- -- VFO B -> VFO A
     CTRL-B -- fast bandwidth
@@ -2883,6 +2894,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // update displays of needed mults
     update_remaining_country_mults_window(statistics, cur_band, new_mode);
+
+    processed = true;
+  }
+
+// ALT-N -- toggle notch status if on SSB
+  if (!processed and e.is_alt('n'))
+  { if (safe_get_mode() == MODE_SSB)
+      rig.k3_tap(K3_BUTTON::NOTCH);    
 
     processed = true;
   }
@@ -4353,6 +4372,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 */
 /*  ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
     ALT-K         -- toggle CW
+    ALT-N         -- toggle notch status if on SSB
     ALT-KP_4      -- decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
 
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
@@ -4404,6 +4424,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // ALT-K -- toggle CW
   if (!processed and e.is_alt('k'))
     processed = toggle_cw();
+
+// ALT-N -- toggle notch status if on SSB
+  if (!processed and e.is_alt('n'))
+  { if (safe_get_mode() == MODE_SSB)
+      rig.k3_tap(K3_BUTTON::NOTCH);    
+
+    processed = true;
+  }
 
 // CTRL-S -- send contents of CALL window to scratchpad
   if (!processed and e.is_control('s'))

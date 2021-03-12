@@ -60,7 +60,6 @@ frequency::frequency(const double f)
     \param unit     frequency unit
 */
 frequency::frequency(const double f, const FREQUENCY_UNIT unit)
-
 { switch (unit)
   { case FREQUENCY_UNIT::HZ :
       _hz = static_cast<unsigned int>(f + 0.5);

@@ -211,6 +211,9 @@ void rig_interface::prepare(const drlog_context& context)
 
   if ((status == RIG_OK) and (_model != RIG_MODEL_DUMMY))
     _rig_connected = true;
+
+// if it's a K3, enable extended mode
+  k3_extended_mode();
 }
 
 /*! \brief      Set mode
@@ -219,33 +222,42 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ static pbwidth_t last_cw_bandwidth  { 200 };
-  static pbwidth_t last_ssb_bandwidth { 1800 };
-
-  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
+{ constexpr milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
 
   _last_commanded_mode = m;
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { switch(m)
-      { case MODE_CW :
-          raw_command("MD3;"s);
-          break;
+    { int counter { 0 };
 
-        case MODE_SSB :
-          { const string mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"s : "MD2;"s };
-
-            raw_command(mode_cmd);
+      while ( (counter++ <= 10) and (rig_mode() != m) ) // don't change mode if we're already in the correct mode
+      { if (counter != 1)                               // no pause the first time through
+          sleep_for(RETRY_TIME);
+        
+        switch(m)
+        { case MODE_CW :
+            raw_command("MD3;"s);
             break;
-          }
 
-        default :
-          break;
+          case MODE_SSB :
+            { const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"s : "MD2;"s };
+
+              raw_command(k3_mode_cmd);
+              break;
+            }
+
+          default :
+            break;
+        }
       }
+
+      if (counter > 10)
+        _error_alert("Error setting mode");
     }
     else    // not K3
-    {
+    { static pbwidth_t last_cw_bandwidth  { 200 };
+      static pbwidth_t last_ssb_bandwidth { 1800 };
+
 // set correct hamlib mode 
       rmode_t hamlib_m { RIG_MODE_CW };
 
@@ -1361,6 +1373,47 @@ void rig_interface::rx_ant(const bool torf)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
       raw_command( torf ? "AR1;"s : "AR0;"s );
+  }
+}
+
+/// is notch enabled?
+bool rig_interface::notch_enabled(const string& ds_result)
+{ if (!_rig_connected)
+    return false;
+
+  if (_model != RIG_MODEL_K3)
+    return false;
+
+// it's a K3
+  const string result { ds_result.empty() ? raw_command("DS;", RESPONSE::EXPECTED) : ds_result };
+
+  if (!contains(result, ";"s) or (result.size() != 13) )
+    ost << "ERROR in notch_enabled(); result = " << result << endl;
+  else
+  { const char c { result[11] };    // icon flash data
+
+    const bool notch_bit { (c bitand 0x02) == 0x02 };
+
+    return notch_bit;
+  }
+
+  return false;
+}
+
+/// place K3 into extended mode
+void rig_interface::k3_extended_mode(void)
+{ if (_model == RIG_MODEL_K3)
+    raw_command("K31;"s);
+}
+
+/// emulate tapping or holding a K3 button
+void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
+{ if (_model == RIG_MODEL_K3)
+  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };
+    const string press_code { (torh == PRESS::TAP) ? "SWT"s : "SWH"s };
+    const string command    { press_code + n_str + ";"s };
+
+    raw_command(command);
   }
 }
 
