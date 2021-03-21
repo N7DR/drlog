@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 178 2020-12-27 16:26:16Z  $
+// $Id: rig_interface.h 180 2021-03-21 15:21:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,6 +64,40 @@ using DRLOG_CLOCK = std::chrono::system_clock;
 // ---------------------------------------- rig_status -------------------------
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig
+
+// ---------------------------------------- audio_filter -------------------------
+
+/*! \class  audio_filter
+    \brief  Encapsulate the basic characteristics of an audio filter
+*/
+
+class audio_filter
+{
+protected:
+
+  int _bandwidth   { 0 };     ///< some measure of bandwidth, in Hz
+  int _centre      { 0 };     ///< centre frequency, in Hz
+  int _granularity { 50 };    ///< granularity, in Hz
+
+  inline int _round(const int value)
+    { return ( ( (value + (_granularity / 2) ) / _granularity ) * _granularity ); }
+
+public:
+
+  audio_filter(void) = default;
+  
+  ~audio_filter(void) = default;
+
+  READ(centre);                     ///< centre frequency, in Hz
+  READ(bandwidth);                  ///< some measure of bandwidth, in Hz
+  READ_AND_WRITE(granularity);      ///< granularity, in Hz
+
+  inline void bandwidth(const int bw)
+    { _bandwidth = _round(bw); }
+
+  inline void centre(const int fc)
+    { _centre = _round(fc); }
+};
 
 // ---------------------------------------- rig_interface -------------------------
 
@@ -523,6 +557,13 @@ public:
 */
   unsigned int centre_frequency(void);
 
+/*! \brief      Set audio centre frequency, in Hz
+    \patam  fc  the audio centre frequency, in Hz
+
+    Works only with K3
+*/
+  void centre_frequency(const unsigned int fc);
+
 /// is notch enabled?
   bool notch_enabled(const std::string& ds_result = std::string());
 
@@ -537,6 +578,8 @@ public:
 
   inline void k3_hold(const K3_BUTTON n)
     { k3_press_button(n, PRESS::HOLD); }
+
+  void filter(const audio_filter& af);
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

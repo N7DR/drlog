@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 178 2020-12-27 16:26:16Z  $
+// $Id: drlog_context.h 180 2021-03-21 15:21:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -257,6 +257,10 @@ protected:
   unsigned int                                 _shift_poll                              { 50 };                         ///< how frequently to poll the shift key during an RIT QSY, in milliseconds
   bool                                         _short_serno                             { false };                      ///< whether to omit leading Ts
   std::string                                  _society_list_filename                   { };                            ///< name of file containing IARU society exchanges
+  int                                          _ssb_bandwidth_narrow                    { 1600 };                       ///< narrow SSB bandwidth (Hz)
+  int                                          _ssb_bandwidth_wide                      { 1800 };                       ///< wide SSB bandwidth (Hz)
+  int                                          _ssb_centre_bandwidth_narrow             { 1300 };                       ///< centre frequency for narrow SSB bandwidth (Hz)
+  int                                          _ssb_centre_bandwidth_wide               { 1500 };                       ///< centre frequency for wide SSB bandwidth (Hz)
   enum AUDIO_RECORDING                         _start_audio_recording                   { AUDIO_RECORDING::DO_NOT_START };  ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band                              { BAND_20 };                        ///< on what band do we start?
   enum MODE                                    _start_mode                              { MODE_CW };                        ///< on which mode do we start?

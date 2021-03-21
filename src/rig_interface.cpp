@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: rig_interface.cpp 180 2021-03-21 15:21:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1344,6 +1344,33 @@ unsigned int rig_interface::centre_frequency(void)
   return ( (status_str.size() < 8) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
+/*! \brief      Set audio centre frequency, in Hz
+    \patam  fc  the audio centre frequency, in Hz
+
+    Works only with K3
+*/
+void rig_interface::centre_frequency(const unsigned int fc)
+{ if ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
+    return;
+
+  SAFELOCK(_rig);
+
+  const string fc_str { pad_leftz(fc, 4) };
+
+  if (fc_str.length() != 4)
+  { const string msg { "ERROR: length of centre frequency string != 4: "s + fc_str  };
+
+    ost << msg << endl;
+    _error_alert(msg);
+
+    return; 
+  }
+
+  const string cmd { "IS "s + fc_str + ";"s };
+
+  raw_command(cmd, RESPONSE::NOT_EXPECTED);
+}
+
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
 
@@ -1415,6 +1442,17 @@ void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
 
     raw_command(command);
   }
+}
+
+void rig_interface::filter(const audio_filter& af)
+{ const int bw { af.bandwidth() };
+  const int cf { af.centre() };
+
+  if (bw)
+    bandwidth(bw);
+
+  if (cf)
+    centre_frequency(cf);
 }
 
 /// register a function for alerting the user

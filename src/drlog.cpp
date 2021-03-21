@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 179 2021-02-22 15:55:56Z  $
+// $Id: drlog.cpp 180 2021-03-21 15:21:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -333,8 +333,8 @@ bandmap_buffer          bm_buffer;                                  ///< global 
 
 set<BAND>               call_history_bands;                         ///< bands displayed in CALL HISTORY window
 drlog_context           context;                                    ///< context taken from configuration file
-int                     cw_bandwidth_narrow;                        ///< narrow CW bandwidth
-int                     cw_bandwidth_wide;                          ///< wide CW bandwidth
+int                     cw_bandwidth_narrow;                        ///< narrow CW bandwidth, in Hz
+int                     cw_bandwidth_wide;                          ///< wide CW bandwidth, in Hz
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
@@ -387,6 +387,10 @@ unsigned int            serno_spaces { 0 };                 ///< number of addit
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
 int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
 unsigned int            shift_poll  { 0 };                  ///< polling interval for SHIFT keys
+int                     ssb_bandwidth_narrow;               ///< narrow SSB bandwidth, in Hz
+int                     ssb_bandwidth_wide;                 ///< wide SSB bandwidth, in Hz
+int                     ssb_centre_narrow;                  ///< narrow SSB bandwidth centre frequency, in Hz
+int                     ssb_centre_wide;                    ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -2156,6 +2160,7 @@ void* display_rig_status(void* vp)
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       if (ok_to_poll_k3)
       { constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
+//        constexpr size_t IC_REPLY_LENGTH     { 8 };           // K3 returns 8 characters
         constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
       
 // force into extended mode -- it's ridiculous to do this all the time, but there seems to be no way to be sure we haven't turned the rig on/off
@@ -2166,6 +2171,7 @@ void* display_rig_status(void* vp)
         const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
         const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
         const string   ds_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
+//        const string   ic_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("IC;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == DS_REPLY_LENGTH) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring(status_str, 2, 11)) };                    // frequency of VFO A
@@ -2272,16 +2278,19 @@ void* display_rig_status(void* vp)
           win_rig < WINDOW_ATTRIBUTES::CURSOR_DOWN
                   < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
+          if (rig_status_thread_parameters.rigp()->test())
+            win_rig < "T ";
+
           if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)
-            win_rig < rit_xit_str;
+            win_rig < rit_xit_str < "  ";
           else
-            win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
+            win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1) < "  ";
 
            win_rig < centre_str;
 
 // don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
           if (bandwidth_str.size() <= 4)
-            win_rig < "   "s < bandwidth_str;
+            win_rig < ":"s < bandwidth_str;
 
           if (notch)
             win_rig < " N"s;
@@ -2738,7 +2747,8 @@ void* prune_bandmap(void* vp)
     ENTER, ALT-ENTER
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
-    KP-           -- centre RIT if on SSB and RIT is on
+//    KP-           -- centre RIT if on SSB and RIT is on [perhaps use KP5 for this]
+    KP-           -- toggle 1300:1600/1500:1800 centre/bandwidth if on SSB
     SHIFT (RIT control)
     SPACE -- generally, dupe check
 
@@ -8758,6 +8768,28 @@ bool cw_toggle_bandwidth(void)
 
   if (safe_get_mode() == MODE_CW)
     rig.bandwidth( (abs(rig.bandwidth() - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
+
+  return true;
+}
+
+/*! \brief      Toggle narrow/wide centre/bandwidth values if on SSB
+    \return     true
+
+    Sets bandwidth to the wide bandwidth if it's not equal to the narrow bandwidth
+*/
+bool ssb_toggle_bandwidth(void)
+{ constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
+
+  if (safe_get_mode() == MODE_SSB)
+  { enum SSB_AUDIO  { SSB_WIDE,
+                      SSB_NARROW
+                    };
+
+    const SSB_AUDIO bw { (abs(rig.bandwidth() - ssb_bandwidth_wide) < BANDWIDTH_PRECISION) ? SSB_NARROW : SSB_WIDE  };
+
+    rig.bandwidth( (bw == SSB_NARROW) ? ssb_bandwidth_narrow : ssb_bandwidth_wide );
+    rig.centre_frequency( (bw == SSB_NARROW) ? ssb_centre_narrow : ssb_centre_wide );
+  }
 
   return true;
 }
