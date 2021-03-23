@@ -842,6 +842,9 @@ public:
 */
   bandmap_entry operator[](const std::string& callsign);
 
+  inline bandmap_entry my_bandmap_entry(void)
+    { return (*this)[MY_MARKER]; }
+
 /*! \brief              Return the first entry for a partial call
     \param  callsign    partial call for which the entry should be returned
     \return             the first bandmap_entry corresponding to <i>callsign</i>

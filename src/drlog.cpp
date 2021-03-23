@@ -79,27 +79,6 @@ enum class KNOWN_MULT { FORCE_KNOWN,
                         NO_FORCE_KNOWN
                       };
 
-
-
-//array<unordered_map<string, frequency>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
-
-/*
-template <class K, class V> // P = parameter; D = data in the database
-class TS_unordered_map : public std::unordered_map<K, V>
-{
-protected:
-
-  pt_mutex ptm { "DEFAULT TS UNORDERED MAP"s };
-
-public:
-
-  inline void rename(const std::string& nm)
-    { ptm.rename(nm); }
-
-};
-*/
-
-
 // needed for WRAPPER_3 definition of memory_entry
 ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 { ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
@@ -337,6 +316,7 @@ int                     cw_bandwidth_narrow;                        ///< narrow 
 int                     cw_bandwidth_wide;                          ///< wide CW bandwidth, in Hz
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
+bool                    debug { false };                            ///< whether to log additional information
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
@@ -2727,6 +2707,7 @@ void* prune_bandmap(void* vp)
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
+    ALT-F4        -- toggle DEBUG state
     BACKSLASH     -- send to the scratchpad
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
@@ -2806,6 +2787,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   const string call_contents { remove_peripheral_spaces(win.read()) };
   const BAND   cur_band      { safe_get_band() };
   const MODE   cur_mode      { safe_get_mode() };
+
+// ALT-F4 -- toggle DEBUG state
+  if (!processed and e.is_alt() and (e.symbol() == XK_F4))
+  { debug = !debug;
+    alert( "DEBUG STATE NOW: "s + (debug ? "TRUE"s : "FALSE"s) );
+    processed = true;
+  }
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
@@ -8097,8 +8085,21 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
   safelock bm_lock(bm._bandmap_mutex);
 
-  if (const bandmap_entry be { (bm.*fn_p)( dirn ) }; !be.empty())  // get and process the next non-empty stn/mult, according to the function
-  { rig.rig_frequency(be.freq());
+  const bandmap_entry be { (bm.*fn_p)( dirn ) };
+
+  if (debug)
+  { ost << "DEBUG process_bandmap_function()"
+        << "current actual frequency: " << rig.rig_frequency()
+        << "my bandmap entry: " << bm.my_bandmap_entry()
+        << "next bandmap entry: " << be
+        << endl;
+  }
+
+  if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
+  { if (debug)
+      ost << "Setting frequency to: " << be.freq() << endl;
+
+    rig.rig_frequency(be.freq());
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
     enter_sap_mode();

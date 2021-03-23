@@ -581,7 +581,7 @@ void bandmap::operator+=(bandmap_entry& be)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
-      { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
+      { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // add only if more than 250 Hz away
         { (*this) -= callsign;
           _insert(be);
         }
@@ -926,6 +926,8 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
+
+     Should perhaps use guard band instead of MAX_FREQUENCY_SKEW
 */
 bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
@@ -939,10 +941,13 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 
   const string target_freq_str { marker_it->frequency_str() };
 
-  if (dirn == BANDMAP_DIRECTION::DOWN)
-  { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis First ed. p. 66f.
+  const frequency target_freq { marker_it->freq() };
 
-    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ) }; // move away from my frequency, in downwards direction
+  if (dirn == BANDMAP_DIRECTION::DOWN)
+  { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
+
+//    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.frequency_str() != target_freq_str ); } ) }; // move away from my frequency, in downwards direction
+    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - static_cast<int>(MAX_FREQUENCY_SKEW)) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
     { const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) };
@@ -953,7 +958,9 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   }
 
   if (dirn == BANDMAP_DIRECTION::UP)
-  { const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
+  { //const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
+
+    const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + static_cast<int>(MAX_FREQUENCY_SKEW)) ); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
     { const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
