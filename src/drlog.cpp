@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 180 2021-03-21 15:21:49Z  $
+// $Id: drlog.cpp 182 2021-04-04 19:39:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2834,10 +2834,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
         last_frequency = DEFAULT_FREQUENCIES.at(bmode);
 
-// workaround for hamlib bug that causes freeze if we attempt to set mode to LSB/USB when
-// our old bandwidth was not 1800
-//      if (cur_mode == MODE_SSB)
-//        rig.bandwidth(1800);
+// check that we're about to go to the correct band
+      { if (BAND(last_frequency) != new_band)
+        { ost << "Error when attempting to change band; new band = " << new_band << ", new frequency = " << last_frequency << endl;
+          alert("FREQUENCY ERROR WHEN CHANGING BAND");
+        }
+      }
 
       rig.rig_frequency(last_frequency);
 

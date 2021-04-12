@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 180 2021-03-21 15:21:49Z  $
+// $Id: rig_interface.h 182 2021-04-04 19:39:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -558,7 +558,7 @@ public:
   unsigned int centre_frequency(void);
 
 /*! \brief      Set audio centre frequency, in Hz
-    \patam  fc  the audio centre frequency, in Hz
+    \param  fc  the audio centre frequency, in Hz
 
     Works only with K3
 */
@@ -570,15 +570,33 @@ public:
 /// place K3 into extended mode
   void k3_extended_mode(void);
 
-/// emulate tapping or holding a K3 button
+/*! \brief          Emulate the tapping or holding of a K3 button
+    \param  n       the K3 button to tap or hold
+    \param  torh    whether to press or hold
+
+    Works only with K3
+*/
   void k3_press_button(const K3_BUTTON n, const PRESS torh);
 
+/*! \brief      Emulate the tapping of a K3 button
+    \param  n   the K3 button to tap
+
+    Works only with K3
+*/
   inline void k3_tap(const K3_BUTTON n)
     { k3_press_button(n, PRESS::TAP); }
 
+/*! \brief      Emulate the holding of a K3 button
+    \param  n   the K3 button to hold
+
+    Works only with K3
+*/
   inline void k3_hold(const K3_BUTTON n)
     { k3_press_button(n, PRESS::HOLD); }
 
+/*! \brief      Set audio centre frequency and width
+    \param  af  the characteristics to set 
+*/
   void filter(const audio_filter& af);
 };
 

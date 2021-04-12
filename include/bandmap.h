@@ -1,4 +1,4 @@
-// $Id: bandmap.h 180 2021-03-21 15:21:49Z  $
+// $Id: bandmap.h 183 2021-04-12 20:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1085,7 +1085,8 @@ public:
 */
   inline void do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      _do_not_add.insert(callsign);
+//      _do_not_add.insert(callsign);
+      _do_not_add += callsign;
     }
 
 /*!  \brief             Remove a call from the do-not-add list

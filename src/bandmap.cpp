@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 180 2021-03-21 15:21:49Z  $
+// $Id: bandmap.cpp 183 2021-04-12 20:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,7 @@ extern pt_mutex                      batch_messages_mutex;   ///< mutex for batc
 extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps
 extern bool                          bandmap_frequency_up;   ///< whether increasing frequency goes upwards in the bandmap
+extern drlog_context                 context;                ///< context
 extern exchange_field_database       exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;            ///< location information
 extern unsigned int                  max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
@@ -630,7 +631,8 @@ void bandmap::operator+=(bandmap_entry& be)
     }
 
     if (be.is_not_marker() and mark_as_recent)
-      _recent_calls.insert(callsign);
+//      _recent_calls.insert(callsign);
+      _recent_calls += callsign;
 
     _dirty_entries();
   }
@@ -932,6 +934,9 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
+//  const int max_permitted_skew { static_cast<int>(MAX_FREQUENCY_SKEW) };
+  const int max_permitted_skew { 95 };
+
   const BM_ENTRIES fe { displayed_entries() };
 
   auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
@@ -947,7 +952,7 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
 
 //    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.frequency_str() != target_freq_str ); } ) }; // move away from my frequency, in downwards direction
-    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - static_cast<int>(MAX_FREQUENCY_SKEW)) ); } ) }; // move away from my frequency, in downwards direction
+    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
     { const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) };
@@ -960,7 +965,7 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   if (dirn == BANDMAP_DIRECTION::UP)
   { //const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
 
-    const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + static_cast<int>(MAX_FREQUENCY_SKEW)) ); }) }; // move away from my frequency, in upwards direction
+    const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
     { const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };

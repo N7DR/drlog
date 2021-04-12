@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 180 2021-03-21 15:21:49Z  $
+// $Id: rig_interface.cpp 182 2021-04-04 19:39:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1157,34 +1157,6 @@ frequency rig_interface::get_last_frequency(const bandmode bm)
   return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not prsent in the map
 }
 
-/*! \brief      Get the most recent frequency for a particular band and mode
-    \param  b   band
-    \param  m   mode
-    \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
-*/
-#if 0
-frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
-{ SAFELOCK(_rig);
-
-  const auto cit { _last_frequency.find( { b, m } ) };
-
-  return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
-}
-#endif
-
-/*! \brief      Set a new value for the most recent frequency for a particular band and mode
-    \param  b   band
-    \param  m   mode
-    \param  f   frequency
-*/
-#if 0
-void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequency& f)
-{ SAFELOCK(_rig);
-
-  _last_frequency[ { b, m } ] = f;
-}
-#endif
-
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  bm  band and mode
     \param  f   frequency
@@ -1301,8 +1273,7 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { //const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
-      const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
+    { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
       raw_command("BW"s + k3_bw_units + ";"s);
 
@@ -1320,8 +1291,7 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 void rig_interface::bandwidth_b(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { //const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
-      const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
+    { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
       raw_command("BW$"s + k3_bw_units + ";"s);
     }
@@ -1433,7 +1403,12 @@ void rig_interface::k3_extended_mode(void)
     raw_command("K31;"s);
 }
 
-/// emulate tapping or holding a K3 button
+/*! \brief          Emulate the tapping or holding of a K3 button
+    \param  n       the K3 button to tap or hold
+    \param  torh    whether to press or hold
+
+    Works only with K3
+*/
 void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
 { if (_model == RIG_MODEL_K3)
   { const string n_str      { pad_leftz(static_cast<int>(n), 2) };
@@ -1444,6 +1419,9 @@ void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
   }
 }
 
+/*! \brief      Set audio centre frequency and width
+    \param  af  the characteristics to set 
+*/
 void rig_interface::filter(const audio_filter& af)
 { const int bw { af.bandwidth() };
   const int cf { af.centre() };
