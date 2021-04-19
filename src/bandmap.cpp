@@ -918,6 +918,14 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 
       return rv;
     }
+
+    case 2 :                                                            // new on this band+mode
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+
+      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
+
+      return rv;
+    }    
   }
 }
 
