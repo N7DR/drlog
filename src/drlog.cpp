@@ -8410,8 +8410,9 @@ void display_memories(void)
 void update_score_window(const unsigned int score)
 { const static string RUBRIC { "Score: "s };
 
-  win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
-            <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
+  if (win_score.width() > static_cast<int>(RUBRIC.length()))
+    win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
+              <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
 }
 
 /*! \brief      Update the BANDMAP FILTER window

@@ -925,7 +925,19 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
       REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
 
       return rv;
+    }
+
+/*
+    case 3 :                                                            // never worked anywhere
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+
+//      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
+      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
+
+      return rv;
     }    
+*/
+
   }
 }
 
