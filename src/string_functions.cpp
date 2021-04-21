@@ -241,16 +241,17 @@ string replace(const string& s, const string& old_str, const string& new_str)
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
 string pad_string(const string& s, const size_t len, const PAD pad_side, const char pad_char)
-{ string rv { s };
+{ if (static_cast<int>(len) <= 0)
+    return s;
 
-  if (rv.length() >= len)
-    return rv;
-  
-  const size_t n_pad_chars { len - rv.length() };
+  if (s.length() >= len)
+    return s;
+
+  const size_t n_pad_chars { len - s.length() };
   
   const string pstring(n_pad_chars, pad_char);  // cannot use initializer-list
 
-  return ( (pad_side == PAD::LEFT) ? (pstring + rv) : (rv + pstring) );
+  return ( (pad_side == PAD::LEFT) ? (pstring + s) : (s + pstring) );
 }
 
 /*! \brief              Read the contents of a file into a single string
