@@ -19,6 +19,7 @@
     Support for pthreads
 */
 
+//#include "log_message.h" // includes this file
 #include "macros.h"
 #include "x_error.h"
 
@@ -27,6 +28,8 @@
 #include <vector>
 
 #include <pthread.h>
+
+//extern message_stream ost;                        ///< for debugging, info
 
 using namespace std::literals::string_literals;
 
@@ -54,10 +57,15 @@ constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error l
               PTHREAD_INHERITANCE_POLICY_ERROR        { -12 },      ///< Error setting inheritance policy
               PTHREAD_STACK_SIZE_ERROR                { -13 },      ///< Error setting stack size
               PTHREAD_PRIORITY_ERROR                  { -14 },      ///< Error related to priority
-              PTHREAD_MUTEX_ATTR_GET_SET_ERROR        { -15 };      ///< Error getting or setting a mutex attribute
+              PTHREAD_MUTEX_ATTR_GET_SET_ERROR        { -15 },      ///< Error getting or setting a mutex attribute
+              PTHREAD_NO_KEY                          { -16 },      ///< Unable to create key
+              PTHREAD_ERROR_SETTING_DATA              { -17 };      ///< Unable to set thread-specific data
 
 // attributes that can be set at the time that a thread_attribute object is created
 constexpr unsigned int PTHREAD_DETACHED { 1 };        ///< detached pthread
+
+// forward declarations
+class pthread_error;
 
 // -------------------------------------------  thread_attribute  -----------------------
 
@@ -263,7 +271,23 @@ public:
 
 /// constructor
   thread_specific_data(void)
-    { pthread_key_create(&_key, NULL); }
+    { if (const int status { pthread_key_create(&_key, NULL) };  status != 0)
+        throw pthread_error(PTHREAD_NO_KEY, "Unable to create pthread key for thread-specific data"s); 
+    }
+
+/// destructor
+  ~thread_specific_data(void)
+  { pthread_key_delete(_key);
+ //if (const int status { pthread_key_delete(_key) }; status != 0)
+      //ost << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << endl;   // can't do this because of circularity; need to rework this sometime
+
+        // if this returns an error, it means something has gone wrong,
+                                                        // but since we can't throw an exception, and we have noweher to send
+                                                        // a notification we might as well just ignore it for now
+  
+//    if (status != 0)                              // can't throw exception in destructor
+//      throw std::exception();
+  }
 
 /*! \brief      Get a pointer into the thread-specific data
     \return     pointer to thread-specific data
@@ -283,7 +307,9 @@ public:
     \param  tp  pointer to data that is to become thread-specific
 */
   void set(const T* tp)
-    { pthread_setspecific(_key, tp); }
+    { if (const int status { pthread_setspecific(_key, tp) };  status != 0)
+        throw pthread_error(PTHREAD_ERROR_SETTING_DATA, "Unable to set thread-specific data"s);
+    }
 };
 
 // --------------------------------------------  pt_mutex  ----------------------------------
