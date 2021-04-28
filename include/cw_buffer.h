@@ -216,6 +216,9 @@ public:
 /// default constructor
   cw_messages(void) = default;
 
+  void init(const std::map<int /* message number */, std::string >& m)
+    { _messages = m; }
+
 /*! \brief      Get a particular CW message
     \param  n   number of message to return
     \return     CW message number <i>n</i>

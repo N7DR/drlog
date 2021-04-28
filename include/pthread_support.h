@@ -24,6 +24,7 @@
 #include "x_error.h"
 
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -272,14 +273,21 @@ public:
 /// constructor
   thread_specific_data(void)
     { if (const int status { pthread_key_create(&_key, NULL) };  status != 0)
-        throw pthread_error(PTHREAD_NO_KEY, "Unable to create pthread key for thread-specific data"s); 
+        throw pthread_error(PTHREAD_NO_KEY, "Unable to create pthread key for thread-specific data"s);
     }
 
-/// destructor
+/// destructor -- should NOT delete key; there's nothing to stop someone else in a different thread from using it later
+/// as long as mutexes of which thread_specific_data<int> objects are a part are global, this shouldn't be a problem
+#if 1
   ~thread_specific_data(void)
-  { pthread_key_delete(_key);
- //if (const int status { pthread_key_delete(_key) }; status != 0)
-      //ost << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << endl;   // can't do this because of circularity; need to rework this sometime
+  { //pthread_key_delete(_key);
+
+    std::cerr << "about to delete key value: " << _key << std::endl;
+
+   if (const int status { pthread_key_delete(_key) }; status != 0)
+      std::cerr << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << std::endl;   // can't do this because of circularity; need to rework this sometime
+
+    std::cerr << "key value after deletion: " << _key << std::endl;
 
         // if this returns an error, it means something has gone wrong,
                                                         // but since we can't throw an exception, and we have noweher to send
@@ -288,11 +296,12 @@ public:
 //    if (status != 0)                              // can't throw exception in destructor
 //      throw std::exception();
   }
+#endif
 
 /*! \brief      Get a pointer into the thread-specific data
     \return     pointer to thread-specific data
 
-    Returns 0 if the data do not exist
+    Returns nullptr if the data do not exist
 */
   T* get(void)
     { T* tp { (T*)pthread_getspecific(_key) };
@@ -577,6 +586,14 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
 { safelock safelock_z(m, "SAFELOCK_SET"s);
 
   var = val;
+}
+
+template <class T>
+T SAFELOCK_GET(std::recursive_mutex& m, const T& v)
+{ //safelock safelock_z(m, "SAFELOCK_GET"s);
+  std::lock_guard lg(m);
+
+  return v;
 }
 
 /*! \brief                  Wrapper for pthread_create()

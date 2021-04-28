@@ -989,7 +989,7 @@ int main(int argc, char** argv)
         if (rig.valid())
           cw_p->associate_rig(&rig);
 
-        cwm = cw_messages(context.messages());
+        cwm.init(context.messages());
       }
 
 // set the initial band and mode from the configuration file

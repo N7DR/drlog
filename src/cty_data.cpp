@@ -536,7 +536,8 @@ location_info location_database::info(const string& callpart) const
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
-  SAFELOCK(_location_database);
+//  SAFELOCK(_location_database);
+  lock_guard lg(_location_database_mutex);
 
   LOCATION_DBTYPE::const_iterator db_posn { _db_checked.find(callsign) };
 
@@ -790,7 +791,8 @@ location_info location_database::info(const string& callpart) const
 /// get a set of all the canonical prefixes for all countries
 //const unordered_set<string> location_database::countries(void) const
 auto location_database::countries(void) const -> unordered_set<string>
-{ SAFELOCK(_location_database);
+{ //SAFELOCK(_location_database);
+  std::lock_guard lg(_location_database_mutex);
 
   unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
 // std::result_of<decltype(&foo::memfun1)(foo, int)>::type  https://stackoverflow.com/questions/26107041/how-can-i-determine-the-return-type-of-a-c11-member-function

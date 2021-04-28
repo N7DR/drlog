@@ -678,17 +678,28 @@ int attribute_priority(const pthread_attr_t& pa)
     This class implements a recursive mutex
 */
 
-/// destructor
+/// destructor; do not write to message_stream, because the mutex in that class might no longer
+// exist if we are in the process of cleaning up
 pt_mutex::~pt_mutex(void)
-{ pthread_mutex_destroy(&_mutex);
+{ //cerr << "destroying mutex: " << _name << endl;
 
-  int* ip;
+  pthread_mutex_destroy(&_mutex);
+
+  int* ip { nullptr };
+
+  //cerr << "getting refcount pointer: " << _name << endl;
 
   ip = _tsd_refcount.get();
-  delete ip; 
+
+  //cerr << "refcount pointer is " << ( (ip == nullptr) ? "" : "NOT " ) << "nullptr" << endl; // nullptr if no data were written by calling _tsd_refcount.set()
+
+  if (ip)
+  { //cerr << "deleting pointer" << endl;
+    delete ip;
+  }
   
-// debug
-  ost << "Mutex destroyed: " << _name << endl;
+// debug -- DON'T write to message_stream
+  //cerr << "Mutex destroyed: " << _name << endl;
   
 // create core dump
 //  throw exception();
@@ -696,11 +707,11 @@ pt_mutex::~pt_mutex(void)
 
 /// lock
 void pt_mutex::lock(void)
-{ int* ip;
+{ int* ip { nullptr };
 
   ip = _tsd_refcount.get();        // defined to return 0 if it has not been set in this thread
 
-  if (ip == 0)
+  if (ip == nullptr)
   { ip = new int(0);
     _tsd_refcount.set(ip);
   }
@@ -719,11 +730,11 @@ void pt_mutex::lock(void)
 
 /// unlock
 void pt_mutex::unlock(void)
-{ int* ip;
+{ int* ip { nullptr };
 
   ip = _tsd_refcount.get();
 
-  if (ip == 0)
+  if (ip == nullptr)
   { ip = new int(0);
     _tsd_refcount.set(ip);
   }

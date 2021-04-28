@@ -25,6 +25,7 @@
 #include <array>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -435,8 +436,9 @@ protected:
 */
   void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
 
-  mutable pt_mutex _location_database_mutex { "LOCATION DATABASE"s };  ///< to make location_database objects thread-safe;
-   
+//  mutable pt_mutex _location_database_mutex { "LOCATION DATABASE"s };  ///< to make location_database objects thread-safe;
+  mutable std::recursive_mutex _location_database_mutex;
+
 public:
 
 /// default constructor
@@ -471,7 +473,8 @@ public:
 
 /// how large is the main database?
   inline size_t size(void) const
-    { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
+    { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); 
+    }
 
 /*! \brief          Add a call to the alt_call database
     \param  call    callsign to add
@@ -490,7 +493,8 @@ public:
   
 /// return the database
   inline decltype(location_database::_db) db(void) const
-    { return (SAFELOCK_GET( _location_database_mutex, _db )); }
+    { return (SAFELOCK_GET( _location_database_mutex, _db ));
+    }
 
 /// create a set of all the canonical prefixes for countries
   auto countries(void) const -> std::unordered_set<std::string>;
@@ -577,7 +581,8 @@ public:
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { SAFELOCK(_location_database);
+    { //SAFELOCK(_location_database);
+      std::lock_guard lg(_location_database_mutex);
 
       ar & _db
          & _alt_call_db
