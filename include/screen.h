@@ -1,4 +1,4 @@
-// $Id: screen.h 180 2021-03-21 15:21:49Z  $
+// $Id: screen.h 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -566,7 +566,7 @@ window& operator<(const T n)
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
-  std::string read(int x = 0, int y = 0);
+  std::string read(const int x = 0, const int y = 0);
 
 /*! \brief              Read a line
     \param  line_nr     number of line to read (0 is bottommost row)
@@ -615,7 +615,7 @@ window& operator<(const T n)
 
     Line number zero is the bottom line
 */
-  window& delete_character( const int n, const int line_nr );
+  window& delete_character(const int n, const int line_nr);
 
 /// set function used to process input
   inline void process_input_function(WINDOW_PROCESS_INPUT_TYPE pf)

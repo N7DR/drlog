@@ -1,4 +1,4 @@
-// $Id: screen.cpp 180 2021-03-21 15:21:49Z  $
+// $Id: screen.cpp 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -662,7 +662,7 @@ window& operator<(window& win, const centre& c)
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
     Cannot be const, because because mvwinstr() silently moves the cursor and we then move it back
 */
-string window::read(int x, int y)
+string window::read(const int x, const int y)
 { if (!_wp)
     return string();
   

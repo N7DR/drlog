@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 182 2021-04-04 19:39:51Z  $
+// $Id: drlog.cpp 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -362,6 +362,7 @@ bool                    require_dot_in_replacement_call;    ///< whether a dot i
 bool                    restored_data { false };            ///< did we restore from an archive?
 bool                    rig_is_split { false };             ///< is the rig in split mode?
 
+bool                    scoring_enabled { true };           ///< are we scoring the contest?
 bool                    sending_qtc_series { false };       ///< am I senting a QTC series?
 unsigned int            serno_spaces { 0 };                 ///< number of additional half-spaces in serno
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
@@ -777,6 +778,7 @@ int main(int argc, char** argv)
     n_memories                      = context.n_memories();
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
+    scoring_enabled                 = context.scoring_enabled();
     serno_spaces                    = context.serno_spaces();
     shift_delta_cw                  = static_cast<int>(context.shift_delta_cw());  // forced positive int
     shift_delta_ssb                 = static_cast<int>(context.shift_delta_ssb());  // forced positive int
@@ -6252,7 +6254,10 @@ void update_rate_window(void)
   
   const vector<unsigned int> rate_periods { context.rate_periods() };    // in minutes
 
-  string rate_str { pad_left(EMPTY_STR, RATE_PERIOD_WIDTH) + pad_left("Qs"s, QS_WIDTH) + pad_left("Score"s, SCORE_WIDTH) };
+  string rate_str { pad_left(EMPTY_STR, RATE_PERIOD_WIDTH) + pad_left("Qs"s, QS_WIDTH) };
+
+  if (scoring_enabled)
+    rate_str += pad_left("Score"s, SCORE_WIDTH);
 
   if (rate_str.length() != static_cast<unsigned int>(win_rate.width()))    // LF is added automatically if a string fills a line
     rate_str += LF;
@@ -6263,7 +6268,9 @@ void update_rate_window(void)
     const pair<unsigned int, unsigned int> qs { rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0) };
 
     str += pad_left(to_string(qs.first), QS_WIDTH);
-    str += pad_left(separated_string(qs.second, TS), SCORE_WIDTH);
+    
+    if (scoring_enabled)
+      str += pad_left(separated_string(qs.second, TS), SCORE_WIDTH);
 
     rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? EMPTY_STR : LF) );      // LF is added automatically if a string fills a line
   }
@@ -8408,10 +8415,12 @@ void display_memories(void)
     \param  score   the score to write to the window
 */
 void update_score_window(const unsigned int score)
-{ const static string RUBRIC { "Score: "s };
+{ if (scoring_enabled)
+  { const static string RUBRIC { "Score: "s };
 
-  win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
-            <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
+    win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
+              <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
+  }
 }
 
 /*! \brief      Update the BANDMAP FILTER window

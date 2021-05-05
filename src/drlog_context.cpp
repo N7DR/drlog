@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: drlog_context.cpp 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,6 +71,10 @@ void drlog_context::_set_points(const string& command, const MODE m)
   { ost << "Invalid command: " << command << endl;
     exit(0);
   }
+
+// points = 0 turns off all scoring
+//  if ( (to_upper(str_vec[0]) == "POINTS"s) and (from_string<int>(str_vec[1]) == 0) )
+  
 
   const string RHS { to_upper(remove_peripheral_spaces(str_vec[1])) };
 
@@ -901,6 +905,10 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (contains(testline, "SSB"s) or contains(testline, "PH"s))
         _score_modes.insert(MODE_SSB);
     }
+
+// SCORING
+    if (LHS == "SCORING"s)
+      _scoring_enabled = is_true;
 
 // SCREEN SNAPSHOT FILE
     if ( (LHS == "SCREEN SNAPSHOT FILE"s) or (LHS == "SCREENSHOT FILE"s) )

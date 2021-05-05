@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: statistics.cpp 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,6 +26,8 @@
 using namespace std;
 
 extern message_stream ost;      ///< for debugging and logging
+
+extern bool scoring_enabled;
 
 pt_mutex statistics_mutex { "STATISTICS"s };      ///< mutex for the (singleton) running_statistics object
 
@@ -227,30 +229,33 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     rv += (line + LF);
 
 // QSO points
-    unsigned int points_all_bands { 0 };
+//    if (!rules.score_bands().empty())
+    if (scoring_enabled)
+    { unsigned int points_all_bands { 0 };
 
-    line = pad_right("Qpoints"s, FIRST_FIELD_WIDTH);
+      line = pad_right("Qpoints"s, FIRST_FIELD_WIDTH);
 
-    for (const auto& b : permitted_bands)
-    { unsigned int points { 0 };
+      for (const auto& b : permitted_bands)
+      { unsigned int points { 0 };
 
-      for (const auto& m : modes)
-      { const auto& qp { _qso_points[m] };
+        for (const auto& m : modes)
+        { const auto& qp { _qso_points[m] };
 
-        if (modes.size() == 1)
-          line += pad_left(to_string(qp[b]), FIELD_WIDTH);
+          if (modes.size() == 1)
+            line += pad_left(to_string(qp[b]), FIELD_WIDTH);
 
-        points += qp[b];
+          points += qp[b];
+        }
+
+        points_all_bands += points;
+
+        if (modes.size() != 1)
+          line += pad_left(to_string(points), FIELD_WIDTH);
       }
 
-      points_all_bands += points;
-
-      if (modes.size() != 1)
-        line += pad_left(to_string(points), FIELD_WIDTH);
+      add_all_bands(permitted_bands.size(), points_all_bands);
+      rv += line;
     }
-
-    add_all_bands(permitted_bands.size(), points_all_bands);
-    rv += line;
 
     if (_include_qtcs)
     { line = LF + pad_right("QTC QSOs"s, FIRST_FIELD_WIDTH);

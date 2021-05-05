@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 175 2020-12-06 17:44:13Z  $
+// $Id: string_functions.cpp 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -699,7 +699,8 @@ vector<size_t> starts_of_words(const string& s)
   if (posn == string::npos)
     return rv;
 
-  rv.push_back(posn);
+//  rv.push_back(posn);
+  rv += posn;
 
 // next space
   while (1)
@@ -713,7 +714,8 @@ vector<size_t> starts_of_words(const string& s)
     if (posn == string::npos)
       return rv;
 
-    rv.push_back(posn);
+//    rv.push_back(posn);
+    rv += posn;
   }
 }
 
@@ -1037,7 +1039,8 @@ vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int widt
 { vector<string> rv;
 
   for (const auto& s : vecstr)
-    rv.push_back(reformat_for_wprintw(s, width));
+//    rv.push_back(reformat_for_wprintw(s, width));
+    rv += reformat_for_wprintw(s, width);
 
   return rv;
 }
@@ -1187,7 +1190,8 @@ vector<string> delimited_substrings(const string& cs, const string& delim_1, con
     if (posn_2 == string::npos)
       return rv;                            // no more ending delimiters
 
-    rv.push_back( sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length()) );
+//    rv.push_back( sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length()) );
+    rv += sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
     cs_start_posn += (posn_2 + delim_2.length());
   }
 

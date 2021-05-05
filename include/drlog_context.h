@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 180 2021-03-21 15:21:49Z  $
+// $Id: drlog_context.h 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -244,23 +244,24 @@ protected:
   std::string                                  _rig1_type                               { };                            ///< model name of rig
   std::string                                  _russian_filename                        { "russian-data"s };            ///< name of russian location file
 
-  std::set<BAND>                               _score_bands                             { };                            ///< which bands are going to be scored?
-  std::set<MODE>                               _score_modes                             { };                            ///< which modes are going to be scored?
-  std::string                                  _screen_snapshot_file                    { "screen"s };                  ///< base name of file for screenshot
-  bool                                         _screen_snapshot_on_exit                 { false };                      ///< whether to take a screenshot on exit
-  std::vector<std::pair<std::string, std::string> > _sent_exchange                      { };                            ///< names and values of sent exchange fields
-  std::vector<std::pair<std::string, std::string> > _sent_exchange_cw                   { };                            ///< names and values of sent exchange fields, CW
-  std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb                  { };                            ///< names and values of sent exchange fields, SSB
-  unsigned int                                 _serno_spaces                            { 0 };                          ///< number of half-length spaces to insert when sending serno
-  unsigned int                                 _shift_delta_cw                          { 10 };                         ///< how many hertz to QSY per poll of the shift key on CW
-  unsigned int                                 _shift_delta_ssb                         { 100 };                        ///< how many hertz to QSY per poll of the shift key on SSB
-  unsigned int                                 _shift_poll                              { 50 };                         ///< how frequently to poll the shift key during an RIT QSY, in milliseconds
-  bool                                         _short_serno                             { false };                      ///< whether to omit leading Ts
-  std::string                                  _society_list_filename                   { };                            ///< name of file containing IARU society exchanges
-  int                                          _ssb_bandwidth_narrow                    { 1600 };                       ///< narrow SSB bandwidth (Hz)
-  int                                          _ssb_bandwidth_wide                      { 1800 };                       ///< wide SSB bandwidth (Hz)
-  int                                          _ssb_centre_bandwidth_narrow             { 1300 };                       ///< centre frequency for narrow SSB bandwidth (Hz)
-  int                                          _ssb_centre_bandwidth_wide               { 1500 };                       ///< centre frequency for wide SSB bandwidth (Hz)
+  std::set<BAND>                               _score_bands                             { };                                ///< which bands are going to be scored?
+  std::set<MODE>                               _score_modes                             { };                                ///< which modes are going to be scored?
+  bool                                         _scoring_enabled                         { true };                           ///< is scoring enabled?
+  std::string                                  _screen_snapshot_file                    { "screen"s };                      ///< base name of file for screenshot
+  bool                                         _screen_snapshot_on_exit                 { false };                          ///< whether to take a screenshot on exit
+  std::vector<std::pair<std::string, std::string> > _sent_exchange                      { };                                ///< names and values of sent exchange fields
+  std::vector<std::pair<std::string, std::string> > _sent_exchange_cw                   { };                                ///< names and values of sent exchange fields, CW
+  std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb                  { };                                ///< names and values of sent exchange fields, SSB
+  unsigned int                                 _serno_spaces                            { 0 };                              ///< number of half-length spaces to insert when sending serno
+  unsigned int                                 _shift_delta_cw                          { 10 };                             ///< how many hertz to QSY per poll of the shift key on CW
+  unsigned int                                 _shift_delta_ssb                         { 100 };                            ///< how many hertz to QSY per poll of the shift key on SSB
+  unsigned int                                 _shift_poll                              { 50 };                             ///< how frequently to poll the shift key during an RIT QSY, in milliseconds
+  bool                                         _short_serno                             { false };                          ///< whether to omit leading Ts
+  std::string                                  _society_list_filename                   { };                                ///< name of file containing IARU society exchanges
+  int                                          _ssb_bandwidth_narrow                    { 1600 };                           ///< narrow SSB bandwidth (Hz)
+  int                                          _ssb_bandwidth_wide                      { 1800 };                           ///< wide SSB bandwidth (Hz)
+  int                                          _ssb_centre_bandwidth_narrow             { 1300 };                           ///< centre frequency for narrow SSB bandwidth (Hz)
+  int                                          _ssb_centre_bandwidth_wide               { 1500 };                           ///< centre frequency for wide SSB bandwidth (Hz)
   enum AUDIO_RECORDING                         _start_audio_recording                   { AUDIO_RECORDING::DO_NOT_START };  ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band                              { BAND_20 };                        ///< on what band do we start?
   enum MODE                                    _start_mode                              { MODE_CW };                        ///< on which mode do we start?
@@ -434,13 +435,10 @@ public:
     \param  m   target mode
     \return     guard band for mode <i>m</i>, in Hz
 */
-  unsigned int guard_band(const MODE m)
+  inline unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
     return MUM_VALUE(_guard_band, m, 1000);
-//    const auto cit { _guard_band.find(m) };
-
-//    return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
 
   CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)
@@ -525,6 +523,7 @@ public:
 
   CONTEXTREAD(score_bands);                      ///< which bands are going to be scored?
   CONTEXTREAD(score_modes);                      ///< which modes are going to be scored?
+  CONTEXTREAD(scoring_enabled);                  ///< is scoring enabled?
   CONTEXTREAD(screen_snapshot_file);             ///< base name of file for screenshot
   CONTEXTREAD(screen_snapshot_on_exit);          ///< whether to take a screenshot on exit
 

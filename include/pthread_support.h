@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 179 2021-02-22 15:55:56Z  $
+// $Id: pthread_support.h 185 2021-05-03 17:07:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,6 +42,10 @@ using namespace std::literals::string_literals;
 
 /// Syntactic sugar to create a safe lock
 #define SAFELOCK(z) safelock safelock_z(z##_mutex, (std::string)(#z))
+
+/// Syntactic sugar to create a safe lock using a native mutex
+#define NATIVELOCK(z) std::lock_guard LG(z)
+//std::lock_guard lg(_location_database_mutex);
 
 // errors
 constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error locking mutex

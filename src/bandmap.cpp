@@ -927,16 +927,13 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
       return rv;
     }
 
-/*
     case 3 :                                                            // never worked anywhere
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
 
-//      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
       REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
 
       return rv;
     }    
-*/
 
   }
 }
@@ -955,7 +952,7 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 { SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
 //  const int max_permitted_skew { static_cast<int>(MAX_FREQUENCY_SKEW) };
-  const int max_permitted_skew { 95 };
+  const int max_permitted_skew { 95 };      // 95 Hz
 
   const BM_ENTRIES fe { displayed_entries() };
 
@@ -971,7 +968,6 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   if (dirn == BANDMAP_DIRECTION::DOWN)
   { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
 
-//    const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.frequency_str() != target_freq_str ); } ) }; // move away from my frequency, in downwards direction
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
@@ -992,7 +988,7 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 
       if (cit3 != fe.cend())
       { // 210227 DEBUG issue where we don't move
-        ost << "needed; upward; marker frequency string = " << *marker_it << ", returning " << *cit3 << endl;
+        //ost << "needed; upward; marker frequency string = " << *marker_it << ", returning " << *cit3 << endl;
          return (*cit3);
       }
     }
@@ -1196,19 +1192,6 @@ window& bandmap::write_to_window(window& win)
 // *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
-
-#if 0
-  BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
-
-  switch (bm.cull_function())
-  { case 1 :                                                         // N7DR criteria
-      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
-      break;
-
-    default :
-      break;
-  }
-#endif
 
   BM_ENTRIES entries { displayed_entries() };    // automatically filter
 
