@@ -88,10 +88,7 @@ tcp_socket::tcp_socket(void)  :
     Acts as default constructor if passed pointer is nullptr
 */
 tcp_socket::tcp_socket(SOCKET* sp) :
-//  _destination_is_set(false),
-//  _force_closure(false),
   _preexisting_socket(true)
-//  _timeout_in_tenths(600)                     // 1 minute
 { if (sp)
     _sock = *sp;
   else                          // sp is nullptr
@@ -141,11 +138,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
                        const unsigned int destination_port, 
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
-//  _destination_is_set(false),
-//  _force_closure(false),
-  _preexisting_socket(false),
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
-//  _timeout_in_tenths(600)                    // 1 minute
 { 
   try
   { 
@@ -229,11 +222,22 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 
 /// destructor
 tcp_socket::~tcp_socket(void)
-{ if (!_preexisting_socket)
-    _close_the_socket();        // we have to close the socket if we are finished with it
+{ try
+  { if (!_preexisting_socket)
+      _close_the_socket();        // we have to close the socket if we are finished with it
 
-  if (_preexisting_socket and _force_closure)
-    _close_the_socket();
+    if (_preexisting_socket and _force_closure)
+      _close_the_socket();
+  }
+
+  catch (...)
+  { try
+    { ost << "UNABLE TO CLOSE SOCKET; " << strerror(errno) << endl;
+    }
+
+    catch (...)
+    { }
+  }
 }
 
 /*! \brief  Create and use a different underlying socket

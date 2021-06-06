@@ -43,11 +43,14 @@ enum class SHOW_TIME { SHOW,
                      };
 
 /// Syntactic sugar for read/write access
+// See: "C++ Move Semantics", p. 81; 5.1.3 Using Move Semantics to Solve the Dilemma
+
 #if (!defined(READ_AND_WRITE))
 
 #define READ_AND_WRITE(y)                                                    \
 /*! Read access to _##y */                                                   \
-  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }  \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; } \
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); } \
 /*! Write access to _##y */                                                  \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
@@ -80,7 +83,9 @@ enum class SHOW_TIME { SHOW,
 
 #define READ(y)                                                       \
 /*! Read-only access to _##y */                                       \
-  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); } 
+/*  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; } */
 
 #endif    // !READ
 
