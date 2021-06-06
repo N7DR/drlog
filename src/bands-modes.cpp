@@ -115,13 +115,12 @@ string frequency::display_string(void) const
     \return     string of the frequency in MHz, to three decimal placex ([xxxx].yyy)
 */
 string frequency::display_string_MHz(void) const
-{ unsigned int mhz { _hz / 1'000'000 };
-  unsigned int khz { ( (_hz / 1000) - (mhz * 1000) ) };
+{ const unsigned int mhz     { _hz / 1'000'000 };
+  const unsigned int khz     { (_hz / 1000) - (mhz * 1000) };
+  const string       mhz_str { to_string(mhz) };
+  const string       khz_str { pad_leftz(khz, 3) };
 
-  const string mhz_str { to_string(mhz) };
-  const string khz_str { pad_leftz(khz, 3) };
-
-  return (mhz_str + "."s + khz_str);
+  return mhz_str + "."s + khz_str;
 }
 
 /// return lower band edge that corresponds to frequency

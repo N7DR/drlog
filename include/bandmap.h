@@ -730,7 +730,7 @@ protected:
   decltype(_entries)              _filtered_entries;                          ///< entries, with the filter applied
   bool                            _filtered_entries_dirty { false };          ///< is the filtered version dirty?
   bandmap_filter_type*            _filter_p               { &BMF };                         ///< pointer to a bandmap filter
-  frequency                       _mode_marker_frequency;                     ///< the frequency of the mode marker
+  frequency                       _mode_marker_frequency  { frequency(0) };                     ///< the frequency of the mode marker
   unsigned int                    _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)              _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
   bool                            _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
@@ -775,7 +775,7 @@ public:
 
 /// default constructor
   inline bandmap(void) :
-    _mode_marker_frequency(frequency(0)),
+//    _mode_marker_frequency(frequency(0)),
     _rbn_threshold(1),
     _rbn_threshold_and_filtered_entries_dirty(false),
     _recent_colour(COLOUR_BLACK),
@@ -1085,7 +1085,6 @@ public:
 */
   inline void do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
-//      _do_not_add.insert(callsign);
       _do_not_add += callsign;
     }
 

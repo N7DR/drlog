@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 185 2021-05-03 17:07:56Z  $
+// $Id: drlog.cpp 186 2021-05-17 20:24:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2863,6 +2863,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
 
       display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
+
+// clear the LAST QRG window
+      win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
