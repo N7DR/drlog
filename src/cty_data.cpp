@@ -139,7 +139,6 @@ cty_record::cty_record(const string& record)
 
     set_zone_info(aci, _cq_zone, _itu_zone);  
     
-//    _alt_prefixes.insert( { aci.identifier(), aci } );
     _alt_prefixes += { aci.identifier(), aci };
   }
 
@@ -416,9 +415,7 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
         { const location_info info { rec };
 
 // insert the canonical entry for this country
-//          _db.insert( { info.canonical_prefix(), info } );
           _db += { info.canonical_prefix(), info };        
-          //_insert_into_database(rec, _db);
 
 // insert other prefixes and calls in the same country
           _insert_alternatives(info, rec.alt_prefixes());
@@ -435,7 +432,6 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
       { const location_info info { rec };
 
 // insert the canonical entry for this country
- //       _db.insert( { info.canonical_prefix(), info } );
         _db += { info.canonical_prefix(), info };
 
         _process_alternative(rec, ALTERNATIVES::CALLSIGNS);
@@ -455,7 +451,7 @@ void location_database::_insert_alternatives(const location_info& info, const AC
 { location_info info_copy { info };
 
   for (const auto& [call_or_prefix, aci] : alternatives)
-    _db += { call_or_prefix, ( info_copy.zones(aci.cq_zone(), aci.itu_zone()), info_copy) };
+    _db += { call_or_prefix, ( info_copy.zones(aci.cq_zone(), aci.itu_zone()), move(info_copy)) };
 }
 
 /*! \brief              Process alternatives from a record

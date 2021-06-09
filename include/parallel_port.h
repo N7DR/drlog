@@ -122,7 +122,7 @@ public:
   explicit parallel_port(const std::string& filename);
 
 /// destructor -- closes the port
-  inline /* virtual */ ~parallel_port(void)
+  inline ~parallel_port(void)
     { ieee1284_free_ports(&_list_from_library); }
 
 /*! \brief                  Set control lines

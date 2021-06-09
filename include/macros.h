@@ -61,7 +61,8 @@ enum class SHOW_TIME { SHOW,
 
 #define SAFE_READ_AND_WRITE(y, z)                                                  \
 /*! Read access to _##y */                                                         \
-  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline decltype(_##y) y(void) && { SAFELOCK(z); return std::move(_##y); } \
 /*! Write access to _##y */                                                        \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
