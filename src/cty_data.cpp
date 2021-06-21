@@ -451,7 +451,7 @@ void location_database::_insert_alternatives(const location_info& info, const AC
 { location_info info_copy { info };
 
   for (const auto& [call_or_prefix, aci] : alternatives)
-    _db += { call_or_prefix, ( info_copy.zones(aci.cq_zone(), aci.itu_zone()), move(info_copy)) };
+    _db += { call_or_prefix, ( info_copy.zones(aci.cq_zone(), aci.itu_zone()), info_copy) };
 }
 
 /*! \brief              Process alternatives from a record

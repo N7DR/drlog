@@ -2865,7 +2865,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
 
 // clear the LAST QRG window
-      win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+      win_last_qrg < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
