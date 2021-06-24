@@ -19,7 +19,6 @@
     Support for pthreads
 */
 
-//#include "log_message.h" // includes this file
 #include "macros.h"
 #include "x_error.h"
 
@@ -29,8 +28,6 @@
 #include <vector>
 
 #include <pthread.h>
-
-//extern message_stream ost;                        ///< for debugging, info
 
 using namespace std::literals::string_literals;
 
@@ -286,12 +283,12 @@ public:
   ~thread_specific_data(void)
   { //pthread_key_delete(_key);
 
-    std::cerr << "about to delete key value: " << _key << std::endl;
+//    std::cerr << "about to delete key value: " << _key << std::endl;
 
    if (const int status { pthread_key_delete(_key) }; status != 0)
       std::cerr << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << std::endl;   // can't do this because of circularity; need to rework this sometime
 
-    std::cerr << "key value after deletion: " << _key << std::endl;
+//    std::cerr << "key value after deletion: " << _key << std::endl;
 
         // if this returns an error, it means something has gone wrong,
                                                         // but since we can't throw an exception, and we have noweher to send
@@ -551,9 +548,6 @@ public:
 
 /// Default constructor
   pthread_error_messages(void);
-
-/// Destructor
-  ~pthread_error_messages(void) = default;
 
 /*!  \brief             Add a reason message to the list of possible error messages
      \param  code       reason code

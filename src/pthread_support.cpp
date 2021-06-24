@@ -250,8 +250,6 @@ void thread_attribute::policy(const int policy)
 int thread_attribute::policy(void) const
 { int policy;
 
-//  const int status { pthread_attr_getschedpolicy(&_attr, &policy) };
-
   if (const int status { pthread_attr_getschedpolicy(&_attr, &policy) }; status != 0)
     throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: "s + to_string(policy) + "status = "s + to_string(status));
 
@@ -319,9 +317,9 @@ int thread_attribute::inheritance_policy(void) const
     "[w]hen a stack is specified, the thread should also be created PTHREAD_CREATE_JOINABLE"
 */
 void thread_attribute::stack_size(const size_t size)
-{ const int status { pthread_attr_setstacksize(&_attr, size) };
+{ //const int status { pthread_attr_setstacksize(&_attr, size) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_setstacksize(&_attr, size) }; status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: "s + to_string(size) + "status = "s + to_string(status));
 }
 
@@ -329,9 +327,9 @@ void thread_attribute::stack_size(const size_t size)
 size_t thread_attribute::stack_size(void) const
 { size_t size;
 
-  const int status { pthread_attr_getstacksize(&_attr, &size) };
+//  const int status { pthread_attr_getstacksize(&_attr, &size) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_getstacksize(&_attr, &size) }; status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: "s + to_string(size) + "status = "s + to_string(status));
 
   return size;
@@ -368,17 +366,15 @@ int thread_attribute::min_priority(void) const
     The scheduling policy has to be set before this is called.
 */
 void thread_attribute::priority(const int priority)
-{ //int p { max(min_priority(), priority) };
-
-  const int p { min(max_priority(), max(min_priority(), priority)) };
+{ const int p { min(max_priority(), max(min_priority(), priority)) };
 
   struct sched_param param;
 
   param.sched_priority = p;
 
-  const int status { pthread_attr_setschedparam(&_attr, &param) };
+//  const int status { pthread_attr_setschedparam(&_attr, &param) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_setschedparam(&_attr, &param) }; status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: "s + to_string(priority) + "status = "s + to_string(status));
 }
 
@@ -386,9 +382,9 @@ void thread_attribute::priority(const int priority)
 int thread_attribute::priority(void) const
 { struct sched_param param;
 
-  const int status { pthread_attr_getschedparam(&_attr, &param) };
+//  const int status { pthread_attr_getschedparam(&_attr, &param) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_getschedparam(&_attr, &param) }; status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = "s + to_string(status));
 
   return param.sched_priority;

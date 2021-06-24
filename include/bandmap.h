@@ -721,7 +721,8 @@ class bandmap
 {
 protected:
 
-  pt_mutex                        _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
+  mutable pt_mutex                        _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
+  
   int                             _column_offset          { 0 };                       ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                       ///< cull function number to apply
   std::unordered_set<std::string> _do_not_add;                                ///< do not add these calls

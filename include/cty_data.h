@@ -161,7 +161,9 @@ public:
     It is not an error to attempt to remove a call that does not exist
 */
   inline void remove_alternative_callsign(const std::string& call)
-    { _alt_callsigns.erase(call); }
+    { //_alt_callsigns.erase(call); 
+      _alt_callsigns -= call;
+    }
 
 /*! \brief          Remove an alternative prefix
     \param  prefix  alternative prefix to remove
@@ -454,7 +456,8 @@ public:
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  explicit location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
+  inline explicit location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC)
+    { _init(cty, country_list); }
 
 /// copy constructor
   location_database(const location_database&) = delete;
@@ -463,7 +466,8 @@ public:
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  void prepare(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
+  inline void prepare(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC)
+    { _init(cty, country_list); }
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>

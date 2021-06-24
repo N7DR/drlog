@@ -243,8 +243,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
-  const vector<string> records     { split_string(entire_file, ";"s) };                            // split into records
+{ //const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
+  const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
   
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
@@ -254,8 +254,10 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{ const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };   // read file and remove EOL markers
-  const vector<string> records     { split_string(entire_file, ";"s) };                                 // split into records
+{ //const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };   // read file and remove EOL markers
+  //const vector<string> records     { split_string(entire_file, ";"s) };                                 // split into records
+
+  const vector<string> records { split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
 
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );        // applies to base class
 }
@@ -497,14 +499,14 @@ location_database::location_database(const string& filename, const COUNTRY_LIST 
 }
 
 /// construct from CTY.DAT data and the definition of which country list to use
-location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list)
-{ _init(cty, country_list);
-}
+//location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list)
+//{ _init(cty, country_list);
+//}
 
 /// prepare a default-constructed object for use
-void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
-{ _init(cty, country_list);
-}
+//void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
+//{ _init(cty, country_list);
+//}
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>

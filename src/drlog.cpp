@@ -220,6 +220,7 @@ void update_remaining_exchange_mults_windows(const contest_rules&, running_stati
 bool update_rx_ant_window(void);                                                                                        ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 void update_score_window(const unsigned int score);                                                                     ///< update the SCORE window
 void update_system_memory(void);                                                                                        ///< update the SYSTEM MEMORY window
+void update_win_posted_by(const vector<dx_post>&);                                                                      ///< update, but do not refresh, the POSTED BY window
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -355,6 +356,7 @@ old_log                 olog;                               ///< old (ADIF) log 
 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
 set<MODE>               permitted_modes;                    ///< the permitted modes
+vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
 
 unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearig on a bandmap?
 int                     REJECT_COLOUR { COLOUR_RED };       ///< colour for calls that are dupes
@@ -430,6 +432,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
+       win_posted_by,                   ///< stations posting me on the RBN
        win_query_1,                     ///< query 1 matches
        win_query_n,                     ///< query n matches
        win_quick_qsy,                   ///< QRG and mode for ctrl-=
@@ -1259,8 +1262,8 @@ int main(int argc, char** argv)
     win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
     mp.max_entries(win_monitored_posts.height());               // set the size of the queue
 
-// QUERY window
-//    win_query.init(context.window_info("QUERY"s), WINDOW_NO_CURSOR);
+// POSTED BY window
+    win_posted_by.init(context.window_info("POSTED BY"s), WINDOW_NO_CURSOR);
   
 // QUERY 1 window
     win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
@@ -2347,6 +2350,7 @@ void* process_rbn_info(void* vp)
 
   while (1)                                                // forever; process a POLL_INTERVAL pass
   { set<BAND> changed_bands;                               // the bands that have been changed by this ten-second pass
+    posted_by_vector.clear();                              // prepare the vector
 
     bool cluster_mult_win_was_changed { false };           // has cluster_mult_win been changed by this pass?
 
@@ -2408,19 +2412,19 @@ void* process_rbn_info(void* vp)
               const string&                 dx_callsign { post.callsign() };
               const string&                 poster      { post.poster() };
               const pair<string, frequency> target      { dx_callsign, post.freq() };
+              const bool                    is_me       { (dx_callsign == my_call) };
+
+              if (is_me and is_rbn and (post.poster_continent() != my_continent))
+                posted_by_vector += post;
 
 // record as the most recent QRG for this station
               const int band_nr { static_cast<int>(BAND(post.freq())) };
 
-//              unordered_map<string, frequency>& qrg_map = last_posted_qrg[band_nr];
-              unordered_map<string, string>& qrg_map = last_posted_qrg[band_nr];
+              unordered_map<string, string>& qrg_map { last_posted_qrg[band_nr] };
 
               { lock_guard lck(last_posted_qrg_mutex[band_nr]);
 
-//                qrg_map[dx_callsign] = post.freq();
                 qrg_map[dx_callsign] = post.frequency_str();
-
-//                ost << "mapped " << dx_callsign << " to: " << post.frequency_str() << endl;
               }
 
               bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
@@ -2471,7 +2475,7 @@ void* process_rbn_info(void* vp)
                   if (!is_recent_call)
                     is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 
-                const bool is_me               { (be.callsign() == context.my_call()) };
+//                const bool is_me               { (be.callsign() == context.my_call()) };
                 const bool is_interesting_mode { (rules.score_modes() > be.mode()) };
 
 // CLUSTER MULT window
@@ -2604,6 +2608,9 @@ void* process_rbn_info(void* vp)
 
     if (context.auto_remaining_country_mults())
       update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
+
+    if (!posted_by_vector.empty())
+      update_win_posted_by(posted_by_vector);
 
 // see also repeat() suggestion at: https://stackoverflow.com/questions/17711655/c11-range-based-for-loops-without-loop-variable
     for (const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
@@ -8868,4 +8875,75 @@ void rebuild_dynamic_call_databases(const logbook& logbk)
 
     query_db += callsign;
   }
+}
+
+void update_win_posted_by(const vector<dx_post>& post_vec)
+{ if (post_vec.empty() or !win_posted_by.valid())
+    return;
+
+  auto win_height { win_posted_by.height() };
+
+  const vector<string> original_contents { win_posted_by.snapshot() };
+
+  vector<string> new_contents;
+
+  for ( int n { static_cast<int>(post_vec.size()) - 1 }; n >= 0; --n )
+  { const dx_post& post { post_vec[n] };
+
+// use the current time rather than relying on any timestamp in the data -- 
+// this should be roughly the same time as the timestamp we've put in the dx_post
+    
+    string line { substring(hhmmss(), 0, 5) + " "s + post.frequency_str() + "  " + post.poster() }; 
+
+    new_contents += line;
+  }
+
+  if (static_cast<int>(new_contents.size()) < win_height)
+    new_contents += original_contents;
+
+  win_posted_by < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+  int y { win_height - 1 };
+
+  for (size_t n { 0 }; (n < new_contents.size() and (y >= 0)); ++n)
+  { win_posted_by < cursor(0, y--);
+
+    win_posted_by < new_contents.at(n);
+  }
+
+  win_posted_by.refresh();
+
+#if 0
+win_monitored_posts < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+      unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
+
+      const time_t              now          { ::time(NULL) };
+      const vector<COLOUR_TYPE> fade_colours { context.bandmap_fade_colours() };
+      const unsigned int        n_colours    { static_cast<unsigned int>(fade_colours.size()) };
+      const float               interval     { 1.0f / n_colours };
+
+      const PAIR_NUMBER_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
+
+// oldest to newest
+      for (size_t n { 0 }; n < entries.size(); ++n)
+      { win_monitored_posts < cursor(0, y++);
+
+// correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
+// minutes to expiration
+        const unsigned int seconds_to_expiration { static_cast<unsigned int>(entries[n].expiration() - now) };
+        const float        fraction              { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
+
+        unsigned int n_intervals { static_cast<unsigned int>(fraction / interval) };
+
+        n_intervals = min(n_intervals, n_colours - 1);
+        n_intervals = (n_colours - 1) - n_intervals;
+
+        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
+
+        win_monitored_posts < colour_pair(cpu)
+                            < entries[n].to_string() < colour_pair(default_colours);
+      }
+
+      win_monitored_posts.refresh();
+#endif
 }

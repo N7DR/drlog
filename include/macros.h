@@ -73,7 +73,8 @@ enum class SHOW_TIME { SHOW,
 
 #define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                       \
 /*! Read access to _##y */                                                  \
-  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; } \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline decltype(_##y) y(void) && { SAFELOCK(z); return std::move(_##y); } \
 /*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
@@ -1351,27 +1352,39 @@ inline void operator+=(C& sus, T&& element)
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-//template <typename C, typename T>
-//inline void operator+=(C& sus, const T& element)
-//  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
-//  { sus.insert(element); }
-
-/*! \brief              Add an element to a set or unordered set
-    \param  sus         destination set or unordered set
-    \param  element     element to insert
-*/
 template <typename C>
 inline void operator+=(C& sus, const typename C::value_type& element)
   requires is_sus_v<C>
   { sus.insert(element); }
 
-/*! \brief              Remove an element from a set or unordered set
+/*! \brief          Add all elements of a vector to a set or unordered set
+    \param  sus     destination set or unordered set
+    \param  vec     vector to insert
+*/
+template <typename C, typename V>
+inline void operator+=(C& sus, const V& vec)
+  requires is_sus_v<C> and is_vector_v<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
+  { std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); };
+
+/*! \brief          Add all elements of a vector to a set or unordered set
+    \param  sus     destination set or unordered set
+    \param  vec     vector to insert
+*/
+//template <typename C, typename V>
+//inline void operator+=(C& sus, V&& vec)
+//  requires is_sus_v<C> and is_vector_v<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
+//  { for_each(std::forward<>vec.begin()
+//    //std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); 
+//  };
+
+/*! \brief              Remove an element from a set, map, unordered set or unordered map
     \param  sus         destination set or unordered set
     \param  element     element to remove
 */
 template <typename C, typename T>
 inline void operator-=(C& sus, const T& element)
-  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+//  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>>)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set
@@ -1393,6 +1406,15 @@ template <typename MUMD, typename MUMS>
              ( (is_sus_v<MUMD>) and (is_sus_v<MUMS>) and (std::is_same_v<typename MUMD::value_type, typename MUMS::value_type>) ) )
 inline void operator+=(MUMD& dest, const MUMS& src)
   { dest.insert(src.cbegin(), src.cend()); }
+
+/*! \brief              Remove an element from a map or unordered map
+    \param  mum         destination map or unordered map
+    \param  element     element to remove
+*/
+//template <typename C, typename T>
+//inline void operator-=(C& mum, const T& element)
+//  requires is_mum_v<C> and (std::is_same_v<typename C::key_type, base_type<T>>)
+//  { mum.erase(element); }
 
 /*! \brief        Append one vector to another
     \param  dest  destination vector

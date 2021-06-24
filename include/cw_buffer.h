@@ -98,7 +98,7 @@ public:
   cw_buffer(const cw_buffer& cwb) = delete;
 
 /// destructor
-  ~cw_buffer(void);
+  ~cw_buffer(void) noexcept;
 
 /*! \brief          Set the speed
     \param  wpm     speed in WPM
@@ -216,7 +216,10 @@ public:
 /// default constructor
   cw_messages(void) = default;
 
-  void init(const std::map<int /* message number */, std::string >& m)
+/*! \brief      Initialise [default-constructed object] with a pre-existing map of message numbers and message contents
+    \param  m   map of message numbers and message contents
+*/
+  inline void init(const std::map<int /* message number */, std::string >& m)
     { _messages = m; }
 
 /*! \brief      Get a particular CW message

@@ -62,7 +62,8 @@ extern message_stream ost;              ///< for debugging, info
 void cw_buffer::_add_action(const int n)
 { SAFELOCK(_key_buffer);
 
-  _key_buffer.push(n);
+//  _key_buffer.push(n);
+  _key_buffer += n;
 }
 
 /*! \brief          Wrapper function to play the buffer
@@ -341,7 +342,7 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
 }
 
 /// destructor
-cw_buffer::~cw_buffer(void)
+cw_buffer::~cw_buffer(void) noexcept
 { SAFELOCK(_key_buffer);
 
   while (!_key_buffer.empty())
@@ -396,10 +397,12 @@ void cw_buffer::key_down(const int n, const int space)
   {
     { SAFELOCK(_key_buffer);
 
-      _key_buffer.push(n);
+//      _key_buffer.push(n);
+      _key_buffer += n;
 
       if (space)                    // add the space if it's non-zero
-        _key_buffer.push(-space);
+//        _key_buffer.push(-space);
+        _key_buffer += (-space);
     }
 
     _condvar.signal();
@@ -741,8 +744,10 @@ void cw_buffer::add(const char c, const int character_space)
 // special commands
     case '>' :                               // clear RIT
       space = 0;
-      _key_buffer.push(0);                   // command
-      _key_buffer.push(CMD_CLEAR_RIT);
+//      _key_buffer.push(0);                   // command
+//      _key_buffer.push(CMD_CLEAR_RIT);
+      _key_buffer += 0;                   // command
+      _key_buffer += CMD_CLEAR_RIT;
       break;
 
     case '-' :                               // slower by 1 WPM (not compatible with TRLOG)

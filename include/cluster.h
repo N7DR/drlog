@@ -105,6 +105,7 @@ protected:
   std::string           _frequency_str;     ///< frequency in format xxxxx.y [kHz]
   std::string           _mode_str;          ///< mode string from RBN post (empty if none)
   std::string           _poster;            ///< call of poster
+  std::string           _poster_continent;  ///< continent of <i>_poster</i>
   enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
   bool                  _valid;             ///< is it a valid post?
@@ -131,6 +132,7 @@ public:
   READ(frequency_str);          ///< frequency in format xxxxx.y [kHz]
   READ(mode_str);               ///< mode string from RBN post (empty if none)
   READ(poster);                 ///< call of poster
+  READ(poster_continent);       ///< continent of <i>_poster</i>
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
   READ(valid);                  ///< is it a valid post?

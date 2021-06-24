@@ -62,7 +62,8 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
     { multiplier mult;                                     // create new mult
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // we've worked it
-      _callsign_multipliers.insert( { mult_name, mult } ); // store the info
+//      _callsign_multipliers.insert( { mult_name, mult } ); // store the info
+      _callsign_multipliers += { mult_name, mult }; // store the info
     }
   }
 }
@@ -286,7 +287,9 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   const vector<string>& exchange_mults { rules.exchange_mults() };
 
-  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields += exchange_mult; } );
+  _exch_mult_fields += exchange_mults;
+
+//  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields += exchange_mult; } );
 
 // callsign mults
   if (_callsign_mults_used)
