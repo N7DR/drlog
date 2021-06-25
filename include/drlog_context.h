@@ -209,6 +209,7 @@ protected:
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
   std::set<std::string>                        _post_monitor_calls                      { };                            ///< calls to be monitored
+  std::set<std::string>                        _posted_by_continents                    { };                            ///< continents for POSTED BY window (empty => all DX continents)
   unsigned int                                 _ptt_delay                               { 25 };                         ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3                                      { false };                      ///< is a P3 available?
   bool                                         _p3_ignore_checksum_error                { false };                      ///< should checksum errors be ignored when acquiring P3 screendumps?
@@ -485,7 +486,8 @@ public:
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
-  CONTEXTREAD(post_monitor_calls)            ///< calls to be monitored
+  CONTEXTREAD(post_monitor_calls);           ///< calls to be monitored
+  CONTEXTREAD(posted_by_continents);         ///< continents for POSTED BY window (empty => all DX continents)
   CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   CONTEXTREAD(p3);                           ///< is a P3 available?
   CONTEXTREAD(p3_ignore_checksum_error);     ///< should checksum errors be ignored when acquiring P3 screendumps?

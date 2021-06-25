@@ -660,7 +660,7 @@ window& operator<(window& win, const centre& c)
 
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
-    Cannot be const, because because mvwinstr() silently moves the cursor and we then move it back
+    Cannot be const, because because mvwinnstr() silently moves the cursor and we then move it back
 */
 string window::read(const int x, const int y)
 { if (!_wp)

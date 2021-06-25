@@ -211,7 +211,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (!RHS.empty())
       { const vector<string> colour_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
-        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
+//        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
+        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
       }
     }
 
@@ -467,7 +468,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string         country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
       const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
 
-      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
+//      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
+      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
@@ -520,7 +522,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       for (const auto& this_field : fields)
       { const vector<string> field { split_string(this_field, ":"s) };
 
-        _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+//        _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+        _sent_exchange += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
 
@@ -742,7 +745,16 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "POST MONITOR"s)
     { const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
 
-      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls.insert(callsign); } );
+//      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls.insert(callsign); } );
+      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls += callsign; } );
+    }
+
+// POSTED BY CONTINENTS
+    if (LHS == "POSTED BY CONTINENTS"s)
+    { const set<string>    continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
+      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
+      
+      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
     }
 
 // P3
