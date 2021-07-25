@@ -70,7 +70,6 @@ enum class SRSS { SUNRISE,
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-//std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
 std::string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss);
 
 /*! \brief          Calculate the time of sunrise

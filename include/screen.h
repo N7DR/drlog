@@ -1,4 +1,4 @@
-// $Id: screen.h 185 2021-05-03 17:07:56Z  $
+// $Id: screen.h 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -236,9 +236,9 @@ class window
 {
 protected:
   
-  std::string   _name               { EMPTY_STR };    ///< (optional) name of window
+  std::string   _name           { EMPTY_STR };  ///< (optional) name of window
   
-  unsigned int  _column_width;                  ///< width of columns
+  unsigned int  _column_width   { 0 };          ///< width of columns
   int           _cursor_x;                      ///< used to hold x cursor
   int           _cursor_y;                      ///< used to hold y cursor
   bool          _echoing;                       ///< whether echoing characters
@@ -246,22 +246,22 @@ protected:
   bool          _hidden_cursor;                 ///< whether to hide the cursor
   bool          _insert;                        ///< whether in insert mode (default = false)
   bool          _leaveok;                       ///< whether leaveok is set
-  bool          _scrolling;                     ///< whether scrolling is enabled
+  bool          _scrolling      { false };      ///< whether scrolling is enabled
   bool          _vertical       { false };      ///< whether containers of strings are to be displayed vertically
   int           _width          { 0 };          ///< width
   int           _x              { 0 };          ///< x of origin (in proper coordinates)
   int           _y              { 0 };          ///< y of origin (in proper coordinates)
   
   WINDOW* _wp                   { nullptr };    ///< ncurses handle
-  PANEL*  _pp;                  ///< panel associated with this window
+  PANEL*  _pp                   { nullptr };    ///< panel associated with this window
 
   int    _sx;                   ///< system cursor x value
   int    _sy;                   ///< system cursor y value
   
-  COLOUR_TYPE    _fg;                   ///< foreground colour
-  COLOUR_TYPE    _bg;                   ///< background colour
+  COLOUR_TYPE    _fg { COLOUR_WHITE };                   ///< foreground colour
+  COLOUR_TYPE    _bg { COLOUR_BLACK };                   ///< background colour
 
-  WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
+  WINDOW_PROCESS_INPUT_TYPE _process_input { nullptr };    ///< pointer to function to handle input to this window
 
 /*! \brief          Set the default colours
     \param  fgbg    colour pair
@@ -287,14 +287,14 @@ public:
 */
   inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
     _name(win_name),
-    _column_width(0),
-    _scrolling(false),
+//    _column_width(0),
+//    _scrolling(false),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
-    _insert(flags bitand WINDOW_INSERT),
-    _pp(nullptr),
-    _process_input(nullptr),
-    _fg(COLOUR_WHITE),
-    _bg(COLOUR_BLACK)
+    _insert(flags bitand WINDOW_INSERT)
+//    _pp(nullptr),
+//    _process_input(nullptr),
+//    _fg(COLOUR_WHITE),
+//    _bg(COLOUR_BLACK)
   { _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
 
 /*! \brief          Create using position and size information from the configuration file

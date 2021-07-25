@@ -1,4 +1,4 @@
-// $Id: macros.h 179 2021-02-22 15:55:56Z  $
+// $Id: macros.h 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -197,7 +197,6 @@ template< typename T1, typename T2 >
 //struct is_same_type<T,T> { enum { result = true }; };
 
 
-#if 1
 // is a type a deque?
 template<class T>
 struct is_deque
@@ -209,8 +208,6 @@ struct is_deque<std::deque<T>>
 
 template<class T>
 constexpr bool is_deque_v = is_deque<T>::value;
-#endif
-
 
 // is a type int?
 template<class T>
@@ -1483,7 +1480,7 @@ auto operator+(const V& v1, E&& element) -> V
 { V rv(v1.size() + 1);
 
   rv = v1;
-  rv.emplace_back(std::forward<E>(element));
+  rv.push_back(std::forward<E>(element));
   
   return rv; 
 }
@@ -1495,7 +1492,7 @@ auto operator+(const V& v1, E&& element) -> V
 template <typename V>
 inline void operator+=(V& v1, typename V::value_type&& element)
   requires is_vector_v<V>
-{ v1.emplace_back(std::forward<typename V::value_type>(element)); }
+{ v1.push_back(std::forward<typename V::value_type>(element)); }
 
 /*! \brief              Append an element to a vector
     \param  v1          destination vector
@@ -1506,14 +1503,14 @@ inline void operator+=(V& v1, const E& element)
   requires is_vector_v<V> and (std::is_convertible_v<E, typename V::value_type>)
 { v1.push_back(element); }
 
-/*! \brief              Append an element to a list
-    \param  l1          destination list
+/*! \brief              Append an element to a list or deque
+    \param  c1          destination list or deque
     \param  element     element to append
 */
-template <typename L>
-inline void operator+=(L& l1, typename L::value_type&& element)
-  requires is_list_v<L>
-{ l1.emplace_back(std::forward<typename L::value_type>(element)); }
+template <typename C>
+inline void operator+=(C& c1, typename C::value_type&& element)
+  requires is_list_v<C> or is_deque_v<C>
+{ c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a list
     \param  l1          destination list
@@ -1529,7 +1526,6 @@ inline void operator+=(L& l1, const E& element)
     \param  pr  location and value to insert
 */
 template <typename L>
-//  using pair_type = std::pair<typename L::const_iterator, typename L::value_type>
 inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
   requires is_list_v<L>
 { l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
@@ -1539,7 +1535,6 @@ inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::
     \param  pr  location and value to insert
 */
 template <typename L>
-//  using pair_type = std::pair<typename L::const_iterator, typename L::value_type>
 inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
   requires is_list_v<L>
 { l1.insert(pr.first, pr.second); }
@@ -1551,7 +1546,7 @@ inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typena
 template <typename Q>
 inline void operator+=(Q& q1, typename Q::value_type&& element)
   requires is_queue_v<Q>
-{ q1.emplace(std::forward<typename Q::value_type>(element)); }
+{ q1.push(std::forward<typename Q::value_type>(element)); }
 
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
@@ -1563,23 +1558,12 @@ inline void operator+=(Q& q1, const E& element)
 { q1.push(element); }
 
 /*! \brief              Append an element to a deque
-    \param  d1          destination deque
-    \param  element     element to append
-*/
-template <typename D>
-inline void operator+=(D& d1, typename D::value_type&& element)
-  requires is_deque_v<D>
-//  requires is_type_v<std::deque, D>
-{ d1.emplace_back(std::forward<typename D::value_type>(element)); }
-
-/*! \brief              Append an element to a deque
     \param  D1          destination deque
     \param  element     element to append
 */
 template <typename D, typename E>
 inline void operator+=(D& d1, const E& element)
   requires is_deque_v<D> and (std::is_convertible_v<E, typename D::value_type>)
-//  requires is_type_v<std::deque, D> and (std::is_convertible_v<E, typename D::value_type>)
 { d1.push_back(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 
@@ -1590,9 +1574,26 @@ inline void operator+=(D& d1, const E& element)
 template <typename D>
 void operator--(D& d1 /*, int*/) // int for post-decrement
   requires is_deque_v<D>
-//  requires is_type_v<std::deque, D>
 { if (!d1.empty())
     d1.pop_front();
 }
+
+/*! \brief      Remove an element referenced by an iterator from a deque
+    \param  c1  destination deque
+    \param  it  iterator
+*/
+template <typename C>
+inline void operator-=(C& c1, typename C::iterator&& it)
+  requires is_deque_v<C>
+{ c1.erase(std::forward<typename C::iterator>(it)); }
+
+/*! \brief      Remove an element referenced by an iterator from a deque
+    \param  c1  destination deque
+    \param  it  iterator
+*/
+template <typename C>
+inline void operator-=(C& c1, const typename C::iterator& it)
+  requires is_deque_v<C>
+{ c1.erase(it); }
 
 #endif    // MACROS_H

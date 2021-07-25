@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 176 2020-12-13 18:28:41Z  $
+// $Id: socket_support.cpp 187 2021-06-26 16:16:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -55,8 +55,7 @@ void tcp_socket::_close_the_socket(void)
 }
 
 /// default constructor
-tcp_socket::tcp_socket(void)  :
-//  _preexisting_socket(false),
+tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
   { 
@@ -123,10 +122,10 @@ tcp_socket::tcp_socket(SOCKET* sp) :
 /*! \brief          Encapsulate a pre-existing socket
     \param  sock    socket
 */
-tcp_socket::tcp_socket(SOCKET sock) :
-  _preexisting_socket(true),
-  _sock(sock)
-{  }
+//tcp_socket::tcp_socket(SOCKET sock) :
+//  _preexisting_socket(true),
+//  _sock(sock)
+//{  }
 
 /*! \brief                                  Construct and initialise with useful values
     \param  destination_ip_address_or_fqdn  destination dotted decimal address or FQDN
@@ -223,11 +222,11 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 /// destructor
 tcp_socket::~tcp_socket(void)
 { try
-  { if (!_preexisting_socket)
+  { if ( (!_preexisting_socket) or (_preexisting_socket and _force_closure) )
       _close_the_socket();        // we have to close the socket if we are finished with it
 
-    if (_preexisting_socket and _force_closure)
-      _close_the_socket();
+ //   if (_preexisting_socket and _force_closure)
+ //     _close_the_socket();
   }
 
   catch (...)
@@ -289,8 +288,6 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
 */
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
-
-//  const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
 
   if (const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) }; status == 0)
   { _destination = adr; 

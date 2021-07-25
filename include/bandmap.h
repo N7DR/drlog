@@ -1,4 +1,4 @@
-// $Id: bandmap.h 183 2021-04-12 20:57:42Z  $
+// $Id: bandmap.h 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -131,6 +131,15 @@ public:
 */
   unsigned int add(const std::string& callsign, const std::string& poster);
 
+/*! \brief              Associate a poster with a call
+    \param  callsign    the callsign
+    \param  poster      poster to associate with <i>callsign</i>
+
+    Creates an entry in the buffer if no entry for <i>callsign</i> exists
+*/
+  inline void operator+=(const std::pair<std::string, std::string>& cp) // callsign poster
+    { this->add(cp.first, cp.second); }
+
 /*! \brief              Are there sufficient posters of a call to allow it to appear on the bandmap?
     \param  callsign    the callsign to test
     \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
@@ -190,6 +199,24 @@ public:
   { _is_needed = true;
 
     return (_values.insert(v)).second;
+  }
+
+/*! \brief      Add a needed value
+    \param  v   needed value
+    \return     whether <i>v</i> was actually inserted
+*/
+  void operator+=(const T& v)
+  { _is_needed = true;
+    _values += v;
+  }
+
+/*! \brief      Add a needed value
+    \param  v   needed value
+    \return     whether <i>v</i> was actually inserted
+*/
+  void operator+=(T&& v)
+  { _is_needed = true;
+    _values += std::forward<T>(v);
   }
 
 /*! \brief      Is a particular value needed?
@@ -362,12 +389,8 @@ public:
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
   explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_SOURCE::LOCAL) :
-//    _expiration_time(0),                  // no expiration time
-//    _is_needed(true),                     // the entry is needed
-//    _mult_status_is_known(false),         // multiplier status is unknown
     _source(s),                           // source is as given in <i>s</i>
     _time(::time(NULL))                  // now
-//    _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
   { }
 
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
@@ -473,7 +496,8 @@ public:
     Does nothing if the value <i>value</i> is already known for the mult <i>name</i>
 */
   inline void add_callsign_mult(const std::string& name, const std::string& value)
-    { _is_needed_callsign_mult.add( { name, value } ); }
+//    { _is_needed_callsign_mult.add( { name, value } ); }
+    { _is_needed_callsign_mult += { name, value }; }
 
 /*! \brief          Add a value of country mult
     \param  value   value of the mult
@@ -481,7 +505,8 @@ public:
     Does nothing if the value <i>value</i> is already known
 */
   inline void add_country_mult(const std::string& value)
-    { _is_needed_country_mult.add(value); }
+//    { _is_needed_country_mult.add(value); }
+    { _is_needed_country_mult += value; }
 
 /*! \brief          Add a value of exchange mult
     \param  name    name of the mult
@@ -489,7 +514,7 @@ public:
     \return         whether the mult was actually added
 */
   inline bool add_exchange_mult(const std::string& name, const std::string& value)
-    { return (_is_needed_exchange_mult.add( { name, value } ) ); }
+    { return (_is_needed_exchange_mult.add( { name, value } ) ); }  // can't use += here because we need th eresult
 
 /// remove all callsign mults
   inline void clear_callsign_mult(void)

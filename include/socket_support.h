@@ -1,4 +1,4 @@
-// $Id: socket_support.h 177 2020-12-13 19:11:32Z  $
+// $Id: socket_support.h 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -218,7 +218,10 @@ public:
 /*! \brief          Encapsulate a pre-existing socket
     \param  sock    socket
 */
-  explicit tcp_socket(SOCKET sock);
+  explicit tcp_socket(SOCKET sock) :
+    _preexisting_socket(true),
+    _sock(sock)
+  { }
 
 /*! \brief  Destructor
 */

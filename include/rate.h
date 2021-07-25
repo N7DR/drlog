@@ -1,4 +1,4 @@
-// $Id: rate.h 178 2020-12-27 16:26:16Z  $
+// $Id: rate.h 187 2021-06-26 16:16:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,7 +42,7 @@ protected:
 
   std::map<time_t /* epoch time */, PAIR_NQSOS_POINTS > _data;    ///< number of QSOs and points at a particular time
 
-  pt_mutex _rate_mutex { "DEFAULT RATE METER"s };                                  ///< In order to lock the object
+  mutable pt_mutex _rate_mutex { "DEFAULT RATE METER"s };                                  ///< In order to lock the object
 
 public:
 
@@ -109,33 +109,33 @@ public:
   }
 
 /// Return the number of QSOs at the current epoch
-  inline unsigned int current_qsos(void)
+  inline unsigned int current_qsos(void) const
   { SAFELOCK(_rate);
-    return (_data.empty() ? 0 : (prev(_data.cend())->second).first);
+    return _data.empty() ? 0 : (prev(_data.cend())->second).first;
   }
 
 /// Return the number of points at the current epoch
-  inline unsigned int current_score(void)
+  inline unsigned int current_score(void) const
   { SAFELOCK(_rate);
 
-    return (_data.empty() ? 0 : (prev(_data.cend())->second).second);
+    return _data.empty() ? 0 : (prev(_data.cend())->second).second;
   }
 
 /*! \brief      Return the number of QSOs and points at the current epoch
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-  PAIR_NQSOS_POINTS current_qsos_and_score(void);
+  PAIR_NQSOS_POINTS current_qsos_and_score(void) const;
 
 /// Return the number of QSOs at the epoch <i>t</i>
-  unsigned int qsos(const time_t t);
+  unsigned int qsos(const time_t t) const;
 
 /// Return the number of points at the epoch <i>t</i>
-  unsigned int score(const time_t t);
+  unsigned int score(const time_t t) const;
 
 /*! \brief      Return the number of QSOs and points at the epoch <i>t</i>
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-  PAIR_NQSOS_POINTS qsos_and_score(const time_t t);
+  PAIR_NQSOS_POINTS qsos_and_score(const time_t t) const;
 
 /*! \brief                          Return the difference in number of QSOs and points between now and some time in the past
     \param  seconds_in_past         number of seconds in the past (i.e., from now) for which the result is desired
@@ -146,7 +146,7 @@ public:
     between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
     then normalises the differences to per <i>normalisation_rate</i> seconds.
 */
-  PAIR_NQSOS_POINTS calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
+  PAIR_NQSOS_POINTS calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600) const;
 
 /// convert to printable string
   std::string to_string(void);

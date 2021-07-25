@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 185 2021-05-03 17:07:56Z  $
+// $Id: cw_buffer.h 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,11 +40,11 @@ class cw_buffer
 {
 protected:
 
-  bool                  _aborted;                           ///< have we received an "abort" command?
+  bool                  _aborted       { false };           ///< have we received an "abort" command?
   pt_mutex              _abort_mutex   { "CW ABORT"s };     ///< mutex to allow thread-safe execution of an "abort" command
   pt_condition_variable _condvar;                           ///< condvar associated with the play thread
   pt_mutex              _condvar_mutex { "CW CONDVAR"s };   ///< mutex associated with the condvar
-  bool                  _disabled_cw;                       ///< whether actual sending is disabled
+  bool                  _disabled_cw   { false };           ///< whether actual sending is disabled
 
 /*  positive numbers represent key down
     negative numbers represent key up
@@ -56,7 +56,7 @@ protected:
   pt_mutex              _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
   parallel_port         _port;                                      ///< the associated parallel port
   unsigned int          _ptt_delay;                                 ///< delay between asserting PTT and transmitting the start of a character, in milliseconds
-  rig_interface*        _rigp;                                      ///< associated rig
+  rig_interface*        _rigp             { nullptr };              ///< associated rig
   pt_mutex              _speed_mutex      { "CW SPEED"s };          ///< mutex for reading/writing speed and ptt delay
   pthread_t             _thread_id;                                 ///< ID for the thread that plays the buffer
   unsigned int          _usec;                                      ///< dot length in microseconds
@@ -201,8 +201,9 @@ class cw_messages
 {
 protected:
 
-  std::map<int, std::string > _messages;                            ///< map number to message
-  pt_mutex                    _messages_mutex { "CW MESSAGES"s };   ///< mutex to allow for thread-safe access
+  std::map<int, std::string > _messages;                 ///< map number to message
+
+  mutable pt_mutex _messages_mutex { "CW MESSAGES"s };   ///< mutex to allow for thread-safe access
 
 public:
 
@@ -228,7 +229,7 @@ public:
 
     Returns empty string if message number <i>n</i> does not exist
 */
-  std::string operator[](const int n);
+  std::string operator[](const int n) const;
 };
 
 #endif /* CWBUFFER_H */

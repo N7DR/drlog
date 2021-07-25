@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 164 2020-08-16 19:57:42Z  $
+// $Id: cw_buffer.cpp 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,7 +62,6 @@ extern message_stream ost;              ///< for debugging, info
 void cw_buffer::_add_action(const int n)
 { SAFELOCK(_key_buffer);
 
-//  _key_buffer.push(n);
   _key_buffer += n;
 }
 
@@ -283,8 +282,8 @@ void* cw_buffer::_play(void*)
     \param  cw_priority     priority of the thread that sends CW
 */
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
-  _aborted(false),
-  _disabled_cw(false),
+//  _aborted(false),
+//  _disabled_cw(false),
   _port(filename),
   _ptt_delay(delay),
   _rigp(nullptr)
@@ -397,11 +396,9 @@ void cw_buffer::key_down(const int n, const int space)
   {
     { SAFELOCK(_key_buffer);
 
-//      _key_buffer.push(n);
       _key_buffer += n;
 
       if (space)                    // add the space if it's non-zero
-//        _key_buffer.push(-space);
         _key_buffer += (-space);
     }
 
@@ -421,7 +418,8 @@ void cw_buffer::key_up(const int n)
 {
   { SAFELOCK(_key_buffer);
 
-    _key_buffer.push(-n);
+//    _key_buffer.push(-n);
+    _key_buffer += (-n);
   }
 
   _condvar.signal();
@@ -744,8 +742,6 @@ void cw_buffer::add(const char c, const int character_space)
 // special commands
     case '>' :                               // clear RIT
       space = 0;
-//      _key_buffer.push(0);                   // command
-//      _key_buffer.push(CMD_CLEAR_RIT);
       _key_buffer += 0;                   // command
       _key_buffer += CMD_CLEAR_RIT;
       break;
@@ -831,7 +827,7 @@ bool cw_buffer::empty(void)
 
      Returns empty string if message number <i>n</i> does not exist
 */
-string cw_messages::operator[](const int n)
+string cw_messages::operator[](const int n) const
 { SAFELOCK(_messages);
 
   return MUM_VALUE(_messages, n);

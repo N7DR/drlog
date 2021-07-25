@@ -1,4 +1,4 @@
-// $Id: parallel_port.h 164 2020-08-16 19:57:42Z  $
+// $Id: parallel_port.h 187 2021-06-26 16:16:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

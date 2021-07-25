@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 186 2021-05-17 20:24:31Z  $
+// $Id: drlog.cpp 188 2021-07-25 14:44:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2481,7 +2481,6 @@ void* process_rbn_info(void* vp)
                   if (!is_recent_call)
                     is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 
-//                const bool is_me               { (be.callsign() == context.my_call()) };
                 const bool is_interesting_mode { (rules.score_modes() > be.mode()) };
 
 // CLUSTER MULT window
@@ -2530,7 +2529,8 @@ void* process_rbn_info(void* vp)
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
                     case BANDMAP_ENTRY_SOURCE::RBN :
-                      bm_buffer.add(be.callsign(), post.poster());
+//                      bm_buffer.add(be.callsign(), post.poster());
+                      bm_buffer += { be.callsign(), post.poster() };
 
                       if (bm_buffer.sufficient_posters(be.callsign()))
                       { bandmap_insertion_queues[dx_band] += be;
@@ -3756,25 +3756,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rebuild_history(logbk, rules, statistics, q_history, rate);
         rescore(rules);
         update_rate_window();
-
         rebuild_dynamic_call_databases(logbk);
-
-// this isn't right: shouldn't automatically delete the call because maybe this wasn't the only QSO with it &&&
-//        scp_dynamic_db.clear();     // clears cache of parent
-//        fuzzy_dynamic_db.clear();
-//        query_db.clear_dynamic_database();
-
-//        const set<string> calls_in_log { logbk.calls() };
-
-//        for (const string& callsign : calls_in_log)
-//        { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-//            scp_dynamic_db.add_call(callsign);
-
-//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-//            fuzzy_dynamic_db.add_call(callsign);
-
-//          query_db += callsign;
-//        }
 
 // display the current statistics
         display_statistics(statistics.summary_string(rules));
@@ -4262,16 +4244,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-R -- toggle RX antenna
   if (!processed and (e.is_alt('r')))
-  { //ost << "Processing ALT-R" << endl;
-    rig.toggle_rx_ant();
+  { rig.toggle_rx_ant();
     processed = update_rx_ant_window();
   }
   
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
-  { //ost << "quick QSY to " << quick_qsy_info.first.display_string() << endl;
-    
-    pair<frequency, MODE> old_quick_qsy_info { quick_qsy_map.at(safe_get_band()) };
+  { pair<frequency, MODE> old_quick_qsy_info { quick_qsy_map.at(safe_get_band()) };
     pair<frequency, MODE> new_quick_qsy_info { get_frequency_and_mode() };
 
     rig.rig_frequency(old_quick_qsy_info.first);
@@ -4332,9 +4311,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     lock_guard lg(last_posted_qrg_mutex[band_nr]);
 
-    const auto it { last_posted_qrg[band_nr].find(original_contents) };
-
-    if (it != last_posted_qrg[band_nr].end())
+    if (const auto it { last_posted_qrg[band_nr].find(original_contents) }; it != last_posted_qrg[band_nr].end())
       win_last_qrg < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < original_contents < ": "s <= it->second;
     else
       win_last_qrg <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -4392,6 +4369,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     ALT-K         -- toggle CW
     ALT-N         -- toggle notch status if on SSB
     ALT-KP_4      -- decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
+    ALT-R -- toggle RX antenna
+    ALT-S -- toggle sub receiver
 
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     CTRL-S -- send contents of CALL window to scratchpad
@@ -4400,10 +4379,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     FULL STOP
     ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
     SHIFT -- RIT control
-    ALT-S -- toggle sub receiver
     CTRL-B -- fast bandwidth
     F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
-    ALT-R -- toggle RX antenna
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
@@ -4468,8 +4445,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // go back to the call window
     if (!processed)
-    { //win_active_p = &win_call;
-      set_active_window(ACTIVE_WINDOW::CALL);
+    { set_active_window(ACTIVE_WINDOW::CALL);
       processed = (win_call <= WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE, true);
     }
   }
@@ -4508,8 +4484,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // figure out whether we have sent a different RST (in SKCC)
 
-//    ost << "original exchange_contents = " << exchange_contents << endl;
-
     const string rst_character { "'"s };    // apostrophe
 
     if (contains(exchange_contents, rst_character))
@@ -4525,8 +4499,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
       new_rst = substring(exchange_contents, last_apostrophe + 1, word_length);
 
-//      ost << "new RST = " << new_rst << endl;
-
 // remove all fields containing an apostrophe
       const vector<string> fields { split_string(exchange_contents, ' ') };
       vector<string> new_fields;
@@ -4537,8 +4509,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
       exchange_field_values = new_fields;
       exchange_contents = join(new_fields, SPACE_STR);
-
-//      ost << "exchange contents = " << exchange_contents << endl;
     }
 
     string from_callsign { call_contents };
@@ -4621,9 +4591,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               const bool quick_qsl { (e.symbol() == XK_KP_Enter) };
 
               if (!send_qtc)
-              { (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
-  //              last_exchange = expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
-              }
+                (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
             }
           }
 
@@ -4776,7 +4744,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
             bool no_exchange_mults_this_qso { true };
 
-            for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.begin() }; cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
+            for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
             { const size_t old_size { (cit->second).size() };
 
               map<string, MULTIPLIER_VALUES>::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
@@ -4806,7 +4774,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                 }
 
                 if (!difference.empty())  // assume that there's at most one entry
- //                 exchange_mults_this_qso.insert( { current_exchange_mult.first, *(difference.begin()) } );
                   exchange_mults_this_qso += { current_exchange_mult.first, *(difference.begin()) };
               }
             }
@@ -5155,9 +5122,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_exchange.move_cursor(0, 0);
       }
       else
-      { //const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
-
-        if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // first empty space
+      { if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // first empty space
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
           set_active_window(ACTIVE_WINDOW::EXCHANGE);
@@ -5737,10 +5702,12 @@ void populate_win_info(const string& callsign)
                                                 < pad_left(bearing(callsign), 5)         < SPACE_STR
                                                 < sunrise_time                           < "/"s      < sunset_time
                                                 < (daylight ? "(D)"s : "(N)"s);
+    const string name_plus_continent_str { name_str + " ["s + location_db.continent(callsign) + "]"s };
 
-    const size_t len { name_str.size() };
+//    const size_t len { name_str.size() };
+    const size_t len { name_plus_continent_str.size() };
 
-    win_info < cursor(win_info.width() - len, win_info.height() - 2) <= name_str;
+    win_info < cursor(win_info.width() - len, win_info.height() - 2) <= name_plus_continent_str;
 
     constexpr unsigned int FIRST_FIELD_WIDTH { 14 };         // "Country [VP2M]"
     constexpr unsigned int FIELD_WIDTH       { 5 };          // width of other fields

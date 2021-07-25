@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 175 2020-12-06 17:44:13Z  $
+// $Id: cluster.cpp 187 2021-06-26 16:16:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -475,7 +475,8 @@ void monitored_posts::operator+=(const dx_post& post)
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
     { if ( mpe.expiration() > old_mpe.expiration() )
-      { _entries.erase(it);
+      { //_entries.erase(it);
+        _entries -= it;
         stop_search = true;
       }
       else
@@ -496,9 +497,7 @@ void monitored_posts::operator+=(const dx_post& post)
   }
 
   while (_entries.size() > _max_entries)  // should happen only once at most
-  { //_entries.pop_front();
-    //_entries--;
-    --_entries;
+  { --_entries;
     _is_dirty = true;                     // should be unnecessary, since should already be true
   }
 }
