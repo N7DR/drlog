@@ -423,8 +423,8 @@ void QSO::populate_from_verbose_format(const string& str)
     \param  str     string from visible log window
 */
 void QSO::populate_from_log_line(const string& str)
-{ //ost << "Inside populate_from_log_line(); initial QSO is:" << *this << endl;
-  //ost << "string = *" << str << "*" << endl;
+{ ost << "Inside populate_from_log_line(); input string is:" << *this << endl;
+  ost << "string = *" << str << "*" << endl;
 
 // separate the line into fields
   const vector<string> vec { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
@@ -447,6 +447,12 @@ void QSO::populate_from_log_line(const string& str)
   size_t received_index { 0 };
 
   const vector<exchange_field> exchange_fields { rules.expanded_exch(_callsign, _mode) };
+
+  ost << "number of received fields in string: " << _received_exchange.size() << endl;
+
+  for (size_t idx { 0 }; idx < _received_exchange.size(); ++idx)
+    ost << "  [" << idx << "] = " << _received_exchange[idx].value() << endl;
+
 
   for (size_t n { 0 }; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
@@ -493,8 +499,65 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
+// need to handle the cases for an optional field:
+//  not present in original and not present in new
+//  not present in original and present in new
+//  present in original and not present in new
+//  present in original and present in new
+
     if (!processed and (starts_with(field, "received-"s)))
-    { if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
+    { if (_is_received_field_optional(field, exchange_fields))
+      { ost << "OPTIONAL received field = " << field << endl;
+
+        bool present_original { !_received_exchange[received_index].value().empty() };
+
+        if (present_original)
+          ost << "field is present in original: " << _received_exchange[received_index].value() << endl;
+        else
+          ost << "field is NOT present in original" << endl;
+
+        bool present_new { !field_value.empty() };
+
+        if (present_new)
+          ost << "field is present in new: " << field_value << endl;
+        else
+          ost << "field is NOT present in new" << endl;
+
+// not present in either
+        if (!present_original and !present_new)
+        { ost << "field is not present in either original or new; not updated" << endl;
+          received_index++;
+        }
+
+// if present in new
+       if (present_new)
+       { if (field_value == _received_exchange[received_index].value())
+         { ost << "field is unchanged; not updated" << endl;
+           received_index++;
+         }
+         else
+         { bool is_legal_value = rules.is_legal_value(substring(field, 9), field_value);
+
+           if (is_legal_value)
+             ost << "field value " << field_value << " is legal" << endl;
+           else
+             ost << "field value " << field_value << " is NOT legal" << endl;
+
+           if (is_legal_value)
+             _received_exchange[received_index++].value(field_value);
+         }
+       }
+       else    // not present in new, but was present in original
+       { ost << "field has been removed in new" << endl;
+          _received_exchange[received_index++].value(string());
+       }
+
+      }
+
+
+
+#if 0      
+      if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
       { ost << "field = " << field << endl;
         ost << "OPTIONAL AND NOT LEGAL VALUE" << endl;
         ost << "Field to be tested = *" << substring(field, 9) << "*" << endl;
@@ -506,6 +569,7 @@ void QSO::populate_from_log_line(const string& str)
         if (received_index < _received_exchange.size())
           _received_exchange[received_index++].value(field_value);  // assume that only one field is optional
       }
+#endif
       else
       { if (received_index < _received_exchange.size())
         { ost << "NOT OPTIONAL" << endl;
