@@ -1,4 +1,4 @@
-// $Id: bandmap.h 188 2021-07-25 14:44:04Z  $
+// $Id: bandmap.h 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -496,7 +496,6 @@ public:
     Does nothing if the value <i>value</i> is already known for the mult <i>name</i>
 */
   inline void add_callsign_mult(const std::string& name, const std::string& value)
-//    { _is_needed_callsign_mult.add( { name, value } ); }
     { _is_needed_callsign_mult += { name, value }; }
 
 /*! \brief          Add a value of country mult
@@ -505,7 +504,6 @@ public:
     Does nothing if the value <i>value</i> is already known
 */
   inline void add_country_mult(const std::string& value)
-//    { _is_needed_country_mult.add(value); }
     { _is_needed_country_mult += value; }
 
 /*! \brief          Add a value of exchange mult
@@ -514,7 +512,7 @@ public:
     \return         whether the mult was actually added
 */
   inline bool add_exchange_mult(const std::string& name, const std::string& value)
-    { return (_is_needed_exchange_mult.add( { name, value } ) ); }  // can't use += here because we need th eresult
+    { return (_is_needed_exchange_mult.add( { name, value } ) ); }  // can't use += here because we need the result
 
 /// remove all callsign mults
   inline void clear_callsign_mult(void)
@@ -748,22 +746,22 @@ protected:
 
   mutable pt_mutex                        _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
   
-  int                             _column_offset          { 0 };                       ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-  int                             _cull_function          { 0 };                       ///< cull function number to apply
-  std::unordered_set<std::string> _do_not_add;                                ///< do not add these calls
-  BM_ENTRIES                      _entries;                                   ///< all the entries
-  std::vector<COLOUR_TYPE>        _fade_colours;                              ///< the colours to use as entries age
-  decltype(_entries)              _filtered_entries;                          ///< entries, with the filter applied
-  bool                            _filtered_entries_dirty { false };          ///< is the filtered version dirty?
-  bandmap_filter_type*            _filter_p               { &BMF };                         ///< pointer to a bandmap filter
-  frequency                       _mode_marker_frequency  { frequency(0) };                     ///< the frequency of the mode marker
-  unsigned int                    _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
-  decltype(_entries)              _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
-  bool                            _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
-  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
-  std::unordered_set<std::string> _recent_calls;                              ///< calls recently added
-  COLOUR_TYPE                     _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
-  uint32_t                        _verno;                                     ///< version number (not currently used, I believe)
+  int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  int                             _cull_function          { 0 };                        ///< cull function number to apply
+  std::unordered_set<std::string> _do_not_add;                                          ///< do not add these calls
+  BM_ENTRIES                      _entries;                                             ///< all the entries
+  std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
+  decltype(_entries)              _filtered_entries;                                    ///< entries, with the filter applied
+  bool                            _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
+  bandmap_filter_type*            _filter_p               { &BMF };                     ///< pointer to a bandmap filter
+  frequency                       _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
+  unsigned int                    _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
+  decltype(_entries)              _rbn_threshold_and_filtered_entries;                  ///< entries, with the filter and RBN threshold applied
+  bool                            _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
+  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries;           ///< entries, with the RBN threshold, filter and cull function applied
+  std::unordered_set<std::string> _recent_calls;                                        ///< calls recently added
+  COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                                       ///< colour to use for entries < 120 seconds old (if black, then not used)
+  uint32_t                        _verno         { 0 };                                               ///< version number (not currently used, I believe)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -800,13 +798,12 @@ protected:
 public:
 
 /// default constructor
-  inline bandmap(void) :
-//    _mode_marker_frequency(frequency(0)),
-    _rbn_threshold(1),
-    _rbn_threshold_and_filtered_entries_dirty(false),
-    _recent_colour(COLOUR_BLACK),
-    _verno(0)
-  { }
+  bandmap(void) = default;
+//    _rbn_threshold(1),
+//    _rbn_threshold_and_filtered_entries_dirty(false),
+//    _recent_colour(COLOUR_BLACK),
+//    _verno(0)
+//  { }
   
   bandmap(const bandmap& bm) = delete;
 
@@ -1121,7 +1118,8 @@ public:
 */
   inline void remove_from_do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      _do_not_add.erase(callsign);
+//      _do_not_add.erase(callsign);
+       _do_not_add -= callsign;
     }
 
 /*!  \brief                     Is a particular call present?

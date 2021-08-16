@@ -1,4 +1,4 @@
-// $Id: qso.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: qso.cpp 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -909,22 +909,28 @@ bool QSO::exchange_match(const string& rule_to_match) const
   else                          // three tokens
   { const string exchange_field_name { remove_peripheral_spaces(tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
-    string exchange_field_value;                                   // default is empty field
+//    string exchange_field_value;                                   // default is empty field
 
 // is this field present?
-    exchange_field_value = received_exchange(exchange_field_name);
+    const string exchange_field_value { received_exchange(exchange_field_name) };   // default is empty field
 
 // now try the various legal operations
+#if 0
     const string op { remove_peripheral_spaces(tokens[1]) };
 
     string target { remove_peripheral_spaces(tokens[2]) };
 
     target = remove_trailing(remove_leading(target, '"'), '"');                   // strip any double quotation marks
+#endif
 
 // !=
     if (!remove_leading_spaces(exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
-    { if (op == "!="s)                                                // precise inequality
-      { ost << "matched operator: " << op << endl;
+    { const string op { remove_peripheral_spaces(tokens[1]) };
+
+      if (op == "!="s)                                                // precise inequality
+      { const string target { remove_trailing(remove_leading(remove_peripheral_spaces(tokens[2]), '"'), '"') };                   // strip any double quotation marks
+
+        ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
         ost << "target: *" << target << "* " << endl;
 

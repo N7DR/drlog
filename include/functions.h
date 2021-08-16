@@ -1,4 +1,4 @@
-// $Id: functions.h 166 2020-08-22 20:59:30Z  $
+// $Id: functions.h 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

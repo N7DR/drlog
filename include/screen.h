@@ -287,14 +287,8 @@ public:
 */
   inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
     _name(win_name),
-//    _column_width(0),
-//    _scrolling(false),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
     _insert(flags bitand WINDOW_INSERT)
-//    _pp(nullptr),
-//    _process_input(nullptr),
-//    _fg(COLOUR_WHITE),
-//    _bg(COLOUR_BLACK)
   { _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
 
 /*! \brief          Create using position and size information from the configuration file

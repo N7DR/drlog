@@ -1,4 +1,4 @@
-// $Id: rate.h 187 2021-06-26 16:16:42Z  $
+// $Id: rate.h 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -72,7 +72,6 @@ public:
 */
   void operator+=(const std::pair<time_t, PAIR_NQSOS_POINTS>& tp)
   { SAFELOCK(_rate);
-//    _data.insert(tp);
     _data += tp;
   }
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 186 2021-05-17 20:24:31Z  $
+// $Id: bandmap.cpp 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -126,13 +126,13 @@ void bandmap_filter_type::add_or_subtract(const string& str)
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
   if (ss > str)              // remove a value
-    ss.erase(str);
+//    ss.erase(str);
+    ss -= str;
   else                       // add a value
     ss += str;
 
   vs_p->clear();                                        // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
-//  sort((*vs_p).begin(), (*vs_p).end(), compare_calls);  // make it easy for humans
   SORT(*vs_p, compare_calls);  // make it easy for humans
 }
 
@@ -423,7 +423,6 @@ void bandmap::_insert(const bandmap_entry& be)
     my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - MY_MARKER_BIAS));     // make it 1Hz less than actual value 
   }
 
-//  const bandmap_entry* bep { be.is_my_marker() ? &my_marker_copy : &be };   // point to the right bandmap_entry object
   const bandmap_entry& ber { be.is_my_marker() ? my_marker_copy : be };   // point to the right bandmap_entry object
   
   bool inserted { false };
@@ -433,7 +432,6 @@ void bandmap::_insert(const bandmap_entry& be)
 // insert it in the right place in the list
   for (BM_ENTRIES::iterator it { _entries.begin() }; (!inserted and (it != _entries.end())); ++it)
   { if (it->freq().hz() > ber.freq().hz())
-//      inserted = ( _entries.insert(it, *bep), true );
       inserted = ( _entries += { it, ber }, true );
   }
 
@@ -532,7 +530,7 @@ bool bandmap::_mark_as_recent(const bandmap_entry& be)
 
   SAFELOCK(_bandmap);
 
-  const bandmap_entry old_be { (*this)[be.callsign()] };
+  const bandmap_entry& old_be { (*this)[be.callsign()] };
 
   if (!old_be.valid())    // not already present
     return false;
@@ -609,7 +607,7 @@ void bandmap::operator+=(bandmap_entry& be)
 
 // possibly remove all the other entries at this QRG
       if (be.is_not_marker())
-      { const bandmap_entry current_be = (*this)[callsign];  // the entry in the updated bandmap
+      { const bandmap_entry current_be { (*this)[callsign] };  // the entry in the updated bandmap
 
         { _entries.remove_if([=] (bandmap_entry& bme) { bool rv { bme.is_not_marker() };
 
@@ -631,7 +629,6 @@ void bandmap::operator+=(bandmap_entry& be)
     }
 
     if (be.is_not_marker() and mark_as_recent)
-//      _recent_calls.insert(callsign);
       _recent_calls += callsign;
 
     _dirty_entries();
@@ -846,7 +843,8 @@ BM_ENTRIES bandmap::filtered_entries(void)
 
   for (const auto& be : tmp)
   { if (be.is_my_marker() or be.is_mode_marker())
-      rv.push_back(be);
+ //     rv.push_back(be);
+      rv += be;
     else                                              // start by assuming that we are in show mode
     { const string& canonical_prefix { be.canonical_prefix() };
       const string& continent        { be.continent() };
@@ -855,13 +853,13 @@ BM_ENTRIES bandmap::filtered_entries(void)
 
       const vector<string>& fil_continent { _filter_p->continents() };
 
-      for (size_t n = 0; n < fil_continent.size() and !display_this_entry; ++n)
+      for (size_t n { 0 }; n < fil_continent.size() and !display_this_entry; ++n)
         if (continent == fil_continent[n])
           display_this_entry = true;
 
       const vector<string>& fil_prefix { _filter_p->prefixes() };
 
-      for (size_t n = 0; n < fil_prefix.size() and !display_this_entry; ++n)
+      for (size_t n { 0 }; n < fil_prefix.size() and !display_this_entry; ++n)
         if (canonical_prefix == fil_prefix[n])
           display_this_entry = true;
 
@@ -869,14 +867,17 @@ BM_ENTRIES bandmap::filtered_entries(void)
         display_this_entry = !display_this_entry;
 
       if (display_this_entry)
-        rv.push_back(be);
+//        rv.push_back(be);
+        rv += be;
     }
   }
 
-  _filtered_entries = rv;
+//  _filtered_entries = rv;
+  _filtered_entries = move(rv);
   _filtered_entries_dirty = false;
 
-  return rv;
+//  return rv;
+  return _filtered_entries;
 }
 
 /// all the entries, after the RBN threshold and filtering have been applied
@@ -896,10 +897,12 @@ BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   SAFELOCK(_bandmap);
 
-  _rbn_threshold_and_filtered_entries = rv;
+//  _rbn_threshold_and_filtered_entries = rv;
+  _rbn_threshold_and_filtered_entries = move(rv);
   _rbn_threshold_and_filtered_entries_dirty = false;
 
-  return rv;
+//  return rv;
+  return _rbn_threshold_and_filtered_entries;
 }
 
 /// all the entries, after the RBN threshold, filtering and culling have been applied

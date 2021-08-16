@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 188 2021-07-25 14:44:04Z  $
+// $Id: cw_buffer.h 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,7 +53,7 @@ protected:
     the duration of key up/down is in units in which 100 == the standard length of a dot
 */
   std::queue<int>       _key_buffer;                                ///< the queue of key up/down motions remaining to be executed
-  pt_mutex              _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
+  pt_mutex      _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
   parallel_port         _port;                                      ///< the associated parallel port
   unsigned int          _ptt_delay;                                 ///< delay between asserting PTT and transmitting the start of a character, in milliseconds
   rig_interface*        _rigp             { nullptr };              ///< associated rig
@@ -136,6 +136,12 @@ public:
 */
   void add(const char c, const int character_space = 200);
 
+/*! \brief                      Send a single character, along with a subsequent 300-unit space
+    \param  c                   character to send
+*/
+  inline void operator+=(const char c)
+    { add(c); }
+
 /*! \brief          Send a string
     \param  str     string to send
 
@@ -143,6 +149,15 @@ public:
     prior to transmission
 */
   void operator<<(const std::string& str);
+
+/*! \brief          Send a string
+    \param  str     string to send
+
+    Special characters and commands embedded in <i>str</i> are expanded and/or processed
+    prior to transmission
+*/
+  inline void operator+=(const std::string& str)
+    { (*this) << str; }
 
 /// clear the buffer
   void clear(void);

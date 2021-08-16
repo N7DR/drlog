@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 188 2021-07-25 14:44:04Z  $
+// $Id: drlog.cpp 189 2021-08-16 00:34:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -269,6 +269,9 @@ map<string, string> individual_messages;        ///< individual messages associa
 
 pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
+
+COLOUR_TYPE log_extract_fg;                 ///< foreground colour of LOG EXTRACT window (used to restore colours after QTC)
+COLOUR_TYPE log_extract_bg;                 ///< background colour of LOG EXTRACT window (used to restore colours after QTC)
 
 pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
 time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
@@ -1241,6 +1244,8 @@ int main(int argc, char** argv)
 
 // LOG EXTRACT window; also used for QTCs
     win_log_extract.init(context.window_info("LOG EXTRACT"s), WINDOW_NO_CURSOR);
+    log_extract_fg = win_log_extract.fg();
+    log_extract_bg = win_log_extract.bg();
     editable_log.prepare();                       // now we can size the editable log
     extract.prepare();
 
@@ -2838,7 +2843,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { try
     { rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
+      { if (BAND(rig.get_last_frequency(cur_band, cur_mode) != cur_band))
+          ost << "ERROR: inconsistency in frequency/band info" << endl;
+      }
+
       BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
+
+      { ost << "cur band = " << cur_band << ", new band = " << new_band << endl;
+      }
 
       safe_set_band(new_band);
 
@@ -7350,7 +7362,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_db += series;                  // add to database of sent QTCs
 
-      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
 // log the QTC series
       append_to_file(context.qtc_filename(), series.complete_output_string());
@@ -7380,7 +7393,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_db += series;                  // add to database of sent QTCs
 
-      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
@@ -7394,7 +7408,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     else  // none sent
     { win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Completely aborted; QTC "s < qtc_id < " not sent to "s <= series.destination();
 
-      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       set_active_window(last_active_window);
 
