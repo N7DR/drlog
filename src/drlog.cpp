@@ -420,14 +420,14 @@ window win_band_mode,                   ///< the band and mode indicator
        win_exchange,                    ///< QSO exchange received from other station
        win_fuzzy,                       ///< fuzzy lookups
        win_grid,                        ///< grid square
-       win_last_qrg,                    ///< last QRG of a posted call
-       win_log_extract,                 ///< to show earlier QSOs
-       win_name,                        ///< name of operator
        win_indices,                     ///< geomagnetic indices
-//       win_indices_lookup_time,         ///< HH:MM of last geomagnetic indices lookup
        win_individual_messages,         ///< messages from the individual messages file
        win_individual_qtc_count,        ///< number of QTCs sent to an individual
        win_info,                        ///< summary of info about current station being worked
+       win_last_qrg,                    ///< last QRG of a posted call
+       win_log_extract,                 ///< to show earlier QSOs
+       win_name,                        ///< name of operator
+       win_qtc_hint,                    ///< hint as to whether to send QTC
        win_local_time,                  ///< window for local time
        win_log,                         ///< main visible log
        win_memories,                    ///< the memory contents
@@ -1271,6 +1271,9 @@ int main(int argc, char** argv)
 
 // POSTED BY window
     win_posted_by.init(context.window_info("POSTED BY"s), WINDOW_NO_CURSOR);
+
+// QTC HINT window
+    win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
   
 // QUERY 1 window
     win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
@@ -2841,15 +2844,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
   { try
-    { rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
+    { const frequency set_last_f { rig.rig_frequency() };
 
-      { if (BAND(rig.get_last_frequency(cur_band, cur_mode) != cur_band))
+      rig.set_last_frequency(cur_band, cur_mode, set_last_f);             // save current frequency
+
+      { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
           ost << "ERROR: inconsistency in frequency/band info" << endl;
       }
 
       BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
 
-      { ost << "cur band = " << cur_band << ", new band = " << new_band << endl;
+      { ost << "cur band = " << BAND_NAME[cur_band] << "m, new band = " << BAND_NAME[new_band] << "m" << endl;
       }
 
       safe_set_band(new_band);
@@ -2858,8 +2863,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       frequency last_frequency { rig.get_last_frequency(bmode) };   // go to saved frequency for this band/mode (if any)
 
+      { ost << "bmode = " << new_band << ", " << cur_mode << endl;
+        ost << "last frequency of bmode = " << last_frequency << endl;
+      }
+
       if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
         last_frequency = DEFAULT_FREQUENCIES.at(bmode);
+
+      { ost << "revised last frequency of bmode = " << last_frequency << endl;
+      }
 
 // check that we're about to go to the correct band
       { if (BAND(last_frequency) != new_band)
@@ -8350,6 +8362,10 @@ void populate_win_call_history(const string& callsign)
 
     int line_nr { 0 };
 
+// keep track of which slots have QSOs and QSLs
+    int n_green { 0 };
+    int n_red   { 0 };
+
 // think about whether we want an option to NOT limit to permitted bands/modes; in 160m contests, this window isn't very useful as-is
     for (const auto b : call_history_bands /* permitted_bands */)
     { const cursor c_posn { 0, line_nr++ };
@@ -8362,10 +8378,41 @@ void populate_win_call_history(const string& callsign)
         const auto         this_colour_pair { colours.add(fg, bg) };
 
         win_call_history < colour_pair(this_colour_pair) < pad_left(to_string(n_qsos), 4) < colour_pair(default_colour_pair);
+
+        if (fg == COLOUR_GREEN)
+          n_green++;
+
+        if (fg == COLOUR_RED)
+          n_red++;
       }
     }
 
     win_call_history.refresh();
+
+    if (win_qtc_hint.valid())
+    { //ost << "win_qtc_hint is valid; n_green = " << n_green << ", n_red = " << n_red << endl;
+
+      int window_colour { COLOUR_RED };
+
+//      if ( (n_green + n_red) == 0 )
+//        win_qtc_hint.bg(COLOUR_RED);
+//      else
+      { if ( ((n_green + n_red) != 0) and (n_green >= (0.75 * (n_green + n_red))) )
+          window_colour = COLOUR_GREEN;
+//          win_qtc_hint.bg(COLOUR_GREEN);
+//        else
+//          win_qtc_hint.bg(COLOUR_RED);
+      }
+
+      const auto this_colour_pair { colours.add(window_colour, window_colour) };
+
+//      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= " "s;
+      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
+
+//      win_qtc_hint.refresh();
+    }
+//    else
+//      ost << "win_qtc_hint is NOT valid" << endl;
   }
 }
 
@@ -8616,10 +8663,6 @@ void adif3_build_old_log(void)
       { olog.increment_n_qsls(callsign);
         olog.qsl_received(callsign, b, m);
       }
-
- //     if (callsign == "OH3RF"s)
- //       ost << "ADDED RECORD: " << rec.to_string() << endl;
-
     };
 
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
@@ -8644,12 +8687,6 @@ void adif3_build_old_log(void)
           if (!matching_qsos.empty())       // should always be true
           { SORT(matching_qsos, compare_adif3_records);    // in chronological order
 
-/*
-            if (callsign == "OH3RF"s)
-            { for (const auto rec : matching_qsos)
-                ost << "MATCHING QSO AFTER SORTING: " << rec << endl;
-            }
-*/
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
             for (const auto& rec : matching_qsos)
@@ -8684,11 +8721,7 @@ void adif3_build_old_log(void)
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
                 for (int n { index_last_marked_qso }; n < static_cast<int>(vrec.size()); ++n)
-                { //if (callsign == "OH3RF"s)
-                  //  ost << "ADDING RECORD NUMBER " << n << " TO LOG: " << vrec[n] << endl;
-
-                   add_record_to_olog(vrec[n]);
-                }
+                  add_record_to_olog(vrec[n]);
             }
           }
           else  // no matching QSOs; should never happen
@@ -8883,9 +8916,6 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
 // use the current time rather than relying on any timestamp in the data -- 
 // this should be roughly the same time as the timestamp we've put in the dx_post
-    
-//    string line { substring(hhmmss(), 0, 5) + " "s + post.frequency_str() + "  " + post.poster() }; 
-
     new_contents += substring(hhmmss(), 0, 5) + " "s + post.frequency_str() + "  " + post.poster();
   }
 

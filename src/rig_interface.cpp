@@ -1209,7 +1209,7 @@ bool rig_interface::test(void)
     { const string response { raw_command("IC;"s, RESPONSE::EXPECTED, 8) };
 
       if (response.length() < 8)
-        _error_alert("Unable to retrieve rig icons and status"s);
+        _error_alert("Unable to retrieve K3 icons and status"s);
       else
       { const char c { response[2] };
 
