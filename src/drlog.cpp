@@ -525,6 +525,10 @@ pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread th
           
 map<BAND, pair<frequency, MODE>> quick_qsy_map;
 
+/// variable to hold the foreground and background colours of the QTC HINT window
+int win_qtc_hint_fg;
+int win_qtc_hint_bg;
+
 /// define wrappers to pass parameters to threads
 
 WRAPPER_7_NC(cluster_info, 
@@ -1274,6 +1278,8 @@ int main(int argc, char** argv)
 
 // QTC HINT window
     win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
+    win_qtc_hint_fg = win_qtc_hint.fg();
+    win_qtc_hint_bg = win_qtc_hint.bg();
   
 // QUERY 1 window
     win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
@@ -8350,6 +8356,8 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
 
 /*! \brief              Populate the call history window
     \param  callsign    full or partial call
+
+    Also handles the colour of the QTC HINT window if that window exists
 */
 void populate_win_call_history(const string& callsign)
 { static const set<MODE> call_history_modes { MODE_CW, MODE_SSB };
@@ -8390,29 +8398,15 @@ void populate_win_call_history(const string& callsign)
     win_call_history.refresh();
 
     if (win_qtc_hint.valid())
-    { //ost << "win_qtc_hint is valid; n_green = " << n_green << ", n_red = " << n_red << endl;
+    { int window_colour { win_qtc_hint_bg };
 
-      int window_colour { COLOUR_RED };
-
-//      if ( (n_green + n_red) == 0 )
-//        win_qtc_hint.bg(COLOUR_RED);
-//      else
-      { if ( ((n_green + n_red) != 0) and (n_green >= (0.75 * (n_green + n_red))) )
-          window_colour = COLOUR_GREEN;
-//          win_qtc_hint.bg(COLOUR_GREEN);
-//        else
-//          win_qtc_hint.bg(COLOUR_RED);
-      }
+      if ( ((n_green + n_red) != 0) and (n_green >= (0.75 * (n_green + n_red))) )
+        window_colour = win_qtc_hint_fg;
 
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
-//      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= " "s;
       win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
-
-//      win_qtc_hint.refresh();
     }
-//    else
-//      ost << "win_qtc_hint is NOT valid" << endl;
   }
 }
 
