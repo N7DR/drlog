@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 189 2021-08-16 00:34:00Z  $
+// $Id: drlog.cpp 190 2021-08-22 14:17:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -335,8 +335,8 @@ bool                    home_exchange_window { false };             ///< whether
 int                     inactivity_timer;                           ///< how long to record with no activity
 bool                    is_ss { false };                            ///< ss is special
 
-logbook                                   logbk;                    ///< the log; can't be called "log" if mathcalls.h is in the compilation path
-unsigned short                            long_t { 0 };             ///< do not send long Ts at beginning of serno
+logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
+unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
 
 unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
 memory_information      meminfo;                                    ///< to monitor the state of memory
@@ -361,6 +361,8 @@ vector<BAND>            permitted_bands;                    ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
+
+unsigned short          qtc_long_t { 0 };                   ///< do not send long Ts at beginning of serno in QTCs
 
 unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearig on a bandmap?
 int                     REJECT_COLOUR { COLOUR_RED };       ///< colour for calls that are dupes
@@ -788,6 +790,7 @@ int main(int argc, char** argv)
     no_default_rst                  = context.no_default_rst();
     n_memories                      = context.n_memories();
     posted_by_continents            = context.posted_by_continents();
+    qtc_long_t                      = context.qtc_long_t();
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
     scoring_enabled                 = context.scoring_enabled();
@@ -8748,9 +8751,33 @@ void adif3_build_old_log(void)
 */
 void send_qtc_entry(const qtc_entry& qe, const bool logit)
 { if (cw_p)
-  { const string space { (context.qtc_double_space() ? "  "s : SPACE_STR) };
-    const string serno { pad_left(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, 'T') };
-    const string msg   { qe.utc() + space + qe.callsign() + space + serno };
+  { constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
+    constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
+    constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
+
+    const string space { (context.qtc_double_space() ? "  "s : SPACE_STR) };
+
+    char t_char { 'T' };    // char for initial zeroes in serial numbers
+
+    switch (qtc_long_t)
+    { case 1 :
+        t_char = LONG_T_CHAR;
+        break;
+
+      case 2 :
+        t_char = LONG_LONG_T_CHAR;
+        break;
+
+      case 3 :
+        t_char = EXTRA_LONG_T_CHAR;
+        break;
+
+      default :
+        break;
+    }
+
+    const string serno_str { pad_left(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, t_char) };
+    const string msg       { qe.utc() + space + qe.callsign() + space + serno_str };
 
     (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed would be back to full speed before the message is sent
     

@@ -224,6 +224,7 @@ protected:
   bool                                         _qtcs                                    { false };                      ///< whether QTCs are enabled
   bool                                         _qtc_double_space                        { false };                      ///< whether to leave a longer pause between elements of a QTC
   std::string                                  _qtc_filename                            { "QTCs"s };                    ///< name of file where QTCs are stored
+  unsigned int                                 _qtc_long_t                              { 0 };                          ///< whether and amount to extend length of initial Ts in serial number in QTCs
   unsigned int                                 _qtc_qrs                                 { 0 };                          ///< WPM decrease when sending QTC
   std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country
 
@@ -502,6 +503,7 @@ public:
   CONTEXTREAD(qtcs);                         ///< whether QTCs are enabled
   CONTEXTREAD(qtc_double_space);             ///< whether to leave a longer pause between elements of a QTC
   CONTEXTREAD(qtc_filename);                 ///< name of file where QTCs are stored
+  CONTEXTREAD(qtc_long_t);                   ///< whether and amount to extend length of initial Ts in serial number in QTCs
   CONTEXTREAD(qtc_qrs);                      ///< WPM decrease when sending QTC
   CONTEXTREAD(qthx);                         ///< allowed exchanges values as a function of country
 

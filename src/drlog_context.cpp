@@ -805,6 +805,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "QTC FILENAME"s)
       _qtc_filename = rhs;
 
+// QTC LONG T
+    if (LHS == "QTC LONG T"s)
+      _qtc_long_t = from_string<decltype(_qtc_long_t)>(rhs);
+
 // QTC QRS
     if (LHS == "QTC QRS"s)
       _qtc_qrs = from_string<decltype(_qtc_qrs)>(rhs);
