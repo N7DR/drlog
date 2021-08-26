@@ -176,7 +176,7 @@ public:
   screen(void);
 
 /// destructor
-  inline ~screen(void)
+  inline ~screen(void) noexcept
     { endwin(); }
 };
 

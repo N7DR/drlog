@@ -905,7 +905,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       for (const auto& band_str : bands_str)
       { try
-        { _score_bands.insert(BAND_FROM_NAME.at(band_str));
+        { //_score_bands.insert(BAND_FROM_NAME.at(band_str));
+          _score_bands += BAND_FROM_NAME.at(band_str);
         }
 
         catch (...)
@@ -916,10 +917,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // SCORE MODES
     if (starts_with(testline, "SCORE MODES"s))
     { if (contains(testline, "CW"s))
-        _score_modes.insert(MODE_CW);
+        _score_modes += MODE_CW;
 
       if (contains(testline, "SSB"s) or contains(testline, "PH"s))
-        _score_modes.insert(MODE_SSB);
+        _score_modes += MODE_SSB;
     }
 
 // SCORING
@@ -1063,7 +1064,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> mult_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
       for (const auto& str : mult_names)
-        _auto_remaining_exchange_mults.insert(str);
+        _auto_remaining_exchange_mults += str;
     }
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
@@ -1226,7 +1227,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"s)
-    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
+    { const vector<string> window_info { remove_peripheral_spaces(split_string(split_string(testline, "="s)[1], ","s)) };
 
       if (window_info.size() >= 5)
       { const string name { window_info[0] };

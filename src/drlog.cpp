@@ -3153,6 +3153,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           display_band_mode(win_band_mode, safe_get_band(), me.mode());
 
           enter_cq_or_sap_mode(me.drlog_mode());
+
+          update_based_on_frequency_change(freq, me.mode());
+// update bandmap; note that it will be updated at the next poll anyway (typically within one second)
+//          bandmap& bm { bandmaps[safe_get_band()] };
+
+//          win_bandmap <= bandmaps[safe_get_band()];
         }
       }
 
@@ -6037,7 +6043,7 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
 
             if (context.auto_remaining_callsign_mults())
             { if ( acc_callsigns[callsign_mult_name].add(prefix, (force_known == KNOWN_MULT::FORCE_KNOWN) ? context.auto_remaining_callsign_mults_threshold() : 1) )
-                known_callsign_mults.insert(prefix);
+                known_callsign_mults += prefix;
             }
           }
 
@@ -6208,7 +6214,6 @@ void rescore(const contest_rules& rules)
     new_logbk += qso;
 
 // redo the historical Q-count and score... this is relatively time-consuming
-//    rate.insert(qso.epoch_time(), statistics.points(rules));
     rate += { qso.epoch_time(), statistics.points(rules) };
   }
 }
@@ -6374,7 +6379,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   for (const auto& qso : q_vec)
   { statistics.add_qso(qso, l, rules);
     q_history += qso;
-//    rate.insert(qso.epoch_time(), ++n_qsos, statistics.points(rules));
     rate += { qso.epoch_time(), statistics.points(rules) };
     
     if (using_best_dx)
@@ -6684,7 +6688,6 @@ void add_qso(const QSO& qso)
   query_db += qso.callsign();
 
 // add to the rates
-//  rate.insert(qso.epoch_time(), statistics.points(rules));
   rate += { qso.epoch_time(), statistics.points(rules) };
 }
 
@@ -8711,8 +8714,9 @@ void adif3_build_old_log(void)
                 rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso); // rec_index is pair: record and index of the record
      
                 if (rec_index.second != -1)
-                { last_marked_qso = rec_index.first;        // next marked QSO
-                  index_last_marked_qso = rec_index.second; // index of next marked QSO
+                { //last_marked_qso = rec_index.first;        // next marked QSO
+                  //index_last_marked_qso = rec_index.second; // index of next marked QSO
+                  tie(last_marked_qso, index_last_marked_qso) = rec_index;  // next marked QSO, index of next marked QSO
                 }
               } while ( (forward_idate_limit < itoday) and (rec_index.second != -1) );
 
@@ -8726,7 +8730,7 @@ void adif3_build_old_log(void)
             exit(-1);
           }
         
-          processed_calls.insert(callsign);
+          processed_calls += callsign;
         }   // end of processing for this call; do nothing if already processed
       }
     }
