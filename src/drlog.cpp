@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 190 2021-08-22 14:17:56Z  $
+// $Id: drlog.cpp 191 2021-08-29 13:32:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -119,11 +119,13 @@ void   audio_error_alert(const string& msg);                                    
 
 string bearing(const string& callsign);   ///< Return the bearing to a station
 
-bool   calculate_exchange_mults(QSO& qso, const contest_rules& rules);                    ///< Populate QSO with correct exchange mults
-string callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
-bool   change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
-void   cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
-bool   cw_toggle_bandwidth(void);                                                         ///< Toggle 50Hz/200Hz bandwidth if on CW
+bool        calculate_exchange_mults(QSO& qso, const contest_rules& rules);                    ///< Populate QSO with correct exchange mults
+set<string> calls_from_do_not_show_file(const BAND b);                                         ///< get the calls from a DO NOT SHOW file
+void        calls_to_do_not_show_file(const set<string>& callsigns, const BAND b);             ///< send calls to a DO NOT SHOW file
+string      callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
+bool        change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
+void        cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
+bool        cw_toggle_bandwidth(void);                                                         ///< Toggle 50Hz/200Hz bandwidth if on CW
 
 bool   debug_dump(void);                                                                            ///< Dump useful information to disk
 MODE   default_mode(const frequency& f);                                                            ///< get the default mode on a frequency
@@ -133,7 +135,7 @@ void   display_call_info(const string& callsign, const bool display_extract = DI
 void   display_memories(void);                                                                      ///< Update MEMORIES window
 void   display_nearby_callsign(const string& callsign);                                             ///< Display a callsign in the NEARBY window, in the correct colour
 void   display_statistics(const string& summary_str);                                               ///< Display the current statistics
-void   do_not_show(const string& callsign);                                                         ///< Mark a callsign as not to be shown
+void   do_not_show(const string& callsign, const BAND b = ALL_BANDS);                               ///< Mark a callsign as not to be shown
 string dump_screen(const string& filename = string());                                              ///< Dump a screen image to PNG file
 
 void   end_of_thread(const string& name);
@@ -322,6 +324,7 @@ unsigned int            cw_speed_change;                            ///< amount 
 
 bool                    debug { false };                            ///< whether to log additional information
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
+string                  do_not_show_filename;                       ///< name of DO NOT SHOW file
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
 exchange_field_prefill  prefill_data;                               ///< exchange prefill data from external files
@@ -777,6 +780,7 @@ int main(int argc, char** argv)
     cw_bandwidth_wide               = context.cw_bandwidth_wide();
     cw_speed_change                 = context.cw_speed_change();
     display_grid                    = context.display_grid();
+    do_not_show_filename            = context.do_not_show_filename();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
     long_t                          = context.long_t();
@@ -1039,20 +1043,33 @@ int main(int argc, char** argv)
       for (const auto& callsign : context.do_not_show())
         FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
-// ditto for other calls in the do-not-show file
-      if (!context.do_not_show_filename().empty())
+// ditto for other calls in the do-not-show files
+      if (!do_not_show_filename.empty())
       { try
-        { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename())))) };
-
-          for (const auto& callsign : lines)
-            FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
-          
-          ost << "Read and processed do not show file: " << context.do_not_show_filename() << endl;
+        { read_file(context.path(), do_not_show_filename);
         }
 
         catch (...)
-        { ost << "Fatal error: unable to read do-not-show file: " << context.do_not_show_filename() << endl;
+        { ost << "Fatal error: unable to read do-not-show file: " << do_not_show_filename << endl;      // the all-band file MUST exist; maybe change this later?
           exit(-1);
+        }
+
+        const set<string> callsigns { calls_from_do_not_show_file(ALL_BANDS) };
+
+        if (!callsigns.empty())
+          for (const auto& callsign : callsigns)
+            FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+
+// now the individual bands
+        for (BAND b { MIN_BAND }; b <= MAX_BAND; b = (BAND)((int)b + 1))
+        { const set<string> callsigns { calls_from_do_not_show_file(b) };
+
+          if (!callsigns.empty())
+          { bandmap& bm { bandmaps[b] };
+
+            for (const auto& callsign : callsigns)
+              bm.do_not_add(callsign);
+          }
         }
       }
 
@@ -2726,6 +2743,7 @@ void* prune_bandmap(void* vp)
     \param  e   keyboard event to process
 */
 /*  KP numbers    -- CW messages
+    ALT-KPDel     -- Add call to single-band DO NOT SHOW list
     ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
     ALT-K         -- toggle CW
     ALT-M         -- change mode
@@ -2741,13 +2759,15 @@ void* prune_bandmap(void* vp)
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
     ALT-F4        -- toggle DEBUG state
     BACKSLASH     -- send to the scratchpad
+    CTRL-B -- fast bandwidth
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
     CTRL-I        -- refresh geomagnetic indices
+    CTRL-M -- Monitor call
     CTRL-Q        -- swap QSL and QUICK QSL messages
     CTRL-S        -- send to scratchpad
     CTRL-KP+      -- increment qso number
-    CTRL-KP- -- decrement qso number
+    CTRL-KP-      -- decrement qso number
     CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
     CTRL-ENTER    -- assume it's a call or partial call and go to the call if it's in the bandmap
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
@@ -2773,10 +2793,10 @@ void* prune_bandmap(void* vp)
 
     ALT--> -- VFO A -> VFO B
     ALT-<- -- VFO B -> VFO A
-    CTRL-B -- fast bandwidth
+
     F1 -- first step in SAP QSO during run
     F4 -- swap contents of CALL and BCALL windows
-    CTRL-M -- Monitor call
+
     CTRL-U -- Unmonitor call (i.e., stop monitoring call)
     ' -- Place NEARBY call into CALL window and update QSL window
     CTRL-R -- toggle audio recording
@@ -3961,8 +3981,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(--next_qso_number), win_qso_number.width()), true );
 
 // KP Del -- remove from bandmap and add to do-not-add list and file (like .REMOVE)
-  if (!processed and e.symbol() == XK_KP_Delete)
+  if (!processed and e.symbol() == XK_KP_Delete and e.is_unmodified())
   { do_not_show(original_contents);
+
+    processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
+  }
+
+// Alt KP Del -- remove from bandmap and add to do-not-add list and file, for this band only
+  if (!processed and e.symbol() == XK_KP_Delete and e.is_alt())
+  { do_not_show(original_contents, safe_get_band());
 
     processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
   }
@@ -8568,28 +8595,34 @@ pair<float, float> latitude_and_longitude(const string& callsign)
 
 /*! \brief              Mark a callsign as not to be shown
     \param  callsign    call
+    \param  b           band
     
     Removes <i>callsign</i> from bandmap, adds it to the do-not-show list, and
     appends it to the do-not-show file if one has been defined
 */
-void do_not_show(const string& callsign)
-{ FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
-                                        bm.do_not_add(callsign);
-                                      } );
+void do_not_show(const string& callsign, const BAND b)
+{ if (b == ALL_BANDS)
+  { FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
+                                          bm.do_not_add(callsign);
+                                        } );
 
-// add to do not show file if it exists (maintaining order)
-  if (!context.do_not_show_filename().empty())
-  { const auto do_not_add_set { bandmaps[0].do_not_add() };   // any old bandmap will do for this
+    set<string> callsigns { calls_from_do_not_show_file(ALL_BANDS) };
 
-    set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
-  
-    for (const auto& callsign : do_not_add_set)
-      output_set += callsign;
-    
-    ofstream outfile(context.do_not_show_filename());
-    
-    for (const auto& callsign : output_set)
-      outfile << callsign << endl;
+    callsigns += callsign;
+
+    calls_to_do_not_show_file(callsigns, ALL_BANDS);
+  }
+  else                          // single band
+  { bandmap& bm = bandmaps[b];
+
+    bm -= callsign;
+    bm.do_not_add(callsign);
+
+    set<string> callsigns { calls_from_do_not_show_file(b) };
+
+    callsigns += callsign;
+
+    calls_to_do_not_show_file(callsigns, b);
   }
 }
 
@@ -8958,4 +8991,49 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
   }
 
   win_posted_by.refresh();
+}
+
+/*! \brief      Get all the calls in a DO NOT SHOW file
+    \param  b   the band (ALL_BANDS or a single band)
+    \return     the calls in the DO NOT SHOW file for band <i>b</i>
+*/
+set<string> calls_from_do_not_show_file(const BAND b)
+{ const string filename_suffix { (b == ALL_BANDS) ? ""s : "-"s + BAND_NAME[b] };
+  const string filename { context.do_not_show_filename() + filename_suffix };
+
+  set<string> rv;
+
+  try
+  { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), filename)))) };
+
+    for (const auto& callsign : lines)
+      rv += callsign;
+  }
+
+  catch (...)     // not an error if a do-not-show file does not exist
+  { }
+
+  return rv;
+}
+
+/*! \brief              Write a set of calls to a DO NOT SHOW file, overwriting the file
+    \param  callsigns   the calls to be written
+    \param  b           the band (ALL_BANDS or a single band)
+*/
+void calls_to_do_not_show_file(const set<string>& callsigns, const BAND b)
+{ if (callsigns.empty())
+    return;
+  
+  const string filename_suffix { (b == ALL_BANDS) ? ""s : "-"s + BAND_NAME[b] };
+  const string filename { context.do_not_show_filename() + filename_suffix };
+
+  set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
+
+  for (const string& callsign : callsigns)
+    output_set += callsign;
+
+  ofstream outfile(filename);
+
+  for (const auto& callsign : output_set)
+    outfile << callsign << endl;
 }
