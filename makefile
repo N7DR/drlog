@@ -177,7 +177,7 @@ src/cty_data.cpp : include/cty_data.h include/drlog_context.h include/string_fun
 src/cw_buffer.cpp : include/cw_buffer.h include/log_message.h
 	touch src/cw_buffer.cpp
 	
-src/diskfile.cpp : include/diskfile.h
+src/diskfile.cpp : include/diskfile.h include/string_functions.h
 	touch src/diskfile.cpp
 	
 src/drlog.cpp : include/audio.h include/bandmap.h include/bands-modes.h include/cluster.h include/command_line.h \

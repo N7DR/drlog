@@ -567,7 +567,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 #endif
 
 // prepare output; includes optional fields and all choices
-  FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
+  FOR_ALL(exchange_template, [=, this] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)

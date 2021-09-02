@@ -38,7 +38,18 @@ inline void append_to_file(const std::string& filename, const std::string& str)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-const bool file_exists(const std::string& filename);
+bool file_exists(const std::string& filename);
+
+/*! \brief              Find the location of a file in a path
+    \param  path        directories in which to look (with or without trailing "/"), in order
+    \param  filename    name of file
+    \return             full filename if a file is found, otherwise the empty string
+
+    Actually checks for existence AND readability, which is much simpler
+    than checking for existence. See:
+      https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+*/
+std::string find_file(const std::vector<std::string>& path, const std::string& filename);
 
 /*! \brief              What is the size of a file?
     \param  filename    name of file
@@ -46,7 +57,7 @@ const bool file_exists(const std::string& filename);
 
     Returns <i>false</i> if the file does not exist or it exists and is not readable.
 */
-const unsigned long file_size(const std::string& filename);
+unsigned long file_size(const std::string& filename);
 
 /*! \brief              Is a file empty?
     \param  filename    name of file
@@ -54,7 +65,7 @@ const unsigned long file_size(const std::string& filename);
 
     Returns <i>true</i> if the file does not exist or it exists and is not readable.
 */
-inline const bool file_empty(const std::string& filename)
+inline bool file_empty(const std::string& filename)
   { return (file_size(filename) == 0); }
 
 /*! \brief              Delete a file
@@ -96,7 +107,7 @@ void directory_create(const std::string& dirname);
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-const bool directory_exists(const std::string& dirname);
+bool directory_exists(const std::string& dirname);
 
 /*! \brief              What files does a directory contain?
     \param  dirname     name of the directory to examine
@@ -105,7 +116,7 @@ const bool directory_exists(const std::string& dirname);
     The returned vector does not include "." or "..".
     Returns empty vector if the directory <i>dirname</i> does not exist
 */
-const std::vector<std::string> directory_contents(const std::string& dirname);
+std::vector<std::string> directory_contents(const std::string& dirname);
 
 /*! \brief              Truncate a file
     \param  filename    name of file to truncate

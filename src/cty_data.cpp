@@ -713,8 +713,8 @@ location_info location_database::info(const string& callpart) const
     }
 
     if (!found_0 and !found_1)    // neither matched exactly; use one that ends with a digit if there is one
-    { const bool first_ends_with_digit  { isdigit(parts[0][parts[0].length()-1]) };
-      const bool second_ends_with_digit { isdigit(parts[1][parts[1].length()-1]) };
+    { const bool first_ends_with_digit  { static_cast<bool>(isdigit(parts[0][parts[0].length()-1])) };
+      const bool second_ends_with_digit { static_cast<bool>(isdigit(parts[1][parts[1].length()-1])) };
       
       if (first_ends_with_digit and !second_ends_with_digit)
         return info(parts[0]);
@@ -808,7 +808,7 @@ unordered_set<string> location_database::countries(const string& cont_target) co
 
   unordered_set <string> rv;
 
-  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
 }

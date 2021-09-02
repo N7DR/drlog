@@ -15,6 +15,7 @@
 */
 
 #include "diskfile.h"
+#include "string_functions.h"
 
 #include <array>
 #include <exception>
@@ -36,10 +37,30 @@ using namespace std;
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-const bool file_exists(const string& filename)
+bool file_exists(const string& filename)
 { struct stat buffer;
 
   return (stat (filename.c_str(), &buffer) == 0);
+}
+
+/*! \brief              Find the location of a file in a path
+    \param  path        directories in which to look (with or without trailing "/"), in order
+    \param  filename    name of file
+    \return             full filename if a file is found, otherwise the empty string
+
+    Actually checks for existence AND readability, which is much simpler
+    than checking for existence. See:
+      https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+*/
+string find_file(const vector<string>& path, const string& filename)
+{ for (const auto& dir : path)
+  { const string sep { ends_with(dir, "/"s) ? ""s : "/"s };
+
+    if ( const auto fullname { dir + sep + filename }; file_exists(fullname) )
+      return fullname;
+  }
+
+  return string();
 }
 
 /*! \brief              What is the size of a file?
@@ -48,7 +69,7 @@ const bool file_exists(const string& filename)
 
     Returns 0 if the file does not exist or is not readable.
 */
-const unsigned long file_size(const string& filename)
+unsigned long file_size(const string& filename)
 { ifstream in(filename, ifstream::in bitor ifstream::binary);
 
   if (in)
@@ -108,7 +129,7 @@ void directory_create(const string& dirname)
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-const bool directory_exists(const string& dirname)
+bool directory_exists(const string& dirname)
 { struct stat stat_buffer;
 
   const int status { stat(dirname.c_str(), &stat_buffer) };
@@ -128,7 +149,7 @@ const bool directory_exists(const string& dirname)
     The returned vector does not include "." or "..".
     Returns empty vector if the directory <i>dirname</i> does not exist
 */
-const vector<string> directory_contents(const string& dirname)
+vector<string> directory_contents(const string& dirname)
 { vector<string> rv;
 
   if (!directory_exists(dirname))

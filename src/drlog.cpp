@@ -59,7 +59,8 @@ using namespace   chrono;        // std::chrono
 using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
-//extern cpair colours;                       ///< program-wide definitions of colour pairs in use
+using CALL_SET = set<string, decltype(&compare_calls)>;    // set in callsign order
+
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 /// active window
@@ -1045,11 +1046,7 @@ int main(int argc, char** argv)
 
 // ditto for other calls in the do-not-show files
       if (!do_not_show_filename.empty())
-      { try
-        { read_file(context.path(), do_not_show_filename);
-        }
-
-        catch (...)
+      { if (find_file(context.path(), do_not_show_filename).empty())
         { ost << "Fatal error: unable to read do-not-show file: " << do_not_show_filename << endl;      // the all-band file MUST exist; maybe change this later?
           exit(-1);
         }
@@ -9019,15 +9016,18 @@ set<string> calls_from_do_not_show_file(const BAND b)
 /*! \brief              Write a set of calls to a DO NOT SHOW file, overwriting the file
     \param  callsigns   the calls to be written
     \param  b           the band (ALL_BANDS or a single band)
+
+    The file is written in the current directory
 */
 void calls_to_do_not_show_file(const set<string>& callsigns, const BAND b)
 { if (callsigns.empty())
     return;
   
   const string filename_suffix { (b == ALL_BANDS) ? ""s : "-"s + BAND_NAME[b] };
-  const string filename { context.do_not_show_filename() + filename_suffix };
+  const string filename        { context.do_not_show_filename() + filename_suffix };
 
-  set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
+///  set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
+  CALL_SET output_set(compare_calls);    // define the ordering to be callsign order
 
   for (const string& callsign : callsigns)
     output_set += callsign;

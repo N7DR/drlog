@@ -155,6 +155,15 @@ template <class T>
 inline std::string to_string(const T& val)
   { return val; }
 
+/*! \brief          No-op conversion to string
+    \param  val     value to convert
+    \return         <i>val</i>
+*/
+//template <class T>
+//  requires is_string_v<T>
+inline std::string to_string(const std::string val)
+  { return val; }
+
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
