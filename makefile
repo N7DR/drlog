@@ -1,6 +1,7 @@
 # makefile for drlog
 
 CC = ccache g++
+LD = g++
 CPP = /usr/local/bin/cpp
 LIB = ar
 ASM = as
@@ -10,7 +11,8 @@ INCL =  -I./include -I./include/hamlib
 
 # LIBS = -L
 
-LIBRARIES = -lpthread -lasound -lpng -lboost_regex -lboost_serialization -lX11 -lpanel -lhamlib -lieee1284 -lncursesw
+#LIBRARIES = -lpthread -lasound -lpng -lboost_regex -lboost_serialization -lX11 -lpanel -lhamlib -lieee1284 -lncursesw
+LIBRARIES = -lpthread -lasound -lpng -lboost_serialization -lX11 -lpanel -lhamlib -lieee1284 -lncursesw
 
 #D_REENTRANT -DLINUX -D_FILE_OFFSET_BITS=64 -I"/home/n7dr/projects/drlog/include" -I"/home/n7dr/projects/drlog/include/#hamlib" -O0 -g3 -Wall -c -fmessage-length=0 -Wno-reorder -std=c++17 `libpng-config --cflags`
 
@@ -26,9 +28,11 @@ PROG = all
 # -O works
 # -O1 works
 # -O2 works
-CFLAGS = $(INCL) -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -fconcepts -Wno-reorder -std=c++2a `libpng-config --cflags`
+#CFLAGS = $(INCL) -no-pie -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -Wno-reorder -std=c++20 `libpng-config --cflags`
+#CFLAGS = $(INCL) -c -g3 -O0 -pipe -Wno-reorder -std=c++20 `libpng-config --cflags`
+CFLAGS = $(INCL) -c -g3 -O2 -pipe -Wno-reorder -std=c++20
 
-LINKFLAGS = $(LIBRARIES)
+#LINKFLAGS = $(LIBRARIES)
 
 include/adif3.h : include/macros.h include/string_functions.h include/x_error.h
 	touch include/adif3.h
@@ -402,6 +406,7 @@ bin/version.o : src/version.cpp FORCE
 bin/x_error.o : src/x_error.cpp
 	$(CC) $(CFLAGS) -o $@ src/x_error.cpp
 
+# in g++10, the libraries must go at the end
 bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
             bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
@@ -411,7 +416,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
             bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
             bin/version.o bin/x_error.o
-	$(CC) $(LINKFLAGS) bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
+	$(LD) bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
 	bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
 	bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
@@ -419,7 +424,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
 	bin/procfs.o bin/pthread_support.o bin/query.o bin/qso.o \
 	bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
 	bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
-	bin/version.o bin/x_error.o \
+	bin/version.o bin/x_error.o $(LIBRARIES) \
 	-o bin/drlog
 	
 directory:

@@ -161,9 +161,7 @@ public:
     It is not an error to attempt to remove a call that does not exist
 */
   inline void remove_alternative_callsign(const std::string& call)
-    { //_alt_callsigns.erase(call); 
-      _alt_callsigns -= call;
-    }
+    { _alt_callsigns -= call; }
 
 /*! \brief          Remove an alternative prefix
     \param  prefix  alternative prefix to remove
@@ -171,7 +169,9 @@ public:
     It is not an error to attempt to remove a prefix that does not exist
 */
   inline void remove_alternative_prefix(const std::string& prefix)
-    { _alt_callsigns.erase(prefix); }   
+    { //_alt_callsigns.erase(prefix); 
+      _alt_prefixes -= prefix;
+    }   
 
 /*! \brief          Is a string an alternative callsign?
     \param  call    string to check

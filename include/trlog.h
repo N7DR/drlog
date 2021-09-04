@@ -24,15 +24,6 @@
 
 #include <cstdio>
 
-/*! \class  QSO_CALL
-    \brief  Encapsulates a QSO number and a callsign
-*/
-
-//struct QSO_CALL
-//{ int         _qso;         ///< QSO number
-//  std::string _call;        ///< callsign
-//};
-
 // -----------  tr_record  ----------------
 
 /*! \class  tr_record
@@ -98,9 +89,11 @@ public:
   inline const int day(void) const
     { return _convert_to_int(7, 2); }
 
-  const int month(void) const;           ///< month of the year; 1 - 12
+/// month of the year; 1 - 12
+  int month(void) const;
 
-  const int year(void) const;            ///< four-digit year
+/// four-digit year
+  int year(void) const;
 
 /// hour; 0 - 23
   inline const int hour(void) const
@@ -110,7 +103,8 @@ public:
   inline const int minute(void) const
     { return _convert_to_int(20, 2); }
 
-  const int rst(void) const;             ///< sent RST
+/// sent RST
+  int rst(void) const;
 
   const int rst_received(void) const;      ///< received RST
 

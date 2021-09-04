@@ -166,6 +166,7 @@ vector<QSO> logbook::worked(const string& call) const
 
 // https://www.youtube.com/watch?v=SYLgG7Q5Zws  39:40
   ranges::sort(rv, {}, [](const QSO& q) { return q.epoch_time(); });    // put in chronological order
+//  ranges::sort(rv, {}, &QSO::epoch_time);    // I think it's a bug in g++ that this doesn't work
 
   return rv;
 }

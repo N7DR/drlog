@@ -137,7 +137,7 @@ public:
 
     Creates an entry in the buffer if no entry for <i>callsign</i> exists
 */
-  inline void operator+=(const std::pair<std::string, std::string>& cp) // callsign poster
+  inline void operator+=(const std::pair<std::string, std::string>& cp) // callsign, poster
     { this->add(cp.first, cp.second); }
 
 /*! \brief              Are there sufficient posters of a call to allow it to appear on the bandmap?
@@ -389,16 +389,16 @@ public:
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
   explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_SOURCE::LOCAL) :
-    _source(s),                           // source is as given in <i>s</i>
-    _time(::time(NULL))                  // now
+    _source(s),                             // source is as given in <i>s</i>
+    _time(::time(NULL))                     // now
   { }
 
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
     \param  be  comparison bandmap_entry
     \return     whether <i>this</i> should be sorted earlier than <i>be</i>
 */
-  inline bool operator<(const bandmap_entry& be) const
-    { return (_freq.hz() < be._freq.hz() ); }
+//  inline bool operator<(const bandmap_entry& be) const
+//    { return (_freq.hz() < be._freq.hz() ); }
 
   READ(band);                           ///< band
   READ(callsign);                       ///< call
@@ -799,11 +799,6 @@ public:
 
 /// default constructor
   bandmap(void) = default;
-//    _rbn_threshold(1),
-//    _rbn_threshold_and_filtered_entries_dirty(false),
-//    _recent_colour(COLOUR_BLACK),
-//    _verno(0)
-//  { }
   
   bandmap(const bandmap& bm) = delete;
 
@@ -825,9 +820,9 @@ public:
 
 /// the number of entries in the bandmap
   inline size_t size(void)
-    { SAFELOCK(_bandmap);
-      return _entries.size(); 
-    }
+  { SAFELOCK(_bandmap);
+    return _entries.size(); 
+  }
   
 /// version number -- just needs to be read via this function, so don't need to lock the mutex
   READ(verno);
@@ -865,6 +860,9 @@ public:
 */
   bandmap_entry operator[](const std::string& callsign);
 
+/*! \brief              Return the bandmap_entry corresponding to my current frequency
+    \return             the bandmap_entry corresponding to my location in the bandmap
+*/
   inline bandmap_entry my_bandmap_entry(void)
     { return (*this)[MY_MARKER]; }
 
@@ -902,8 +900,8 @@ public:
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(/*const*/ std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-                                const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+  void not_needed_callsign_mult(std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
+                                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  mult_type               name of mult type

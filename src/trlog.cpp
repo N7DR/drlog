@@ -43,7 +43,7 @@ struct QSO_CALL
 */
 
 /// month of the year; 1 - 12
-const int tr_record::month(void) const
+int tr_record::month(void) const
 { static const unordered_map<string, int> month_nr { { "JAN"s, 1 },
                                                      { "FEB"s, 2 },
                                                      { "MAR"s, 3 },
@@ -58,28 +58,20 @@ const int tr_record::month(void) const
                                                      { "DEC"s, 12 }
                                                    };
 
-  const string tmps { substring(_record, 10, 3) };
+//  const string tmps { substring(_record, 10, 3) };
 
-  return MUM_VALUE(month_nr, tmps, 0);
-
-//  try
-//  { return month_nr.at(tmps);
-//  }
-
-//  catch (...)
-//  { return 0;       // error
-//  }
+  return MUM_VALUE(month_nr, substring(_record, 10, 3), 0);
 }
 
 /// four-digit year
-const int tr_record::year(void) const
+int tr_record::year(void) const
 { const int two_digit_year { _convert_to_int(14, 2) };
 
   return (two_digit_year + ( (two_digit_year < 50) ? 2000 : 1900 ) );
 }
 
 /// sent RST
-const int tr_record::rst(void) const
+int tr_record::rst(void) const
 { const string tmp { substring(_record, 44, _record[46] == ' ' ? 2 : 3) };
 
   return from_string<int>(tmp);
@@ -258,7 +250,7 @@ void tr_log::sort_by_call(void)
 // create a revised file
   FILE* tmpfp { tmpfile() };
 
-  for (int n = 0; n < _number_of_qsos; ++n)
+  for (int n { 0 }; n < _number_of_qsos; ++n)
   { const int original_position { table[n]._qso };
     int       status            { fseek(_fp, original_position * _record_length, 0) };
 
