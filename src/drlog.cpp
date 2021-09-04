@@ -3899,11 +3899,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     string new_callsign;
 
-    if ( (!in_scp_matching) and cursor_down)                          // first down arrow; select best match, according to match_callsign() algorithm
+    if ( (!in_scp_matching) and cursor_down)            // first down arrow; select best match, according to match_callsign() algorithm
     { new_callsign = match_callsign(scp_matches);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
       if (new_callsign.empty())
-        new_callsign = match_callsign(fuzzy_matches);
+      { new_callsign = match_callsign(fuzzy_matches);
+
+        if (new_callsign.empty())
+        { new_callsign = match_callsign(query_1_matches);
+
+          if (new_callsign.empty())
+            new_callsign = match_callsign(query_n_matches);
+        }
+      }
       
       if (!new_callsign.empty())
       { win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
@@ -3923,6 +3931,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // add fuzzy matches
         FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+
+// add query_1 matches
+        FOR_ALL(query_1_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+
+// add query_n matches
+        FOR_ALL(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
       }
 
       if (!all_matches.empty())                         // if there are some matches
@@ -3935,6 +3949,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else
         { if (cursor_down)
             scp_index = min(scp_index + 1, static_cast<int>(all_matches.size() - 1));
+
           if (cursor_up)                                  // one of cursor_up and cursor_down should be true
             scp_index = max(scp_index - 1, 0);
         }
@@ -8982,9 +8997,10 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
   int y { win_height - 1 };
 
   for (size_t n { 0 }; (n < new_contents.size() and (y >= 0)); ++n)
-  { win_posted_by < cursor(0, y--);
+  { win_posted_by < cursor(0, y--) < new_contents.at(n);
+    //win_posted_by < cursor(0, y--);
 
-    win_posted_by < new_contents.at(n);
+    //win_posted_by < new_contents.at(n);
   }
 
   win_posted_by.refresh();

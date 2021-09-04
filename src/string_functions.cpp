@@ -29,12 +29,12 @@ using namespace std;
 
 //extern ofstream ost;                   ///< for debugging, info
 
-const string     EOL      { "\n" };       ///< end-of-line marker as string
-constexpr char   EOL_CHAR { '\n' };       ///< end-of-line marker as character
+//const string     EOL      { "\n" };       ///< end-of-line marker as string
+//constexpr char   EOL_CHAR { '\n' };       ///< end-of-line marker as character
 
-const string  LF       { "\n" };      ///< LF as string
-const string& LF_STR   { LF };        ///< LF as string
-constexpr char    LF_CHAR  { '\n' };      ///< LF as character
+//const string  LF       { "\n" };      ///< LF as string
+//const string& LF_STR   { LF };        ///< LF as string
+//constexpr char    LF_CHAR  { '\n' };      ///< LF as character
 
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
@@ -42,7 +42,7 @@ constexpr char    LF_CHAR  { '\n' };      ///< LF as character
 
     This is actually quite difficult to do properly
 */
-vector<string> from_csv(experimental::string_view line)
+vector<string> from_csv(string_view line)
 { constexpr char quote { '"' };
   constexpr char comma { ',' };
 
@@ -124,7 +124,6 @@ string duplicate_char(const string& s, const char c)
 
     if (next_posn != string::npos)
     { rv += (s.substr(start_posn, next_posn - start_posn + 1) + c);
-//      rv += c;
       start_posn = next_posn + 1;
     }
   } while (next_posn != string::npos);
@@ -142,20 +141,19 @@ string duplicate_char(const string& s, const char c)
 
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
-string substring(const string& str, const size_t start_posn, const size_t length)
-{ return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR );
+//string substring(const string& str, const size_t start_posn, const size_t length)
+//{ return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR );
 
 //  if (str.size() > start_posn)
 //    return str.substr(start_posn, length);
 
 //  return string();
-}
+//}
 
 /*! \brief                      Provide a formatted UTC date/time string
-    \param  include_seconds     whether to include the portion oft he string that designates seconds
+    \param  include_seconds     whether to include the portion of the string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-//string date_time_string(const bool include_seconds)
 string date_time_string(const SECONDS include_seconds)
 { constexpr size_t TIME_BUF_LEN { 26 };
 
@@ -202,10 +200,12 @@ string format_time(const string& format, const tm* tmp)
 
     Probably faster to use a more complicated algorithm with "find", as in the following function
 */
-string replace_char(const string& s, char old_char, char new_char)
-{ string rv { };
+string replace_char(const string& s, const char old_char, const char new_char)
+{ string rv { s };
 
-  FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
+  replace( rv.begin(), rv.end(), old_char, new_char); // replace all 'x' to 'y'
+
+//  FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
 
   return rv;
 }
@@ -1243,7 +1243,7 @@ vector<string> delimited_substrings(const string& cs, const string& delim_1, con
     is the conclusion of <i>str</i>
 */
 //const size_t find_and_go_to_end_of(const std::string& str, const std::string& target)
-size_t find_and_go_to_end_of(const experimental::string_view str, const experimental::string_view target)
+size_t find_and_go_to_end_of(const string_view str, const string_view target)
 { size_t posn { str.find(target) };
 
   if (posn == string::npos)

@@ -244,7 +244,7 @@ protected:
   bool          _echoing;                       ///< whether echoing characters
   int           _height         { 0 };          ///< height
   bool          _hidden_cursor;                 ///< whether to hide the cursor
-  bool          _insert;                        ///< whether in insert mode (default = false)
+  bool          _insert         { false };      ///< whether in insert mode
   bool          _leaveok;                       ///< whether leaveok is set
   bool          _scrolling      { false };      ///< whether scrolling is enabled
   bool          _vertical       { false };      ///< whether containers of strings are to be displayed vertically

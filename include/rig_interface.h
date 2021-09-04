@@ -79,22 +79,33 @@ protected:
   int _centre      { 0 };     ///< centre frequency, in Hz
   int _granularity { 50 };    ///< granularity, in Hz
 
+/*  \brief          convert a value to a rounded value with a particular granularity
+    \param  value   the value to convert/round
+    \return         <i>value</i> rounded with granularity <i>_granularity</i>
+*/
   inline int _round(const int value)
     { return ( ( (value + (_granularity / 2) ) / _granularity ) * _granularity ); }
 
 public:
 
+/// default constructor
   audio_filter(void) = default;
-  
-  ~audio_filter(void) = default;
+ 
+//  ~audio_filter(void) = default;
 
   READ(centre);                     ///< centre frequency, in Hz
   READ(bandwidth);                  ///< some measure of bandwidth, in Hz
   READ_AND_WRITE(granularity);      ///< granularity, in Hz
 
+/*  \brief       set the bandwidth to a rounded value, in Hz
+    \param  bw   the unrounded bandwidth, in Hz
+*/
   inline void bandwidth(const int bw)
     { _bandwidth = _round(bw); }
 
+/*  \brief       set the centre frequency to a rounded value, in Hz
+    \param  bw   the unrounded bandwidth, in Hz
+*/
   inline void centre(const int fc)
     { _centre = _round(fc); }
 };
@@ -424,7 +435,9 @@ public:
     { sub_receiver(false); }
 
 /// toggle sub-receiver between on and off
-  void sub_receiver_toggle(void);
+//  void sub_receiver_toggle(void);
+  inline void sub_receiver_toggle(void)
+    { sub_receiver_enabled() ? sub_receiver_disable() : sub_receiver_enable(); }
 
 /// toggle sub-receiver between on and off
   inline void toggle_sub_receiver(void)

@@ -732,12 +732,12 @@ bool rig_interface::sub_receiver(void)
 }
 
 /// toggle sub-receiver between on and off
-void rig_interface::sub_receiver_toggle(void)
-{ if (sub_receiver_enabled())
-    sub_receiver_disable();
-  else
-    sub_receiver_enable();
-}
+//void rig_interface::sub_receiver_toggle(void)
+//{ if (sub_receiver_enabled())
+//    sub_receiver_disable();
+//  else
+//    sub_receiver_enable();
+//}
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM

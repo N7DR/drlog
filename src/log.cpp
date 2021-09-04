@@ -39,8 +39,8 @@ extern string VERSION;          ///< version string
     \param  q2  second QSO
     \return     whether <i>q1</i> is earlier than <i>q2</i>
 */
-inline bool qso_sort_by_time(const QSO& q1, const QSO& q2)
-  { return q1.earlier_than(q2); }
+//inline bool qso_sort_by_time(const QSO& q1, const QSO& q2)
+//  { return q1.earlier_than(q2); }
 
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
 { 
@@ -159,11 +159,13 @@ vector<QSO> logbook::worked(const string& call) const
 
   { SAFELOCK(_log);
   
-//    for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv.push_back(qso.second); } );
     for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv += qso.second; } );
   }
 
-  SORT(rv, qso_sort_by_time);    // put in chronological order
+//  SORT(rv, qso_sort_by_time);    // put in chronological order
+
+// https://www.youtube.com/watch?v=SYLgG7Q5Zws  39:40
+  ranges::sort(rv, {}, [](const QSO& q) { return q.epoch_time(); });    // put in chronological order
 
   return rv;
 }

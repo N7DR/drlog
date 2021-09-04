@@ -269,6 +269,20 @@ struct is_set<std::set<T, C, A>>
 template<class T>
 constexpr bool is_set_v { is_set<T>::value };
 
+// current g++ does not support definition of concepts, even with -fconcepts !!
+template<typename T>
+concept SET = requires(T a) 
+{ is_set<T>::value == true;
+//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+};
+
+//template<typename T>
+//concept SUS = requires(T a) 
+//{ (is_set<T>::value == true) || (is_unordered_set<T>::value == true);
+//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+//};
+
+
 // is a type an unordered map?
 template<class T>
 struct is_unordered_map 
@@ -303,6 +317,9 @@ constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 //constexpr bool is_sus_v = is_sus<T>::value;
 template<class T>
 constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
+
+template <class T> concept SUS = is_sus_v<T>;
+//concept SUS = is_set_v<T> or is_unordered_set_v<T>;
 
 // is a type a multimap or unordered multimap?
 template<class T>
@@ -1349,9 +1366,20 @@ inline void operator+=(C& sus, T&& element)
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-template <typename C>
-inline void operator+=(C& sus, const typename C::value_type& element)
-  requires is_sus_v<C>
+// OK
+//template <typename C>
+//inline void operator+=(C& sus, const typename C::value_type& element)
+//  requires is_sus_v<C>
+//  { sus.insert(element); }
+
+// OK
+//template <SUS C>
+//inline void operator+=(C& sus, const typename C::value_type& element)
+//  { sus.insert(element); }
+
+// Seems to be OK; https://www.youtube.com/watch?v=SYLgG7Q5Zws at 16:28; I think that the single ampersand is right
+// see also https://www.sandordargo.com/blog/2021/02/17/cpp-concepts-4-ways-to-use-them
+inline void operator+=(SUS auto& sus, const typename decltype(sus)::value_type& element)
   { sus.insert(element); }
 
 /*! \brief          Add all elements of a vector to a set or unordered set

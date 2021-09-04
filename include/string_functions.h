@@ -27,31 +27,39 @@
 #include <regex>
 #include <sstream>
 #include <string>
-#include <experimental/string_view>
+//#include <experimental/string_view>
+#include <string_view>
 #include <vector>
 
 #include <time.h>
 
 using namespace std::literals::string_literals;
-using namespace std::experimental::literals::string_view_literals;
+//using namespace std::experimental::literals::string_view_literals;
+using namespace std::literals::string_view_literals;
+
+//constexpr std::string EOL_a { "\n" };
 
 // the next five are defined in string_functions.cpp
-extern const std::string EOL;           ///< end-of-line marker as string
-extern const char        EOL_CHAR;      ///< end-of-line marker as character
+//extern const std::string EOL;           ///< end-of-line marker as string
+static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
 
-extern const std::string  LF;           ///< LF as string
-extern const std::string& LF_STR;       ///< LF as string
-extern const char         LF_CHAR;      ///< LF as character
+constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
-static const std::string  CR       { "\r"s };       ///< CR as string
-static const std::string& CR_STR   { CR };         ///< CR as string
-static const char         CR_CHAR  { '\r' };       ///< CR as character
+static const std::string  LF     { "\n"s };         ///< LF as string
+static const std::string& LF_STR { LF };            ///< LF as string
 
-static const std::string CRLF      { "\r\n"s };     ///< CR followed by LF
+constexpr char LF_CHAR { '\n' };                    ///< LF as character
 
-static const std::string EMPTY_STR { };          ///< an empty string
-static const std::string FULL_STOP { "."s };       ///< full stop as string
-static const std::string SPACE_STR { " "s };       ///< space as string
+static const std::string  CR     { "\r"s };         ///< CR as string
+static const std::string& CR_STR { CR };            ///< CR as string
+
+constexpr char CR_CHAR { '\r' };                    ///< CR as character
+
+static const std::string CRLF { "\r\n"s };          ///< CR followed by LF
+
+static const std::string EMPTY_STR { };             ///< an empty string
+static const std::string FULL_STOP { "."s };        ///< full stop as string
+static const std::string SPACE_STR { " "s };        ///< space as string
 
 static const std::string CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };    ///< convenient place to hold all characters that are legal in callsigns
 static const std::string DIGITS                        { "0123456789"s };                               ///< convenient place to hold all digits
@@ -59,7 +67,7 @@ static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKL
 static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };               ///< convenient place to hold all upper case letters
 
 constexpr char BACKSLASH_CHAR { '\\' };
-constexpr char SPACE_CHAR { ' ' };
+constexpr char SPACE_CHAR     { ' ' };
   
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -94,7 +102,7 @@ constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
 
     This is actually quite difficult to do properly
 */
-std::vector<std::string> from_csv(std::experimental::string_view line);
+std::vector<std::string> from_csv(std::string_view line);
 
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
@@ -152,8 +160,10 @@ std::string to_string(const T val)
 */
 template <class T>
   requires is_string_v<T>
-inline std::string to_string(const T& val)
-  { return val; }
+//  requires std::is_same_v<base_type<T>, std::string>
+//
+inline std::string to_string(T&& val)
+  { return std::forward<T>(val); }
 
 /*! \brief          No-op conversion to string
     \param  val     value to convert
@@ -161,8 +171,8 @@ inline std::string to_string(const T& val)
 */
 //template <class T>
 //  requires is_string_v<T>
-inline std::string to_string(const std::string val)
-  { return val; }
+//inline std::string to_string(const std::string val)
+//  { return val; }
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -173,7 +183,8 @@ inline std::string to_string(const std::string val)
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception.
     Compiler error if one uses str.size() - start_posn as a default length; value may not be calculated from other parameters
 */
-std::string substring(const std::string& str, const size_t start_posn, const size_t length);
+inline std::string substring(const std::string& str, const size_t start_posn, const size_t length)
+  { return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR ); }
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -191,7 +202,7 @@ inline std::string substring(const std::string& str, const size_t start_posn)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-std::string replace_char(const std::string& s, char old_char, char new_char);
+std::string replace_char(const std::string& s, const char old_char, const char new_char);
 
 /*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
@@ -930,7 +941,7 @@ inline std::string truncate_before_first(const std::string& str, const char c)
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-size_t find_and_go_to_end_of(const std::experimental::string_view str, const std::experimental::string_view target);
+size_t find_and_go_to_end_of(const std::string_view str, const std::string_view target);
 
 /*! \brief              Get the base portion of a call
     \param  callsign    original callsign
