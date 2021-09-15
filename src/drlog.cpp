@@ -55,8 +55,8 @@
 #include <png++/png.hpp>
 
 using namespace std;
-using namespace   chrono;        // std::chrono
-using namespace   placeholders;  // std::placeholders
+using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
+//using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
 using CALL_SET = set<string, decltype(&compare_calls)>;    // set in callsign order
@@ -193,6 +193,7 @@ void   stop_recording(audio_recorder& audio);                                   
 string sunrise_or_sunset(const string& callsign, const SRSS srss);              ///< Calculate the sunrise or sunset time for a station
 bool   swap_rit_xit(void);                                                      ///< Swap the states of RIT and XIT
 
+char t_char(const unsigned short long_t);                                           ///< the character used to represent a leading T in a servo
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
 int  time_since_last_qso(const logbook& logbk);                                     ///< time in seconds since the last QSO
 int  time_since_last_qsy(void);                                                     ///< time in seconds since the last QSY
@@ -596,7 +597,8 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     vector<string> tmp_red_matches;                     // variable in which to build interim ordered matches
     vector<string> tmp_ordinary_matches;                // variable in which to build interim ordered matches
 
-    if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
+ //   if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
+    if (contains(vec_str, callsign))
       tmp_exact_matches += callsign;
 
     auto is_dupe = [](const string& call) { return logbk.is_dupe(call, safe_get_band(), safe_get_mode(), rules); };
@@ -704,7 +706,7 @@ inline void update_scp_window(const string& callsign)
 /*! \brief      Am I sending CW?
     \return     whether I appear to be sending CW
 
-    This does not need to be, and is not, robust or clever. It's used only to control
+    This does not need to be, and is not, either robust or clever. It's used only to control
     behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
     a slow machine if the CW is not being sent on a thread with RT scheduling.
 */
@@ -712,7 +714,7 @@ inline bool sending_cw(void)
   { return (cw_p != nullptr) and !(cw_p->empty()); }
 
 int main(int argc, char** argv)
-{
+{ 
 // generate version information
   try
   { const map<string, string> MONTH_NAME_TO_NUMBER( { { "Jan"s, "01"s },
@@ -2491,7 +2493,8 @@ void* process_rbn_info(void* vp)
                 { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
                   { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
-                    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
+//                    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
+                    const bool           is_possible_exchange_field { contains(exchange_field_names, exch_mult_name) };
 
                     if (is_possible_exchange_field)
                     { const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) };
@@ -3672,8 +3675,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     for (const auto& b : permitted_bands)
     { bandmap& bm { bandmaps[b] };        // use current bandmap to make it easier to display column offset
 
- //     const bandmap_entry be { bm[original_contents] };
-
       if (const bandmap_entry be { bm[original_contents] }; !be.empty())
       { if (!results.empty())
           results += SPACE_STR;
@@ -3937,6 +3938,20 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // add query_n matches
         FOR_ALL(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+
+// remove any duplicates from all_matches
+        const vector<string> all_matches_copy { all_matches };
+
+        set<string> already_present;
+
+        all_matches.clear();
+
+        for (const auto& match : all_matches_copy)
+        { if ( !(already_present > match) )
+          { all_matches += match;
+            already_present += match;
+          }
+        }
       }
 
       if (!all_matches.empty())                         // if there are some matches
@@ -4082,9 +4097,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           if (possible_qsy)
           {
 // get band of VFO B
-            const BAND band_b { to_BAND(f_b) };
-
-            float band_edge_in_khz { f_b.lower_band_edge().khz() };
+            const BAND  band_b           { to_BAND(f_b) };
+            const float band_edge_in_khz { f_b.lower_band_edge().khz() };
 
             switch (band_b)
             { case BAND_160 :
@@ -4363,8 +4377,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
   }
 
-// KP- -- toggle 50Hz/200Hz bandwidth if on CW;
-// KP- -- centre RIT if on SSB and RIT is on
+// KP- -- toggle 50Hz/200Hz bandwidth if on CW; centre RIT if on SSB and RIT is on
   if (!processed and e.is_unmodified() and e.symbol() == XK_KP_Subtract)
   { switch (safe_get_mode())
     { case MODE_CW :
@@ -4399,8 +4412,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-G go to the frequency in win_last_qrg
   if (!processed and (e.is_alt('g')))
-  { const string contents = win_last_qrg.read();
-    const size_t posn = contents.find(':');
+  { const string contents { win_last_qrg.read() };
+    const size_t posn     { contents.find(':') };
 
     if ((posn != string::npos) and (posn != (contents.size() - 1)))
     { const string    fstr { remove_peripheral_spaces(substring(contents, posn + 1)) };
@@ -4561,7 +4574,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     string new_rst;
 
 // figure out whether we have sent a different RST (in SKCC)
-
     const string rst_character { "'"s };    // apostrophe
 
     if (contains(exchange_contents, rst_character))
@@ -4579,11 +4591,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // remove all fields containing an apostrophe
       const vector<string> fields { split_string(exchange_contents, ' ') };
+
       vector<string> new_fields;
 
       for (const string& str : exchange_field_values)
         if (!contains(str, '\''))
-          new_fields.push_back(str);
+//          new_fields.push_back(str);
+          new_fields += str;
 
       exchange_field_values = new_fields;
       exchange_contents = join(new_fields, SPACE_STR);
@@ -4661,6 +4675,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
               if (callsign != original_callsign)    // callsign did not change
               { at_call = callsign;
+
                 if (!send_qtc)
                   (*cw_p) << expand_cw_message(context.call_ok_now_message());
               }
@@ -4752,7 +4767,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                   pef.value(rules.canonical_value(pef.name(), pef.value()));
               }
 
-              received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
+//              received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
+              received_exchange += { pef.name(), pef.value(), is_mult_field, false };
             }
 
             qso.received_exchange(received_exchange);
@@ -4827,7 +4843,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
               map<string, MULTIPLIER_VALUES>::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
 
-              if (ncit != new_worked_exchange_mults.end())    // should never be equal
+              if (ncit != new_worked_exchange_mults.cend())    // should never be equal
               { const size_t new_size { (ncit->second).size() };
 
                 no_exchange_mults_this_qso = (old_size == new_size);
@@ -5347,7 +5363,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // pretend that we just entered this station on the bandmap by hand
 // do this just for QSOs that have changed
-            if (find(original_qsos.cbegin(), original_qsos.cend(), qso) == original_qsos.cend())
+//            if (find(original_qsos.cbegin(), original_qsos.cend(), qso) == original_qsos.cend())
+            if (!contains(original_qsos, qso))
             { const BAND qso_band { qso.band() };
 
               bandmap& bm { bandmaps[qso_band] };
@@ -5393,42 +5410,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         rebuild_history(logbk, rules, statistics, q_history, rate);
         rescore(rules);
         update_rate_window();
-
- //       scp_dynamic_db.clear();     // clears cache of parent
- //       fuzzy_dynamic_db.clear();
- //       query_db.clear_dynamic_database();
-
-//        const vector<QSO> qso_vec { logbk.as_vector() };
-
-//        for (const auto& qso : qso_vec)
-//        { const string& callsign { qso.callsign() };
-
-//          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-//            scp_dynamic_db.add_call(callsign);
-
-//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-//            fuzzy_dynamic_db.add_call(callsign);
-
-//          query_db += callsign;
-//        }
-
         rebuild_dynamic_call_databases(logbk);
-
- //       scp_dynamic_db.clear();     // clears cache of parent
- //       fuzzy_dynamic_db.clear();
- //       query_db.clear_dynamic_database();
-
- //       const set<string> calls_in_log { logbk.calls() };
-
- //       for (const string& callsign : calls_in_log)
- //       { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
- //           scp_dynamic_db.add_call(callsign);
-
- //         if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
- //           fuzzy_dynamic_db.add_call(callsign);
-
- //         query_db += callsign;
- //       }
 
 // all the QSOs are added; now display the last few in the log window
         editable_log.recent_qsos(logbk, true);
@@ -5596,7 +5578,8 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   if (filter_remaining_country_mults)
   { set<string> copy;
 
-    copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (worked_callsign_mults.find(s) == worked_callsign_mults.end()); } );
+ //   copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (worked_callsign_mults.find(s) == worked_callsign_mults.end()); } );
+    copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (!contains(worked_callsign_mults, s)); } );
     original = copy;
   }
 
@@ -5718,12 +5701,10 @@ string bearing(const string& callsign)
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
-//string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 string sunrise_or_sunset(const string& callsign, const SRSS srss)
-{ const auto   [lat, lon] { latitude_and_longitude(callsign) };
-  const string rv         { sunrise_or_sunset(lat, lon, srss) };
+{ const auto [lat, lon] { latitude_and_longitude(callsign) };
 
-  return rv;
+  return sunrise_or_sunset(lat, lon, srss);
 }
 
 /*! \brief              Populate the information window
@@ -5781,9 +5762,7 @@ void populate_win_info(const string& callsign)
                                                 < sunrise_time                           < "/"s      < sunset_time
                                                 < (daylight ? "(D)"s : "(N)"s);
     const string name_plus_continent_str { name_str + " ["s + location_db.continent(callsign) + "]"s };
-
-//    const size_t len { name_str.size() };
-    const size_t len { name_plus_continent_str.size() };
+    const size_t len                     { name_plus_continent_str.size() };
 
     win_info < cursor(win_info.width() - len, win_info.height() - 2) <= name_plus_continent_str;
 
@@ -5915,13 +5894,16 @@ string expand_cw_message(const string& msg)
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
+// %%%%
     if ( (long_t > 0) and (octothorpe < 100) )
-    { constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
-      constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
-      constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
+    { //constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
+      //constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
+      //constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
 
       const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
-      const char char_to_send { long_t == 3 ? EXTRA_LONG_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
+      //const char char_to_send { long_t == 3 ? EXTRA_LONG_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
+
+      const char char_to_send { t_char(long_t) };
 
       bool found_all { false };
       int  n_found   { 0 };
@@ -6412,8 +6394,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   logbook l;
 
   const vector<QSO> q_vec { logbk.as_vector() };
-
-//  int n_qsos { 0 };
 
   for (const auto& qso : q_vec)
   { statistics.add_qso(qso, l, rules);
@@ -7075,15 +7055,9 @@ string dump_screen(const string& dump_filename)
 
   const int width  { win_attr.width };
   const int height { win_attr.height };
-  
-//  ost << "width and height = " << width << ", " << height << endl;
 
   if (multithreaded)
     XLockDisplay(display_p);
-//  ost << "Calling XGetImage" << endl;
-
-//  XImage* xim_p { XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap) };
-//  XImage* xim_p { XGetImage(display_p, window_id, 0, 0, width, height, -1, ZPixmap) };
 
   int int_x_y { 0 };
 
@@ -7147,8 +7121,8 @@ string dump_screen(const string& dump_filename)
   constexpr unsigned int GREEN_MASK { FF << 8 };
   constexpr unsigned int RED_MASK   { FF << 16 };
 
-  for (size_t y = 0; y < image.get_height(); ++y)
-  { for (size_t x = 0; x < image.get_width(); ++x)
+  for (size_t y { 0 }; y < image.get_height(); ++y)
+  { for (size_t x { 0 }; x < image.get_width(); ++x)
     { const unsigned long pixel { XGetPixel (xim_p, x, y) };
       const unsigned char blue  { static_cast<unsigned char>(pixel bitand BLUE_MASK) };
       const unsigned char green { static_cast<unsigned char>((pixel bitand GREEN_MASK) >> 8)};
@@ -7456,7 +7430,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_db += series;                  // add to database of sent QTCs
 
-//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       append_to_file(context.qtc_filename(), series.complete_output_string());
@@ -7471,7 +7444,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     else  // none sent
     { win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Completely aborted; QTC "s < qtc_id < " not sent to "s <= series.destination();
 
-//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       set_active_window(last_active_window);
@@ -7756,7 +7728,7 @@ void display_statistics(const string& summary_str)
   win_summary < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < summary_str;
 
   if (rules.permitted_modes().size() > 1)
-  { for (unsigned int n = 0; n < static_cast<unsigned int>(win_summary.height()); ++n)
+  { for (unsigned int n { 0 }; n < static_cast<unsigned int>(win_summary.height()); ++n)
     {
 // we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
       if (const string line { remove_peripheral_spaces(win_summary.getline(n)) }; MODE_STRINGS > line)
@@ -8548,7 +8520,7 @@ void update_system_memory(void)
 
 /// update value of <i>quick_qsy_info</i> and write it to <i>win_quick_qsy</i>
 void update_quick_qsy(void)
-{ const pair<frequency, MODE> quick_qsy_info = get_frequency_and_mode();
+{ const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
 
   quick_qsy_map[BAND(quick_qsy_info.first)] = quick_qsy_info;
 
@@ -8715,7 +8687,7 @@ void adif3_build_old_log(void)
   try
   { const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());       // this is not necessarily in chronological order
 
-    alert("read " + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: " + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
+    alert("read "s + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
     if (!limit_old_qsos)
       for (const adif3_record& rec : old_adif3_log)
@@ -8759,10 +8731,7 @@ void adif3_build_old_log(void)
                 rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso); // rec_index is pair: record and index of the record
      
                 if (rec_index.second != -1)
-                { //last_marked_qso = rec_index.first;        // next marked QSO
-                  //index_last_marked_qso = rec_index.second; // index of next marked QSO
                   tie(last_marked_qso, index_last_marked_qso) = rec_index;  // next marked QSO, index of next marked QSO
-                }
               } while ( (forward_idate_limit < itoday) and (rec_index.second != -1) );
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
@@ -8800,33 +8769,10 @@ void adif3_build_old_log(void)
 */
 void send_qtc_entry(const qtc_entry& qe, const bool logit)
 { if (cw_p)
-  { constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
-    constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
-    constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
-
-    const string space { (context.qtc_double_space() ? "  "s : SPACE_STR) };
-
-    char t_char { 'T' };    // char for initial zeroes in serial numbers
-
-    switch (qtc_long_t)
-    { case 1 :
-        t_char = LONG_T_CHAR;
-        break;
-
-      case 2 :
-        t_char = LONG_LONG_T_CHAR;
-        break;
-
-      case 3 :
-        t_char = EXTRA_LONG_T_CHAR;
-        break;
-
-      default :
-        break;
-    }
-
-    const string serno_str { pad_left(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, t_char) };
-    const string msg       { qe.utc() + space + qe.callsign() + space + serno_str };
+  { const string space        { (context.qtc_double_space() ? "  "s : SPACE_STR) };
+    const char   char_to_send { t_char(qtc_long_t) };
+    const string serno_str    { pad_left(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, char_to_send) };
+    const string msg          { qe.utc() + space + qe.callsign() + space + serno_str };
 
     (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed would be back to full speed before the message is sent
     
@@ -8977,8 +8923,6 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
   auto win_height { win_posted_by.height() };
 
-//  const vector<string> original_contents { win_posted_by.snapshot() };
-
   vector<string> new_contents;
 
   for ( int n { static_cast<int>(post_vec.size()) - 1 }; n >= 0; --n )
@@ -8986,7 +8930,7 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
 // use the current time rather than relying on any timestamp in the data -- 
 // this should be roughly the same time as the timestamp we've put in the dx_post
-    new_contents += substring(hhmmss(), 0, 5) + " "s + post.frequency_str() + "  " + post.poster();
+    new_contents += substring(hhmmss(), 0, 5) + " "s + post.frequency_str() + "  "s + post.poster();
   }
 
   if (static_cast<int>(new_contents.size()) < win_height)
@@ -8997,11 +8941,7 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
   int y { win_height - 1 };
 
   for (size_t n { 0 }; (n < new_contents.size() and (y >= 0)); ++n)
-  { win_posted_by < cursor(0, y--) < new_contents.at(n);
-    //win_posted_by < cursor(0, y--);
-
-    //win_posted_by < new_contents.at(n);
-  }
+    win_posted_by < cursor(0, y--) < new_contents.at(n);
 
   win_posted_by.refresh();
 }
@@ -9012,7 +8952,7 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 */
 set<string> calls_from_do_not_show_file(const BAND b)
 { const string filename_suffix { (b == ALL_BANDS) ? ""s : "-"s + BAND_NAME[b] };
-  const string filename { context.do_not_show_filename() + filename_suffix };
+  const string filename        { context.do_not_show_filename() + filename_suffix };
 
   set<string> rv;
 
@@ -9052,4 +8992,28 @@ void calls_to_do_not_show_file(const set<string>& callsigns, const BAND b)
 
   for (const auto& callsign : output_set)
     outfile << callsign << endl;
+}
+
+/*! \brief          Obtain the char used to represent a leading zero in a serial number
+    \param  long_t  the value of the length of the T
+    \return         the char to represent a leading zer
+*/
+char t_char(const unsigned short long_t)
+{ constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
+  constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
+  constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
+
+  switch (long_t)
+  { case 1 :
+      return LONG_T_CHAR;
+
+    case 2 :
+      return LONG_LONG_T_CHAR;
+
+    case 3 :
+      return EXTRA_LONG_T_CHAR;
+
+    default :
+      return 'T';
+  }
 }

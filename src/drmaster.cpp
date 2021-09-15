@@ -840,8 +840,8 @@ void drmaster::prepare(const string& filename)
     _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
-/*! \brief          Prepare the object by reading a file
-    \param  path    directories to check
+/*! \brief              Prepare the object by reading a file
+    \param  path        directories to check
     \param  filename    name of file to read
 
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
@@ -853,10 +853,13 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 
 /// all the calls (in alphabetical order)
 vector<string> drmaster::calls(void) const
-{ vector<string> rv(_records.size());
+{ vector<string> rv;
 
-  for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
-    rv.push_back(cit->first);
+  rv.reserve(_records.size());
+
+  for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit)
+//    rv.push_back(cit->first);
+    rv += cit->first;
 
 //  sort(rv.begin(), rv.end());
   SORT(rv, compare_calls);      // added compare_calls 201101
@@ -866,12 +869,11 @@ vector<string> drmaster::calls(void) const
 
 /// all the calls (in random order)
 vector<string> drmaster::unordered_calls(void) const
-{ vector<string> rv(_records.size());
+{ vector<string> rv;
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+  rv.reserve(_records.size());
 
-  //sort(rv.begin(), rv.end());
-  //SORT(rv, compare_calls);      // added compare_calls 201101
+  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
 
   return rv;
 }

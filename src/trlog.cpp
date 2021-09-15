@@ -78,14 +78,14 @@ int tr_record::rst(void) const
 }
 
 /// received RST
-const int tr_record::rst_received(void) const
-{ const string tmp { substring(_record, 49, _record[51] == ' ' ? 2 : 3) };
-
-  return from_string<int>(tmp);
-}
+//const int tr_record::rst_received(void) const
+//{ const string tmp { substring(_record, 49, _record[51] == ' ' ? 2 : 3) };
+//
+//  return from_string<int>(tmp);
+//}
 
 /// band
-const BAND tr_record::band(void) const
+BAND tr_record::band(void) const
 { const string band_string { substring(_record, 0, 3) };
   const int    b           { atoi(band_string.c_str()) };
 
@@ -106,7 +106,7 @@ const BAND tr_record::band(void) const
 }
 
 /// frequency in MHz
-const string tr_record::frequency(void) const
+string tr_record::frequency(void) const
 { float base_frequency;
 
   switch (band())
@@ -168,13 +168,6 @@ const string tr_record::frequency(void) const
   return stream.str();
 }
 
-/// the received exchange; maximum of four characters
-const string tr_record::exchange_received(void) const
-{ const string tmp { substring(_record, 53, 4) };
-
-  return remove_peripheral_spaces(tmp);
-}
-
 // -----------  tr_log  ----------------
 
 /// compare order of calls
@@ -199,7 +192,7 @@ tr_log::tr_log(const std::string& filename)
   _number_of_qsos = 0;
   _record_length = 0;
 
-  for (size_t n = 1; n < lines.size(); ++n)
+  for (size_t n { 1 }; n < lines.size(); ++n)
   { const string& this_line { lines[n] };
 
 // is this line real data?
@@ -239,7 +232,7 @@ tr_log::tr_log(const std::string& filename)
 void tr_log::sort_by_call(void)
 { struct QSO_CALL* table { new struct QSO_CALL [_number_of_qsos] };
 
-  for (int n = 0; n < _number_of_qsos; ++n)
+  for (int n { 0 }; n < _number_of_qsos; ++n)
   { table[n]._qso = n;
     table[n]._call = (this->read(n)).call();
   }
@@ -279,7 +272,7 @@ void tr_log::sort_by_call(void)
 }
 
 /// return record number <i>n</i>
-const tr_record tr_log::read(const int n)
+tr_record tr_log::read(const int n)
 { if (fseek(_fp, n * _record_length, 0))
     throw exception();
 

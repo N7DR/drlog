@@ -225,14 +225,12 @@ public:
 /// clear the logbook
   inline void clear(void)
     { SAFELOCK(_log);
-
       _log.clear();
     }
 
 /// how many QSOs are in the log?
   inline size_t size(void) const
     { SAFELOCK(_log);
-
       return _log.size();
     }
 
@@ -243,7 +241,6 @@ public:
 /// is the log empty?
   inline bool empty(void) const
     { SAFELOCK(_log);
-
       return _log.empty();
     }
 
@@ -262,6 +259,9 @@ public:
 */
   std::vector<QSO> match_exchange(const std::string& target) const;
 
+/*! \brief          Return all the calls in the log
+    \return         all the calls in the log
+*/
   std::set<std::string> calls(void) const;
 
 /// serialise logbook
@@ -374,15 +374,14 @@ public:
   void match_exchange(const logbook& lgbook, const std::string& target);
 
 /// log_extract = <i>container of QSOs</i>
-template <typename T>
-  void operator=(const T& t)
-  requires (std::is_same_v<typename T::value_type, QSO>)
+template <typename C>
+  void operator=(const C& t)
+  requires (std::is_same_v<typename C::value_type, QSO>)
   { SAFELOCK(_extract);
     _qsos.clear();
     copy(t.cbegin(), t.cend(), back_inserter(_qsos));
   }
 };
-
 
 // -----------  old_log  ----------------
 

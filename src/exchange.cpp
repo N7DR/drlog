@@ -222,9 +222,12 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     }
   }
 
-//  count the number fields that might be, or might contain, a serial number
+// count the number fields that might be, or might contain, a serial number
 // i.e., all digits, or digits followed by a single letter
   vector<INDEX_TYPE> possible_sernos;
+  vector<INDEX_TYPE> possible_prec;
+  vector<INDEX_TYPE> possible_check;
+  vector<INDEX_TYPE> possible_callsigns;
 
   INDEX_TYPE index { 0 };
 
@@ -232,10 +235,20 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   { if (_is_possible_serno(field))
       possible_sernos += index;
 
+    if (_is_possible_prec(field))
+      possible_prec += index;
+
+    if (_is_possible_check(field))
+      possible_check += index;
+
+    if (_is_possible_callsign(field))
+      possible_callsigns += index;
+
     index++;
   }
 
-  vector<INDEX_TYPE> possible_prec;
+#if 0
+//  vector<INDEX_TYPE> possible_prec;
 
   index = 0;
 
@@ -246,36 +259,41 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     index++;
   }
 
-  vector<INDEX_TYPE> possible_check;
+//  vector<INDEX_TYPE> possible_check;
 
   index = 0;
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_check(field))
-      possible_check.push_back(index);
+  //    possible_check.push_back(index);
+      possible_check += index;
 
     index++;
   }
 
-  vector<INDEX_TYPE> possible_callsigns;
+//  vector<INDEX_TYPE> possible_callsigns;
 
   index = 0;
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_callsign(field))
-      possible_callsigns.push_back(index);
+ //     possible_callsigns.push_back(index);
+      possible_callsigns += index;
 
     index++;
   }
+#endif
 
 // calculate number of entries that might be a check or a serial number
   vector<INDEX_TYPE> ambiguous_fields;
 
   for (const auto& possible_check_field : possible_check)
-    if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
-      ambiguous_fields.push_back(possible_check_field);
+//    if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
+    if (contains(possible_sernos, possible_check_field))
+//      ambiguous_fields.push_back(possible_check_field);
+      ambiguous_fields += possible_check_field;
 
-  if (possible_prec.empty() and (_prec == 'Z') )  // _prec unchanged from default
+  if (possible_prec.empty() and (_prec == DEFAULT_PREC) )  // _prec unchanged from default
   { ost << "ERROR: no possible precedence in exchange received from " << call << endl;
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
@@ -538,15 +556,16 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     if (exch.callsign() != from_callsign)
       _replacement_call = exch.callsign();
 
-    _fields.push_back( { "SERNO"s, to_string(exch.serno()), false } );
-    _fields.push_back( { "PREC"s, create_string(exch.prec()), false } );
-    _fields.push_back( { "CALL"s, exch.callsign(), false } );
-    _fields.push_back( { "CHECK"s, exch.check(), false } );
-    _fields.push_back( parsed_exchange_field("SECTION"s, exch.section(), true) );    // convert section to canonical form if necessary
+//    _fields.push_back( { "SERNO"s, to_string(exch.serno()), false } );
+    _fields += { "SERNO"s, to_string(exch.serno()), false };
+    _fields += { "PREC"s, create_string(exch.prec()), false };
+    _fields += { "CALL"s, exch.callsign(), false };
+    _fields += { "CHECK"s, exch.check(), false };
+    _fields += { "SECTION"s, exch.section(), true };    // convert section to canonical form if necessary
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
-    _valid = ( (exch.serno() != 0) and (exch.section() != "AAA"s) and (exch.prec() != 'Z') );
+    _valid = ( (exch.serno() != 0) and (exch.section() != "AAA"s) and (exch.prec() != DEFAULT_PREC) );
 
     return;
   }
@@ -567,7 +586,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 #endif
 
 // prepare output; includes optional fields and all choices
-  FOR_ALL(exchange_template, [=, this] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
+//  FOR_ALL(exchange_template, [=, this] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );  
+  FOR_ALL(exchange_template, [=, this] (const exchange_field& ef) { _fields += { ef.name(), EMPTY_STRING, ef.is_mult() }; } );
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
@@ -667,13 +687,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   deque<TRIPLET> tuple_deque;
 
   for (const auto& [ field_number, matching_names ] : matches)
-    tuple_deque.push_back(TRIPLET { field_number, copy_received_values[field_number], matching_names } );  // field number, value, matching field names
-
-// DEBUG
-#if 0
-  ost << "Initial deque" << endl;
-  print_tuple_deque(tuple_deque);
-#endif
+//    tuple_deque.push_back(TRIPLET { field_number, copy_received_values[field_number], matching_names } );  // field number, value, matching field names
+    tuple_deque += { field_number, copy_received_values[field_number], matching_names };  // field number, value, matching field names
 
   vector<TRIPLET>      tuple_vector_assignments;
   map<string, TRIPLET> tuple_map_assignments;
@@ -823,7 +838,8 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
 
   for (const auto& pef : _fields)
   { if (!contains(pef.name(), "+"s))             // not a CHOICE
-      rv.push_back(pef);
+//      rv.push_back(pef);
+      rv += pef;
     else                                        // is a CHOICE
     { parsed_exchange_field pef_chosen { pef };
 
@@ -832,7 +848,8 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
       if (pef_chosen.name().empty())
         ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
       else
-        rv.push_back(pef_chosen);
+//        rv.push_back(pef_chosen);
+        rv += pef_chosen;
     }
   }
 

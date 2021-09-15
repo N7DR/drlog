@@ -29,13 +29,6 @@ using namespace std;
 
 //extern ofstream ost;                   ///< for debugging, info
 
-//const string     EOL      { "\n" };       ///< end-of-line marker as string
-//constexpr char   EOL_CHAR { '\n' };       ///< end-of-line marker as character
-
-//const string  LF       { "\n" };      ///< LF as string
-//const string& LF_STR   { LF };        ///< LF as string
-//constexpr char    LF_CHAR  { '\n' };      ///< LF as character
-
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
     \return         vector of fields from the CSV line
@@ -132,23 +125,6 @@ string duplicate_char(const string& s, const char c)
 
   return rv;
 }
-
-/*! \brief              Safe version of the substr() member function
-    \param  str         string on which to operate
-    \param  start_posn  position at which to start operation
-    \param  length      length of substring to be extracted
-    \return             substring of length <i>length</i>, starting at position <i>start_posn</i>
-
-    Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
-*/
-//string substring(const string& str, const size_t start_posn, const size_t length)
-//{ return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR );
-
-//  if (str.size() > start_posn)
-//    return str.substr(start_posn, length);
-
-//  return string();
-//}
 
 /*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds

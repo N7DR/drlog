@@ -554,7 +554,7 @@ public:
      \param  reason     message to add
 */
   inline void add(const int code, const std::string& reason)
-    { push_back(reason); }
+    { push_back(reason); }    // the code is ignored except for readability when the add  is called
 };
 
 /// How many threads belong to this process?
@@ -588,8 +588,7 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
 
 template <class T>
 T SAFELOCK_GET(std::recursive_mutex& m, const T& v)
-{ //safelock safelock_z(m, "SAFELOCK_GET"s);
-  std::lock_guard lg(m);
+{ std::lock_guard lg(m);
 
   return v;
 }

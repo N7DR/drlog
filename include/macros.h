@@ -86,8 +86,7 @@ enum class SHOW_TIME { SHOW,
 #define READ(y)                                                       \
 /*! Read-only access to _##y */                                       \
   [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
-  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); } 
-/*  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; } */
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); }
 
 #endif    // !READ
 
@@ -269,11 +268,9 @@ struct is_set<std::set<T, C, A>>
 template<class T>
 constexpr bool is_set_v { is_set<T>::value };
 
-// current g++ does not support definition of concepts, even with -fconcepts !!
 template<typename T>
 concept SET = requires(T a) 
 { is_set<T>::value == true;
-//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
 };
 
 //template<typename T>
@@ -313,13 +310,10 @@ constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
 // is a type a set or unordered set?
 
-//template< class T>
-//constexpr bool is_sus_v = is_sus<T>::value;
 template<class T>
 constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
 
 template <class T> concept SUS = is_sus_v<T>;
-//concept SUS = is_set_v<T> or is_unordered_set_v<T>;
 
 // is a type a multimap or unordered multimap?
 template<class T>
@@ -383,12 +377,7 @@ struct is_vector<std::vector<T>>
 template<class T>
 constexpr bool is_vector_v = is_vector<T>::value;
 
-// current g++ does not support definition of concepts, even with -fconcepts !!
-//template<typename T>
-//concept SET_TYPE = requires(T a) 
-//{ is_set<T>::value == true;
-//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
-//};
+template<typename T> concept VECTOR = is_vector_v<T>;
 
 // ---------------------------------------------------------------------------
 
@@ -946,16 +935,22 @@ bool operator>(const T& s, const U& v)
   requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
   { return s.find(v) != s.cend(); }
 
+/*! \brief      Is an object a member of a set, an unordered_set, or a key in a map or unordered map?
+    \param  s   set or unordered_set  to be tested
+    \param  v   object to be tested for membership
+    \return     Whether <i>t</i> is a member/key of <i>s</i>
+*/
+template <class T, class U>
+bool contains(const T& s, const U& v)
+//  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
+  requires (is_sus_v<T> or is_mum_v<T>) and (std::is_same_v<typename T::key_type, U>)
+  { return s.find(v) != s.cend(); }
+
 /// union of two sets of the same type
 template<class T>
 T operator+(const T& s1, const T& s2)
   requires (is_set_v<T>)
-  { //T rv { s1 };
-
-    //for (const auto& el2 : s2)
-    //  rv += el2;
-
-    T rv;
+  { T rv;
 
     std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
 
@@ -1021,7 +1016,8 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
   { for (const auto& p : cit->second)
-      rv.insert( { p, cit->first } );
+ //     rv.insert( { p, cit->first } );
+      rv += { p, cit->first };
   }
 
   return rv;
@@ -1121,16 +1117,17 @@ inline void UNUSED( Unused&& )
 */
 template <typename T>
 class accumulator
-{
+{ using COUNTER = unsigned int;
+
 protected:
 
-  std::map<T, unsigned int> _values;                ///< all the known values, with the number of times each has been added
-  unsigned int              _threshold;             ///< threshold value
+  std::map<T, COUNTER> _values;                ///< all the known values, with the number of times each has been added
+  COUNTER              _threshold;             ///< threshold value
 
 public:
 
 /// default constructor
-  accumulator(const unsigned int thold = 1) :
+  explicit accumulator(const COUNTER thold = 1) :
     _threshold(thold)
   { }
 
@@ -1141,9 +1138,12 @@ public:
     \param  n       number of times to add it
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
-  bool add(const T& val, const int n = 1)
-  { if (_values.find(val) == _values.end())
-      _values.insert( { val, n } );
+  bool add(const T& val, const COUNTER n = 1)
+  { //if (_values.find(val) == _values.end())
+    //  _values.insert( { val, n } );
+    if (!contains(_values, val))
+//      _values.insert( { val, n } );
+      _values += { val, n };
     else
       _values[val] += n;
 
@@ -1391,25 +1391,13 @@ inline void operator+=(C& sus, const V& vec)
   requires is_sus_v<C> and is_vector_v<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
   { std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); };
 
-/*! \brief          Add all elements of a vector to a set or unordered set
-    \param  sus     destination set or unordered set
-    \param  vec     vector to insert
-*/
-//template <typename C, typename V>
-//inline void operator+=(C& sus, V&& vec)
-//  requires is_sus_v<C> and is_vector_v<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
-//  { for_each(std::forward<>vec.begin()
-//    //std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); 
-//  };
-
 /*! \brief              Remove an element from a set, map, unordered set or unordered map
     \param  sus         destination set or unordered set
     \param  element     element to remove
 */
 template <typename C, typename T>
 inline void operator-=(C& sus, const T& element)
-//  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
-  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>>)
+  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>>)and (std::is_same_v<typename C::key_type, base_type<T>>)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set
@@ -1432,15 +1420,6 @@ template <typename MUMD, typename MUMS>
 inline void operator+=(MUMD& dest, const MUMS& src)
   { dest.insert(src.cbegin(), src.cend()); }
 
-/*! \brief              Remove an element from a map or unordered map
-    \param  mum         destination map or unordered map
-    \param  element     element to remove
-*/
-//template <typename C, typename T>
-//inline void operator-=(C& mum, const T& element)
-//  requires is_mum_v<C> and (std::is_same_v<typename C::key_type, base_type<T>>)
-//  { mum.erase(element); }
-
 /*! \brief        Append one vector to another
     \param  dest  destination vector
     \param  src   source vector
@@ -1453,6 +1432,14 @@ inline void operator+=(V& dest, V&& src)
     dest.insert(dest.end(), src.begin(), src.end());
   }
 
+// too confusing
+//template <typename V>
+//  requires (is_vector_v<V>)
+//void operator+=(VECTOR auto& dest, const VECTOR auto&& src)
+//  { dest.reserve(dest.size() + src.size());
+//    dest.insert(dest.end(), src.begin(), src.end());
+//  }
+
 /*! \brief        Append one vector to another
     \param  dest  destination vector
     \param  src   source vector
@@ -1464,14 +1451,17 @@ inline void operator+=(V& dest, const V& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
   }
+//void operator+=(VECTOR auto& dest, const VECTOR auto& src)
+//  { dest.reserve(dest.size() + src.size());
+//    dest.insert(dest.end(), src.begin(), src.end());
+//  }
 
 /*! \brief        Concatenate two vectors
     \param  dest  destination vector
     \param  src   source vector
     \return       <i>dest</i> with <i>src</i> appended
 */
-template <typename V>
-  requires (is_vector_v<V>)
+template <typename V> requires (is_vector_v<V>)
 V operator+(const V& v1, V&& v2)
 { V rv(v1.size() + v2.size());
 
@@ -1486,8 +1476,7 @@ V operator+(const V& v1, V&& v2)
     \param  src   source vector
     \return       <i>dest</i> with <i>src</i> appended
 */
-template <typename V>
-  requires (is_vector_v<V>)
+template <typename V> requires (is_vector_v<V>)
 V operator+(const V& v1, const V& v2)
 { V rv(v1.size() + v2.size());
 
@@ -1513,41 +1502,23 @@ auto operator+(const V& v1, E&& element) -> V
   return rv; 
 }
 
-/*! \brief              Append an element to a vector
-    \param  v1          destination vector
-    \param  element     element to append
-*/
-template <typename V>
-inline void operator+=(V& v1, typename V::value_type&& element)
-  requires is_vector_v<V>
-{ v1.push_back(std::forward<typename V::value_type>(element)); }
-
-/*! \brief              Append an element to a vector
-    \param  v1          destination vector
-    \param  element     element to append
-*/
-template <typename V, typename E>
-inline void operator+=(V& v1, const E& element)
-  requires is_vector_v<V> and (std::is_convertible_v<E, typename V::value_type>)
-{ v1.push_back(element); }
-
-/*! \brief              Append an element to a list or deque
-    \param  c1          destination list or deque
+/*! \brief              Append an element to a deque, list or vector
+    \param  c1          destination deque, list or vector
     \param  element     element to append
 */
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
-  requires is_list_v<C> or is_deque_v<C>
+  requires is_deque_v<C> or is_list_v<C> or is_vector_v<C>
 { c1.push_back(std::forward<typename C::value_type>(element)); }
 
-/*! \brief              Append an element to a list
-    \param  l1          destination list
+/*! \brief              Append an element to a deque, list or vector
+    \param  c1          destination deque, list or vector
     \param  element     element to append
 */
-template <typename L, typename E>
-inline void operator+=(L& l1, const E& element)
-  requires is_list_v<L> and (std::is_convertible_v<E, typename L::value_type>)
-{ l1.push_back(element); }
+template <typename C, typename E>
+inline void operator+=(C& c1, const E& element)
+  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+{ c1.push_back(element); }
 
 /*! \brief      Insert an element into a list
     \param  l1  destination list
@@ -1567,6 +1538,24 @@ inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typena
   requires is_list_v<L>
 { l1.insert(pr.first, pr.second); }
 
+/*! \brief              Remove all elements with a particular value from a list
+    \param  c1          list
+    \param  element     value to remove
+*/
+template <typename C>
+inline void operator-=(C& c1, typename C::value_type&& element)
+  requires is_list_v<C>
+{ c1.remove(std::forward<typename C::value_type>(element)); }
+
+/*! \brief              Remove all elements with a particular value from a list
+    \param  c1          list
+    \param  element     value to remove
+*/
+template <typename C>
+inline void operator-=(C& c1, const typename C::value_type& element)
+  requires is_list_v<C>
+{ c1.remove(element); }
+
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
     \param  element     element to append
@@ -1585,35 +1574,26 @@ inline void operator+=(Q& q1, const E& element)
   requires is_queue_v<Q> and (std::is_convertible_v<E, typename Q::value_type>)
 { q1.push(element); }
 
-/*! \brief              Append an element to a deque
-    \param  D1          destination deque
-    \param  element     element to append
-*/
-template <typename D, typename E>
-inline void operator+=(D& d1, const E& element)
-  requires is_deque_v<D> and (std::is_convertible_v<E, typename D::value_type>)
-{ d1.push_back(element); }
-
 /*! \brief              Remove and call destructor on front element of deque 
     \param  D1          destination deque
 
     Does nothing if the deque is empty
 */
 template <typename D>
-void operator--(D& d1 /*, int*/) // int for post-decrement
+void operator--(D& d /*, int*/) // int for post-decrement
   requires is_deque_v<D>
-{ if (!d1.empty())
-    d1.pop_front();
+{ if (!d.empty())
+    d.pop_front();
 }
 
 /*! \brief      Remove an element referenced by an iterator from a deque
-    \param  c1  destination deque
+    \param  d   destination deque
     \param  it  iterator
 */
-template <typename C>
-inline void operator-=(C& c1, typename C::iterator&& it)
-  requires is_deque_v<C>
-{ c1.erase(std::forward<typename C::iterator>(it)); }
+template <typename D>
+inline void operator-=(D& d, typename D::iterator&& it)
+  requires is_deque_v<D>
+{ d.erase(std::forward<typename D::iterator>(it)); }
 
 /*! \brief      Remove an element referenced by an iterator from a deque
     \param  c1  destination deque
@@ -1623,5 +1603,15 @@ template <typename C>
 inline void operator-=(C& c1, const typename C::iterator& it)
   requires is_deque_v<C>
 { c1.erase(it); }
+
+/*! \brief              Is an element in a deque, list or vector?
+    \param  c           the deque, list or vector
+    \param  element     the value to test
+    \return             whether <i>element</i> is an element of <i>v</i>
+*/
+template <typename C, typename E>
+  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+inline bool contains(const C& c, const E& element)
+  { return std::find(c.cbegin(), c.cend(), element) != c.cend(); }
 
 #endif    // MACROS_H

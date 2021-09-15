@@ -46,9 +46,9 @@ extern ofstream            ost;                   ///< for debugging, info
     \param  nm  tag name
 */
 void cabrillo_tag_template::_init_from_string(const string& str)
-{ const auto posn = str.find(":"s);
+{ //const auto posn = str.find(":"s);
 
-  if (posn == string::npos)                             // no values included
+  if (const auto posn { str.find(":"s) }; posn == string::npos)                             // no values included
     _name = str;
   else                                                          // one or more values are included
   { _name = str.substr(0, posn);
@@ -59,36 +59,6 @@ void cabrillo_tag_template::_init_from_string(const string& str)
     FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
   }
 }
-
-/*! \brief      Construct from name
-    \param  nm  tag name
-
-    Any tag value is legal for this tag
-*/
-//cabrillo_tag_template::cabrillo_tag_template(const string& nm)
-//{ if (nm.find(":"s) == string::npos)                             // no values included
-//    _name = nm;
-//  else                                                          // one or more values are included
-//  { _name = nm.substr(0, nm.find(":"s));
-//
-//    const string         values { nm.substr(nm.find(":"s) + 1) };
-//    const vector<string> vec    { remove_peripheral_spaces(split_string(values, ","s)) };
-//
-//    FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
-//  }
-//}
-
-/// cabrillo_tag_template = string
-//void cabrillo_tag_template::operator=(const string& nm)
-//{ if (nm.find(":"s) == string::npos)                             // no values included
-//    _name = nm;
-//  else                                                          // one or more values are included
-//  { const string         values { substring(nm, nm.find(":"s) + 1) };
-//    const vector<string> vec    { remove_peripheral_spaces(split_string(values, ","s)) };
-//
-//    FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
-//  }
-//}
 
 // -----------  cabrillo_tag_templatess  ----------------
 

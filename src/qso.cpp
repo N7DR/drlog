@@ -857,15 +857,15 @@ string QSO::verbose_format(void) const
 
   rv = "QSO: "s;
   
-  rv += "number="s + pad_left(_number, NUMBER_WIDTH);
-  rv += " date="s + _date;
-  rv += " utc="s + _utc;
-  rv += " hiscall="s + pad_right(_callsign, CALLSIGN_WIDTH);
-  rv += " mode="s + pad_right(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH);
-  rv += " band="s + pad_right(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
+  rv += "number="s        + pad_left(_number, NUMBER_WIDTH);
+  rv += " date="s         + _date;
+  rv += " utc="s          + _utc;
+  rv += " hiscall="s      + pad_right(_callsign, CALLSIGN_WIDTH);
+  rv += " mode="s         + pad_right(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH);
+  rv += " band="s         + pad_right(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
   rv += " frequency-tx="s + pad_right(_frequency_tx, FREQUENCY_WIDTH);
   rv += " frequency-rx="s + pad_right( (_frequency_rx.empty() ? "0"s : _frequency_rx), FREQUENCY_WIDTH );
-  rv += " mycall="s + pad_right(_my_call, CALLSIGN_WIDTH);
+  rv += " mycall="s       + pad_right(_my_call, CALLSIGN_WIDTH);
 
   for (const auto& exch_field : _sent_exchange)
   { const string name  { "sent-"s + exch_field.first };
@@ -937,7 +937,6 @@ bool QSO::exchange_match(const string& rule_to_match) const
         return exchange_field_value != target;
       }
     }
-
   }
 
   return false;
@@ -1162,7 +1161,7 @@ ostream& operator<<(ostream& ost, const QSO& q)
       
   const vector<pair<string, string> > sent_exchange { q.sent_exchange() };
 
-  for (unsigned int n = 0; n < sent_exchange.size(); ++n)
+  for (unsigned int n { 0 }; n < sent_exchange.size(); ++n)
     ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";    
 
   ost << ", Rcvd: ";
@@ -1216,7 +1215,7 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
                                                          : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };
 
 // handle "frequency_rx=     mycall=N7DR"
-  if (contains(value, "="s))
+  if (contains(value, '='))
   { posn = value_first_char_posn;
     return { name, string() };
   }

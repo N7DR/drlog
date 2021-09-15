@@ -77,7 +77,8 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 
     vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
   
-    qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
+//    qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
+    qso.sent_exchange((current_sent_exchange += { field_name, value }, current_sent_exchange));
   }
 
 // rcall
@@ -165,8 +166,7 @@ vector<QSO> logbook::worked(const string& call) const
 //  SORT(rv, qso_sort_by_time);    // put in chronological order
 
 // https://www.youtube.com/watch?v=SYLgG7Q5Zws  39:40
-  ranges::sort(rv, {}, [](const QSO& q) { return q.epoch_time(); });    // put in chronological order
-//  ranges::sort(rv, {}, &QSO::epoch_time);    // I think it's a bug in g++ that this doesn't work
+  ranges::sort(rv, {}, [](const QSO& q) { return q.epoch_time(); });    // use a projection to put in chronological order
 
   return rv;
 }
@@ -302,10 +302,10 @@ list<QSO> logbook::as_list(void) const
 
   { SAFELOCK(_log);
   
-    FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv.push_back(q.second); } );
+    FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv += q.second; } );
   }
 
-  rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&)
+  rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&); should be a NOP, though
 
   return rv;
 }
@@ -327,14 +327,9 @@ logbook logbook::recalculate_dupes(const contest_rules& rules) const
   SAFELOCK(_log);
 
   for (auto qso : _log_vec)
-  { auto fn_p { ( (rv.is_dupe(qso, rules)) ? &QSO::dupe : &QSO::undupe ) };  
+  { auto fn_p { ( (rv.is_dupe(qso, rules)) ? &QSO::dupe : &QSO::undupe ) };  // find the correct function to apply
 
-    (qso.*fn_p)();
-
- //  if (rv.is_dupe(qso, rules))
- //     qso.dupe();
- //   else
- //     qso.undupe();
+    (qso.*fn_p)();  // apply it
       
     rv += qso;
   }
@@ -510,8 +505,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
   const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
   
-  for (unsigned int n = 0; n < template_fields.size(); ++n)
-    individual_values.push_back(split_string(remove_peripheral_spaces(template_fields[n]), ":"s));
+  for (unsigned int n { 0 }; n < template_fields.size(); ++n)
+//    individual_values.push_back(split_string(remove_peripheral_spaces(template_fields[n]), ":"s));
+    individual_values += split_string(remove_peripheral_spaces(template_fields[n]), ":"s);
 
   unsigned int last_qso_number { 0 };
    
@@ -521,7 +517,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     { QSO qso;
   
 // go through the fields
-      for (unsigned int n = 0; n < individual_values.size(); ++n)
+      for (unsigned int n { 0 }; n < individual_values.size(); ++n)
       { const vector<string>& vec  { individual_values[n] };
         const string          name { vec[0] };
         const unsigned int    posn { from_string<unsigned int>(vec[1]) - 1 };
@@ -529,63 +525,6 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces(line.substr(posn, len)) : string()) };
       
         _modify_qso_with_name_and_value(qso, name, value);
-#if 0
-// frequency
-        if (name == "FREQ"s)
-          qso.freq_and_band(value);
-      
-// mode
-        if (name == "MODE"s)
-        { if (value == "CW"s)
-            qso.mode(MODE_CW);
-
-          if (value == "SSB"s)
-            qso.mode(MODE_SSB);
-//    if (value == "RTTY")
-//      qso.mode(MODE_DIGI);
-        }
-
-// date
-        if (name == "DATE"s)
-          qso.date(value);
-
-// time
-        if (name == "TIME"s)
-        { qso.utc( (value.length() == 5) ? (value.substr(0, 2) + value.substr(3, 2)) : value ); // handle hh:mm and hhmm formats
-//          if (value.length() == 5)
-//            qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
-//          else
-//            qso.utc(value);                                      // hhmm
-        }
-
-// tcall
-        if (name == "TCALL"s)
-          qso.my_call(value);
-    
-// transmitted exchange
-        if (starts_with(name, "TEXCH"s))
-        { const string field_name { name.substr(6) };
-
-          vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
-  
-          qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
-        }
-
-// rcall
-        if (name == "RCALL"s)
-          qso.callsign(value);
-
-// received exchange
-        if (starts_with(name, "REXCH"s))
-        { const string field_name { name.substr(6) };
-
-          vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
-
-// should have a function in the QSO class to add a field to the exchange
-          current_received_exchange.push_back( { field_name, value, false, false });
-          qso.received_exchange(current_received_exchange);
-        }
-#endif
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
@@ -613,67 +552,15 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   
       const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) }; // skip first four characters
       
-      for (unsigned int m = 0; m < fields.size(); ++m)
+      for (unsigned int m { 0 }; m < fields.size(); ++m)
         ost << m << ": *" << fields[m] << "*" << endl; 
 
 // go through the fields
-      for (unsigned int n = 0; n < cabrillo_fields.size(); ++n)
+      for (unsigned int n { 0 }; n < cabrillo_fields.size(); ++n)
       { const string name  { cabrillo_fields[n] };
         const string value { (n < fields.size() ? remove_peripheral_spaces(fields[n]) : string()) };
 
         _modify_qso_with_name_and_value(qso, name, value);
-#if 0
-// frequency
-        if (name == "FREQ"s)
-          qso.freq_and_band(value);
-
-// mode
-        if (name == "MODE"s)
-        { if (value == "CW"s)
-            qso.mode(MODE_CW);
-
-          if (value == "SSB"s)
-            qso.mode(MODE_SSB);
-//    if (value == "RTTY")
-//      qso.mode(MODE_DIGI);
-        }
-
-// date
-        if (name == "DATE"s)
-          qso.date(value);
-
-// time
-        if (name == "TIME"s)
-          qso.utc( (value.find(":"s) == 2) ? (value.substr(0, 2) + value.substr(3, 2)) : value) ;   // handle HHMM and HH:MM
-
-// tcall
-        if (name == "TCALL"s)
-          qso.my_call(value);
-    
-// transmitted exchange
-        if (starts_with(name, "TEXCH"s))
-        { const string field_name { name.substr(6) };
-
-          vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
-  
-          qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
-        }
-
-// rcall
-        if (name == "RCALL"s)
-          qso.callsign(value);
-
-// received exchange
-        if (starts_with(name, "REXCH"s))
-        { const string field_name { name.substr(6) };
-
-          vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
-
-// should have a function in the QSO class to add a field to the exchange
-          current_received_exchange.push_back( { field_name, value, false, false } );
-          qso.received_exchange(current_received_exchange);
-        }
-#endif
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
@@ -716,7 +603,7 @@ vector<QSO> logbook::match_exchange(const string& target) const
 
   for (const auto& qso : _log_vec)
     if (qso.exchange_match_string(target))
-      rv.push_back(qso);
+      rv += qso;
 
   return rv;
 }
@@ -750,17 +637,15 @@ QSO logbook::remove_last_qso(void)
   return rv;
 }
 
-//https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
-//for(  multimap<char,int>::iterator it = mymm.begin(), end = mymm.end(); it != end; it = mymm.upper_bound(it->first))
-//  {
-//      cout << it->first << ' ' << it->second << endl;
-//  }
-
+/*! \brief          Return all the calls in the log
+    \return         all the calls in the log
+*/
 set<string> logbook::calls(void) const
 { SAFELOCK(_log);
 
   set<string> rv { };
 
+// https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
   for (auto it { _log.cbegin() }; it != _log.cend(); it = _log.upper_bound(it->first))
     rv += it->first;
 
@@ -781,10 +666,13 @@ set<string> logbook::calls(void) const
 void log_extract::operator+=(const QSO& qso)
 { SAFELOCK(_extract);
 
-  _qsos.push_back(qso);
+//  _qsos.push_back(qso);
+  _qsos += qso;
 
+//  while (_qsos.size() > _win_size)
+//    _qsos.pop_front();
   while (_qsos.size() > _win_size)
-    _qsos.pop_front();
+    --_qsos;
 }
 
 /*! \brief  Display the extract in the associated window

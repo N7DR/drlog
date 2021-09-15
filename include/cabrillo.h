@@ -28,6 +28,8 @@
     in general, no less ambiguous) than the "version 3" that was at the original site.
 */
 
+#include "macros.h"
+
 #include <string>
 #include <vector>
 
@@ -63,9 +65,6 @@ public:
   inline explicit cabrillo_tag_template(const std::string& nm)
     { _init_from_string(nm); }
     
-/// destructor
-//  inline virtual ~cabrillo_tag_template(void) = default;
-
 /// cabrillo_tag_template = string
   inline void operator=(const std::string& nm)
     { _init_from_string(nm); }
@@ -74,7 +73,7 @@ public:
     \param  val     value to add
 */
   inline void add_legal_value(const std::string& val)
-    { _legal_values.push_back(val); }
+    { _legal_values += val; }
 };
 
 // -----------  cabrillo_tag_templatess  ----------------
@@ -93,15 +92,12 @@ protected:
     \param  str     name of tag to add
 */
   inline void _add(const std::string& str)
-    { _templates.push_back(cabrillo_tag_template(str)); }
+    { _templates += cabrillo_tag_template(str); }
   
 public:
   
 /// default constructor
   cabrillo_tag_templates(void);
-    
-/// destructor
-//  inline virtual ~cabrillo_tag_templates(void) = default;
 };
 
 #endif    // CABRILLO_H

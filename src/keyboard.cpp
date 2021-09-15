@@ -285,7 +285,8 @@ void keyboard_queue::process_events(void)
       if (interesting_event)
       { SAFELOCK(_keyboard);
 
-        _events.push_back(ke);
+//        _events.push_back(ke);
+        _events += ke;
       }
     }
   }
@@ -357,8 +358,8 @@ void keyboard_queue::push_key_press(const char c)
       break;
 
     default:
-    { const string c_str = create_string(c);
-      const KeySym ks = XStringToKeysym(c_str.c_str());
+    { const string c_str { create_string(c) };
+      const KeySym ks    { XStringToKeysym(c_str.c_str()) };
 
       push_key_press(ks);
     }
@@ -378,12 +379,12 @@ void keyboard_queue::push_key_press(const KeySym ks)
    if (_x_multithreaded)
      XLockDisplay(_display_p);
 
-   const KeyCode kc = XKeysymToKeycode(_display_p, ks);
+   const KeyCode kc { XKeysymToKeycode(_display_p, ks) };
 
    event.xkey.keycode = kc;
    event.xkey.state = 0;      // no modifiers
 
-   const Window window_id = _window_id;
+   const Window window_id { _window_id };
 
 //   Display* display_p = _display_p;
 

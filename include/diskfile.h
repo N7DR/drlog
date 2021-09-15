@@ -10,8 +10,7 @@
 
 /*! \file   diskfile.h
 
-    Useful file-related functions. This file is derived, with permission, from proprietary code
-    owned by IPfonix, Inc.
+    Useful file-related functions.
 */
 
 #ifndef DISKFILE_H
@@ -107,7 +106,7 @@ void directory_create(const std::string& dirname);
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-bool directory_exists(const std::string& dirname);
+bool directory_exists(const std::string& dirname) noexcept;
 
 /*! \brief              What files does a directory contain?
     \param  dirname     name of the directory to examine

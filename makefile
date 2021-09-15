@@ -30,7 +30,7 @@ PROG = all
 # -O2 works
 #CFLAGS = $(INCL) -no-pie -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -Wno-reorder -std=c++20 `libpng-config --cflags`
 #CFLAGS = $(INCL) -c -g3 -O0 -pipe -Wno-reorder -std=c++20 `libpng-config --cflags`
-CFLAGS = $(INCL) -c -g3 -O2 -pipe -Wno-reorder -std=c++20
+CFLAGS = $(INCL) -c -g3 -O2 -pipe -Wno-reorder -std=c++20 -fcoroutines
 
 #LINKFLAGS = $(LIBRARIES)
 
@@ -47,7 +47,8 @@ include/bandmap.h : include/cluster.h include/drlog_context.h include/log.h incl
 include/bands-modes.h : include/string_functions.h
 	touch include/bands-modes.h
 
-# cabrillo.h has no dependencies
+include/cabrillo.h : macros.h
+  touch cabrillo.h
 
 include/cluster.h : include/drlog_context.h include/macros.h include/socket_support.h
 	touch include/cluster.h

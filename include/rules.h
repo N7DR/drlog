@@ -163,6 +163,9 @@ public:
 */
   void add_value(const std::string& cv, const std::string& v);
 
+  inline void operator+=(const std::pair<std::string, std::string>& pss)
+    { add_value(pss.first, pss.second); }
+
 /*! \brief      Number of possible values for a particular canonical value
     \param  cv  canonical value
     \return     number of possible values for the canonical value <i>cv</i>
@@ -346,7 +349,10 @@ public:
 */
 
 class contest_rules
-{
+{ enum class CHOICES { EXPAND,                        ///< expand choices
+                       NO_EXPAND                      ///< do not expand choices
+                     };
+
 protected:
     
   std::set<std::string>               _bonus_countries;         ///< countries that are eligible for bonus points
@@ -469,7 +475,8 @@ protected:
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
+//  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
+  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
 
 public:
   
@@ -534,7 +541,7 @@ public:
     CHOICE fields ARE NOT expanded
 */
   inline std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
-    { return _exchange_fields(canonical_prefix, m, false); }
+    { return _exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND); }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -544,7 +551,7 @@ public:
     CHOICE fields ARE expanded
 */
   inline std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
-    { return _exchange_fields(canonical_prefix, m, true); }
+    { return _exchange_fields(canonical_prefix, m, CHOICES::EXPAND); }
 
   RULESREAD(callsign_mults);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
   RULESREAD(callsign_mults_per_band);             ///< are callsign mults counted per-band?

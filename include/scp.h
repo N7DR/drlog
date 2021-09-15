@@ -96,7 +96,8 @@ public:
 
 /// add a parent scp_databases object
   inline void add_parent(scp_databases& dbs)
-    { _parents.push_back(&dbs); }
+//    { _parents.push_back(&dbs); }
+    { _parents += &dbs; }
 };
 
 // -----------  scp_databases  ----------------

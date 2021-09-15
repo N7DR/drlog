@@ -256,11 +256,12 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
 
-        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx.add_value(equivalent_values[0], equivalent_value); } ); // cbegin() corresponds to the canonical value
+//        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx.add_value(equivalent_values[0], equivalent_value); } ); // cbegin() corresponds to the canonical value
+        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx += { equivalent_values[0], equivalent_value }; } ); // cbegin() corresponds to the canonical value
       }
     }
 
-    _exch_values.push_back(qthx);
+    _exch_values += qthx;
   }
 }
 
@@ -284,28 +285,23 @@ set<string> contest_rules::_all_exchange_values(const string& field_name) const
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const bool expand_choices) const
+vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const CHOICES expand_choices) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 
   SAFELOCK(rules);
 
   try
-  { const map<string, vector<exchange_field>>& exchange { (expand_choices ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) }; // this can throw exception if rig has been set to a mode that is not supported by the contest
+  { const map<string, vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) }; // this can throw exception if rig has been set to a mode that is not supported by the contest
 
     auto cit { exchange.find(canonical_prefix) };
 
     return ( (cit == exchange.cend()) ? MUM_VALUE(exchange, string()) : cit->second );
-
-//    if (cit != exchange.cend())
-//      return cit->second;
-
-//    return MUM_VALUE(exchange, string());
   }
 
   catch (std::out_of_range& oor)
   { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
-    ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
+    ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << ((expand_choices == CHOICES::EXPAND) ? "true" : "false") << endl;
 
     return vector<exchange_field>();
   }
@@ -332,9 +328,12 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
         vector<exchange_field> choices;
 
         for (auto& choice_field_name : choice_fields)
-        { const bool is_mult { find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend() };
+        { //const bool is_mult { find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend() };
+          //const bool is_mult { contains(exchange_mults_vec, choice_field_name) };
 
-          choices.push_back(exchange_field(choice_field_name, is_mult));
+//          choices.push_back(exchange_field(choice_field_name, is_mult));
+//          choices += exchange_field(choice_field_name, is_mult);
+            choices += exchange_field(choice_field_name, contains(exchange_mults_vec, choice_field_name));
         }
 
 // put into alphabetical order
@@ -348,16 +347,18 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
         exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
         this_field.choice(choices);
-        rv.push_back(this_field);
+  //      rv.push_back(this_field);
+        rv += this_field;
       }
     }
 
     if (is_opt)
     { try
       { const string name    { split_string(field_name, ":"s).at(1) };
-        const bool   is_mult { ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), name) != exchange_mults_vec.cend() ) };
+ //       const bool   is_mult { ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), name) != exchange_mults_vec.cend() ) };
 
-        rv.push_back( exchange_field(name, is_mult, is_opt) );
+ //       rv.push_back( exchange_field(name, is_mult, is_opt) );
+        rv += exchange_field(name, contains(exchange_mults_vec, name), is_opt);
       }
 
       catch (...)
@@ -367,10 +368,11 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     }
 
     if (!is_choice and !is_opt)
-    { const bool is_mult { ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend() ) };
-
-      rv.push_back( exchange_field(field_name, is_mult) );
-    }
+      rv += exchange_field(field_name, contains(exchange_mults_vec, field_name));
+ //   { const bool is_mult { ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend() ) };
+//
+//      rv.push_back( exchange_field(field_name, is_mult) );
+//    }
   }
 
   return rv;
@@ -426,13 +428,14 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
 // force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
     auto vef_rs_rst = [=](const string& initial_field_name, const string& final_field_name)
-      { vector<exchange_field> rv;
+      { vector<exchange_field> rv(vef.size());
 
-        for (auto ef : vef)
+        for (exchange_field ef : vef)
         { if (ef.name() == initial_field_name)
             ef.name(final_field_name);
 
-          rv.push_back(ef);
+ //         rv.push_back(ef);
+          rv += move(ef);
         }
 
         return rv;
@@ -443,12 +446,15 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // g++'s restriction that values of maps cannot be altered in-place
 // makes it easier to do it now
 
-    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RST
-    single_mode_rv_rs.insert( { mpef.first, vef_rs_rst("RST"s, "RS"s) } );  // force to RS
+//    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RST
+    single_mode_rv_rst += { mpef.first, vef_rs_rst("RS"s, "RST"s) }; // force to RST
+//    single_mode_rv_rs.insert( { mpef.first, vef_rs_rst("RST"s, "RS"s) } );  // force to RS
+    single_mode_rv_rs += { mpef.first, vef_rs_rst("RST"s, "RS"s) };  // force to RS
   }
 
   for (const auto& m : _permitted_modes)
-    _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
+//    _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
+    _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) };
 }
 
 /*! \brief                  Initialize an object that was created from the default constructor
@@ -894,11 +900,11 @@ EFT contest_rules::exchange_field_eft(const string& field_name) const
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, true) };
+{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::EXPAND) };
 
   vector<string> rv;
 
-  FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.push_back(ef.name()); });
+  FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); });
 
   return rv;
 }
@@ -909,12 +915,13 @@ vector<string> contest_rules::expanded_exchange_field_names(const string& canoni
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, false) };
+{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND) };
 
   vector<string> rv;
 
   for (const auto& ef : vef)
-    rv.push_back(ef.name());
+//    rv.push_back(ef.name());
+    rv += ef.name();
 
   return rv;
 }
@@ -931,11 +938,11 @@ vector<string> contest_rules::exch_canonical_values(const string& field_name) co
 
     for (unsigned int n = 0; n < _exch_values.size(); ++n)
     { if (_exch_values[n].name() == field_name)
-      { const map<string, set<string> >& m { _exch_values[n].values() };
+      { const map<string, set<string>>& m { _exch_values[n].values() };
 
-        FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
+//        FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
+        FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv += mss.first; } );  // Josuttis 2nd ed., p. 338
 
- //       sort(rv.begin(), rv.end());
         SORT(rv);
       }
     }
@@ -1124,8 +1131,10 @@ MODE contest_rules::next_mode(const MODE current_mode) const
 void contest_rules::add_permitted_band(const BAND b)
 { SAFELOCK(rules);
 
-  if (find(_permitted_bands.begin(), _permitted_bands.end(), b) == _permitted_bands.end())
-    _permitted_bands.push_back(b);
+  if (!contains(_permitted_bands, b))
+    _permitted_bands += b;
+//  if (find(_permitted_bands.begin(), _permitted_bands.end(), b) == _permitted_bands.end())
+//    _permitted_bands.push_back(b);
 }
 
 /// get the next band up
@@ -1140,7 +1149,7 @@ BAND contest_rules::next_band_up(const BAND current_band) const
 // find first permitted band higher than the current band
     const set<BAND> pbs { permitted_bands_set() };
 
-    for (int counter = static_cast<int>(MIN_BAND); counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
+    for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
     { band_nr++;
 
       if (band_nr > MAX_BAND)
@@ -1171,7 +1180,7 @@ BAND contest_rules::next_band_down(const BAND current_band) const
 // find first permitted band higher than the current one
     const set<BAND> pbs { permitted_bands_set()};
 
-    for (int counter = static_cast<int>(MIN_BAND); counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
+    for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
     { band_nr--;
 
       if (band_nr < MIN_BAND)
@@ -1187,10 +1196,11 @@ BAND contest_rules::next_band_down(const BAND current_band) const
     return *(_permitted_bands.cend());
   }
 
-  if (cit == _permitted_bands.begin())
-    return _permitted_bands[_permitted_bands.size() - 1];
+//  if (cit == _permitted_bands.begin())
+//    return _permitted_bands[_permitted_bands.size() - 1];
 
-  return *(--cit);
+//  return *(--cit);
+  return ( (cit == _permitted_bands.begin()) ? _permitted_bands[_permitted_bands.size() - 1] : *(--cit));
 }
 
 /*! \brief                  Points for a particular QSO

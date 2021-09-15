@@ -171,7 +171,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
 
 // CQZ : 1..40
-      if (const auto cit = _positive_integer_range.find(_name); cit != _positive_integer_range.cend())
+      if (const auto cit { _positive_integer_range.find(_name) }; cit != _positive_integer_range.cend())
       { const int& min_value { cit->second.first };
         const int& max_value { cit->second.second };   
         
@@ -341,7 +341,7 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
 
     start_posn = element.import_and_eat(str, start_posn, posn_2);             // name is forced to upper case
     
-    if ( auto [it, inserted] = _elements.insert( { element.name(), element } ); !inserted)     // should always be inserted
+    if ( auto [it, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
       throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
   }
   

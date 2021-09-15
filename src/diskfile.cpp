@@ -10,8 +10,7 @@
 
 /*! \file   diskfile.cpp
 
-    Useful file-related functions. This file is derived from proprietary code
-    owned by IPfonix, Inc.
+    Useful file-related functions.
 */
 
 #include "diskfile.h"
@@ -129,7 +128,7 @@ void directory_create(const string& dirname)
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-bool directory_exists(const string& dirname)
+bool directory_exists(const string& dirname) noexcept
 { struct stat stat_buffer;
 
   const int status { stat(dirname.c_str(), &stat_buffer) };
@@ -164,11 +163,11 @@ vector<string> directory_contents(const string& dirname)
   if (status == -1)
     return rv;                                  // shouldn't happen
 
-  for (int n = 0; n < status; n++)
-  { const string name { namelist[n]->d_name };
+  for (int n { 0 }; n < status; n++)
+  { //const string name { namelist[n]->d_name };
 
-    if ((name != "."s) and (name != ".."s))
-      rv.push_back(name);
+    if (const string name { namelist[n]->d_name }; (name != "."s) and (name != ".."s))
+      rv += name;
   }
 
   return rv;

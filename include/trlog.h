@@ -83,10 +83,10 @@ public:
   inline MODE mode(void) const
     { return ( (_record[3] == 'C') ? MODE_CW : MODE_SSB ); }
 
-  const BAND band(void) const;           ///< band
+  BAND band(void) const;           ///< band
 
 /// day of the month; 1 - 31
-  inline const int day(void) const
+  inline int day(void) const
     { return _convert_to_int(7, 2); }
 
 /// month of the year; 1 - 12
@@ -96,29 +96,33 @@ public:
   int year(void) const;
 
 /// hour; 0 - 23
-  inline const int hour(void) const
+  inline int hour(void) const
     { return _convert_to_int(17, 2); }
 
 /// minute; 0 - 59
-  inline const int minute(void) const
+  inline int minute(void) const
     { return _convert_to_int(20, 2); }
 
 /// sent RST
   int rst(void) const;
 
-  const int rst_received(void) const;      ///< received RST
+/// received RST
+  inline int rst_received(void) const
+    { return from_string<int>(substring(_record, 49, _record[51] == ' ' ? 2 : 3)); }
 
-  const std::string frequency(void) const; ///< frequency in MHz
+  std::string frequency(void) const; ///< frequency in MHz
 
-  const std::string exchange_received(void) const;  ///< the received exchange; maximum of four characters
+/// the received exchange; maximum of four characters
+  inline std::string exchange_received(void) const
+    { return remove_peripheral_spaces(substring(_record, 53, 4)); }
 
-  inline const std::string record(void) const       ///< the entire record
+  inline std::string record(void) const       ///< the entire record
     { return _record; }
 
-  inline const bool sap_mode(void) const            ///< was this a SAP-mode QSO?
+  inline bool sap_mode(void) const            ///< was this a SAP-mode QSO?
     { return contains(_record, "$"s); }
 
-  inline const bool cq_mode(void) const             ///< was this a CQ-mode QSO?
+  inline bool cq_mode(void) const             ///< was this a CQ-mode QSO?
     { return !sap_mode(); }
 };
 
@@ -144,11 +148,11 @@ public:
   explicit tr_log(const std::string& filename);
 
 /// destructor
-  inline virtual ~tr_log(void)
+  inline ~tr_log(void)
     { fclose(_fp); }              // not really necessary
 
 /// return record number <i>n</i>
-  const tr_record read(const int n);
+  tr_record read(const int n);
 
 /*! \brief          Write a record to the file
     \param  trr     the text of the record to be written
@@ -160,7 +164,7 @@ public:
   void sort_by_call(void);
 
 /// the number of QSOs in the log
-  inline const int number_of_qsos(void) const
+  inline int number_of_qsos(void) const
     { return _number_of_qsos; }
 };
 

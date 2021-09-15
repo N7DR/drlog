@@ -20,6 +20,7 @@
 #include "x_error.h"
 
 #include <algorithm>
+#include <concepts>
 #include <cstdint>
 #include <deque>
 #include <fstream>
@@ -27,7 +28,6 @@
 #include <regex>
 #include <sstream>
 #include <string>
-//#include <experimental/string_view>
 #include <string_view>
 #include <vector>
 
@@ -221,7 +221,7 @@ std::string replace(const std::string& s, const std::string& old_str, const std:
     Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
 */
 template <typename T>
-[[nodiscard]] std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
+std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
 { std::string rv { s };
 
   constexpr size_t value_size { sizeof(value) };
@@ -305,9 +305,12 @@ inline std::string pad_left(const T& s, const size_t len, const char pad_char = 
     \param  s           integer value
     \return             left padded version of <i>s</i> rendered as a string and left padded with zeroes
 */
-template <typename T>
-  requires (std::is_integral_v<T>)
-inline std::string pad_leftz(const T& s, const size_t len)
+//template <typename T>
+//  requires (std::is_integral_v<T>)
+//inline std::string pad_leftz(const T& s, const size_t len)
+//  { return pad_left(s, len, '0'); }
+
+inline std::string pad_leftz(const std::integral auto& s, const size_t len)
   { return pad_left(s, len, '0'); }
 
 /*! \brief              Right pad a string to a particular size

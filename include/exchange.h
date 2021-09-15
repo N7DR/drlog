@@ -145,15 +145,17 @@ std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
     \brief  All the fields in the SS exchange, following parsing
 */
 
+constexpr char DEFAULT_PREC { 'Z' };  // a non-existent precendence
+
 class parsed_ss_exchange
-{
+{ 
 protected:
 
-  unsigned int _serno    { 0 };          ///< serial number
-  char         _prec     { 'Z' };        ///< precedence
-  std::string  _callsign { };            ///< callsign
-  std::string  _check    { "XX"s };      ///< check (2 digits)
-  std::string  _section  { "AAA"s };     ///< section
+  unsigned int _serno    { 0 };             ///< serial number
+  char         _prec     { DEFAULT_PREC };  ///< precedence
+  std::string  _callsign { };               ///< callsign
+  std::string  _check    { "XX"s };         ///< check (2 digits)
+  std::string  _section  { "AAA"s };        ///< section
 
 /*! \brief          Does a string possibly contain a serial number?
     \param  str     string to check

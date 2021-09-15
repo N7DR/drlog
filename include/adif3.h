@@ -108,12 +108,14 @@ protected:
 
 // private objects and collections providing legal values
 
-  const static std::unordered_map<std::string /* field name */, ADIF3_DATA_TYPE /* corresponding data type */>         _element_type;             ///< map from field name to type
+  const static std::unordered_map<std::string /* field name */, ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
+
   static std::map<std::string /* field name */, std::pair<int, int> /* miniumum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
 // soi-disant "enumeration" values (actually typically strings)
   const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
   const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+
   static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
   static std::set<std::string> _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
 
@@ -123,7 +125,7 @@ public:
   adif3_field(void) = default;
   
 /// copy constructor
-  adif3_field(const adif3_field&) = default;
+//  adif3_field(const adif3_field&) = default;
   
 /*! \brief                  Construct from name and value
     \param  field_name      name of field

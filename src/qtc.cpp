@@ -381,12 +381,14 @@ void qtc_buffer::operator+=(const logbook& logbk)
 */
 void qtc_buffer::operator+=(const QSO& qso)
 { if (qso.continent() == "EU"s)
-  { const qtc_entry entry { qso };
+  { //const qtc_entry entry { qso };
 
-    if (find(_sent_qtcs.begin(), _sent_qtcs.end(), entry) == _sent_qtcs.end())
-    { if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
-        _unsent_qtcs.push_back(entry);
-    }
+//    if (find(_sent_qtcs.begin(), _sent_qtcs.end(), entry) == _sent_qtcs.end())
+//    { if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
+//        _unsent_qtcs.push_back(entry);
+//    }
+    if (const qtc_entry entry { qso }; !contains(_sent_qtcs, entry) and !contains(_unsent_qtcs, entry))
+      _unsent_qtcs += entry;
   }
 }
 
@@ -411,7 +413,9 @@ vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries
 
   while ( (rv.size() != max_entries) and (cit != _unsent_qtcs.cend()) )
   { if (cit->callsign() != target)
-      rv.push_back(*cit);               // don't send a QTC back to the station of the original QSO
+//      rv.push_back(*cit);               // don't send a QTC back to the station of the original QSO
+      rv += *cit;               // don't send a QTC back to the station of the original QSO    
+
     ++cit;
   }
 
@@ -422,10 +426,14 @@ vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries
     \param  entry   <i>qtc_entry</i> to transfer
 */
 void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
-{ if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) != _unsent_qtcs.end())
-    _unsent_qtcs.remove(entry);
+{ //if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) != _unsent_qtcs.end())
+  //  _unsent_qtcs.remove(entry);
+  //if (contains(_unsent_qtcs, entry))
+ //   _unsent_qtcs.remove(entry);
+    _unsent_qtcs -= entry;
 
-  _sent_qtcs.push_back(entry);
+//  _sent_qtcs.push_back(entry);
+  _sent_qtcs += entry;
 }
 
 /*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
