@@ -4629,9 +4629,17 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           n_fields_without_new_callsign++;
 
       if ( (!is_ss and (exchange_template.size() - n_optional_fields) > n_fields_without_new_callsign) )
-      { ost << "mismatched template and exchange fields: Expected " << exchange_template.size() << " exchange fields; found " << exchange_template.size() << " non-replacement-callsign fields" << endl;
+      { ost << "mismatched template and exchange fields: Expected " << exchange_template.size() << " exchange fields; found " << to_string(n_fields_without_new_callsign) << " non-replacement-callsign fields" << endl;
         alert("Expected "s + to_string(exchange_template.size()) + " exchange fields; found "s + to_string(n_fields_without_new_callsign));
         processed = true;
+
+        ost << "  exchange_template.size() = " << exchange_template.size() << endl;
+        ost << "  n_optional_fields = " << n_optional_fields << endl;
+        ost << "  n_fields_without_new_callsign = " << n_fields_without_new_callsign << endl;
+
+        for (const auto& etf : exchange_template)
+          ost << etf << endl;
+
       }
 
       if (!processed)

@@ -384,6 +384,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
     Puts correct values in _received_exchange
 */
+#if 0
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
 // generate vector of all permitted exchange fields
@@ -428,7 +429,81 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
 // force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
     auto vef_rs_rst = [=](const string& initial_field_name, const string& final_field_name)
-      { vector<exchange_field> rv(vef.size());
+      { vector<exchange_field> rv;
+
+        for (auto ef : vef)
+        { if (ef.name() == initial_field_name)
+            ef.name(final_field_name);
+
+          rv.push_back(ef);
+        }
+
+        return rv;
+      };
+
+// adjust RST/RS to match mode; ideally we would have done this later, when
+// it would be far simpler to iterate through the map, changing values, but
+// g++'s restriction that values of maps cannot be altered in-place
+// makes it easier to do it now
+
+    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RST
+    single_mode_rv_rs.insert( { mpef.first, vef_rs_rst("RST"s, "RS"s) } );  // force to RS
+  }
+
+  for (const auto& m : _permitted_modes)
+    _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
+}
+#endif
+#if 1
+void contest_rules::_parse_context_exchange(const drlog_context& context)
+{
+// generate vector of all permitted exchange fields
+  map<string /* canonical prefix */, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
+
+  const auto& per_country_exchanges { context.exchange_per_country() };
+
+  for (const auto& pce : per_country_exchanges)
+    permitted_exchange_fields.insert( { pce.first, remove_peripheral_spaces(split_string(pce.second, ","s)) } );   // unexpanded choice
+
+  for (const auto& pce : per_country_exchanges)
+  { const vector<string> vs { remove_peripheral_spaces(split_string(pce.second, ","s)) };
+
+    set<string> ss;
+
+    for (auto str : vs)
+    { if (begins_with(str, "CHOICE:"s))
+        str = substring(str, 7);
+
+      const vector<string> expanded_choice { remove_peripheral_spaces(split_string(str, "/"s)) };
+
+      FOR_ALL(expanded_choice, [&ss] (const string& s) { ss.insert(s); } );
+    }
+
+    _per_country_exchange_fields.insert( { pce.first, ss } );
+  }
+
+// add the ordinary exchange to the permitted exchange fields
+  const vector<string> exchange_vec { remove_peripheral_spaces(split_string(context.exchange(), ","s)) };
+
+//  for (const auto& exf : exchange_vec)
+//    ost << "ordinary exchange field: " << exf << endl;
+
+
+  permitted_exchange_fields.insert( { string(), exchange_vec } );
+
+  const vector<string> exchange_mults_vec { remove_peripheral_spaces(split_string(context.exchange_mults(), ","s)) };
+
+  map<string, vector<exchange_field>> single_mode_rv_rst;
+  map<string, vector<exchange_field>> single_mode_rv_rs;
+
+  for (const auto& mpef : permitted_exchange_fields)
+  { const vector<string>& vs { mpef.second };
+
+    vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
+
+// force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
+    auto vef_rs_rst = [=](const string& initial_field_name, const string& final_field_name)
+      { vector<exchange_field> rv;
 
         for (exchange_field ef : vef)
         { if (ef.name() == initial_field_name)
@@ -456,6 +531,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 //    _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
     _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) };
 }
+#endif
 
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         drlog context
