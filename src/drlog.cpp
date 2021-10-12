@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 191 2021-08-29 13:32:34Z  $
+// $Id: drlog.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -185,7 +185,6 @@ void rig_error_alert(const string& msg);            ///< Alert the user to a rig
 void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
 void   set_active_window(const ACTIVE_WINDOW aw);                               ///< Set the window that is receiving input
-//void   set_active_window(const window* wp);                                     ///< Set the window that is receiving input
 bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
 void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
@@ -2881,7 +2880,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           ost << "ERROR: inconsistency in frequency/band info" << endl;
       }
 
-      BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
+//      const BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
+
+      const set<BAND> permitted_bands_set(permitted_bands.begin(), permitted_bands.end());
+
+      const BAND new_band { ( e.is_alt('b') ? set_last_f.next_band_up(permitted_bands_set) : set_last_f.next_band_down(permitted_bands_set) ) };    // move up or down one band
 
       { ost << "cur band = " << BAND_NAME[cur_band] << "m, new band = " << BAND_NAME[new_band] << "m" << endl;
       }
@@ -7407,7 +7410,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_db += series;                  // add to database of sent QTCs
 
-//      (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
 // log the QTC series
@@ -7477,12 +7479,20 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+  auto valid_qtc_nr = [](const unsigned int qtcs_sent) { const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
+
+                                                         return ( ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ) ? optional<int>(qtc_nr) : nullopt );
+                                                       };
+
 // T, U -- repeat time
   if (!processed and ( (e.is_char('t')) or (e.is_char('u'))))
   { if (cw)
-    { if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
-        send_msg(series[qtc_nr].first.utc());
+    { //if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
+      if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
+        send_msg(series[vqn.value()].first.utc());
     }
+    //if (cw and valid_qtc_nr(qtcs_sent))
+    //  send_msg(series[valid_qtc_nr.value()].first.utc());
 
     processed = true;
   }
@@ -7652,8 +7662,7 @@ void test_exchange_templates(const contest_rules& rules, const string& test_file
       ost << "matches for " << target << ": " << endl;
 
       for (const auto& match : matches)
-      { ost << "  " << match << endl;
-      }
+        ost << "  " << match << endl;
     }
   }
 
@@ -7904,7 +7913,7 @@ bool process_keypress_F5(void)
     enter_sap_mode();
   }
 
-  if (win_bcall.defined())              // swap contents of CALL and BCALL
+  if (win_bcall.defined())                      // swap contents of CALL and BCALL
   { const string tmp   { win_call.read() };
     const string tmp_b { win_bcall.read() };
 
@@ -8216,20 +8225,17 @@ void start_recording(audio_recorder& audio, const drlog_context& context)
   if (!allow_audio_recording or audio.recording())
     return;  
  
-// configure some stuff if the recorder is not initialised
- // if (!audio.initialised()) 
-  { audio.base_filename(context.audio_file());
-    audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
-    audio.pcm_name(context.audio_device_name());
-    audio.n_channels(context.audio_channels());
-    audio.samples_per_second(context.audio_rate());
+// configure some stuff
+  audio.base_filename(context.audio_file());
+  audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
+  audio.pcm_name(context.audio_device_name());
+  audio.n_channels(context.audio_channels());
+  audio.samples_per_second(context.audio_rate());
  //   audio.log("audio-log"s);                                  // must come before initialise()
-    audio.register_error_alert_function(audio_error_alert);
-    audio.initialise();
-  }
+  audio.register_error_alert_function(audio_error_alert);
+  audio.initialise();
   
-// turn on the capture
-  audio.capture();
+  audio.capture();      // turn on the capture
 
   if (win_recording_status.defined())
     update_recording_status_window();

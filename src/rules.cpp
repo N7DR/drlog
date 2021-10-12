@@ -1,4 +1,4 @@
-// $Id: rules.cpp 180 2021-03-21 15:21:49Z  $
+// $Id: rules.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@ extern location_database location_db;   ///< location information
 
 extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
 
-using MSI = std::map<std::string, unsigned int>;                    ///< syntactic sugar
+using MSI = map<string, unsigned int>;                    ///< syntactic sugar
 
 // -------------------------  choice_equivalents  ---------------------------
 
@@ -47,7 +47,7 @@ using MSI = std::map<std::string, unsigned int>;                    ///< syntact
 /*! \brief              Add a pair of equivalent fields
     \param  ch1_ch2     pair: first element of choice, second element of choice
 */
-void choice_equivalents::operator+=(const std::pair<std::string, std::string>& ch1_ch2)
+void choice_equivalents::operator+=(const pair<string, string>& ch1_ch2)
 { _choices[ch1_ch2.first] = ch1_ch2.second;
   _choices[ch1_ch2.second] = ch1_ch2.first;
 }
@@ -57,7 +57,7 @@ void choice_equivalents::operator+=(const std::pair<std::string, std::string>& c
 
     Throws exception if <i>ch1_ch2<i> appears to be malformed
 */
-void choice_equivalents::operator+=(const std::string& ch1_ch2)
+void choice_equivalents::operator+=(const string& ch1_ch2)
 { if (number_of_occurrences(ch1_ch2, '+') != 1)
     throw exception();
 
@@ -89,7 +89,8 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
-{ if (_values.find(cv) == _values.end())
+{ //if (_values.find(cv) == _values.end())
+  if (!contains(_values, cv))
     _values += { cv, set<string>( { cv } ) };
 }
 

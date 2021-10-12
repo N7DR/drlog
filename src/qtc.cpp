@@ -37,14 +37,16 @@ string qtc_entry::to_string(void) const
     \brief  A QTC series as defined by the WAE rules
 */
 
-/*! \brief          Get all the entries that either have been sent or have not been sent
-    \param  sent    whether to return the sent entries
-    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise retrun all the unsent entries
+/*! \brief              Get all the entries that either have been sent or have not been sent
+    \param  qstatus     the status of the QTCs to return
+    \return             all the QTCs whose status matches <i>qstatus</i>
 */
-vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
+//vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
+vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const
 { vector<qtc_entry> rv;
 
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv += pqeb.first; } );
+//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv += pqeb.first; } );
+  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (qstatus == pqeb.second) rv += pqeb.first; } );  // should use COPY_IF
 
   return rv;
 }
@@ -53,12 +55,14 @@ vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
+//bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
+bool qtc_series::operator+=(const pair<qtc_entry, QTC_STATUS>& p)
 { const qtc_entry& entry { p.first };
-  const bool       sent  { p.second };
+  //const bool       sent  { p.second };
 
   if (entry.valid() and (entry.callsign() != _target))
-  { _qtc_entries += { entry, sent };
+  { //_qtc_entries += { entry, sent };
+    _qtc_entries += p;
     return true;
   }
 
@@ -71,8 +75,9 @@ bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
-{ static const pair<qtc_entry, bool> empty_return_value { };
+//pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
+pair<qtc_entry, QTC_STATUS> qtc_series::operator[](const unsigned int n) const
+{ static const pair<qtc_entry, QTC_STATUS> empty_return_value { { }, QTC_STATUS::UNSENT };
 
   return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
 }
@@ -84,7 +89,7 @@ pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
 */
 void qtc_series::mark_as_sent(const unsigned int n)
 { if (n < _qtc_entries.size())
-    _qtc_entries[n].second = true;
+    _qtc_entries[n].second = QTC_STATUS::SENT;
 }
 
 /*! \brief      Mark a particular entry as having NOT been sent
@@ -94,7 +99,7 @@ void qtc_series::mark_as_sent(const unsigned int n)
 */
 void qtc_series::mark_as_unsent(const unsigned int n)
 { if (n < _qtc_entries.size())
-    _qtc_entries[n].second = false;
+    _qtc_entries[n].second = QTC_STATUS::UNSENT;
 }
 
 /*! \brief          Get first <i>qtc_entry</i> beyond a certain point that has not been sent
@@ -107,7 +112,8 @@ qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 { unsigned int index { posn };
 
   while (index < _qtc_entries.size())
-  { if (!_qtc_entries[index].second)
+  { //if (!_qtc_entries[index].second)
+    if (_qtc_entries[index].second == QTC_STATUS::UNSENT)
       return _qtc_entries[index].first;
 
     index++;
@@ -122,7 +128,8 @@ qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 unsigned int qtc_series::n_sent(void) const
 { unsigned int rv { 0 };
 
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv++; } );
+//  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (pqeb.second == QTC_STATUS::SENT) rv++; } );
 
   return rv;
 }
@@ -133,7 +140,8 @@ unsigned int qtc_series::n_sent(void) const
 unsigned int qtc_series::n_unsent(void) const
 { unsigned int rv { 0 };
 
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv++; } );
+//  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (pqeb.second == QTC_STATUS::UNSENT) rv++; } );
 
   return rv;
 }
@@ -157,7 +165,8 @@ string qtc_series::output_string(const unsigned int n) const
 
   const vector<string> qtc_ser { split_string(_id, "/"s) };
 
-  rv += pad_left(qtc_ser[0], 3, '0') + "/"s + pad_left(qtc_ser[1], 2, '0') + create_string(' ', 5);
+//  rv += pad_left(qtc_ser[0], 3, '0') + "/"s + pad_left(qtc_ser[1], 2, '0') + create_string(' ', 5);
+  rv += pad_leftz(qtc_ser[0], 3) + "/"s + pad_leftz(qtc_ser[1], 2) + create_string(' ', 5);
   rv += substring(pad_right(_source, 13), 0, 13) + SPACE_STR;
   rv += qe.utc() + SPACE_STR;
   rv += substring(pad_right(qe.callsign(), 13), 0, 13) + SPACE_STR;
@@ -166,14 +175,14 @@ string qtc_series::output_string(const unsigned int n) const
   return rv;
 }
 
-/*! \brief      Get a string representing all the entries
-    \return     string describing all the <i>qtc_entry</i> elements
+/*! \brief      Get a string representing all the SENT entries
+    \return     string describing all the SENT <i>qtc_entry</i> elements
 */
 string qtc_series::complete_output_string(void) const
 { string rv { };
 
   for (size_t n { 0 }; n < size(); ++n)
-  { if (_qtc_entries[n].second)
+  { if (_qtc_entries[n].second == QTC_STATUS::SENT)
       rv += (output_string(n) + EOL);
   }
 
@@ -206,7 +215,7 @@ window& operator<(window& win, const qtc_series& qs)
 
   for (const auto& pr : qtc_entries)
   { const string entry_str { pr.first.to_string() };
-    const int    cpu       { static_cast<int>(colours.add(win.fg(), pr.second ? COLOUR_RED : win.bg())) };
+    const int    cpu       { static_cast<int>(colours.add(win.fg(), (pr.second == QTC_STATUS::SENT) ? COLOUR_RED : win.bg())) };
 
 // work out where to start the display of this call
     const unsigned int x { static_cast<unsigned int>( (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) ) };
@@ -299,6 +308,20 @@ void qtc_database::read(const string& filename)
 // 28100.0 CW 2014-07-18 15:32:42 G1AAA         001/10     N7DR          1516 YL2BJ         477
 // 28100.0 CW 2014-07-18 15:32:42 G1AAA 001/10 N7DR 1516 YL2BJ 477
 //    0    1      2         3       4      5     6    7    8    9
+
+  constexpr int FREQ_FIELD      { 0 };
+  constexpr int MODE_FIELD      { 1 };
+  constexpr int DATE_FIELD      { 2 };
+  constexpr int UTC_FIELD       { 3 };
+  constexpr int DEST_FIELD      { 4 };
+  constexpr int ID_FIELD        { 5 };
+  constexpr int SRC_FIELD       { 6 };
+  constexpr int QSO_UTC_FIELD   { 7 };
+  constexpr int QSO_CALL_FIELD  { 8 };
+  constexpr int QSO_SERNO_FIELD { 9 };
+
+//  enum class QTC_FIELD { FREQ = 0 };
+
   while (line_nr < lines.size())
   { const string&        line   { lines[line_nr++] };
     const vector<string> fields { remove_peripheral_spaces(split_string(squash(line), ' ')) };
@@ -306,7 +329,7 @@ void qtc_database::read(const string& filename)
     if (fields.size() != 10)
       throw qtc_error(QTC_INVALID_FORMAT, "QTC has "s + to_string(fields.size()) + " fields; "s + line);
 
-    const string id { fields[5] };
+    const string id { fields[ID_FIELD] };
 
     if (line_nr == 1)  // we've already incremented the line number
       last_id = id;
@@ -323,30 +346,30 @@ void qtc_database::read(const string& filename)
         series.id(id);
 
       if (series.frequency_str().empty())
-        series.frequency_str(fields[0]);
+        series.frequency_str(fields[FREQ_FIELD]);
 
       if (series.mode().empty())
-        series.mode(fields[1]);
+        series.mode(fields[MODE_FIELD]);
 
       if (series.date().empty())
-        series.date(fields[2]);
+        series.date(fields[DATE_FIELD]);
 
       if (series.utc().empty())
-        series.utc(fields[3]);
+        series.utc(fields[UTC_FIELD]);
 
       if (series.destination().empty())
-        series.destination(fields[4]);
+        series.destination(fields[DEST_FIELD]);
 
       if (series.source().empty())
-        series.source(fields[6]);
+        series.source(fields[SRC_FIELD]);
 
       qtc_entry qe;
 
-      qe.utc(fields[7]);
-      qe.callsign(fields[8]);
-      qe.serno(fields[9]);
+      qe.utc(fields[QSO_UTC_FIELD]);
+      qe.callsign(fields[QSO_CALL_FIELD]);
+      qe.serno(fields[QSO_SERNO_FIELD]);
 
-      series += { qe, QTC_SENT };
+      series += { qe, QTC_STATUS::SENT };
     }
   }
 
@@ -381,13 +404,7 @@ void qtc_buffer::operator+=(const logbook& logbk)
 */
 void qtc_buffer::operator+=(const QSO& qso)
 { if (qso.continent() == "EU"s)
-  { //const qtc_entry entry { qso };
-
-//    if (find(_sent_qtcs.begin(), _sent_qtcs.end(), entry) == _sent_qtcs.end())
-//    { if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
-//        _unsent_qtcs.push_back(entry);
-//    }
-    if (const qtc_entry entry { qso }; !contains(_sent_qtcs, entry) and !contains(_unsent_qtcs, entry))
+  { if (const qtc_entry entry { qso }; !contains(_sent_qtcs, entry) and !contains(_unsent_qtcs, entry))
       _unsent_qtcs += entry;
   }
 }
@@ -413,7 +430,6 @@ vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries
 
   while ( (rv.size() != max_entries) and (cit != _unsent_qtcs.cend()) )
   { if (cit->callsign() != target)
-//      rv.push_back(*cit);               // don't send a QTC back to the station of the original QSO
       rv += *cit;               // don't send a QTC back to the station of the original QSO    
 
     ++cit;

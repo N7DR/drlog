@@ -1,4 +1,4 @@
-// $Id: log.cpp 179 2021-02-22 15:55:56Z  $
+// $Id: log.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,14 +33,6 @@ extern string VERSION;          ///< version string
 /*! \class  logbook
     \brief  The log
 */
-
-/*! \brief      Is one QSO earlier than another?
-    \param  q1  first QSO
-    \param  q2  second QSO
-    \return     whether <i>q1</i> is earlier than <i>q2</i>
-*/
-//inline bool qso_sort_by_time(const QSO& q1, const QSO& q2)
-//  { return q1.earlier_than(q2); }
 
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
 { 
@@ -77,7 +69,6 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 
     vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
   
-//    qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
     qso.sent_exchange((current_sent_exchange += { field_name, value }, current_sent_exchange));
   }
 
@@ -104,10 +95,7 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 void logbook::operator+=(const QSO& q)
 { SAFELOCK(_log);
 
-//  _log.insert( { q.callsign(), q } );
   _log += { q.callsign(), q };
- 
-//  _log_vec.push_back(q);
   _log_vec += q;
 }
 

@@ -1,4 +1,4 @@
-// $Id: adif3.h 180 2021-03-21 15:21:49Z  $
+// $Id: adif3.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -40,6 +40,11 @@ constexpr int ADIF3_INVALID_VALUE       { -1 },    ///< Invalid value
               ADIF3_EMPTY_VALUE         { -4 },    ///< value is empty (implies incorrect length)
               ADIF3_UNKNOWN_TYPE        { -5 },    ///< unable to determine type
               ADIF3_DUPLICATE_FIELD     { -6 };    ///< duplicate field name
+
+// should really be ADIF3_COUNTRY_STATUS, but that's too verbose until g++ supports "using enum", which is in g++ 11
+enum class COUNTRY_STATUS { CURRENT,
+                            DELETED
+                          };
 
 enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              BOOLEAN,
@@ -89,8 +94,13 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
     \brief A single generic ADIF field
 */
 
+//enum class COUNTRY_STATUS { CURRENT,
+//                            DELETED
+//                          };
+
 class adif3_field
-{
+{ //using enum COUNTRY_STATUS;  not supported in g++ 10
+
 protected:
 
   std::string     _name;                    ///< name of the field
@@ -114,7 +124,8 @@ protected:
 
 // soi-disant "enumeration" values (actually typically strings)
   const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
-  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+//  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
   static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
   static std::set<std::string> _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD

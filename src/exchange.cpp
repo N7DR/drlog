@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 179 2021-02-22 15:55:56Z  $
+// $Id: exchange.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -247,50 +247,11 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     index++;
   }
 
-#if 0
-//  vector<INDEX_TYPE> possible_prec;
-
-  index = 0;
-
-  for (const auto& field : copy_received_fields)
-  { if (_is_possible_prec(field))
-      possible_prec += index;
-
-    index++;
-  }
-
-//  vector<INDEX_TYPE> possible_check;
-
-  index = 0;
-
-  for (const auto& field : copy_received_fields)
-  { if (_is_possible_check(field))
-  //    possible_check.push_back(index);
-      possible_check += index;
-
-    index++;
-  }
-
-//  vector<INDEX_TYPE> possible_callsigns;
-
-  index = 0;
-
-  for (const auto& field : copy_received_fields)
-  { if (_is_possible_callsign(field))
- //     possible_callsigns.push_back(index);
-      possible_callsigns += index;
-
-    index++;
-  }
-#endif
-
 // calculate number of entries that might be a check or a serial number
   vector<INDEX_TYPE> ambiguous_fields;
 
   for (const auto& possible_check_field : possible_check)
-//    if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
     if (contains(possible_sernos, possible_check_field))
-//      ambiguous_fields.push_back(possible_check_field);
       ambiguous_fields += possible_check_field;
 
   if (possible_prec.empty() and (_prec == DEFAULT_PREC) )  // _prec unchanged from default
@@ -347,7 +308,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   if (possible_callsigns.empty())
     _callsign = call;    // default
   else
-  { const unsigned int& field_nr { possible_callsigns[possible_callsigns.size() - 1] };
+  { const unsigned int field_nr { possible_callsigns[possible_callsigns.size() - 1] };
 
     _callsign = copy_received_fields[field_nr];
   }
@@ -371,7 +332,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
       { ost << "ERROR: insufficient possible sernos in exchange received from " << call << endl;
         for (const auto& field : received_fields)
           ost << field << " : " << endl;
-        _serno = 0;    // default
+        _serno = DEFAULT_SERNO;
       }
       else
       { field_nr = possible_sernos[possible_sernos.size() - 2];
@@ -385,11 +346,11 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
           ost << "field number for serno = " << field_nr << endl;
         }
 
-        _serno = from_string<unsigned int>(copy_received_fields[field_nr]);
+        _serno = from_string<decltype(_serno)>(copy_received_fields[field_nr]);
       }
     }
     else    // field number is not same as check field number
-    { _serno = from_string<unsigned int>(copy_received_fields[field_nr]);  // stops processing when hits a letter
+    { _serno = from_string<decltype(_serno)>(copy_received_fields[field_nr]);  // stops processing when hits a letter
     }
   }
 
@@ -467,11 +428,11 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
   set<string> matched_field_names;
   decltype(matches) remaining_matches(matches);
 
-  for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
+  for (unsigned int field_nr { 0 }; field_nr < remaining_matches.size(); ++field_nr)
   { if (remaining_matches.at(field_nr).size() == 1)         // there is a single match between field number and name
     { const string& matched_field_name { *(remaining_matches.at(field_nr).cbegin()) };
 
-      for (unsigned int n = 0; n < _fields.size(); ++n)
+      for (unsigned int n { 0 }; n < _fields.size(); ++n)
       { if (_fields[n].name() == matched_field_name)
           _fields[n].value(received_values[n]);
       }
@@ -511,10 +472,12 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     { if (FIELD_NAMES(t).size() == 1)
       { const string& field_name { *(FIELD_NAMES(t).cbegin()) };    // syntactic sugar
 
-        if (const auto it { tuple_map_assignments.find( field_name ) }; it != tuple_map_assignments.end())
-         tuple_map_assignments.erase(it);        // erase any previous entry with this key
-
-        tuple_map_assignments.insert( { field_name, t } );
+//        if (const auto it { tuple_map_assignments.find( field_name ) }; it != tuple_map_assignments.end())
+//          tuple_map_assignments.erase(it);        // erase any previous entry with this key
+//          tuple_map_assignments -= it;        // erase any previous entry with this key
+        tuple_map_assignments -= field_name;        // erase any previous entry with this key
+//        tuple_map_assignments.insert( { field_name, t } );
+        tuple_map_assignments += { field_name, t };
       }
     }
 
@@ -526,7 +489,8 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     { set<string>& ss { FIELD_NAMES(t) };
 
       for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
-        ss.erase(tm.first);
+//        ss.erase(tm.first);
+        ss -= tm.first;
     }
   } while (old_size_of_tuple_deque != unassigned_tuples.size());
 }
@@ -1345,10 +1309,10 @@ string process_cut_digits(const string& input)
 
 sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string& callsign, const string& received_exchange) :
   _call(callsign)
-{ static EFT check_eft;
-  static EFT serno_eft;
-  static EFT prec_eft;
-  static EFT section_eft;
+{ static EFT  check_eft;
+  static EFT  serno_eft;
+  static EFT  prec_eft;
+  static EFT  section_eft;
   static bool first_time { true };
 
   if (first_time)
@@ -1360,11 +1324,8 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
     first_time = false;
   }
 
-  const vector<string> r_vec = remove_peripheral_spaces(split_string(received_exchange, SPACE_STR));
+  const vector<string> r_vec { remove_peripheral_spaces(split_string(received_exchange, SPACE_STR)) };
 
-//  static const EFT check_eft = rules.exchange_field_eft("CHECK");
-//  static const EFT serno_eft = rules.exchange_field_eft("SERNO");
-//  static const EFT prec_eft = rules.exchange_field_eft("PREC");
 
 
 //  const static regex check_regex("^[[:digit:]][[:digit:]]$");

@@ -1,4 +1,4 @@
-// $Id: rules.h 180 2021-03-21 15:21:49Z  $
+// $Id: rules.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,6 +163,11 @@ public:
 */
   void add_value(const std::string& cv, const std::string& v);
 
+/*! \brief          Add a possible value
+    \param  pss     pair to be added, containing: canonical value to which <i>v</i> is to be added, value to be added
+
+    Also adds <i>pss.first</i> as a canonical value if it does not already exist
+*/
   inline void operator+=(const std::pair<std::string, std::string>& pss)
     { add_value(pss.first, pss.second); }
 
@@ -207,7 +212,8 @@ public:
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline bool canonical_value_present(const std::string& putative_cv_value) const
-    { return (_values.find(putative_cv_value) != _values.cend()); }
+//    { return (_values.find(putative_cv_value) != _values.cend()); }
+    { return contains(_values, putative_cv_value); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
     \param  putative_cv_value   string to test
@@ -261,7 +267,7 @@ public:
 
     Also the default constructor
 */
-  inline exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false) :
+  inline explicit exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false) :
     _name(nm),
     _is_mult(mult),
     _is_optional(opt)

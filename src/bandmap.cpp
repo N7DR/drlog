@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 189 2021-08-16 00:34:00Z  $
+// $Id: bandmap.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,7 +47,7 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
 
-constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward) that is applied to MY_MARKER before inserting it 
+constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it 
 
 const string        MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 const string        MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
@@ -126,7 +126,6 @@ void bandmap_filter_type::add_or_subtract(const string& str)
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
   if (ss > str)              // remove a value
-//    ss.erase(str);
     ss -= str;
   else                       // add a value
     ss += str;
@@ -209,7 +208,8 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   for (const auto& exch_mult_name : exch_mults)
   { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(_canonical_prefix, _mode) };
-    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
+//    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
+    const bool           is_possible_exchange_field { contains(exchange_field_names, exch_mult_name) };
 
     if (is_possible_exchange_field)
     { exchange_mult_is_possible = true;
@@ -319,7 +319,8 @@ bool bandmap_entry::matches_criteria(void) const
 
   { SAFELOCK(batch_messages);
 
-    if (batch_messages.find(_callsign) != batch_messages.cend())
+//    if (batch_messages.find(_callsign) != batch_messages.cend())
+    if (contains(batch_messages, _callsign))
       return false;             // skip any call with a batch message
   }
 
@@ -843,7 +844,6 @@ BM_ENTRIES bandmap::filtered_entries(void)
 
   for (const auto& be : tmp)
   { if (be.is_my_marker() or be.is_mode_marker())
- //     rv.push_back(be);
       rv += be;
     else                                              // start by assuming that we are in show mode
     { const string& canonical_prefix { be.canonical_prefix() };

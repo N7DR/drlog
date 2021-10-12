@@ -1,4 +1,4 @@
-// $Id: exchange.h 179 2021-02-22 15:55:56Z  $
+// $Id: exchange.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -145,13 +145,14 @@ std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
     \brief  All the fields in the SS exchange, following parsing
 */
 
-constexpr char DEFAULT_PREC { 'Z' };  // a non-existent precendence
+constexpr char         DEFAULT_PREC  { 'Z' };   // a non-existent precendence
+constexpr unsigned int DEFAULT_SERNO { 0 };     // a non-existent serial number
 
 class parsed_ss_exchange
 { 
 protected:
 
-  unsigned int _serno    { 0 };             ///< serial number
+  unsigned int _serno    { DEFAULT_SERNO }; ///< serial number
   char         _prec     { DEFAULT_PREC };  ///< precedence
   std::string  _callsign { };               ///< callsign
   std::string  _check    { "XX"s };         ///< check (2 digits)
@@ -255,9 +256,8 @@ public:
     \param  rules                       rules for the contest
     \param  m                           mode
     \param  received_values             the received values, in the order that they were received
-    \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED WITH THE VALUE <i>TRUE</i>? ***
 */
-  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values /* , const bool truncate_received_values = false */);
+  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

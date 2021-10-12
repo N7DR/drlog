@@ -1,4 +1,4 @@
-// $Id: qtc.h 171 2020-11-15 16:02:32Z  $
+// $Id: qtc.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,8 +32,9 @@ using namespace std::literals::string_literals;
 // error numbers
 constexpr int QTC_INVALID_FORMAT            { -1 };   ///< error reading from file
 
-constexpr bool QTC_SENT   { true };                   ///< QTC has been sent
-constexpr bool QTC_UNSENT { false };                  ///< QTC has not been sent
+enum class QTC_STATUS { SENT,                   ///< QTC has been sent
+                        UNSENT                  ///< QTC has not been sent
+                      };
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
@@ -56,8 +57,6 @@ protected:
   std::string _callsign { };            ///< other station
   std::string _serno    { "0000"s };    ///< serial number sent by other station; width = 4
 
-//  int _my_serno;             ///< the serno sent by me, used for ordering
-
 public:
 
 /// default constructor
@@ -73,7 +72,6 @@ public:
   READ_AND_WRITE(utc);          ///< time of QSO: HHMM
   READ_AND_WRITE(callsign);     ///< other station
   READ(serno);                  ///< serial number sent by other station; width = 4
-//  READ(my_serno);               ///< the serno sent by me, used for ordering
 
 /*! \brief          Explicitly set the serial number sent by the other station
     \param  str     new serial number
@@ -91,12 +89,7 @@ public:
 
 /// qtc_entry == qtc_entry
   inline bool operator==(const qtc_entry& entry) const
-    { return ( /* (_my_serno == entry._my_serno) and */ (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
-
-/// qtc_entry < qtc_entry
-  inline bool operator<(const qtc_entry& entry) const
-//    { return (_my_serno < entry._my_serno); }
-    { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }     // is this right?
+    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// convert to printable string
   std::string to_string(void) const;
@@ -143,7 +136,8 @@ class qtc_series
 {
 protected:
 
-  std::vector<std::pair<qtc_entry, bool>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
+//  std::vector<std::pair<qtc_entry, bool>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
+  std::vector<std::pair<qtc_entry, QTC_STATUS>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
 
   std::string _target;              ///< to whom is the QTC series to be sent?
   std::string _id;                  ///< QTC ID (e.g., "1/10")
@@ -154,11 +148,12 @@ protected:
   std::string _mode;                ///< CW or PH
   std::string _source;              ///< my call
 
-/*! \brief          Get all the entries that either have been sent or have not been sent
-    \param  sent    whether to return the sent entries
-    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise return all the unsent entries
+/*! \brief              Get all the entries that either have been sent or have not been sent
+    \param  qstatus     the status of the QTCs to return
+    \return             all the QTCs whose status matches <i>qstatus</i>
 */
-  std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
+//  std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
+  std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const;
 
 public:
 
@@ -171,10 +166,11 @@ public:
     \param  my_call     my call
     \param  b           whether the QTC has been sent
 */
-  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
+//  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
+  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const QTC_STATUS qstatus = QTC_STATUS::UNSENT) :
     _mode(mode_str),
     _source(my_call)
-    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += std::pair<qtc_entry, bool>( { qe, b } ); } ); }
+    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += std::pair<qtc_entry, QTC_STATUS>( { qe, qstatus } ); } ); }
 
   READ_AND_WRITE(target);             ///< to whom is the QTC series to be sent?
   READ_AND_WRITE(id);                 ///< QTC ID (e.g., "1/10")
@@ -198,11 +194,11 @@ public:
 
 /// return all the sent QTCs
   inline std::vector<qtc_entry> sent_qtc_entries(void) const
-    { return _sent_or_unsent_qtc_entries(true); }
+    { return _sent_or_unsent_qtc_entries(QTC_STATUS::SENT); }
 
 /// return all the unsent QTCs
   inline std::vector<qtc_entry> unsent_qtc_entries(void) const
-    { return _sent_or_unsent_qtc_entries(false); }
+    { return _sent_or_unsent_qtc_entries(QTC_STATUS::UNSENT); }
 
 /// return frequency in form xxxxx.y (kHz)
   inline std::string frequency_str(void) const
@@ -228,7 +224,8 @@ public:
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-  bool operator+=(const std::pair<qtc_entry, bool>& param);
+//  bool operator+=(const std::pair<qtc_entry, bool>& param);
+  bool operator+=(const std::pair<qtc_entry, QTC_STATUS>& param);
 
 /*! \brief      Return an entry
     \param  n   index number to return (wrt 0)
@@ -236,7 +233,8 @@ public:
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-  std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
+//  std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
+  std::pair<qtc_entry, QTC_STATUS> operator[](const unsigned int n) const;
 
 /*! \brief      Mark a particular entry as having been sent
     \param  n   index number to mark (wrt 0)

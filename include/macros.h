@@ -1,4 +1,4 @@
-// $Id: macros.h 189 2021-08-16 00:34:00Z  $
+// $Id: macros.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1393,11 +1393,11 @@ inline void operator+=(C& sus, const V& vec)
 
 /*! \brief              Remove an element from a set, map, unordered set or unordered map
     \param  sus         destination set or unordered set
-    \param  element     element to remove
+    \param  element     element to remove, or an iterator into <i>sus</i>
 */
 template <typename C, typename T>
 inline void operator-=(C& sus, const T& element)
-  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>>)and (std::is_same_v<typename C::key_type, base_type<T>>)
+  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set

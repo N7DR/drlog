@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 185 2021-05-03 17:07:56Z  $
+// $Id: string_functions.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -173,15 +173,11 @@ string format_time(const string& format, const tm* tmp)
     \param  old_char    character to be replaced
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
-
-    Probably faster to use a more complicated algorithm with "find", as in the following function
 */
 string replace_char(const string& s, const char old_char, const char new_char)
 { string rv { s };
 
-  replace( rv.begin(), rv.end(), old_char, new_char); // replace all 'x' to 'y'
-
-//  FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
+  replace(rv.begin(), rv.end(), old_char, new_char);
 
   return rv;
 }
@@ -407,17 +403,9 @@ string remove_char(const string& cs, const char char_to_remove)
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
 
     delimiters are kept in the output
-
-//    should replace this by a method that uses find()
-//    or for each found delimited substring, execute remove_char
-//    or build vector of delimited substrings, then remove char from them, then recombine
 */
 string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
-{ 
-#if 1
-// this should be faster than the next one
-  string rv;
-
+{ string rv         { };
   size_t start_posn { 0 };
 
   while (true)
@@ -447,28 +435,6 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
 
 // should never get here
   return rv;
-#endif
-
-#if 0
-  string rv;
-
-  bool inside_delimiters { false };
-
-  for (unsigned int n = 0; n < cs.length(); n++)
-  { const char& c { cs[n] };
-
-    if (!inside_delimiters or (c != char_to_remove))
-      rv += c;
-
-    if (c == delim_1)
-      inside_delimiters = true;
-
-    if (c == delim_2)
-      inside_delimiters = false;
-  }
-
-  return rv;
-#endif
 }
 
 /*! \brief                      Remove all instances of particular characters from a string

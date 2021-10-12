@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 187 2021-06-26 16:16:42Z  $
+// $Id: pthread_support.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -193,19 +193,20 @@ public:
     { return _attr; }
 };
 
-/*! \brief          Write a <i>thread_attribute</i> object to an output stream
-    \param  ost     output stream
-    \param  ta      object to write
-    \return         the output stream
-*/
-std::ostream& operator<<(std::ostream& ost, const thread_attribute& ta);
-
 /*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
     \param  ost     output stream
     \param  pa      object to write
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, const pthread_attr_t& pa);
+
+/*! \brief          Write a <i>thread_attribute</i> object to an output stream
+    \param  ost     output stream
+    \param  ta      object to write
+    \return         the output stream
+*/
+inline std::ostream& operator<<(std::ostream& ost, const thread_attribute& ta)
+  { return (ost << ta.attr()); }
 
 /*! \brief      Get the detached state of C-style attributes
     \param  pa  C-style attributes
@@ -281,21 +282,8 @@ public:
 /// as long as mutexes of which thread_specific_data<int> objects are a part are global, this shouldn't be a problem
 #if 1
   ~thread_specific_data(void)
-  { //pthread_key_delete(_key);
-
-//    std::cerr << "about to delete key value: " << _key << std::endl;
-
-   if (const int status { pthread_key_delete(_key) }; status != 0)
+  { if (const int status { pthread_key_delete(_key) }; status != 0)
       std::cerr << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << std::endl;   // can't do this because of circularity; need to rework this sometime
-
-//    std::cerr << "key value after deletion: " << _key << std::endl;
-
-        // if this returns an error, it means something has gone wrong,
-                                                        // but since we can't throw an exception, and we have noweher to send
-                                                        // a notification we might as well just ignore it for now
-  
-//    if (status != 0)                              // can't throw exception in destructor
-//      throw std::exception();
   }
 #endif
 
@@ -347,11 +335,6 @@ public:
   inline explicit pt_mutex(const std::string& nm) :
     _name(nm)
     { pthread_mutex_init(&_mutex, NULL); }
-
-/// default construtor, use ONLY for building containers of mutexes that are then renamed
-// this is needed because we can't build a container of non-default-constructed mutexes
-//  inline pt_mutex(void)
-//    { pthread_mutex_init(&_mutex, NULL); }
     
 /// forbid copying
   pt_mutex(const pt_mutex&) = delete;

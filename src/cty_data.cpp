@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 187 2021-06-26 16:16:42Z  $
+// $Id: cty_data.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,7 +45,27 @@ constexpr unsigned int MAX_ITU_ZONE { 90 };     ///< maximum ITU zone number
   
     The official page describing the format is:
       http://www.country-files.com/cty/format.htm.
+
+    210930: the format now seems to be at:
+      https://www.country-files.com/cty-dat-format/
+
+----
   
+Column 	Length 	Description
+1 	26 	Country Name
+27 	5 	CQ Zone
+32 	5 	ITU Zone
+37 	5 	2-letter continent abbreviation
+42 	9 	Latitude in degrees, + for North
+51 	10 	Longitude in degrees, + for West
+61 	9 	Local time offset from GMT
+70 	6 	Primary DXCC Prefix (A “*” preceding this prefix indicates that the country is on the DARC WAEDC list, and counts in CQ-sponsored contests, but not ARRL-sponsored contests).
+
+----
+
+    The above is wrong, as it ignores the ninth field, which comprises
+    at least one prefix and various alternative calls and prefixes.
+
     Spacing in the file is "for readability only", so
     we use the official delimiter ":" for fields, and
     ";" for records.
@@ -57,46 +77,56 @@ constexpr unsigned int MAX_ITU_ZONE { 90 };     ///< maximum ITU zone number
             possible errors, but we do test for the most obvious ones.
 */
 cty_record::cty_record(const string& record)
-{ const vector<string> fields { remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":"s )) };   // split the record into fields instead of lines
+{ constexpr int CTY_NAME       { 0 };
+  constexpr int CTY_CQZ        { 1 };
+  constexpr int CTY_ITUZ       { 2 };
+  constexpr int CTY_CONTINENT  { 3 };
+  constexpr int CTY_LAT        { 4 };
+  constexpr int CTY_LONG       { 5 };
+  constexpr int CTY_UTC_OFFSET { 6 };
+  constexpr int CTY_PREFIX     { 7 };
+  constexpr int CTY_ALTS       { 8 };
+
+  const vector<string> fields { remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":"s )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
     throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found "s + to_string(fields.size()) + " fields in record for "s + fields[0]);
   
-  _country_name = fields[0];
+  _country_name = fields[CTY_NAME];
 
-  _cq_zone = from_string<int>(fields[1]);
+  _cq_zone = from_string<int>(fields[CTY_CQZ]);
   if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
-  _itu_zone = from_string<int>(fields[2]);
+  _itu_zone = from_string<int>(fields[CTY_ITUZ]);
   if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
-  _continent = fields[3];
+  _continent = fields[CTY_CONTINENT];
 
   if ( !(CONTINENT_SET > _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
-  _latitude = from_string<float>(fields[4]);
+  _latitude = from_string<float>(fields[CTY_LAT]);
   if (_latitude < -90 or _latitude > 90)
-    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[4] + " in record for "s + _country_name);
+    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[CTY_LAT] + " in record for "s + _country_name);
 
-  _longitude = from_string<float>(fields[5]);
+  _longitude = from_string<float>(fields[CTY_LONG]);
   if (_longitude < -180 or _longitude > 180)
-    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[5] + " in record for "s + _country_name);
+    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[CTY_LONG] + " in record for "s + _country_name);
   
 // map to (0, 360)
   if (_longitude < 0)
     _longitude += 360;
   
-  _utc_offset = static_cast<int>(from_string<float>(fields[6]) * 60 + 0.5);  // convert to minutes
+  _utc_offset = static_cast<int>(from_string<float>(fields[CTY_UTC_OFFSET]) * 60 + 0.5);  // convert to minutes
 
   constexpr int MAX_OFFSET { 24 * 60 };     // maximum UTC offset, in minutes
 
   if ( (_utc_offset < -MAX_OFFSET) or (_utc_offset > MAX_OFFSET) )                 // check that it's reasonable
-    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = "s + fields[6] + " in record for "s + _country_name);
+    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = "s + fields[CTY_UTC_OFFSET] + " in record for "s + _country_name);
 
-  _prefix = to_upper(fields[7]);  // so that, for example, JD/o -> JD/O
+  _prefix = to_upper(fields[CTY_PREFIX]);  // so that, for example, JD/o -> JD/O
   
   if (_prefix.empty())
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for "s + _country_name);
@@ -110,7 +140,7 @@ cty_record::cty_record(const string& record)
     _prefix = _prefix.substr(1);        // remove the asterisk
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
-  const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[8], ","s)) };
+  const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[CTY_ALTS], ","s)) };
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;

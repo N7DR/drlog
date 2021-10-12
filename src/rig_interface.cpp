@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 190 2021-08-22 14:17:56Z  $
+// $Id: rig_interface.cpp 192 2021-09-19 14:03:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

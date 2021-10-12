@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 191 2021-08-29 13:32:34Z  $
+// $Id: drlog_context.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -299,7 +299,7 @@ public:
   inline drlog_context(void) = default;
 
 /// construct from file
-  drlog_context(const std::string& filename);
+  explicit drlog_context(const std::string& filename);
 
   drlog_context(const drlog_context&) = delete;         ///< disallow copying
 
@@ -438,6 +438,8 @@ public:
     \return     guard band for mode <i>m</i>, in Hz
 */
   inline unsigned int guard_band(const MODE m)
+//  inline decltype(decltype(_guard_band)::value_type)::type guard_band(const MODE m) // I don't know how to get the type of the second element in the pair
+//  decltype(std::get<1>(_guard_band)) guard_band(const MODE m)
   { SAFELOCK(_context);
 
     return MUM_VALUE(_guard_band, m, 1000);

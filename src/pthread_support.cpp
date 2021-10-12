@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 187 2021-06-26 16:16:42Z  $
+// $Id: pthread_support.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -327,8 +327,6 @@ void thread_attribute::stack_size(const size_t size)
 size_t thread_attribute::stack_size(void) const
 { size_t size;
 
-//  const int status { pthread_attr_getstacksize(&_attr, &size) };
-
   if (const int status { pthread_attr_getstacksize(&_attr, &size) }; status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: "s + to_string(size) + "status = "s + to_string(status));
 
@@ -372,8 +370,6 @@ void thread_attribute::priority(const int priority)
 
   param.sched_priority = p;
 
-//  const int status { pthread_attr_setschedparam(&_attr, &param) };
-
   if (const int status { pthread_attr_setschedparam(&_attr, &param) }; status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: "s + to_string(priority) + "status = "s + to_string(status));
 }
@@ -381,8 +377,6 @@ void thread_attribute::priority(const int priority)
 /// get the priority
 int thread_attribute::priority(void) const
 { struct sched_param param;
-
-//  const int status { pthread_attr_getschedparam(&_attr, &param) };
 
   if (const int status { pthread_attr_getschedparam(&_attr, &param) }; status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = "s + to_string(status));
@@ -395,17 +389,25 @@ int thread_attribute::priority(void) const
     \param  ta      object to write
     \return         the output stream
 */
-ostream& operator<<(ostream& ost, const thread_attribute& ta)
-{ return (ost << ta.attr());
+//ostream& operator<<(ostream& ost, const thread_attribute& ta)
+//{ return (ost << ta.attr());
+//}
 
-#if 0
-  ost << "  detached/joinable: " << (ta.detached() ? "PTHREAD_CREATE_DETACHED" : "PTHREAD_CREATE_JOINABLE") << endl
+/*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
+    \param  ost     output stream
+    \param  pa      object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
+{ ost << "Thread attributes:" << endl
+      << "  detached/joinable: " << (attribute_detached(pa) ? "PTHREAD_CREATE_DETACHED" : "PTHREAD_CREATE_JOINABLE") << endl
       << "  policy: ";
 
-  const int policy = ta.policy();
+  const int tpolicy { attribute_policy(pa) };
+
   string policy_str;
 
-  switch (policy)
+  switch (tpolicy)
   { case SCHED_FIFO :
       policy_str = "SCHED_FIFO"s;
       break;
@@ -425,85 +427,8 @@ ostream& operator<<(ostream& ost, const thread_attribute& ta)
   ost << policy_str << endl
       << "  scope: ";
 
-  const int scope = ta.scope();
-  string scope_str;
+  const int tscope { attribute_scope(pa) };
 
-  switch (scope)
-  { case PTHREAD_SCOPE_PROCESS :
-      scope_str = "PTHREAD_SCOPE_PROCESS"s;
-      break;
-
-    case PTHREAD_SCOPE_SYSTEM :
-      scope_str = "PTHREAD_SCOPE_SYSTEM"s;
-      break;
-
-    default :
-      scope_str = "UNKNOWN"s;
-  }
-
-  ost << scope_str << endl
-      << "  inheritance policy: ";
-
-  const int ipolicy = ta.inheritance_policy();
-  string ipolicy_str;
-
-  switch (ipolicy)
-  { case PTHREAD_EXPLICIT_SCHED :
-      ipolicy_str = "PTHREAD_EXPLICIT_SCHED"s;
-      break;
-
-    case PTHREAD_INHERIT_SCHED :
-      ipolicy_str = "PTHREAD_INHERIT_SCHED"s;
-      break;
-
-    default :
-      ipolicy_str = "UNKNOWN"s;
-  }
-
-  ost << ipolicy_str << endl
-      << "  stack size: " << ta.stack_size() << endl
-      << "  min allowed priority: " << ta.min_priority() << endl
-      << "  max allowed priority: " << ta.max_priority() << endl
-      << "  actual priority: " << ta.priority();
-
-  return ost;
-#endif
-}
-
-/*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
-    \param  ost     output stream
-    \param  pa      object to write
-    \return         the output stream
-*/
-ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
-{ ost << "Thread attributes:" << endl
-      << "  detached/joinable: " << (attribute_detached(pa) ? "PTHREAD_CREATE_DETACHED" : "PTHREAD_CREATE_JOINABLE") << endl
-      << "  policy: ";
-
-  const int tpolicy = attribute_policy(pa);
-  string policy_str;
-
-  switch (tpolicy)
-  { case SCHED_FIFO :
-    policy_str = "SCHED_FIFO"s;
-    break;
-
-    case SCHED_OTHER :
-      policy_str = "SCHED_OTHER"s;
-      break;
-
-    case SCHED_RR :
-      policy_str = "SCHED_RR"s;
-      break;
-
-    default :
-      policy_str = "UNKNOWN"s;
-  }
-
-  ost << policy_str << endl
-      << "  scope: ";
-
-  const int tscope = attribute_scope(pa);
   string scope_str;
 
   switch (tscope)
@@ -522,7 +447,8 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
   ost << scope_str << endl
       << "  inheritance policy: ";
 
-  const int ipolicy = attribute_inheritance_policy(pa);
+  const int ipolicy { attribute_inheritance_policy(pa) };
+
   string ipolicy_str;
 
   switch (ipolicy)

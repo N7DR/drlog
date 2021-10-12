@@ -1,4 +1,4 @@
-// $Id: cty_data.h 187 2021-06-26 16:16:42Z  $
+// $Id: cty_data.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -36,7 +36,7 @@ enum class COUNTRY_LIST { DXCC,     ///< DXCC list
                           WAEDC     ///< DARC WAEDC list
                         };
 
-/// alterntive prexies and alternative callsigns are /almost/ the same
+/// alternative prexies and alternative callsigns are /almost/ the same
 enum class ALTERNATIVES { CALLSIGNS,
                           PREFIXES
                         };
@@ -103,12 +103,32 @@ std::ostream& operator<<(std::ostream& ost, const alternative_country_info& aci)
 /*! \class  cty_record
     \brief  A single record in the CTY.DAT file
   
-  The official page describing the format is:
-  http://www.country-files.com/cty/format.htm.
+    The official page describing the format is:
+      http://www.country-files.com/cty/format.htm.
+
+    210930: the format now seems to be at:
+      https://www.country-files.com/cty-dat-format/
+
+----
   
-  Spacing in the file is "for readability only", so 
-  we use the official delimiter ":" for fields, and
-  ";" for records.
+Column 	Length 	Description
+1 	26 	Country Name
+27 	5 	CQ Zone
+32 	5 	ITU Zone
+37 	5 	2-letter continent abbreviation
+42 	9 	Latitude in degrees, + for North
+51 	10 	Longitude in degrees, + for West
+61 	9 	Local time offset from GMT
+70 	6 	Primary DXCC Prefix (A “*” preceding this prefix indicates that the country is on the DARC WAEDC list, and counts in CQ-sponsored contests, but not ARRL-sponsored contests).
+
+----
+
+    The above is wrong, as it ignores the ninth field, which comprises
+    at least one prefix and various alternative calls and prefixes.
+
+    Spacing in the file is "for readability only", so
+    we use the official delimiter ":" for fields, and
+    ";" for records.
 */
 
 class cty_record
@@ -169,23 +189,23 @@ public:
     It is not an error to attempt to remove a prefix that does not exist
 */
   inline void remove_alternative_prefix(const std::string& prefix)
-    { //_alt_callsigns.erase(prefix); 
-      _alt_prefixes -= prefix;
-    }   
+    { _alt_prefixes -= prefix; }   
 
 /*! \brief          Is a string an alternative callsign?
     \param  call    string to check
     \return         whether <i>call</i> is an alternative callsign
 */
-  inline bool is_alternative_callsign(const std::string& call)
-    { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
+  inline bool is_alternative_callsign(const std::string& call) const
+//    { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
+    { return contains(_alt_callsigns, call); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
-  inline bool is_alternative_prefix(const std::string& pfx)
-    { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
+  inline bool is_alternative_prefix(const std::string& pfx) const
+//    { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
+    { return contains(_alt_prefixes, pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };

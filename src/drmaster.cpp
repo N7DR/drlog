@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 178 2020-12-27 16:26:16Z  $
+// $Id: drmaster.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,7 +70,6 @@ master_dta::master_dta(const string& filename)
     tmp_calls += _get_call(contents, pointer);      // modified pointer
 
 // remove duplicates
-//  sort(tmp_calls.begin(), tmp_calls.end());
   SORT(tmp_calls);
 
   vector<string>::iterator pos { unique(tmp_calls.begin(), tmp_calls.end()) };
@@ -167,7 +166,7 @@ trmaster_line::trmaster_line(const string& line)
 // user parameters
   char user_parameter { 'U' };
 
-  for (unsigned int n_user_parameter = 0; n_user_parameter < TRMASTER_N_USER_PARAMETERS; ++n_user_parameter)
+  for (unsigned int n_user_parameter { 0 }; n_user_parameter < TRMASTER_N_USER_PARAMETERS; ++n_user_parameter)
   { char marker[3];
 
     marker[0] = '=';
@@ -248,7 +247,7 @@ trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
   if ((!trml.qth().empty()))
     rv.qth(trml.qth());
 
-  for (unsigned int n = 1; n <= TRMASTER_N_USER_PARAMETERS; n++)
+  for (unsigned int n { 1 }; n <= TRMASTER_N_USER_PARAMETERS; n++)
   { if (!trml.user(n).empty())
       rv.user(n, trml.user(n));
   }
@@ -519,7 +518,6 @@ trmaster::trmaster(const string& filename)
       if (_records.find(call) != _records.end())
         record += _records[call];
 
-//      _records.insert( { call, record } );
       _records += { call, record };
     }
   }
@@ -528,7 +526,7 @@ trmaster::trmaster(const string& filename)
 
     FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
 
-                                             _records += { record.call(), record };
+                                              _records += { record.call(), record };
                                             } );
   }
 }
@@ -537,7 +535,8 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+//  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
 
   SORT(rv, compare_calls);      // added compare_calls 201101
 
@@ -884,7 +883,8 @@ string drmaster::to_string(void) const
 
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
   for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit)
-    lines.push_back((cit->second).to_string() + EOL);
+//    lines.push_back((cit->second).to_string() + EOL);
+    lines += (cit->second).to_string() + EOL;
 
 //  sort(lines.begin(), lines.end());
   SORT(lines);

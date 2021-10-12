@@ -1,4 +1,4 @@
-// $Id: cabrillo.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: cabrillo.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,9 +46,7 @@ extern ofstream            ost;                   ///< for debugging, info
     \param  nm  tag name
 */
 void cabrillo_tag_template::_init_from_string(const string& str)
-{ //const auto posn = str.find(":"s);
-
-  if (const auto posn { str.find(":"s) }; posn == string::npos)                             // no values included
+{ if (const auto posn { str.find(":"s) }; posn == string::npos)                             // no values included
     _name = str;
   else                                                          // one or more values are included
   { _name = str.substr(0, posn);

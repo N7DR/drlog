@@ -151,9 +151,104 @@ frequency frequency::difference(const frequency& f2) const
   return rv;
 }
 
+BAND frequency::next_band_down(const set<BAND>& bands) const
+{ for (auto cit { bands.crbegin() }; cit != bands.crend(); ++cit)
+  { //cerr << "testing down: " << BAND_NAME[*cit] << endl;
+    if (upper_edge(*cit) < *this)
+     return *cit;
+  }
+
+  return BAND_160;
+}
+
+BAND frequency::next_band_up(const set<BAND>& bands) const
+{ for (const BAND b : bands)
+  { //cerr << "testing up: " << BAND_NAME[b] << endl;
+//    cerr << "lower edge = " << lower_edge
+    if (lower_edge(b) > *this)
+     return b;
+  }
+
+  return BAND_160;
+}
+
 /// ostream << frequency
 ostream& operator<<(ostream& ost, const frequency& f)
 { ost << f.hz();
 
   return ost;
+}
+
+frequency lower_edge(const BAND b)
+{ switch (b)
+  { case BAND_160 :
+      return frequency(1'800'000);
+
+    case BAND_80 :
+      return frequency(3'500'000);
+
+    case BAND_60 :
+      return frequency(5'000'000);
+
+    case BAND_40 :
+      return frequency(7'000'000);
+
+    case BAND_30 :
+      return frequency(10'100'000);
+
+    case BAND_20 :
+      return frequency(14'000'000);
+
+    case BAND_17 :
+      return frequency(18'068'000);
+
+    case BAND_15 :
+      return frequency(21'000'000);
+
+    case BAND_12 :
+      return frequency(24'890'000);
+
+    case BAND_10 :
+      return frequency(28'000'000);
+
+    default :
+      return frequency(1'800'000);
+  }
+}
+
+frequency upper_edge(const BAND b)
+{ switch (b)
+  { case BAND_160 :
+      return frequency(2'000'000);
+
+    case BAND_80 :
+      return frequency(4'000'000);
+
+    case BAND_60 :
+      return frequency(6'000'000);
+
+    case BAND_40 :
+      return frequency(7'300'000);
+
+    case BAND_30 :
+      return frequency(10'150'000);
+
+    case BAND_20 :
+      return frequency(14'350'000);
+
+    case BAND_17 :
+      return frequency(18'168'000);
+
+    case BAND_15 :
+      return frequency(21'450'000);
+
+    case BAND_12 :
+      return frequency(24'990'000);
+
+    case BAND_10 :
+      return frequency(29'700'000);
+
+    default :
+      return frequency(1'800'000);
+  }
 }

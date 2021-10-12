@@ -1,4 +1,4 @@
-// $Id: string_functions.h 180 2021-03-21 15:21:49Z  $
+// $Id: string_functions.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,13 +34,11 @@
 #include <time.h>
 
 using namespace std::literals::string_literals;
-//using namespace std::experimental::literals::string_view_literals;
 using namespace std::literals::string_view_literals;
 
 //constexpr std::string EOL_a { "\n" };
 
 // the next five are defined in string_functions.cpp
-//extern const std::string EOL;           ///< end-of-line marker as string
 static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
@@ -115,7 +113,6 @@ std::string duplicate_char(const std::string& s, const char c = '"');
     \param  include_seconds     whether to include the portion of the string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-//std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
 std::string date_time_string(const SECONDS include_seconds);
 
 /*! \brief          Convert struct tm pointer to formatted string
@@ -160,19 +157,8 @@ std::string to_string(const T val)
 */
 template <class T>
   requires is_string_v<T>
-//  requires std::is_same_v<base_type<T>, std::string>
-//
 inline std::string to_string(T&& val)
-  { return std::forward<T>(val); }
-
-/*! \brief          No-op conversion to string
-    \param  val     value to convert
-    \return         <i>val</i>
-*/
-//template <class T>
-//  requires is_string_v<T>
-//inline std::string to_string(const std::string val)
-//  { return val; }
+  { return std::forward<T>(val); } 
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -301,17 +287,20 @@ template <typename T>
 inline std::string pad_left(const T& s, const size_t len, const char pad_char = SPACE_CHAR)
   { return pad_string(to_string(s), len, PAD::LEFT, pad_char); }
 
-/*! \brief              Left pad an integer type with zeroes to a particular size
-    \param  s           integer value
-    \return             left padded version of <i>s</i> rendered as a string and left padded with zeroes
+/*! \brief      Left pad an integer type with zeroes to a particular size
+    \param  s   integer value
+    \return     left padded version of <i>s</i> rendered as a string and left padded with zeroes
 */
-//template <typename T>
-//  requires (std::is_integral_v<T>)
-//inline std::string pad_leftz(const T& s, const size_t len)
+template <typename T>
+  requires (std::is_integral_v<T> or std::is_same_v<base_type<T>, std::string>)
+inline std::string pad_leftz(const T& s, const size_t len)
+  { return pad_left(s, len, '0'); }
+
+//inline std::string pad_leftz(const std::integral auto& s, const size_t len)
 //  { return pad_left(s, len, '0'); }
 
-inline std::string pad_leftz(const std::integral auto& s, const size_t len)
-  { return pad_left(s, len, '0'); }
+//inline std::string pad_leftz(const std::string& s, const size_t len)
+//  { return pad_left(s, len, '0'); }
 
 /*! \brief              Right pad a string to a particular size
     \param  s           original string
@@ -907,7 +896,7 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//");
+std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//"s);
 
 /*! \brief              Add delimiters to a string
     \param  str         string
@@ -977,9 +966,9 @@ T regex_matches(const C& container, const std::string& s)
      
   const std::regex rgx { s };
 
-  FOR_ALL(container, [=, &rv](const std::string& callsign) { if (regex_match(callsign, rgx))
-                                                               rv += callsign;
-                                                           } );
+  FOR_ALL(container, [=, &rv](const std::string& target) { if (regex_match(target, rgx))
+                                                             rv += target;
+                                                         } );
   return rv;
 }
 

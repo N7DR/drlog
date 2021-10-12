@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 191 2021-08-29 13:32:34Z  $
+// $Id: drlog_context.cpp 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -72,21 +72,13 @@ void drlog_context::_set_points(const string& command, const MODE m)
     exit(0);
   }
 
-// points = 0 turns off all scoring
-//  if ( (to_upper(str_vec[0]) == "POINTS"s) and (from_string<int>(str_vec[1]) == 0) )
-  
-
   const string RHS { to_upper(remove_peripheral_spaces(str_vec[1])) };
 
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
 
- //   string tmp_points_str;
-    
- //   auto& pbb { _per_band_points[m] };
-
     if (auto& pbb { _per_band_points[m] }; !contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
-    { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+    { for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
         pbb += { static_cast<BAND>(n), RHS };
     }
     else                                                        // not all bands
@@ -123,7 +115,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
   const vector<string> lines { split_string(entire_file, LF_STR) };   // split into lines
 
-  for (const auto& tmpline : lines)                                    // process each line
+  for (const auto& tmpline : lines)                                   // process each line
   { const string line { remove_trailing_comment(tmpline) };           // remove any comment
 
 // generate a number of useful variables
@@ -211,7 +203,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (!RHS.empty())
       { const vector<string> colour_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
-//        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
         FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
       }
     }
@@ -468,7 +459,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string         country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
       const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
 
-//      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
       FOR_ALL(countries, [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
@@ -538,7 +528,8 @@ void drlog_context::_process_configuration_file(const string& filename)
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
-        _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+ //       _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+        _sent_exchange_cw += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
 
@@ -553,7 +544,8 @@ void drlog_context::_process_configuration_file(const string& filename)
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
-        _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+//        _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+        _sent_exchange_ssb += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
 
@@ -603,7 +595,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> bounds { remove_peripheral_spaces(split_string(range, "-"s)) };
 
         try
-        { frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        { //frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+          frequencies += { frequency(bounds.at(0)), frequency(bounds.at(1))};
         }
 
         catch (...)
@@ -612,10 +605,12 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
 
       if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES CW"s)
-        _mark_frequencies.insert( { MODE_CW, frequencies } );
+//        _mark_frequencies.insert( { MODE_CW, frequencies } );
+        _mark_frequencies += { MODE_CW, frequencies };
 
       if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES SSB"s)
-        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+//        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+        _mark_frequencies += { MODE_SSB, frequencies };
     }
 
 // MATCH MINIMUM
@@ -823,7 +818,8 @@ void drlog_context::_process_configuration_file(const string& filename)
         const vector<string> values           { remove_peripheral_spaces(split_string(RHS, ","s)) };
         const set<string>    ss               { values.cbegin(), values.cend() };
 
-        _qthx.insert( { canonical_prefix, ss } );
+//        _qthx.insert( { canonical_prefix, ss } );
+        _qthx += { canonical_prefix, ss };
       }
     }
 
@@ -833,7 +829,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       vector<unsigned int> new_rates;
 
-      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
+ //     FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
+      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
@@ -1248,7 +1245,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           winfo.colours_set(true);
         }
 
-        _windows.insert(make_pair(name, winfo));
+//        _windows.insert(make_pair(name, winfo));
+        _windows += { name, winfo };
       }
     }    // end of WINDOW
 
@@ -1341,7 +1339,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
             vector<window_information> vec { _static_windows[name].second };
 
-            vec.push_back(winfo);
+            vec += winfo;
             _static_windows[name] = { final_contents, vec };
           }
         }
@@ -1365,7 +1363,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           const string         str     { remove_leading_spaces(vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
-          _messages.insert( { cit->second, str } );
+//          _messages.insert( { cit->second, str } );
+          _messages += { cit->second, str };
 
           ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
 
@@ -1379,10 +1378,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
             { const int& keysym { cit->second };
 
-              if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
+ //             if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
+              if (!contains(_messages, keysym))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
-                _messages.insert( { keysym, str } );
+ //               _messages.insert( { keysym, str } );
+                _messages += { keysym, str };
               }
             }
           }
@@ -1431,7 +1432,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     for (const auto& str : bands_vec)
     { try
-      { _call_history_bands.insert(BAND_FROM_NAME.at(str));
+      { _call_history_bands += BAND_FROM_NAME.at(str);
       }
 
       catch (...)
@@ -1467,7 +1468,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 /// construct from file
 drlog_context::drlog_context(const std::string& filename)
 { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-    _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );
+    _per_band_country_mult_factor += { static_cast<BAND>(n), 1 };
 
   _process_configuration_file(filename);
 
@@ -1477,9 +1478,9 @@ drlog_context::drlog_context(const std::string& filename)
 
     for (const auto& band_name : bands_str)
     { try
-      { const BAND b { BAND_FROM_NAME.at(band_name) };
+      { //const BAND b { BAND_FROM_NAME.at(band_name) };
 
-        _score_bands.insert(b);
+        _score_bands += BAND_FROM_NAME.at(band_name);
       }
 
       catch (...)
@@ -1490,10 +1491,10 @@ drlog_context::drlog_context(const std::string& filename)
 // default is to score all permitted modes
   if (_score_modes.empty())
   { if (contains(_modes, "CW"s))
-      _score_modes.insert(MODE_CW);
+      _score_modes += MODE_CW;
 
     if (contains(_modes, "SSB"s))
-      _score_modes.insert(MODE_SSB);
+      _score_modes += MODE_SSB;
   }
 }
 
@@ -1506,7 +1507,8 @@ vector<string> drlog_context::window_name_contains(const string& substr) const
 
   for (auto cit = _windows.cbegin(); cit != _windows.cend(); ++cit)
     if (contains(cit->first, substr))
-      rv.push_back(cit->first);
+//      rv.push_back(cit->first);
+      rv += (cit->first);
 
   return rv;
 }
@@ -1578,7 +1580,7 @@ vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
 
   for (const auto& [name, value] : _sent_exchange)
-    rv.push_back(name);
+    rv += name;
 
   return rv;
 }
@@ -1593,7 +1595,8 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
   const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
   for (const auto& pss : *ptr_vec_pss)
-    rv.push_back(pss.first);
+//    rv.push_back(pss.first);
+    rv += pss.first;
 
   return rv;
 }

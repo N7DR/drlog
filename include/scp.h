@@ -1,4 +1,4 @@
-// $Id: scp.h 179 2021-02-22 15:55:56Z  $
+// $Id: scp.h 193 2021-10-03 20:05:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -76,7 +76,6 @@ public:
 
 /// add a call to the database
   void operator+=(const std::string& call);
-//  void add_call(const std::string& call);
   
 /// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
   unsigned int remove_call(const std::string& call);
@@ -96,7 +95,6 @@ public:
 
 /// add a parent scp_databases object
   inline void add_parent(scp_databases& dbs)
-//    { _parents.push_back(&dbs); }
     { _parents += &dbs; }
 };
 
