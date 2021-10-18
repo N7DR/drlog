@@ -362,6 +362,7 @@ unsigned int            octothorpe { 1 };                   ///< serial number o
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
+set<BAND>               permitted_bands_set;                ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
@@ -484,10 +485,13 @@ pt_mutex band_mode_mutex { "BAND/MODE WINDOW"s };                   ///< mutex f
 cw_messages cwm;                            ///< pre-defined CW messages
 
 contest_rules rules;                    ///< the rules for this contest
-cw_buffer*       cw_p { nullptr };      ///< pointer to buffer that holds outbound CW message
-drmaster*       drm_p { nullptr };      ///< pointer to drmaster information; also used by exchange.cpp
+
+cw_buffer*  cw_p      { nullptr };      ///< pointer to buffer that holds outbound CW message
+drmaster    drm_db    { };             ///< the drmaster database
 dx_cluster* cluster_p { nullptr };      ///< pointer to cluster information
-dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
+dx_cluster* rbn_p     { nullptr };      ///< pointer to RBN information
+
+const drmaster& drm_cdb { drm_db };     ///< const version of the drmaster database
 
 location_database location_db;              ///< global location database
 rig_interface rig;                          ///< rig control
@@ -839,9 +843,8 @@ int main(int argc, char** argv)
 
     const cty_data& country_data { *country_data_p };
 
-// read drmaster database-- right now, the object is not deleted
   { try
-    { drm_p = new drmaster(context.path(), context.drmaster_filename());
+    { drm_db.prepare(context.path(), context.drmaster_filename());
     }
 
     catch (...)
@@ -849,58 +852,56 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    const drmaster& drm { *drm_p };
-
+    {
 // location database
-    try
-    { location_db.prepare(country_data, context.country_list() /*, qth_db */);
-    }
+      try
+      { location_db.prepare(country_data, context.country_list());
+      }
 
-    catch (...)
-    { cerr << "Error generating location database" << endl;
-      exit(-1);
-    }
+      catch (...)
+      { cerr << "Error generating location database" << endl;
+        exit(-1);
+      }
 
-    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
+      location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
 
 // build super check partial database from the drmaster information
-    try
-    { scp_db.init_from_calls(drm.calls());
-    }
+      try
+      { scp_db.init_from_calls(drm_cdb.calls());
+      }
 
-    catch (...)
-    { cerr << "Error initialising scp database" << endl;
-      exit(-1);
-    }
+      catch (...)
+      { cerr << "Error initialising scp database" << endl;
+        exit(-1);
+      }
 
-    scp_dbs += scp_db;            // incorporate into multiple-database version
-    scp_dbs += scp_dynamic_db;    // add the (empty) dynamic SCP database
+      scp_dbs += scp_db;            // incorporate into multiple-database version
+      scp_dbs += scp_dynamic_db;    // add the (empty) dynamic SCP database
 
 // build fuzzy database from the drmaster information
-    try
-    { fuzzy_db.init_from_calls(drm.calls());
-    }
+      try
+      { fuzzy_db.init_from_calls(drm_cdb.calls());
+      }
 
-    catch (...)
-    { cerr << "Error generating fuzzy database" << endl;
-      exit(-1);
-    }
+      catch (...)
+      { cerr << "Error generating fuzzy database" << endl;
+        exit(-1);
+      }
 
-    fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
-    fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
+      fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
+      fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
 
 // build query database from the drmaster information
-    query_db = drm.unordered_calls();
+      query_db = drm_cdb.unordered_calls();
 
 // possibly build name database from the drmaster information (not the same as the names used in exchanges)
-    if (context.window_info("NAME"s).defined())    // does the config file define a NAME window?
-    { const vector<string> drm_calls { drm.unordered_calls() };   // we don't need them to be ordered
+      if (context.window_info("NAME"s).defined())                   // does the config file define a NAME window?
+      { //const vector<string> drm_calls { drm_cdb.unordered_calls() };   // we don't need them to be ordered
 
-      for (const auto& this_call : drm_calls)
-        names[this_call] = drm[this_call].name();
+        for (const auto& this_call : drm_cdb.unordered_calls())
+          names[this_call] = drm_cdb[this_call].name();
+      }
     }
-
-// I think it should be safe to delete the drmaster object now
   }
 
 // define the rules for this contest
@@ -915,6 +916,7 @@ int main(int argc, char** argv)
 
 // set some immutable variables from the rules
     permitted_bands = rules.permitted_bands();
+    permitted_bands_set = rules.permitted_bands_set();
     permitted_modes = rules.permitted_modes();
 
     { const auto cm_set { rules.country_mults() };
@@ -1087,7 +1089,8 @@ int main(int argc, char** argv)
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
       if (context.mark_mode_break_points())
-      { for (const auto& b : rules.permitted_bands())
+      { //for (const auto& b : rules.permitted_bands())
+        for (const auto& b : permitted_bands)
         { bandmap& bm { bandmaps[b] };
 
           bandmap_entry be;
@@ -2372,7 +2375,7 @@ void* process_rbn_info(void* vp)
 
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
 
-  const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
+//  const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
 
   deque<pair<string, frequency>> recent_mult_calls;                             // the queue of recent calls posted to the mult window (can't be a std::queue)
 
@@ -2882,7 +2885,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 //      const BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
 
-      const set<BAND> permitted_bands_set(permitted_bands.begin(), permitted_bands.end());
+//      const set<BAND> permitted_bands_set(permitted_bands.begin(), permitted_bands.end());
+//      const set<BAND> permitted_bands_set { rules.permitted_bands_set() };
 
       const BAND new_band { ( e.is_alt('b') ? set_last_f.next_band_up(permitted_bands_set) : set_last_f.next_band_down(permitted_bands_set) ) };    // move up or down one band
 
@@ -3215,7 +3219,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
             catch (...)
             { if (band_str == "*"s)
-                score_bands = set<BAND>(rules.permitted_bands().cbegin(), rules.permitted_bands().cend());
+ //               score_bands = set<BAND>(rules.permitted_bands().cbegin(), rules.permitted_bands().cend());
+                score_bands = permitted_bands_set;
               else
                 alert("Error parsing [RE]SCOREB command"s);
             }
@@ -3369,7 +3374,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           const frequency new_frequency     { ( (contains_plus or contains_minus) ? cur_rig_frequency.hz() + (value * 1000) : value ) };
           const BAND new_band               { to_BAND(new_frequency) };
 
-          bool valid { ( rules.permitted_bands_set() > new_band ) };
+//          bool valid { ( rules.permitted_bands_set() > new_band ) };
+          bool valid { permitted_bands_set > new_band };
 
           if ( (valid) and (new_band == BAND_160))                                                  // check that it's not just BAND_160 because there's been a problem
             valid = ( (new_frequency.hz() >= 1'800'000) and (new_frequency.hz() <= 2'000'000) );
@@ -3671,11 +3677,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
   if (!processed and e.is_control() and (e.symbol() == XK_KP_Enter))
-  { const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
+  { //const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
 
     string results;
 
-    for (const auto& b : permitted_bands)
+    for (const auto& b : permitted_bands_set)
     { bandmap& bm { bandmaps[b] };        // use current bandmap to make it easier to display column offset
 
       if (const bandmap_entry be { bm[original_contents] }; !be.empty())
@@ -5782,7 +5788,7 @@ void populate_win_info(const string& callsign)
 
     int next_y_value { win_info.height() - 3 };                 // keep track of where we are vertically in the window
 
-    const vector<BAND>& permitted_bands { rules.permitted_bands() };
+//    const vector<BAND>& permitted_bands { rules.permitted_bands() };
     const set<MODE>&    permitted_modes { rules.permitted_modes() };
 
     for (const auto& this_mode : permitted_modes)
@@ -8405,8 +8411,7 @@ void populate_win_call_history(const string& callsign)
     int n_green { 0 };
     int n_red   { 0 };
 
-// think about whether we want an option to NOT limit to permitted bands/modes; in 160m contests, this window isn't very useful as-is
-    for (const auto b : call_history_bands /* permitted_bands */)
+    for (const auto b : call_history_bands)
     { const cursor c_posn { 0, line_nr++ };
 
       win_call_history < c_posn < pad_left(BAND_NAME[b], 3);            // low band is on bottom

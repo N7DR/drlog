@@ -46,12 +46,13 @@ const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BA
 */
 frequency::frequency(const double f)
 { if (f < 100)                  // MHz
-    _hz = static_cast<unsigned int>(f * 1'000'000 + 0.5);
+    _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
   else
-  { if (f < 100'000)             // kHz
-      _hz = static_cast<unsigned int>(f * 1'000 + 0.5);
-    else
-      _hz = static_cast<unsigned int>(f + 0.5);
+  { //if (f < 100'000)             // kHz
+   //   _hz = static_cast<unsigned int>(f * 1'000 + 0.5);
+    //else
+    //  _hz = static_cast<unsigned int>(f + 0.5);
+    _hz = static_cast<HZ_TYPE>( (f < 100'000) ? (f * 1'000 + 0.5) : (f + 0.5) );
   }
 }
 
@@ -62,15 +63,15 @@ frequency::frequency(const double f)
 frequency::frequency(const double f, const FREQUENCY_UNIT unit)
 { switch (unit)
   { case FREQUENCY_UNIT::HZ :
-      _hz = static_cast<unsigned int>(f + 0.5);
+      _hz = static_cast<HZ_TYPE>(f + 0.5);
       break;
 
     case FREQUENCY_UNIT::KHZ :
-      _hz = static_cast<unsigned int>(f * 1'000 + 0.5);
+      _hz = static_cast<HZ_TYPE>(f * 1'000 + 0.5);
       break;
 
     case FREQUENCY_UNIT::MHZ :
-      _hz = static_cast<unsigned int>(f * 1'000'000 + 0.5);
+      _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
       break;
   }
 }
@@ -151,6 +152,13 @@ frequency frequency::difference(const frequency& f2) const
   return rv;
 }
 
+
+/*! \brief          Find the next lower band
+    \param  bands   set of bands that may be returned
+    \return         band from <i>bands</i> that is the highest band below the frequency
+
+    Returns BAND_160 if the frequency is outside all bands
+*/
 BAND frequency::next_band_down(const set<BAND>& bands) const
 { for (auto cit { bands.crbegin() }; cit != bands.crend(); ++cit)
   { //cerr << "testing down: " << BAND_NAME[*cit] << endl;

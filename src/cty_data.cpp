@@ -94,11 +94,13 @@ cty_record::cty_record(const string& record)
   
   _country_name = fields[CTY_NAME];
 
-  _cq_zone = from_string<int>(fields[CTY_CQZ]);
+//  _cq_zone = from_string<decltype(_cq_zone)>(fields[CTY_CQZ]);
+  auto_from_string(fields[CTY_CQZ], _cq_zone);
   if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
-  _itu_zone = from_string<int>(fields[CTY_ITUZ]);
+//  _itu_zone = from_string<decltype(_itu_zone)>(fields[CTY_ITUZ]);
+  auto_from_string(fields[CTY_ITUZ], _itu_zone);
   if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
@@ -107,11 +109,13 @@ cty_record::cty_record(const string& record)
   if ( !(CONTINENT_SET > _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
-  _latitude = from_string<float>(fields[CTY_LAT]);
+//  _latitude = from_string<decltype(_latitude)>(fields[CTY_LAT]);
+  auto_from_string(fields[CTY_LAT], _latitude);
   if (_latitude < -90 or _latitude > 90)
     throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[CTY_LAT] + " in record for "s + _country_name);
 
-  _longitude = from_string<float>(fields[CTY_LONG]);
+//  _longitude = from_string<decltype(_longitude)>(fields[CTY_LONG]);
+  auto_from_string(fields[CTY_LONG], _longitude);
   if (_longitude < -180 or _longitude > 180)
     throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[CTY_LONG] + " in record for "s + _country_name);
   
@@ -163,7 +167,6 @@ cty_record::cty_record(const string& record)
 
 // save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
 // directly from here than to check for zero here and then retrieve from the main record
-
   for (const auto& alt_prefix : alt_prefixes)
   { alternative_country_info aci(alt_prefix, _prefix);  // alternative prefix, canonical prefix
 
@@ -234,7 +237,8 @@ alternative_country_info::alternative_country_info(const string& record, const s
   { _identifier = substring(record, 0, end_identifier);      // read up to the first delimiter
   
     if (const string cq_zone_str { delimited_substring(record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
-    { _cq_zone = from_string<int>(cq_zone_str);
+    { //_cq_zone = from_string<decltype(_cq_zone)>(cq_zone_str);
+      auto_from_string(cq_zone_str, _cq_zone);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);

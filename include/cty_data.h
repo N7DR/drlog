@@ -196,7 +196,6 @@ public:
     \return         whether <i>call</i> is an alternative callsign
 */
   inline bool is_alternative_callsign(const std::string& call) const
-//    { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
     { return contains(_alt_callsigns, call); }
 
 /*! \brief  is a string an alternative prefix?
@@ -204,7 +203,6 @@ public:
     \return        whether <i>pfx</i> is an alternative prefix
 */
   inline bool is_alternative_prefix(const std::string& pfx) const
-//    { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
     { return contains(_alt_prefixes, pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
@@ -242,7 +240,7 @@ public:
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
-  cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
@@ -429,13 +427,9 @@ protected:
   using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
   using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
 
-//  std::map<std::string, location_info> _db;          ///< prefix-associated info -- the original database
   LOCATION_DBTYPE _db;          ///< prefix-associated info -- the original database
-  
-//  std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
   LOCATION_DBTYPE _alt_call_db; ///< database of alternative calls
 
-//  mutable std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
   mutable LOCATION_DBTYPE _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
 
   RUSSIAN_DBTYPE _russian_db;  ///< Russian substring-indexed info

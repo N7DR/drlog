@@ -26,12 +26,14 @@
 using namespace std;
 
 extern contest_rules           rules;                               ///< the rules for this contest
-extern drmaster*               drm_p;                               ///< pointer to drmaster database
+//extern drmaster*               drm_p;                               ///< pointer to drmaster database
 extern EFT                     CALLSIGN_EFT;                        ///< exchange field template for a callsign
 extern location_database       location_db;                         ///< the (global) location database
 extern logbook                 logbk;                               ///< the (global) logbook
 extern exchange_field_prefill  prefill_data;                        ///< exchange prefill data from external files
 extern bool                    require_dot_in_replacement_call;     ///< whether a dot is required to mark a replacement callsign
+
+extern const drmaster& drm_cdb;     ///< const version of the drmaster database
 
 pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mutex for access to the exchange field database
 
@@ -179,21 +181,21 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 { if (!contains_digit(str))
     return false;
 
-  bool possible { true };
+  bool rv { true };
 
 // check all except the last character
   for (size_t n { 0 }; n < str.length() - 1; ++n) // note the "<" and -1
-    if (possible)
-      possible = (isdigit(str[n]));
+    if (rv)
+      rv = (isdigit(str[n]));
 
 // now do the last character, which might be a digit or a precedence
-  if (possible)
+  if (rv)
   { const char lchar { last_char(str) };
 
-    possible = isdigit(lchar) or (legal_prec > lchar);
+    rv = isdigit(lchar) or (legal_prec > lchar);
   }
 
-  return possible;
+  return rv;
 }
 
 /*! \brief                      Constructor
@@ -472,11 +474,7 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     { if (FIELD_NAMES(t).size() == 1)
       { const string& field_name { *(FIELD_NAMES(t).cbegin()) };    // syntactic sugar
 
-//        if (const auto it { tuple_map_assignments.find( field_name ) }; it != tuple_map_assignments.end())
-//          tuple_map_assignments.erase(it);        // erase any previous entry with this key
-//          tuple_map_assignments -= it;        // erase any previous entry with this key
         tuple_map_assignments -= field_name;        // erase any previous entry with this key
-//        tuple_map_assignments.insert( { field_name, t } );
         tuple_map_assignments += { field_name, t };
       }
     }
@@ -489,7 +487,6 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     { set<string>& ss { FIELD_NAMES(t) };
 
       for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
-//        ss.erase(tm.first);
         ss -= tm.first;
     }
   } while (old_size_of_tuple_deque != unassigned_tuples.size());
@@ -927,7 +924,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
   }
 
 // no prior QSO; is it in the drmaster database?
-  const drmaster_line drm_line { (*drm_p)[callsign] };
+//  const drmaster_line drm_line { (*drm_p)[callsign] };
+  const drmaster_line drm_line { drm_cdb[callsign] };
 
 // check to see if this is still useful
 #if 0

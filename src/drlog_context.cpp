@@ -512,7 +512,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       for (const auto& this_field : fields)
       { const vector<string> field { split_string(this_field, ":"s) };
 
-//        _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
         _sent_exchange += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
@@ -528,7 +527,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
- //       _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
         _sent_exchange_cw += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
@@ -544,7 +542,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
-//        _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
         _sent_exchange_ssb += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
       }
     }
@@ -595,8 +592,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> bounds { remove_peripheral_spaces(split_string(range, "-"s)) };
 
         try
-        { //frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-          frequencies += { frequency(bounds.at(0)), frequency(bounds.at(1))};
+        { frequencies += { frequency(bounds.at(0)), frequency(bounds.at(1))};
         }
 
         catch (...)
@@ -605,7 +601,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
 
       if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES CW"s)
-//        _mark_frequencies.insert( { MODE_CW, frequencies } );
         _mark_frequencies += { MODE_CW, frequencies };
 
       if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES SSB"s)

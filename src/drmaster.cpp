@@ -535,10 +535,8 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-//  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
   FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
-
-  SORT(rv, compare_calls);      // added compare_calls 201101
+  SORT(rv, compare_calls);                                          // added compare_calls 201101
 
   return rv;
 }
@@ -586,7 +584,6 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 */
 drmaster_line::drmaster_line(const string& line_or_call)
 { const vector<string> fields   { split_string(line_or_call, SPACE_STR) };
-//  const size_t         n_fields { fields.size() };
 
   if (const size_t n_fields { fields.size() }; n_fields == 0)
     return;
@@ -803,18 +800,28 @@ void drmaster::_prepare_from_file_contents(const string& contents)
 
   for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
 
-                                                                    _records.insert( { record.call(), record } );
+//                                                                    _records.insert( { record.call(), record } );
+                                                                    _records += { record.call(), record } ;
                                                                   } );
 }
 
 /*! \brief              Construct from a file
     \param  filename    name of file to read
 
-    Throws exception if the file does not exist or is incorrectly formatted
+    Throws exception if the file does not exist or is incorrectly formatted;
+    except creates empty object if called with default filename that does not exist
 */
 drmaster::drmaster(const string& filename)
 { if (!filename.empty())
-    _prepare_from_file_contents(read_file(filename));      // throws exception if fails
+  { try
+    { _prepare_from_file_contents(read_file(filename));      // throws exception if fails
+    }
+
+    catch (...)
+    { if (filename != "drmaster"s)      // don't fail if we couldn't find the default file; simply create empty object
+        throw;
+    }
+  }
 }
 
 /*! \brief              Construct from a file

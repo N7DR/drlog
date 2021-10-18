@@ -126,7 +126,7 @@ protected:
 public:
 
 /// default constructor
-  inline exchange_field_values(void) = default;
+  exchange_field_values(void) = default;
 
 /*! \brief          Construct from name
     \param  nm      name of exchange field
@@ -177,7 +177,7 @@ public:
 
     Returns 0 if the canonical value does not exist
 */
-  size_t n_values(const std::string& cv) const
+  inline size_t n_values(const std::string& cv) const
     { return MUMF_VALUE(_values, cv, &std::set<std::string>::size); }
 
 /// Get the number of canonical values
@@ -212,7 +212,6 @@ public:
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline bool canonical_value_present(const std::string& putative_cv_value) const
-//    { return (_values.find(putative_cv_value) != _values.cend()); }
     { return contains(_values, putative_cv_value); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
@@ -326,7 +325,7 @@ protected:
 public:
 
 /// default constructor
-  inline points_structure(void) = default;
+  points_structure(void) = default;
 
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(country_points);      ///< per-country points
@@ -481,7 +480,6 @@ protected:
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-//  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
   std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
 
 public:
@@ -616,14 +614,12 @@ public:
 /// Restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)
     { SAFELOCK(rules);
-
       _score_bands = _original_score_bands;
     }
 
 /// Restore the original set of modes to be scored (from the configuration file)
   inline void restore_original_score_modes(void)
     { SAFELOCK(rules);
-
       _score_modes = _original_score_modes;
     }
 

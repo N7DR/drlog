@@ -139,6 +139,11 @@ T from_string(const std::string& s)
   return t;
 }
 
+//_cq_zone = from_string<decltype(_cq_zone)>(cq_zone_str);
+template <class T>
+void auto_from_string(const std::string& s, T& var)
+  { var = from_string<T>(s); }
+
 /*! \brief          Generic conversion to string
     \param  val     value to convert
     \return         <i>val</i>converted to a string

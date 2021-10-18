@@ -43,7 +43,7 @@ enum BAND { BAND_160 = 0,
             ALL_BANDS = ANY_BAND,
             MIN_BAND = BAND_160,
             MAX_BAND = BAND_10
-          };
+          };                        // these MUST be in order of increasing frequency
 
 constexpr unsigned int NUMBER_OF_BANDS { MAX_BAND + 1 };                          ///< how many bands does drlog know about?
 constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                       ///< how many bands does drlog know about?
@@ -60,29 +60,29 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                     "10"s
                                                                  } };         ///< names of bands
 
-static std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
-                                                    { "80"s,  BAND_80 },
-                                                    { "60"s,  BAND_60 },
-                                                    { "40"s,  BAND_40 },
-                                                    { "30"s,  BAND_30 },
-                                                    { "20"s,  BAND_20 },
-                                                    { "17"s,  BAND_17 },
-                                                    { "15"s,  BAND_15 },
-                                                    { "12"s,  BAND_12 },
-                                                    { "10"s,  BAND_10 }
-                                                  };                    ///< map a band name to a band
+static /* const */ std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
+                                                          { "80"s,  BAND_80 },
+                                                          { "60"s,  BAND_60 },
+                                                          { "40"s,  BAND_40 },
+                                                          { "30"s,  BAND_30 },
+                                                          { "20"s,  BAND_20 },
+                                                          { "17"s,  BAND_17 },
+                                                          { "15"s,  BAND_15 },
+                                                          { "12"s,  BAND_12 },
+                                                          { "10"s,  BAND_10 }
+                                                        };                    ///< map a band name to a band
 
-static std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },
-                                                          { "80m"s,  BAND_80 },
-                                                          { "60m"s,  BAND_60 },
-                                                          { "40m"s,  BAND_40 },
-                                                          { "30m"s,  BAND_30 },
-                                                          { "20m"s,  BAND_20 },
-                                                          { "17m"s,  BAND_17 },
-                                                          { "15m"s,  BAND_15 },
-                                                          { "12m"s,  BAND_12 },
-                                                          { "10m"s,  BAND_10 }
-                                                        };                    ///< map an ADIF3 band to a band
+static /* const */ std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },
+                                                                { "80m"s,  BAND_80 },
+                                                                { "60m"s,  BAND_60 },
+                                                                { "40m"s,  BAND_40 },
+                                                                { "30m"s,  BAND_30 },
+                                                                { "20m"s,  BAND_20 },
+                                                                { "17m"s,  BAND_17 },
+                                                                { "15m"s,  BAND_15 },
+                                                                { "12m"s,  BAND_12 },
+                                                                { "10m"s,  BAND_10 }
+                                                              };                    ///< map an ADIF3 band to a band
 
 
 /// modes that drlog knows about
@@ -128,63 +128,6 @@ using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band a
 class frequency;
 
 extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
-
-//extern const std::array<frequency, NUMBER_OF_BANDS> BAND_LOWER_BOUND;
-
-#if 0
-
-/*!  \brief     Convert a frequency to a band
-     \param  f  frequency
-     \return    band corresponding to <i>f</i>
-
-     Frequency may be in Hz, kHz or MHz.
-*/
-template<class T> const BAND to_BAND(T f)
-{ if (f <= 0)
-    return MIN_BAND;
-
-  if (f < 1000)       // MHz
-    return to_BAND(static_cast<long>(f) * 1'000'000);
-
-  if (f < 1'000'000)    // kHz
-    return to_BAND(static_cast<long>(f) * 1000);
-
-// Hz
-//  if ( (f >= 1'800'000) and (f <= 2'000'000) )
-  if ( (f >= BAND_LOWER_BOUND[static_cast<unsigned int>(BAND_160)]) and (f <= 2'000'000) )
-    return BAND_160;
-
-  if ( (f >= 3'500'000) and (f <= 4'000'000) )
-    return BAND_80;
-
-  if ( (f >= 5'000'000) and (f <= 6'000'000) )
-    return BAND_60;
-
-  if ( (f >= 7'000'000) and (f <= 7'300'000) )
-    return BAND_40;
-
-  if ( (f == 10'000'000) or ((f >= 10'100'000) and (f <= 10'150'000)) )
-    return BAND_30;
-
-  if ( (f >= 14'000'000) and (f <= 14'350'000) )
-    return BAND_20;
-
-  if ( (f == 18'000'000) or ((f >= 18'068'000) and (f <= 18'168'000)) )
-    return BAND_17;
-
-  if ( (f >= 21'000'000) and (f <= 21'450'000) )
-    return BAND_15;
-
-  if ( (f == 24'000'000) or ((f >= 24'890'000) and (f <= 24'990'000)) )
-    return BAND_12;
-
-  if ( (f >= 28'000'000) and (f <= 29'700'000) )
-    return BAND_10;
-
-  return MIN_BAND;
-}
-
-#endif
 
 // forward declaration
 template<class T> const BAND to_BAND(T f);
@@ -288,37 +231,18 @@ public:
 /// return lower band edge that corresponds to frequency
   frequency lower_band_edge(void) const;
 
+/// define ordering
   auto operator<=>(const frequency&) const = default;
-
-#if 0
-/// frequency == frequency
-  inline bool operator==(const frequency& f) const
-    { return (_hz == f._hz); }
-
-/// frequency != frequency
-  inline bool operator!=(const frequency& f) const
-    { return !(*this == f); }
-
-/// frequency < frequency
-  inline bool operator<(const frequency& f) const
-    { return (_hz < f._hz); }
-
-/// frequency <= frequency
-  inline bool operator<=(const frequency& f) const
-    { return (_hz <= f._hz); }
-
-/// frequency > frequency
-  inline bool operator>(const frequency& f) const
-    { return (_hz > f._hz); }
-
-/// frequency >= frequency
-  inline bool operator>=(const frequency& f) const
-    { return (_hz >= f._hz); }
-#endif
 
 /// difference in two frequencies, always +ve
   frequency difference(const frequency& f2) const;
 
+/*! \brief          Find the next lower band
+    \param  bands   set of bands that may be returned
+    \return         band from <i>bands</i> that is the highest band below the frequency
+
+    Returns BAND_160 if the frequency is outside all bands
+*/
   BAND next_band_down(const std::set<BAND>& bands) const;
 
   BAND next_band_up(const std::set<BAND>& bands) const;

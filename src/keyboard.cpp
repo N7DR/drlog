@@ -133,10 +133,7 @@ void* runit(void* vp)
 }
 
 /// default constructor
-keyboard_queue::keyboard_queue(void) //:
-//  _display_p(nullptr),
-//  _window_id(0),
-//  _x_multithreaded(true)        // to be safe, until we're sure we aren't running the simulator
+keyboard_queue::keyboard_queue(void)
 {
 // write a message, pause, then exit
   auto delayed_exit = [] (const string& msg, const unsigned int delay_in_seconds)

@@ -341,7 +341,8 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file to read
 
-    Throws exception if the file does not exist or is incorrectly formatted
+    Throws exception if the file does not exist or is incorrectly formatted;
+    except creates empty object if called with default filename that does not exist
 */
   explicit drmaster(const std::string& filename = "drmaster"s);
 

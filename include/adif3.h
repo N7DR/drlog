@@ -94,13 +94,8 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
     \brief A single generic ADIF field
 */
 
-//enum class COUNTRY_STATUS { CURRENT,
-//                            DELETED
-//                          };
-
 class adif3_field
-{ //using enum COUNTRY_STATUS;  not supported in g++ 10
-
+{
 protected:
 
   std::string     _name;                    ///< name of the field
@@ -124,7 +119,6 @@ protected:
 
 // soi-disant "enumeration" values (actually typically strings)
   const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
-//  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
   const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
   static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
@@ -134,9 +128,6 @@ public:
 
 /// default constructor
   adif3_field(void) = default;
-  
-/// copy constructor
-//  adif3_field(const adif3_field&) = default;
   
 /*! \brief                  Construct from name and value
     \param  field_name      name of field
@@ -296,7 +287,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  adif3_file(const std::string& filename);
+  explicit adif3_file(const std::string& filename);
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
