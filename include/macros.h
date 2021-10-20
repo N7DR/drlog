@@ -1081,6 +1081,7 @@ public:
 
     See also the UNUSED template below
 */
+#if 0
 template <typename T>
 class RANGE : public std::vector<T>
 {
@@ -1111,6 +1112,7 @@ public:
 template<typename Unused>
 inline void UNUSED( Unused&& )
   { }
+#endif
 
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached
@@ -1139,10 +1141,7 @@ public:
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
   bool add(const T& val, const COUNTER n = 1)
-  { //if (_values.find(val) == _values.end())
-    //  _values.insert( { val, n } );
-    if (!contains(_values, val))
-//      _values.insert( { val, n } );
+  { if (!contains(_values, val))
       _values += { val, n };
     else
       _values[val] += n;
@@ -1599,10 +1598,10 @@ inline void operator-=(D& d, typename D::iterator&& it)
     \param  c1  destination deque
     \param  it  iterator
 */
-template <typename C>
-inline void operator-=(C& c1, const typename C::iterator& it)
-  requires is_deque_v<C>
-{ c1.erase(it); }
+template <typename D>
+inline void operator-=(D& d, const typename D::iterator& it)
+  requires is_deque_v<D>
+{ d.erase(it); }
 
 /*! \brief              Is an element in a deque, list or vector?
     \param  c           the deque, list or vector

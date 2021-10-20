@@ -437,7 +437,8 @@ public:
     \return         whether <i>call</i> is present
 */
   inline bool contains(const std::string& call) const
-    { return ( _records.find(call) != _records.cend() ); }
+    { return ::contains(_records, call); }
+//    { return ( _records.find(call) != _records.cend() ); }
 };
 
 #endif    // DRMASTER_H

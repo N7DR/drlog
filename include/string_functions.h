@@ -25,6 +25,7 @@
 #include <deque>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -139,7 +140,10 @@ T from_string(const std::string& s)
   return t;
 }
 
-//_cq_zone = from_string<decltype(_cq_zone)>(cq_zone_str);
+/*! \brief          Generic conversion from string, without an explicit type
+    \param  s       string
+    \param  var     variable into which the converted value is to be placed
+*/
 template <class T>
 void auto_from_string(const std::string& s, T& var)
   { var = from_string<T>(s); }
@@ -246,28 +250,36 @@ inline bool contains(const std::string& s, const char c)
 /*! \brief          Does a string contain any letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any letters
+
+    This should give the correct result in any locale
 */
-bool contains_letter(const std::string& str);
+//bool contains_letter(const std::string& str);
+inline bool contains_letter(const std::string& str)
+  { return std::ranges::any_of(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
 
 /*! \brief          Does a string contain any upper case letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
 inline bool contains_upper_case_letter(const std::string& str)
-  { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
+  { return std::ranges::any_of(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
+//  { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-bool contains_digit(const std::string& str);
+//bool contains_digit(const std::string& str);
+inline bool contains_digit(const std::string& str)
+  { return std::ranges::any_of(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief          Does a string contain only digits?
     \param  str     string to test
     \return         whether <i>str</i> comprises only digits
 */
 inline bool is_digits(const std::string& str)
-  { return (str.find_first_not_of(DIGITS) == std::string::npos); }
+  { return std::ranges::all_of(str, [] (const char c) { return isdigit(c); } ); }
+//  { return (str.find_first_not_of(DIGITS) == std::string::npos); }
 
 /*! \brief              Pad a string to a particular size
     \param  s           original string
@@ -292,20 +304,14 @@ template <typename T>
 inline std::string pad_left(const T& s, const size_t len, const char pad_char = SPACE_CHAR)
   { return pad_string(to_string(s), len, PAD::LEFT, pad_char); }
 
-/*! \brief      Left pad an integer type with zeroes to a particular size
-    \param  s   integer value
+/*! \brief      Left pad an integer or string type with zeroes to a particular size
+    \param  s   integer value, or a string
     \return     left padded version of <i>s</i> rendered as a string and left padded with zeroes
 */
 template <typename T>
   requires (std::is_integral_v<T> or std::is_same_v<base_type<T>, std::string>)
 inline std::string pad_leftz(const T& s, const size_t len)
   { return pad_left(s, len, '0'); }
-
-//inline std::string pad_leftz(const std::integral auto& s, const size_t len)
-//  { return pad_left(s, len, '0'); }
-
-//inline std::string pad_leftz(const std::string& s, const size_t len)
-//  { return pad_left(s, len, '0'); }
 
 /*! \brief              Right pad a string to a particular size
     \param  s           original string
@@ -369,17 +375,18 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 
 /*! \brief      Does a string begin with one of a number of particular substrings?
     \param  cs  string to test
-    \param  ss  substrings to look for
+    \param  ss  container of substrings to look for
     \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
 template <typename T>
 bool starts_with(const std::string& cs, const T& ss)
   requires (is_string_v<typename T::value_type>)
-{ for (const auto& str : ss)
-    if (starts_with(cs, str))
-      return true;
+{ //for (const auto& str : ss)
+  //  if (starts_with(cs, str))
+  //    return true;
 
-  return false;
+  //return false;
+  return std::ranges::any_of(ss, [=] (const std::string& str) { return starts_with(cs, str); });
 }
 
 /*! \brief      Does a string begin with a particular substring?
@@ -511,15 +518,17 @@ inline std::string remove_trailing_spaces(const std::string& cs)
 inline std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }
 
-/*! \brief      Remove leading and trailing spaces
+/*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
 template <typename T>
+  requires (is_string_v<typename T::value_type>)
 T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
-  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+//  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+  std::ranges::for_each(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
 }
@@ -553,6 +562,7 @@ inline std::string remove_char(std::string& s, const char char_to_remove)
     \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
 */
 template <typename T>
+  requires (is_string_v<typename T::value_type>)
 T remove_char(T& t, const char char_to_remove)
 { typename std::remove_const<T>::type rv;
 

@@ -27,8 +27,6 @@
 
 using namespace std;
 
-//extern ofstream ost;                   ///< for debugging, info
-
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
     \return         vector of fields from the CSV line
@@ -135,7 +133,7 @@ string date_time_string(const SECONDS include_seconds)
 
   const time_t now { time(NULL) };            // get the time from the kernel
 
-  struct tm    structured_time;
+  struct tm structured_time;
 
   gmtime_r(&now, &structured_time);         // convert to UTC
 
@@ -349,7 +347,8 @@ string squash(const string& cs, const char c)
 vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
-  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+//  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+  ranges::for_each(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
 
   return rv;
 }
@@ -502,7 +501,6 @@ string delimited_substring(const string& cs, const string& delim_1, const string
                                                                           : posn_2 + posn_1 + delim_2.length()
                                 };
   
-//  return cs.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
   return cs.substr(posn_1 + length_to_skip, length_to_return);
 }
 
@@ -882,6 +880,7 @@ bool compare_mults(const string& mult1, const string& mult2)
 
     This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
+#if 0
 bool contains_letter(const string& str)
 { for (const char& c : str)
     if ( (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z') )
@@ -889,6 +888,7 @@ bool contains_letter(const string& str)
 
   return false;
 }
+#endif
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
@@ -896,6 +896,7 @@ bool contains_letter(const string& str)
 
     This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
+#if 0
 bool contains_digit(const string& str)
 { for (const char& c : str)
     if (c >= '0' and c <= '9')
@@ -903,6 +904,7 @@ bool contains_digit(const string& str)
 
   return false;
 }
+#endif
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -952,7 +954,7 @@ string reformat_for_wprintw(const string& str, const int width)
 
   int since_last_newline { 0 };
 
-  for (size_t posn = 0; posn < str.length(); ++posn)
+  for (size_t posn { 0 }; posn < str.length(); ++posn)
   { const char c { str[posn] };
 
     if (c != EOL_CHAR)
@@ -981,7 +983,6 @@ vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int widt
 { vector<string> rv;
 
   for (const auto& s : vecstr)
-//    rv.push_back(reformat_for_wprintw(s, width));
     rv += reformat_for_wprintw(s, width);
 
   return rv;
@@ -1081,65 +1082,6 @@ string remove_substrings(const string& cs, const vector<string>& vs)
       
   return rv; 
 }
-
-/*! \brief              Obtain a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             substring between <i>delim_1</i> and <i>delim_2</i>
-  
-    Returns the empty string if the delimiters do not exist, or if
-    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
-    first delimited substring if more than one exists.
-*/
-#if 0
-string delimited_substring(const string& cs, const string& delim_1, const string& delim_2)
-{ const size_t posn_1 { cs.find(delim_1) };
-  
-  if (posn_1 == string::npos)
-    return string();  
-  
-  const size_t posn_2 { cs.find(delim_2, posn_1 + delim_1.length()) };
-  
-  if (posn_2 == string::npos)
-    return string();
-  
-  return cs.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
-}
-#endif
-
-/*! \brief              Obtain all occurrences of a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
-*/
-#if 0
-vector<string> delimited_substrings(const string& cs, const string& delim_1, const string& delim_2)
-{ vector<string> rv;
-
-  size_t cs_start_posn { 0 };
-
-  while (!substring(cs, cs_start_posn).empty())
-  { const string sstring { substring(cs, cs_start_posn) };
-    const size_t posn_1  { sstring.find(delim_1) };
-
-    if (posn_1 == string::npos)             // no more starting delimiters
-      return rv;
-
-    const size_t posn_2 { sstring.find(delim_2, posn_1 + delim_1.length()) };
-
-    if (posn_2 == string::npos)
-      return rv;                            // no more ending delimiters
-
-//    rv.push_back( sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length()) );
-    rv += sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
-    cs_start_posn += (posn_2 + delim_2.length());
-  }
-
-  return rv;
-}
-#endif
 
 /*! \brief                      Obtain all occurrences of a delimited substring
     \param  cs                  original string

@@ -26,14 +26,13 @@
 using namespace std;
 
 extern contest_rules           rules;                               ///< the rules for this contest
-//extern drmaster*               drm_p;                               ///< pointer to drmaster database
 extern EFT                     CALLSIGN_EFT;                        ///< exchange field template for a callsign
 extern location_database       location_db;                         ///< the (global) location database
 extern logbook                 logbk;                               ///< the (global) logbook
 extern exchange_field_prefill  prefill_data;                        ///< exchange prefill data from external files
 extern bool                    require_dot_in_replacement_call;     ///< whether a dot is required to mark a replacement callsign
 
-extern const drmaster& drm_cdb;     ///< const version of the drmaster database
+extern const drmaster& drm_cdb;                                     ///< const version of the drmaster database
 
 pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mutex for access to the exchange field database
 
@@ -52,9 +51,7 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
     const string  filename   { truncate_before_first(this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
 
     try
-    { const vector<string> lines { to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
-
-      unordered_map<string /* call */, string /* prefill value */> call_value_map;
+    { unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
 // figure out the columns to be read; column numbers in the config file are wrt 1
       unsigned int call_column  { 0 };
@@ -71,6 +68,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
         call_column = from_string<unsigned int>(fields[1]) - 1;      // adjust to wrt 0
         field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
       }
+
+      const vector<string> lines { to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
 
       for (const auto& line : lines)                                // each line should now be space-separated columns
         if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() > max(call_column, field_column))
@@ -99,9 +98,10 @@ string exchange_field_prefill::prefill_data(const string& field_name, const stri
   if (it == _db.cend())
     return string();
 
-  const unordered_map<string /* callsign */, string /* value */>& field_map { it->second };
+//  const unordered_map<string /* callsign */, string /* value */>& field_map { it->second };
 
-  return MUM_VALUE(field_map, callsign);
+//  
+  return MUM_VALUE(it->second, callsign);
 }
 
 /// ostream << exchange_field_prefill
@@ -284,8 +284,10 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         switch (ambiguous_fields.size())
         { case 1 :  // if there's only one, it should be a serial number
             break;
+
           default :
             ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break
+
           case 2 :  // first should be serial number, second should check
           { const unsigned int field_nr { ambiguous_fields[1] };
 
@@ -360,7 +362,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   ost << "getting section" << endl;
   map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
-//  vector<size_t> possible_sections;
   index = 0;
 
   try
@@ -426,8 +427,8 @@ ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
     THIS IS CURRENTLY UNUSED
 */
 void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
-{ set<int> matched_field_numbers;
-  set<string> matched_field_names;
+{ set<int>          matched_field_numbers;
+  set<string>       matched_field_names;
   decltype(matches) remaining_matches(matches);
 
   for (unsigned int field_nr { 0 }; field_nr < remaining_matches.size(); ++field_nr)

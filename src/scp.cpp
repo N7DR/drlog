@@ -39,7 +39,8 @@ scp_database::scp_database(const string& filename)
 //void scp_database::add_call(const string& call)
 void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
-    for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
+//    for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
+    for ( auto start_index : ranges::iota_view { static_cast<size_t>(0), call.length() - 2 } )
       (_db[substring(call, start_index, 2)]).insert(call);
 }
 
@@ -48,7 +49,8 @@ unsigned int scp_database::remove_call(const std::string& call)
 { unsigned int rv { 0 };
 
   if (call.length() >= 2)
-  { for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
+  { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
+    for (const auto start_index : ranges::iota_view { static_cast<size_t>(0), call.length() - 2 } )
     { SCP_SET& ss { _db[substring(call, start_index, 2)] };
 
       rv = ss.erase(call);                                      // all except the last will be thrown away

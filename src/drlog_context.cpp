@@ -22,6 +22,7 @@
 #include <iostream>
 
 using namespace std;
+//using namespace std::ranges;
 
 extern message_stream   ost;                        ///< for debugging, info
 extern bool             QSO_DISPLAY_COUNTRY_MULT;   ///< controls whether country mults are written on the log line
@@ -88,9 +89,11 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
       if (valid)
       { const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
-        const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
+//        const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
-        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+//        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+//        std::ranges::for_each(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+        ranges::for_each(remove_peripheral_spaces(split_string(bands_str, ","s)), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
       }
     }
   }
@@ -733,18 +736,19 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // POST MONITOR
     if (LHS == "POST MONITOR"s)
-    { const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
+    { //const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
 
-//      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls.insert(callsign); } );
-      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls += callsign; } );
+      //FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls += callsign; } );
+      ranges::for_each(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& callsign) { _post_monitor_calls += callsign; } );
     }
 
 // POSTED BY CONTINENTS
     if (LHS == "POSTED BY CONTINENTS"s)
     { const set<string>    continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
-      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
+//      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
       
-      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
+//      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
+      ranges::for_each(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
     }
 
 // P3
@@ -820,12 +824,12 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RATE
     if (LHS == "RATE"s)
-    { const vector<string> vec_rates { remove_peripheral_spaces(split_string(rhs, ","s)) };
+    { //const vector<string> vec_rates { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       vector<unsigned int> new_rates;
 
- //     FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
-      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
+//      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
+      ranges::for_each(remove_peripheral_spaces(split_string(rhs, ","s)), [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;

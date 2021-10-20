@@ -96,7 +96,6 @@ void adif3_field::_verify(void) const
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
- //     if (const int code { from_string<int>(_value) }; _ENUMERATION_DXCC_ENTITY_CODE.find(code) == _ENUMERATION_DXCC_ENTITY_CODE.cend())
       if (!contains(_ENUMERATION_DXCC_ENTITY_CODE, from_string<int>(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
@@ -168,7 +167,8 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     break;
     
     case ADIF3_DATA_TYPE::POSITIVE_INTEGER :      // an unsigned sequence of one or more Digits representing a decimal integer that has a value greater than 0.  Leading zeroes are allowed. 
-    { if (_value.find_first_not_of(DIGITS) != string::npos)
+    { //if (_value.find_first_not_of(DIGITS) != string::npos)
+      if (!is_digits(_value))
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
 
 // CQZ : 1..40
@@ -192,7 +192,8 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     case ADIF3_DATA_TYPE::TIME :          // HHMMSS or HHMM
     { const string& utc { _value };
       
-      if (utc.find_first_not_of(DIGITS) != string::npos)
+  //    if (utc.find_first_not_of(DIGITS) != string::npos)
+      if (!is_digits(utc))
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
  
       if ( (utc.length() != 4) and (utc.length() != 6) )

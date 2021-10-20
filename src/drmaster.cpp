@@ -70,7 +70,8 @@ master_dta::master_dta(const string& filename)
     tmp_calls += _get_call(contents, pointer);      // modified pointer
 
 // remove duplicates
-  SORT(tmp_calls);
+//  SORT(tmp_calls);
+  ranges::sort(tmp_calls);
 
   vector<string>::iterator pos { unique(tmp_calls.begin(), tmp_calls.end()) };
 
@@ -216,7 +217,7 @@ string trmaster_line::to_string(void) const
 
   char user_letter { 'U' };
 
-  for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
+  for (unsigned int n { 0 }; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
     { rv += " ="s;
       rv += user_letter;
@@ -515,19 +516,24 @@ trmaster::trmaster(const string& filename)
 // is there already a record for this call?
       const string call { record.call() };
 
-      if (_records.find(call) != _records.end())
+ //     if (_records.find(call) != _records.end())
+      if (contains(_records, call))
         record += _records[call];
 
       _records += { call, record };
     }
   }
   else              // not binary
-  { const vector<string> lines { to_lines(contents) };
+  { //const vector<string> lines { to_lines(contents) };
 
-    FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
+    //FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
+//
+    //                                          _records += { record.call(), record };
+    //                                        } );
+    ranges::for_each( to_lines(contents), [&] (const string& line) { const trmaster_line record(line);
 
-                                              _records += { record.call(), record };
-                                            } );
+                                                                     _records += { record.call(), record };
+                                                                   } );
   }
 }
 
@@ -535,8 +541,10 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
-  SORT(rv, compare_calls);                                          // added compare_calls 201101
+//  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
+  ranges::for_each(_records, [&rv](const auto& rec) { rv += rec.first; } );
+//  SORT(rv, compare_calls);                                          // added compare_calls 201101
+  ranges::sort(rv, compare_calls);                                          // added compare_calls 201101
 
   return rv;
 }

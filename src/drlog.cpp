@@ -843,7 +843,7 @@ int main(int argc, char** argv)
 
     const cty_data& country_data { *country_data_p };
 
-  { try
+    try
     { drm_db.prepare(context.path(), context.drmaster_filename());
     }
 
@@ -852,57 +852,51 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    {
 // location database
-      try
-      { location_db.prepare(country_data, context.country_list());
-      }
+    try
+    { location_db.prepare(country_data, context.country_list());
+    }
 
-      catch (...)
-      { cerr << "Error generating location database" << endl;
-        exit(-1);
-      }
+    catch (...)
+    { cerr << "Error generating location database" << endl;
+      exit(-1);
+    }
 
-      location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
+    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
 
 // build super check partial database from the drmaster information
-      try
-      { scp_db.init_from_calls(drm_cdb.calls());
-      }
+    try
+    { scp_db.init_from_calls(drm_cdb.calls());
+    }
 
-      catch (...)
-      { cerr << "Error initialising scp database" << endl;
-        exit(-1);
-      }
+    catch (...)
+    { cerr << "Error initialising scp database" << endl;
+      exit(-1);
+    }
 
-      scp_dbs += scp_db;            // incorporate into multiple-database version
-      scp_dbs += scp_dynamic_db;    // add the (empty) dynamic SCP database
+    scp_dbs += scp_db;            // incorporate into multiple-database version
+    scp_dbs += scp_dynamic_db;    // add the (empty) dynamic SCP database
 
 // build fuzzy database from the drmaster information
-      try
-      { fuzzy_db.init_from_calls(drm_cdb.calls());
-      }
+    try
+    { fuzzy_db.init_from_calls(drm_cdb.calls());
+    }
 
-      catch (...)
-      { cerr << "Error generating fuzzy database" << endl;
-        exit(-1);
-      }
+    catch (...)
+    { cerr << "Error generating fuzzy database" << endl;
+      exit(-1);
+    }
 
-      fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
-      fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
+    fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
+    fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
 
 // build query database from the drmaster information
-      query_db = drm_cdb.unordered_calls();
+    query_db = drm_cdb.unordered_calls();
 
 // possibly build name database from the drmaster information (not the same as the names used in exchanges)
-      if (context.window_info("NAME"s).defined())                   // does the config file define a NAME window?
-      { //const vector<string> drm_calls { drm_cdb.unordered_calls() };   // we don't need them to be ordered
-
-        for (const auto& this_call : drm_cdb.unordered_calls())
-          names[this_call] = drm_cdb[this_call].name();
-      }
-    }
-  }
+    if (context.window_info("NAME"s).defined())                   // does the config file define a NAME window?
+      for (const auto& this_call : drm_cdb.unordered_calls())
+        names[this_call] = drm_cdb[this_call].name();
 
 // define the rules for this contest
     try
@@ -928,10 +922,16 @@ int main(int argc, char** argv)
     if (rules.n_modes() == 1)
     { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
 
-      for (const auto& ef : exchange_template)
-      { if (ef.name() == "PREC"s)                // if there's a field with this name, it must be SS
-          is_ss = true;
-      }
+      if (ranges::any_of(exchange_template, [](const exchange_field& ef) { return (ef.name() == "PREC"s); }))
+        is_ss = true;
+
+ //     if (ranges::any_of(exchange_template, [](const auto& name) { return (name == "PREC"s); }, &exchange_field::name)
+ //       is_ss = true;
+
+//      for (const auto& ef : exchange_template)
+//      { if (ef.name() == "PREC"s)                // if there's a field with this name, it must be SS
+//          is_ss = true;
+//      }
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
@@ -1041,11 +1041,13 @@ int main(int argc, char** argv)
       rig.base_state();
 
 // configure bandmaps so user's call does not display
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+//      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+      ranges::for_each(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
 
 // ditto for other calls in the do-not-show list
       for (const auto& callsign : context.do_not_show())
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+//        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+        ranges::for_each(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
 // ditto for other calls in the do-not-show files
       if (!do_not_show_filename.empty())
@@ -1067,8 +1069,9 @@ int main(int argc, char** argv)
           if (!callsigns.empty())
           { bandmap& bm { bandmaps[b] };
 
-            for (const auto& callsign : callsigns)
-              bm.do_not_add(callsign);
+            FOR_ALL(callsigns, [&bm] (const auto& callsign) { bm.do_not_add(callsign); });
+//            for (const auto& callsign : callsigns)
+//              bm.do_not_add(callsign);
           }
         }
       }
@@ -1089,8 +1092,7 @@ int main(int argc, char** argv)
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
       if (context.mark_mode_break_points())
-      { //for (const auto& b : rules.permitted_bands())
-        for (const auto& b : permitted_bands)
+      { for (const auto& b : permitted_bands)
         { bandmap& bm { bandmaps[b] };
 
           bandmap_entry be;
@@ -1371,7 +1373,8 @@ int main(int argc, char** argv)
         window* wp { new window() };
 
         wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-        win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
+//        win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
+        win_remaining_exch_mults_p += { exchange_mult_name, wp };
 
         (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
       }
@@ -1389,22 +1392,24 @@ int main(int argc, char** argv)
 
 // SCORE BANDS window
     win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
-    { const set<BAND> score_bands { rules.score_bands() };
+    { //const set<BAND> score_bands { rules.score_bands() };
 
       string bands_str;
 
-      FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+      //FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+      ranges::for_each(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
       win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
     }
 
 // SCORE MODES window
     win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
-    { const set<MODE> score_modes { rules.score_modes() };
+    { //const set<MODE> score_modes { rules.score_modes() };
 
       string modes_str;
 
-      FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+//      FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+      ranges::for_each(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
       win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
     }
@@ -1453,10 +1458,14 @@ int main(int argc, char** argv)
 
 // possibly set the auto country mults and auto callsign mults thresholds
     if (context.auto_remaining_callsign_mults())
-    { const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+    { //const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
-      for (const auto& callsign_mult_name : callsign_mults)
-        acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
+      //for (const auto& callsign_mult_name : callsign_mults)
+      //  acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
+
+      const auto threshold { context.auto_remaining_callsign_mults_threshold() };
+
+      ranges::for_each(rules.callsign_mults(), [=](const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
     }
 
     if (context.auto_remaining_country_mults())
@@ -1551,9 +1560,10 @@ int main(int argc, char** argv)
       bm.filter_enabled(context.bandmap_filter_enabled());
       bm.filter_hide(context.bandmap_filter_hide());
 
-      const vector<string>& original_filter { context.bandmap_filter() };
+ //     const vector<string>& original_filter { context.bandmap_filter() };
 
-      FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+//      FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+      ranges::for_each( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
       display_bandmap_filter(bm);
     }
@@ -1660,7 +1670,6 @@ int main(int argc, char** argv)
 
           statistics.add_qso(qso, logbk, rules);
           logbk += qso;
-//          rate.insert(qso.epoch_time(), statistics.points(rules));
           rate += { qso.epoch_time(), statistics.points(rules) };
         }
 
@@ -1671,39 +1680,7 @@ int main(int argc, char** argv)
         rescore(rules);
         update_rate_window();
 
- //       scp_dynamic_db.clear();       // clears cache of parent
- //       fuzzy_dynamic_db.clear();
- //       query_db.clear_dynamic_database();
-
-//        const vector<QSO> qso_vec { logbk.as_vector() };
-
-//        for (const auto& qso : qso_vec)
-//        { const string& callsign { qso.callsign() };
-
-//          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-//            scp_dynamic_db.add_call(callsign);
-
-//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-//            fuzzy_dynamic_db.add_call(callsign);
-//        }
-
         rebuild_dynamic_call_databases(logbk);
-
-//        scp_dynamic_db.clear();     // clears cache of parent
-//        fuzzy_dynamic_db.clear();
-//        query_db.clear_dynamic_database();
-
-//        const set<string> calls_in_log { logbk.calls() };
-
-//        for (const string& callsign : calls_in_log)
-//        { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-//            scp_dynamic_db.add_call(callsign);
-
-//          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-//            fuzzy_dynamic_db.add_call(callsign);
-
-//          query_db += callsign;
-//        }
 
         if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
           win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -1770,9 +1747,8 @@ int main(int argc, char** argv)
 // move the sent ones to the sent buffer
         const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
-        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
-
-//      ost << "unsent QTCS: " << endl << qtc_buf.unsent_list_as_string() << endl;
+//        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+        ranges::for_each(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
         statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
         statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
@@ -1839,8 +1815,6 @@ int main(int argc, char** argv)
       }
 
       enter_sap_mode();                                       // explicitly enter SAP mode
-//      win_active_p = &win_call;                               // set the active window
-//      active_window = ACTIVE_WINDOW::CALL;
       win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
 
 // if necessary, wait for the adif23 old log information to finish building
@@ -2182,7 +2156,6 @@ void* display_rig_status(void* vp)
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       if (ok_to_poll_k3)
       { constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
-//        constexpr size_t IC_REPLY_LENGTH     { 8 };           // K3 returns 8 characters
         constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
       
 // force into extended mode -- it's ridiculous to do this all the time, but there seems to be no way to be sure we haven't turned the rig on/off
@@ -2193,7 +2166,6 @@ void* display_rig_status(void* vp)
         const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
         const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
         const string   ds_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
-//        const string   ic_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("IC;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == DS_REPLY_LENGTH) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring(status_str, 2, 11)) };                    // frequency of VFO A
@@ -2271,7 +2243,6 @@ void* display_rig_status(void* vp)
 
           const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp()->bandwidth()) };
           const string frequency_b_str { f_b.display_string() };
-
           const string centre_str      { to_string(rig_status_thread_parameters.rigp()->centre_frequency()) };
 
 // now display the status
@@ -2355,29 +2326,26 @@ void* process_rbn_info(void* vp)
 
   start_of_thread(THREAD_NAME);
 
-  constexpr unsigned int POLL_INTERVAL { 10 };      // seconds between processing passes
-  constexpr int          MAX_FREQ_SKEW { 800 };     // maximum change in frequency considered as NOT a QSY, in Hz 
+  constexpr int POLL_INTERVAL { 10 };      // seconds between processing passes
+  constexpr int MAX_FREQ_SKEW { 800 };     // maximum change in frequency considered as NOT a QSY, in Hz 
 
 // get access to the information that's been passed to the thread
   cluster_info*                    cip              { static_cast<cluster_info*>(vp) };
-  window&                          cluster_line_win { *(cip->wclp()) };            // the window to which we will write each line from the cluster/RBN
-  window&                          cluster_mult_win { *(cip->wcmp()) };            // the window in which to write mults
-  dx_cluster&                      rbn              { *(cip->dcp()) };                      // the DX cluster or RBN
-  running_statistics&              statistics       { *(cip->statistics_p()) };           // the statistics
-  location_database&               location_db      { *(cip->location_database_p()) };    // database of locations
-  window&                          bandmap_win      { *(cip->win_bandmap_p()) };                     // bandmap window
-  array<bandmap, NUMBER_OF_BANDS>& bandmaps         { *(cip->bandmaps_p()) };  // bandmaps
+  window&                          cluster_line_win { *(cip->wclp()) };                 // the window to which we will write each line from the cluster/RBN
+  window&                          cluster_mult_win { *(cip->wcmp()) };                 // the window in which to write mults
+  dx_cluster&                      rbn              { *(cip->dcp()) };                  // the DX cluster or RBN
+  running_statistics&              statistics       { *(cip->statistics_p()) };         // the statistics
+  location_database&               location_db      { *(cip->location_database_p()) };  // database of locations
+  window&                          bandmap_win      { *(cip->win_bandmap_p()) };        // bandmap window
+  array<bandmap, NUMBER_OF_BANDS>& bandmaps         { *(cip->bandmaps_p()) };           // bandmaps
 
   const bool is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
   const bool is_cluster             { !is_rbn };
   const bool rbn_beacons            { context.rbn_beacons() };
   const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"s) }; // the colour of my call in the CLUSTER MULT window
 
-  string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
-
-//  const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
-
-  deque<pair<string, frequency>> recent_mult_calls;                             // the queue of recent calls posted to the mult window (can't be a std::queue)
+  string unprocessed_input;                             // data from the cluster that have not yet been processed by this thread
+  deque<pair<string, frequency>> recent_mult_calls;     // the queue of recent calls posted to the mult window (can't be a std::queue)
 
   const int highlight_colour { static_cast<int>(colours.add(COLOUR_WHITE, COLOUR_RED)) };             // colour that will mark that we are processing a ten-second pass
   const int original_colour  { static_cast<int>(colours.add(cluster_line_win.fg(), cluster_line_win.bg())) };
@@ -2495,7 +2463,6 @@ void* process_rbn_info(void* vp)
                 { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
                   { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
-//                    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
                     const bool           is_possible_exchange_field { contains(exchange_field_names, exch_mult_name) };
 
                     if (is_possible_exchange_field)
@@ -2521,9 +2488,9 @@ void* process_rbn_info(void* vp)
 
 // CLUSTER MULT window
                 if (cluster_mult_win.defined())
-                { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
-                  { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-                    { const size_t QUEUE_SIZE { static_cast<size_t>(cluster_mult_win.height()) };        // make the queue the same as the height of the window
+                { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))    // if it's a mult and not recently posted...
+                  { if (location_db.continent(poster) == my_continent)                                                  // heard on our continent?
+                    { const size_t QUEUE_SIZE { static_cast<size_t>(cluster_mult_win.height()) };           // make the queue the same as the height of the window
 
                       cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                       recent_mult_calls += target;
@@ -2560,31 +2527,28 @@ void* process_rbn_info(void* vp)
                 }
 
 // add the post to the correct bandmap unless it's a marked frequency  ...  win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
-
                 if ( is_interesting_mode and (context.bandmap_show_marked_frequencies() or !context.mark_frequency(be.mode(), be.freq())) )
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
                     case BANDMAP_ENTRY_SOURCE::RBN :
-//                      bm_buffer.add(be.callsign(), post.poster());
                       bm_buffer += { be.callsign(), post.poster() };
 
                       if (bm_buffer.sufficient_posters(be.callsign()))
                       { bandmap_insertion_queues[dx_band] += be;
                         changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
                       }
-
                       break;
 
                     default :
                       bandmap_insertion_queues[dx_band] += be;
-                      changed_bands += dx_band;      // prepare to display the bandmap if we just made a change for this band
+                      changed_bands += dx_band;         // prepare to display the bandmap if we just made a change for this band
                   }
                 }
               }
             }
           }
           else
-          { //ost << "invalid post" << endl;
+          { // invalid post; do nothing
           }
         }
       }
@@ -2611,12 +2575,11 @@ void* process_rbn_info(void* vp)
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-      const time_t              now          { ::time(NULL) };
-      const vector<COLOUR_TYPE> fade_colours { context.bandmap_fade_colours() };
-      const unsigned int        n_colours    { static_cast<unsigned int>(fade_colours.size()) };
-      const float               interval     { 1.0f / n_colours };
-
-      const PAIR_NUMBER_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
+      const time_t              now             { ::time(NULL) };
+      const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
+      const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
+      const float               interval        { 1.0f / n_colours };
+      const PAIR_NUMBER_TYPE    default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
       for (size_t n { 0 }; n < entries.size(); ++n)
@@ -2654,9 +2617,12 @@ void* process_rbn_info(void* vp)
     if (!posted_by_vector.empty())
       update_win_posted_by(posted_by_vector);
 
+// for (int i : iota_view{1, 10})
+
 // see also repeat() suggestion at: https://stackoverflow.com/questions/17711655/c11-range-based-for-loops-without-loop-variable
-    for (const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
-    { UNUSED(n);
+ //   for ([[maybe_unused]] const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
+    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, POLL_INTERVAL } )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
+    { //UNUSED(n);
 
       { SAFELOCK(thread_check);
 
@@ -2684,8 +2650,9 @@ void* get_cluster_info(void* vp)
   while(1)                                                  // forever
   { cluster.read();                                         // reads the socket and stores the data
 
-    for (const auto n : RANGE<unsigned int>(1, 5) )         // check the socket every 5 seconds
-    { UNUSED(n);
+//    for (const auto n : RANGE<unsigned int>(1, 5) )         // check the socket every 5 seconds
+    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 5 } )    // check the socket every 5 seconds
+    { //UNUSED(n);
 
       { SAFELOCK(thread_check);
 
@@ -2718,8 +2685,9 @@ void* prune_bandmap(void* vp)
 
     bandmap_win <= bandmaps[safe_get_band()];
 
-    for (const auto n : RANGE<unsigned int>(1, 60) )    // check once per second for a minute
-    { UNUSED(n);
+ //   for (const auto n : RANGE<unsigned int>(1, 60) )    // check once per second for a minute
+    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 60 } )    // check once per second for a minute
+    { //UNUSED(n);
 
       { SAFELOCK(thread_check);
 
