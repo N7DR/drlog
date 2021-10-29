@@ -225,7 +225,8 @@ public:
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-  bool is_legal_value(const std::string& value) const;
+  inline bool is_legal_value(const std::string& value) const
+    { return ANY_OF(canonical_values(), [=, this] (const auto& cv) { return is_legal_value(cv, value); }); }
 
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value

@@ -2621,7 +2621,8 @@ void* process_rbn_info(void* vp)
 
 // see also repeat() suggestion at: https://stackoverflow.com/questions/17711655/c11-range-based-for-loops-without-loop-variable
  //   for ([[maybe_unused]] const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
-    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, POLL_INTERVAL } )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
+ //   for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, POLL_INTERVAL } )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
+    for ( [[maybe_unused]] auto _ : RANGE(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
     { //UNUSED(n);
 
       { SAFELOCK(thread_check);
@@ -2651,7 +2652,8 @@ void* get_cluster_info(void* vp)
   { cluster.read();                                         // reads the socket and stores the data
 
 //    for (const auto n : RANGE<unsigned int>(1, 5) )         // check the socket every 5 seconds
-    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 5 } )    // check the socket every 5 seconds
+//    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 5 } )    // check the socket every 5 seconds
+    for ( [[maybe_unused]] auto _ : RANGE(1, 5) )    // check the socket every 5 seconds
     { //UNUSED(n);
 
       { SAFELOCK(thread_check);
@@ -2686,7 +2688,8 @@ void* prune_bandmap(void* vp)
     bandmap_win <= bandmaps[safe_get_band()];
 
  //   for (const auto n : RANGE<unsigned int>(1, 60) )    // check once per second for a minute
-    for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 60 } )    // check once per second for a minute
+ //   for ( [[maybe_unused]] auto _ : ranges::iota_view { 1, 60 } )    // check once per second for a minute
+    for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
     { //UNUSED(n);
 
       { SAFELOCK(thread_check);
@@ -2843,18 +2846,22 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
   { try
-    { const frequency set_last_f { rig.rig_frequency() };
+    { ost << "Changing band: " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
+
+      const frequency set_last_f { rig.rig_frequency() };
 
       rig.set_last_frequency(cur_band, cur_mode, set_last_f);             // save current frequency
 
       { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
-          ost << "ERROR: inconsistency in frequency/band info" << endl;
+        { ost << "ERROR: inconsistency in frequency/band info" << endl;
+
+          ost << "  cur_band = " << cur_band << endl;
+          ost << "  cur_mode = " << cur_mode << endl;
+          ost << "  get_last_frequency = " << rig.get_last_frequency(cur_band, cur_mode) << endl;
+          ost << "  BAND(get_last_frequency) = " << BAND(rig.get_last_frequency(cur_band, cur_mode)) << endl;
+          ost << "  set_last_f = " << set_last_f << endl;
+        }
       }
-
-//      const BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
-
-//      const set<BAND> permitted_bands_set(permitted_bands.begin(), permitted_bands.end());
-//      const set<BAND> permitted_bands_set { rules.permitted_bands_set() };
 
       const BAND new_band { ( e.is_alt('b') ? set_last_f.next_band_up(permitted_bands_set) : set_last_f.next_band_down(permitted_bands_set) ) };    // move up or down one band
 
@@ -2879,7 +2886,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // check that we're about to go to the correct band
       { if (BAND(last_frequency) != new_band)
-        { ost << "Error when attempting to change band; new band = " << new_band << ", new frequency = " << last_frequency << endl;
+        { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[new_band] << ", new frequency = " << last_frequency << endl;
           alert("FREQUENCY ERROR WHEN CHANGING BAND");
         }
       }
@@ -3096,6 +3103,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           const int    cull_function { from_string<int>(substring(command, posn)) };
 
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+//          ranges::for_each(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
         }
 
         bandmap& bm { bandmaps[safe_get_band()] };
@@ -3146,14 +3154,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           rig.rig_mode(me.mode());
           safe_set_mode(me.mode());
           display_band_mode(win_band_mode, safe_get_band(), me.mode());
-
           enter_cq_or_sap_mode(me.drlog_mode());
-
           update_based_on_frequency_change(freq, me.mode());
-// update bandmap; note that it will be updated at the next poll anyway (typically within one second)
-//          bandmap& bm { bandmaps[safe_get_band()] };
-
-//          win_bandmap <= bandmaps[safe_get_band()];
         }
       }
 
@@ -3187,7 +3189,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
             catch (...)
             { if (band_str == "*"s)
- //               score_bands = set<BAND>(rules.permitted_bands().cbegin(), rules.permitted_bands().cend());
                 score_bands = permitted_bands_set;
               else
                 alert("Error parsing [RE]SCOREB command"s);
@@ -3199,11 +3200,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no band information
           rules.restore_original_score_bands();
 
-        { const set<BAND> score_bands { rules.score_bands() };
+        { //const set<BAND> score_bands { rules.score_bands() };
 
           string bands_str;
 
-          FOR_ALL(score_bands, [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+          FOR_ALL(rules.score_bands(), [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+//          ranges::for_each(rules.score_bands(), [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
           win_score_bands < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Bands: "s <= bands_str;
         }
@@ -3242,12 +3244,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no mode information
           rules.restore_original_score_modes();
 
-        const set<MODE> score_modes { rules.score_modes() };
+ //       const set<MODE> score_modes { rules.score_modes() };
 
         string modes_str;
 
-        for (const auto& m : score_modes)
-          modes_str += (MODE_NAME[m] + SPACE_STR);
+ //       for (const auto& m : score_modes)
+ //         modes_str += (MODE_NAME[m] + SPACE_STR);
+
+ //       ranges::for_each(rules.score_modes(), [&] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+        FOR_ALL(rules.score_modes(), [&] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
         win_score_modes < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Modes: "s <= modes_str;
 
@@ -3342,7 +3347,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           const frequency new_frequency     { ( (contains_plus or contains_minus) ? cur_rig_frequency.hz() + (value * 1000) : value ) };
           const BAND new_band               { to_BAND(new_frequency) };
 
-//          bool valid { ( rules.permitted_bands_set() > new_band ) };
           bool valid { permitted_bands_set > new_band };
 
           if ( (valid) and (new_band == BAND_160))                                                  // check that it's not just BAND_160 because there's been a problem
@@ -3451,7 +3455,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         for (const auto& exf : expected_exchange)
         { bool processed_field { false };
 
-// &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
+// if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
 // need to figure out a way to generalise all this
           if (exf.is_choice())
           { if (exf.name() == "ITUZONE+SOCIETY"s)
@@ -3619,7 +3623,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
     if (found_call)
-    { const string callsign { be.callsign() };
+    { const string& callsign { be.callsign() };
 
       win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= callsign;  // put callsign into CALL window
 
@@ -3645,9 +3649,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
   if (!processed and e.is_control() and (e.symbol() == XK_KP_Enter))
-  { //const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
-
-    string results;
+  { string results;
 
     for (const auto& b : permitted_bands_set)
     { bandmap& bm { bandmaps[b] };        // use current bandmap to make it easier to display column offset
@@ -3711,7 +3713,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         be.calculate_mult_status(rules, statistics);
         be.is_needed(is_needed);
 
-        bandmap& bandmap_this_band = bandmaps[cur_band];
+        bandmap& bandmap_this_band { bandmaps[cur_band] };
 
         bandmap_this_band += be;
         win_bandmap <= bandmap_this_band;
@@ -3780,7 +3782,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // remove the visual indication in the visible log
         bool cleared { false };
 
-        for (auto line_nr = 0; line_nr < win_log.height() and !cleared; ++line_nr)
+        for (auto line_nr { 0 }; line_nr < win_log.height() and !cleared; ++line_nr)
         { if (!win_log.line_empty(line_nr))
           { win_log.clear_line(line_nr);
             cleared = true;
@@ -3813,12 +3815,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // removal of a Q might change the colour indication of stations
         for (auto& bm : bandmaps)
-        { BM_ENTRIES bme { bm.entries() };
+        { //BM_ENTRIES bme { bm.entries() };
 
-          for (auto& be : bme)
-          { if (be.remark(rules, q_history, statistics))
-              bm += be;
-          }
+  //        FOR_ALL(bme | std::ranges::views::filter([] (auto& be) { be.remark(rules, q_history, statistics); }), [] (const auto& be) { bm += be; });
+
+          FOR_ALL(bm.entries(), [&bm] (auto& be) { if (be.remark(rules, q_history, statistics))
+                                                     bm += be; 
+                                                 });
+
+  //        for (auto& be : bme)
+  //        { if (be.remark(rules, q_history, statistics))
+  //            bm += be;
+  //        }
 
           if (&bm == &(bandmaps[safe_get_band()]))
             win_bandmap <= bm;
@@ -3905,16 +3913,16 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
-        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+        ranges::for_each(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
 
 // add fuzzy matches
-        FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+        ranges::for_each(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
 
 // add query_1 matches
-        FOR_ALL(query_1_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+        ranges::for_each(query_1_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
 
 // add query_n matches
-        FOR_ALL(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+        ranges::for_each(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
 
 // remove any duplicates from all_matches
         const vector<string> all_matches_copy { all_matches };
@@ -4203,15 +4211,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { if (rig.split_enabled())
     { rig.split_disable();
 
-      switch (a_drlog_mode)
-      { case DRLOG_MODE::CQ :
-          enter_cq_mode();
-          break;
+      enter_cq_or_sap_mode(a_drlog_mode);
 
-        case DRLOG_MODE::SAP :
-          enter_sap_mode();
-          break;
-      }
+//      switch (a_drlog_mode)
+//      { case DRLOG_MODE::CQ :
+//          enter_cq_mode();
+//          break;
+//
+//        case DRLOG_MODE::SAP :
+//          enter_sap_mode();
+//          break;
+//      }
     }
     else
     { rig.split_enable();
@@ -7871,15 +7881,17 @@ bool process_keypress_F5(void)
 { if (rig.split_enabled())      // split is enabled; go back to situation before it was enabled
   { rig.split_disable();
 
-    switch (a_drlog_mode)
-    { case DRLOG_MODE::CQ :
-        enter_cq_mode();
-        break;
+    enter_cq_or_sap_mode(a_drlog_mode);
 
-      case DRLOG_MODE::SAP :
-        enter_sap_mode();
-        break;
-    }
+//    switch (a_drlog_mode)
+//    { case DRLOG_MODE::CQ :
+//        enter_cq_mode();
+//        break;
+//
+//      case DRLOG_MODE::SAP :
+//        enter_sap_mode();
+//        break;
+//    }
   }
   else                          // split is disabled, enable and prepare to work stn on B VFO
   { rig.split_enable();
@@ -8234,8 +8246,8 @@ void stop_recording(audio_recorder& audio)
 */
 bool update_rx_ant_window(void)
 { if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
-  { const bool   rx_ant_in_use          { rig.rx_ant() };
-    const        string window_contents { win_rx_ant.read() };
+  { const bool   rx_ant_in_use   { rig.rx_ant() };
+    const string window_contents { win_rx_ant.read() };
 
     if ( rx_ant_in_use and (window_contents != "RX"s) )
       win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "RX"s;
@@ -8384,7 +8396,7 @@ void populate_win_call_history(const string& callsign)
 
       win_call_history < c_posn < pad_left(BAND_NAME[b], 3);            // low band is on bottom
 
-      for (const auto m : call_history_modes /* permitted_modes*/ )
+      for (const auto m : call_history_modes)
       { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
         const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
         const auto         this_colour_pair { colours.add(fg, bg) };
@@ -8401,6 +8413,7 @@ void populate_win_call_history(const string& callsign)
 
     win_call_history.refresh();
 
+// QTC hint
     if (win_qtc_hint.valid())
     { int window_colour { win_qtc_hint_bg };
 
@@ -8534,7 +8547,7 @@ void update_bandmap_size_window(void)
   }
 }
 
-/*! \brief  Return latitude and longitude of a call or partial call
+/*! \brief              Return latitude and longitude of a call or partial call
     \param  callsign    call or partial call
     \return             latitude (+ve north) and longitude (+ve west) of <i>callsign</i>
     
@@ -8573,15 +8586,17 @@ pair<float, float> latitude_and_longitude(const string& callsign)
 */
 void do_not_show(const string& callsign, const BAND b)
 { if (b == ALL_BANDS)
-  { FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
-                                          bm.do_not_add(callsign);
-                                        } );
+  { ranges::for_each(bandmaps, [=] (bandmap& bm) { bm -= callsign;
+                                                   bm.do_not_add(callsign);
+                                                 } );
 
-    set<string> callsigns { calls_from_do_not_show_file(ALL_BANDS) };
+//    set<string> callsigns { calls_from_do_not_show_file(ALL_BANDS) };
 
-    callsigns += callsign;
+//    callsigns += callsign;
 
-    calls_to_do_not_show_file(callsigns, ALL_BANDS);
+//    calls_to_do_not_show_file(callsigns, ALL_BANDS);
+
+    calls_to_do_not_show_file( calls_from_do_not_show_file(ALL_BANDS) + callsign, ALL_BANDS );
   }
   else                          // single band
   { bandmap& bm = bandmaps[b];

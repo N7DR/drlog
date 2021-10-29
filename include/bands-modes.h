@@ -61,28 +61,28 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                  } };         ///< names of bands
 
 static /* const */ std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
-                                                          { "80"s,  BAND_80 },
-                                                          { "60"s,  BAND_60 },
-                                                          { "40"s,  BAND_40 },
-                                                          { "30"s,  BAND_30 },
-                                                          { "20"s,  BAND_20 },
-                                                          { "17"s,  BAND_17 },
-                                                          { "15"s,  BAND_15 },
-                                                          { "12"s,  BAND_12 },
-                                                          { "10"s,  BAND_10 }
-                                                        };                    ///< map a band name to a band
+                                                                { "80"s,  BAND_80 },
+                                                                { "60"s,  BAND_60 },
+                                                                { "40"s,  BAND_40 },
+                                                                { "30"s,  BAND_30 },
+                                                                { "20"s,  BAND_20 },
+                                                                { "17"s,  BAND_17 },
+                                                                { "15"s,  BAND_15 },
+                                                                { "12"s,  BAND_12 },
+                                                                { "10"s,  BAND_10 }
+                                                              };                    ///< map a band name to a band
 
 static /* const */ std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },
-                                                                { "80m"s,  BAND_80 },
-                                                                { "60m"s,  BAND_60 },
-                                                                { "40m"s,  BAND_40 },
-                                                                { "30m"s,  BAND_30 },
-                                                                { "20m"s,  BAND_20 },
-                                                                { "17m"s,  BAND_17 },
-                                                                { "15m"s,  BAND_15 },
-                                                                { "12m"s,  BAND_12 },
-                                                                { "10m"s,  BAND_10 }
-                                                              };                    ///< map an ADIF3 band to a band
+                                                                      { "80m"s,  BAND_80 },
+                                                                      { "60m"s,  BAND_60 },
+                                                                      { "40m"s,  BAND_40 },
+                                                                      { "30m"s,  BAND_30 },
+                                                                      { "20m"s,  BAND_20 },
+                                                                      { "17m"s,  BAND_17 },
+                                                                      { "15m"s,  BAND_15 },
+                                                                      { "12m"s,  BAND_12 },
+                                                                      { "10m"s,  BAND_10 }
+                                                                    };                    ///< map an ADIF3 band to a band
 
 
 /// modes that drlog knows about
@@ -132,6 +132,18 @@ extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    //
 // forward declaration
 template<class T> const BAND to_BAND(T f);
 
+/*! \brief      Return the lower edge of a band
+    \param  b   target band
+    \return     the frequency at the low edge of band <i>b</i>
+*/
+frequency lower_edge(const BAND b);
+
+/*! \brief      Return the upper edge of a band
+    \param  b   target band
+    \return     the frequency at the top edge of band <i>b</i>
+*/
+frequency upper_edge(const BAND b);
+
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
 /*! \class  frequency
@@ -172,7 +184,9 @@ public:
 
     Sets the frequency to the low edge of the band <i>b</i>
 */
-  explicit frequency(const enum BAND b);
+  inline explicit frequency(const enum BAND b) :
+    _hz { lower_edge(b) }
+    { }
 
 /// set frequency in Hz
   inline void hz(const decltype(_hz) n)
@@ -245,6 +259,12 @@ public:
 */
   BAND next_band_down(const std::set<BAND>& bands) const;
 
+/*! \brief          Find the next higher band
+    \param  bands   set of bands that may be returned
+    \return         band from <i>bands</i> that is the lowest band above the frequency
+
+    Returns BAND_160 if the frequency is outside all bands
+*/
   BAND next_band_up(const std::set<BAND>& bands) const;
 
 /// serialise
@@ -283,47 +303,18 @@ inline std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
-static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1'900) },
-                                                    { BAND_80,  frequency(3'600) },
-                                                    { BAND_60,  frequency(5'500) },
-                                                    { BAND_40,  frequency(7'100) },
-                                                    { BAND_30,  frequency(10'150) },
-                                                    { BAND_20,  frequency(14'150) },
-                                                    { BAND_17,  frequency(18'900) },
-                                                    { BAND_15,  frequency(21'200) },
-                                                    { BAND_12,  frequency(24'910) },
-                                                    { BAND_10,  frequency(28'300) }
+static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency { 1'900 } },
+                                                    { BAND_80,  frequency { 3'600 } },
+                                                    { BAND_60,  frequency { 5'500 } },
+                                                    { BAND_40,  frequency { 7'100 } },
+                                                    { BAND_30,  frequency { 10'150 } },
+                                                    { BAND_20,  frequency { 14'150 } },
+                                                    { BAND_17,  frequency { 18'900 } },
+                                                    { BAND_15,  frequency { 21'200 } },
+                                                    { BAND_12,  frequency { 24'910 } },
+                                                    { BAND_10,  frequency { 28'300 } }
                                                   };
 
-#if 0
-static const std::array<frequency, NUMBER_OF_BANDS> BAND_LOWER_BOUND { { frequency(1'800'000),  // 160
-                                                                         frequency(3'500'000),  // 80
-                                                                         frequency(5'000'000),  // 60
-                                                                         frequency(7'000'000),  // 40
-                                                                         frequency(10'100'000), // 30
-                                                                         frequency(14'000'000), // 20
-                                                                         frequency(18'068'000), // 17
-                                                                         frequency(21'000'000), // 15
-                                                                         frequency(24'890'000), // 12
-                                                                         frequency(28'000'000)  // 10
-                                                                      } };
-
-static const std::array<frequency, NUMBER_OF_BANDS> BAND_UPPER_BOUND { { frequency(2'000'000),  // 160
-                                                                         frequency(4'000'000),  // 80
-                                                                         frequency(6'000'000),  // 60
-                                                                         frequency(7'300'000),  // 40
-                                                                         frequency(10'150'000), // 30
-                                                                         frequency(14'350'000), // 20
-                                                                         frequency(18'168'000), // 17
-                                                                         frequency(21'450'000), // 15
-                                                                         frequency(24'990'000), // 12
-                                                                         frequency(29'700'000)  // 10
-                                                                      } }; 
-#endif
-
-frequency lower_edge(const BAND b);
-
-frequency upper_edge(const BAND b);
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency
@@ -341,76 +332,25 @@ template<class T> const BAND to_BAND(T f)
   if (f < 1'000'000)    // kHz
     return to_BAND(static_cast<long>(f) * 1000);
 
-// Hz
-//  if ( (f >= 1'800'000) and (f <= 2'000'000) )
-
-#if 1
-
   const static std::vector<BAND> non_warc_bands { BAND_160, BAND_80, BAND_60, BAND_40, BAND_20, BAND_15, BAND_10 };
 
-//  std::cerr << "Inside to_BAND() f = " << f << std::endl;
-
+// non-WARC bands
   for (const auto non_warc_band : non_warc_bands)
   { if ( (f >= lower_edge(non_warc_band).hz()) and (f <= upper_edge(non_warc_band).hz()) )
-    { //std::cerr << "returning band: " << non_warc_band << " LB = " << lower_edge(non_warc_band) 
-      //                                                 << " UB = " << upper_edge(non_warc_band) << std::endl;
       return non_warc_band;
-    }
   }
 
+// WARC bands
   if ( (f == 10'000'000) or ((f >= lower_edge(BAND_30).hz()) and (f <= upper_edge(BAND_30).hz())) )
-  { //std::cerr << "returning BAND_30 " << std::endl;
     return BAND_30;
-  }
 
   if ( (f == 18'000'000) or ((f >= lower_edge(BAND_17).hz()) and (f <= upper_edge(BAND_17).hz())) )
-  { //std::cerr << "returning BAND_17 " << std::endl;
     return BAND_17;
-  }
 
   if ( (f == 24'000'000) or ((f >= lower_edge(BAND_12).hz()) and (f <= upper_edge(BAND_12).hz())) )
-  { //std::cerr << "returning BAND_12 " << std::endl;
     return BAND_12;
-  }
-#endif
-
-#if 0
-  if ( (f >= 1'800'000) and (f <= 2'000'000) )
-    return BAND_160;
-
-  if ( (f >= 3'500'000) and (f <= 4'000'000) )
-    return BAND_80;
-
-  if ( (f >= 5'000'000) and (f <= 6'000'000) )
-    return BAND_60;
-
-  if ( (f >= 7'000'000) and (f <= 7'300'000) )
-    return BAND_40;
-
-  if ( (f == 10'000'000) or ((f >= 10'100'000) and (f <= 10'150'000)) )
-    return BAND_30;
-
-  if ( (f >= 14'000'000) and (f <= 14'350'000) )
-    return BAND_20;
-
-  if ( (f == 18'000'000) or ((f >= 18'068'000) and (f <= 18'168'000)) )
-    return BAND_17;
-
-  if ( (f >= 21'000'000) and (f <= 21'450'000) )
-    return BAND_15;
-
-  if ( (f == 24'000'000) or ((f >= 24'890'000) and (f <= 24'990'000)) )
-    return BAND_12;
-
-  if ( (f >= 28'000'000) and (f <= 29'700'000) )
-    return BAND_10;
-#endif
 
   return MIN_BAND;
 }
-
-//frequency lower_edge(const BAND b);
-
-//frequency upper_edge(const BAND b);
 
 #endif /* BANDSMODES_H */

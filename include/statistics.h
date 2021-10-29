@@ -100,7 +100,6 @@ public:
     \param  rules           rules for this contest
 */
   inline running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
-//    _auto_country_mults(false),
     _callsign_mults_used(rules.callsign_mults_used()),
     _country_mults_used(rules.country_mults_used()),
     _exchange_mults_used(rules.exchange_mults_used()),

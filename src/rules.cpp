@@ -89,8 +89,7 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
-{ //if (_values.find(cv) == _values.end())
-  if (!contains(_values, cv))
+{ if (!contains(_values, cv))
     _values += { cv, set<string>( { cv } ) };
 }
 
@@ -137,14 +136,18 @@ set<string> exchange_field_values::all_values(void) const
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-bool exchange_field_values::is_legal_value(const string& value) const
-{ for (const auto& cv : canonical_values())         // for each canonical value
-  { if (is_legal_value(cv, value))
-      return true;
-  }
+//bool exchange_field_values::is_legal_value(const string& value) const
+//{ return ANY_OF(canonical_values(), [=, this] (const auto& cv) { return is_legal_value(cv, value); }); }
 
-  return false;
-}
+
+
+//for (const auto& cv : canonical_values())         // for each canonical value
+//  { if (is_legal_value(cv, value))
+//      return true;
+//  }
+//
+//  return false;
+//}
 
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value
@@ -158,7 +161,8 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
   const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
-  return ( ss.find(putative_value) != ss.cend() );
+//  return ( ss.find(putative_value) != ss.cend() );
+  return ss.contains(putative_value);
 }
 
 // -------------------------  exchange_field  ---------------------------
@@ -179,12 +183,17 @@ vector<exchange_field> exchange_field::expand(void) const
   }
 
 // it's a choice
+#if 0
   for (const auto& this_choice : _choice)
-  { const vector<exchange_field>& vec { this_choice.expand() };   // recursive
+  { //const vector<exchange_field>& vec { this_choice.expand() };   // recursive
 
 //    COPY_ALL(vec, back_inserter(rv));          // append to rv
-    rv += vec;
+ //   rv += vec;
+    rv += this_choice.expand();     // recursive expansion
   }
+#endif
+
+  FOR_ALL(_choice, [&rv] (const auto& this_choice) { rv += this_choice.expand(); } );
 
   return rv;
 }

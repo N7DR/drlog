@@ -51,7 +51,7 @@ int64_t audio_recorder::_total_bytes_to_read(void)
 
 // how many seconds to next time marker?
 // current seconds past midnight
-  const string now_str { hhmmss() };                                      // HH:MM:SS
+  const string now_str { hhmmss() };                                        // HH:MM:SS
   const uint64_t hh    { from_string<uint64_t>(substring(now_str, 0, 2)) };
   const uint64_t mm    { from_string<uint64_t>(substring(now_str, 3, 2)) };
   const uint64_t ss    { from_string<uint64_t>(substring(now_str, 6, 2)) };
@@ -125,6 +125,7 @@ void audio_recorder::_set_params(void)
   }
 
   unsigned int rate { _hw_params.rate };
+
   err = snd_pcm_hw_params_set_rate_near(_handle, params, &_hw_params.rate, 0);
 
   if (err < 0)
@@ -273,7 +274,7 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+  _audio_buf = (u_char *)malloc(_period_size_in_bytes);             // !!!
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;

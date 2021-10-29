@@ -1215,10 +1215,29 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
     \param  fn      function
     \return         <i>fn</i>
 */
-template<class Input, class Function>
-inline Function FOR_ALL(Input& first, Function fn)
-  { return (std::for_each(first.begin(), first.end(), fn)); }
 
+// see https://en.cppreference.com/w/cpp/algorithm/ranges/for_each
+template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirectly_unary_invocable<std::projected<I, Proj>> Fun >
+constexpr std::ranges::for_each_result<I, Fun> FOR_ALL( I first, S last, Fun f, Proj proj = {} ) { return std::ranges::for_each(first, last, f, proj); }; 
+
+template< std::ranges::input_range R, class Proj = std::identity, std::indirectly_unary_invocable<std::projected<std::ranges::iterator_t<R>, Proj>> Fun >
+constexpr std::ranges::for_each_result<std::ranges::borrowed_iterator_t<R>, Fun> FOR_ALL( R&& r, Fun f, Proj proj = {} ) { return std::ranges::for_each(r, f, proj); }; 
+
+// https://en.cppreference.com/w/cpp/algorithm/ranges/all_any_none_of
+template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr bool ANY_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::any_of(first, last, pred, proj); };
+
+template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
+constexpr bool ANY_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::any_of(r, pred, proj); };;
+
+template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr bool ALL_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::all_of(first, last, pred, proj); };
+
+template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
+constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(r, pred, proj); };;
+
+
+#if 0
 /*! \brief          Apply a function to all in a const container
     \param  first   container
     \param  fn      function
@@ -1227,6 +1246,8 @@ inline Function FOR_ALL(Input& first, Function fn)
 template<class Input, class Function>
 inline Function FOR_ALL(const Input& first, Function fn)
   { return (std::for_each(first.cbegin(), first.cend(), fn)); }
+//  { return (std::ranges::for_each(first, fn)); }
+#endif
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
@@ -1267,25 +1288,37 @@ void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
 */
 template <class Input>
 inline void REVERSE(Input& v)
-  { std::reverse(v.begin(), v.end()); }
+//  { std::reverse(v.begin(), v.end()); }
+  { std::ranges::reverse(v); }
+
+// https://en.cppreference.com/w/cpp/ranges/reverse_view
+//template< std::ranges::view V > requires std::ranges::bidirectional_range<V>
+//class reverse_view : public std::ranges::view_interface<reverse_view<V>>
 
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container
     \param  pred    (boolean) predicate to apply
     \return         first value in <i>v</i> for which <i>pred</i> is true
 */
-template <typename Input, typename UnaryPredicate>
-inline auto FIND_IF(Input& v, UnaryPredicate pred) -> typename Input::iterator
-  { return std::find_if(v.begin(), v.end(), pred); }
+//template <typename Input, typename UnaryPredicate>
+//inline auto FIND_IF(Input& v, UnaryPredicate pred) -> typename Input::iterator
+//  { return std::find_if(v.begin(), v.end(), pred); }
 
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container (const)
     \param  pred    (boolean) predicate to apply
     \return         first value in <i>v</i> for which <i>pred</i> is true
 */
-template <typename Input, typename UnaryPredicate>
-inline auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
-  { return std::find_if(v.cbegin(), v.cend(), pred); }
+//template <typename Input, typename UnaryPredicate>
+//inline auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
+//  { return std::find_if(v.cbegin(), v.cend(), pred); }
+
+// https://en.cppreference.com/w/cpp/algorithm/ranges/find
+template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr I FIND_IF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::find_if(first, last, pred, proj); };
+
+template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>, Proj>> Pred >
+constexpr std::ranges::borrowed_iterator_t<R> FIND_IF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::find_if(r, pred, proj); };
 
 /*! \brief              Bound a value within limits
     \param  val         value to bound
@@ -1501,6 +1534,21 @@ auto operator+(const V& v1, E&& element) -> V
   return rv; 
 }
 
+/*! \brief             Add an element to a set or unordered set
+    \param  sus        initial SUS
+    \param  element    element to add
+    \return            <i>sus</i> with <i>element</i> added
+*/
+template <typename S, typename E>
+auto operator+(const S& s1, E&& element) -> S
+  requires is_sus_v<S> and (std::is_same_v<typename S::value_type, base_type<E>>)
+{ S rv { s1 };
+
+  rv.insert(std::forward<E>(element));
+  
+  return rv; 
+}
+
 /*! \brief              Append an element to a deque, list or vector
     \param  c1          destination deque, list or vector
     \param  element     element to append
@@ -1612,5 +1660,18 @@ template <typename C, typename E>
   requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
   { return std::find(c.cbegin(), c.cend(), element) != c.cend(); }
+
+
+template <typename T = int, typename U, typename V>
+//ranges::iota_view { 0u, call.length() - 2 } )
+auto RANGE(const U u, const V v)
+  { return std::ranges::iota_view { static_cast<T>(u), static_cast<T>(v) }; }
+
+#if 0
+template <typename T = int>
+//ranges::iota_view { 0u, call.length() - 2 } )
+auto RANGE(std::initializer_list<T> l)
+  { return std::ranges::iota_view { static_cast<T>(l.data[0]), static_cast<T>(l.data[1]) }; }
+#endif
 
 #endif    // MACROS_H

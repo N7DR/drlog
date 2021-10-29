@@ -119,7 +119,9 @@ protected:
 
 // soi-disant "enumeration" values (actually typically strings)
   const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
-  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, 
+                                                            std::string /* canonical prefix */, 
+                                                            COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
   static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
   static std::set<std::string> _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
@@ -241,7 +243,7 @@ public:
     { return value("QSO_DATE"s); }
 
 /// return the ADIF3 value of the date [YYYYMMDD] (zero if none)
-  inline int idate(void) const        // YYYYMMDD
+  inline int idate(void) const                                  // YYYYMMDD
     { return _fast_string_to_int(date()); }
 
 /// return the ADIF3 value of the band (empty string if none)

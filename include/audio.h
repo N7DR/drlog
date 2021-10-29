@@ -167,43 +167,42 @@ public:
 typedef struct { unsigned int     channels;     ///< number of channels
                  snd_pcm_format_t format;       ///< format number; defined in alsa/pcm.h
                  unsigned int     rate;         ///< rate (bytes per second)
-               } PARAMS_STRUCTURE ;
+               } PARAMS_STRUCTURE;
 
 class audio_recorder
 {
 protected:
 
-  bool              _aborting;                  ///< whether aborting a capture
-  u_char*           _audio_buf;                 ///< buffer for audio
-  std::string       _base_filename;             ///< base name of output file
-  size_t            _bits_per_frame;            ///< bits per sample * number of channels
-  snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
-  unsigned int      _buffer_time;               ///< amount of time in buffer?
-//  int               _file_type;                 ///< format of file
-  snd_pcm_t*        _handle;                    ///< PCM handle
-  PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
-  snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
-  bool              _initialised { false };     ///< has the hardware been initialised, ready for reading?
-  int64_t           _max_file_time;             ///< maximum duration in seconds
-  size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
-  snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
-  bool              _monotonic;                 ///< whether device does monotonic timestamps
-  unsigned int      _n_channels;                ///< number of channels to record
-  int               _open_mode;                 ///< blocking or non-blocking
-  std::string       _pcm_name;                  ///< name of the PCM handle
-  snd_pcm_uframes_t _period_frames;             ///< ?
-  unsigned int      _period_time;               ///< ?
-  bool              _recording;                 ///< whether the recorder is currently recording
-  int64_t           _record_count;              ///< number of records to capture
-  unsigned int      _samples_per_second;        ///< number of samples per second
-  snd_pcm_format_t  _sample_format;             ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.)
-  int               _start_delay;               ///< ?
-  snd_pcm_stream_t  _stream;                    ///< type of stream
-  pthread_t         _thread_id;                 ///< ID for the thread that plays the buffer
-  unsigned int      _thread_number;             ///< number of the thread currently being used
-  unsigned int      _time_limit;                ///< number of seconds to record
-  unsigned int      _xrun_counter { 0 };        ///< number of xrun errors
-  unsigned int      _xrun_threshhold { 1 };     ///< xrun target for displaying error message (doubled each time a message is written)
+  bool              _aborting              { false };           ///< whether aborting a capture
+  u_char*           _audio_buf             { nullptr };         ///< buffer for audio
+  std::string       _base_filename         { "drlog-audio"s };  ///< base name of output file
+  size_t            _bits_per_frame;                            ///< bits per sample * number of channels
+  snd_pcm_uframes_t _buffer_frames         { 0 };               ///< number of frames in buffer?
+  unsigned int      _buffer_time           { 0 };               ///< amount of time in buffer?
+  snd_pcm_t*        _handle                { nullptr };         ///< PCM handle
+  PARAMS_STRUCTURE  _hw_params;                                 ///< hardware parameters
+  snd_pcm_info_t*   _info                  { nullptr };         ///< pointer to information structure that corresponds to <i>_handle</i>
+  bool              _initialised           { false };           ///< has the hardware been initialised, ready for reading?
+  int64_t           _max_file_time         { 0 };               ///< maximum duration in seconds
+  bool              _monotonic             { false };           ///< whether device does monotonic timestamps
+  unsigned int      _n_channels            { 1 };               ///< number of channels to record
+  int               _open_mode             { 0 };               ///< blocking (0) or non-blocking (1)
+  std::string       _pcm_name              { "defaults"s };     ///< name of the PCM handle
+  snd_pcm_uframes_t _period_frames         { 0 };               ///< ?
+  size_t            _period_size_in_bytes;                      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
+  snd_pcm_uframes_t _period_size_in_frames { 0 };                       ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
+  unsigned int      _period_time           { 0 };                       ///< ?
+  bool              _recording             { false };                   ///< whether the recorder is currently recording
+  int64_t           _record_count          { 9999999999 };              ///< number of records to capture
+  unsigned int      _samples_per_second    { 8000 };                    ///< number of samples per second; 8000 = G.711 rate
+  snd_pcm_format_t  _sample_format         { SND_PCM_FORMAT_S16_LE };   ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.);my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-( 
+  int               _start_delay           { 1 };                       ///< ?
+  snd_pcm_stream_t  _stream                { SND_PCM_STREAM_CAPTURE };  ///< type of stream; we are capturing a stream
+  pthread_t         _thread_id;                                         ///< ID for the thread that plays the buffer
+  unsigned int      _thread_number;                                     ///< number of the thread currently being used
+  unsigned int      _time_limit            { 0 };                       ///< number of seconds to record; 0 => no limit
+  unsigned int      _xrun_counter          { 0 };                       ///< number of xrun errors
+  unsigned int      _xrun_threshhold       { 1 };                       ///< xrun target for displaying error message (doubled each time a message is written)
 
 // stuff for bext extension
 #if 0
@@ -220,9 +219,6 @@ protected:
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);     ///< function to write interleaved frames
   snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);             ///< function to read non-interleaved frames
   snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
-
-/// Declare, but do not define, copy constructor
-//  audio_recorder(const audio_recorder&);
 
 // protected pointers to functions
 
@@ -274,40 +270,15 @@ public:
 
 /// constructor
   inline audio_recorder(void) :
-    _aborting(false),                         // we are not aborting a capture
-    _audio_buf(nullptr),                      // no buffer by default
-    _base_filename("drlog-audio"s),            // default output file
-    _buffer_frames(0),                        // no frames in buffer?
-    _buffer_time(0),                          // no time covered by buffer?
-//    _file_type(AUDIO_FORMAT::WAVE),            // WAV format
-    _handle(nullptr),                         // no PCM handle
-    _info(nullptr),                           // explicitly set to uninitialised
-    _max_file_time(0),                        // no maximum duration (in seconds)
-    _period_size_in_frames(0),
-    _monotonic(false),                        // device cannot do monotonic timestamps
-    _n_channels(1),                           // monophonic
-    _open_mode(0),                            // blocking
-    _pcm_name("default"s),
-    _period_frames(0),
-    _period_time(0),
     _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
     _readn_func(snd_pcm_readn),               // function to read non-interleaved frames
-    _recording(false),                        // initially, not recording
-    _record_count(9999999999),                // big number
-    _samples_per_second(8000),                // G.711 rate
-    _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
-    _start_delay(1),
-    _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
-    _time_limit(0),                           // no limit
     _thread_number(0),
     _writei_func(snd_pcm_writei),             // function to write interleaved frames
     _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
   { }
 
+// disallow copy construction
   audio_recorder(const audio_recorder&) = delete;
-
-/// destructor
-//  inline virtual ~audio_recorder(void) = default;
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
   READ(initialised);                        ///< has the hardware been initialised, ready for reading?
@@ -347,10 +318,6 @@ public:
 /// register a function for alerting the user
   inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
     { _error_alert_function = error_alert_function; }
-
-/// register a function for handling low-level ALSA errors (to prevent them from appearing on the screen)
-//  inline void register_alsa_error_function(void (*error_alert_function)(const std::string&) )
-
 };
 
 /*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream

@@ -42,15 +42,6 @@ fuzzy_database::fuzzy_database(const string& filename)
   FOR_ALL(calls, [&] (const string& x) { *this += x; } );
 }
 
-/*! \brief          Construct from a <i>drmaster</i> object
-    \param  drm     <i>drmaster</i> object from which to construct
-*/
-fuzzy_database::fuzzy_database(const drmaster& drm)
-{ const vector<string> calls { drm.calls() };
-
-  FOR_ALL(calls, [&] (const string& x) { *this += x; } );
-}
-
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
@@ -93,7 +84,7 @@ void fuzzy_databases::remove_call(const string& call)
 
     Returns empty set if 
 */
-set<string> fuzzy_databases::operator[](const string& key)
+set<string> fuzzy_databases::operator[](const string& key) const
 { set<string> rv { };
 
   if (key.length() < 3)

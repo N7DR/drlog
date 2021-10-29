@@ -724,7 +724,8 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+//  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
   _dirty_entries();
 }
@@ -766,7 +767,8 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
 
   SAFELOCK(_bandmap);
 
-  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
+//  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
+  ranges::for_each(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
 
   _dirty_entries();
 }
@@ -867,16 +869,13 @@ BM_ENTRIES bandmap::filtered_entries(void)
         display_this_entry = !display_this_entry;
 
       if (display_this_entry)
-//        rv.push_back(be);
         rv += be;
     }
   }
 
-//  _filtered_entries = rv;
   _filtered_entries = move(rv);
   _filtered_entries_dirty = false;
 
-//  return rv;
   return _filtered_entries;
 }
 
@@ -897,11 +896,9 @@ BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   SAFELOCK(_bandmap);
 
-//  _rbn_threshold_and_filtered_entries = rv;
   _rbn_threshold_and_filtered_entries = move(rv);
   _rbn_threshold_and_filtered_entries_dirty = false;
 
-//  return rv;
   return _rbn_threshold_and_filtered_entries;
 }
 
@@ -954,22 +951,21 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
-//  const int max_permitted_skew { static_cast<int>(MAX_FREQUENCY_SKEW) };
-  const int max_permitted_skew { 95 };      // 95 Hz
+  const int        max_permitted_skew { 95 };                   // 95 Hz
+  const BM_ENTRIES fe                 { displayed_entries() };
 
-  const BM_ENTRIES fe { displayed_entries() };
-
-  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+// why can't this be const?
+//  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+  /* const */ auto marker_it { ranges::find_if(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
   if (marker_it == fe.cend())             // should never be true
     return bandmap_entry();
 
-  const string target_freq_str { marker_it->frequency_str() };
-
-  const frequency target_freq { marker_it->freq() };
+//  const string    target_freq_str { marker_it->frequency_str() };
+  const frequency target_freq     { marker_it->freq() };
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
-  { auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
+  { const auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
 
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
@@ -982,18 +978,13 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   }
 
   if (dirn == BANDMAP_DIRECTION::UP)
-  { //const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }) }; // move away from my frequency, in upwards direction
-
-    const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
+  { const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
     { const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
 
       if (cit3 != fe.cend())
-      { // 210227 DEBUG issue where we don't move
-        //ost << "needed; upward; marker frequency string = " << *marker_it << ", returning " << *cit3 << endl;
-         return (*cit3);
-      }
+        return (*cit3);
     }
   }
 
@@ -1034,7 +1025,7 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
 
     rv = fe.front();
 
-    for (BM_ENTRIES::const_iterator cit = next(fe.cbegin()); cit != fe.cend(); ++cit)
+    for (BM_ENTRIES::const_iterator cit { next(fe.cbegin()) }; cit != fe.cend(); ++cit)
     { if (cit->freq() >= f)
         return rv;
 
@@ -1051,7 +1042,7 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
 
     rv = fe.back();
 
-    for (BM_ENTRIES::const_reverse_iterator crit = next(fe.crbegin()); crit != fe.crend(); ++crit)
+    for (BM_ENTRIES::const_reverse_iterator crit { next(fe.crbegin()) }; crit != fe.crend(); ++crit)
     { if (crit->freq() <= f)
         return rv;
 
@@ -1139,10 +1130,12 @@ string bandmap::to_str(void)
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-bool bandmap::is_present(const string& target_callsign)
+bool bandmap::is_present(const string& target_callsign) const
 { SAFELOCK(_bandmap);
 
-  return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
+//  return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
+
+  return ranges::any_of(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
 }
 
 /*! \brief         Process an insertion queue, adding the elements to the bandmap
@@ -1155,9 +1148,10 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
   while (!biq.empty())
-  { bandmap_entry be { biq.front() };
+  { //bandmap_entry be { biq.front() };
 
-    *this += be;
+    //*this += be;
+    *this += biq.front();
 
     biq.pop();
   }
@@ -1187,12 +1181,6 @@ window& bandmap::write_to_window(window& win)
   constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
 
   const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
-//  const vector<int> fade_colours { bm.fade_colours() };
-
-// be very, very careful: don't call anything that locks _bandmap, as process_insertion_queue
-// locks _bandmap and then calls this routine -- I don't think that this is a relevant comment since this has been moved into the bandmap class
-
-// *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
@@ -1224,7 +1212,7 @@ window& bandmap::write_to_window(window& win)
       PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != 16 /* COLOUR_BLACK */))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != /* 16 */ COLOUR_BLACK))
         cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)

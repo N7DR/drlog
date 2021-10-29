@@ -30,9 +30,9 @@ extern message_stream ost;
 /// constructor from filename
 scp_database::scp_database(const string& filename)
 { const string file_contents { to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')) };
-  const vector<string> calls { to_lines(file_contents) };
+//  const vector<string> calls { to_lines(file_contents) };
 
-  init_from_calls(calls);
+  init_from_calls(to_lines(file_contents));
 }
 
 /// add a call
@@ -40,8 +40,11 @@ scp_database::scp_database(const string& filename)
 void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
 //    for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
-    for ( auto start_index : ranges::iota_view { static_cast<size_t>(0), call.length() - 2 } )
-      (_db[substring(call, start_index, 2)]).insert(call);
+//    for ( auto start_index : ranges::iota_view { 0u, call.length() - 2 } )
+//    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+//      (_db[substring(call, start_index, 2)]).insert(call);
+      (_db[substring(call, start_index, 2)]) += call;
 }
 
 /// remove a call; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
@@ -50,7 +53,8 @@ unsigned int scp_database::remove_call(const std::string& call)
 
   if (call.length() >= 2)
   { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
-    for (const auto start_index : ranges::iota_view { static_cast<size_t>(0), call.length() - 2 } )
+//    for (const auto start_index : ranges::iota_view { 0u, call.length() - 2 } )
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
     { SCP_SET& ss { _db[substring(call, start_index, 2)] };
 
       rv = ss.erase(call);                                      // all except the last will be thrown away
@@ -81,9 +85,9 @@ SCP_SET scp_database::operator[](const string& key)
         rv += cache_callsign;
       
     _last_key = key;
-    _last_result = rv;
+    _last_result = move(rv);
 
-    return rv;
+    return _last_result;
   }
   
 // cache miss
@@ -96,9 +100,9 @@ SCP_SET scp_database::operator[](const string& key)
       rv += callsign;
     
   _last_key = key;
-  _last_result = rv;
+  _last_result = move(rv);
 
-  return rv;      
+  return _last_result;      
 }
 
 /// empty the database; also clears the cache
@@ -113,7 +117,8 @@ void scp_database::clear_cache(void)
   _last_result.clear();
 
 // must also clear the cache of any parents
-  FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
+//  FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
+  ranges::for_each(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
 }
 
 // -----------  scp_databases  ----------------
@@ -149,7 +154,8 @@ SCP_SET scp_databases::operator[](const string& key)
 
       const SCP_SET ss { db[key] };
 
-      _last_result.insert(ss.cbegin(), ss.cend());
+//      _last_result.insert(ss.cbegin(), ss.cend());
+      _last_result += ss;
     }
 
     return _last_result;
@@ -164,9 +170,9 @@ SCP_SET scp_databases::operator[](const string& key)
         rv += cache_callsign;
 
     _last_key = key;
-    _last_result = rv;
+    _last_result = move(rv);
 
-    return rv;
+    return _last_result;
   }
 
 // key length is > 2; cache miss
@@ -183,16 +189,17 @@ SCP_SET scp_databases::operator[](const string& key)
   }
 
   _last_key = key;
-  _last_result = rv;
+  _last_result = move(rv);
 
-  return rv;
+  return _last_result;
 }
 
 /// clear the cache; also clear the caches of any children
 void scp_databases::clear_cache(void)
 { clear_cache_no_children();
 
-  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
+//  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
+  ranges::for_each(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
 }
 
 /// clear the cache without clearing the caches of any children

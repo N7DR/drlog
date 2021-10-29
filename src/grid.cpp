@@ -47,7 +47,7 @@ grid_square::grid_square(const string& gs)
     const char c1 { _designation[0] };
     const int  l1 { round_it(FIELD_WIDTH * (c1 - 'J')) };
     const char c2 { _designation[2] };
-    const int l2  { round_it(SQUARE_WIDTH * (c2 - '0')) };
+    const int  l2 { round_it(SQUARE_WIDTH * (c2 - '0')) };
 
     const float rounding_lon { ( SQUARE_WIDTH / 2 ) };
     const float lon          { l1 + l2 + rounding_lon };
@@ -105,4 +105,3 @@ bool is_valid_grid_designation(const string& putative_designation)
 
   return true;
 }
-

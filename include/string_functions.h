@@ -253,24 +253,24 @@ inline bool contains(const std::string& s, const char c)
 
     This should give the correct result in any locale
 */
-//bool contains_letter(const std::string& str);
 inline bool contains_letter(const std::string& str)
-  { return std::ranges::any_of(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
+//  { return std::ranges::any_of(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
+  { return ANY_OF(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
 
 /*! \brief          Does a string contain any upper case letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
 inline bool contains_upper_case_letter(const std::string& str)
-  { return std::ranges::any_of(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
-//  { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
+//  { return std::ranges::any_of(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
+  { return ANY_OF(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-//bool contains_digit(const std::string& str);
 inline bool contains_digit(const std::string& str)
+//  { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
   { return std::ranges::any_of(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief          Does a string contain only digits?
@@ -278,8 +278,8 @@ inline bool contains_digit(const std::string& str)
     \return         whether <i>str</i> comprises only digits
 */
 inline bool is_digits(const std::string& str)
-  { return std::ranges::all_of(str, [] (const char c) { return isdigit(c); } ); }
-//  { return (str.find_first_not_of(DIGITS) == std::string::npos); }
+//  { return std::ranges::all_of(str, [] (const char c) { return isdigit(c); } ); }
+  { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief              Pad a string to a particular size
     \param  s           original string
@@ -379,15 +379,10 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
     \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
 template <typename T>
-bool starts_with(const std::string& cs, const T& ss)
+inline bool starts_with(const std::string& cs, const T& ss)
   requires (is_string_v<typename T::value_type>)
-{ //for (const auto& str : ss)
-  //  if (starts_with(cs, str))
-  //    return true;
-
-  //return false;
-  return std::ranges::any_of(ss, [=] (const std::string& str) { return starts_with(cs, str); });
-}
+//  { return std::ranges::any_of(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
+  { return ANY_OF(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
 
 /*! \brief      Does a string begin with a particular substring?
     \param  cs  string to test
@@ -528,7 +523,8 @@ T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
 //  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
-  std::ranges::for_each(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+//  std::ranges::for_each(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+  FOR_ALL(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
 }
@@ -566,7 +562,8 @@ template <typename T>
 T remove_char(T& t, const char char_to_remove)
 { typename std::remove_const<T>::type rv;
 
-  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+//  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+  FOR_ALL(t, [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -981,9 +978,13 @@ T regex_matches(const C& container, const std::string& s)
      
   const std::regex rgx { s };
 
-  FOR_ALL(container, [=, &rv](const std::string& target) { if (regex_match(target, rgx))
-                                                             rv += target;
-                                                         } );
+  using namespace std::ranges::views;
+
+  FOR_ALL(container | filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
+
+ // FOR_ALL(container, [=, &rv](const std::string& target) { if (regex_match(target, rgx))
+ //                                                            rv += target;
+ //                                                        } );
   return rv;
 }
 

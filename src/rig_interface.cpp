@@ -1387,8 +1387,7 @@ bool rig_interface::notch_enabled(const string& ds_result)
   if (!contains(result, ";"s) or (result.size() != 13) )
     ost << "ERROR in notch_enabled(); result = " << result << endl;
   else
-  { const char c { result[11] };    // icon flash data
-
+  { const char c         { result[11] };    // icon flash data
     const bool notch_bit { (c bitand 0x02) == 0x02 };
 
     return notch_bit;

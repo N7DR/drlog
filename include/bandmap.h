@@ -1124,7 +1124,7 @@ public:
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-  bool is_present(const std::string& target_callsign);
+  bool is_present(const std::string& target_callsign) const;
 
 /// convert to a printable string
   std::string to_str(void);

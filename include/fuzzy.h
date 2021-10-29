@@ -52,7 +52,7 @@ protected:
 public:
 
 /// default constructor
-  inline fuzzy_database(void) = default;
+  fuzzy_database(void) = default;
 
 /*! \brief              Construct from a file
     \param  filename    name of the file from which to construct the object
@@ -64,7 +64,8 @@ public:
 /*! \brief          Construct from a <i>drmaster</i> object
     \param  drm     <i>drmaster</i> object from which to construct
 */
-  explicit fuzzy_database(const drmaster& drm);
+  inline explicit fuzzy_database(const drmaster& drm)
+    { FOR_ALL(drm.calls(), [&] (const std::string& x) { *this += x; } ); }
 
 /*! \brief          Add the calls in a vector to the database
     \param  calls   calls to be added
@@ -72,6 +73,7 @@ public:
     Does nothing for any calls already in the database
 */
   inline void init_from_calls(const std::vector<std::string>& calls)
+//    { std::ranges::for_each(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
     { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
 
 /*! \brief          Add a call to the database
@@ -145,7 +147,7 @@ public:
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-  std::set<std::string> operator[](const std::string& key);
+  std::set<std::string> operator[](const std::string& key) const;
 };
 
 #endif    // FUZZY_H
