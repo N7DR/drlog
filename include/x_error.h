@@ -1,4 +1,4 @@
-// $Id: x_error.h 3 2012-12-30 00:02:28Z  $
+// $Id: x_error.h 195 2021-11-01 01:21:22Z  $
 
 #ifndef X_ERROR_H
 #define X_ERROR_H
@@ -17,6 +17,7 @@
 class x_error : public std::exception
 {
 protected:
+
   int         _code;            ///< Error code
   std::string _reason;          ///< Error reason
 
@@ -30,7 +31,7 @@ public:
 
 /*! \brief  Destructor
 */
-  virtual ~x_error(void) throw()
+  /* virtual */ inline ~x_error(void) throw()
     { }
 
 /*! \brief  RO access to _code

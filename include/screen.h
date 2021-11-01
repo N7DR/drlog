@@ -1,4 +1,4 @@
-// $Id: screen.h 192 2021-09-19 14:03:15Z  $
+// $Id: screen.h 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -127,7 +127,7 @@ protected:
 public:
 
   cpair(void) = default;
-  cpair(const cpair&) = delete;
+  cpair(const cpair&) = delete;     // no copy constructor
 
 /*! \brief          Add a pair of colours
     \param  fg      foreground colour

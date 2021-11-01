@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 187 2021-06-26 16:16:42Z  $
+// $Id: bands-modes.cpp 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

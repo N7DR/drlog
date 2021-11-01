@@ -1,4 +1,4 @@
-// $Id: string_functions.h 193 2021-10-03 20:05:48Z  $
+// $Id: string_functions.h 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -529,6 +529,17 @@ T remove_peripheral_spaces(const T& t)
   return rv;
 }
 
+template <typename T>
+  requires (is_string_v<typename T::value_type>)
+T remove_peripheral_spaces(T&& t)
+{ T rv;
+
+  FOR_ALL(std::forward<T>(t), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+
+  return rv;
+}
+
+
 /*! \brief      Remove peripheral instances of a specific character
     \param  cs  original string
     \param  c   character to remove
@@ -557,13 +568,23 @@ inline std::string remove_char(std::string& s, const char char_to_remove)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
 */
-template <typename T>
-  requires (is_string_v<typename T::value_type>)
-T remove_char(T& t, const char char_to_remove)
-{ typename std::remove_const<T>::type rv;
+template <typename C>
+  requires (is_string_v<typename C::value_type>)
+C remove_char(C& t, const char char_to_remove)
+{ typename std::remove_const<C>::type rv;
 
 //  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
   FOR_ALL(t, [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+
+  return rv;
+}
+
+template <typename C>
+  requires (is_string_v<typename C::value_type>)
+C remove_char(C&& t, const char char_to_remove)
+{ C rv;
+
+  FOR_ALL(std::forward<C>(t), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }

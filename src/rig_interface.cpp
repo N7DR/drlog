@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 192 2021-09-19 14:03:15Z  $
+// $Id: rig_interface.cpp 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -523,7 +523,8 @@ void rig_interface::rit(const int hz)
     const int status { rig_set_rit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while setting RIT offset"s);
+//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while setting RIT offset"s);
+      _error_alert("Hamlib error while setting RIT offset"s);
   }
 }
 
@@ -545,7 +546,10 @@ int rig_interface::rit(void)
     shortfreq_t hz;
 
     if (const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
+ //     throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
+    { _error_alert("Hamlib error while getting RIT offset"s);
+      return 0;
+    }
 
     return static_cast<int>(hz);
   }
@@ -580,7 +584,11 @@ bool rig_interface::rit_enabled(void)
     { const string response { raw_command("RT;"s, RESPONSE::EXPECTED) };
 
       if (response.length() != 4)
-        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled(): "s + response);  // handle this error upstairs
+//        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled(): "s + response);  // handle this error upstairs
+      { //ost << "Invalid length in rit_enabled(): "s << response << endl;
+        _error_alert("Invalid length in rit_enabled(): "s + response);
+        return false;
+      }
         
       return (response[2] == '1');
     }
@@ -621,7 +629,10 @@ bool rig_interface::xit_enabled(void)
     { const string response { raw_command("XT;"s, RESPONSE::EXPECTED) };
 
       if (response.length() != 4)
-        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
+      {  // throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
+        _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
+        return false;
+      }
 
       return (response[2] == '1');
     }
@@ -655,7 +666,8 @@ void rig_interface::xit(const int hz)
     const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error in xit(int)");  // handle this error upstairs
+//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error in xit(int)");  // handle this error upstairs
+      _error_alert("Hamlib error in xit(int)");  // handle this error upstairs
   }
 }
 
@@ -666,7 +678,10 @@ int rig_interface::xit(void)
   SAFELOCK(_rig);
 
   if (const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) }; status != RIG_OK)
-    throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
+  {//throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
+     _error_alert("Hamlib error obtaining XIT offset"s);
+     return 0;
+  }
 
   return static_cast<int>(hz);
 }
@@ -681,7 +696,8 @@ void rig_interface::lock(void)
   { constexpr int v { 1 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
+    //  throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
+      _error_alert("Hamlib error locking VFO"s);
   }
 }
 
@@ -695,7 +711,8 @@ void rig_interface::unlock(void)
   { constexpr int v { 0 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
+//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
+      _error_alert("Hamlib error unlocking VFO"s);
   }
 }
 
@@ -714,7 +731,10 @@ bool rig_interface::sub_receiver(void)
     { const string str { raw_command("SB;"s, RESPONSE::EXPECTED) };
 
       if (str.length() < 3)
-        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response"s);
+      { //  throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response"s);
+        _error_alert("SUBRX Short response"s);
+        return false;
+      }
 
       return (str[2] == '1');
     }
@@ -730,14 +750,6 @@ bool rig_interface::sub_receiver(void)
 
   return false;    // keep compiler happy
 }
-
-/// toggle sub-receiver between on and off
-//void rig_interface::sub_receiver_toggle(void)
-//{ if (sub_receiver_enabled())
-//    sub_receiver_disable();
-//  else
-//    sub_receiver_enable();
-//}
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
@@ -756,7 +768,8 @@ void rig_interface::keyer_speed(const int wpm)
     v.i = wpm;
 
     if (const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
+//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
+      _error_alert("Hamlib error setting keyer speed"s);
   }
 }
 
@@ -773,7 +786,10 @@ int rig_interface::keyer_speed(void)
   { value_t v;
 
     if (const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
+    { //      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
+      _error_alert("Hamlib error getting keyer speed"s);
+      return 26;  // default speed
+    }
 
     return v.i;
   }
@@ -1127,7 +1143,10 @@ bool rig_interface::is_locked(void)
     int v;
 
     if (const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) }; status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
+    //  throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
+    {       _error_alert("Hamlib error getting lock status"s);
+      return false;
+    }
 
     return (v == 1);
   }

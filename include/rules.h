@@ -1,4 +1,4 @@
-// $Id: rules.h 193 2021-10-03 20:05:48Z  $
+// $Id: rules.h 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -382,7 +382,7 @@ protected:
   bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
-  std::map<std::string /* exchange field name */, unsigned int>  _exchange_present_points;                                  ///< number of points if a particular exchange field is received; only one value for all bands and modes
+  std::map<std::string /* exchange field name */, unsigned int>                             _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
   std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
@@ -686,7 +686,8 @@ public:
   inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
-      return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
+ //     return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
+      return contains(_permitted_exchange_values, field_name);
     }
 
 /*! \brief              Is a particular exchange field a regex?
@@ -863,4 +864,3 @@ std::string sac_prefix(const std::string& call);
 std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
 
 #endif    // RULES_H
-

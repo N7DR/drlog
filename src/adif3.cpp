@@ -192,7 +192,6 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     case ADIF3_DATA_TYPE::TIME :          // HHMMSS or HHMM
     { const string& utc { _value };
       
-  //    if (utc.find_first_not_of(DIGITS) != string::npos)
       if (!is_digits(utc))
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
  
@@ -463,7 +462,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) 
+  FOR_ALL(begin_it, end_it, [=, &rv](const auto& map_entry) 
     { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
         rv += map_entry.second; 
     });
@@ -480,7 +479,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) { rv += map_entry.second; });
+  FOR_ALL(begin_it, end_it, [=, &rv](const auto& map_entry) { rv += map_entry.second; });
   
   return rv;
 }

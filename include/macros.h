@@ -1,4 +1,4 @@
-// $Id: macros.h 193 2021-10-03 20:05:48Z  $
+// $Id: macros.h 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1210,7 +1210,7 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
   return ost;
 }
 
-/*! \brief          Apply a function to all in a (non-const) container
+/*! \brief          Apply a function to all in a container
     \param  first   container
     \param  fn      function
     \return         <i>fn</i>
@@ -1236,18 +1236,6 @@ constexpr bool ALL_OF( I first, S last, Pred pred, Proj proj = {} ) { return std
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
 constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(r, pred, proj); };;
 
-
-#if 0
-/*! \brief          Apply a function to all in a const container
-    \param  first   container
-    \param  fn      function
-    \return         <i>fn</i>
-*/
-template<class Input, class Function>
-inline Function FOR_ALL(const Input& first, Function fn)
-  { return (std::for_each(first.cbegin(), first.cend(), fn)); }
-//  { return (std::ranges::for_each(first, fn)); }
-#endif
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
@@ -1309,9 +1297,6 @@ inline void REVERSE(Input& v)
     \param  pred    (boolean) predicate to apply
     \return         first value in <i>v</i> for which <i>pred</i> is true
 */
-//template <typename Input, typename UnaryPredicate>
-//inline auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
-//  { return std::find_if(v.cbegin(), v.cend(), pred); }
 
 // https://en.cppreference.com/w/cpp/algorithm/ranges/find
 template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >

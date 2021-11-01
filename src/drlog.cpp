@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 193 2021-10-03 20:05:48Z  $
+// $Id: drlog.cpp 195 2021-11-01 01:21:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8959,10 +8959,11 @@ set<string> calls_from_do_not_show_file(const BAND b)
   set<string> rv;
 
   try
-  { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), filename)))) };
+  { //const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), filename)))) };
 
-    for (const auto& callsign : lines)
-      rv += callsign;
+    //for (const auto& callsign : lines)
+    //  rv += callsign;
+    FOR_ALL( remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
   }
 
   catch (...)     // not an error if a do-not-show file does not exist
@@ -8987,13 +8988,15 @@ void calls_to_do_not_show_file(const set<string>& callsigns, const BAND b)
 ///  set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
   CALL_SET output_set(compare_calls);    // define the ordering to be callsign order
 
-  for (const string& callsign : callsigns)
-    output_set += callsign;
+//  for (const string& callsign : callsigns)
+//    output_set += callsign;
+  FOR_ALL(callsigns, [&output_set] (const string& callsign) { output_set += callsign; });
 
   ofstream outfile(filename);
 
-  for (const auto& callsign : output_set)
-    outfile << callsign << endl;
+  FOR_ALL(output_set, [&outfile] (const auto& callsign) { outfile << callsign << endl; });
+//  for (const auto& callsign : output_set)
+//    outfile << callsign << endl;
 }
 
 /*! \brief          Obtain the char used to represent a leading zero in a serial number
