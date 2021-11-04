@@ -90,8 +90,6 @@ public:
 
 /// default constructor
   audio_filter(void) = default;
- 
-//  ~audio_filter(void) = default;
 
   READ(centre);                     ///< centre frequency, in Hz
   READ(bandwidth);                  ///< some measure of bandwidth, in Hz
@@ -171,6 +169,18 @@ protected:
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
   void _error_alert(const std::string& msg);
+
+//    if ( const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"s, 0) )
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \param  expected_len    expected length of response
+    \return                 the response from the rig, or the empty string
+
+    Currently any expected length is ignored; the routine looks for the concluding ";" instead
+*/
+  std::string _retried_raw_command(const std::string& cmd, const int expected_len = 0, const int timeout_ms = 250, const int n_retries = 0);
 
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
@@ -455,8 +465,6 @@ public:
   int keyer_speed(void);
 
 // explicit K3 commands
-#if !defined(NEW_RAW_COMMAND)
-
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
     \param  expectation     whether a response is expected
@@ -466,12 +474,6 @@ public:
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
   std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0);
-#endif
-
-#if defined(NEW_RAW_COMMAND)
-  const std::string raw_command(const std::string& cmd,
-                                const unsigned int expected_length);
-#endif
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode

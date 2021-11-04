@@ -4583,7 +4583,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
       for (const string& str : exchange_field_values)
         if (!contains(str, '\''))
-//          new_fields.push_back(str);
           new_fields += str;
 
       exchange_field_values = new_fields;
@@ -4626,7 +4625,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         for (const auto& etf : exchange_template)
           ost << etf << endl;
-
       }
 
       if (!processed)
@@ -4762,7 +4760,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                   pef.value(rules.canonical_value(pef.name(), pef.value()));
               }
 
-//              received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
               received_exchange += { pef.name(), pef.value(), is_mult_field, false };
             }
 
@@ -4879,6 +4876,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             append_to_file(context.logfile(), (qso.verbose_format() + EOL) );
             update_rate_window();
           }
+
+// possibly switch automatically to CQ mode
+          if ( (logbk.size() > 1) and context.auto_cq_mode_ssb() and (drlog_mode == DRLOG_MODE::SAP) and (cur_mode == MODE_SSB) )
+            if (logbk[logbk.size() - 1].mode() == MODE_SSB)
+              if (abs(from_string<float>(logbk.last_qso().freq()) - from_string<float>(logbk[logbk.size() - 1].freq())) < 0.5)  // 500 Hz
+                enter_cq_mode();
 
 // perform any changes to the bandmaps
 

@@ -59,6 +59,7 @@ protected:
   std::string                                  _audio_file                              { "audio"s };                   ///< base name of file for audio recordings
   unsigned int                                 _audio_rate                              { 8000 };                       ///< number of samples per second
   std::string                                  _auto_backup_directory                   { };                            ///< directory for auto backup files (default = no directory)
+  bool                                         _auto_cq_mode_ssb                        { false };                      ///< do we automatically go to CQ mode on SSB?
   bool                                         _auto_remaining_callsign_mults           { false };                      ///< do we auto-generate the remaining callsign mults?
   unsigned int                                 _auto_remaining_callsign_mults_threshold { 1 };                          ///< number of times a callsign mult must be seen before it becomes known
   bool                                         _auto_remaining_country_mults            { false };                      ///< do we auto-generate the remaining country mults?
@@ -316,6 +317,7 @@ public:
   CONTEXTREAD(audio_file);                               ///< base name of file for audio recordings
   CONTEXTREAD(audio_rate);                               ///< number of samples per second
   CONTEXTREAD(auto_backup_directory);                    ///< directory for auto backup files
+  CONTEXTREAD(auto_cq_mode_ssb);                         ///< do we automatically go to CQ mode on SSB?
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
   CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
   CONTEXTREAD(auto_remaining_callsign_mults_threshold);  ///< number of times a callsign mult must be seen before it becomes known

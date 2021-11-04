@@ -239,6 +239,15 @@ std::string replace_substring(const std::string& s, const size_t start_posn, con
 inline bool contains(const std::string& s, const std::string& ss)
   { return s.find(ss) != std::string::npos; }
 
+/*! \brief          Does a string contain a particular substring at a particular location?
+    \param  s       string to test
+    \param  ss      substring for which to search
+    \param  posn    putative start position of <i>ss</i>
+    \return         whether <i>s</i> contains the substring <i>ss</i>, starting at position <i>posn</i>
+*/
+inline bool contains_at(const std::string& s, const std::string& ss, const size_t posn)
+  { return (s.length() >= posn + ss.length()) and (substring(s, posn, ss.length()) == ss); }
+
 /*! \brief      Does a string contain a particular character?
     \param  s   string to test
     \param  c   character for which to search
@@ -246,6 +255,15 @@ inline bool contains(const std::string& s, const std::string& ss)
 */
 inline bool contains(const std::string& s, const char c)
   { return s.find(c) != std::string::npos; }
+
+/*! \brief          Does a string contain a particular character at a particular location?
+    \param  s       string to test
+    \param  c       character for which to search
+    \param  posn    location to test
+    \return         whether <i>s</i> contains the character <i>c</i> at position <i>posn</i>
+*/
+inline bool contains_at(const std::string& s, const char c, const size_t posn)
+  { return (s.length() > posn) and (s[posn] == c); }
 
 /*! \brief          Does a string contain any letters?
     \param  str     string to test

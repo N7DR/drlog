@@ -160,6 +160,42 @@ frequency rig_interface::_rig_frequency(const VFO v)
     \brief  The interface to a rig
 */
 
+//  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0);
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \param  expected_len    expected length of response
+    \return                 the response from the rig, or the empty string
+
+    Currently any expected length is ignored; the routine looks for the concluding ";" instead
+*/
+string rig_interface::_retried_raw_command(const string& cmd, const int expected_len, const int timeout_ms, const int n_retries)
+{ string rv;
+
+  int counter    { 0 };
+  bool completed { false };
+
+  while (!completed and (counter != n_retries))  
+  { rv = raw_command(cmd, RESPONSE::EXPECTED, expected_len);    // issue the command each time
+
+//    completed = contains(rv, ';');
+    completed = contains_at(rv, ';', expected_len - 1);
+   
+    if (!completed)
+    { counter++;
+      sleep_for(milliseconds(timeout_ms));
+    }
+  }
+
+  if (!completed)
+  { ost << "no response from command: " << cmd << endl;
+    rv.clear();             // don't give a partial reponse
+  }
+
+  return rv;
+}
+
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
@@ -383,7 +419,10 @@ bool rig_interface::split_enabled(void)
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; transmit_vfo.length() >= 4)
+//    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; transmit_vfo.length() >= 4)
+//      return (transmit_vfo[2] == '1');
+
+    if ( const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"s, 0) )
       return (transmit_vfo[2] == '1');
 
     _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -523,7 +562,6 @@ void rig_interface::rit(const int hz)
     const int status { rig_set_rit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while setting RIT offset"s);
       _error_alert("Hamlib error while setting RIT offset"s);
   }
 }
@@ -531,14 +569,21 @@ void rig_interface::rit(const int hz)
 /// get rit offset (in Hz)
 int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
-  { const string value { raw_command("RO;"s, RESPONSE::EXPECTED) };
-
-    if (value.length() != 8)
+  { if ( const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"s, 0) )
+      return from_string<int>(substring(value, 2, 5));
+    else
     { _error_alert("Invalid rig response in rit(): "s + value);
       return 0;
     }
 
-    return from_string<int>(substring(value, 2, 5));
+#if 0
+  if (const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; value.length() < 8)
+    { _error_alert("Invalid rig response in rit(): "s + value);
+      return 0;
+    }
+    else
+      return from_string<int>(substring(value, 2, 5));
+#endif
   }
   else
   { SAFELOCK(_rig);
@@ -546,7 +591,6 @@ int rig_interface::rit(void)
     shortfreq_t hz;
 
     if (const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
- //     throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
     { _error_alert("Hamlib error while getting RIT offset"s);
       return 0;
     }
@@ -581,16 +625,20 @@ void rig_interface::rit_disable(void)
 bool rig_interface::rit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { const string response { raw_command("RT;"s, RESPONSE::EXPECTED) };
-
-      if (response.length() != 4)
-//        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled(): "s + response);  // handle this error upstairs
-      { //ost << "Invalid length in rit_enabled(): "s << response << endl;
-        _error_alert("Invalid length in rit_enabled(): "s + response);
+    { if ( const string response { raw_command("RT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "RT"s, 0) )
+        return (response[2] == '1');
+      else
+      { _error_alert("Invalid length in rit_enabled(): "s + response);
         return false;
       }
-        
-      return (response[2] == '1');
+
+
+//if (const string response { raw_command("RT;"s, RESPONSE::EXPECTED) }; response.length() < 4)
+ //     { _error_alert("Invalid length in rit_enabled(): "s + response);
+ //       return false;
+ //     }
+ //     else
+ //       return (response[2] == '1');
     }
     
     case RIG_MODEL_DUMMY :
@@ -626,15 +674,20 @@ void rig_interface::xit_disable(void)
 bool rig_interface::xit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { const string response { raw_command("XT;"s, RESPONSE::EXPECTED) };
-
-      if (response.length() != 4)
-      {  // throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
-        _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
+    { if ( const string response { raw_command("XT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "XT"s, 0) )
+        return (response[2] == '1');
+      else
+      { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
         return false;
       }
 
-      return (response[2] == '1');
+
+//if (const string response { raw_command("XT;"s, RESPONSE::EXPECTED) }; response.length() < 4)
+//      { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
+//        return false;
+//      }
+//      else
+//        return (response[2] == '1');
     }
     
     case RIG_MODEL_DUMMY :
@@ -666,7 +719,6 @@ void rig_interface::xit(const int hz)
     const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error in xit(int)");  // handle this error upstairs
       _error_alert("Hamlib error in xit(int)");  // handle this error upstairs
   }
 }
@@ -678,8 +730,7 @@ int rig_interface::xit(void)
   SAFELOCK(_rig);
 
   if (const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) }; status != RIG_OK)
-  {//throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
-     _error_alert("Hamlib error obtaining XIT offset"s);
+  {  _error_alert("Hamlib error obtaining XIT offset"s);
      return 0;
   }
 
@@ -696,7 +747,6 @@ void rig_interface::lock(void)
   { constexpr int v { 1 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
-    //  throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
       _error_alert("Hamlib error locking VFO"s);
   }
 }
@@ -711,7 +761,6 @@ void rig_interface::unlock(void)
   { constexpr int v { 0 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
-//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
       _error_alert("Hamlib error unlocking VFO"s);
   }
 }
@@ -727,28 +776,18 @@ void rig_interface::sub_receiver(const bool b)
 /// is sub-receiver on?
 bool rig_interface::sub_receiver(void)
 { if (_model == RIG_MODEL_K3)
-  { try
-    { const string str { raw_command("SB;"s, RESPONSE::EXPECTED) };
+  { 
 
-      if (str.length() < 3)
-      { //  throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response"s);
-        _error_alert("SUBRX Short response"s);
-        return false;
-      }
 
-      return (str[2] == '1');
+if (const string response { raw_command("SB;"s, RESPONSE::EXPECTED) }; response.length() < 3)
+    { _error_alert("SUBRX Short response"s);
+      return false;
     }
-
-    catch (const rig_interface_error& e)
-    { throw e;
-    }
-
-    catch (...)
-    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting SUBRX status"s);
-    }
+    else
+      return (response[2] == '1');
   }
 
-  return false;    // keep compiler happy
+  return false;
 }
 
 /*! \brief          Set the keyer speed
@@ -768,7 +807,6 @@ void rig_interface::keyer_speed(const int wpm)
     v.i = wpm;
 
     if (const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) }; status != RIG_OK)
-//      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
       _error_alert("Hamlib error setting keyer speed"s);
   }
 }
@@ -778,16 +816,26 @@ int rig_interface::keyer_speed(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { const string status_str { raw_command("KS;"s, RESPONSE::EXPECTED, 6) };
+  { if ( const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"s, 0) )
+      return from_string<int>(substring(response, 2, 3));
+    else
+    { _error_alert("Invalid response getting keyer_speed: "s + response);
+      return false;
+    }
 
-    return from_string<int>(substring(status_str, 2, 3));
+
+//f (const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; response.length() < 6)
+//    { _error_alert("Invalid response getting keyer_speed: "s + response);
+ //     return false;
+//    }
+//    else
+//      return from_string<int>(substring(response, 2, 3));
   }
-  else
+  else              // not K3
   { value_t v;
 
     if (const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) }; status != RIG_OK)
-    { //      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
-      _error_alert("Hamlib error getting keyer speed"s);
+    { _error_alert("Hamlib error getting keyer speed"s);
       return 26;  // default speed
     }
 
@@ -872,14 +920,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
         while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
         { set_timeout(1, 0);
 
-//          FD_ZERO(&set);    // clear the set
-//          FD_SET(fd, &set); // add the file descriptor to the set
-
-//          timeout.tv_sec = 1;
-//          timeout.tv_usec = 0;
-
- //         int status { select(fd + 1, &set, NULL, NULL, &timeout) };
-
           if (int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
@@ -906,26 +946,16 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
             alert("P3 screendump progress: "s + to_string(percent) + percent_str);
             sleep_for(milliseconds(1000));  // we have the lock for all this time
           }
-//          else
-//            alert("P3 screendump complete");
         }
       }
-      else              // not a P3 screenshot
+      else                                              // not a P3 screenshot; keep reading until we received at least one ";"
       { static int rig_communication_failures { 0 };
 
         while (!completed and (counter < MAX_ATTEMPTS) )
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
- //         FD_ZERO(&set);    // clear the set
-//          FD_SET(fd, &set); // add the file descriptor to the set
-
-//          timeout.tv_sec = 0;
-//          timeout.tv_usec = TIMEOUT_MICROSECONDS;
-
           if (counter)                          // we've already slept the first time through
             sleep_for(milliseconds(50));
-
- //         int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
           if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
@@ -950,7 +980,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
                 }
               }
 
-              const ssize_t n_read { read(fd, c_in.data(), INBUF_SIZE / 2) };   // read a maximum of 500 characters inot the static array; halve to provide margin of error
+              const ssize_t n_read { read(fd, c_in.data(), INBUF_SIZE / 2) };   // read a maximum of 500 characters into the static array; halve to provide margin of error
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -1132,10 +1162,17 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 /// is the VFO locked?
 bool rig_interface::is_locked(void)
 { if (_model == RIG_MODEL_K3)
-  { const string status_str  { raw_command("LK;"s, RESPONSE::EXPECTED, 4) };
-    const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
+  { if ( const string response { raw_command("LK;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"s, 0) )
+      return (response[2] == '1');
+    else
+    { _error_alert("Invalid response getting locked status: "s + response);
+      return false;  // default is unlocked
+    }
 
-    return (status_char == '1');
+//    const string status_str  { raw_command("LK;"s, RESPONSE::EXPECTED, 4) };
+//    const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
+//
+//    return (status_char == '1');
   }
   else
   { SAFELOCK(_rig);
@@ -1143,8 +1180,7 @@ bool rig_interface::is_locked(void)
     int v;
 
     if (const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) }; status != RIG_OK)
-    //  throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
-    {       _error_alert("Hamlib error getting lock status"s);
+    { _error_alert("Hamlib error getting lock status"s);
       return false;
     }
 
@@ -1161,9 +1197,16 @@ int rig_interface::bandwidth(void)
 
   SAFELOCK(_rig);
 
-  const string status_str { raw_command("BW;"s, RESPONSE::EXPECTED, 7) };
+  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"s, 0) )
+      return from_string<int>(substring(response, 2, 4)) * 10;
+  else
+  { _error_alert("Invalid response getting bandwidth: "s + response);
+    return 0;
+  }
 
-  return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
+//  const string status_str { raw_command("BW;"s, RESPONSE::EXPECTED, 7) };
+
+//  return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1195,10 +1238,18 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
 */
 bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
-  { bool rv { true };                                        // default: be paranoid
+  { //bool rv { true };                                        // default: be paranoid
 
     if (_model == RIG_MODEL_K3)
-    { const string response { raw_command("TQ;"s, RESPONSE::EXPECTED, 4) };
+    { if ( const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0) )
+        return  (response[2] == '1');
+      else
+      { _error_alert("Invalid response getting transmit status: "s + response);
+        return true;                // be paranoid
+      }
+
+#if 0
+const string response { raw_command("TQ;"s, RESPONSE::EXPECTED, 4) };
 
       if (response.length() < 4)
       { // because this happens so often, don't report it
@@ -1206,9 +1257,10 @@ bool rig_interface::is_transmitting(void)
       }
       else
         rv = (response[2] == '1');
+#endif
     }
 
-    return rv;
+    return true;    // keep compiler happy
   }
   else              // no rig connected
     return false;
@@ -1225,7 +1277,19 @@ bool rig_interface::test(void)
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string response { raw_command("IC;"s, RESPONSE::EXPECTED, 8) };
+    { if ( const string response { raw_command("IC;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"s, 0) )
+      { const char c { response[2] };
+
+        return c bitand (1 << 5);
+      }
+      else
+      { _error_alert("Invalid response retrieving icons and status: "s + response);
+        return true;                // be paranoid
+      }
+
+
+#if 0
+      const string response { raw_command("IC;"s, RESPONSE::EXPECTED, 8) };
 
       if (response.length() < 8)
         _error_alert("Unable to retrieve K3 icons and status"s);
@@ -1234,6 +1298,7 @@ bool rig_interface::test(void)
 
         rv = (c bitand (1 << 5));
       }
+#endif
     }
   }
 
@@ -1328,9 +1393,17 @@ unsigned int rig_interface::centre_frequency(void)
 
   SAFELOCK(_rig);
 
-  const string status_str { raw_command("IS;"s, RESPONSE::EXPECTED, 8) };
+  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
+    return from_string<int>(substring(response, 2, 4)) * 10;
+  else
+  { _error_alert("Invalid response getting centre frequency: "s + response);
+    return 0;
+  }
 
-  return ( (status_str.size() < 8) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
+
+//  const string status_str { raw_command("IS;"s, RESPONSE::EXPECTED, 8) };
+
+//  return ( (status_str.size() < 8) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Set audio centre frequency, in Hz

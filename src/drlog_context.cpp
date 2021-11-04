@@ -178,6 +178,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( ((LHS == "AUTO BACKUP DIRECTORY"s) or (LHS == "AUTO BACKUP"s)) and !rhs.empty() )  // AUTO BACKUP was the old name for this command
       _auto_backup_directory = rhs;
 
+// AUTO CQ MODE SSB
+    if (LHS == "AUTO CQ MODE SSB"s)
+      _auto_cq_mode_ssb = is_true;
+
 // AUTO SCREENSHOT
     if ( (LHS == "AUTO SCREENSHOT"s) and !rhs.empty() )
       _auto_screenshot = is_true;
