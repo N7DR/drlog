@@ -93,7 +93,8 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
 //        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
 //        std::ranges::for_each(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
-        ranges::for_each(remove_peripheral_spaces(split_string(bands_str, ","s)), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+//        ranges::for_each(remove_peripheral_spaces(split_string(bands_str, ","s)), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+        FOR_ALL(clean_split_string(bands_str, ','), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
       }
     }
   }
@@ -208,16 +209,16 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
-      { const vector<string> colour_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
+      { //const vector<string> colour_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
-        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
+        FOR_ALL(clean_split_string(RHS, ','), [&] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
       }
     }
 
 // BAND MAP FILTER
     if ( (LHS == "BAND MAP FILTER"s) or (LHS == "BANDMAP FILTER"s) )
     { if (!RHS.empty())
-      { vector<string> filters { remove_peripheral_spaces(split_string(RHS, ","s)) };
+      { vector<string> filters { clean_split_string(RHS, '.') };
 
         SORT(filters, compare_calls);    // put the entries into callsign order
         _bandmap_filter = filters;
@@ -228,7 +229,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP FILTER COLOURS"s) or (LHS == "BAND MAP FILTER COLORS"s) or
          (LHS == "BANDMAP FILTER COLOURS"s) or (LHS == "BANDMAP FILTER COLORS"s) )
     { if (!RHS.empty())
-      { const vector<string> colours { split_string(RHS, ","s) };
+      { //const vector<string> colours { split_string(RHS, ","s) };
+        const vector<string> colours { clean_split_string(RHS, ',') };
 
         if (colours.size() >= 1)
           _bandmap_filter_foreground_colour = string_to_colour(colours[0]);
@@ -293,11 +295,12 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"s)
-    { const string         bands_str     { rhs };
-      const vector<string> bands_str_vec { remove_peripheral_spaces(split_string(bands_str, ","s)) };
+    { //const string         bands_str     { rhs };
+      //const vector<string> bands_str_vec { remove_peripheral_spaces(split_string(bands_str, ","s)) };
       
-      for (const auto& band_str : bands_str_vec)
-        _call_history_bands += BAND_FROM_NAME[band_str]; 
+      //for (const auto& band_str : bands_str_vec)
+      //  _call_history_bands += BAND_FROM_NAME[band_str]; 
+      FOR_ALL(clean_split_string(rhs, ','), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
     }
 
 // CALL OK NOW MESSAGE
@@ -306,9 +309,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALLSIGN MULTS
     if (LHS == "CALLSIGN MULTS"s)
-    { const vector<string> callsign_mults_vec { remove_peripheral_spaces(split_string(RHS, ","s)) };
+    { //const vector<string> callsign_mults_vec { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
-      move(callsign_mults_vec.cbegin(), callsign_mults_vec.cend(), inserter(_callsign_mults, _callsign_mults.begin()));
+//      move(callsign_mults_vec.cbegin(), callsign_mults_vec.cend(), inserter(_callsign_mults, _callsign_mults.begin()));
+//      ranges::move(callsign_mults_vec, inserter(_callsign_mults, _callsign_mults.begin()));
+      ranges::move(clean_split_string(RHS, ','), inserter(_callsign_mults, _callsign_mults.begin()));
     }
 
 // CALLSIGN MULTS PER BAND
@@ -464,9 +469,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE[
     if (starts_with(testline, "EXCHANGE["s))
     { const string         country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
-      const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
+      //const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
 
-      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
+//      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
+      FOR_ALL(clean_split_string(country_list, ','), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
@@ -499,7 +505,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']', DELIMITERS::DROP)) };
 
       for (const auto& file : files)
-      { const vector<string> fields { remove_peripheral_spaces(split_string(file, ","s)) };
+      { //const vector<string> fields { remove_peripheral_spaces(split_string(file, ","s)) };
+        const vector<string> fields { clean_split_string(file, ',') };
 
         if (fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
@@ -513,7 +520,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE SENT
 // e.g., exchange sent = RST:599, CQZONE:4
     if (LHS == "EXCHANGE SENT"s)
-    { const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+    { //const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+      const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
       const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
@@ -525,7 +533,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE SENT CW
     if (LHS == "EXCHANGE SENT CW"s)
-    { const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+    { //const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+      const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
       const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
@@ -611,7 +620,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         _mark_frequencies += { MODE_CW, frequencies };
 
       if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES SSB"s)
-//        _mark_frequencies.insert( { MODE_SSB, frequencies } );
         _mark_frequencies += { MODE_SSB, frequencies };
     }
 
@@ -647,7 +655,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const frequency f { break_point };
         const BAND      b { to_BAND(f) };
 
-        _mode_break_points.insert( { b, f } );
+//        _mode_break_points.insert( { b, f } );
+        _mode_break_points += { b, f };
       }
     }
 
@@ -743,7 +752,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { //const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
 
       //FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls += callsign; } );
-      ranges::for_each(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& callsign) { _post_monitor_calls += callsign; } );
+      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& callsign) { _post_monitor_calls += callsign; } );
     }
 
 // POSTED BY CONTINENTS
@@ -752,7 +761,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 //      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
       
 //      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
-      ranges::for_each(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
+      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
     }
 
 // P3
@@ -821,7 +830,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         const vector<string> values           { remove_peripheral_spaces(split_string(RHS, ","s)) };
         const set<string>    ss               { values.cbegin(), values.cend() };
 
-//        _qthx.insert( { canonical_prefix, ss } );
         _qthx += { canonical_prefix, ss };
       }
     }
@@ -833,7 +841,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       vector<unsigned int> new_rates;
 
 //      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
-      ranges::for_each(remove_peripheral_spaces(split_string(rhs, ","s)), [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
+      FOR_ALL(remove_peripheral_spaces(split_string(rhs, ","s)), [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;

@@ -42,6 +42,7 @@
 #include "socket_support.h"
 #include "statistics.h"
 #include "string_functions.h"
+#include "time_log.h"
 #include "trlog.h"
 #include "version.h"
 
@@ -201,6 +202,7 @@ bool toggle_cw(void);                                                           
 bool toggle_recording_status(audio_recorder& audio);                                ///< toggle status of audio recording
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
+void update_bandmap_window(bandmap& bm);
 void update_based_on_frequency_change(const frequency& f, const MODE m);                                                ///< Update some windows based on a change in frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
@@ -337,6 +339,7 @@ float                   greatest_distance { 0 };                    ///< greates
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
 int                     inactivity_timer;                           ///< how long to record with no activity
+//bool                    inhibit_poll { false };                     ///< is polling temporarily inhibited?
 bool                    is_ss { false };                            ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -2141,8 +2144,7 @@ void* display_rig_status(void* vp)
   be.expiration_time(be.time() + MILLION);    // a million seconds in the future
 
   while (true)
-  {
-    try
+  { try
     { try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
           sleep_for(microseconds(microsecond_poll_period / 10));
@@ -2184,8 +2186,10 @@ void* display_rig_status(void* vp)
           m = rig_status_thread_parameters.rigp() -> rig_mode();                     // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
 
 // have we changed band (perhaps manually)?
-          if (safe_get_band() != to_BAND(f))
-          { safe_set_band(to_BAND(f));
+          if (const auto sgb { safe_get_band() }; sgb != to_BAND(f))
+          { ost << "Setting band during poll; sgb = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
+
+            safe_set_band(to_BAND(f));
 
             update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), m);
             update_remaining_country_mults_window(statistics, safe_get_band(), m);
@@ -2845,21 +2849,28 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  { try
+  { //inhibit_poll = true;                                                    // halt polling; this is a lot cleaner than trying to use a mutex with its attendant nexting problems
+    ok_to_poll_k3 = false;
+    time_log <std::chrono::milliseconds> tl;
+
+    try
     { ost << "Changing band: " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
 
       const frequency set_last_f { rig.rig_frequency() };
 
       rig.set_last_frequency(cur_band, cur_mode, set_last_f);             // save current frequency
 
-      { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
-        { ost << "ERROR: inconsistency in frequency/band info" << endl;
+ //     ost << "set the last frequency for cur_band = " << cur_band << ", cur_mode = " << cur_mode << " to " << set_last_f << endl;
 
-          ost << "  cur_band = " << cur_band << endl;
-          ost << "  cur_mode = " << cur_mode << endl;
-          ost << "  get_last_frequency = " << rig.get_last_frequency(cur_band, cur_mode) << endl;
-          ost << "  BAND(get_last_frequency) = " << BAND(rig.get_last_frequency(cur_band, cur_mode)) << endl;
-          ost << "  set_last_f = " << set_last_f << endl;
+      { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
+        { alert("ERROR: inconsistency in frequency/band info"s);
+
+        ost << "  cur_band = " << cur_band << endl;
+        ost << "  safe_get_band() = " << safe_get_band() << endl;
+        ost << "  cur_mode = " << cur_mode << endl;
+        ost << "  get_last_frequency = " << rig.get_last_frequency(cur_band, cur_mode) << endl;
+        ost << "  BAND(get_last_frequency) = " << BAND(rig.get_last_frequency(cur_band, cur_mode)) << endl;
+        ost << "  set_last_f = " << set_last_f << endl;
         }
       }
 
@@ -2893,6 +2904,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       rig.rig_frequency(last_frequency);
 
+// confirm that it's really happened
+      { const auto f { rig.rig_frequency() };
+
+        ost << "new frequency we have moved to appears to be: " << f << endl;
+        ost << "new band is supposed to be: " << new_band << ", band name = " << BAND_NAME[new_band] << "m" << endl;
+        ost << "new band is actually: " << BAND(f) << ", band name = " << BAND_NAME[BAND(f)] << "m" << endl;
+        ost << "the value of safe_get_band() is: " << safe_get_band() << endl;
+      }
+
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
       rig.rig_mode(cur_mode);
       enter_sap_mode();
@@ -2921,12 +2941,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
 
       display_bandmap_filter(bm);
+
+      tl.end_now();
+      ost << "time taken to change band = " << tl.time_span<int>() << " milliseconds" << endl;
     }
 
     catch (const rig_interface_error& e)
     { alert(e.reason());
     }
 
+//    inhibit_poll = false;       // this is the only reasonable exit, so OK to do this here
+    ok_to_poll_k3 = true;
     processed = true;
   }
 
@@ -8046,7 +8071,15 @@ void end_of_thread(const string& name)
 
 /// update some windows based on a change in frequency
 void update_based_on_frequency_change(const frequency& f, const MODE m)
-{
+{ //LOG_TIME("entering update_based_on_frequency_change");
+  //const std::chrono::time_point<std::chrono::system_clock> start_ms = std::chrono::system_clock::now();
+//  time_log tl;
+    
+//  ost << std::put_time(std::localtime(&t_c), "%F %T.\n") << " " << comment << std::flush;
+//  auto t = time_point_cast<milliseconds>(now);
+
+//  ost << t.time_since_epoch().count() << " " << comment << endl;
+
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
 // threads. To do that would require holding a lock for a very long time, and would nest
@@ -8076,7 +8109,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
       my_bandmap_entry = mbe_copy;
     }
 
-    win_bandmap <= bm;       // move this outside the SAFELOCK?
+//    win_bandmap <= bm;       // move this outside the SAFELOCK?
+    update_bandmap_window(bm);
 
     display_bandmap_filter(bm);
 
@@ -8119,6 +8153,13 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
       alert("audio recording started due to activity"s);
     }
   }                 // end of changed frequency
+
+//  LOG_TIME("leaving update_based_on_frequency_change");
+//  const std::chrono::time_point<std::chrono::system_clock> end_ms = std::chrono::system_clock::now();
+//  duration<double> time_span = duration_cast<duration<double>>(end_ms - start_ms);
+ // tl.end_now();
+
+ // ost << "time spent in update_based_on_frequency_change (μs) = " << tl.time_span<int>() << endl;
 }
 
 /*! \brief          Process a bandmap function, to jump to the next frequency returned by the function
@@ -8147,6 +8188,8 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
   { if (debug)
       ost << "Setting frequency to: " << be.freq() << endl;
 
+    ok_to_poll_k3 = false;  // since we're goign to be updating things anyway, briefly inhibit polling of a K3
+
     rig.rig_frequency(be.freq());
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
@@ -8156,6 +8199,8 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     possible_mode_change(be.freq());
 
     update_based_on_frequency_change(be.freq(), safe_get_mode());   // update win_bandmap, and other windows
+
+    ok_to_poll_k3 = true;
 
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
@@ -9024,4 +9069,21 @@ char t_char(const unsigned short long_t)
     default :
       return 'T';
   }
+}
+
+// temporary
+void update_bandmap_window(bandmap& bm)
+{ const int highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
+  const int original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
+
+  const string win_contents { win_bandmap_filter.read() };
+  const char   first_char   { (win_contents.empty() ? ' ' : win_contents[0]) };
+
+// mark that we are processing on the screen
+  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
+
+  win_bandmap <= bm;
+
+// clear the mark that we are processing
+  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
 }

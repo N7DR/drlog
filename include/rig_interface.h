@@ -55,7 +55,6 @@ enum class PRESS { TAP,
                    HOLD
                  };
 
-//constexpr int K3_BUTTON_NOTCH { 32 };
 enum class K3_BUTTON { NOTCH = 32
                      };
 
@@ -112,6 +111,9 @@ public:
 
 /*! \class  rig_interface
     \brief  The interface to a rig
+
+    A good argument can be made that this should be a base class, with specialisations occurring
+    in derived classes. For now, that's not done.
 */
 
 class rig_interface
@@ -128,11 +130,7 @@ protected:
   RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
   bool                                    _rig_connected               { false };                       ///< is a rig connected?
   pt_mutex                                _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
-//  unsigned int                            _rig_poll_interval           { 1'000 };                       ///< interval between polling for rig status, in milliseconds
-//  rig_status                              _status                      { frequency(14'000), MODE_CW };  ///< most recent rig frequency and mode from the periodic poll
   pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
-
-//  DRLOG_TIMEPOINT                         _time_last_commanded_frequency { };                           ///< time of most recent frequency command (defaults to the epoch)
 
 // protected pointers to functions
 
@@ -143,26 +141,6 @@ protected:
 
 // protected functions
 
-/*! \brief      Thread function to poll rig for status, forever
-    \param  vp  unused (should be nullptr)
-    \return     nullptr
-
-    Sets the frequency and mode in the <i>_status</i> object
-*/
-//  void* _poll_thread_function(void* vp);
-
-/*! \brief          Static wrapper for function to poll rig for status
-    \param  this_p  the this pointer, in order to allow static member access to a real object
-    \return         nullptr
-*/
-//  static void* _static_poll_thread_function(void* this_p);
-
-/*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
-    \return     the file descriptor associated with the rig
-*/
-  inline int _file_descriptor(void) const
-    { return (_rigp->state.rigport.fd); }
-
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
 
@@ -170,7 +148,11 @@ protected:
 */
   void _error_alert(const std::string& msg);
 
-//    if ( const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"s, 0) )
+/*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
+    \return     the file descriptor associated with the rig
+*/
+  inline int _file_descriptor(void) const
+    { return (_rigp->state.rigport.fd); }
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
@@ -445,7 +427,6 @@ public:
     { sub_receiver(false); }
 
 /// toggle sub-receiver between on and off
-//  void sub_receiver_toggle(void);
   inline void sub_receiver_toggle(void)
     { sub_receiver_enabled() ? sub_receiver_disable() : sub_receiver_enable(); }
 

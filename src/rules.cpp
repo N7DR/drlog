@@ -496,9 +496,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _countries.clear();                             // remove concept of countries
   else
   { if (context.country_mults_filter() == "ALL"s)
-      copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
+//      copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
+      ranges::copy(_countries, inserter(_country_mults, _country_mults.begin()));
     else
-    { const vector<string> countries { remove_peripheral_spaces(split_string(context.country_mults_filter(), ","s)) };
+    { const vector<string>& countries { remove_peripheral_spaces(split_string(context.country_mults_filter(), ","s)) };
 
       FOR_ALL(countries, [this] (const string& prefix) { _country_mults += prefix; } );
     }
@@ -507,11 +508,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (CONTINENT_SET > context.country_mults_filter())
   { const string target_continent { context.country_mults_filter() };
 
-    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) { return (location_db.continent(cp) == target_continent); } );
+//    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) { return (location_db.continent(cp) == target_continent); } );
+    ranges::copy_if(_countries, inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) { return (location_db.continent(cp) == target_continent); } );
   }
 
 // remove any country mults that are explicitly not allowed
-  const vector<string> not_country_mults_vec { remove_peripheral_spaces(split_string(context.not_country_mults(), ","s)) };  // may not be actual canonical prefixes
+  const vector<string>& not_country_mults_vec { remove_peripheral_spaces(split_string(context.not_country_mults(), ","s)) };  // may not be actual canonical prefixes
 
   FOR_ALL(not_country_mults_vec, [&] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
 
@@ -542,7 +544,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // the sent exchange
   if (_permitted_modes > MODE_CW)
-//    _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) } );
     _sent_exchange_names += { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) };
 
   if (_permitted_modes > MODE_SSB)
@@ -564,7 +565,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ","s) );
 
 // DOKs are a single letter; create the complete set if they aren't in auto mode
-  if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK"s) != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK"s) )
+//  if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK"s) != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK"s) )
+  if ( contains(_exchange_mults, "DOK"s)  and !context.auto_remaining_exchange_mults("DOK"s) )
   { exchange_field_values dok_values { "DOK"s };
 
     for (const char c : UPPER_CASE_LETTERS)
@@ -582,7 +584,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       const vector<string> expanded_choice { remove_peripheral_spaces(split_string(str, "/"s)) };
 
       for (const string& this_expanded_name : expanded_choice)
-        if (find(_expanded_exchange_mults.begin(), _expanded_exchange_mults.end(), this_expanded_name) == _expanded_exchange_mults.end() )
+//        if (find(_expanded_exchange_mults.begin(), _expanded_exchange_mults.end(), this_expanded_name) == _expanded_exchange_mults.end() )
+        if (!contains(_expanded_exchange_mults, this_expanded_name))
           _expanded_exchange_mults += this_expanded_name;
     }
   }
@@ -610,22 +613,20 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         else
         { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null prefix implies applies to all
 
- //         choice_equivalents_this_mode_and_cp.add(field.name());
-         choice_equivalents_this_mode_and_cp += field.name();
+          choice_equivalents_this_mode_and_cp += field.name();
 
- //         ost << "Added CHOICE field in rules::_init() for cp [" << prefix << "] : " << field << endl;
+ //         const vector<exchange_field> vec { field.expand() };
 
-          const vector<exchange_field> vec { field.expand() };
-
-//          copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
-          expanded_vef += vec;
+ //         expanded_vef += vec;
+          expanded_vef += field.expand();
         }
       }
 
       expanded_exch += { prefix, expanded_vef };
     }
 
-    _expanded_received_exchange.insert( { m, expanded_exch} );
+ //   _expanded_received_exchange.insert( { m, expanded_exch} );
+    _expanded_received_exchange += { m, expanded_exch};
 
     for (const auto& psvef : expanded_exch)
     { const vector<exchange_field>& vef { psvef.second };
@@ -670,7 +671,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
         const vector<string> points_str_vec { remove_peripheral_spaces( split_string(context_points, ","s) ) };
 
-        for (unsigned int n = 0; n < points_str_vec.size(); ++n)
+        for (unsigned int n { 0 }; n < points_str_vec.size(); ++n)
         { const string         points_str { points_str_vec[n] };
           const vector<string> fields     { split_string(points_str, ":"s) };
 
@@ -722,7 +723,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
             { const set<string> all_exchange_field_names { exchange_field_names() };
 
               if (!all_exchange_field_names.empty())
-              {  const auto cit { all_exchange_field_names.find(inside_square_brackets) };
+              { const auto cit { all_exchange_field_names.find(inside_square_brackets) };
 
                 if (cit != all_exchange_field_names.cend())              // if found a valid exchange field name (as opposed to a name with a condition)
                 { const int n_points { from_string<int>(fields[1]) };    // the value after the colon
@@ -747,14 +748,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   for (const auto& m : _permitted_modes)
   { const map<string, vector<exchange_field>>& unexpanded_exch { _received_exchange.at(m) };
 
-    for (auto cit = unexpanded_exch.cbegin(); cit != unexpanded_exch.cend(); ++cit)
+    for (auto cit { unexpanded_exch.cbegin() }; cit != unexpanded_exch.cend(); ++cit)
     { const vector<exchange_field> vec_1 { cit->second };
 
       for (const auto& ef: vec_1)
-      { const vector<exchange_field> vec { ef.expand() };
+      { //const vector<exchange_field> vec { ef.expand() };
 
- //       copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
-        leaves_vec += vec;
+        //leaves_vec += vec;
+        leaves_vec += ef.expand();
       }
     }
   }
@@ -784,6 +785,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse file
     if (read_file_ok)
     { const vector<string> lines { split_string(entire_file, EOL_CHAR) };
+
       map<string /* canonical value */, set<string> > map_canonical_to_all;
 
       for (const auto& line : lines)

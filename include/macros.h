@@ -341,6 +341,34 @@ constexpr bool is_unordered_multimap_v { is_unordered_multimap<T>::value };
 template<class T>
 constexpr bool is_mmumm_v { is_multimap_v<T> or is_unordered_multimap_v<T> };
 
+// is a type a multiset or unordered multiset?
+template<class T>
+struct is_multiset 
+  { constexpr static bool value { false }; };
+
+template<class E>
+struct is_multiset<std::multiset<E>> 
+  { constexpr static bool value { true }; };
+  
+template<class T>
+constexpr bool is_multiset_v { is_multiset<T>::value };
+
+template<class T>
+struct is_unordered_multiset 
+  { constexpr static bool value { false }; };
+
+template<class E>
+struct is_unordered_multiset<std::unordered_multiset<E>> 
+  { constexpr static bool value { true }; };
+  
+template<class T>
+constexpr bool is_unordered_multiset_v { is_unordered_multiset<T>::value };
+
+template<class T>
+constexpr bool is_ssuss_v { is_multiset_v<T> or is_unordered_multiset_v<T> };
+
+template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
+
 // is a type a string?
 template<class T>
 struct is_string 
@@ -1236,7 +1264,6 @@ constexpr bool ALL_OF( I first, S last, Pred pred, Proj proj = {} ) { return std
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
 constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(r, pred, proj); };;
 
-
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
     \param  oi      iterator on final container
@@ -1368,16 +1395,25 @@ inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
 */
 template <typename C, typename F = std::less<>>
 inline void SORT(C& v, F f = F())
-  { std::sort(v.begin(), v.end(), f); }
+//  { std::sort(v.begin(), v.end(), f); }
+  { std::ranges::sort(v, f); }
 
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
+#if 1
 template <typename C, typename T>
 inline void operator+=(C& sus, T&& element)
-  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+//  requires is_sus_v<C> and (std::is_convertible_v<typename C::value_type, base_type<T>>) or
+//           is_ssuss_v<C> and (std::is_convertible_v<typename C::value_type, base_type<T>>)
+//  requires (is_sus_v<C> and (std::is_convertible_v<base_type<T>, typename C::value_type>)) or
+//           (is_ssuss_v<C> and (std::is_convertible_v<base_type<T>, typename C::value_type>))
+  requires (is_sus_v<C> or is_ssuss_v<C>) and (std::is_convertible_v<base_type<T>, typename C::value_type>)
   { sus.insert(std::forward<T>(element)); }
+#endif
+//inline void operator+=(ANYSET auto& sus, typename decltype(sus)::value_type&& element)
+//  { sus.insert(std::forward<typename decltype(sus)::value_type>(element)); }
 
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
@@ -1396,8 +1432,12 @@ inline void operator+=(C& sus, T&& element)
 
 // Seems to be OK; https://www.youtube.com/watch?v=SYLgG7Q5Zws at 16:28; I think that the single ampersand is right
 // see also https://www.sandordargo.com/blog/2021/02/17/cpp-concepts-4-ways-to-use-them
-inline void operator+=(SUS auto& sus, const typename decltype(sus)::value_type& element)
+inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_type& element)
   { sus.insert(element); }
+//template <typename C, typename T>
+//inline void operator+=(C& sus, const typename C::value_type& element)
+//  requires is_sus_v<C> or is_ssuss_v<C>
+//  { sus.insert(element); }
 
 /*! \brief          Add all elements of a vector to a set or unordered set
     \param  sus     destination set or unordered set
@@ -1423,6 +1463,14 @@ inline void operator-=(C& sus, const T& element)
 */
 template <typename F, typename S>
 inline void operator+=(std::set<std::pair<F, S>>& s, const std::pair<F, S>& element)
+  { s.insert(element); }
+
+/*! \brief              Add an element to a multiset
+    \param  s           destination multiset
+    \param  element     element to insert
+*/
+template <typename F, typename S>
+inline void operator+=(std::multiset<std::pair<F, S>>& s, const std::pair<F, S>& element)
   { s.insert(element); }
 
 /*! \brief        insert one MUM/SUS into another

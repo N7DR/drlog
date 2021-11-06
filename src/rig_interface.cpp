@@ -81,6 +81,13 @@ extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW
 
 // ---------------------------------------- rig_interface -------------------------
 
+/*! \class  rig_interface
+    \brief  The interface to a rig
+
+    A good argument can be made that this should be a base class, with specialisations occurring
+    in derived classes. For now, that's not done.
+*/
+
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
 
@@ -179,7 +186,6 @@ string rig_interface::_retried_raw_command(const string& cmd, const int expected
   while (!completed and (counter != n_retries))  
   { rv = raw_command(cmd, RESPONSE::EXPECTED, expected_len);    // issue the command each time
 
-//    completed = contains(rv, ';');
     completed = contains_at(rv, ';', expected_len - 1);
    
     if (!completed)
@@ -315,8 +321,8 @@ void rig_interface::rig_mode(const MODE m)
       else
       { switch (tmp_mode)
         { case RIG_MODE_CW:
-          last_cw_bandwidth = tmp_bandwidth;
-          break;
+            last_cw_bandwidth = tmp_bandwidth;
+            break;
 
           case RIG_MODE_LSB:
           case RIG_MODE_USB:
@@ -1216,7 +1222,7 @@ int rig_interface::bandwidth(void)
 frequency rig_interface::get_last_frequency(const bandmode bm)
 { SAFELOCK(_rig);
 
-  return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not prsent in the map
+  return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not present in the map
 }
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
@@ -1226,7 +1232,12 @@ frequency rig_interface::get_last_frequency(const bandmode bm)
 void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
 { SAFELOCK(_rig);
 
-  _last_frequency[bm] = f;
+  if (BAND(f) != bm.first)
+  { alert("Attempt to set out-of-band frequency in set_last_frequency()"); 
+    ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << bm.first << ", mode = " << bm.second << ", f  " << f << endl;
+  }
+  else
+    _last_frequency[bm] = f;
 }
 
 /*! \brief      Is the rig transmitting?

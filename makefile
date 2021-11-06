@@ -191,7 +191,8 @@ src/drlog.cpp : include/audio.h include/bandmap.h include/bands-modes.h include/
                 include/log_message.h include/memory.h \
                 include/parallel_port.h include/procfs.h include/query.h include/qso.h include/qtc.h include/rate.h \
                 include/rig_interface.h include/rules.h include/scp.h include/screen.h include/serialization.h \
-                include/socket_support.h include/statistics.h include/string_functions.h include/trlog.h include/version.h
+                include/socket_support.h include/statistics.h include/string_functions.h include/time_log.h \
+                include/trlog.h include/version.h
 	touch src/drlog.cpp
 	
 src/drlog_context.cpp : include/diskfile.h include/drlog_context.h include/exchange.h include/string_functions.h

@@ -83,7 +83,6 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
     vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
-//    current_received_exchange.push_back( { field_name, value, false, false });
     current_received_exchange += { field_name, value, false, false };
     qso.received_exchange(current_received_exchange);
   }
@@ -133,7 +132,6 @@ void logbook::operator-=(const unsigned int n)
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
 
-//  FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
   FOR_ALL(_log_vec, [&](const QSO& qso) { _log += { qso.callsign(), qso }; } );
 }
 
@@ -179,11 +177,14 @@ unsigned int logbook::n_worked(const string& call) const
 bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
-  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
-    if (cit->second.band() == b)
-      return true;
+  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b); });
+
+
+//  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
+//    if (cit->second.band() == b)
+//      return true;
   
-  return false;
+//  return false;
 }
 
 /*! \brief          Has a call been worked on a particular mode?
@@ -193,12 +194,14 @@ bool logbook::qso_b4(const string& call, const BAND b) const
 */
 bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
+
+  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.mode() == m); });
   
-  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
-    if (cit->second.mode() == m)
-      return true;
+//  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
+//    if (cit->second.mode() == m)
+//      return true;
   
-  return false;
+//  return false;
 }
 
 /*! \brief          Has a call been worked on a particular band and mode?
@@ -209,12 +212,14 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
 */
 bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
+
+  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
   
-  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
-    if ((cit->second.band() == b) and (cit->second.mode() == m))
-      return true;
+//  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
+//    if ((cit->second.band() == b) and (cit->second.mode() == m))
+//      return true;
   
-  return false;
+//  return false;
 }
 
 /*! \brief          Get a string list of bands on which a call is needed
@@ -462,11 +467,12 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 */
   
 // generate time-ordered container
-  const list<QSO> qsos                  { as_list() };
+//  const list<QSO> qsos                  { as_list() };
   const string    cabrillo_qso_template { context.cabrillo_qso_template() };
   
-  FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
-  
+//  FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
+  FOR_ALL(as_list(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
+ 
 // soapbox
   rv += "SOAPBOX: "s + EOL_STRING;
  
@@ -491,11 +497,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
   vector< vector< string> > individual_values;
 
-  const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
+  const vector<string> template_fields { split_string(cabrillo_qso_template, ',') };         // colon-delimited values
   
   for (unsigned int n { 0 }; n < template_fields.size(); ++n)
-//    individual_values.push_back(split_string(remove_peripheral_spaces(template_fields[n]), ":"s));
-    individual_values += split_string(remove_peripheral_spaces(template_fields[n]), ":"s);
+    individual_values += split_string(remove_peripheral_spaces(template_fields[n]), ':');
 
   unsigned int last_qso_number { 0 };
    
@@ -589,9 +594,11 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
 vector<QSO> logbook::match_exchange(const string& target) const
 { vector<QSO> rv;
 
-  for (const auto& qso : _log_vec)
-    if (qso.exchange_match_string(target))
-      rv += qso;
+  FOR_ALL(_log_vec, [=, &rv] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
+
+//  for (const auto& qso : _log_vec)
+//    if (qso.exchange_match_string(target))
+//      rv += qso;
 
   return rv;
 }
@@ -603,7 +610,7 @@ vector<QSO> logbook::match_exchange(const string& target) const
     the number of QSOs in the logbook
 */
 void logbook::remove_last_qsos(const unsigned int n_to_remove)
-{ for (unsigned int n = 0; n < n_to_remove; ++n)
+{ for (unsigned int n { 0 }; n < n_to_remove; ++n)
     remove_last_qso();
 }
 
@@ -654,11 +661,8 @@ set<string> logbook::calls(void) const
 void log_extract::operator+=(const QSO& qso)
 { SAFELOCK(_extract);
 
-//  _qsos.push_back(qso);
   _qsos += qso;
 
-//  while (_qsos.size() > _win_size)
-//    _qsos.pop_front();
   while (_qsos.size() > _win_size)
     --_qsos;
 }
@@ -673,7 +677,8 @@ void log_extract::display(void)
 
   { SAFELOCK(_extract);
 
-    copy(_qsos.cbegin(), _qsos.cend(), back_inserter(vec));
+//    copy(_qsos.cbegin(), _qsos.cend(), back_inserter(vec));
+    ranges::copy(_qsos, back_inserter(vec));
   }
 
   if (vec.size() < _win_size)
@@ -682,7 +687,7 @@ void log_extract::display(void)
   if (!vec.empty())
   { const size_t n_to_display { min(vec.size(), _win_size) };
 
-    for (size_t n = 0; n < n_to_display; ++n)
+    for (size_t n { 0 }; n < n_to_display; ++n)
     { const size_t index { vec.size() - 1 - n };              // write so that most recent is at the bottom
 
       _win < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < cursor(0, n) < vec[index].log_line();
@@ -705,7 +710,7 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
   clear();    // empty the container of QSOs
 
 // extract the QSOs
-  for (size_t n = 0; n < n_to_copy; ++n)
+  for (size_t n { 0 }; n < n_to_copy; ++n)
   	(*this) += vec.at(vec.size() - n_to_copy + n);
 
   if (to_display)
@@ -725,7 +730,7 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
   clear();    // empty the container of QSOs
 
-  for (size_t n = 0; n < n_to_copy; ++n)
+  for (size_t n { 0 }; n < n_to_copy; ++n)
     (*this) += vec.at(vec.size() - n_to_copy + n);
 
   display();
@@ -857,7 +862,8 @@ unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const M
     it = _olog.find(call);
   }
 
-  get<3>(it->second).insert( { b, m } );
+//  get<3>(it->second).insert( { b, m } );
+  get<3>(it->second) += { b, m };
 
   return n_qsos(call, b, m);
 }

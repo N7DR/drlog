@@ -272,7 +272,6 @@ inline bool contains_at(const std::string& s, const char c, const size_t posn)
     This should give the correct result in any locale
 */
 inline bool contains_letter(const std::string& str)
-//  { return std::ranges::any_of(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
   { return ANY_OF(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
 
 /*! \brief          Does a string contain any upper case letters?
@@ -280,7 +279,6 @@ inline bool contains_letter(const std::string& str)
     \return         whether <i>str</i> contains any upper case letters
 */
 inline bool contains_upper_case_letter(const std::string& str)
-//  { return std::ranges::any_of(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
   { return ANY_OF(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
 
 /*! \brief          Does a string contain any digits?
@@ -288,15 +286,14 @@ inline bool contains_upper_case_letter(const std::string& str)
     \return         whether <i>str</i> contains any digits
 */
 inline bool contains_digit(const std::string& str)
-//  { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
-  { return std::ranges::any_of(str, [] (const char c) { return isdigit(c); } ); }
+  { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
+//  { return std::ranges::any_of(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief          Does a string contain only digits?
     \param  str     string to test
     \return         whether <i>str</i> comprises only digits
 */
 inline bool is_digits(const std::string& str)
-//  { return std::ranges::all_of(str, [] (const char c) { return isdigit(c); } ); }
   { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief              Pad a string to a particular size
@@ -399,7 +396,6 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 template <typename T>
 inline bool starts_with(const std::string& cs, const T& ss)
   requires (is_string_v<typename T::value_type>)
-//  { return std::ranges::any_of(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
   { return ANY_OF(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
 
 /*! \brief      Does a string begin with a particular substring?
@@ -438,63 +434,6 @@ inline std::string remove_from_end(const std::string& s, const unsigned int n)
 */
 inline std::string remove_from_end(const std::string& s, const std::string& e)
   { return ( ends_with(s, e) ? remove_from_end(s, e.length()) : s ); }
-
-/*! \brief              Split a string into components
-    \param  cs          original string
-    \param  separator   separator string (typically a single character)
-    \return             vector containing the separate components
-*/
-std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
-
-/*! \brief              Split a string into components
-    \param  cs          original string
-    \param  separator   separator character
-    \return             vector containing the separate components
-*/
-inline std::vector<std::string> split_string(const std::string& cs, const char separator)
-  { return split_string(cs, std::string(1, separator)); }
-
-/*! \brief                  Split a string into equal-length records
-    \param  cs              original string
-    \param  record_length   length of each record
-    \return                 vector containing the separate components
-
-    Any non-full record at the end is silently discarded
-*/
-std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
-
-/*! \brief                  Split a string into equal-length records
-    \param  cs              original string
-    \param  record_length   length of each record
-    \return                 vector containing the separate components
-
-    Any non-full record at the end is silently discarded
-*/
-inline std::vector<std::string> split_string(const std::string& cs, const int record_length)
-  { return split_string(cs, static_cast<unsigned int>(record_length)); }
-
-/*! \brief      Squash repeated occurrences of a character
-    \param  cs  original string
-    \param  c   character to squash
-    \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
-*/
-std::string squash(const std::string& cs, const char c = SPACE_CHAR);
-
-/*! \brief          Remove empty lines from a vector of lines
-    \param  lines   the original vector of lines
-    \return         <i>lines</i>, but with all empty lines removed
-
-    If the line contains anything, even just whitespace, it is not removed
-*/
-std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
-
-/*! \brief              Split a string into lines
-    \param  cs          original string
-    \param  eol_marker  EOL marker
-    \return             vector containing the separate lines
-*/
-inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
-  { return split_string(cs, eol_marker); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -557,6 +496,78 @@ T remove_peripheral_spaces(T&& t)
   return rv;
 }
 
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator string (typically a single character)
+    \return             vector containing the separate components
+*/
+std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
+
+/*! \brief              Split a string into components, and remove peripheral spaces from each component
+    \param  cs          original string
+    \param  separator   separator string (typically a single character)
+    \return             vector containing the separate components, with peripheral spaces removed
+*/
+inline std::vector<std::string> clean_split_string(const std::string& cs, const std::string& separator)
+  { return remove_peripheral_spaces(split_string(cs, separator)); }
+
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator character
+    \return             vector containing the separate components
+*/
+/* inline */std::vector<std::string> split_string(const std::string& cs, const char separator);
+//  { return split_string(cs, std::string(1, separator)); }
+
+/*! \brief              Split a string into components, and remove peripheral spaces from each component
+    \param  cs          original string
+    \param  separator   separator character
+    \return             vector containing the separate components, with peripheral spaces removed
+*/
+inline std::vector<std::string> clean_split_string(const std::string& cs, const char separator)
+  { return remove_peripheral_spaces(split_string(cs, separator)); }
+
+/*! \brief                  Split a string into equal-length records
+    \param  cs              original string
+    \param  record_length   length of each record
+    \return                 vector containing the separate components
+
+    Any non-full record at the end is silently discarded
+*/
+std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
+
+/*! \brief                  Split a string into equal-length records
+    \param  cs              original string
+    \param  record_length   length of each record
+    \return                 vector containing the separate components
+
+    Any non-full record at the end is silently discarded
+*/
+inline std::vector<std::string> split_string(const std::string& cs, const int record_length)
+  { return split_string(cs, static_cast<unsigned int>(record_length)); }
+
+/*! \brief      Squash repeated occurrences of a character
+    \param  cs  original string
+    \param  c   character to squash
+    \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
+*/
+std::string squash(const std::string& cs, const char c = SPACE_CHAR);
+
+/*! \brief          Remove empty lines from a vector of lines
+    \param  lines   the original vector of lines
+    \return         <i>lines</i>, but with all empty lines removed
+
+    If the line contains anything, even just whitespace, it is not removed
+*/
+std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
+
+/*! \brief              Split a string into lines
+    \param  cs          original string
+    \param  eol_marker  EOL marker
+    \return             vector containing the separate lines
+*/
+inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
+  { return split_string(cs, eol_marker); }
 
 /*! \brief      Remove peripheral instances of a specific character
     \param  cs  original string
@@ -591,7 +602,6 @@ template <typename C>
 C remove_char(C& t, const char char_to_remove)
 { typename std::remove_const<C>::type rv;
 
-//  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
   FOR_ALL(t, [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;

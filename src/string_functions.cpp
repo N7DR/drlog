@@ -303,6 +303,31 @@ vector<string> split_string(const string& cs, const string& separator)
   return rv;
 }
 
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator character
+    \return             vector containing the separate components
+*/
+vector<string> split_string(const string& cs, const char separator)
+{ size_t start_posn { 0 };
+
+  vector<string> rv;
+
+  while (start_posn < cs.length())
+  { if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
+    { rv += cs.substr(start_posn);
+      start_posn = cs.length();
+    }
+    else                                            // at least one separator
+    { rv += cs.substr(start_posn, posn - start_posn);
+      start_posn = posn + 1;
+    }
+  }
+
+  return rv;
+}
+
+
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string
     \param  record_length   length of each record

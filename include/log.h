@@ -187,7 +187,8 @@ public:
 
     SAFELOCK(_log);
 
-    copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv), pred);
+//    copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv), pred);
+    std::ranges::copy_if(_log_vec, back_inserter(rv), pred);
 
     return rv;
   }
@@ -379,7 +380,8 @@ template <typename C>
   requires (std::is_same_v<typename C::value_type, QSO>)
   { SAFELOCK(_extract);
     _qsos.clear();
-    copy(t.cbegin(), t.cend(), back_inserter(_qsos));
+ //   copy(t.cbegin(), t.cend(), back_inserter(_qsos));
+    std::ranges::copy(t, back_inserter(_qsos));
   }
 };
 

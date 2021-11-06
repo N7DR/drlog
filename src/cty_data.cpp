@@ -811,7 +811,8 @@ location_info location_database::info(const string& callpart) const
     
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
-    _db_checked.erase(target);
+//    _db_checked.erase(target);
+    _db_checked -= target;
     _db_checked += { callsign, best_info };
         
     return best_info;   
@@ -821,10 +822,8 @@ location_info location_database::info(const string& callpart) const
 }
 
 /// get a set of all the canonical prefixes for all countries
-//const unordered_set<string> location_database::countries(void) const
 auto location_database::countries(void) const -> unordered_set<string>
-{ //SAFELOCK(_location_database);
-  std::lock_guard lg(_location_database_mutex);
+{ std::lock_guard lg(_location_database_mutex);
 
   unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
 // std::result_of<decltype(&foo::memfun1)(foo, int)>::type  https://stackoverflow.com/questions/26107041/how-can-i-determine-the-return-type-of-a-c11-member-function
@@ -842,7 +841,8 @@ unordered_set<string> location_database::countries(const string& cont_target) co
 
   unordered_set <string> rv;
 
-  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+//  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+  ranges::copy_if(all_countries, inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
 }
@@ -863,7 +863,8 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
 // check that the prefix matches the line
   const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
 
-  if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
+//  if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
+  if (!contains(substrings, ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
   const size_t posn_1 { line.find(']') };
