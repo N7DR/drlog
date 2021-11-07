@@ -2187,15 +2187,33 @@ void* display_rig_status(void* vp)
 
 // have we changed band (perhaps manually)?
           if (const auto sgb { safe_get_band() }; sgb != to_BAND(f))
-          { ost << "Setting band during poll; sgb = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
+          { ost << "Band mismatch during poll; sgb = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
 
-            safe_set_band(to_BAND(f));
+// changing bands is ssslllloooowwww, and maybe the rig is in transition in another thread -- holding mutex locks
+// is no good because it's so slow
+            bool need_to_set_band { true };
+            frequency new_f;
+            BAND new_sgb;
 
-            update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), m);
-            update_remaining_country_mults_window(statistics, safe_get_band(), m);
-            update_remaining_exchange_mults_windows(rules, statistics, safe_get_band(), m);
+            for ( [[maybe_unused]] int n { 1 }; need_to_set_band and n != 5; ++n)
+            { sleep_for(milliseconds(500));
+
+              new_f = rig.rig_frequency();
+              new_sgb = safe_get_band();
+              need_to_set_band = (new_sgb != to_BAND(new_f));
+            }
+
+            if (need_to_set_band)               // it looks like this was probably a manual band change
+            { ost << "Consistent band mismatch during poll; new_sgb = " << new_sgb << ", new_f = " << new_f << ", BAND(new_f) = " << to_BAND(new_f) << "; setting band" << endl;
+
+              safe_set_band(to_BAND(new_f));
+
+              update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), m);
+              update_remaining_country_mults_window(statistics, safe_get_band(), m);
+              update_remaining_exchange_mults_windows(rules, statistics, safe_get_band(), m);
             
-            update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+              update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+            }
           }
           else          // we haven't changed band
           { const uint32_t current_verno { bandmaps[safe_get_band()].verno() };
@@ -2207,16 +2225,16 @@ void* display_rig_status(void* vp)
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
 // it seems like the effort of trying to work around the bug is not worth it
-          constexpr unsigned int RIT_XIT_PM_ENTRY  { 18 };   // position of the RIT/XIT +/- indicator; compiler does not allow "±" in variable names
+          constexpr unsigned int RIT_XIT_PM_ENTRY  { 18 };      // position of the RIT/XIT +/- indicator; compiler does not allow "±" in variable names
 
-          constexpr unsigned int RIT_XIT_OFFSET_ENTRY  { 19 };   // position of the RIT/XIT offset
+          constexpr unsigned int RIT_XIT_OFFSET_ENTRY  { 19 };  // position of the RIT/XIT offset
           constexpr unsigned int RIT_XIT_OFFSET_LENGTH { 4 };   // length of the RIT/XIT offset
 
-          constexpr unsigned int RIT_ENTRY  { 23 };      // position of the RIT status byte in the K3 status string
-          constexpr unsigned int XIT_ENTRY  { 24 };      // position of the XIT status byte in the K3 status string
-          constexpr unsigned int MODE_ENTRY { 29 };      // position of the mode byte in the K3 status string
+          constexpr unsigned int RIT_ENTRY  { 23 };             // position of the RIT status byte in the K3 status string
+          constexpr unsigned int XIT_ENTRY  { 24 };             // position of the XIT status byte in the K3 status string
+          constexpr unsigned int MODE_ENTRY { 29 };             // position of the mode byte in the K3 status string
 
-          constexpr unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
+          constexpr unsigned int SPLIT_ENTRY = 32;              // position of the SPLIT status byte in the K3 status string
 
           constexpr unsigned int RIT_XIT_DISPLAY_LENGTH  { 7 }; // display length of RIT/XIT info
 
@@ -2357,15 +2375,15 @@ void* process_rbn_info(void* vp)
   if (is_cluster)
     win_cluster_screen < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT;  // probably unused
 
-  while (1)                                                // forever; process a POLL_INTERVAL pass
-  { set<BAND> changed_bands;                               // the bands that have been changed by this ten-second pass
-    posted_by_vector.clear();                              // prepare the posted_by vector
+  while (1)                                                 // forever; process a POLL_INTERVAL pass
+  { set<BAND> changed_bands;                                // the bands that have been changed by this ten-second pass
+    posted_by_vector.clear();                               // prepare the posted_by vector
 
-    bool cluster_mult_win_was_changed { false };           // has cluster_mult_win been changed by this pass?
+    bool cluster_mult_win_was_changed { false };            // has cluster_mult_win been changed by this pass?
 
-    string last_processed_line;                            // the last line processed during this pass
+    string last_processed_line;                             // the last line processed during this pass
 
-    const string new_input { rbn.get_unprocessed_input() };  // add any unprocessed info from the cluster; deletes the data from the cluster
+    const string new_input { rbn.get_unprocessed_input() }; // add any unprocessed info from the cluster; deletes the data from the cluster
 
 // a visual marker that we are processing a pass; this should appear only briefly
     const string win_contents { cluster_line_win.read() };
@@ -2902,7 +2920,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         }
       }
 
+//      ost << "time before setting frequency = " << tl.duration_restart<int>() << " milliseconds" << endl;
+
       rig.rig_frequency(last_frequency);
+
+//      ost << "time to set frequency = " << tl.duration_restart<int>() << " milliseconds" << endl;
 
 // confirm that it's really happened
       { const auto f { rig.rig_frequency() };
@@ -2914,9 +2936,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
+// these are the commands that take a lot of time
       rig.rig_mode(cur_mode);
       enter_sap_mode();
       rig.base_state();    // turn off RIT, split and sub-rx
+
+ //     ost << "time to set other rig state = " << tl.duration_restart<int>() << " milliseconds" << endl;
 
 // clear the call window (since we're now on a new band)
       win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
@@ -2943,7 +2968,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       display_bandmap_filter(bm);
 
       tl.end_now();
-      ost << "time taken to change band = " << tl.time_span<int>() << " milliseconds" << endl;
+      ost << "time to change bands = " << tl.time_span<int>() << " milliseconds" << endl;
     }
 
     catch (const rig_interface_error& e)
@@ -3128,7 +3153,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           const int    cull_function { from_string<int>(substring(command, posn)) };
 
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
-//          ranges::for_each(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
         }
 
         bandmap& bm { bandmaps[safe_get_band()] };
@@ -3173,7 +3197,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const frequency&   freq   { me.freq() };
 
         if (freq.hz())    // if valid
-        { rig.rig_frequency(freq);
+        { ok_to_poll_k3 = false;        // we might be partway through a poll, but that should be OK
+
+          rig.rig_frequency(freq);
           safe_set_band(static_cast<BAND>(freq));
 
           rig.rig_mode(me.mode());
@@ -3181,6 +3207,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           display_band_mode(win_band_mode, safe_get_band(), me.mode());
           enter_cq_or_sap_mode(me.drlog_mode());
           update_based_on_frequency_change(freq, me.mode());
+
+          ok_to_poll_k3 = true;
+
         }
       }
 
@@ -3205,9 +3234,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           set<BAND> score_bands;
 
 // next bit of code is copied from drlog_context.cpp
-          const vector<string> bands_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
+//          const vector<string> bands_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
+//          const vector<string> bands_str { clean_split_string(rhs, ',') };
 
-          for (const auto& band_str : bands_str)
+ //         for (const auto& band_str : bands_str)
+          for (const auto& band_str : clean_split_string(rhs, ','))
           { try
             { score_bands += BAND_FROM_NAME.at(band_str);
             }
@@ -3225,12 +3256,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no band information
           rules.restore_original_score_bands();
 
-        { //const set<BAND> score_bands { rules.score_bands() };
-
-          string bands_str;
+        { string bands_str;
 
           FOR_ALL(rules.score_bands(), [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
-//          ranges::for_each(rules.score_bands(), [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
           win_score_bands < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Bands: "s <= bands_str;
         }
@@ -3249,9 +3277,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           set<MODE> score_modes;
 
-          const vector<string> modes_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
+ //         const vector<string> modes_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
-          for (const auto& mode_str : modes_str)
+//          for (const auto& mode_str : modes_str)
+          for (const auto& mode_str : clean_split_string(rhs, ','))
           { try
             { score_modes += MODE_FROM_NAME.at(mode_str);
             }
@@ -3269,14 +3298,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no mode information
           rules.restore_original_score_modes();
 
- //       const set<MODE> score_modes { rules.score_modes() };
-
         string modes_str;
 
- //       for (const auto& m : score_modes)
- //         modes_str += (MODE_NAME[m] + SPACE_STR);
-
- //       ranges::for_each(rules.score_modes(), [&] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
         FOR_ALL(rules.score_modes(), [&] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
         win_score_modes < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Modes: "s <= modes_str;
@@ -3378,7 +3401,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             valid = ( (new_frequency.hz() >= 1'800'000) and (new_frequency.hz() <= 2'000'000) );
 
           if (valid)
-          { const BAND cur_band { to_BAND(cur_rig_frequency) };                     // hide old cur_band
+          { ok_to_poll_k3 = false;
+            
+            const BAND cur_band { to_BAND(cur_rig_frequency) };                     // hide old cur_band
 
             rig.set_last_frequency(cur_band, cur_mode, cur_rig_frequency);             // save current frequency
             rig.rig_frequency(new_frequency);
@@ -3407,6 +3432,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             enter_sap_mode();    // we want to be in SAP mode after a frequency change
 
             win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+            ok_to_poll_k3 = true;
           }
           else // not valid frequency
             alert(string("Invalid frequency: "s) + to_string(new_frequency.hz()) + " Hz"s);

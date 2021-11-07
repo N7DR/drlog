@@ -73,7 +73,6 @@ public:
     Does nothing for any calls already in the database
 */
   inline void init_from_calls(const std::vector<std::string>& calls)
-//    { std::ranges::for_each(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
     { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
 
 /*! \brief          Add a call to the database
@@ -129,12 +128,13 @@ public:
   fuzzy_databases(void) = default;
 
 /// add a database to those that are consulted
-  inline void add_db(fuzzy_database& db)
-    { _vec += &db; }
+//  inline void add_db(fuzzy_database& db)
+//    { _vec += &db; }
 
 /// add a database to those that are consulted
   inline void operator+=(fuzzy_database& db)
-    { add_db(db); }
+//    { add_db(db); }
+    { _vec += &db; }
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
   void remove_call(const std::string& call);

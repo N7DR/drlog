@@ -372,8 +372,8 @@ string squash(const string& cs, const char c)
 vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
-//  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
-  ranges::for_each(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+//  ranges::for_each(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
 
   return rv;
 }
@@ -517,7 +517,7 @@ string delimited_substring(const string& cs, const string& delim_1, const string
     return string();  
   
   const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
-  const size_t posn_2 { cs.find(delim_2, posn_1 + length_to_skip) };
+  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
   
   if (posn_2 == string::npos)
     return string();
@@ -643,7 +643,8 @@ string get_environment_variable(const string& var_name)
 string transform_string(const string& cs, int(*pf)(int))
 { string rv { cs };
   
-  transform(rv.begin(), rv.end(), rv.begin(), pf);
+//  transform(rv.begin(), rv.end(), rv.begin(), pf);
+  std::ranges::transform(rv, rv.begin(), pf);
   
   return rv;
 }
@@ -664,7 +665,6 @@ vector<size_t> starts_of_words(const string& s)
   if (posn == string::npos)
     return rv;
 
-//  rv.push_back(posn);
   rv += posn;
 
 // next space
@@ -679,7 +679,6 @@ vector<size_t> starts_of_words(const string& s)
     if (posn == string::npos)
       return rv;
 
-//    rv.push_back(posn);
     rv += posn;
   }
 }
@@ -730,8 +729,8 @@ string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
   const size_t posn_1 { starts[actual_word_number] };
   const size_t posn_2 { ( (actual_word_number + 1) >= starts.size() ? string::npos : starts[actual_word_number + 1] ) };
 
-  rv = substring(s, posn_1, posn_2 - posn_1);
-  rv = remove_peripheral_spaces(rv);
+  rv = remove_peripheral_spaces(substring(s, posn_1, posn_2 - posn_1));
+//  rv = remove_peripheral_spaces(rv);
 
   return rv;
 }
@@ -750,7 +749,7 @@ size_t n_chars(const string& str)
   const size_t n_bytes { str.size() };
 
   char*  cp     { const_cast<char*>(str.data()) };
-  char*  end_cp { cp + n_bytes };  // one past the end of the contents of str
+  char*  end_cp { cp + n_bytes };                   // one past the end of the contents of str
   size_t rv     { 0 };
 
   while (cp < end_cp)

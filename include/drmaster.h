@@ -332,7 +332,7 @@ class drmaster
 {
 protected:
 
-  std::unordered_map<std::string, drmaster_line> _records;       ///< the information
+  std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
 
   void _prepare_from_file_contents(const std::string& contents);
 
@@ -353,7 +353,7 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
+  explicit drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
@@ -422,7 +422,7 @@ public:
     Does nothing if <i>call</i> is not present
 */
   inline void operator-=(const std::string& call)
-    { _records.erase(call); }
+    { _records -= call; }
 
 /*! \brief          Remove a call
     \param  call    target callsign
@@ -438,7 +438,6 @@ public:
 */
   inline bool contains(const std::string& call) const
     { return ::contains(_records, call); }
-//    { return ( _records.find(call) != _records.cend() ); }
 };
 
 #endif    // DRMASTER_H

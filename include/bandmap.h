@@ -251,6 +251,12 @@ public:
     return rv;
   }
 
+  void operator-=(const T& v)
+    { _values -= v; }
+
+  void operator-=(T&& v)
+    { _values -= forward<T>(v); }
+
 /// remove knowledge of all needed values
   void clear(void)
   { _is_status_known = false;
@@ -393,13 +399,6 @@ public:
     _time(::time(NULL))                     // now
   { }
 
-/*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
-    \param  be  comparison bandmap_entry
-    \return     whether <i>this</i> should be sorted earlier than <i>be</i>
-*/
-//  inline bool operator<(const bandmap_entry& be) const
-//    { return (_freq.hz() < be._freq.hz() ); }
-
   READ(band);                           ///< band
   READ(callsign);                       ///< call
 
@@ -541,7 +540,8 @@ public:
     Does nothing if the value <i>value</i> is unknown
 */
   inline void remove_country_mult(const std::string& value)
-    { _is_needed_country_mult.remove(value); }
+//    { _is_needed_country_mult.remove(value); }
+    { _is_needed_country_mult -= value; }
 
 /*! \brief          Remove a particular value of an exchange mult
     \param  name    name of the exchange mult

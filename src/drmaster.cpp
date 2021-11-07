@@ -70,12 +70,12 @@ master_dta::master_dta(const string& filename)
     tmp_calls += _get_call(contents, pointer);      // modified pointer
 
 // remove duplicates
-//  SORT(tmp_calls);
-  ranges::sort(tmp_calls);
+  SORT(tmp_calls);
+//  ranges::sort(tmp_calls);
 
   vector<string>::iterator pos { unique(tmp_calls.begin(), tmp_calls.end()) };
 
-  copy(tmp_calls.begin(), pos, back_inserter(_calls));          // put calls into the permanent container
+  ranges::copy(tmp_calls.begin(), pos, back_inserter(_calls));          // put calls into the permanent container
 }
 
 // -----------------------------------------------------  trmaster_line  ---------------------------------
@@ -148,8 +148,8 @@ trmaster_line::trmaster_line(const string& line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-  const bool   contains_parameters { contains(line, SPACE_STR) };
-  const size_t length_of_call      { (contains_parameters ? line.find(SPACE_STR) : line.length()) };
+//  const bool   contains_parameters { contains(line, SPACE_STR) };
+  const size_t length_of_call      { (contains(line, SPACE_STR) ? line.find(SPACE_STR) : line.length()) };
 
   _call = to_upper(substring(line, 0, length_of_call));
 
@@ -516,7 +516,6 @@ trmaster::trmaster(const string& filename)
 // is there already a record for this call?
       const string call { record.call() };
 
- //     if (_records.find(call) != _records.end())
       if (contains(_records, call))
         record += _records[call];
 
@@ -530,10 +529,10 @@ trmaster::trmaster(const string& filename)
 //
     //                                          _records += { record.call(), record };
     //                                        } );
-    ranges::for_each( to_lines(contents), [&] (const string& line) { const trmaster_line record(line);
+    FOR_ALL( to_lines(contents), [&] (const string& line) { const trmaster_line record(line);
 
-                                                                     _records += { record.call(), record };
-                                                                   } );
+                                                            _records += { record.call(), record };
+                                                          } );
   }
 }
 
@@ -541,10 +540,10 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-//  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
-  ranges::for_each(_records, [&rv](const auto& rec) { rv += rec.first; } );
-//  SORT(rv, compare_calls);                                          // added compare_calls 201101
-  ranges::sort(rv, compare_calls);                                          // added compare_calls 201101
+  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
+//  ranges::for_each(_records, [&rv](const auto& rec) { rv += rec.first; } );
+  SORT(rv, compare_calls);                                          // added compare_calls 201101
+//  ranges::sort(rv, compare_calls);                                          // added compare_calls 201101
 
   return rv;
 }
@@ -585,13 +584,13 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
   return string();
 }
 
-/*! \brief                  Construct fronm a call or from a line from a drmaster file
+/*! \brief                  Construct from a call or from a line from a drmaster file
     \param  line_or_call    line from file, or a call
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
 drmaster_line::drmaster_line(const string& line_or_call)
-{ const vector<string> fields   { split_string(line_or_call, SPACE_STR) };
+{ const vector<string> fields { split_string(line_or_call, SPACE_STR) };
 
   if (const size_t n_fields { fields.size() }; n_fields == 0)
     return;
@@ -665,7 +664,7 @@ string drmaster_line::to_string(void) const
 
   char user_letter { 'U' };
 
-  for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
+  for (unsigned int n { 0 }; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
     { rv += " ="s;
       rv += user_letter;
@@ -744,6 +743,12 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
   if (rv.ten_ten().empty())
     rv.ten_ten(ten_ten());
 
+  for (unsigned int n { 1 }; n <= TRMASTER_N_USER_PARAMETERS; n++)
+  { if (rv.user(n).empty())
+      rv.user(n, user(n));
+  }
+
+#if 0
   if (rv.user(1).empty())
     rv.user(1, (user(1)));
 
@@ -758,6 +763,7 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   if (rv.user(5).empty())
     rv.user(5, (user(5)));
+#endif
 
   if (rv.cw_power().empty())
     rv.cw_power(cw_power());
@@ -804,14 +810,19 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 */
 
 void drmaster::_prepare_from_file_contents(const string& contents)
-{ const vector<string> lines { to_lines(contents) };
+{ FOR_ALL(to_lines(contents), [&] (const string& line) { const drmaster_line record { line };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
-
-//                                                                    _records.insert( { record.call(), record } );
-                                                                    _records += { record.call(), record } ;
-                                                                  } );
+                                                         _records += { record.call(), record } ;
+                                                       } );
 }
+//{ const vector<string> lines { to_lines(contents) };
+//
+//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//
+//                                                                    _records.insert( { record.call(), record } );
+//                                                                    _records += { record.call(), record } ;
+ //                                                                 } );
+//}
 
 /*! \brief              Construct from a file
     \param  filename    name of file to read
@@ -867,18 +878,26 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 
 /// all the calls (in alphabetical order)
 vector<string> drmaster::calls(void) const
-{ vector<string> rv;
+{ vector<string> rv { unordered_calls() };
+
+  SORT(rv, compare_calls);
+
+  return rv;
+
+#if 0
+vector<string> rv;
 
   rv.reserve(_records.size());
 
-  for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit)
-//    rv.push_back(cit->first);
-    rv += cit->first;
+//  for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit
+//    rv += cit->first;
+  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; });
 
 //  sort(rv.begin(), rv.end());
   SORT(rv, compare_calls);      // added compare_calls 201101
 
   return rv;
+#endif
 }
 
 /// all the calls (in random order)
@@ -887,7 +906,7 @@ vector<string> drmaster::unordered_calls(void) const
 
   rv.reserve(_records.size());
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
+  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; } );
 
   return rv;
 }
@@ -896,10 +915,14 @@ vector<string> drmaster::unordered_calls(void) const
 string drmaster::to_string(void) const
 { vector<string> lines;
 
+  FOR_ALL(_records, [&lines] (const auto& rec) { lines += rec.second.to_string() + EOL; });
+
+#if 0
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
   for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit)
 //    lines.push_back((cit->second).to_string() + EOL);
     lines += (cit->second).to_string() + EOL;
+#endif
 
 //  sort(lines.begin(), lines.end());
   SORT(lines);
@@ -914,8 +937,10 @@ string drmaster::to_string(void) const
 */
 void drmaster::operator+=(const string& call)
 { if (!::contains(call, SPACE_STR))                                                // basic sanity check for a call
-  { if (_records.find(call) == _records.end())
-     _records.insert( { call, static_cast<drmaster_line>(call) } );    // cast needed in order to keep the temporary around long enough to use
+  { //if (_records.find(call) == _records.end())
+    //  _records.insert( { call, static_cast<drmaster_line>(call) } );    // cast needed in order to keep the temporary around long enough to use
+    if (!::contains(_records, call))
+      _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use
   }
 }
 
@@ -927,13 +952,17 @@ void drmaster::operator+=(const string& call)
 void drmaster::operator+=(const drmaster_line& drml)
 { const string call { drml.call() };
 
-  if (_records.find(call) == _records.end())        // no pre-existing record
-    _records.insert( { call, drml } );
+//  if (_records.find(call) == _records.end())        // no pre-existing record
+//    _records.insert( { call, drml } );
+  if (!::contains(_records, call))
+    _records += { call, drml };
   else
   { drmaster_line old_drml { _records[call] };
 
     old_drml += drml;
-    _records.erase(call);
-    _records.insert( { call, old_drml });
+//    _records.erase(call);
+//    _records.insert( { call, old_drml });
+    _records -= call;
+    _records += { call, old_drml };
   }
 }

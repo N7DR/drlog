@@ -961,12 +961,10 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   if (marker_it == fe.cend())             // should never be true
     return bandmap_entry();
 
-//  const string    target_freq_str { marker_it->frequency_str() };
   const frequency target_freq     { marker_it->freq() };
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
-  { const auto crit { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
-
+  { const auto crit  { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
@@ -1008,17 +1006,50 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
   if (fe.empty())
     return rv;
 
-  if (dirn == BANDMAP_DIRECTION::DOWN and f <= fe.front().freq())
+  if ( (dirn == BANDMAP_DIRECTION::DOWN and f <= fe.front().freq()) or (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq()) )
     return rv;
 
-  if (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq())
-    return rv;
+//  if (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq())
+//    return rv;
 
 // the logic here (for DOWN; UP is just the inverse) is to mark the highest frequency
 // and then step down through the bandmap; if bm freq is >= the target then mark the
 // frequency and keep going; if bm freq < the target, return the most recently marked
 // frequency
 
+  switch (dirn)
+  { case BANDMAP_DIRECTION::DOWN :
+      if (f <= fe.front().freq())         // all frequencies are higher than the target
+        return rv;
+
+      rv = fe.front();
+
+      for (BM_ENTRIES::const_iterator cit { next(fe.cbegin()) }; cit != fe.cend(); ++cit)
+      { if (cit->freq() >= f)
+          return rv;
+
+        rv = *cit;
+      }
+
+      return rv;            // get here only if all frequencies are above the target
+
+    case BANDMAP_DIRECTION::UP :
+      if (f >= fe.back().freq())         // all frequencies are lower than the target
+        return rv;
+
+      rv = fe.back();
+
+      for (BM_ENTRIES::const_reverse_iterator crit { next(fe.crbegin()) }; crit != fe.crend(); ++crit)
+      { if (crit->freq() <= f)
+          return rv;
+
+        rv = *crit;
+      }
+      
+      return rv;            // get here only if all frequencies are below the target
+  }
+
+#if 0
   if (dirn == BANDMAP_DIRECTION::DOWN)
   { if (f <= fe.front().freq())         // all frequencies are higher than the target
       return rv;
@@ -1052,6 +1083,7 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
 // get here only if all frequencies are above the target
     return rv;
   }
+#endif
 
   return bandmap_entry();       // keep compiler happy
 }

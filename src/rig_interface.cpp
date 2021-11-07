@@ -1325,11 +1325,7 @@ void rig_interface::test(const bool b)
 { if (test() != b)
   { if (_rig_connected)
     { if (_model == RIG_MODEL_K3)
-#if defined(NEW_RAW_COMMAND)
-        raw_command("SWH18;"s, 0);    // toggles state
-#else
         raw_command("SWH18;"s);    // toggles state
-#endif
     }
   }
 }
@@ -1410,11 +1406,6 @@ unsigned int rig_interface::centre_frequency(void)
   { _error_alert("Invalid response getting centre frequency: "s + response);
     return 0;
   }
-
-
-//  const string status_str { raw_command("IS;"s, RESPONSE::EXPECTED, 8) };
-
-//  return ( (status_str.size() < 8) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Set audio centre frequency, in Hz
@@ -1545,17 +1536,23 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 void rig_interface::base_state(void)
 { if (rit_enabled())
   { rit_disable();
-    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+
+    if (_model == RIG_MODEL_K3)
+      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
   if (split_enabled())
   { split_disable();
-    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+
+    if (_model == RIG_MODEL_K3)
+      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
   if (sub_receiver_enabled())
   { sub_receiver_disable();
-    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+
+    if (_model == RIG_MODEL_K3)
+      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 }
 

@@ -95,13 +95,13 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
 string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign) const
 { const auto it { _db.find(field_name) };
 
-  if (it == _db.cend())
-    return string();
+//  if (it == _db.cend())
+//    return string();
 
 //  const unordered_map<string /* callsign */, string /* value */>& field_map { it->second };
 
-//  
-  return MUM_VALUE(it->second, callsign);
+ // return MUM_VALUE(it->second, callsign);
+  return ( (it == _db.cend()) ? string() : MUM_VALUE(it->second, callsign) );
 }
 
 /// ostream << exchange_field_prefill

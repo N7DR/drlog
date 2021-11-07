@@ -46,7 +46,7 @@ public:
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-  message_stream(const std::string& filename, const std::string& error_name = "drlog-errors"s);
+  explicit message_stream(const std::string& filename, const std::string& error_name = "drlog-errors"s);
 
 /*! \brief          Write a generic object to a <i>message_stream</i> object
     \param  obj     object to write
@@ -73,7 +73,7 @@ public:
     \param  obj     manipulator to write
     \return         the <i>message_stream</i> object
 
-     have no idea why this is necessary, since it seems to me that the
+    I have no idea why this is necessary, since it seems to me that the
     (identical) generic version should work just fine (since surely manipulators are constant?)
 */
   message_stream& operator<<(std::ostream&(*obj)(std::ostream&))
