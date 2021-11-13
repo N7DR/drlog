@@ -1563,10 +1563,10 @@ int main(int argc, char** argv)
       bm.filter_enabled(context.bandmap_filter_enabled());
       bm.filter_hide(context.bandmap_filter_hide());
 
- //     const vector<string>& original_filter { context.bandmap_filter() };
+      const vector<string>& original_filter { context.bandmap_filter() };
 
-//      FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
-      ranges::for_each( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+      FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+//      ranges::for_each( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
       display_bandmap_filter(bm);
     }

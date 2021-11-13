@@ -1272,6 +1272,7 @@ constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::
 template<class Input, class OutputIterator>
 inline OutputIterator COPY_ALL(Input& first, OutputIterator oi)
   { return (std::copy(first.begin(), first.end(), oi)); }
+//  { return (std::ranges::copy(first, oi)); }
 
 /*! \brief          Remove values in a container that match a predicate, and resize the container
     \param  first   container

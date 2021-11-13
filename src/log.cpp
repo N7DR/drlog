@@ -84,7 +84,7 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 
 // should have a function in the QSO class to add a field to the exchange
     current_received_exchange += { field_name, value, false, false };
-    qso.received_exchange(current_received_exchange);
+    qso.received_exchange(move(current_received_exchange));
   }
 }
 
@@ -177,7 +177,8 @@ unsigned int logbook::n_worked(const string& call) const
 bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
-  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b); });
+//  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b); });
+  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.band() == b); });
 
 
 //  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
@@ -195,7 +196,8 @@ bool logbook::qso_b4(const string& call, const BAND b) const
 bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
 
-  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.mode() == m); });
+//  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.mode() == m); });
+  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.mode() == m); });
   
 //  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
 //    if (cit->second.mode() == m)
@@ -213,8 +215,10 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
 bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
 
-  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
-  
+//  return ANY_OF(_log.lower_bound(call), _log.upper_bound(call), [=] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
+  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
+ // return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second == { b, m }); });
+ 
 //  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
 //    if ((cit->second.band() == b) and (cit->second.mode() == m))
 //      return true;
@@ -543,7 +547,8 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   { if (starts_with(line, qso_markers))
     { QSO qso;
   
-      const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) }; // skip first four characters
+ //     const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) }; // skip first four characters
+      const vector<string> fields { split_string(squash(line.substr(4)), SPACE_STR) }; // skip first four characters
       
       for (unsigned int m { 0 }; m < fields.size(); ++m)
         ost << m << ": *" << fields[m] << "*" << endl; 
@@ -896,5 +901,6 @@ void old_log::qsl_received(const string& call, const BAND b, const MODE m)
     it = _olog.find(call);
   }
 
-  get<2>(it->second).insert( { b, m } );
+//  get<2>(it->second).insert( { b, m } );
+  get<2>(it->second) += { b, m };
 }

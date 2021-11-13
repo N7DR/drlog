@@ -54,7 +54,13 @@ protected:
   std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap; we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
-  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);  
+  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);
+
+  inline auto _LB(const std::string& call) const
+    { return _log.lower_bound(call); }
+
+  inline auto _UB(const std::string& call) const
+    { return _log.upper_bound(call); }  
 
 public:
   

@@ -218,7 +218,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // BAND MAP FILTER
     if ( (LHS == "BAND MAP FILTER"s) or (LHS == "BANDMAP FILTER"s) )
     { if (!RHS.empty())
-      { vector<string> filters { clean_split_string(RHS, '.') };
+      { vector<string> filters { clean_split_string(RHS, ',') };
 
         SORT(filters, compare_calls);    // put the entries into callsign order
         _bandmap_filter = filters;

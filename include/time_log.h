@@ -55,15 +55,27 @@ public:
     { _start = std::chrono::system_clock::now();
       _end = { };
     }
-  
+
+/*! \brief  Return the time between the start time and the end time
+
+    Performs no sanity checking on the values of the start and end times
+*/ 
   template <class U = double, class T = A>
   inline U time_span(void) const
     { return static_cast<U>(duration_cast<T>(_end - _start).count()); }
 
+/*! \brief  Return the time between the start time and the end time
+
+    Performs no sanity checking on the values of the start and end times
+*/
   template <class U = double, class T = A>
   inline U duration(void) const
     { return time_span<U, T>(); }
 
+/*! \brief  Return the time between the start time and now
+
+    Performs no sanity checking on the value of the start time
+*/
   template <class U = double, class T = A>
   inline U split(void)
   { end_now();
@@ -71,6 +83,10 @@ public:
     return time_span<U, T>();
   }
 
+/*! \brief  Return the time between the start time and now, and set the start time to now
+
+    Performs no sanity checking on the value of the start time before using it
+*/
   template <class U = double, class T = A>
   inline U duration_restart(void)
   { end_now();
@@ -82,6 +98,8 @@ public:
     return rv;;
   } 
 
+/*! \brief  Perform a basic sanity check that the start and end values reflect actual times
+*/
   bool valid(void) const
     { const static std::chrono::time_point<std::chrono::system_clock> empty { };
     
