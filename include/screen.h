@@ -1,4 +1,4 @@
-// $Id: screen.h 195 2021-11-01 01:21:22Z  $
+// $Id: screen.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -239,13 +239,13 @@ protected:
   std::string   _name           { EMPTY_STR };  ///< (optional) name of window
   
   unsigned int  _column_width   { 0 };          ///< width of columns
-  int           _cursor_x;                      ///< used to hold x cursor
-  int           _cursor_y;                      ///< used to hold y cursor
-  bool          _echoing;                       ///< whether echoing characters
+  int           _cursor_x       { 0 };          ///< used to hold x cursor
+  int           _cursor_y       { 0 };          ///< used to hold y cursor
+  bool          _echoing        { false };      ///< whether echoing characters
   int           _height         { 0 };          ///< height
-  bool          _hidden_cursor;                 ///< whether to hide the cursor
+  bool          _hidden_cursor  { false };      ///< whether to hide the cursor
   bool          _insert         { false };      ///< whether in insert mode
-  bool          _leaveok;                       ///< whether leaveok is set
+  bool          _leaveok        { false };      ///< whether leaveok is set
   bool          _scrolling      { false };      ///< whether scrolling is enabled
   bool          _vertical       { false };      ///< whether containers of strings are to be displayed vertically
   int           _width          { 0 };          ///< width

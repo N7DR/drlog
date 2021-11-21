@@ -1,4 +1,4 @@
-// $Id: string_functions.h 195 2021-11-01 01:21:22Z  $
+// $Id: string_functions.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -287,7 +287,6 @@ inline bool contains_upper_case_letter(const std::string& str)
 */
 inline bool contains_digit(const std::string& str)
   { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
-//  { return std::ranges::any_of(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief          Does a string contain only digits?
     \param  str     string to test
@@ -479,8 +478,6 @@ template <typename T>
 T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
-//  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
-//  std::ranges::for_each(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
   FOR_ALL(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
@@ -516,15 +513,14 @@ inline std::vector<std::string> clean_split_string(const std::string& cs, const 
     \param  separator   separator character
     \return             vector containing the separate components
 */
-/* inline */std::vector<std::string> split_string(const std::string& cs, const char separator);
-//  { return split_string(cs, std::string(1, separator)); }
+std::vector<std::string> split_string(const std::string& cs, const char separator = ',');
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string
     \param  separator   separator character
     \return             vector containing the separate components, with peripheral spaces removed
 */
-inline std::vector<std::string> clean_split_string(const std::string& cs, const char separator)
+inline std::vector<std::string> clean_split_string(const std::string& cs, const char separator = ',')
   { return remove_peripheral_spaces(split_string(cs, separator)); }
 
 /*! \brief                  Split a string into equal-length records
@@ -787,6 +783,7 @@ inline bool is_maritime_mobile(const std::string& callsign)
 
     Uses comma as separator if <i>sep</i> is empty.
 */
+#if 0
 template <typename T>
 std::string separated_string(const T n, const std::string& sep = ","s)
 { const char separator { (sep.empty() ? ',' : sep[0]) };
@@ -802,6 +799,28 @@ std::string separated_string(const T n, const std::string& sep = ","s)
 
     if (!tmp.empty())
       rv = std::string(1, separator) + rv;
+  }
+
+  return rv;
+}
+#endif
+
+template <typename T>
+std::string separated_string(const T n, const char sep = ',')
+{ //const char separator { (sep.empty() ? ',' : sep[0]) };
+
+  std::string tmp { to_string(n) };
+  std::string rv;
+
+  while (!tmp.empty())
+  { for (unsigned int N { 0 }; N < 3 and !tmp.empty(); ++N)
+    { rv = std::string(1, last_char(tmp)) + rv;
+      tmp = tmp.substr(0, tmp.length() - 1);
+    }
+
+    if (!tmp.empty())
+//      rv = std::string(1, separator) + rv;
+      rv.insert(rv.begin(), sep);
   }
 
   return rv;

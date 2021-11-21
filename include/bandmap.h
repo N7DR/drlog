@@ -1,4 +1,4 @@
-// $Id: bandmap.h 195 2021-11-01 01:21:22Z  $
+// $Id: bandmap.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -224,10 +224,12 @@ public:
     \return     whether <i>v</i> is needed
 */
   bool is_value_needed(const T& v) const
-  { if (!_is_needed)
-      return false;
+  { //return _is_needed ? (_values.find(v) == _values.cend()) : false;
+    return _is_needed ? !contains(_values, v) : false;
+//if (!_is_needed)
+    //  return false;
 
-    return (_values.find(v) == _values.cend());
+    //return (_values.find(v) == _values.cend());
   }
 
 /*! \brief      Remove a needed value
@@ -237,10 +239,11 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { if (!_is_needed)
-      return false;
+  { //if (!_is_needed)
+    //  return false;
 
-    if (_values.find(v) == _values.cend())
+//    if (_values.find(v) == _values.cend())
+    if (!_is_needed or !contains(_values, v))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -321,10 +324,10 @@ class bandmap_filter_type
 {
 protected:
 
-  std::vector<std::string>  _continents;                ///< continents to filter
+  std::vector<std::string>  _continents  { };           ///< continents to filter
   bool                      _enabled     { false };     ///< is bandmap filtering enabled?
   bool                      _hide        { true };      ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _prefixes;                  ///< canonical country prefixes to filter
+  std::vector<std::string>  _prefixes    { };           ///< canonical country prefixes to filter
 
 public:
 
@@ -532,7 +535,8 @@ public:
     Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
 */
   inline void remove_callsign_mult(const std::string& name, const std::string& value)
-    { _is_needed_callsign_mult.remove( { name, value } ); }
+//    { _is_needed_callsign_mult.remove( { name, value } ); }
+    { _is_needed_callsign_mult -= { name, value }; }
 
 /*! \brief          Remove a particular value of country mult
     \param  value   value of the mult
@@ -540,7 +544,6 @@ public:
     Does nothing if the value <i>value</i> is unknown
 */
   inline void remove_country_mult(const std::string& value)
-//    { _is_needed_country_mult.remove(value); }
     { _is_needed_country_mult -= value; }
 
 /*! \brief          Remove a particular value of an exchange mult
@@ -550,7 +553,8 @@ public:
     Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
 */
   inline void remove_exchange_mult(const std::string& name, const std::string& value)
-    { _is_needed_exchange_mult.remove( { name, value } ); }
+//    { _is_needed_exchange_mult.remove( { name, value } ); }
+    { _is_needed_exchange_mult -= { name, value }; }
 
 /// is this a needed mult of any type?
   inline bool is_needed_mult(void) const
@@ -748,15 +752,15 @@ protected:
   
   int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                        ///< cull function number to apply
-  std::unordered_set<std::string> _do_not_add;                                          ///< do not add these calls
-  BM_ENTRIES                      _entries;                                             ///< all the entries
-  std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
-  decltype(_entries)              _filtered_entries;                                    ///< entries, with the filter applied
+  std::unordered_set<std::string> _do_not_add             { };                          ///< do not add these calls
+  BM_ENTRIES                      _entries                { };                          ///< all the entries
+  std::vector<COLOUR_TYPE>        _fade_colours           { };                          ///< the colours to use as entries age
+  decltype(_entries)              _filtered_entries       { };                          ///< entries, with the filter applied
   bool                            _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*            _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                       _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
   unsigned int                    _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
-  decltype(_entries)              _rbn_threshold_and_filtered_entries;                  ///< entries, with the filter and RBN threshold applied
+  decltype(_entries)              _rbn_threshold_and_filtered_entries       { };        ///< entries, with the filter and RBN threshold applied
   bool                            _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)              _rbn_threshold_filtered_and_culled_entries;           ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string> _recent_calls;                                        ///< calls recently added
@@ -800,7 +804,7 @@ public:
 /// default constructor
   bandmap(void) = default;
   
-  bandmap(const bandmap& bm) = delete;
+  bandmap(const bandmap& bm) = delete;      // no copying
 
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
 
@@ -858,12 +862,12 @@ public:
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-  bandmap_entry operator[](const std::string& callsign);
+  bandmap_entry operator[](const std::string& callsign) const;
 
 /*! \brief              Return the bandmap_entry corresponding to my current frequency
     \return             the bandmap_entry corresponding to my location in the bandmap
 */
-  inline bandmap_entry my_bandmap_entry(void)
+  inline bandmap_entry my_bandmap_entry(void) const
     { return (*this)[MY_MARKER]; }
 
 /*! \brief              Return the first entry for a partial call
@@ -872,7 +876,7 @@ public:
 
     Returns the null string if <i>callsign</i> matches no entries in the bandmap
 */
-  bandmap_entry substr(const std::string& callsign);
+  bandmap_entry substr(const std::string& callsign) const;
 
 /*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
@@ -881,14 +885,14 @@ public:
 */
   void operator-=(const std::string& callsign);
 
-/*! \brief set the needed status of a call to <i>false</i>
+/*! \brief              Set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
   void not_needed(const std::string& callsign);
 
-/*! \brief set the needed country mult status of all calls in a particular country to false
+/*! \brief                      Set the needed country mult status of all calls in a particular country to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
@@ -921,7 +925,7 @@ public:
 // filter functions -- these affect all bandmaps, since there's just one (global) filter
 
 /// is the filter enabled?
-  inline bool filter_enabled(void)
+  inline bool filter_enabled(void) const
     { return _filter_p->enabled(); }
 
 /*! \brief          Enable or disable the filter
@@ -996,6 +1000,13 @@ public:
   inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
+/*!  \brief                             Find the station in the displayed bandmap that is closest to a target frequency, within the guard band
+     \param target_frequency_in_khz     target frequency, in kHz
+     \param guard_band_in_hz            guard band, in Hz
+     \return                            closest displayed bandmap entry (if any) to the target frequency and within the guard band
+
+     Returns the empty string if no displayed station was found within the guard band.
+*/
   inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 

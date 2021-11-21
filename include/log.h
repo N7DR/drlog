@@ -1,4 +1,4 @@
-// $Id: log.h 192 2021-09-19 14:03:15Z  $
+// $Id: log.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,11 +54,28 @@ protected:
   std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap; we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
+/*! \brief          Modify a passed QSO with a new value for a named field
+    \param  qso     QSO to modify
+    \param  name    name of the field to modify
+    \param  value   the new value to give to field <i>name</i>
+*/
   void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);
 
+/*! \brief          Obtain iterator to the first location of QSOs with a given call
+    \param  call    target callsign
+    \return         iterator to the first entry in the multimap for callsign <i>call</i>
+
+    Returns _log.end() if call <i>call</i> does not appear in the log
+*/
   inline auto _LB(const std::string& call) const
     { return _log.lower_bound(call); }
 
+/*! \brief          Obtain iterator to the last location of QSOs with a given call
+    \param  call    target callsign
+    \return         iterator to one past the last entry in the multimap for callsign <i>call</i>
+
+    Returns _log.end() if call <i>call</i> does not appear in the log
+*/
   inline auto _UB(const std::string& call) const
     { return _log.upper_bound(call); }  
 
@@ -193,7 +210,6 @@ public:
 
     SAFELOCK(_log);
 
-//    copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv), pred);
     std::ranges::copy_if(_log_vec, back_inserter(rv), pred);
 
     return rv;
@@ -386,7 +402,6 @@ template <typename C>
   requires (std::is_same_v<typename C::value_type, QSO>)
   { SAFELOCK(_extract);
     _qsos.clear();
- //   copy(t.cbegin(), t.cend(), back_inserter(_qsos));
     std::ranges::copy(t, back_inserter(_qsos));
   }
 };

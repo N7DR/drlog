@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: drlog_context.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -230,7 +230,8 @@ void drlog_context::_process_configuration_file(const string& filename)
          (LHS == "BANDMAP FILTER COLOURS"s) or (LHS == "BANDMAP FILTER COLORS"s) )
     { if (!RHS.empty())
       { //const vector<string> colours { split_string(RHS, ","s) };
-        const vector<string> colours { clean_split_string(RHS, ',') };
+//        const vector<string> colours { clean_split_string(RHS, ',') };
+        const vector<string> colours { clean_split_string(RHS) };
 
         if (colours.size() >= 1)
           _bandmap_filter_foreground_colour = string_to_colour(colours[0]);
@@ -295,13 +296,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"s)
-    { //const string         bands_str     { rhs };
-      //const vector<string> bands_str_vec { remove_peripheral_spaces(split_string(bands_str, ","s)) };
-      
-      //for (const auto& band_str : bands_str_vec)
-      //  _call_history_bands += BAND_FROM_NAME[band_str]; 
-      FOR_ALL(clean_split_string(rhs, ','), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
-    }
+      FOR_ALL(clean_split_string(rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
 
 // CALL OK NOW MESSAGE
     if (LHS == "CALL OK NOW MESSAGE"s)
@@ -313,7 +308,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 //      move(callsign_mults_vec.cbegin(), callsign_mults_vec.cend(), inserter(_callsign_mults, _callsign_mults.begin()));
 //      ranges::move(callsign_mults_vec, inserter(_callsign_mults, _callsign_mults.begin()));
-      ranges::move(clean_split_string(RHS, ','), inserter(_callsign_mults, _callsign_mults.begin()));
+      ranges::move(clean_split_string(RHS), inserter(_callsign_mults, _callsign_mults.begin()));
     }
 
 // CALLSIGN MULTS PER BAND
@@ -355,21 +350,21 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // COUNTRY MULT FACTOR
     if (LHS == "COUNTRY MULT FACTOR"s)  // there may be an "=" in the points definitions
-    { const vector<string> str_vec { split_string(line, "="s) };
+    { const vector<string> str_vec { split_string(line, '=') };
 
       if (!str_vec.empty())
       { string tmp_str;
 
         const string lhs { str_vec[0] };
 
-        if (!contains(lhs, "["s) or contains(lhs, "[*]"s))             // for all bands
+        if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
         { string new_str;
 
           for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
           { new_str += str_vec[n];
 
             if (n != str_vec.size() - 1)
-              new_str += "="s;
+              new_str += '=';
           }
 
           tmp_str = to_upper(remove_peripheral_spaces(new_str));
@@ -379,9 +374,10 @@ void drlog_context::_process_configuration_file(const string& filename)
         }
         else    // not all bands
         { const string         bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
-          const vector<string> bands     { remove_peripheral_spaces(split_string(bands_str, ","s)) };
+          //const vector<string> bands     { remove_peripheral_spaces(split_string(bands_str, ","s)) };
+          //const vector<string> bands     { clean_split_string(bands_str) };
 
-          for (const auto b_str: bands)
+          for (const auto b_str: clean_split_string(bands_str))
           { const BAND b { BAND_FROM_NAME[b_str] };
 
             string new_str;
@@ -390,7 +386,7 @@ void drlog_context::_process_configuration_file(const string& filename)
             { new_str += str_vec[n];
 
               if (n != str_vec.size() - 1)
-                new_str += "="s;
+                new_str += '=';
             }
 
             tmp_str = to_upper(remove_peripheral_spaces(new_str));
@@ -418,7 +414,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CW BANDWIDTH
     if (LHS == "CW BANDWIDTH"s)
-    { const vector<string> bw { remove_peripheral_spaces(split_string(RHS, "/"s)) };
+    { //const vector<string> bw { remove_peripheral_spaces(split_string(RHS, "/"s)) };
+      const vector<string> bw { clean_split_string(RHS, '/') };
 
       if (bw.size() == 2)
       { _cw_bandwidth_narrow = from_string<decltype(_cw_bandwidth_narrow)>(bw[0]);
@@ -440,7 +437,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // DECIMAL POINT
     if (LHS == "DECIMAL POINT"s)
-      _decimal_point = rhs;
+    { //_decimal_point = rhs;
+      if (rhs.size() >= 1)
+        _decimal_point = rhs[0];
+    }
 
 // DISPLAY COMMUNICATION ERRORS
     if (LHS == "DISPLAY COMMUNICATION ERRORS"s)
@@ -452,7 +452,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // DO NOT SHOW
     if (LHS == "DO NOT SHOW"s)
-      _do_not_show = remove_peripheral_spaces(split_string(RHS, ","s));
+      _do_not_show = clean_split_string(RHS);
 
 // DO NOT SHOW FILE
     if (LHS == "DO NOT SHOW FILE"s)
@@ -468,11 +468,9 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE[
     if (starts_with(testline, "EXCHANGE["s))
-    { const string         country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
-      //const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
+    { const string  country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
 
-//      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
-      FOR_ALL(clean_split_string(country_list, ','), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
+      FOR_ALL(clean_split_string(country_list), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
@@ -487,7 +485,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE MULTS"s)
     { _exchange_mults = RHS;
 
-      if (contains(_exchange_mults, ","s))      // if there is more than one exchange mult
+      if (contains(_exchange_mults, ','))      // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
 
@@ -505,10 +503,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']', DELIMITERS::DROP)) };
 
       for (const auto& file : files)
-      { //const vector<string> fields { remove_peripheral_spaces(split_string(file, ","s)) };
-        const vector<string> fields { clean_split_string(file, ',') };
-
-        if (fields.size() == 2)
+      { if (const vector<string> fields { clean_split_string(file) }; fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
       }
     }
@@ -522,12 +517,15 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE SENT"s)
     { //const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
       const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
-      const vector<string> fields               { split_string(comma_delimited_list, ","s) };
+      const vector<string> fields               { split_string(comma_delimited_list) };
 
       for (const auto& this_field : fields)
-      { const vector<string> field { split_string(this_field, ":"s) };
+      { //const vector<string> field { split_string(this_field, ':'s) };
 
-        _sent_exchange += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
+        //_sent_exchange += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
+        const vector<string> field { clean_split_string(this_field, ':') };
+
+        _sent_exchange += { field[0], field[1] };
       }
     }
 
@@ -1009,7 +1007,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // THOUSANDS SEPARATOR
     if (LHS == "THOUSANDS SEPARATOR"s)
-      _thousands_separator = rhs;
+    { if (rhs.size() >= 1)
+        _thousands_separator = rhs[0];
+      else
+        _thousands_separator = ' ';
+    }
 
 // UBA BONUS
     if (LHS == "UBA BONUS"s)

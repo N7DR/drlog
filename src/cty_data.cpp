@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 193 2021-10-03 20:05:48Z  $
+// $Id: cty_data.cpp 196 2021-11-14 21:39:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

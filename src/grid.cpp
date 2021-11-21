@@ -1,4 +1,4 @@
-// $Id: grid.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: grid.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -22,10 +22,10 @@ using namespace std;
 
 extern message_stream ost;                  ///< for debugging, info
 
-constexpr float FIELD_WIDTH  { 20.0f };             ///< width of a Maidenhead field, in degrees
+constexpr float FIELD_WIDTH   { 20.0f };            ///< width of a Maidenhead field, in degrees
 constexpr float FIELD_HEIGHT  { 10.0f };            ///< height of a Maidenhead field, in degrees
 constexpr float SQUARE_WIDTH  { 2.0f };             ///< width of a Maidenhead "square", in degrees
-constexpr float SQUARE_HEIGHT { 1.0f };            ///< width of a Maidenhead "square", in degrees
+constexpr float SQUARE_HEIGHT { 1.0f };             ///< width of a Maidenhead "square", in degrees
 
 // -------------------------  grid_square  ---------------------------
 
@@ -38,7 +38,7 @@ constexpr float SQUARE_HEIGHT { 1.0f };            ///< width of a Maidenhead "s
 */
 grid_square::grid_square(const string& gs)
 { if ( is_valid_grid_designation(gs) )
-  { auto round_it { [] (const float f) { return static_cast<int>(round(f)); } };
+  { auto round_it { [] (const float f) { return static_cast<int>(round(f)); } };     // round a float to the nearest int
 
     _designation = to_upper(gs);
 

@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: fuzzy.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -36,11 +36,11 @@ extern message_stream    ost;       ///< debugging/logging output
 
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC
 */
-fuzzy_database::fuzzy_database(const string& filename)
-{ const vector<string> calls { to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '))) };
-
-  FOR_ALL(calls, [&] (const string& x) { *this += x; } );
-}
+//fuzzy_database::fuzzy_database(const string& filename)
+//{ const vector<string> calls { to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '))) };
+//
+//  FOR_ALL(calls, [&] (const string& x) { *this += x; } );
+//}
 
 /*! \brief          Return matches
     \param  key     basic call against which to compare

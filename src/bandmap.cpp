@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: bandmap.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -660,7 +660,7 @@ void bandmap::prune(void)
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-bandmap_entry bandmap::operator[](const string& str)
+bandmap_entry bandmap::operator[](const string& str) const
 { SAFELOCK(_bandmap);
 
   const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); }) };
@@ -674,12 +674,13 @@ bandmap_entry bandmap::operator[](const string& str)
 
     Returns the null string if <i>callsign</i> matches no entries in the bandmap
 */
-bandmap_entry bandmap::substr(const string& str)
+bandmap_entry bandmap::substr(const string& str) const
 { SAFELOCK(_bandmap);
 
-  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); }) };
+//  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); }) };
 
-  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
+//  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
+  return VALUE_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); });
 }
 
 /*! \brief              Remove a call from the bandmap
@@ -724,8 +725,8 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-//  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
-  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+//  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
   _dirty_entries();
 }
@@ -767,8 +768,8 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
 
   SAFELOCK(_bandmap);
 
-//  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
-  ranges::for_each(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
+  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
+//  ranges::for_each(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
 
   _dirty_entries();
 }
@@ -851,19 +852,30 @@ BM_ENTRIES bandmap::filtered_entries(void)
     { const string& canonical_prefix { be.canonical_prefix() };
       const string& continent        { be.continent() };
 
-      bool display_this_entry { false };
+//      bool display_this_entry { false };
 
-      const vector<string>& fil_continent { _filter_p->continents() };
+//      const vector<string>& fil_continent { _filter_p->continents() };
 
-      for (size_t n { 0 }; n < fil_continent.size() and !display_this_entry; ++n)
-        if (continent == fil_continent[n])
-          display_this_entry = true;
+//      for (size_t n { 0 }; n < fil_continent.size() and !display_this_entry; ++n)
+//        if (continent == fil_continent[n])
+//          display_this_entry = true;
 
-      const vector<string>& fil_prefix { _filter_p->prefixes() };
+//      if (!display_this_entry and contains(_filter_p->continents(), continent))
+//          display_this_entry = true;
 
-      for (size_t n { 0 }; n < fil_prefix.size() and !display_this_entry; ++n)
-        if (canonical_prefix == fil_prefix[n])
-          display_this_entry = true;
+ //     const vector<string>& fil_prefix { _filter_p->prefixes() };
+
+//      for (size_t n { 0 }; n < fil_prefix.size() and !display_this_entry; ++n)
+//        if (canonical_prefix == fil_prefix[n])
+//          display_this_entry = true;
+
+ //     if (!display_this_entry and contains(_filter_p->prefixes(), canonical_prefix))
+ //         display_this_entry = true;
+
+//      if ( contains(_filter_p->continents(), continent) or contains(_filter_p->prefixes(), canonical_prefix) )
+//        display_this_entry = true;
+
+      bool display_this_entry { contains(_filter_p->continents(), continent) or contains(_filter_p->prefixes(), canonical_prefix) };
 
       if (filter_hide())                              // hide is the opposite of show
         display_this_entry = !display_this_entry;
@@ -911,30 +923,29 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 0 :
       return rbn_threshold_and_filtered_entries();
 
-    case 1 :                                                            // N7DR criteria
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+    case 1 :                                                        // N7DR criteria
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
       REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
 
       return rv;
     }
 
-    case 2 :                                                            // new on this band+mode
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+    case 2 :                                                        // new on this band+mode
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
       REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
 
       return rv;
     }
 
-    case 3 :                                                            // never worked anywhere
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+    case 3 :                                                        // never worked anywhere
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
       REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
 
       return rv;
     }    
-
   }
 }
 
@@ -955,8 +966,8 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   const BM_ENTRIES fe                 { displayed_entries() };
 
 // why can't this be const?
-//  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
-  /* const */ auto marker_it { ranges::find_if(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+//  /* const */ auto marker_it { ranges::find_if(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
   if (marker_it == fe.cend())             // should never be true
     return bandmap_entry();
@@ -968,9 +979,9 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
-    { const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) };
+    { //const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) };
 
-      if (crit3 != fe.crend())
+      if (const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) }; crit3 != fe.crend())
         return (*crit3);
     }
   }
@@ -1009,9 +1020,6 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
   if ( (dirn == BANDMAP_DIRECTION::DOWN and f <= fe.front().freq()) or (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq()) )
     return rv;
 
-//  if (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq())
-//    return rv;
-
 // the logic here (for DOWN; UP is just the inverse) is to mark the highest frequency
 // and then step down through the bandmap; if bm freq is >= the target then mark the
 // frequency and keep going; if bm freq < the target, return the most recently marked
@@ -1048,42 +1056,6 @@ bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIREC
       
       return rv;            // get here only if all frequencies are below the target
   }
-
-#if 0
-  if (dirn == BANDMAP_DIRECTION::DOWN)
-  { if (f <= fe.front().freq())         // all frequencies are higher than the target
-      return rv;
-
-    rv = fe.front();
-
-    for (BM_ENTRIES::const_iterator cit { next(fe.cbegin()) }; cit != fe.cend(); ++cit)
-    { if (cit->freq() >= f)
-        return rv;
-
-      rv = *cit;
-    }
-
-// get here only if all frequencies are below the target
-    return rv;
-  }
-
-  if (dirn == BANDMAP_DIRECTION::UP)
-  { if (f >= fe.back().freq())         // all frequencies are lower than the target
-      return rv;
-
-    rv = fe.back();
-
-    for (BM_ENTRIES::const_reverse_iterator crit { next(fe.crbegin()) }; crit != fe.crend(); ++crit)
-    { if (crit->freq() <= f)
-        return rv;
-
-      rv = *crit;
-    }
-
-// get here only if all frequencies are above the target
-    return rv;
-  }
-#endif
 
   return bandmap_entry();       // keep compiler happy
 }

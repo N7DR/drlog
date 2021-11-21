@@ -1,4 +1,4 @@
-// $Id: log_message.h 180 2021-03-21 15:21:49Z  $
+// $Id: log_message.h 196 2021-11-14 21:39:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

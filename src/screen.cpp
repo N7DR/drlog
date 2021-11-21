@@ -1,4 +1,4 @@
-// $Id: screen.cpp 192 2021-09-19 14:03:15Z  $
+// $Id: screen.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -177,10 +177,6 @@ window::window(const window_information& wi, const unsigned int flags) :
   _height(wi.h()),
   _x(wi.x()),
   _y(wi.y()),
-//  _vertical(false),
-//  _column_width(0),
-//  _wp(nullptr),
-//  _scrolling(false),
   _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
   _insert(flags bitand WINDOW_INSERT),
   _pp(nullptr),
@@ -927,7 +923,9 @@ PAIR_NUMBER_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
   if (_colours.empty())
     return _add_to_vector(fgbg);
 
-  const auto it { find(_colours.begin(), _colours.end(), fgbg) };
+//  const auto it { find(_colours.begin(), _colours.end(), fgbg) };
+  const auto it { ranges::find(_colours, fgbg) };
+//  const auto it { FIND(_colours, fgbg) };
 
   return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_NUMBER_TYPE>( distance(_colours.begin(), it) + 1));
 }
@@ -961,7 +959,7 @@ COLOUR_TYPE string_to_colour(const string& str)
                                                      { "YELLOW"s,  COLOUR_YELLOW }
                                                    };
 
-  const string s   { to_upper(remove_peripheral_spaces(str)) };
+  const string s { to_upper(remove_peripheral_spaces(str)) };
 
   if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
     return cit->second;

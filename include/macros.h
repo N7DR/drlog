@@ -1,4 +1,4 @@
-// $Id: macros.h 195 2021-11-01 01:21:22Z  $
+// $Id: macros.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -272,13 +272,6 @@ template<typename T>
 concept SET = requires(T a) 
 { is_set<T>::value == true;
 };
-
-//template<typename T>
-//concept SUS = requires(T a) 
-//{ (is_set<T>::value == true) || (is_unordered_set<T>::value == true);
-//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
-//};
-
 
 // is a type an unordered map?
 template<class T>
@@ -970,7 +963,6 @@ bool operator>(const T& s, const U& v)
 */
 template <class T, class U>
 bool contains(const T& s, const U& v)
-//  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
   requires (is_sus_v<T> or is_mum_v<T>) and (std::is_same_v<typename T::key_type, U>)
   { return s.find(v) != s.cend(); }
 
@@ -1249,30 +1241,37 @@ template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::ident
 constexpr std::ranges::for_each_result<I, Fun> FOR_ALL( I first, S last, Fun f, Proj proj = {} ) { return std::ranges::for_each(first, last, f, proj); }; 
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirectly_unary_invocable<std::projected<std::ranges::iterator_t<R>, Proj>> Fun >
-constexpr std::ranges::for_each_result<std::ranges::borrowed_iterator_t<R>, Fun> FOR_ALL( R&& r, Fun f, Proj proj = {} ) { return std::ranges::for_each(r, f, proj); }; 
+constexpr std::ranges::for_each_result<std::ranges::borrowed_iterator_t<R>, Fun> FOR_ALL( R&& r, Fun f, Proj proj = {} ) { return std::ranges::for_each(std::forward<R>(r), f, proj); }; 
 
 // https://en.cppreference.com/w/cpp/algorithm/ranges/all_any_none_of
 template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
 constexpr bool ANY_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::any_of(first, last, pred, proj); };
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
-constexpr bool ANY_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::any_of(r, pred, proj); };;
+constexpr bool ANY_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::any_of(std::forward<R>(r), pred, proj); };;
 
 template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
 constexpr bool ALL_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::all_of(first, last, pred, proj); };
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
-constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(r, pred, proj); };;
+constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(std::forward<R>(r), pred, proj); };;
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
     \param  oi      iterator on final container
     \return         <i>oi</i>
 */
-template<class Input, class OutputIterator>
-inline OutputIterator COPY_ALL(Input& first, OutputIterator oi)
-  { return (std::copy(first.begin(), first.end(), oi)); }
+//template<class Input, class OutputIterator>
+//inline OutputIterator COPY_ALL(Input& first, OutputIterator oi)
+//  { return (std::copy(first.begin(), first.end(), oi)); }
 //  { return (std::ranges::copy(first, oi)); }
+
+//https://en.cppreference.com/w/cpp/algorithm/ranges/copy
+template< std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O > requires  std::indirectly_copyable<I, O>
+constexpr std::ranges::in_out_result<I, O> COPY_ALL( I first, S last, O result ) { return std::ranges::copy(first, last, result); };
+
+template< std::ranges::input_range R, std::weakly_incrementable O > requires  std::indirectly_copyable<std::ranges::iterator_t<R>, O>
+constexpr std::ranges::in_out_result<std::ranges::borrowed_iterator_t<R>, O> COPY_ALL( R&& r, O result )  { return std::ranges::copy(std::forward<R>(r), result); };
 
 /*! \brief          Remove values in a container that match a predicate, and resize the container
     \param  first   container
@@ -1304,12 +1303,7 @@ void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
 */
 template <class Input>
 inline void REVERSE(Input& v)
-//  { std::reverse(v.begin(), v.end()); }
   { std::ranges::reverse(v); }
-
-// https://en.cppreference.com/w/cpp/ranges/reverse_view
-//template< std::ranges::view V > requires std::ranges::bidirectional_range<V>
-//class reverse_view : public std::ranges::view_interface<reverse_view<V>>
 
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container
@@ -1693,8 +1687,14 @@ inline void operator-=(D& d, const typename D::iterator& it)
 template <typename C, typename E>
   requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
-  { return std::find(c.cbegin(), c.cend(), element) != c.cend(); }
+ // { return std::find(c.cbegin(), c.cend(), element) != c.cend(); }        // don't use ranges here because it might be dangling
+  { return std::ranges::find(c, element) != c.cend(); }
 
+//template <typename C, typename E>
+//  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+//inline bool contains(C&& c, const E& element)
+//  { return std::ranges::find(std::forward<C>(c), element) != c.cend(); }       // don't use ranges here because it might be dangling
+//  { return contains(std::forward<C>(c), element); }       // don't use ranges here because it might be dangling
 
 template <typename T = int, typename U, typename V>
 //ranges::iota_view { 0u, call.length() - 2 } )
@@ -1707,5 +1707,18 @@ template <typename T = int>
 auto RANGE(std::initializer_list<T> l)
   { return std::ranges::iota_view { static_cast<T>(l.data[0]), static_cast<T>(l.data[1]) }; }
 #endif
+
+/*! \brief          Find the first element in a container that matches a predicate, or the default-constructed element if none match
+    \param  c       the container
+    \param  pred    predicate to apply
+    \return         first element in <i>c<i> for which <i>pred</i> is true; if none, then a default-constructed element
+*/
+template <class C, class UnaryPredicate>
+  requires is_list_v<C>
+typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
+  { const auto cit { FIND_IF(c, pred) };
+
+    return ( (cit == c.end()) ? typename C::value_type {} : *cit );
+  }
 
 #endif    // MACROS_H

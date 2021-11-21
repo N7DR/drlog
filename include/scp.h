@@ -1,4 +1,4 @@
-// $Id: scp.h 193 2021-10-03 20:05:48Z  $
+// $Id: scp.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,7 +56,8 @@ public:
   inline scp_database(void) = default;
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
-  explicit scp_database(const std::string& filename);
+  inline explicit scp_database(const std::string& filename)
+    { init_from_calls(to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
   
 /// construct from vector of calls
   inline explicit scp_database(const std::vector<std::string>& calls)
@@ -78,7 +79,10 @@ public:
   void operator+=(const std::string& call);
   
 /// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-  unsigned int remove_call(const std::string& call);
+//  unsigned int remove_call(const std::string& call);
+  bool remove_call(const std::string& call);
+
+  void operator-=(const std::string& call);
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
@@ -129,7 +133,9 @@ public:
     { add_db(db); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
-  void remove_call(const std::string& call);
+//  void remove_call(const std::string& call);
+  inline void remove_call(const std::string& call)
+    { FIND_IF(_vec.rbegin(), _vec.rend(), [=] (auto& db) { return (db->remove_call(call)); } ); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
   inline void operator-=(const std::string& call)

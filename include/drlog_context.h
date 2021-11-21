@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 193 2021-10-03 20:05:48Z  $
+// $Id: drlog_context.h 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -274,7 +274,7 @@ protected:
   bool                                         _sync_keyer                              { false };                          ///< whether to synchronise the rig keyer speed with the computer
 
   bool                                         _test                                    { false };                          ///< whether to put rig in TEST mode
-  std::string                                  _thousands_separator                     { ","s };                           ///< character used as thousands separator in numbers
+  char                                         _thousands_separator                     { ',' };                            ///< character used as thousands separator in numbers
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
@@ -440,8 +440,6 @@ public:
     \return     guard band for mode <i>m</i>, in Hz
 */
   inline unsigned int guard_band(const MODE m)
-//  inline decltype(decltype(_guard_band)::value_type)::type guard_band(const MODE m) // I don't know how to get the type of the second element in the pair
-//  decltype(std::get<1>(_guard_band)) guard_band(const MODE m)
   { SAFELOCK(_context);
 
     return MUM_VALUE(_guard_band, m, 1000);
@@ -598,7 +596,7 @@ public:
 */
   inline std::vector<std::string> band_names(void) const
   { SAFELOCK(_context);
-    return split_string(_bands, ","s);
+    return split_string(_bands, ',');
   }
 
 /*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
@@ -606,7 +604,7 @@ public:
 */
   inline std::vector<std::string> mode_names(void) const
   { SAFELOCK(_context);
-    return split_string(_modes, ","s);
+    return split_string(_modes, ',');
   }
 
 /// how many bands are used in this contest?

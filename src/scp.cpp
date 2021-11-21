@@ -1,4 +1,4 @@
-// $Id: scp.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: scp.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,28 +28,25 @@ using namespace      placeholders;
 extern message_stream ost;
 
 /// constructor from filename
+#if 0
 scp_database::scp_database(const string& filename)
 { const string file_contents { to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')) };
 //  const vector<string> calls { to_lines(file_contents) };
 
   init_from_calls(to_lines(file_contents));
 }
+#endif
 
 /// add a call
-//void scp_database::add_call(const string& call)
 void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
-//    for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
-//    for ( auto start_index : ranges::iota_view { 0u, call.length() - 2 } )
-//    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
-//      (_db[substring(call, start_index, 2)]).insert(call);
       (_db[substring(call, start_index, 2)]) += call;
 }
 
 /// remove a call; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-unsigned int scp_database::remove_call(const std::string& call)
-{ unsigned int rv { 0 };
+bool scp_database::remove_call(const std::string& call)
+{ bool rv { 0 };
 
   if (call.length() >= 2)
   { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
@@ -57,11 +54,17 @@ unsigned int scp_database::remove_call(const std::string& call)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
     { SCP_SET& ss { _db[substring(call, start_index, 2)] };
 
-      rv = ss.erase(call);                                      // all except the last will be thrown away
+      rv = (ss.erase(call) == 1);                                      // all except the last will be thrown away
     }
   }
 
   return rv;
+}
+
+void scp_database::operator-=(const std::string& call)
+{ if (call.length() >= 2)
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+      _db[substring(call, start_index, 2)].erase(call);                                      // all except the last will be thrown away
 }
 
 /// return SCP matches; cannot be const, as it might change the cache
@@ -117,13 +120,14 @@ void scp_database::clear_cache(void)
   _last_result.clear();
 
 // must also clear the cache of any parents
-//  FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
-  ranges::for_each(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
+  FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
+//  ranges::for_each(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
 }
 
 // -----------  scp_databases  ----------------
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
+#if 0
 void scp_databases::remove_call(const string& call)
 { bool removed { false };
 
@@ -133,6 +137,7 @@ void scp_databases::remove_call(const string& call)
     removed = _vec[rev]->remove_call(call);
   }
 }
+#endif
 
 /// add a database to those that are consulted
 void scp_databases::add_db(scp_database& db)
@@ -152,10 +157,10 @@ SCP_SET scp_databases::operator[](const string& key)
     for (auto& db_p : _vec)
     { scp_database& db { *(db_p) };
 
-      const SCP_SET ss { db[key] };
+//      const SCP_SET ss { db[key] };
 
-//      _last_result.insert(ss.cbegin(), ss.cend());
-      _last_result += ss;
+//      _last_result += ss;
+      _last_result += db[key];
     }
 
     return _last_result;
@@ -198,8 +203,8 @@ SCP_SET scp_databases::operator[](const string& key)
 void scp_databases::clear_cache(void)
 { clear_cache_no_children();
 
-//  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
-  ranges::for_each(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
+  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
+//  ranges::for_each(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
 }
 
 /// clear the cache without clearing the caches of any children

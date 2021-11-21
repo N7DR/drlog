@@ -1,4 +1,4 @@
-// $Id: log.cpp 193 2021-10-03 20:05:48Z  $
+// $Id: log.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +34,11 @@ extern string VERSION;          ///< version string
     \brief  The log
 */
 
+/*! \brief          Modify a passed QSO with a new value for a named field
+    \param  qso     QSO to modify
+    \param  name    name of the field to modify
+    \param  value   the new value to give to field <i>name</i>
+*/
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
 { 
 // frequency
@@ -65,11 +70,12 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 
 // transmitted exchange
   if (starts_with(name, "TEXCH"s))
-  { const string field_name { name.substr(6) };
+  { //const string field_name { name.substr(6) };
 
-    vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
+//    vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
   
-    qso.sent_exchange((current_sent_exchange += { field_name, value }, current_sent_exchange));
+//    qso.sent_exchange((current_sent_exchange += { field_name, value }, current_sent_exchange));
+    qso.sent_exchange(qso.sent_exchange() + pair<string, string> { name.substr(6), value });    // remove "TEXCH-" before adding the field and value
   }
 
 // rcall
@@ -78,13 +84,14 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 
 // received exchange
   if (starts_with(name, "REXCH"s))
-  { const string field_name { name.substr(6) };
+  { //const string field_name { name.substr(6) };
 
-    vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
+//    vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
-    current_received_exchange += { field_name, value, false, false };
-    qso.received_exchange(move(current_received_exchange));
+//    current_received_exchange += { field_name, value, false, false };
+//    qso.received_exchange(move(current_received_exchange));
+    qso.received_exchange(qso.received_exchange() + received_field { name.substr(6), value, false, false });    // remove "REXCH-" before adding the field and value
   }
 }
 

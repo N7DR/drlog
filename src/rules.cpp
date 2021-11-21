@@ -1,4 +1,4 @@
-// $Id: rules.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: rules.cpp 197 2021-11-21 14:52:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -132,23 +132,6 @@ set<string> exchange_field_values::all_values(void) const
   return rv;
 }
 
-/*! \brief          Is a string a legal value (for any canonical value)
-    \param  value   value to be tested
-    \return         whether <i>value</i> is a legal value of any canonical value
-*/
-//bool exchange_field_values::is_legal_value(const string& value) const
-//{ return ANY_OF(canonical_values(), [=, this] (const auto& cv) { return is_legal_value(cv, value); }); }
-
-
-
-//for (const auto& cv : canonical_values())         // for each canonical value
-//  { if (is_legal_value(cv, value))
-//      return true;
-//  }
-//
-//  return false;
-//}
-
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value
     \param  putative_value  value to test
@@ -161,7 +144,6 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
   const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
-//  return ( ss.find(putative_value) != ss.cend() );
   return ss.contains(putative_value);
 }
 
@@ -183,16 +165,6 @@ vector<exchange_field> exchange_field::expand(void) const
   }
 
 // it's a choice
-#if 0
-  for (const auto& this_choice : _choice)
-  { //const vector<exchange_field>& vec { this_choice.expand() };   // recursive
-
-//    COPY_ALL(vec, back_inserter(rv));          // append to rv
- //   rv += vec;
-    rv += this_choice.expand();     // recursive expansion
-  }
-#endif
-
   FOR_ALL(_choice, [&rv] (const auto& this_choice) { rv += this_choice.expand(); } );
 
   return rv;
@@ -242,7 +214,7 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
     Incorporates the parsed information into _exch_values
 */
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ const auto& context_qthx { context.qthx() };
+{ const auto context_qthx { context.qthx() };
 
   if (context_qthx.empty())
     return;
@@ -258,10 +230,11 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
     qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
 
     for (const auto this_value : ss)
-    { if (!contains(this_value, "|"s))
+    { if (!contains(this_value, '|'))
         qthx.add_canonical_value(this_value);
       else
-      { const vector<string> equivalent_values { remove_peripheral_spaces(split_string(this_value, "|"s)) };
+      { //const vector<string> equivalent_values { remove_peripheral_spaces(split_string(this_value, "|"s)) };
+        const vector<string> equivalent_values { clean_split_string(this_value, '|') };
 
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
@@ -336,39 +309,25 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
         vector<exchange_field> choices;
 
-//        FOR_ALL(choice_fields, [=, &choices] (auto& choice_field_name) { choices += exchange_field(choice_field_name, contains(exchange_mults_vec, choice_field_name)); });
         FOR_ALL(choice_fields, [=, &choices] (auto& choice_field_name) { choices += exchange_field { choice_field_name, contains(exchange_mults_vec, choice_field_name) }; });
-#if 0
-        for (auto& choice_field_name : choice_fields)
-        { //const bool is_mult { find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend() };
-          //const bool is_mult { contains(exchange_mults_vec, choice_field_name) };
-
-//          choices.push_back(exchange_field(choice_field_name, is_mult));
-//          choices += exchange_field(choice_field_name, is_mult);
-            choices += exchange_field(choice_field_name, contains(exchange_mults_vec, choice_field_name));
-        }
-#endif
 
 // put into alphabetical order
         SORT(choice_fields);
 
         string full_name;                 // A+B pseudo name of the choice
 
- //       for (auto& choice_field_name : choice_fields)
- //         full_name += choice_field_name + "+"s;
-        FOR_ALL(choice_fields, [&full_name] (auto& choice_field_name) { full_name += choice_field_name + "+"s; });
+        FOR_ALL(choice_fields, [&full_name] (auto& choice_field_name) { full_name += (choice_field_name + '+'); });
 
         exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
         this_field.choice(choices);
-  
         rv += this_field;
       }
     }
 
     if (is_opt)
     { try
-      { const string name    { split_string(field_name, ":"s).at(1) };
+      { const string name { split_string(field_name, ':').at(1) };
 
         rv += exchange_field(name, contains(exchange_mults_vec, name), is_opt);
       }
@@ -380,7 +339,8 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     }
 
     if (!is_choice and !is_opt)
-      rv += exchange_field(field_name, contains(exchange_mults_vec, field_name));
+//      rv += exchange_field(field_name, contains(exchange_mults_vec, field_name));
+      rv += exchange_field { field_name, contains(exchange_mults_vec, field_name) };
   }
 
   return rv;
@@ -400,22 +360,24 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const auto& per_country_exchanges { context.exchange_per_country() };
 
   for (const auto& pce : per_country_exchanges)
- //   permitted_exchange_fields.insert( { pce.first, remove_peripheral_spaces(split_string(pce.second, ","s)) } );   // unexpanded choice
-    permitted_exchange_fields += { pce.first, remove_peripheral_spaces(split_string(pce.second, ","s)) };   // unexpanded choice
+ //   permitted_exchange_fields += { pce.first, remove_peripheral_spaces(split_string(pce.second, ","s)) };   // unexpanded choice
+    permitted_exchange_fields += { pce.first, clean_split_string(pce.second) };   // unexpanded choice
 
   for (const auto& pce : per_country_exchanges)
   { //const vector<string> vs { remove_peripheral_spaces(split_string(pce.second, ","s)) };
 
     set<string> ss;
 
-    for (auto str : remove_peripheral_spaces(split_string(pce.second, ","s)))
+ //   for (auto str : remove_peripheral_spaces(split_string(pce.second, ","s)))
+    for (auto str : clean_split_string(pce.second))
     { if (begins_with(str, "CHOICE:"s))
         str = substring(str, 7);
 
  //     const vector<string> expanded_choice { remove_peripheral_spaces(split_string(str, "/"s)) };
 
  //     FOR_ALL(expanded_choice, [&ss] (const string& s) { ss += s; } );
-      FOR_ALL(remove_peripheral_spaces(split_string(str, "/"s)), [&ss] (const string& s) { ss += s; } );
+ //     FOR_ALL(remove_peripheral_spaces(split_string(str, "/"s)), [&ss] (const string& s) { ss += s; } );
+      FOR_ALL(clean_split_string(str, '/'), [&ss] (const string& s) { ss += s; } );
     }
 
     _per_country_exchange_fields += { pce.first, ss };
@@ -424,9 +386,11 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // add the ordinary exchange to the permitted exchange fields
 //  const vector<string> exchange_vec { remove_peripheral_spaces(split_string(context.exchange(), ","s)) };
 
-  permitted_exchange_fields += { string(), remove_peripheral_spaces(split_string(context.exchange(), ","s)) };  // no canonical prefix for the default ordinary exchange
+//  permitted_exchange_fields += { string(), remove_peripheral_spaces(split_string(context.exchange(), ","s)) };  // no canonical prefix for the default ordinary exchange
+  permitted_exchange_fields += { string(), clean_split_string(context.exchange()) };  // no canonical prefix for the default ordinary exchange
 
-  const vector<string> exchange_mults_vec { remove_peripheral_spaces(split_string(context.exchange_mults(), ","s)) };
+//  const vector<string> exchange_mults_vec { remove_peripheral_spaces(split_string(context.exchange_mults(), ","s)) };
+  const vector<string> exchange_mults_vec { clean_split_string(context.exchange_mults()) };
 
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
