@@ -150,7 +150,7 @@ reconnect:
       ost << "Reconnected; now need to log in" << endl;
 
       _connection.send(_login_id + CRLF);
-      ost << "login ID sent" << endl;
+      ost << "login ID [" << _login_id << "] sent" << endl;
     }
 
     catch (const socket_support_error& E)

@@ -4947,6 +4947,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           if (country_mults_used)
           { const string canonical_prefix { location_db.canonical_prefix(qso.callsign()) };
 
+            ost << "updating country mult status for cp: " << canonical_prefix << endl;
+
             if (rules.country_mults_per_band())
               bandmap_this_band.not_needed_country_mult(canonical_prefix);
             else                                                                            // country mults are not per band

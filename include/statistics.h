@@ -1,4 +1,4 @@
-// $Id: statistics.h 195 2021-11-01 01:21:22Z  $
+// $Id: statistics.h 198 2021-11-29 19:15:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -57,13 +57,13 @@ protected:
 
   location_database                                                 _location_db;           ///< database for location-based lookups
 
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes;               ///< number of dupes, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos;                ///< number of QSOs, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_ON_qsos;             ///< number of ON QSOs, per band and mode -- for UBA
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _qso_points;            ///< number of QSO points, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes    { {} };         ///< number of dupes, per band and mode; Josuttis 2nd ed., p.262 -- initializes all elements with zero
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos     { {} };         ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_ON_qsos  { {} };         ///< number of ON QSOs, per band and mode -- for UBA
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _qso_points { {} };         ///< number of QSO points, per band and mode
 
-  unsigned int                                                      _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
-  unsigned int                                                      _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
+  unsigned int                                                      _qtc_qsos_sent   { 0 };     ///< total number of QSOs sent in QTCs
+  unsigned int                                                      _qtc_qsos_unsent { 0 };     ///< total number of (legal) QSOs available but not yet sent in QTCs
 
 /*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
@@ -86,13 +86,14 @@ protected:
 public:
 
 /// default constructor
-  inline running_statistics(void) :
-    _n_dupes( { {} } ),
-    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-    _qso_points( { {} } ),
-    _qtc_qsos_sent(0),
-    _qtc_qsos_unsent(0)
-  { }
+  running_statistics(void) = default;
+//  inline running_statistics(void) :
+//    _n_dupes( { {} } ),
+//    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+//    _qso_points( { {} } ),
+//    _qtc_qsos_sent(0),
+//    _qtc_qsos_unsent(0)
+//  { }
 
 /*! \brief                  Constructor
     \param  country_data    data from cty.dat file
@@ -105,12 +106,12 @@ public:
     _exchange_mults_used(rules.exchange_mults_used()),
     _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
     _include_qtcs(rules.send_qtcs()),
-    _location_db(country_data, context.country_list()),
-    _n_dupes( { {} } ),
-    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-    _qso_points( { {} } ),
-    _qtc_qsos_sent(0),
-    _qtc_qsos_unsent(0)
+    _location_db(country_data, context.country_list())
+//    _n_dupes( { {} } ),
+//    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+//    _qso_points( { {} } ),
+//    _qtc_qsos_sent(0),
+//    _qtc_qsos_unsent(0)
   { }
   
 /*! \brief                  Prepare an object that was created with the default constructor

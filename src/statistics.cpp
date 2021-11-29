@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 187 2021-06-26 16:16:42Z  $
+// $Id: statistics.cpp 198 2021-11-29 19:15:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,7 +62,6 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
     { multiplier mult;                                     // create new mult
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // we've worked it
-//      _callsign_multipliers.insert( { mult_name, mult } ); // store the info
       _callsign_multipliers += { mult_name, mult }; // store the info
     }
   }
@@ -148,9 +147,9 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
 
         line = pad_right(mult_name, FIRST_FIELD_WIDTH);
 
-        const auto& cit { _callsign_multipliers.find(mult_name) };
+ //       const auto& cit { _callsign_multipliers.find(mult_name) };
 
-        if (cit != _callsign_multipliers.end())    // should always be true
+        if (const auto& cit { _callsign_multipliers.find(mult_name) }; cit != _callsign_multipliers.end())    // should always be true
         { const multiplier& mult { cit->second };
 
           FOR_ALL(permitted_bands, [=, &line] (const BAND& b) { line += pad_left(to_string(mult.n_worked(b, m)), FIELD_WIDTH); } );
@@ -230,7 +229,6 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     rv += (line + LF);
 
 // QSO points
-//    if (!rules.score_bands().empty())
     if (scoring_enabled)
     { unsigned int points_all_bands { 0 };
 
@@ -260,7 +258,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
 
     if (_include_qtcs)
     { line = LF + pad_right("QTC QSOs"s, FIRST_FIELD_WIDTH);
-      line += pad_left((to_string(_qtc_qsos_sent) + "|"s + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
+      line += pad_left((to_string(_qtc_qsos_sent) + '|' + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
 
       rv += line;
     }
@@ -288,8 +286,6 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
   const vector<string>& exchange_mults { rules.exchange_mults() };
 
   _exch_mult_fields += exchange_mults;
-
-//  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields += exchange_mult; } );
 
 // callsign mults
   if (_callsign_mults_used)
@@ -347,7 +343,8 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 bool running_statistics::known_callsign_mult_name(const string& putative_callsign_mult_name) const
 { SAFELOCK(statistics);
 
-  return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
+//  return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
+  return contains(_callsign_multipliers, putative_callsign_mult_name);
 }
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
@@ -363,13 +360,14 @@ bool running_statistics::is_needed_callsign_mult(const string& mult_name, const 
   if (!known_callsign_mult_name(mult_name))
     return false;
 
-  const auto cit { _callsign_multipliers.find(mult_name) };
+//  const auto cit { _callsign_multipliers.find(mult_name) };
 
-  if (cit != _callsign_multipliers.cend())                          // should always be true
+  if (const auto cit { _callsign_multipliers.find(mult_name) }; cit != _callsign_multipliers.cend())                          // should always be true
   { const multiplier& mult   { cit->second };
-    const bool        worked { mult.is_worked(mult_value, b, m) };
+//    const bool        worked { mult.is_worked(mult_value, b, m) };
 
-    return !(worked);
+//    return !(worked);
+    return !(mult.is_worked(mult_value, b, m));
   }
 
   ost << "ERROR: Unknown multiplier name: " << mult_name << endl;
@@ -519,7 +517,6 @@ bool running_statistics::add_known_exchange_mult(const string& name, const strin
     \param  name    name of the exchange multiplier
     \return         all the known legal values of <i>name</i>
 */
-//set<string> running_statistics::known_exchange_mult_values(const string& name)
 MULTIPLIER_VALUES running_statistics::known_exchange_mult_values(const string& name)
 { SAFELOCK(statistics);
 
