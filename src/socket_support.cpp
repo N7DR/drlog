@@ -58,21 +58,25 @@ void tcp_socket::_close_the_socket(void)
 tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
-  { 
-// enable re-use
+  { reuse();    // enable re-use
+
+#if 0
     const int on { 1 };
 
     int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };  // char* cast is needed for Windows
 
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+#endif
 
-    const struct linger lgr { 1, 0 };  // close blocks, but with timeout = 0 seconds; https://www.gnu.org/software/libc/manual/html_node/Socket_002dLevel-Options.html
+    linger();
 
-    status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+//    const struct linger lgr { 1, 0 };  // close blocks, but with timeout = 0 seconds; https://www.gnu.org/software/libc/manual/html_node/Socket_002dLevel-Options.html
 
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+
+//    if (status)
+//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
   }
 
   catch (...)
@@ -94,20 +98,25 @@ tcp_socket::tcp_socket(SOCKET* sp) :
   { try
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-// enable re-use
+      reuse();      // enable re-use
+
+#if 0
       const int on { 1 };
 
       int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };    // char* cast is needed for Windows
 
       if (status)
         throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+#endif
 
-      const struct linger lgr { 1, 0 };
+      linger();
 
-      status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+//      const struct linger lgr { 1, 0 };
 
-      if (status)
-        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+//      int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+
+//      if (status)
+//        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 
       _preexisting_socket = false;
     }
@@ -118,14 +127,6 @@ tcp_socket::tcp_socket(SOCKET* sp) :
     }
   }
 }
-
-/*! \brief          Encapsulate a pre-existing socket
-    \param  sock    socket
-*/
-//tcp_socket::tcp_socket(SOCKET sock) :
-//  _preexisting_socket(true),
-//  _sock(sock)
-//{  }
 
 /*! \brief                                  Construct and initialise with useful values
     \param  destination_ip_address_or_fqdn  destination dotted decimal address or FQDN
@@ -140,21 +141,25 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { 
   try
-  { 
-// enable re-use
+  { reuse();    // enable re-use
+
+#if 0
     static const int on { 1 };
 
     int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
 
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+#endif
     
-    const struct linger lgr { 1, 0 };
+    linger();
 
-    status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+//    const struct linger lgr { 1, 0 };
 
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+
+//    if (status)
+//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 
     bind(source_address);
 
@@ -167,7 +172,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       { try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
           { destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
-            rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + to_string(destination_port));
+            rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
           {
@@ -175,7 +180,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
             destination(dotted_decimal, destination_port, TIMEOUT );
-            rename_mutex("TCP: "s + dotted_decimal + ":"s + to_string(destination_port));
+            rename_mutex("TCP: "s + dotted_decimal + ":"s + ::to_string(destination_port));
           }
 
           connected = true;
@@ -185,7 +190,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
-          alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + to_string(destination_port));
+          alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + ::to_string(destination_port));
 
           ost << "sleeping for " << retry_time_in_seconds << " seconds" << endl;
           sleep_for(seconds(retry_time_in_seconds));
@@ -247,20 +252,25 @@ void tcp_socket::new_socket(void)
 
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-// enable re-use
+    reuse();    // enable re-use
+
+#if 0
     const int on { 1 };
 
     int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
 
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+#endif
     
-    const struct linger lgr { 1, 0 };
+    linger();
 
-    status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+//    const struct linger lgr { 1, 0 };
 
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
+
+//    if (status)
+//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
   }
   
   catch (...)
@@ -277,7 +287,7 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
   if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
   { const string address { dotted_decimal_address(*(sockaddr*)(&local_address)) };
 
-    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
+    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + ::to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
   }
 
   _bound_address = local_address;
@@ -299,7 +309,8 @@ void tcp_socket::destination(const sockaddr_storage& adr)
     const string       address { dotted_decimal_address(*(sockaddr*)(&adr)) };
     const unsigned int p       { port(*(sockaddr*)(&adr)) };
   
-    throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
+    throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s 
+                                                               + address + "; port "s + ::to_string(p));
   }
 }
 
@@ -338,16 +349,16 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     const unsigned int p       { port(*(sockaddr*)(&adr)) };
 
     if (errno != EINPROGRESS)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
     if (status < 0)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
     if (status == 0)  // timed out
     { errno = ETIMEDOUT;
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
     }
 
 // select is positive, which means that the file descriptor is OK
@@ -442,7 +453,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
   switch (socket_status)
   { case 0:                    // timeout
     { if (timeout_secs)        // don't signal timeout if we weren't given a duration to wait
-        throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after "s + to_string(timeout_secs) + " seconds"s);
+        throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after "s + ::to_string(timeout_secs) + " seconds"s);
       break;
     }
 
@@ -461,7 +472,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
       { status = ::recv(_sock, cp, BUFSIZE, 0);
 
         if (status == -1)
-        { const string msg { "errno = "s + to_string(errno) + ": "s + strerror(errno) };
+        { const string msg { "errno = "s + ::to_string(errno) + ": "s + strerror(errno) };
 
           ost << "Throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
           throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
@@ -521,18 +532,19 @@ void tcp_socket::max_retries(const unsigned int n)
 
 /*! \brief          Set or unset the use of keep-alives
     \param  torf    whether to use keep-alives
+
+    Throws a tcp_socket_error if an error occurs
 */
 void tcp_socket::keep_alive(const bool torf)
-{ //constexpr int optlen { sizeof(int) };
-
-  const int optval { torf ? 1 : 0 };
+{ const int optval { torf ? 1 : 0 };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) };
+//  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) };
 
-  if (status)
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error to control keep-alive"s);
+//  if (status)
+  if ( setsockopt(_sock, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) )
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_KEEPALIVE"s);
 }
 
 /*! \brief          Set properties of the keep-alive
@@ -545,6 +557,59 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
   idle_time(idle);
   retry_time(retry);
   max_retries(n);
+}
+
+/*! \brief          Set or unset the re-use of the socket
+    \param  torf    whether to allow re-use
+
+    Throws a tcp_socket_error if an error occurs
+*/
+void tcp_socket::reuse(const bool torf)
+{ const int optval { torf ? 1 : 0 };
+  
+  SAFELOCK(_tcp_socket);
+
+//  const int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) };      // char* cast is needed for Windows
+
+//  if (status)
+  if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+}
+
+/*! \brief          Set or unset lingering of the socket
+    \param  torf    whether to allow lingering
+    \param  secs    linger time in seconds
+
+    Throws a tcp_socket_error if an error occurs
+*/
+void tcp_socket::linger(const bool torf, const int secs)
+{ const struct linger lgr { torf ? 1 : 0, secs };
+
+  SAFELOCK(_tcp_socket);
+
+//  const int status { setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) ) };  // char* cast is needed for Windows
+
+//  if (status)
+  if ( setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) ) )
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+}
+
+string tcp_socket::to_string(void) const
+{ string rv { };
+
+  rv += "bound address: "s + dotted_decimal_address(_bound_address) + EOL;
+
+  if (_destination_is_set)
+    rv += "destination is set to: "s + dotted_decimal_address(_destination) + EOL;
+  else
+    rv += "destination is not set"s + EOL;
+
+  rv += "closure will "s + (_force_closure ? ""s : "NOT "s) + "be forced"s  + EOL;
+  rv += "socket was "s + (_preexisting_socket ? ""s : "NOT "s) + "pre-existing"s  + EOL;
+  rv += "encapsulated socket number: "s + ::to_string(_sock) + EOL;
+  rv += "timout in tenths of a second: "s + ::to_string(_timeout_in_tenths);
+
+  return rv;
 }
 
 // ---------------------------------------------- generic socket functions ---------------------
@@ -723,5 +788,15 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   { ost << "Error return" << endl;
 
     throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: "s + fqdn));
+  }
+}
+
+string dotted_decimal_address(const sockaddr_storage& ss)
+{ try
+  { return dotted_decimal_address(to_sockaddr_in(ss));
+  }
+
+  catch (...)
+  { return "0.0.0.0"s;
   }
 }

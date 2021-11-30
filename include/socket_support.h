@@ -161,6 +161,8 @@ inline uint32_t host_order_inet_addr(const std::string& s)
 */
 sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
 
+std::string dotted_decimal_address(const sockaddr_storage& ss);
+
 /*! \brief          Write a <i>sockaddr_in</i> object to an output stream
     \param  ost     output stream
     \param  pa      object to write
@@ -235,7 +237,7 @@ public:
 /*! \brief  Close the socket
 */
   inline void close(void)
-    { return _close_the_socket(); }
+    { _close_the_socket(); }
 
 /*! \brief  Create and use a different underlying socket
 */
@@ -342,6 +344,8 @@ public:
   
 /*! \brief          Set or unset the use of keep-alives
     \param  torf    whether to use keep-alives
+
+    Throws a tcp_socket_error if an error occurs
 */
   void keep_alive(const bool torf = true);
   
@@ -352,8 +356,27 @@ public:
 */
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
 
+/*! \brief          Set or unset the re-use of the socket
+    \param  torf    whether to allow re-use
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  void reuse(const bool torf = true);
+
+/*! \brief          Set or unset lingering of the socket
+    \param  torf    whether to allow lingering
+    \param  secs    linger time in seconds
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  void linger(const bool torf = true, const int secs = 0);
+
   inline void rename_mutex(const std::string& new_name)
     { _tcp_socket_mutex.rename(new_name); }
+
+  std::string to_string(void) const;
+
+  void enable_reuse(void);
 };
 
 /*! \brief              Convert a name to a dotted decimal IP address

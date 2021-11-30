@@ -87,13 +87,6 @@ public:
 
 /// default constructor
   running_statistics(void) = default;
-//  inline running_statistics(void) :
-//    _n_dupes( { {} } ),
-//    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//    _qso_points( { {} } ),
-//    _qtc_qsos_sent(0),
-//    _qtc_qsos_unsent(0)
-//  { }
 
 /*! \brief                  Constructor
     \param  country_data    data from cty.dat file
@@ -107,11 +100,6 @@ public:
     _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
     _include_qtcs(rules.send_qtcs()),
     _location_db(country_data, context.country_list())
-//    _n_dupes( { {} } ),
-//    _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//    _qso_points( { {} } ),
-//    _qtc_qsos_sent(0),
-//    _qtc_qsos_unsent(0)
   { }
   
 /*! \brief                  Prepare an object that was created with the default constructor

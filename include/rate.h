@@ -116,7 +116,6 @@ public:
 /// Return the number of points at the current epoch
   inline unsigned int current_score(void) const
   { SAFELOCK(_rate);
-
     return _data.empty() ? 0 : (prev(_data.cend())->second).second;
   }
 

@@ -224,10 +224,12 @@ public:
     \return     whether <i>v</i> is needed
 */
   bool is_value_needed(const T& v) const
-  { if (!_is_needed)
-      return false;
+  { //if (!_is_needed)
+    //  return false;
 
-    return (_values.find(v) == _values.cend());
+    //return (_values.find(v) == _values.cend());
+
+    return _is_needed ? !contains(_values, v) : false;
   }
 
 /*! \brief      Remove a needed value
@@ -237,10 +239,13 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { if (!_is_needed)
-      return false;
+  { //if (!_is_needed)
+    //  return false;
 
-    if (_values.find(v) == _values.cend())
+    //if (_values.find(v) == _values.cend())
+    //  return false;
+
+    if (!_is_needed or !contains(_values, v))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -250,6 +255,12 @@ public:
 
     return rv;
   }
+
+  inline void operator-=(const T& v)
+    { remove(v); }
+
+  inline void operator-=(T&& v)
+    { remove(forward<T>(v)); }
 
 /// remove knowledge of all needed values
   void clear(void)

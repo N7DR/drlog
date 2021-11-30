@@ -50,6 +50,62 @@ constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
     \brief  A DX cluster or reverse beacon network
 */
 
+/// process a read error
+void dx_cluster::_process_error(void)
+{  ost << "Processing error on TCP socket: " << _connection.to_string() << endl;
+
+new_socket:
+  try
+  { try
+    { _connection.close();                     // releases the file descriptor
+      ost << "TCP connection closed OK" << endl;
+    }
+
+    catch (...)
+    { ost << "Error closing socket" << endl;
+    }
+
+    _connection.new_socket();                                       // get a new socket
+    _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);     // set the keepalive option
+    _connection.bind(_my_ip);                                       // bind it to the correct IP address
+
+    ost << "New TCP socket: " << _connection.to_string() << endl;
+
+// reconnect to the server
+reconnect:
+    try
+    { ost << "Attempting to use the new socket to reconnect to server: " << _server << " on port " << _port << endl;
+
+// resolve the name
+      const string dotted_decimal { name_to_dotted_decimal(_server) };
+
+      _connection.destination(dotted_decimal, _port);
+      ost << "Connected to " << dotted_decimal << "; now need to log in" << endl;
+
+      _connection.send(_login_id + CRLF);
+      ost << "login ID [" << _login_id << "] sent" << endl;
+    }
+
+    catch (const socket_support_error& E)
+    { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
+      sleep_for(minutes(1));    // sleep for one minute before retrying
+
+      { SAFELOCK(thread_check);
+
+        if (exiting)
+          return;
+      }
+
+      goto reconnect;
+    }
+  }
+
+  catch (const tcp_socket_error& E)    // complete failure; go back and try again
+  { ost << "TCP socket error " << E.code() << " in close/new socket/bind recovery sequence: " << E.reason() << endl;
+    goto new_socket;
+  }
+}
+
 /*! \brief              Constructor
     \param  context     the drlog context
     \param  src         whether this is a real DX cluster or the RBN
@@ -63,7 +119,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _port(src == POSTING_SOURCE::CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
   _server(src == POSTING_SOURCE::CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
   _source(src),                                                                                     // set the source
-  _timeout(CLUSTER_TIMEOUT)                                                                                       // two-second timeout
+  _timeout(CLUSTER_TIMEOUT)                                                                         // two-second timeout
 { 
 // set the keepalive option
   _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);
@@ -117,59 +173,6 @@ dx_cluster::~dx_cluster(void)
   
   { SAFELOCK(rbn_buffer);
     _unprocessed_input = _connection.read(_timeout / 2);  // add a delay before we tear down the connection
-  }
-}
-
-/// process a read error
-void dx_cluster::_process_error(void)
-{
-new_socket:
-  try
-  { try
-    { _connection.close();                     // releases the file descriptor
-      ost << "Closed OK" << endl;
-    }
-
-    catch (...)
-    { ost << "Error closing socket" << endl;
-    }
-
-    _connection.new_socket();                                       // get a new socket
-    _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);     // set the keepalive option
-    _connection.bind(_my_ip);                                       // bind it to the correct IP address
-
-// reconnect to the server
-reconnect:
-    try
-    { ost << "Attempting to reconnect to server: " << _server << " on port " << _port << endl;
-
-// resolve the name
-      const string dotted_decimal { name_to_dotted_decimal(_server) };
-
-      _connection.destination(dotted_decimal, _port);
-      ost << "Reconnected; now need to log in" << endl;
-
-      _connection.send(_login_id + CRLF);
-      ost << "login ID [" << _login_id << "] sent" << endl;
-    }
-
-    catch (const socket_support_error& E)
-    { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
-      sleep_for(minutes(1));    // sleep for one minute before retrying
-
-      { SAFELOCK(thread_check);
-
-        if (exiting)
-          return;
-      }
-
-      goto reconnect;
-    }
-  }
-
-  catch (const tcp_socket_error& E)    // complete failure; go back and try again
-  { ost << "TCP socket error " << E.code() << " in close/new socket/bind recovery sequence: " << E.reason() << endl;
-    goto new_socket;
   }
 }
 
