@@ -6340,11 +6340,14 @@ void update_rate_window(void)
 
 /// Thread function to reset the RBN or cluster connection
 void* reset_connection(void* vp)
-{ 
+{ ost << "Resetting RBN/cluster connection" << endl;    // for now only RESET RBN exists
+
 // no start_of_thread for this one, as it's all asynchronous
   dx_cluster* rbn_p { static_cast<dx_cluster*>(vp) };
 
-  rbn_p->reset();
+  rbn_p-> reset_connection();
+
+  ost << "RBN/cluster connection has been reset" << endl;
 
 //  return nullptr;
   pthread_exit(nullptr);
@@ -6956,6 +6959,8 @@ void* spawn_dx_cluster(void* vp)
 
   try
   { cluster_p = new dx_cluster(context, POSTING_SOURCE::CLUSTER);
+
+    ost << "Cluster connection: " << cluster_p->connection_status() << endl;
   }
 
   catch (...)
@@ -6987,6 +6992,8 @@ void* spawn_dx_cluster(void* vp)
 void* spawn_rbn(void* vp)
 { try
   { rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
+
+    ost << "RBN connection: " << rbn_p->connection_status() << endl;
   }
   
   catch (const x_error& e)

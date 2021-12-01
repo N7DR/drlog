@@ -139,7 +139,12 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
-{ 
+{ //ost << "In tcp_socket constructor: " << endl
+  //    << "  destination address: " << destination_ip_address_or_fqdn << endl
+  //    << "  destination port: " << destination_port << endl
+  //    << "  source addrsss: " << source_address << endl
+  //    << "  retry time (sec): " << retry_time_in_seconds << endl;
+
   try
   { reuse();    // enable re-use
 
@@ -175,20 +180,30 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
             rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
-          {
+          { //ost << "resolving name: " << destination_ip_address_or_fqdn << endl;
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
+            //ost << "resolved name to address: " << dotted_decimal << endl;
+
             destination(dotted_decimal, destination_port, TIMEOUT );
             rename_mutex("TCP: "s + dotted_decimal + ":"s + ::to_string(destination_port));
+
+            //ost << "destination address = " << dotted_decimal + ":"s + ::to_string(destination_port) << endl;
+            //ost << "destination is set: " << _destination_is_set << endl;
+
+            //ost << "current status = " << to_string() << endl;
+
           }
 
           connected = true;
+
+          //ost << "connected; socket status = " << to_string() << endl;
         }
 
         catch (const socket_support_error& e)
-        { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
-          ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
+        { //ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
+          //ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
           alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + ::to_string(destination_port));
 
@@ -321,7 +336,9 @@ void tcp_socket::destination(const sockaddr_storage& adr)
     See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
 void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long timeout_secs)
-{ struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
+{ //ost << "SETTING DESTINATION" << endl;
+
+  struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
   SAFELOCK(_tcp_socket);
 
@@ -341,6 +358,9 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   if (status == 0)        // all OK
   { _destination = adr;
     _destination_is_set = true;
+
+    //ost << "DESTINATION HAS BEEN SET OK" << endl;
+    //ost << "ADDRESS: " << dotted_decimal_address(*(sockaddr*)(&adr)) << endl;
   }
   else
   { _destination_is_set = false;
@@ -351,7 +371,11 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     if (errno != EINPROGRESS)
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
+//    ost << "IN PROGRESS" << endl;
+
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
+
+//    ost << "status returned from select: " << status << endl;
 
     if (status < 0)
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
@@ -361,8 +385,11 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
     }
 
+//    ost << "status is OK" << endl;
+
 // select is positive, which means that the file descriptor is OK
     _destination_is_set = true;
+    _destination = adr;
   }
 }
 
@@ -793,10 +820,17 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
 
 string dotted_decimal_address(const sockaddr_storage& ss)
 { try
-  { return dotted_decimal_address(to_sockaddr_in(ss));
+  { //ost << "about to convert to sockaddr_in" << endl;
+
+    //const sockaddr_in sin { to_sockaddr_in(ss) };
+
+    //ost << "converted to sockaddr_in" << endl;
+
+    return dotted_decimal_address(to_sockaddr_in(ss));
   }
 
   catch (...)
-  { return "0.0.0.0"s;
+  { ost << "Caught exception when obtaining dotted decimal address" << endl;
+    return "0.0.0.0"s;
   }
 }

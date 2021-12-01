@@ -127,7 +127,12 @@ inline unsigned int port(const sockaddr& sin)
     \return         dotted decimal string
 */
 inline std::string dotted_decimal_address(const sockaddr_in& sin)
-  { return (inet_ntoa(sin.sin_addr)); }
+  { //std::cerr << "Inside dotted_decimal_address(sockaddr_in)" << std::endl; 
+    const std::string rv { inet_ntoa(sin.sin_addr) };
+    //std::cerr << "Returning dotted decimal address: " << rv << std::endl;
+
+    return (inet_ntoa(sin.sin_addr)); 
+  }
 
 /*! \brief          Extract address from a sockaddr
     \param  sin     sockaddr_in

@@ -177,7 +177,7 @@ dx_cluster::~dx_cluster(void)
 }
 
 /// reset the cluster socket
-void dx_cluster::reset(void)
+void dx_cluster::reset_connection(void)
 { ost << "Attempting to reset connection" << endl;
   _process_error();
   ost << "Completed reset of connection" << endl;

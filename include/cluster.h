@@ -83,7 +83,10 @@ public:
   READ(source);        ///< source for postings
 
 /// reset the cluster socket
-  void reset(void);
+  void reset_connection(void);
+
+  inline std::string connection_status(void)
+    { return _connection.to_string(); }
 };
 
 // -----------  dx_post  ----------------
