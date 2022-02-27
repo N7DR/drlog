@@ -1,4 +1,4 @@
-// $Id: socket_support.h 188 2021-07-25 14:44:04Z  $
+// $Id: socket_support.h 200 2022-01-16 14:48:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -127,9 +127,7 @@ inline unsigned int port(const sockaddr& sin)
     \return         dotted decimal string
 */
 inline std::string dotted_decimal_address(const sockaddr_in& sin)
-  { //std::cerr << "Inside dotted_decimal_address(sockaddr_in)" << std::endl; 
-    const std::string rv { inet_ntoa(sin.sin_addr) };
-    //std::cerr << "Returning dotted decimal address: " << rv << std::endl;
+  {//const std::string rv { inet_ntoa(sin.sin_addr) 
 
     return (inet_ntoa(sin.sin_addr)); 
   }
@@ -142,6 +140,12 @@ inline std::string dotted_decimal_address(const sockaddr_in& sin)
 */
 inline std::string dotted_decimal_address(const sockaddr& sin)
   { return (inet_ntoa(((sockaddr_in*)(&sin))->sin_addr)); }
+
+/*! \brief      Extract address from a sockaddr_storage
+    \param  ss  sockaddr_storage
+    \return     dotted decimal string
+*/
+std::string dotted_decimal_address(const sockaddr_storage& ss);
 
 /*! \brief                  Bind a socket to an address
     \param  sock            socket to bind
@@ -165,8 +169,6 @@ inline uint32_t host_order_inet_addr(const std::string& s)
     Throws socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL) if <i>ss</i> is not an IPv4 address
 */
 sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
-
-std::string dotted_decimal_address(const sockaddr_storage& ss);
 
 /*! \brief          Write a <i>sockaddr_in</i> object to an output stream
     \param  ost     output stream
@@ -376,11 +378,19 @@ public:
 */
   void linger(const bool torf = true, const int secs = 0);
 
+/*! \brief              Rename the mutex associated with the socket
+    \param  new_name    the new name for the mutex
+*/
   inline void rename_mutex(const std::string& new_name)
     { _tcp_socket_mutex.rename(new_name); }
 
+/// Human-readable string description of the status of the socket
   std::string to_string(void) const;
 
+/*! \brief  Enable reuse of the socket
+
+    Throws a tcp_socket_error if an error occurs
+*/
   void enable_reuse(void);
 };
 

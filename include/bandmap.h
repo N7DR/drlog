@@ -1,4 +1,4 @@
-// $Id: bandmap.h 195 2021-11-01 01:21:22Z  $
+// $Id: bandmap.h 201 2022-02-21 22:33:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -223,14 +223,8 @@ public:
     \param  v   value to test
     \return     whether <i>v</i> is needed
 */
-  bool is_value_needed(const T& v) const
-  { //if (!_is_needed)
-    //  return false;
-
-    //return (_values.find(v) == _values.cend());
-
-    return _is_needed ? !contains(_values, v) : false;
-  }
+  inline bool is_value_needed(const T& v) const
+    { return _is_needed ? !contains(_values, v) : false; }
 
 /*! \brief      Remove a needed value
     \param  v   value to remove
@@ -416,19 +410,21 @@ public:
 
 /*! \brief          Set the callsign
     \param  call    the callsign to set
+
+    \return         the <i>bandmap_entry</i> object
 */
-  void callsign(const std::string& call);
+  bandmap_entry& callsign(const std::string& call);
 
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
   READ(continent);                      ///< continent corresponding to the call
-  READ_AND_WRITE(expiration_time);      ///< time at which this entry expires (in seconds since the epoch)
+  READ_AND_WRITE_RET(expiration_time);  ///< time at which this entry expires (in seconds since the epoch)
 
   READ(freq);                           ///< QRG
 
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-  void freq(const frequency& f);
+  bandmap_entry& freq(const frequency& f);
 
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
 
@@ -436,11 +432,11 @@ public:
   inline bool is_needed(void) const
     { return ( _is_needed and !is_marker() ); }    // we never need a marker, regardless of the value of _is_needed
 
-  WRITE(is_needed);                     ///< do we need this call?
+  WRITE_RET(is_needed);                     ///< do we need this call?
 
   READ_AND_WRITE(mode);                 ///< mode
   READ(mult_status_is_known);           ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
-  READ_AND_WRITE(source);               ///< the source of this entry
+  READ_AND_WRITE_RET(source);           ///< the source of this entry
   READ(time);                           ///< time (in seconds since the epoch) at which the object was created
   READ(time_of_earlier_bandmap_entry);  ///< time (in seconds since the epoch) of object that this object replaced
 
@@ -734,10 +730,6 @@ public:
 */
 std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 
-// you'd think that BM_ENTRIES should be std::multiset<bandmap_entry>, but that's a royal pain with g++...
-// remove_if internally calls the assignment operator, which is illegal... so basically means that in g++ set/multiset can't use remove_if
-// one can use complex workarounds (remove_copy_if and then re-assign back to the original container), but that's ugly and in any case
-// std::list seems to be fast enough
 using BM_ENTRIES      = std::list<bandmap_entry>;
 using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 
@@ -759,8 +751,8 @@ protected:
   
   int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                        ///< cull function number to apply
-  std::unordered_set<std::string> _do_not_add;                                          ///< do not add these calls
-  BM_ENTRIES                      _entries;                                             ///< all the entries
+  std::unordered_set<std::string> _do_not_add             { };                          ///< do not add these calls
+  BM_ENTRIES                      _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)              _filtered_entries;                                    ///< entries, with the filter applied
   bool                            _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
@@ -810,7 +802,8 @@ public:
 
 /// default constructor
   bandmap(void) = default;
-  
+
+/// no copy constructor  
   bandmap(const bandmap& bm) = delete;
 
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
@@ -892,21 +885,21 @@ public:
 */
   void operator-=(const std::string& callsign);
 
-/*! \brief set the needed status of a call to <i>false</i>
+/*! \brief              Set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
   void not_needed(const std::string& callsign);
 
-/*! \brief set the needed country mult status of all calls in a particular country to false
+/*! \brief                      Set the needed country mult status of all calls in a particular country to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
   void not_needed_country_mult(const std::string& canonical_prefix);
 
-/*! \brief                          set the needed callsign mult status of all matching callsign mults to <i>false</i>
+/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  pf                      pointer to function to return the callsign mult value
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
@@ -932,7 +925,7 @@ public:
 // filter functions -- these affect all bandmaps, since there's just one (global) filter
 
 /// is the filter enabled?
-  inline bool filter_enabled(void)
+  inline bool filter_enabled(void) const
     { return _filter_p->enabled(); }
 
 /*! \brief          Enable or disable the filter
@@ -1120,6 +1113,26 @@ public:
       _do_not_add += callsign;
     }
 
+/*!  \brief         Add all the calls in a container to the do-not-add list
+     \param calls   container of calls to add
+
+     Calls in the do-not-add list are never added to the bandmap
+*/
+template<typename C>
+  requires (is_string_v<typename C::value_type>)
+  inline void do_not_add(const C& calls)
+  { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
+
+/*!  \brief         Add all the calls in a container to the do-not-add list
+     \param calls   container of calls to add
+
+     Calls in the do-not-add list are never added to the bandmap
+*/
+template<typename C>
+  requires (is_string_v<typename C::value_type>)
+  inline void do_not_add(C&& calls)
+  { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
+
 /*!  \brief             Remove a call from the do-not-add list
      \param callsign    callsign to add
 
@@ -1127,7 +1140,7 @@ public:
 */
   inline void remove_from_do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
-//      _do_not_add.erase(callsign);
+
        _do_not_add -= callsign;
     }
 

@@ -1,4 +1,4 @@
-// $Id: query.h 198 2021-11-29 19:15:07Z  $
+// $Id: query.h 200 2022-01-16 14:48:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,13 +58,11 @@ public:
 /// query_database = vector of calls
   inline void operator=(const std::vector<std::string>& calls)
     { _qdb.clear();
-//      std::copy(calls.cbegin(), calls.cend(), std::inserter(_qdb, _qdb.end()));
       std::ranges::copy(calls, std::inserter(_qdb, _qdb.end()));
     }
 
 /// add a container of calls
   inline void operator+=(const decltype(_qdb)& calls)
-//    { std::copy(calls.cbegin(), calls.cend(), std::inserter(_qdb, _qdb.end())); }
     { std::ranges::copy(calls, std::inserter(_qdb, _qdb.end())); }
 
 /*! \brief          Possibly add a call to the dynamic database

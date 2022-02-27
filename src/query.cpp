@@ -1,4 +1,4 @@
-// $Id: query.cpp 179 2021-02-22 15:55:56Z  $
+// $Id: query.cpp 200 2022-01-16 14:48:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,8 +50,9 @@ pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](cons
   set<string> rv_2 { _query(replace(key, "?"s, ".{1,}"s)) };
 
 // remove any elements in rv_1 from rv_2
-  for (const auto& el1 : rv_1)
-    rv_2 -= el1;
+//  for (const auto& el1 : rv_1)
+//    rv_2 -= el1;
+  rv_2 -= rv_1;
 
   return { rv_1, rv_2 };
 }

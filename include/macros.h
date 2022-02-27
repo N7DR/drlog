@@ -1,4 +1,4 @@
-// $Id: macros.h 197 2021-11-21 14:52:50Z  $
+// $Id: macros.h 201 2022-02-21 22:33:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,11 +47,20 @@ enum class SHOW_TIME { SHOW,
 
 #if (!defined(READ_AND_WRITE))
 
-#define READ_AND_WRITE(y)                                                    \
-/*! Read access to _##y */                                                   \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; } \
-  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); } \
-/*! Write access to _##y */                                                  \
+#define READ_AND_WRITE_RET(y)                                       \
+/*! Read access to _##y */                                      \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); }    \
+\
+/*! Write access to _##y */                                     \
+  inline auto y(const decltype(_##y)& n) -> decltype(*this)& { _##y = n; return (*this); }
+
+#define READ_AND_WRITE(y)                                       \
+/*! Read access to _##y */                                      \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); }    \
+\
+/*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -134,6 +143,10 @@ enum class SHOW_TIME { SHOW,
 #define WRITE(y)                                       \
 /*! Write access to _##y */                            \
   inline void y(const decltype(_##y)& n) { _##y = n; }
+
+#define WRITE_RET(y)                                       \
+/*! Write access to _##y */                            \
+  inline auto y(const decltype(_##y)& n) -> decltype(*this)& { _##y = n; return (*this); }
 
 #endif    // !READ_AND_WRITE
 
@@ -445,13 +458,13 @@ public:                                                \
       std::get<1>(*this) = Y;                          \
     }                                                  \
                                                        \
-  inline a0 a1(void) const                       \
+  inline a0 a1(void) const                             \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline b0 b1(void) const                       \
+  inline b0 b1(void) const                             \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(const b0 & var)                       \
@@ -987,8 +1000,8 @@ T operator+(const T& s1, const T& s2)
 template <class M, class K>
 std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
   requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
-{ using V = typename M::mapped_type;
-  using RT = std::pair<bool, typename M::mapped_type>;
+{ using V  = typename M::mapped_type;
+  using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
 
   const auto cit { m.find(k) };
 
@@ -1036,7 +1049,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
   { for (const auto& p : cit->second)
- //     rv.insert( { p, cit->first } );
       rv += { p, cit->first };
   }
 
@@ -1248,13 +1260,19 @@ template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::ident
 constexpr bool ANY_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::any_of(first, last, pred, proj); };
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
-constexpr bool ANY_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::any_of(std::forward<R>(r), pred, proj); };;
+constexpr bool ANY_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::any_of(std::forward<R>(r), pred, proj); };
 
 template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
 constexpr bool ALL_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::all_of(first, last, pred, proj); };
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
-constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(std::forward<R>(r), pred, proj); };;
+constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(std::forward<R>(r), pred, proj); };
+
+template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
+constexpr bool NONE_OF( I first, S last, Pred pred, Proj proj = {} )  { return std::ranges::none_of(first, last, pred, proj); };
+
+template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
+constexpr bool NONE_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::none_of(std::forward<R>(r), pred, proj); };
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
@@ -1390,7 +1408,6 @@ inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
 */
 template <typename C, typename F = std::less<>>
 inline void SORT(C& v, F f = F())
-//  { std::sort(v.begin(), v.end(), f); }
   { std::ranges::sort(v, f); }
 
 /*! \brief              Add an element to a set or unordered set
@@ -1708,7 +1725,7 @@ auto RANGE(std::initializer_list<T> l)
   { return std::ranges::iota_view { static_cast<T>(l.data[0]), static_cast<T>(l.data[1]) }; }
 #endif
 
-/*! \brief          Find the first element in a container that matches a predicate, or the default-constructed element if none match
+/*! \brief          Find the first element in a container that matches a predicate, or return the default-constructed element if none match
     \param  c       the container
     \param  pred    predicate to apply
     \return         first element in <i>c<i> for which <i>pred</i> is true; if none, then a default-constructed element
@@ -1720,5 +1737,16 @@ typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
 
     return ( (cit == c.end()) ? typename C::value_type {} : *cit );
   }
+
+/*! \brief          Remove all the elements in a container from another container
+    \param  c1      the container that may be modified
+    \param  c2      the container of elements to be removed from <i>c1</i>
+
+    It is permissible for <i>c2</i> to contain elements that are not present in <i>c1</i>
+*/
+template <typename C>
+inline void operator-=(C& c1, C c2)
+  { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
+//  { c1.erase(std::remove_if(c2.begin(), c2.end(), [&c1] (const C::value_type& v) { contains(c1, v); }), c1.end());}
 
 #endif    // MACROS_H

@@ -1,4 +1,4 @@
-// $Id: statistics.h 198 2021-11-29 19:15:07Z  $
+// $Id: statistics.h 199 2021-12-05 21:36:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -244,7 +244,7 @@ public:
 /// the number of known country mults
   inline size_t n_known_country_mults(void) const
   { SAFELOCK(statistics);
-    return _country_multipliers.n_known();
+    return _country_multipliers.n_known_mults();
   }
 
 /*! \brief      Worked exchange mults for a particular band and mode

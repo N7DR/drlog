@@ -1,4 +1,4 @@
-// $Id: string_functions.h 197 2021-11-21 14:52:50Z  $
+// $Id: string_functions.h 200 2022-01-16 14:48:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -483,6 +483,10 @@ T remove_peripheral_spaces(const T& t)
   return rv;
 }
 
+/*! \brief      Remove leading and trailing spaces from each element in a container of strings
+    \param  t   container of strings
+    \return     <i>t</i> with leading and trailing spaces removed from the individual elements
+*/
 template <typename T>
   requires (is_string_v<typename T::value_type>)
 T remove_peripheral_spaces(T&& t)
@@ -508,6 +512,14 @@ std::vector<std::string> split_string(const std::string& cs, const std::string& 
 inline std::vector<std::string> clean_split_string(const std::string& cs, const std::string& separator)
   { return remove_peripheral_spaces(split_string(cs, separator)); }
 
+/*! \brief              Split a string into components, and remove peripheral spaces from each component
+    \param  cs          original string
+    \param  separator   separator string (typically a single character)
+    \return             vector containing the separate components, with peripheral spaces removed
+*/
+inline std::vector<std::string> clean_split_string(std::string&& cs, const std::string& separator)
+  { return remove_peripheral_spaces(split_string(std::forward<std::string>(cs), separator)); }
+
 /*! \brief              Split a string into components
     \param  cs          original string
     \param  separator   separator character
@@ -522,6 +534,14 @@ std::vector<std::string> split_string(const std::string& cs, const char separato
 */
 inline std::vector<std::string> clean_split_string(const std::string& cs, const char separator = ',')
   { return remove_peripheral_spaces(split_string(cs, separator)); }
+
+/*! \brief              Split a string into components, and remove peripheral spaces from each component
+    \param  cs          original string
+    \param  separator   separator character
+    \return             vector containing the separate components, with peripheral spaces removed
+*/
+inline std::vector<std::string> clean_split_string(std::string&& cs, const char separator = ',')
+  { return remove_peripheral_spaces(split_string(std::forward<std::string>(cs), separator)); }
 
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string
@@ -603,6 +623,11 @@ C remove_char(C& t, const char char_to_remove)
   return rv;
 }
 
+/*! \brief                  Remove all instances of a particular char from a container of strings
+    \param  t               container of strings
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
+*/
 template <typename C>
   requires (is_string_v<typename C::value_type>)
 C remove_char(C&& t, const char char_to_remove)
@@ -783,33 +808,10 @@ inline bool is_maritime_mobile(const std::string& callsign)
 
     Uses comma as separator if <i>sep</i> is empty.
 */
-#if 0
-template <typename T>
-std::string separated_string(const T n, const std::string& sep = ","s)
-{ const char separator { (sep.empty() ? ',' : sep[0]) };
-
-  std::string tmp { to_string(n) };
-  std::string rv;
-
-  while (!tmp.empty())
-  { for (unsigned int N { 0 }; N < 3 and !tmp.empty(); ++N)
-    { rv = std::string(1, last_char(tmp)) + rv;
-      tmp = tmp.substr(0, tmp.length() - 1);
-    }
-
-    if (!tmp.empty())
-      rv = std::string(1, separator) + rv;
-  }
-
-  return rv;
-}
-#endif
-
 template <typename T>
 std::string separated_string(const T n, const char sep = ',')
-{ //const char separator { (sep.empty() ? ',' : sep[0]) };
+{ std::string tmp { to_string(n) };
 
-  std::string tmp { to_string(n) };
   std::string rv;
 
   while (!tmp.empty())
@@ -819,7 +821,6 @@ std::string separated_string(const T n, const char sep = ',')
     }
 
     if (!tmp.empty())
-//      rv = std::string(1, separator) + rv;
       rv.insert(rv.begin(), sep);
   }
 
@@ -1046,13 +1047,31 @@ T regex_matches(const C& container, const std::string& s)
      
   const std::regex rgx { s };
 
-  using namespace std::ranges::views;
+//  using namespace std::ranges::views;
 
-  FOR_ALL(container | filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
+  FOR_ALL(container | std::ranges::views::filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
 
  // FOR_ALL(container, [=, &rv](const std::string& target) { if (regex_match(target, rgx))
  //                                                            rv += target;
  //                                                        } );
+  return rv;
+}
+
+/*! \brief              Return all strings from a container that match a particular regular expression string
+    \param  container   container of strings
+    \param  s           regular expression string
+    \return             All the elements of <i>container</i> that match <i>s</i>
+*/
+template <class T, class C>
+T regex_matches(C&& container, const std::string& s)
+{ T rv;
+     
+  const std::regex rgx { s };
+
+//  using namespace std::ranges::views;
+
+  FOR_ALL(std::forward<C>(container) | filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
+
   return rv;
 }
 

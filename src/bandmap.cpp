@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 197 2021-11-21 14:52:50Z  $
+// $Id: bandmap.cpp 201 2022-02-21 22:33:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -140,7 +140,7 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 /*! \brief          Set the callsign
     \param  call    the callsign to set
 */
-void bandmap_entry::callsign(const string& call)
+bandmap_entry& bandmap_entry::callsign(const string& call)
 { _callsign = call;
 
   if (!is_marker())
@@ -149,16 +149,20 @@ void bandmap_entry::callsign(const string& call)
     _canonical_prefix = li.canonical_prefix();
     _continent = li.continent();
   }
+
+  return *this;
 }
 
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-void bandmap_entry::freq(const frequency& f)
+bandmap_entry& bandmap_entry::freq(const frequency& f)
 { _freq = f;
   _frequency_str = _freq.display_string();
   _band = to_BAND(f);
   _mode = putative_mode();
+
+  return *this;
 }
 
 /*! \brief              Calculate the mult status of this entry
@@ -208,7 +212,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   for (const auto& exch_mult_name : exch_mults)
   { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(_canonical_prefix, _mode) };
-//    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
     const bool           is_possible_exchange_field { contains(exchange_field_names, exch_mult_name) };
 
     if (is_possible_exchange_field)
@@ -319,7 +322,6 @@ bool bandmap_entry::matches_criteria(void) const
 
   { SAFELOCK(batch_messages);
 
-//    if (batch_messages.find(_callsign) != batch_messages.cend())
     if (contains(batch_messages, _callsign))
       return false;             // skip any call with a batch message
   }
@@ -663,9 +665,10 @@ void bandmap::prune(void)
 bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
-  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); }) };
+//  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); }) };
 
-  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
+//  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
+  return VALUE_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); });
 }
 
 /*! \brief              Return the first entry for a partial call
@@ -695,7 +698,7 @@ void bandmap::operator-=(const string& callsign)
 
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.callsign() == callsign); });        // OK for lists
 
-  if (_entries.size() != initial_size)
+  if (_entries.size() != initial_size)  // mark as dirty if we removed any
     _dirty_entries();
 }
 
@@ -725,8 +728,8 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-//  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
-  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+//  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
   _dirty_entries();
 }
@@ -849,33 +852,10 @@ BM_ENTRIES bandmap::filtered_entries(void)
   { if (be.is_my_marker() or be.is_mode_marker())
       rv += be;
     else                                              // start by assuming that we are in show mode
-    { const string& canonical_prefix { be.canonical_prefix() };
-      const string& continent        { be.continent() };
+    { //const string& canonical_prefix { be.canonical_prefix() };
+      //const string& continent        { be.continent() };
 
-//      bool display_this_entry { false };
-
-//      const vector<string>& fil_continent { _filter_p->continents() };
-
-//      for (size_t n { 0 }; n < fil_continent.size() and !display_this_entry; ++n)
-//        if (continent == fil_continent[n])
-//          display_this_entry = true;
-
-//      if (!display_this_entry and contains(_filter_p->continents(), continent))
-//          display_this_entry = true;
-
- //     const vector<string>& fil_prefix { _filter_p->prefixes() };
-
-//      for (size_t n { 0 }; n < fil_prefix.size() and !display_this_entry; ++n)
-//        if (canonical_prefix == fil_prefix[n])
-//          display_this_entry = true;
-
- //     if (!display_this_entry and contains(_filter_p->prefixes(), canonical_prefix))
- //         display_this_entry = true;
-
-//      if ( contains(_filter_p->continents(), continent) or contains(_filter_p->prefixes(), canonical_prefix) )
-//        display_this_entry = true;
-
-      bool display_this_entry { contains(_filter_p->continents(), continent) or contains(_filter_p->prefixes(), canonical_prefix) };
+      bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
 
       if (filter_hide())                              // hide is the opposite of show
         display_this_entry = !display_this_entry;
@@ -979,9 +959,7 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
     const auto crit2 { find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return ( be.freq().hz() < (target_freq.hz() - max_permitted_skew) ); } ) }; // move away from my frequency, in downwards direction
 
     if (crit2 != fe.crend())
-    { //const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) };
-
-      if (const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) }; crit3 != fe.crend())
+    { if (const auto crit3 { find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } ) }; crit3 != fe.crend())
         return (*crit3);
     }
   }
@@ -1139,7 +1117,8 @@ bool bandmap::is_present(const string& target_callsign) const
 
 //  return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 
-  return ranges::any_of(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
+//  return ranges::any_of(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
+  return ANY_OF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
 }
 
 /*! \brief         Process an insertion queue, adding the elements to the bandmap

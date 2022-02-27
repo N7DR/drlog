@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 187 2021-06-26 16:16:42Z  $
+// $Id: socket_support.cpp 201 2022-02-21 22:33:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,24 +59,7 @@ tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
   { reuse();    // enable re-use
-
-#if 0
-    const int on { 1 };
-
-    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };  // char* cast is needed for Windows
-
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
-#endif
-
-    linger();
-
-//    const struct linger lgr { 1, 0 };  // close blocks, but with timeout = 0 seconds; https://www.gnu.org/software/libc/manual/html_node/Socket_002dLevel-Options.html
-
-//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
-
-//    if (status)
-//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+    linger();   // linger turned on, immediate time-out
   }
 
   catch (...)
@@ -90,35 +73,20 @@ tcp_socket::tcp_socket(void) :
   
     Acts as default constructor if passed pointer is nullptr
 */
-tcp_socket::tcp_socket(SOCKET* sp) :
-  _preexisting_socket(true)
+tcp_socket::tcp_socket(SOCKET* sp) //:
+//  _preexisting_socket(true)
 { if (sp)
-    _sock = *sp;
+  { _sock = *sp;
+    _preexisting_socket = true;
+  }
   else                          // sp is nullptr
   { try
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
       reuse();      // enable re-use
+      linger();     // linger turned on, immediate time-out
 
-#if 0
-      const int on { 1 };
-
-      int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };    // char* cast is needed for Windows
-
-      if (status)
-        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
-#endif
-
-      linger();
-
-//      const struct linger lgr { 1, 0 };
-
-//      int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
-
-//      if (status)
-//        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
-
-      _preexisting_socket = false;
+//      _preexisting_socket = false;
     }
 
     catch (...)
@@ -146,25 +114,8 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
   //    << "  retry time (sec): " << retry_time_in_seconds << endl;
 
   try
-  { reuse();    // enable re-use
-
-#if 0
-    static const int on { 1 };
-
-    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
-
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
-#endif
-    
-    linger();
-
-//    const struct linger lgr { 1, 0 };
-
-//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
-
-//    if (status)
-//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+  { reuse();    // enable re-use    
+    linger();   // linger turned on, immediate time-out
 
     bind(source_address);
 
@@ -180,32 +131,19 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
             rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
-          { //ost << "resolving name: " << destination_ip_address_or_fqdn << endl;
+          { 
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
-            //ost << "resolved name to address: " << dotted_decimal << endl;
-
             destination(dotted_decimal, destination_port, TIMEOUT );
             rename_mutex("TCP: "s + dotted_decimal + ":"s + ::to_string(destination_port));
-
-            //ost << "destination address = " << dotted_decimal + ":"s + ::to_string(destination_port) << endl;
-            //ost << "destination is set: " << _destination_is_set << endl;
-
-            //ost << "current status = " << to_string() << endl;
-
           }
 
           connected = true;
-
-          //ost << "connected; socket status = " << to_string() << endl;
         }
 
         catch (const socket_support_error& e)
-        { //ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
-          //ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
-
-          alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + ::to_string(destination_port));
+        { alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + ::to_string(destination_port));
 
           ost << "sleeping for " << retry_time_in_seconds << " seconds" << endl;
           sleep_for(seconds(retry_time_in_seconds));
@@ -621,6 +559,7 @@ void tcp_socket::linger(const bool torf, const int secs)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 }
 
+/// Human-readable string description of the status of the socket
 string tcp_socket::to_string(void) const
 { string rv { };
 
@@ -794,10 +733,9 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   remove_const_t<decltype(n_tries)> n_try   { 0 };
   bool                              success { false };
 
-  int status;
-
   while (n_try++ < n_tries and !success)
-  { status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
+  { const int status { gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop) };
+
     success = (status == 0) and (result != nullptr);    // the second test should be redundant
 
     if (!success and n_try != n_tries)
@@ -818,15 +756,13 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   }
 }
 
+/*! \brief      Extract address from a sockaddr_storage
+    \param  ss  sockaddr_storage
+    \return     dotted decimal string
+*/
 string dotted_decimal_address(const sockaddr_storage& ss)
 { try
-  { //ost << "about to convert to sockaddr_in" << endl;
-
-    //const sockaddr_in sin { to_sockaddr_in(ss) };
-
-    //ost << "converted to sockaddr_in" << endl;
-
-    return dotted_decimal_address(to_sockaddr_in(ss));
+  { return dotted_decimal_address(to_sockaddr_in(ss));
   }
 
   catch (...)

@@ -94,7 +94,8 @@ public:
     \return             whether there is an alternative field for <i>field_name</i>
 */
   inline bool is_choice(const std::string& field_name) const
-    { return (_choices.find(field_name) != _choices.cend() ); }
+//    { return (_choices.find(field_name) != _choices.cend() ); }
+    { return contains(_choices, field_name); }
 
 /// return the inverse of whether there are any choices
   inline bool empty(void) const

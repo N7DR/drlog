@@ -144,7 +144,8 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
   const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
-  return ss.contains(putative_value);
+//  return ss.contains(putative_value);
+  return contains(ss, putative_value);
 }
 
 // -------------------------  exchange_field  ---------------------------
@@ -221,6 +222,8 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
   SAFELOCK(rules);
 
+//  auto no_star = [] (const string& str) { return remove_char(str, '*'); };      // remove indicator that this is allowed but not to be treated as a mult
+
   for (const auto this_qthx : context_qthx)
   { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
     const set<string> ss               { this_qthx.second };
@@ -232,14 +235,17 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
     for (const auto this_value : ss)
     { if (!contains(this_value, '|'))
         qthx.add_canonical_value(this_value);
+//        qthx.add_canonical_value(no_star(this_value));
       else
-      { //const vector<string> equivalent_values { remove_peripheral_spaces(split_string(this_value, "|"s)) };
-        const vector<string> equivalent_values { clean_split_string(this_value, '|') };
+      { const vector<string> equivalent_values { clean_split_string(this_value, '|') };
 
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
+//          qthx.add_canonical_value(no_star(equivalent_values[0]));
 
         for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx += { equivalent_values[0], equivalent_value }; } ); // cbegin() corresponds to the canonical value
+
+//        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx += { no_star(equivalent_values[0]), no_star(equivalent_value) }; } ); // cbegin() corresponds to the canonical value
       }
     }
 

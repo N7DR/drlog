@@ -1,4 +1,4 @@
-// $Id: rate.h 189 2021-08-16 00:34:00Z  $
+// $Id: rate.h 199 2021-12-05 21:36:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

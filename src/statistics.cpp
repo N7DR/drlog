@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 198 2021-11-29 19:15:07Z  $
+// $Id: statistics.cpp 199 2021-12-05 21:36:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,8 +31,8 @@ extern bool scoring_enabled;
 
 pt_mutex statistics_mutex { "STATISTICS"s };      ///< mutex for the (singleton) running_statistics object
 
-constexpr unsigned int FIRST_FIELD_WIDTH { 10 };         ///< width of first field
-constexpr unsigned int FIELD_WIDTH       { 6 };          ///< width of other fields
+constexpr unsigned int FIRST_FIELD_WIDTH  { 10 };   ///< width of first field
+constexpr unsigned int FIELD_WIDTH        { 6 };    ///< width of other fields
 
 // -----------  running_statistics  ----------------
 
@@ -626,7 +626,7 @@ string running_statistics::summary_string(const contest_rules& rules)
     vsm += sm;
 
   for (const auto& mode_set : vsm)
-  { if (vsm.size()  != 1)
+  { if (vsm.size() != 1)
       rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All"s ) + LF );
   
     rv += _summary_string(rules, mode_set);
@@ -708,7 +708,8 @@ unsigned int running_statistics::points(const contest_rules& rules) const
 MULTIPLIER_VALUES running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
-  if (mult_name == string() and _callsign_multipliers.size() == 1)
+//  if (mult_name == string() and _callsign_multipliers.size() == 1)
+  if (mult_name.empty() and _callsign_multipliers.size() == 1)
     return _callsign_multipliers.cbegin()->second.worked(b, m);
 
   const auto& cit { _callsign_multipliers.find(mult_name) };
@@ -727,9 +728,10 @@ map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics
   SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
-  { const multiplier& mult { psm.second };
+  { //const multiplier& mult { psm.second };
 
-    rv += { psm.first, mult.worked(b, m) };
+    //rv += { psm.first, mult.worked(b, m) };
+    rv += { psm.first, psm.second.worked(b, m) };
   }
 
  return rv;
@@ -874,9 +876,10 @@ unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& ru
 
   for (const auto& sm : _callsign_multipliers)
   { if (const multiplier& mult { sm.second }; mult.per_band())
-    { for (const auto& b : permitted_bands)
-        if (score_bands > b)
-          rv += mult.n_worked(b);
+    { //for (const auto& b : permitted_bands)
+      //  if (score_bands > b)
+      //    rv += mult.n_worked(b);
+      FOR_ALL(permitted_bands, [=, &rv] (const auto& b) { if (score_bands > b) rv += mult.n_worked(b); });
     }
     else
       rv += mult.n_worked(ALL_BANDS);
@@ -918,8 +921,9 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
   { if (const multiplier& mult { em.second }; mult.per_mode())
     { for (const auto& m : permitted_modes)
       { if (mult.per_band())
-        { for (const auto& b : permitted_bands)
-            rv += mult.n_worked(b, m);
+        { //for (const auto& b : permitted_bands)
+          //  rv += mult.n_worked(b, m);
+          FOR_ALL(permitted_bands, [=, &rv] (const auto& b) { rv += mult.n_worked(b, m); });
         }
         else
           rv += mult.n_worked(ANY_BAND, m);

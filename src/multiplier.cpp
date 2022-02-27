@@ -25,6 +25,40 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \brief  encapsulate all the necessary stuff for a mult
 */
 
+MULTIPLIER_VALUES multiplier::_filter_asterisks(const MULTIPLIER_VALUES& mv) const
+{ MULTIPLIER_VALUES rv { mv };
+
+//    REMOVE_IF_AND_RESIZE(rv, [] (const std::string& str) { return contains(str, '*'); } );
+    erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
+
+//    FOR_ALL(mv, [&rv] (const std::string& str) { if (!contains(str, '*')) rv += str; } );
+//    std::ranges::copy_if(mv.begin(), mv.end(), rv.begin(), [] (const auto& str) { return !contains(str, '*'); } );    // I don't know why this doesn't work
+
+    return rv;
+}
+
+/*! \brief          Add a value to the set of known values
+    \param  str     value to add
+    \return         whether the addition was successful
+
+    Returns false if the value <i>str</i> was already known
+*/
+bool multiplier::add_known(const std::string& str)
+{ SAFELOCK(multiplier); 
+
+  if (!_used)
+    return false;
+
+  const bool rv { _known.insert(str).second };
+
+  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
+    _all_values_are_mults = false;
+
+  return rv;
+
+//  return ( _used ? ( (_known.insert(str)).second ) : false ); 
+}
+
 /*! \brief          Remove a value from the known values
     \param  str     value to be removed
 
@@ -35,6 +69,8 @@ void multiplier::remove_known(const string& str)
 
   if (_used)
     _known.erase(str);
+
+  _all_values_are_mults = ANY_OF(_known, [] (const string& str) { return contains(str, '*'); } );
 }
 
 /*! \brief          Is a particular value a known multiplier value?
@@ -53,7 +89,8 @@ bool multiplier::is_known(const string& str) const
     \param  m       mode on which <i>str</i> has been worked
     \return         whether <i>str</i> was successfully added to the worked multipliers
 
-    Returns false if the value <i>str</i> is not known
+    Returns false if the value <i>str</i> is not known.
+    Adds even if it's NOT a mult value.
 */
 bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
@@ -170,7 +207,11 @@ size_t multiplier::n_worked(const BAND b, const MODE m) const
   const int   m_nr { static_cast<int>(m) };
   const auto& pb   { _worked[m_nr] };
 
-  return pb[b_nr].size();
+  if (_all_values_are_mults)
+    return pb[b_nr].size();
+
+// some values are not mults (e.g., XXX* in UBA contest)
+  return _filter_asterisks(pb[b_nr]).size();
 }
 
 /*! \brief      Number of mults worked on a particular band, regardless of mode
@@ -185,13 +226,19 @@ size_t multiplier::n_worked(const BAND b) const
 
   const auto& pb { _worked[ N_MODES ] };
 
-  return pb[ (_per_band ? b : N_BANDS) ].size();
+  if (_all_values_are_mults)
+    return pb[ (_per_band ? b : N_BANDS) ].size();
+
+// some values are not mults (e.g., XXX* in UBA contest)
+  return _filter_asterisks(pb[ (_per_band ? b : N_BANDS) ]).size();
 }
 
 /*! \brief      All the mults worked on a particular band and mode
     \param  b   band
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
+
+    Includes any non-mult values
 */
 MULTIPLIER_VALUES multiplier::worked(const int b, const int m) const
 { SAFELOCK(multiplier);

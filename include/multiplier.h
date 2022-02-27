@@ -45,6 +45,8 @@ class multiplier
 {
 protected:
 
+  bool              _all_values_are_mults { true };     ///< whether allthe known values are actually mults
+
   MULTIPLIER_VALUES _known      { };     ///< all the (currently) known possible values
 
   bool              _per_band   { false };  ///< is this multiplier accumulated per band?
@@ -57,6 +59,22 @@ protected:
    writes and reads to/from _worked from outside the object are non-trivial.
 */
   std::array< std::array< MULTIPLIER_VALUES /* values */, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
+
+// SHOULD I HAVE distinct _worked_values AND _worked_mults??
+
+  MULTIPLIER_VALUES _filter_asterisks(const MULTIPLIER_VALUES& mv) const;
+#if 0
+  { MULTIPLIER_VALUES rv { mv };
+
+//    REMOVE_IF_AND_RESIZE(rv, [] (const std::string& str) { return contains(str, '*'); } );
+    erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
+
+//    FOR_ALL(mv, [&rv] (const std::string& str) { if (!contains(str, '*')) rv += str; } );
+//    std::ranges::copy_if(mv.begin(), mv.end(), rv.begin(), [] (const auto& str) { return !contains(str, '*'); } );    // I don't know why this doesn't work
+
+    return rv;
+  }
+#endif
 
 public:
 
@@ -74,8 +92,8 @@ public:
 
     Returns false if the value <i>str</i> was already known
 */
-  inline bool add_known(const std::string& str)
-    { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
+  bool add_known(const std::string& str);
+//    { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
 /*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add
@@ -122,7 +140,8 @@ public:
     \param  m       mode on which <i>str</i> has been worked
     \return         whether <i>str</i> was successfully added to the worked multipliers
 
-    Returns false if the value <i>str</i> is not known
+    Returns false if the value <i>str</i> is not known.
+    Adds even if it's NOT a mult value.
 */
   bool add_worked(const std::string& str, const BAND b, const MODE m);
 
@@ -172,7 +191,7 @@ public:
   size_t n_worked(const BAND b) const;
 
 /// Number of known mults
-  inline size_t n_known(void) const
+  inline size_t n_known_mults(void) const
     { SAFELOCK(multiplier);
 
       return _known.size();
@@ -182,6 +201,8 @@ public:
     \param  b   band
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
+
+    Includes any non-mult values
 */
   MULTIPLIER_VALUES worked(const int b, const int m) const;
 

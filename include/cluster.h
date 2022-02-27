@@ -1,4 +1,4 @@
-// $Id: cluster.h 187 2021-06-26 16:16:42Z  $
+// $Id: cluster.h 201 2022-02-21 22:33:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -85,6 +85,9 @@ public:
 /// reset the cluster socket
   void reset_connection(void);
 
+/*! \brief      The status of the connection, as a human-readable string
+    \return     the status of the connection
+*/
   inline std::string connection_status(void)
     { return _connection.to_string(); }
 };
@@ -139,6 +142,16 @@ public:
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
   READ(valid);                  ///< is it a valid post?
+
+// syntactic sugar
+
+/// was the cluster the source of the post?
+  inline bool from_cluster(void) const
+    { return (_source == POSTING_SOURCE::CLUSTER); }
+
+/// was the RBN the source of the post?
+  inline bool from_rbn(void) const
+    { return (_source == POSTING_SOURCE::RBN); }
 };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream
