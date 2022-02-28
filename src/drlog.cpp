@@ -12,6 +12,7 @@
 
 #include "adif3.h"
 #include "audio.h"
+#include "autocorrect.h"
 #include "bandmap.h"
 #include "bands-modes.h"
 #include "cluster.h"
@@ -318,6 +319,7 @@ unordered_set<string>   all_country_mults;                          ///< all the
 bool                    allow_audio_recording { false };            ///< may we record audio?
 string                  at_call;                                    ///< call that should replace comat in "call ok now" message
 audio_recorder          audio;                                      ///< provide capability to record audio
+atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
 
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
@@ -518,6 +520,8 @@ call_history q_history;                         ///< history of calls worked
 rate_meter rate;                                ///< QSO and point rates
 
 vector<string> win_log_snapshot;                ///< individual lines in the LOG window
+
+autocorrect_database ac_db;                     ///< the RBN autocorrection database
 
 scp_database  scp_db,                           ///< static SCP database from file
               scp_dynamic_db;                   ///< dynamic SCP database from QSOs
@@ -789,6 +793,7 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
 
     allow_audio_recording           = context.allow_audio_recording();
+    autocorrect_rbn                 = context.autocorrect_rbn();
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
     call_history_bands              = context.call_history_bands();
@@ -899,6 +904,23 @@ int main(int argc, char** argv)
 
     fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
     fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
+
+// build autocorrect database from the drmaster information, regardless of whether it is currently set to be used
+    try
+    { ac_db.init_from_calls(drm_cdb.calls());
+
+      ost << "number of calls in ac_db = " << ac_db.n_calls() << endl;
+
+      if (autocorrect_rbn)
+        ost << "autocorrect is ON" << endl;
+      else
+        ost << "autocorrect is OFF" << endl;
+    }
+
+    catch (...)
+    { cerr << "Error initialising autocorrect database" << endl;
+      exit(-1);
+    }
 
 // build query database from the drmaster information
     query_db = drm_cdb.unordered_calls();
@@ -2465,11 +2487,22 @@ void* process_rbn_info(void* vp)
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
-          const dx_post post       { line, location_db, rbn.source() };
+          /* const */dx_post post       { line, location_db, rbn.source() };                // no longer const to allow for RBN autocorrection
           const bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
 
           if (post.valid() and !wrong_mode)
-          { const BAND dx_band { post.band() };
+          { 
+// possibly autocorrect
+            if (is_rbn and autocorrect_rbn)
+            { const string b4 { post.callsign() };
+
+              post.callsign(ac_db.corrected_call(post.callsign()));
+
+              if (b4 != post.callsign())
+                ost << "  " << b4 << " -> " << post.callsign() << endl;
+            }
+
+            const BAND dx_band { post.band() };
 
 // is this station being monitored?
             if (mp.is_monitored(post.callsign()))
@@ -3166,6 +3199,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .ABORT -- immediate exit, simulating power failure
       if (starts_with(command, "ABORT"s))
         exit(-1);
+
+// .AC ON|OFF -- control autocorrecting RBN posts
+      if (starts_with(command, "AC"s))
+      { const vector<string> words { clean_split_string(command, ' ') };
+
+        if (words.size() == 2)
+        { if (words[1] == "ON"s)
+          { autocorrect_rbn = true;
+            ost << "AUTOCORRECT RBN turned ON" << endl;
+          }
+
+          if (words[1] == "OFF"s)
+          { autocorrect_rbn = false;
+            ost << "AUTOCORRECT RBN turned OFF" << endl;
+          }
+        }
+      }
 
 // .ADD <call> -- remove call from the do-not-show list
       if (starts_with(command, "ADD"s))

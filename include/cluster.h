@@ -130,7 +130,7 @@ public:
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
 
   READ(band);                   ///< band of post
-  READ(callsign);               ///< callsign that was heard
+  READ_AND_WRITE(callsign);     ///< callsign that was heard
   READ(canonical_prefix);       ///< canonical prefix corresponding to <i>callsign</i>
   READ(comment);                ///< comment supplied by poster
   READ(continent);              ///< continent of <i>_callsign</i>

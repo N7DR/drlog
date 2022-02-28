@@ -58,6 +58,7 @@ protected:
   unsigned int                                 _audio_duration                          { 60 };                         ///< maximum duration in minutes, per file
   std::string                                  _audio_file                              { "audio"s };                   ///< base name of file for audio recordings
   unsigned int                                 _audio_rate                              { 8000 };                       ///< number of samples per second
+  bool                                         _autocorrect_rbn                         { false };                      ///< whether to try to autocorrect posts from the RBN
   std::string                                  _auto_backup_directory                   { };                            ///< directory for auto backup files (default = no directory)
   bool                                         _auto_cq_mode_ssb                        { false };                      ///< do we automatically go to CQ mode on SSB?
   bool                                         _auto_remaining_callsign_mults           { false };                      ///< do we auto-generate the remaining callsign mults?
@@ -316,6 +317,7 @@ public:
   CONTEXTREAD(audio_duration);                           ///< maximum duration in minutes, per file
   CONTEXTREAD(audio_file);                               ///< base name of file for audio recordings
   CONTEXTREAD(audio_rate);                               ///< number of samples per second
+  CONTEXTREAD(autocorrect_rbn);                          ///< whether to try to autocorrect posts from the RBN
   CONTEXTREAD(auto_backup_directory);                    ///< directory for auto backup files
   CONTEXTREAD(auto_cq_mode_ssb);                         ///< do we automatically go to CQ mode on SSB?
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?

@@ -39,7 +39,10 @@ include/adif3.h : include/macros.h include/string_functions.h include/x_error.h
 	
 include/audio.h : include/macros.h include/string_functions.h include/x_error.h
 	touch include/audio.h
-	
+
+include/autocorrect.h : include/macros.h
+	touch include/autocorrect.h
+
 include/bandmap.h : include/cluster.h include/drlog_context.h include/log.h include/pthread_support.h include/rules.h \
                     include/screen.h include/serialization.h include/statistics.h
 	touch include/bandmap.h
@@ -160,7 +163,10 @@ src/adif3.cpp : include/adif3.h
 	
 src/audio.cpp : include/audio.h include/log_message.h include/string_functions.h
 	touch src/audio.cpp
-	
+
+src/autocorrect.cpp : include/autocorrect.h include/string_functions.h
+	touch src/autocorrect.cpp
+
 src/bandmap.cpp : include/bandmap.h include/exchange.h include/log_message.h include/statistics.h include/string_functions.h
 	touch src/bandmap.cpp
 	
@@ -185,7 +191,7 @@ src/cw_buffer.cpp : include/cw_buffer.h include/log_message.h
 src/diskfile.cpp : include/diskfile.h include/string_functions.h
 	touch src/diskfile.cpp
 	
-src/drlog.cpp : include/audio.h include/bandmap.h include/bands-modes.h include/cluster.h include/command_line.h \
+src/drlog.cpp : include/audio.h include/autocorrect.h include/bandmap.h include/bands-modes.h include/cluster.h include/command_line.h \
                 include/cty_data.h include/cw_buffer.h include/diskfile.h include/drlog_context.h include/exchange.h \
                 include/functions.h include/fuzzy.h include/grid.h include/keyboard.h include/log.h \
                 include/log_message.h include/memory.h \
@@ -409,7 +415,7 @@ bin/x_error.o : src/x_error.cpp
 	$(CC) $(CFLAGS) -o $@ src/x_error.cpp
 
 # in g++10, the libraries must go at the end
-bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
+bin/drlog : bin/adif3.o bin/audio.o bin/autocorrect.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
             bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
             bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
@@ -418,7 +424,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
             bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
             bin/version.o bin/x_error.o
-	$(LD) bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
+	$(LD) bin/adif3.o bin/audio.o bin/autocorrect.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
 	bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
 	bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
