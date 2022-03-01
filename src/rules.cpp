@@ -61,7 +61,8 @@ void choice_equivalents::operator+=(const string& ch1_ch2)
 { if (number_of_occurrences(ch1_ch2, '+') != 1)
     throw exception();
 
-  const vector<string> vec { remove_peripheral_spaces(split_string(ch1_ch2, "+"s)) };
+//  const vector<string> vec { remove_peripheral_spaces(split_string(ch1_ch2, "+"s)) };
+  const vector<string> vec { clean_split_string(ch1_ch2, '+') };
 
   *this += { vec[0], vec[1] };
 }
@@ -144,7 +145,6 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
   const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
-//  return ss.contains(putative_value);
   return contains(ss, putative_value);
 }
 
@@ -161,9 +161,10 @@ vector<exchange_field> exchange_field::expand(void) const
 { vector<exchange_field> rv;
 
   if (!is_choice())
-  { rv += (*this);
-    return rv;
-  }
+    return ( rv += (*this), rv );
+//  { rv += (*this);
+//    return rv;
+//  }
 
 // it's a choice
   FOR_ALL(_choice, [&rv] (const auto& this_choice) { rv += this_choice.expand(); } );
@@ -308,10 +309,11 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     const bool is_opt    { contains(field_name, "OPT:"s) };
 
     if (is_choice)
-    { const vector<string> choice_vec { split_string(field_name, ":"s) };
+    { const vector<string> choice_vec { split_string(field_name, ':') };
 
       if (choice_vec.size() == 2)       // true if legal
-      { vector<string> choice_fields { remove_peripheral_spaces(split_string(choice_vec[1], "/"s)) };
+      { //vector<string> choice_fields { remove_peripheral_spaces(split_string(choice_vec[1], "/"s)) };
+        vector<string> choice_fields { clean_split_string(choice_vec[1], '/') };
 
         vector<exchange_field> choices;
 
@@ -345,7 +347,6 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     }
 
     if (!is_choice and !is_opt)
-//      rv += exchange_field(field_name, contains(exchange_mults_vec, field_name));
       rv += exchange_field { field_name, contains(exchange_mults_vec, field_name) };
   }
 

@@ -35,7 +35,7 @@ protected:
   std::unordered_set<std::string> _calls;
 
 // we should add a cache of input to output calls
-
+  mutable std::map<std::string /* input call */, std::string /* output call */> _cache;
 
 public:
 

@@ -290,6 +290,8 @@ bool                exiting { false };                      ///< is the program 
 bool                exiting_rig_status { false };           ///< turn off the display-rig_status thread first
 set<string>         thread_names;                           ///< the names of the threads
 
+bool                auto_remaining_country_mults { false }; ///< whether country mults are to be automatically added (value read from context before use)
+
 //pt_mutex            current_band_mutex { "CURRENT BAND"s }; ///< mutex for setting/getting the current band
 //BAND                current_band;                           ///< the current band
 atomic<BAND>        current_band;                           ///< the current band
@@ -793,6 +795,7 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
 
     allow_audio_recording           = context.allow_audio_recording();
+    auto_remaining_country_mults    = context.auto_remaining_country_mults();
     autocorrect_rbn                 = context.autocorrect_rbn();
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
@@ -1505,7 +1508,8 @@ int main(int argc, char** argv)
       FOR_ALL(rules.callsign_mults(), [=](const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
     }
 
-    if (context.auto_remaining_country_mults())
+//    if (context.auto_remaining_country_mults())
+    if (auto_remaining_country_mults)
       acc_countries.threshold(context.auto_remaining_country_mults_threshold());
 
 // possibly set speed of internal keyer. Direct quote from N2IC: Contesters don't use internal keyers. [Message-ID: <515996A2.9060800@arrl.net>]
@@ -2498,8 +2502,8 @@ void* process_rbn_info(void* vp)
 
               post.callsign(ac_db.corrected_call(post.callsign()));
 
-              if (b4 != post.callsign())
-                ost << "  " << b4 << " -> " << post.callsign() << endl;
+ //             if (b4 != post.callsign())
+ //               ost << "  " << b4 << " -> " << post.callsign() << endl;
             }
 
             const BAND dx_band { post.band() };
@@ -2533,10 +2537,10 @@ void* process_rbn_info(void* vp)
                 qrg_map[dx_callsign] = post.frequency_str();
               }
 
-//              bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
               bandmap_entry be { post.from_cluster() ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
-              be.callsign(dx_callsign).freq(post.freq());        // also sets band and mode
+              be.callsign(dx_callsign);
+              be.freq(post.freq());        // also sets band and mode
               
               if (rules.score_modes() > be.mode())
               { be.frequency_str_decimal_places(1);
@@ -2550,7 +2554,8 @@ void* process_rbn_info(void* vp)
                 update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-                if (context.auto_remaining_country_mults())
+//                if (context.auto_remaining_country_mults())
+                if (auto_remaining_country_mults)
                   update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
@@ -2711,7 +2716,8 @@ void* process_rbn_info(void* vp)
     else
       cluster_line_win < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= last_processed_line;  // display the last processed line on the screen
 
-    if (context.auto_remaining_country_mults())
+//    if (context.auto_remaining_country_mults())
+    if (auto_remaining_country_mults)
 //      update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
 //      update_remaining_country_mults_window(statistics, current_band, safe_get_mode());  // might have added a new one if in auto mode
       update_remaining_country_mults_window(statistics, current_band, current_mode);  // might have added a new one if in auto mode
@@ -5932,7 +5938,8 @@ void populate_win_info(const string& callsign)
 // country mults
       const string canonical_prefix { location_db.canonical_prefix(callsign) };
 
-      if (!all_country_mults.empty() or context.auto_remaining_country_mults())
+ //     if (!all_country_mults.empty() or context.auto_remaining_country_mults())
+      if (!all_country_mults.empty() or auto_remaining_country_mults)
       { if (all_country_mults > canonical_prefix)                                           // all_country_mults is from rules, and has all the valid mults for the contest
         { const MULTIPLIER_VALUES known_country_mults { statistics.known_country_mults() };
 
@@ -6255,7 +6262,8 @@ bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_k
 
   bool rv { false };
 
-  if (context.auto_remaining_country_mults())
+//  if (context.auto_remaining_country_mults())
+  if (auto_remaining_country_mults)
   { const string canonical_prefix { location_db.canonical_prefix(callsign) };
 
     if ( acc_countries.add(canonical_prefix, (force_known == KNOWN_MULT::FORCE_KNOWN) ? context.auto_remaining_country_mults_threshold() : 1) )
