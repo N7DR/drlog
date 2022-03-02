@@ -974,6 +974,43 @@ void drlog_context::_process_configuration_file(const string& filename)
 // SOCIETY LIST FILENAME
     if (LHS == "SOCIETY LIST FILENAME"s)
       _society_list_filename = rhs;
+#if 0
+// CW BANDWIDTH
+    if (LHS == "CW BANDWIDTH"s)
+    { //const vector<string> bw { remove_peripheral_spaces(split_string(RHS, "/"s)) };
+      const vector<string> bw { clean_split_string(RHS, '/') };
+
+      if (bw.size() == 2)
+      { _cw_bandwidth_narrow = from_string<decltype(_cw_bandwidth_narrow)>(bw[0]);
+        _cw_bandwidth_wide = from_string<decltype(_cw_bandwidth_wide)>(bw[1]);
+      }
+    }
+
+int                     ssb_bandwidth_narrow;               ///< narrow SSB bandwidth, in Hz
+int                     ssb_bandwidth_wide;                 ///< wide SSB bandwidth, in Hz
+int                     ssb_centre_narrow;                  ///< narrow SSB bandwidth centre frequency, in Hz
+int                     ssb_centre_wide;                    ///< wide SSB bandwidth centre frequency, in Hz
+
+ssb audio = 1500:1800 / 1300:1600
+            WC    WB     NC    NB
+#endif
+
+// SSB AUDIO
+    if (LHS == "SSB AUDIO"s)
+    { const vector<string> cbw { clean_split_string(RHS, '/') };
+
+      if (cbw.size() == 2)
+      { const vector<string> cbw_wide { clean_split_string(cbw[0], ':') };
+
+        _ssb_centre_wide = from_string<decltype(_ssb_centre_wide)>(cbw_wide[0]);
+        _ssb_bandwidth_wide = from_string<decltype(_ssb_bandwidth_wide)>(cbw_wide[1]);
+
+        const vector<string> cbw_narrow { clean_split_string(cbw[1], ':') };
+
+        _ssb_centre_narrow = from_string<decltype(_ssb_centre_narrow)>(cbw_narrow[0]);
+        _ssb_bandwidth_narrow = from_string<decltype(_ssb_bandwidth_narrow)>(cbw_narrow[1]);
+      }
+    }
 
 // START AUDIO RECORDING
     if (LHS == "START AUDIO RECORDING"s)

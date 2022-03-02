@@ -190,6 +190,7 @@ void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
 void   set_active_window(const ACTIVE_WINDOW aw);                               ///< Set the window that is receiving input
 bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
+bool   ssb_toggle_bandwidth(void);                                              ///< Toggle bandwidth and centre frequency if on SSB
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
 void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
 void   stop_recording(audio_recorder& audio);                                   ///< stop audio recording
@@ -391,10 +392,10 @@ unsigned int            serno_spaces { 0 };                 ///< number of addit
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
 int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
 unsigned int            shift_poll  { 0 };                  ///< polling interval for SHIFT keys
-int                     ssb_bandwidth_narrow;               ///< narrow SSB bandwidth, in Hz
-int                     ssb_bandwidth_wide;                 ///< wide SSB bandwidth, in Hz
-int                     ssb_centre_narrow;                  ///< narrow SSB bandwidth centre frequency, in Hz
-int                     ssb_centre_wide;                    ///< wide SSB bandwidth centre frequency, in Hz
+int                     ssb_bandwidth_narrow { 1600 };      ///< narrow SSB bandwidth, in Hz
+int                     ssb_bandwidth_wide   { 1800 };      ///< wide SSB bandwidth, in Hz
+int                     ssb_centre_narrow    { 1300 };      ///< narrow SSB bandwidth centre frequency, in Hz
+int                     ssb_centre_wide      { 1500 };      ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -826,6 +827,10 @@ int main(int argc, char** argv)
     shift_delta_cw                  = static_cast<int>(context.shift_delta_cw());  // forced positive int
     shift_delta_ssb                 = static_cast<int>(context.shift_delta_ssb());  // forced positive int
     shift_poll                      = context.shift_poll();
+    ssb_bandwidth_narrow            = context.ssb_bandwidth_narrow();
+    ssb_bandwidth_wide              = context.ssb_bandwidth_wide();
+    ssb_centre_narrow               = context.ssb_centre_narrow();
+    ssb_centre_wide                 = context.ssb_centre_wide();
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
@@ -4509,14 +4514,30 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         break;
 
       case MODE_SSB :
-        if (rig.rit_enabled())
-          rig.rit(0);
-        processed = true;
+//        if (rig.rit_enabled())
+//          rig.rit(0);
+//        processed = true;
+          processed = ssb_toggle_bandwidth();
         break;
 
       default :
         processed = true;
     }
+  }
+
+//  ost << "processed = " << processed << endl;
+//  ost << "e.symbol() = " << e.symbol() << endl;
+//  ost << "e.is_unmodified() = " << e.is_unmodified() << endl;
+//  ost << "XK_KP_5 = " << XK_KP_5 << endl;
+
+// KP5 -- centre RIT if on SSB and RIT is on
+  if (!processed and e.is_unmodified() and ( (e.symbol() == XK_KP_5) or (e.symbol() == XK_KP_Begin) ) )     // XK_KP_Begin seems to be non-Num_lock KP5
+  { //ost << " *****  KP5 *****" << endl;
+
+    if ( (current_mode == MODE_SSB) and rig.rit_enabled() )
+      rig.rit(0);
+
+    processed = true;
   }
 
 // CTRL-G -- display QRG of call
@@ -9069,10 +9090,15 @@ bool cw_toggle_bandwidth(void)
 /*! \brief      Toggle narrow/wide centre/bandwidth values if on SSB
     \return     true
 
-    Sets bandwidth to the wide bandwidth if it's not equal to the narrow bandwidth
+    Sets bandwidth and centre frequency to the wide settings if not equal to the those settings; otherwise set to narrow settings
 */
 bool ssb_toggle_bandwidth(void)
-{ constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
+{ constexpr int BANDWIDTH_PRECISION { 50 };        // K3 can set only to 50 Hz boundaries
+
+    ost << "ssb_bandwidth_narrow = " << ssb_bandwidth_narrow << endl;
+    ost << "ssb_bandwidth_wide = " << ssb_bandwidth_wide << endl;
+    ost << "ssb_centre_narrow = " << ssb_centre_narrow << endl;
+    ost << "ssb_centre_wide = " << ssb_centre_wide << endl;
 
 //  if (safe_get_mode() == MODE_SSB)
   if (current_mode == MODE_SSB)
@@ -9082,8 +9108,12 @@ bool ssb_toggle_bandwidth(void)
 
     const SSB_AUDIO bw { (abs(rig.bandwidth() - ssb_bandwidth_wide) < BANDWIDTH_PRECISION) ? SSB_NARROW : SSB_WIDE  };
 
+    ost << "bw = " << bw << endl;
+
     rig.bandwidth( (bw == SSB_NARROW) ? ssb_bandwidth_narrow : ssb_bandwidth_wide );
     rig.centre_frequency( (bw == SSB_NARROW) ? ssb_centre_narrow : ssb_centre_wide );
+
+
   }
 
   return true;

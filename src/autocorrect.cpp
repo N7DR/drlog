@@ -28,9 +28,9 @@ string autocorrect_database::corrected_call(const string& str) const
 { if (str.empty())
     return str;
 
-  const string from_cache { MUM_VALUE(_cache, str) };
+//  const string from_cache { MUM_VALUE(_cache, str) };
 
-  if (!from_cache.empty())
+  if (const string from_cache { MUM_VALUE(_cache, str) }; !from_cache.empty())
     return from_cache;
 
   if (contains(str))            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
@@ -38,110 +38,148 @@ string autocorrect_database::corrected_call(const string& str) const
 
 // extraneous E in front of a US K call
   if (starts_with(str, "EK"s))
-  { const string call_to_test { substring(str, 1) };
+  { //const string call_to_test { substring(str, 1) };
 
-    if (contains(call_to_test))
+    if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
       return ( _cache += { str, call_to_test }, call_to_test );
+  }
+
+// JA miscopied as JT
+  if (starts_with(str, "JT"s))
+  { if (!contains(str))
+    { //const string call_to_test { "JA"s + substring(str, 2) };
+
+      if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
+        return ( _cache += { str, call_to_test }, call_to_test );
+    }
   }
 
 // initial W copied as an initial M
   if (starts_with(str, "M"s))
   { if (!contains(str))
-    { const string call_to_test { "W"s + substring(str, 1) };
+    { //const string call_to_test { "W"s + substring(str, 1) };
 
-      if (contains(call_to_test))
+      if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
         return ( _cache += { str, call_to_test }, call_to_test );
     }
   }
 
 // initial J copied as an initial O
-  if (starts_with(str, "O"s))
-  { if (starts_with(str, "OA"s))
-    { if (!contains(str))
-      { const string call_to_test { "JA"s + substring(str, 2) };
+  if (starts_with(str, "O"s) and (str.size() > 3))
+  { switch (str[1])
+    { case 'A' :
+      case 'E' :
+      case 'F' :
+      case 'G' :
+      case 'H' :
+      case 'I' :
+      case 'J' :
+      case 'K' :
+      case 'L' :
+      case 'M' :
+      case 'N' :
+      case 'O' :
+      case 'P' :
+      case 'Q' :
+      case 'R' :
+      case 'S' :
+        
+        if (const string call_to_test { "J"s + substring(str, 1) }; contains(call_to_test))
+          return ( _cache += { str, call_to_test }, call_to_test );
 
-        if (contains(call_to_test))
+      default :
+        break;
+    }
+
+#if 0
+    const string J_call { "J"s + substring(str, 1) };
+
+    if (starts_with(str, "OA"s))
+    { if (!contains(str))
+      { //const string call_to_test { "JA"s + substring(str, 2) };
+
+        if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
     if (starts_with(str, "OE"s))
     { if (!contains(str))
-      { const string call_to_test { "JE"s + substring(str, 2) };
+      { //const string call_to_test { "JE"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JE"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
    if (starts_with(str, "OF"s))
     { if (!contains(str))
-      { const string call_to_test { "JF"s + substring(str, 2) };
+      { //const string call_to_test { "JF"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JF"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
     if (starts_with(str, "OG"s))
     { if (!contains(str))
-      { const string call_to_test { "JG"s + substring(str, 2) };
+      { //const string call_to_test { "JG"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JG"s + substring(str, 2) }; contains(call_to_test))
           return call_to_test;
       }
     }
 
     if (starts_with(str, "OH"s))
     { if (!contains(str))
-      { const string call_to_test { "JH"s + substring(str, 2) };
+      { //const string call_to_test { "JH"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JH"s + substring(str, 2) }; contains(call_to_test))
           return call_to_test;
       }
     }
 
     if (starts_with(str, "OI"s))
     { if (!contains(str))
-      { const string call_to_test { "JI"s + substring(str, 2) };
+      { //const string call_to_test { "JI"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JI"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
     if (starts_with(str, "OJ"s))
     { if (!contains(str))
-      { const string call_to_test { "JJ"s + substring(str, 2) };
+      { //const string call_to_test { "JJ"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JJ"s + substring(str, 2) }; contains(call_to_test))
           return call_to_test;
       }
     }
 
     if (starts_with(str, "OK"s))
     { if (!contains(str))
-      { const string call_to_test { "JK"s + substring(str, 2) };
+      { //const string call_to_test { "JK"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JK"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
     if (starts_with(str, "OL"s))
     { if (!contains(str))
-      { const string call_to_test { "JL"s + substring(str, 2) };
+      { //const string call_to_test { "JL"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JL"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
 
     if (starts_with(str, "OM"s))
     { if (!contains(str))
-      { const string call_to_test { "JM"s + substring(str, 2) };
+      { //const string call_to_test { "JM"s + substring(str, 2) };
 
-        if (contains(call_to_test))
+        if (const string call_to_test { "JM"s + substring(str, 2) }; contains(call_to_test))
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
@@ -199,6 +237,8 @@ string autocorrect_database::corrected_call(const string& str) const
           return ( _cache += { str, call_to_test }, call_to_test );
       }
     }
+#endif
+
   }
 
 // extraneous T in front of a US K call

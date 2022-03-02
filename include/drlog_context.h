@@ -264,8 +264,8 @@ protected:
   std::string                                  _society_list_filename                   { };                                ///< name of file containing IARU society exchanges
   int                                          _ssb_bandwidth_narrow                    { 1600 };                           ///< narrow SSB bandwidth (Hz)
   int                                          _ssb_bandwidth_wide                      { 1800 };                           ///< wide SSB bandwidth (Hz)
-  int                                          _ssb_centre_bandwidth_narrow             { 1300 };                           ///< centre frequency for narrow SSB bandwidth (Hz)
-  int                                          _ssb_centre_bandwidth_wide               { 1500 };                           ///< centre frequency for wide SSB bandwidth (Hz)
+  int                                          _ssb_centre_narrow                       { 1300 };                           ///< centre frequency for narrow SSB bandwidth (Hz)
+  int                                          _ssb_centre_wide                         { 1500 };                           ///< centre frequency for wide SSB bandwidth (Hz)
   enum AUDIO_RECORDING                         _start_audio_recording                   { AUDIO_RECORDING::DO_NOT_START };  ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band                              { BAND_20 };                        ///< on what band do we start?
   enum MODE                                    _start_mode                              { MODE_CW };                        ///< on which mode do we start?
@@ -549,6 +549,10 @@ public:
   CONTEXTREAD(shift_poll);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   CONTEXTREAD(short_serno);                      ///< whether to omit leading Ts
   CONTEXTREAD(society_list_filename);            ///< name of file containing IARU society exchanges
+  CONTEXTREAD(ssb_bandwidth_narrow);             ///< narrow SSB bandwidth (Hz)
+  CONTEXTREAD(ssb_bandwidth_wide);               ///< wide SSB bandwidth (Hz)
+  CONTEXTREAD(ssb_centre_narrow);                ///< centre frequency for narrow SSB bandwidth (Hz)
+  CONTEXTREAD(ssb_centre_wide);                  ///< centre frequency for wide SSB bandwidth (Hz)
   CONTEXTREAD(start_audio_recording);            ///< whether to start recording of audio (if _allow_audio_recording is true)
   CONTEXTREAD(start_band);                       ///< on what band do we start?
   CONTEXTREAD(start_mode);                       ///< on which mode do we start?
