@@ -89,9 +89,13 @@ string to_string(const BANDMAP_ENTRY_SOURCE bes)
 unsigned int bandmap_buffer::n_posters(const string& callsign)
 { SAFELOCK(_bandmap_buffer);
 
-  const auto cit { _data.find(callsign) };
+//  const auto cit { _data.find(callsign) };
 
-  return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
+//  return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
+
+// std::map<std::string /* call */, bandmap_buffer_entry>  _data;
+
+  return MUMF_VALUE(_data, callsign, &bandmap_buffer_entry::size);  // is this correct??? I think that it is
 }
 
 /*! \brief              Associate a poster with a call
@@ -207,7 +211,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   const vector<string> exch_mults { rules.expanded_exchange_mults() };                                  // the exchange multipliers
 
-// there can only be an exchange mult if one of the exchange field names matches an exchange mult field name
+// there can be an exchange mult only if one of the exchange field names matches an exchange mult field name
   bool exchange_mult_is_possible { false };
 
   for (const auto& exch_mult_name : exch_mults)
@@ -275,7 +279,7 @@ bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, runnin
   { _is_needed = true;
 
     for (auto& b : rules.permitted_bands())
-      _is_needed = ( _is_needed and !q_history.worked(_callsign, b) );
+      _is_needed = ( _is_needed and !q_history.worked(_callsign, b) );      // there is no &&= operator in C++
   }
   else
    _is_needed = !q_history.worked(_callsign, _band);
@@ -729,7 +733,6 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
   FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
-//  std::ranges::for_each(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
   _dirty_entries();
 }
@@ -772,7 +775,6 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   SAFELOCK(_bandmap);
 
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
-//  ranges::for_each(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
 
   _dirty_entries();
 }

@@ -94,7 +94,6 @@ public:
     \return             whether there is an alternative field for <i>field_name</i>
 */
   inline bool is_choice(const std::string& field_name) const
-//    { return (_choices.find(field_name) != _choices.cend() ); }
     { return contains(_choices, field_name); }
 
 /// return the inverse of whether there are any choices
@@ -507,7 +506,7 @@ public:
     Does nothing if <i>mode</i> is already permitted
 */
   inline void add_permitted_mode(const MODE mode)
-    { SAFELOCK(rules); _permitted_modes.insert(mode); }
+    { SAFELOCK(rules); _permitted_modes += mode; }
     
 /*! \brief                  Get the next mode in sequence
     \param  current_mode    the current mode
@@ -687,7 +686,6 @@ public:
   inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
- //     return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
       return contains(_permitted_exchange_values, field_name);
     }
 

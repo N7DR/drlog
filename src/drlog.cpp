@@ -3914,8 +3914,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // and unmodified: // KEYPAD-/, KEYPAD-*: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
-  { update_quick_qsy();
-    processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+    }
+    else
+      processed = true;
   }
 
 // SHIFT (RIT control)
@@ -4542,9 +4546,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-G -- display QRG of call
   if (!processed and (e.is_control('g')))
-  { //const BAND b       { safe_get_band() };
-    const BAND b       { current_band };
-    const int  band_nr { static_cast<int>(b) };
+  { //const BAND b       { current_band };
+    const int  band_nr { static_cast<int>(current_band) };
 
     lock_guard lg(last_posted_qrg_mutex[band_nr]);
 
@@ -4609,14 +4612,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     ALT-R -- toggle RX antenna
     ALT-S -- toggle sub receiver
 
-    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
-    CTRL-S -- send contents of CALL window to scratchpad
-    ESCAPE
-    COMMA -- place contents of call window into this window, preceeded by a dot
-    FULL STOP
-    ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
-    SHIFT -- RIT control
     CTRL-B -- fast bandwidth
+    CTRL-S -- send contents of CALL window to scratchpad
+
+    ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
+    ESCAPE
+    FULL STOP
+
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+
+    COMMA -- place contents of call window into this window, preceeded by a dot
+
+    SHIFT -- RIT control
+
     F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
 */

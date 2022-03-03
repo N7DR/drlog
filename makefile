@@ -164,7 +164,7 @@ src/adif3.cpp : include/adif3.h
 src/audio.cpp : include/audio.h include/log_message.h include/string_functions.h
 	touch src/audio.cpp
 
-src/autocorrect.cpp : include/autocorrect.h include/string_functions.h
+src/autocorrect.cpp : include/autocorrect.h include/log_message.h include/string_functions.h
 	touch src/autocorrect.cpp
 
 src/bandmap.cpp : include/bandmap.h include/exchange.h include/log_message.h include/statistics.h include/string_functions.h
