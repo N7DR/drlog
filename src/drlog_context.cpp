@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 197 2021-11-21 14:52:50Z  $
+// $Id: drlog_context.cpp 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1572,6 +1572,7 @@ vector<string> drlog_context::window_name_contains(const string& substr) const
     \param  f   frequency to test
     \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
+#if 0
 bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
 
@@ -1590,6 +1591,7 @@ bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 
   return false;
 }
+#endif
 
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band
@@ -1648,9 +1650,9 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
 
   const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
-  for (const auto& pss : *ptr_vec_pss)
-//    rv.push_back(pss.first);
-    rv += pss.first;
+//  for (const auto& pss : *ptr_vec_pss)
+//    rv += pss.first;
+  FOR_ALL(*ptr_vec_pss, [&rv] (const auto& pss) { rv += pss.first; } );
 
   return rv;
 }

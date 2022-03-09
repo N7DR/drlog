@@ -1,4 +1,4 @@
-// $Id: multiplier.h 171 2020-11-15 16:02:32Z  $
+// $Id: multiplier.h 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,19 +62,11 @@ protected:
 
 // SHOULD I HAVE distinct _worked_values AND _worked_mults??
 
+/*! \brief      return only values that do NOT contain asterisks
+    \param  mv  multiplier values
+    \return     <i>mv</i>, but without any values that contain an asterisk
+*/
   MULTIPLIER_VALUES _filter_asterisks(const MULTIPLIER_VALUES& mv) const;
-#if 0
-  { MULTIPLIER_VALUES rv { mv };
-
-//    REMOVE_IF_AND_RESIZE(rv, [] (const std::string& str) { return contains(str, '*'); } );
-    erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
-
-//    FOR_ALL(mv, [&rv] (const std::string& str) { if (!contains(str, '*')) rv += str; } );
-//    std::ranges::copy_if(mv.begin(), mv.end(), rv.begin(), [] (const auto& str) { return !contains(str, '*'); } );    // I don't know why this doesn't work
-
-    return rv;
-  }
-#endif
 
 public:
 
@@ -93,7 +85,6 @@ public:
     Returns false if the value <i>str</i> was already known
 */
   bool add_known(const std::string& str);
-//    { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
 /*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add

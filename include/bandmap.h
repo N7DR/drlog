@@ -1,4 +1,4 @@
-// $Id: bandmap.h 201 2022-02-21 22:33:24Z  $
+// $Id: bandmap.h 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -233,13 +233,7 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { //if (!_is_needed)
-    //  return false;
-
-    //if (_values.find(v) == _values.cend())
-    //  return false;
-
-    if (!_is_needed or !contains(_values, v))
+  { if (!_is_needed or !contains(_values, v))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -397,13 +391,6 @@ public:
     _source(s),                             // source is as given in <i>s</i>
     _time(::time(NULL))                     // now
   { }
-
-/*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
-    \param  be  comparison bandmap_entry
-    \return     whether <i>this</i> should be sorted earlier than <i>be</i>
-*/
-//  inline bool operator<(const bandmap_entry& be) const
-//    { return (_freq.hz() < be._freq.hz() ); }
 
   READ(band);                           ///< band
   READ(callsign);                       ///< call
@@ -1121,7 +1108,7 @@ public:
 template<typename C>
   requires (is_string_v<typename C::value_type>)
   inline void do_not_add(const C& calls)
-  { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
+    { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1131,7 +1118,7 @@ template<typename C>
 template<typename C>
   requires (is_string_v<typename C::value_type>)
   inline void do_not_add(C&& calls)
-  { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
+    { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
 
 /*!  \brief             Remove a call from the do-not-add list
      \param callsign    callsign to add

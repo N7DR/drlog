@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 201 2022-02-21 22:33:24Z  $
+// $Id: drlog.cpp 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,7 +58,6 @@
 
 using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
-//using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
 using CALL_SET = set<string, decltype(&compare_calls)>;    // set in callsign order
@@ -158,6 +157,7 @@ string hhmmss(void);                                ///< Obtain the current time
 
 void insert_memory(void);                                                                               ///< insert an entry into the memories
 bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
+bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
 bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                                 ///<   Is a callsign needed on a particular band and mode?
 
 pair<float, float> latitude_and_longitude(const string& callsign);    ///< obtain latitude and longtide associated with a call
@@ -296,19 +296,17 @@ bool                auto_remaining_country_mults { false }; ///< whether country
 //pt_mutex            current_band_mutex { "CURRENT BAND"s }; ///< mutex for setting/getting the current band
 //BAND                current_band;                           ///< the current band
 atomic<BAND>        current_band;                           ///< the current band
-
-//pt_mutex            current_mode_mutex { "CURRENT MODE"s };                     ///< mutex for setting/getting the current mode
-//MODE                current_mode;                           ///< the current mode
 atomic<MODE>        current_mode;                           ///< the current mode
 
 pt_mutex            drlog_mode_mutex { "DRLOG_MODE"s };                       ///< mutex for accessing <i>drlog_mode</i>
 DRLOG_MODE          drlog_mode { DRLOG_MODE::SAP };         ///< CQ or SAP
 DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
-pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };             ///< mutex for the callsign mults we know about in AUTO mode
-set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
+pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };     ///< mutex for the callsign mults we know about in AUTO mode
+set<string>         known_callsign_mults;                                       ///< callsign mults we know about in AUTO mode
 
-bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
+map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges { };  ///< frequency ranges to be marked on-screen
+bandmap_entry       my_bandmap_entry;                                       ///< last bandmap entry that refers to me (usually from poll)
 
 pt_condition_variable frequency_change_condvar;             ///< condvar associated with updating windows related to a frequency change
 pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR"s };       ///< mutex associated with frequency_change_condvar
@@ -325,6 +323,7 @@ audio_recorder          audio;                                      ///< provide
 atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
 
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
+bool                    bandmap_show_marked_frequencies { false };  ///< whether to display entries that would be marked
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
 bandmap_buffer          bm_buffer;                                  ///< global control buffer for all the bandmaps
 
@@ -799,6 +798,7 @@ int main(int argc, char** argv)
     auto_remaining_country_mults    = context.auto_remaining_country_mults();
     autocorrect_rbn                 = context.autocorrect_rbn();
     bandmap_frequency_up            = context.bandmap_frequency_up();
+    bandmap_show_marked_frequencies = context.bandmap_show_marked_frequencies();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
     call_history_bands              = context.call_history_bands();
     cw_bandwidth_narrow             = context.cw_bandwidth_narrow();
@@ -809,6 +809,7 @@ int main(int argc, char** argv)
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
     long_t                          = context.long_t();
+    marked_frequency_ranges         = context.mark_frequencies();
     max_qsos_without_qsl            = context.max_qsos_without_qsl();
     multiple_modes                  = context.multiple_modes();
     my_call                         = context.my_call();
@@ -2340,7 +2341,8 @@ void* display_rig_status(void* vp)
           const string centre_str      { to_string(rig_status_thread_parameters.rigp()->centre_frequency()) };
 
 // now display the status
-          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
+//          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
+          win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
 
           const bool sub_rx { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
           const auto fg     { win_rig.fg() };                                          // original foreground colour
@@ -2636,7 +2638,9 @@ void* process_rbn_info(void* vp)
                 }
 
 // add the post to the correct bandmap unless it's a marked frequency  ...  win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
-                if ( is_interesting_mode and (context.bandmap_show_marked_frequencies() or !context.mark_frequency(be.mode(), be.freq())) )
+//                if ( is_interesting_mode and (context.bandmap_show_marked_frequencies() or !context.mark_frequency(be.mode(), be.freq())) )
+//                if ( is_interesting_mode and (context.bandmap_show_marked_frequencies() or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
+                if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
                     case BANDMAP_ENTRY_SOURCE::RBN :
@@ -3978,7 +3982,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                                                      bm += be; 
                                                  });
 
- //         if (&bm == &(bandmaps[safe_get_band()]))
           if (&bm == &(bandmaps[current_band]))
             win_bandmap <= bm;
         }
@@ -4145,16 +4148,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.symbol() == XK_KP_Delete and e.is_unmodified())
   { do_not_show(original_contents);
 
-//    processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
     processed = ( win_bandmap <= (bandmaps[current_band]), true );
   }
 
 // Alt KP Del -- remove from bandmap and add to do-not-add list and file, for this band only
   if (!processed and e.symbol() == XK_KP_Delete and e.is_alt())
-  { //do_not_show(original_contents, safe_get_band());
-    do_not_show(original_contents, current_band);
+  { do_not_show(original_contents, current_band);
 
-//    processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
     processed = ( win_bandmap <= (bandmaps[current_band]), true );
   }
 
@@ -4326,7 +4326,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { if (!original_contents.empty())
     {
 // assume it's a call -- look for the same call in the current bandmap
- //     bandmap_entry be { bandmaps[safe_get_band()][original_contents] };
       bandmap_entry be { bandmaps[current_band][original_contents] };
 
       if (!(be.callsign().empty()))
@@ -4336,14 +4335,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
         if (old_b_band != to_BAND(be.freq()))  // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
-//          sleep_for(milliseconds(100));
           sleep_for(100ms);
 
         rig.sub_receiver_enable();
       }
       else    // didn't find an exact match; try a substring search
-      { //be = bandmaps[safe_get_band()].substr(original_contents);
-        be = bandmaps[current_band].substr(original_contents);
+      { be = bandmaps[current_band].substr(original_contents);
 
         const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
 
@@ -4352,7 +4349,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
         if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
-          sleep_for(milliseconds(100));
+//          sleep_for(milliseconds(100));
+          sleep_for(100ms);
 
         rig.sub_receiver_enable();
       }
@@ -9302,4 +9300,29 @@ void update_bandmap_window(bandmap& bm)
 
 // clear the mark that we are processing
   win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
+}
+
+/*! \brief                              Is a particular frequency within any marked range?
+    \param  marked_frequency_ranges     the ranges to be marked, per mode
+    \param  m                           mode
+    \param  f                           frequency to test
+    \return                             whether <i>f</i> is in any marked range for the mode <i>m</i>
+*/
+bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f)
+{ try
+  { const vector<pair<frequency, frequency>>& vec { marked_frequency_ranges.at(m) };
+
+ //   for (const auto& pff : vec)
+ //   { if ( (f >= pff.first) and (f <= pff.second))
+ //       return true;
+ //   }
+
+    return ANY_OF(vec, [f] (const auto& pff) { return ( (f >= pff.first) and (f <= pff.second) ); } );
+  }
+
+  catch (...)
+  { return false;
+  }
+
+//  return false;
 }

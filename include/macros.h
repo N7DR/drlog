@@ -1,4 +1,4 @@
-// $Id: macros.h 201 2022-02-21 22:33:24Z  $
+// $Id: macros.h 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1102,48 +1102,6 @@ public:
     _db.erase(param);
   }
 };
-#endif
-
-/*! \class  RANGE
-    \brief  allow easy execution of a loop a predetermined number of times
-
-    This does throw a warning, but I can't think of a better way to
-    execute a loop a predetermined number of times. C++14 might be going
-    to provide a better mechanism.
-
-    See also the UNUSED template below
-*/
-#if 0
-template <typename T>
-class RANGE : public std::vector<T>
-{
-public:
-
-/*! \brief      Generate a range
-    \param  v1  lowest value
-    \param  v2  highest value
-*/
-  RANGE(const T& v1, const T& v2)
-  { if (v1 > v2)
-    { T value { v1 };
-
-      while (value != v2)
-      { this->push_back(value--);
-      }
-
-      this->push_back(v2);
-    }
-    else
-    { for (T value = v1; value <= v2; ++value)
-        this->push_back(value);
-    }
-  }
-};
-
-/// Syntactic sugar to avoid the "unused variable" warning when using the RANGE template, until C++ provides a proper way to have unused range-based loop variables
-template<typename Unused>
-inline void UNUSED( Unused&& )
-  { }
 #endif
 
 /*! \class  accumulator

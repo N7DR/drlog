@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 171 2020-11-15 16:02:32Z  $
+// $Id: multiplier.cpp 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,10 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \brief  encapsulate all the necessary stuff for a mult
 */
 
+/*! \brief      return only values that do NOT contain asterisks
+    \param  mv  multiplier values
+    \return     <i>mv</i>, but without any values that contain an asterisk
+*/
 MULTIPLIER_VALUES multiplier::_filter_asterisks(const MULTIPLIER_VALUES& mv) const
 { MULTIPLIER_VALUES rv { mv };
 

@@ -1041,21 +1041,18 @@ std::string remove_substrings(const std::string& cs, const std::vector<std::stri
     \param  s           regular expression string
     \return             All the elements of <i>container</i> that match <i>s</i>
 */
+#if 0
 template <class T, class C>
 T regex_matches(const C& container, const std::string& s)
 { T rv;
      
-  const std::regex rgx { s };
-
-//  using namespace std::ranges::views;
+  const std::regex rgx { s }
 
   FOR_ALL(container | std::ranges::views::filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
 
- // FOR_ALL(container, [=, &rv](const std::string& target) { if (regex_match(target, rgx))
- //                                                            rv += target;
- //                                                        } );
   return rv;
 }
+#endif
 
 /*! \brief              Return all strings from a container that match a particular regular expression string
     \param  container   container of strings
@@ -1068,9 +1065,8 @@ T regex_matches(C&& container, const std::string& s)
      
   const std::regex rgx { s };
 
-//  using namespace std::ranges::views;
-
-  FOR_ALL(std::forward<C>(container) | filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
+  FOR_ALL(std::forward<C>(container) | std::ranges::views::filter([=] (const std::string& target) { return regex_match(target, rgx); }),
+            [=, &rv](const std::string& target) { rv += target; }); 
 
   return rv;
 }

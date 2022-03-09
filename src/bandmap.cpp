@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 201 2022-02-21 22:33:24Z  $
+// $Id: bandmap.cpp 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,17 +24,21 @@
 
 using namespace std;
 
-extern pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
-extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
-extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps
-extern bool                          bandmap_frequency_up;   ///< whether increasing frequency goes upwards in the bandmap
-extern drlog_context                 context;                ///< context
-extern exchange_field_database       exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
-extern location_database             location_db;            ///< location information
-extern unsigned int                  max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
-extern message_stream                ost;                    ///< debugging/logging output
+extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
+extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
+extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
+extern bool                          bandmap_show_marked_frequencies;   ///< whether to display entries that would be marked
+extern bool                          bandmap_frequency_up;              ///< whether increasing frequency goes upwards in the bandmap
+//extern drlog_context                 context;                           ///< context
+extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern location_database             location_db;                       ///< location information
+extern unsigned int                  max_qsos_without_qsl;              ///< limit for the N7DR matches_criteria() algorithm
+extern map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges;
+extern message_stream                ost;                               ///< debugging/logging output
 
 extern const set<string> CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
+
+extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
 
 /*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
     \param  callsign_mult_name  the type of the callsign mult
@@ -1230,7 +1234,15 @@ window& bandmap::write_to_window(window& win)
       const bool reverse { ( (start_entry != 0) and (start_entry == index) ) or
                              (index == (start_entry + maximum_number_of_displayable_entries - 1) and (entries.size() > (index + 1))) };
 
-      win < cursor(x, y) < colour_pair(cpu);
+      const bool is_marked_entry { bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()) };
+
+//      win < cursor(x, y) < colour_pair(cpu);
+
+// switch to red if marked frequency and we are showing marked frequencies
+ //     if (bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()))
+//        win < colours.add(COLOUR_WHITE, COLOUR_RED);
+
+      win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(COLOUR_WHITE, COLOUR_RED) : cpu );
 
       if (reverse)
         win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;

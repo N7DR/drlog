@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 197 2021-11-21 14:52:50Z  $
+// $Id: drlog_context.h 202 2022-03-07 21:01:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -175,9 +175,9 @@ protected:
   unsigned int                                 _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies        { };                            ///< frequency ranges to be marked on-screen
-  bool                                         _mark_mode_break_points                  { false };                      ///< whether to mark the mode break points on the bandmap
-  unsigned int                                 _match_minimum                           { 4 };                          ///< number of characters before SCP or fuzzy match kicks in
-  unsigned int                                 _max_qsos_without_qsl                    { 4 };                          ///< cutoff for the N7DR matches_criteria() algorithm
+  bool                                                         _mark_mode_break_points  { false };                      ///< whether to mark the mode break points on the bandmap
+  unsigned int                                                 _match_minimum           { 4 };                          ///< number of characters before SCP or fuzzy match kicks in
+  unsigned int                                                 _max_qsos_without_qsl    { 4 };                          ///< cutoff for the N7DR matches_criteria() algorithm
 
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
   std::map<int, std::string >                  _messages                                { };                            ///< CW messages
@@ -636,7 +636,7 @@ public:
     \param  f   frequency to test
     \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
-  bool mark_frequency(const MODE, const frequency& f);
+//  bool mark_frequency(const MODE, const frequency& f);
 
 /*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange
