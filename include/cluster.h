@@ -36,17 +36,20 @@ constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored pos
 */
 
 class dx_cluster
-{
+{ using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+
 protected:
 
-  tcp_socket          _connection;                    ///< TCP socket for communication with the network
-  std::string         _login_id;                      ///< my login identifier
-  std::string         _my_ip;                         ///< my IP address
-  unsigned int        _port;                          ///< server port
-  std::string         _server;                        ///< name or IP address of the server
-  enum POSTING_SOURCE _source;                        ///< source for postings
-  unsigned int        _timeout;                       ///< timeout in seconds (defaults to 1)
-  std::string         _unprocessed_input;             ///< buffer for messages from the network
+  tcp_socket          _connection;                  ///< TCP socket for communication with the network
+  std::string         _login_id;                    ///< my login identifier
+  std::string         _my_ip;                       ///< my IP address
+  unsigned int        _port;                        ///< server port
+  std::string         _server;                      ///< name or IP address of the server
+  enum POSTING_SOURCE _source;                      ///< source for postings
+  unsigned int        _timeout;                     ///< timeout in seconds (defaults to 1)
+  std::string         _unprocessed_input;           ///< buffer for messages from the network
+
+  TIME_POINT          _last_data_received { };      ///< time point of last data received
 
 /// process a read error
   void _process_error(void);
@@ -90,6 +93,9 @@ public:
 */
   inline std::string connection_status(void)
     { return _connection.to_string(); }
+
+  inline std::chrono::seconds time_since_data_last_received(void) const
+    { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
 };
 
 // -----------  dx_post  ----------------

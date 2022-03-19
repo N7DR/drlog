@@ -32,13 +32,13 @@ class autocorrect_database
 {
 protected:
 
-  std::unordered_set<std::string> _calls;
+  std::unordered_set<std::string> _calls;                                               ///< known good calls
 
-// we should add a cache of input to output calls
-  mutable std::map<std::string /* input call */, std::string /* output call */> _cache;
+  mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
 
 public:
 
+// default constructor
   autocorrect_database(void) = default;
 
   inline void init_from_calls(const std::vector<std::string>& callsigns)
@@ -53,6 +53,10 @@ public:
   inline unsigned int size(void) const
     { return n_calls(); }
 
+/*! \brief          Obtain an output call from an input
+    \param  str     input call
+    \return         <i>str</i> or a corrected version of same
+*/
   std::string corrected_call(const std::string& str) const;
 };
 

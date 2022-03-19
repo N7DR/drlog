@@ -44,9 +44,12 @@ void scp_database::operator+=(const string& call)
       (_db[substring(call, start_index, 2)]) += call;
 }
 
-/// remove a call; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
+/*! \brief          Remove a call from the database
+    \param  call    call to remove
+    \return         whether <i>call</i> was actually removed
+*/
 bool scp_database::remove_call(const std::string& call)
-{ bool rv { 0 };
+{ bool rv { false };
 
   if (call.length() >= 2)
   { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
@@ -54,31 +57,38 @@ bool scp_database::remove_call(const std::string& call)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
     { SCP_SET& ss { _db[substring(call, start_index, 2)] };
 
-      rv = (ss.erase(call) == 1);                                      // all except the last will be thrown away
+      rv = (ss.erase(call) == 1);       // key remains, regardless of whether the set of matches is empty
     }
   }
 
   return rv;
 }
 
+/*! \brief          Remove a call from the database
+    \param  call    call to remove
+*/
 void scp_database::operator-=(const std::string& call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
-      _db[substring(call, start_index, 2)].erase(call);                                      // all except the last will be thrown away
+      _db[substring(call, start_index, 2)].erase(call);       // key remains, regardless of whether the set of matches is empty
 }
 
-/// return SCP matches; cannot be const, as it might change the cache
+/*! \brief          Return all the matches for a partial call
+    \param  key     partial call
+    \return         whether <i>call</i> was actually removed
+*/
 SCP_SET scp_database::operator[](const string& key)
 { if (key.length() < 2)
-    return SCP_SET();
+    return SCP_SET { };
   
   if (key.length() == 2)         // trivial lookup
   { _last_key = key;
-    _last_result = _db[key];
+    _last_result = _db[key];    // might change _db
     
     return _last_result;
   }
   
+
 // key length is > 2, look to the cache first
   if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
   { SCP_SET rv;
@@ -94,7 +104,7 @@ SCP_SET scp_database::operator[](const string& key)
   }
   
 // cache miss
-  SCP_SET& calls { _db[substring(key, 0, 2)] };
+  const SCP_SET& calls { _db[substring(key, 0, 2)] };
 
   SCP_SET rv;
 

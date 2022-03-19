@@ -59,8 +59,6 @@ bool multiplier::add_known(const std::string& str)
     _all_values_are_mults = false;
 
   return rv;
-
-//  return ( _used ? ( (_known.insert(str)).second ) : false ); 
 }
 
 /*! \brief          Remove a value from the known values
@@ -74,7 +72,8 @@ void multiplier::remove_known(const string& str)
   if (_used)
     _known.erase(str);
 
-  _all_values_are_mults = ANY_OF(_known, [] (const string& str) { return contains(str, '*'); } );
+//  _all_values_are_mults = ANY_OF(_known, [] (const string& str) { return contains(str, '*'); } );
+  _all_values_are_mults = ALL_OF(_known, [] (const string& str) { return !contains(str, '*'); } );
 }
 
 /*! \brief          Is a particular value a known multiplier value?
@@ -189,11 +188,11 @@ bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
   if (!_used)
     return false;
 
-  auto& pb { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
-
+  const auto&              pb               { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
   const MULTIPLIER_VALUES& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
 
-  return (worked_this_band.find(str) != worked_this_band.cend());
+//  return (worked_this_band.find(str) != worked_this_band.cend());
+  return contains(worked_this_band, str);
 }
 
 /*! \brief      Number of mults worked on a particular band and mode

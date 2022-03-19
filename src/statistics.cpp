@@ -53,16 +53,16 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
 { if (_callsign_mults_used and !mult_value.empty())     // do we actually have to do anything?
   { SAFELOCK(statistics);
 
-    if (known_callsign_mult_name(mult_name))            // do we already know about this mult name?
+    if (known_callsign_mult_name(mult_name))                                                    // do we already know about this mult name?
     { multiplier& mult { (_callsign_multipliers.find(mult_name))->second };
 
-      mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // add value and band for this mult name
+      mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));      // add value and band for this mult name
     }
-    else                                                   // unknown mult name
-    { multiplier mult;                                     // create new mult
+    else                                                                                        // unknown mult name
+    { multiplier mult;                                                                          // create new mult
 
-      mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // we've worked it
-      _callsign_multipliers += { mult_name, mult }; // store the info
+      mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));      // we've worked it
+      _callsign_multipliers += { mult_name, mult };                                             // store the info
     }
   }
 }
@@ -93,12 +93,12 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     { unsigned int qsos { 0 };
 
       for (const auto& m : modes)
-      { const auto& nq { _n_qsos[m] };
+      { const auto& nq_b { _n_qsos[m][b] };
 
         if (modes.size() == 1)
-          line += pad_left(to_string(nq[b]), FIELD_WIDTH);
+          line += pad_left(to_string(nq_b), FIELD_WIDTH);
 
-        qsos += nq[b];
+        qsos += nq_b;
       }
 
       qsos_all_bands += qsos;
@@ -146,8 +146,6 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       { const MODE m { ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE) };
 
         line = pad_right(mult_name, FIRST_FIELD_WIDTH);
-
- //       const auto& cit { _callsign_multipliers.find(mult_name) };
 
         if (const auto& cit { _callsign_multipliers.find(mult_name) }; cit != _callsign_multipliers.end())    // should always be true
         { const multiplier& mult { cit->second };
@@ -211,12 +209,12 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     { unsigned int dupes { 0 };
 
       for (const auto& m : modes)
-      { const auto& nd { _n_dupes[m] };
+      { const auto& nd_mb { _n_dupes[m][b] };
 
         if (modes.size() == 1)
-          line += pad_left(to_string(nd[b]), FIELD_WIDTH);
+          line += pad_left(to_string(nd_mb), FIELD_WIDTH);
 
-        dupes += nd[b];
+        dupes += nd_mb;
       }
 
       dupes_all_bands += dupes;
@@ -238,12 +236,12 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       { unsigned int points { 0 };
 
         for (const auto& m : modes)
-        { const auto& qp { _qso_points[m] };
+        { const auto& qp_mb { _qso_points[m][b] };
 
           if (modes.size() == 1)
-            line += pad_left(to_string(qp[b]), FIELD_WIDTH);
+            line += pad_left(to_string(qp_mb), FIELD_WIDTH);
 
-          points += qp[b];
+          points += qp_mb;
         }
 
         points_all_bands += points;

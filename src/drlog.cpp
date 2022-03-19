@@ -253,10 +253,6 @@ void* simulator_thread(void* vp);                                           ///<
 void* spawn_dx_cluster(void*);                                              ///< Thread function to spawn the cluster
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
-// necessary forward declaration of functions that include thread safety
-//BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
-//MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
-
 // values that are used by multiple threads
 // mostly these are essentially RO, so locking is overkill; but we do it anyway,
 // otherwise Murphy dictates that we'll hit a race condition at the worst possible time
@@ -267,11 +263,10 @@ time_t   alert_time  { 0 };                 ///< time of last alert
 pt_mutex                      batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
 unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 
-pt_mutex  cq_mode_frequency_mutex { "CQ MODE FREQUENCY"s };          ///< mutex for the frequency in CQ mode
-frequency cq_mode_frequency;                ///< frequency in CQ mode
+atomic<frequency> cq_mode_frequency;
 
 pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
-string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band
+string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
 pt_mutex            individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
 map<string, string> individual_messages;        ///< individual messages associated with calls
@@ -293,8 +288,6 @@ set<string>         thread_names;                           ///< the names of th
 
 bool                auto_remaining_country_mults { false }; ///< whether country mults are to be automatically added (value read from context before use)
 
-//pt_mutex            current_band_mutex { "CURRENT BAND"s }; ///< mutex for setting/getting the current band
-//BAND                current_band;                           ///< the current band
 atomic<BAND>        current_band;                           ///< the current band
 atomic<MODE>        current_mode;                           ///< the current mode
 
@@ -2232,7 +2225,8 @@ void* display_rig_status(void* vp)
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == DS_REPLY_LENGTH) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring(status_str, 2, 11)) };                    // frequency of VFO A
-          const frequency  target             { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };             // frequency in CQ mode
+ //         const frequency  target             { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };             // frequency in CQ mode
+          const frequency  target             { cq_mode_frequency };             // frequency in CQ mode
           const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
           const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
           const bool       notch              { (rig_status_thread_parameters.rigp())->notch_enabled(ds_reply_str) };   // really only needed in SSB
@@ -2483,6 +2477,16 @@ void* process_rbn_info(void* vp)
       }
     }
 
+    if (new_input.empty())
+    { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
+
+      if (time_since_data_last_received > 60s)
+      { const string msg { "NO DATA RECEIVED FOR "s + to_string(time_since_data_last_received.count()) + " SECONDS"s };
+
+        cluster_line_win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(msg, 0);
+      }
+    }
+
     unprocessed_input += new_input;
 
     while (contains(unprocessed_input, CRLF))              // look for EOL markers
@@ -2498,14 +2502,15 @@ void* process_rbn_info(void* vp)
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
-          /* const */dx_post post       { line, location_db, rbn.source() };                // no longer const to allow for RBN autocorrection
+          dx_post post       { line, location_db, rbn.source() };                // no longer const to allow for RBN autocorrection
+
           const bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
 
           if (post.valid() and !wrong_mode)
           { 
 // possibly autocorrect
             if (is_rbn and autocorrect_rbn)
-            { const string b4 { post.callsign() };
+            { //const string b4 { post.callsign() };
 
               post.callsign(ac_db.corrected_call(post.callsign()));
 
@@ -2520,8 +2525,7 @@ void* process_rbn_info(void* vp)
               mp += post;
 
             if (permitted_bands_set > dx_band)              // process only if is on a band we care about
-            { //const BAND                    cur_band    { safe_get_band() };
-              const BAND                    cur_band    { current_band };
+            { const BAND                    cur_band    { current_band };
               const string&                 dx_callsign { post.callsign() };
               const string&                 poster      { post.poster() };
               const pair<string, frequency> target      { dx_callsign, post.freq() };
@@ -2561,7 +2565,6 @@ void* process_rbn_info(void* vp)
                 update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-//                if (context.auto_remaining_country_mults())
                 if (auto_remaining_country_mults)
                   update_known_country_mults(dx_callsign);
 
@@ -5675,7 +5678,8 @@ void enter_cq_mode(void)
 {
   { SAFELOCK(drlog_mode);  // don't use SAFELOCK_SET because we want to set the frequency and the mode as an atomic operation
 
-    SAFELOCK_SET(cq_mode_frequency_mutex, cq_mode_frequency, rig.rig_frequency());  // nested inside other lock
+//    SAFELOCK_SET(cq_mode_frequency_mutex, cq_mode_frequency, rig.rig_frequency());  // nested inside other lock
+    cq_mode_frequency = rig.rig_frequency();  // nested inside other lock
     drlog_mode = DRLOG_MODE::CQ;
   }
 

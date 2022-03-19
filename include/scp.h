@@ -78,17 +78,25 @@ public:
 /// add a call to the database
   void operator+=(const std::string& call);
   
-/// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-//  unsigned int remove_call(const std::string& call);
+/*! \brief          Remove a call from the database
+    \param  call    call to remove
+    \return         whether <i>call</i> was actually removed
+*/
   bool remove_call(const std::string& call);
 
+/*! \brief          Remove a call from the database
+    \param  call    call to remove
+*/
   void operator-=(const std::string& call);
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
     { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
 
-/// return SCP matches; cannot be const, as it might change the cache
+/*! \brief          Return all the matches for a partial call
+    \param  key     partial call
+    \return         whether <i>call</i> was actually removed
+*/
   SCP_SET operator[](const std::string& key);
 
 /// empty the database; also clears the cache

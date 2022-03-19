@@ -27,10 +27,15 @@ extern message_stream    ost;       ///< for debugging and logging
     \brief  The database of good calls for the autocorrect function
 */
 
+/*! \brief          Obtain an output call from an input
+    \param  str     input call
+    \return         <i>str</i> or a corrected version of same
+*/
 string autocorrect_database::corrected_call(const string& str) const
 { if (str.empty())
     return str;
 
+// insert a mapping into the cache
   auto insert = [this] (const string& input, const string& output)
     { _cache += { input, output };
 
@@ -40,29 +45,24 @@ string autocorrect_database::corrected_call(const string& str) const
       return output;
     };
 
+// return cached value
   if (const string from_cache { MUM_VALUE(_cache, str) }; !from_cache.empty())
     return from_cache;
 
+// return known good call
   if (contains(str))            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
     return insert(str, str);
-//    return ( _cache += { str, str }, str );
 
 // extraneous E in front of a US K call
   if (starts_with(str, "EK"s))
-  { //const string call_to_test { substring(str, 1) };
-
-    if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
-//      return ( _cache += { str, call_to_test }, call_to_test );
+  { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // JA miscopied as JT
   if (starts_with(str, "JT"s))
   { if (!contains(str))
-    { //const string call_to_test { "JA"s + substring(str, 2) };
-
-      if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
-//        return ( _cache += { str, call_to_test }, call_to_test );
+    { if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -70,10 +70,7 @@ string autocorrect_database::corrected_call(const string& str) const
 // initial W copied as an initial M
   if (starts_with(str, "M"s))
   { if (!contains(str))
-    { //const string call_to_test { "W"s + substring(str, 1) };
-
-      if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
-//        return ( _cache += { str, call_to_test }, call_to_test );
+    { if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -99,7 +96,6 @@ string autocorrect_database::corrected_call(const string& str) const
       case 'S' :
         
         if (const string call_to_test { "J"s + substring(str, 1) }; contains(call_to_test))
- //         return ( _cache += { str, call_to_test }, call_to_test );
           return insert(str, call_to_test);
 
       default :
@@ -109,18 +105,18 @@ string autocorrect_database::corrected_call(const string& str) const
 
 // extraneous T in front of a US K call
   if (starts_with(str, "TK"s))
-  { const string call_to_test { substring(str, 1) };
+  { //const string call_to_test { substring(str, 1) };
 
-    if (contains(call_to_test))
+    if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
       //return ( _cache += { str, call_to_test }, call_to_test );
       return insert(str, call_to_test);
   }
 
 // extraneous T in front of a US N call
   if (starts_with(str, "TN"s))
-  { const string call_to_test { substring(str, 1) };
+  { //const string call_to_test { substring(str, 1) };
 
-    if (contains(call_to_test))
+    if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
 //      return ( _cache += { str, call_to_test }, call_to_test );
       return insert(str, call_to_test);
   }
@@ -128,16 +124,13 @@ string autocorrect_database::corrected_call(const string& str) const
 // initial PY copied as initial TM
   if (starts_with(str, "TM"s))
   { if (!contains(str))
-    { const string call_to_test { "PY"s + substring(str, 2) };
+    { //const string call_to_test { "PY"s + substring(str, 2) };
 
-      if (contains(call_to_test))
+      if (const string call_to_test { "PY"s + substring(str, 2) }; contains(call_to_test))
 //        return ( _cache += { str, call_to_test }, call_to_test );
         return insert(str, call_to_test);
     }
   }
 
-//  _cache += { str, str };
-
-//  return str;
   return insert(str, str);
 }

@@ -33,7 +33,7 @@ extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 
 extern bool exiting;                    ///< is the program exiting?
 
-pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };          ///< mutex for the cluster buffer
+//pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };          ///< mutex for the cluster buffer
 pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
 
@@ -211,6 +211,7 @@ string dx_cluster::read(void)
   { SAFELOCK(rbn_buffer);
 
     _unprocessed_input += buf;
+    _last_data_received = system_clock::now();
   }
   
   return _unprocessed_input;
