@@ -1,4 +1,4 @@
-// $Id: cluster.h 202 2022-03-07 21:01:02Z  $
+// $Id: cluster.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,6 +20,7 @@
 #include "macros.h"
 #include "socket_support.h"
 
+#include <atomic>
 #include <string>
 
 /// the source of a remote post
@@ -94,6 +95,9 @@ public:
   inline std::string connection_status(void)
     { return _connection.to_string(); }
 
+/*! \brief      Return the time since the last data were received on the connection
+    \return     the time since the last data were received on the connection, in seconds
+*/
   inline std::chrono::seconds time_since_data_last_received(void) const
     { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
 };
@@ -225,20 +229,27 @@ protected:
 
   std::set<std::string> _callsigns   { };           ///< monitored calls
   bool                  _is_dirty    { false };     ///< whether info has changed since last output
-  unsigned int          _max_entries { 0 };         ///< number of displayable entries
+  std::atomic<unsigned int> _max_entries { 0 };         ///< number of displayable entries
 
   std::deque<monitored_posts_entry> _entries;       ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
 
 public:
 
-/// constructor
+/// default constructor
   monitored_posts(void) = default;
 
   SAFEREAD(entries, monitored_posts);           ///< calls monitored within past MONITORED_POSTS_DURATION seconds
   READ(is_dirty);                               ///< whether info has changed since last output
 
   SAFE_READ_AND_WRITE(callsigns, monitored_posts);      ///< monitored calls
-  SAFE_READ_AND_WRITE(max_entries, monitored_posts);    ///< number of displayable entries
+//  SAFE_READ_AND_WRITE(max_entries, monitored_posts);    ///< number of displayable entries
+//  ATOMIC_READ_AND_WRITE(max_entries);                          ///< number of displayable entries
+
+  inline void max_entries(const unsigned int v)
+    { _max_entries = v; }
+
+  unsigned int max_entries(void) const
+    { return _max_entries; }
 
 /*! \brief              Is a particular call monitored?
     \param  callsign    call to be tested

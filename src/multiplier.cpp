@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 202 2022-03-07 21:01:02Z  $
+// $Id: multiplier.cpp 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -83,7 +83,8 @@ void multiplier::remove_known(const string& str)
 bool multiplier::is_known(const string& str) const
 { SAFELOCK(multiplier);
 
-  return (_used ? (_known > str) : false);
+//  return (_used ? (_known > str) : false);
+  return (_used ? _known.contains(str) : false);
 }
 
 /*! \brief          Add a worked multiplier
@@ -154,7 +155,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     bool present { false };
 
     for (int n {MIN_BAND}; n < MAX_BAND; ++n)
-      present |= (_worked[m_nr][n] > str);
+//      present |= (_worked[m_nr][n] > str);
+      present |= _worked[m_nr][n].contains(str);
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
@@ -163,13 +165,16 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     present = false;
 
     for (int n {MIN_MODE}; n < MAX_MODE; ++n)
-      present |= (_worked[n][b_nr] > str);
+//      present |= (_worked[n][b_nr] > str);
+      present |= _worked[n][b_nr].contains(str);
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
 
 // is it still present in any band and any mode?
-    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
+//    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
+    present = _worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str);
+
 
     if (!present)
       _worked[ANY_MODE][ANY_BAND].erase(str);
@@ -192,7 +197,7 @@ bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
   const MULTIPLIER_VALUES& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
 
 //  return (worked_this_band.find(str) != worked_this_band.cend());
-  return contains(worked_this_band, str);
+  return worked_this_band.contains(str);
 }
 
 /*! \brief      Number of mults worked on a particular band and mode

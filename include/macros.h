@@ -1,4 +1,4 @@
-// $Id: macros.h 202 2022-03-07 21:01:02Z  $
+// $Id: macros.h 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -200,6 +200,10 @@ struct is_type
 
 template< typename T1, typename T2 >
   constexpr bool is_type_v = is_type<T1, T2>::value;
+
+template< typename T1, typename T2 >
+using IS_DEQUE = is_type_v<T1, std::deque<T2>>
+
 #endif
 
 //template< typename T1, typename T2 >
@@ -207,9 +211,70 @@ template< typename T1, typename T2 >
 
 //template< typename T>
 //struct is_same_type<T,T> { enum { result = true }; };
+/*
+https://stackoverflow.com/questions/51032671/idiomatic-way-to-write-concept-that-says-that-type-is-a-stdvector
 
+template<class, template<class...> class>
+inline constexpr bool is_specialization = false;
+template<template<class...> class T, class... Args>
+inline constexpr bool is_specialization<T<Args...>, T> = true;
+
+template<class T>
+concept bool Vec = is_specialization<T, std::vector>;
+
+template<class T>
+concept bool VecInt = Vec<T> && 
+  std::is_same_v<int, typename T::value_type>;
+*/
+
+template <class, template<class...> class>
+inline constexpr bool is_specialization = false;
+
+template <template<class...> class T, class... Args>
+inline constexpr bool is_specialization<T<Args...>, T> = true;
+
+template <class T> concept is_deque_v = is_specialization<T, std::deque>;
+
+template <class T> concept is_int_v = std::is_same_v<T, int>;
+
+template <class T> concept is_uint_v = std::is_same_v<T, unsigned int>;
+
+template <class T> concept is_list_v = is_specialization<T, std::list>;
+
+template <class T> concept is_map_v = is_specialization<T, std::map>;
+
+template <class T> concept is_multimap_v = is_specialization<T, std::multimap>;
+
+template <class T> concept is_queue_v = is_specialization<T, std::queue>;
+
+template <class T> concept is_set_v = is_specialization<T, std::set>;
+
+template <class T> concept is_string_v = std::is_same_v<T, std::string>;
+
+template <class T> concept is_multiset_v = is_specialization<T, std::multiset>;
+
+template <class T> concept is_unordered_map_v = is_specialization<T, std::unordered_map>;
+
+template <class T> concept is_unordered_multimap_v = is_specialization<T, std::unordered_multimap>;
+
+template <class T> concept is_unordered_multiset_v = is_specialization<T, std::unordered_multiset>;
+
+template <class T> concept is_unordered_set_v = is_specialization<T, std::unordered_set>;
+
+template <class T> concept is_vector_v = is_specialization<T, std::vector>;
+
+template <class T> concept is_mum_v = is_map_v<T> or is_unordered_map_v<T>;
+
+template <class T> concept is_mmumm_v = is_multimap_v<T> or is_unordered_multimap_v<T>;
+
+template <class T> concept is_sus_v = is_set_v<T> or is_unordered_set_v<T>;
+
+template <class T> concept is_ssuss_v = is_multiset_v<T> or is_unordered_multiset_v<T>;
+
+template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
 
 // is a type a deque?
+#if 0
 template<class T>
 struct is_deque
   { constexpr static bool value { false }; };
@@ -220,8 +285,10 @@ struct is_deque<std::deque<T>>
 
 template<class T>
 constexpr bool is_deque_v = is_deque<T>::value;
+#endif
 
 // is a type int?
+#if 0
 template<class T>
 struct is_int 
   { constexpr static bool value { false }; };
@@ -232,7 +299,9 @@ struct is_int<int>
 
 template<class T>
 constexpr bool is_int_v { is_int<T>::value };
+#endif
 
+#if 0
 // is a type a list?
 template<class T>
 struct is_list 
@@ -244,7 +313,9 @@ struct is_list<std::list<T>>
 
 template<class T>
 constexpr bool is_list_v = is_list<T>::value;
+#endif
 
+#if 0
 // is a type a map?
 template<class T>
 struct is_map 
@@ -256,7 +327,9 @@ struct is_map<std::map<K, V>>
 
 template<class T>
 constexpr bool is_map_v = is_map<T>::value;
+#endif
 
+#if 0
 // is a type a queue?
 template<class T>
 struct is_queue 
@@ -268,7 +341,9 @@ struct is_queue<std::queue<T>>
 
 template<class T>
 constexpr bool is_queue_v = is_queue<T>::value;
+#endif
 
+#if 0
 // is a type a set?
 template<class T>
 struct is_set 
@@ -285,7 +360,9 @@ template<typename T>
 concept SET = requires(T a) 
 { is_set<T>::value == true;
 };
+#endif
 
+#if 0
 // is a type an unordered map?
 template<class T>
 struct is_unordered_map 
@@ -297,11 +374,13 @@ struct is_unordered_map<std::unordered_map<K, V>>
 
 template< class T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
+#endif
 
 // is a type a map or unordered map?
-template<class T>
-constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
+//template<class T>
+//constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
 
+#if 0
 // is a type an unordered set?
 template<class T>
 struct is_unordered_set 
@@ -313,14 +392,18 @@ struct is_unordered_set<std::unordered_set<T>>
 
 template< class T>
 constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
+#endif
 
+#if 0
 // is a type a set or unordered set?
 
 template<class T>
 constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
 
 template <class T> concept SUS = is_sus_v<T>;
+#endif
 
+#if 0
 // is a type a multimap or unordered multimap?
 template<class T>
 struct is_multimap 
@@ -346,7 +429,9 @@ constexpr bool is_unordered_multimap_v { is_unordered_multimap<T>::value };
 
 template<class T>
 constexpr bool is_mmumm_v { is_multimap_v<T> or is_unordered_multimap_v<T> };
+#endif
 
+#if 0
 // is a type a multiset or unordered multiset?
 template<class T>
 struct is_multiset 
@@ -374,7 +459,9 @@ template<class T>
 constexpr bool is_ssuss_v { is_multiset_v<T> or is_unordered_multiset_v<T> };
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
+#endif
 
+#if 0
 // is a type a string?
 template<class T>
 struct is_string 
@@ -386,7 +473,9 @@ struct is_string<std::string>
 
 template< class T>
 constexpr bool is_string_v = is_string<T>::value;
+#endif
 
+#if 0
 // is a type unsigned int?
 template<class T>
 struct is_unsigned_int 
@@ -398,7 +487,9 @@ struct is_unsigned_int<unsigned int>
 
 template<class T>
 constexpr bool is_unsigned_int_v = is_unsigned_int<T>::value;
+#endif
 
+#if 0
 // is a type a vector?
 template<class T>
 struct is_vector 
@@ -412,6 +503,7 @@ template<class T>
 constexpr bool is_vector_v = is_vector<T>::value;
 
 template<typename T> concept VECTOR = is_vector_v<T>;
+#endif
 
 // ---------------------------------------------------------------------------
 
@@ -513,24 +605,24 @@ public:                                                \
       std::get<2>(*this) = Z;                          \
     }                                                  \
                                                        \
-  nm(void) = default;                                       \
+  nm(void) = default;                                  \
                                                        \
-  inline a0 a1(void) const                       \
+  inline a0 a1(void) const                             \
     { return std::get<0>(*this); }                     \
                                                        \
-  inline void a1(const a0 & var)                               \
+  inline void a1(const a0 & var)                       \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline b0 b1(void) const                       \
+  inline b0 b1(void) const                             \
     { return std::get<1>(*this); }                     \
                                                        \
-  inline void b1(const b0 & var)                               \
+  inline void b1(const b0 & var)                       \
     { std::get<1>(*this) = var; }                      \
                                                        \
-  inline c0 c1(void) const                       \
+  inline c0 c1(void) const                             \
     { return std::get<2>(*this); }                     \
                                                        \
-  inline void c1(const c0 & var)                               \
+  inline void c1(const c0 & var)                       \
     { std::get<2>(*this) = var; }                      \
 };                                                     \
                                                        \
@@ -592,24 +684,24 @@ public:                                                                     \
       std::get<2>(*this) = Z;                                               \
     }                                                                       \
                                                                             \
-  nm(void) = default;                                                           \
+  nm(void) = default;                                                       \
                                                                             \
-  inline a0 a1(void) const                                            \
+  inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \
                                                                             \
-  inline void a1(const a0 & var)                                                    \
+  inline void a1(const a0 & var)                                            \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline b0 b1(void) const                                            \
+  inline b0 b1(void) const                                                  \
     { return std::get<1>(*this); }                                          \
                                                                             \
-  inline void b1(const b0 & var)                                                    \
+  inline void b1(const b0 & var)                                            \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline c0 c1(void) const                                            \
+  inline c0 c1(void) const                                                  \
     { return std::get<2>(*this); }                                          \
                                                                             \
-  inline void c1(const c0 & var)                                                    \
+  inline void c1(const c0 & var)                                            \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
     template<typename Archive>                                              \
@@ -618,7 +710,6 @@ public:                                                                     \
          & std::get<1>(*this)                                               \
          & std::get<2>(*this);                                              \
     }                                                                       \
-                                                                            \
 }
 
 /// tuple class (4)
@@ -635,7 +726,7 @@ public:                                                                     \
       std::get<1>(*this) = Y;                                               \
       std::get<2>(*this) = Z;                                               \
       std::get<3>(*this) = A;                                               \
-}                                                                           \
+    }                                                                       \
                                                                             \
   inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \
@@ -678,30 +769,30 @@ public:                                                                     \
       std::get<3>(*this) = A;                                               \
     }                                                                       \
                                                                             \
-  nm(void) = default;                                                            \
+  nm(void) = default;                                                       \
                                                                             \
-  inline a0 a1(void) const                                            \
+  inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \
                                                                             \
-  inline void a1(const a0 & var)                                                    \
+  inline void a1(const a0 & var)                                            \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline b0 b1(void) const                                            \
+  inline b0 b1(void) const                                                  \
     { return std::get<1>(*this); }                                          \
                                                                             \
-  inline void b1(const b0 & var)                                                    \
+  inline void b1(const b0 & var)                                            \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline c0 c1(void) const                                            \
+  inline c0 c1(void) const                                                  \
     { return std::get<2>(*this); }                                          \
                                                                             \
-  inline void c1(const c0 & var)                                                    \
+  inline void c1(const c0 & var)                                            \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
-  inline d0 d1(void) const                                            \
+  inline d0 d1(void) const                                                  \
     { return std::get<3>(*this); }                                          \
                                                                             \
-  inline void d1(const d0 & var)                                                    \
+  inline void d1(const d0 & var)                                            \
     { std::get<3>(*this) = var; }                                           \
                                                                             \
 template<typename Archive>                                                  \
@@ -740,7 +831,7 @@ public:                                                                     \
       std::get<4>(*this) = B;                                               \
     }                                                                       \
                                                                             \
-  nm(void) = default;                                                              \
+  nm(void) = default;                                                       \
                                                                             \
   inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \
@@ -959,25 +1050,36 @@ public:                                                                         
     { std::get<7>(*this) = var; }                                                           \
 }
 
-/*! \brief      Is an object a member of a set or unordered_set?
+/*! \brief      Does a set or unordered_set contains a particular member?
     \param  s   set or unordered_set  to be tested
     \param  v   object to be tested for membership
-    \return     Whether <i>t</i> is a member of <i>s</i>
+    \return     Whether <i>v</i> is a member of <i>s</i>
 */
 template <class T, class U>
 bool operator>(const T& s, const U& v)
   requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
-  { return s.find(v) != s.cend(); }
+  { return s.contains(v); }
+
+/*! \brief      Is an object a member of a set or unordered_set?
+    \param  v   object to be tested for membership
+    \param  s   set or unordered_set  to be tested
+    \return     Whether <i>v</i> is a member of <i>s</i>
+*/
+template <class E, class S>
+bool operator<(const E& v, const S& s)
+  requires (is_sus_v<S>) and (std::is_same_v<typename S::value_type, E>)
+//  { return s.contains(v); }
+  { return (s > v); }
 
 /*! \brief      Is an object a member of a set, an unordered_set, or a key in a map or unordered map?
     \param  s   set or unordered_set  to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member/key of <i>s</i>
 */
-template <class T, class U>
-bool contains(const T& s, const U& v)
-  requires (is_sus_v<T> or is_mum_v<T>) and (std::is_same_v<typename T::key_type, U>)
-  { return s.find(v) != s.cend(); }
+//template <class T, class U>
+//bool contains(const T& s, const U& v)
+//  requires (is_sus_v<T> or is_mum_v<T>) and (std::is_same_v<typename T::key_type, U>)
+//  { return s.find(v) != s.cend(); }
 
 /// union of two sets of the same type
 template<class T>
@@ -997,6 +1099,7 @@ T operator+(const T& s1, const T& s2)
     
     // possibly should return variant instead
 */
+#if 0
 template <class M, class K>
 std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
   requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
@@ -1006,6 +1109,31 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
   const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
+}
+#endif
+
+template <class M, class K>
+inline bool operator>(const M& m, const K& k)
+  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
+{ //using V  = typename M::mapped_type;
+  //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
+
+  //const auto cit { m.find(k) };
+
+  //return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
+  return m.contains(k);
+}
+
+template <class M, class K>
+inline bool operator<(const K& k, const M& m)
+  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
+{ //using V  = typename M::mapped_type;
+  //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
+
+  //const auto cit { m.find(k) };
+
+  //return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
+  return (m > k);
 }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
@@ -1131,7 +1259,8 @@ public:
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
   bool add(const T& val, const COUNTER n = 1)
-  { if (!contains(_values, val))
+  { //if (!contains(_values, val))
+    if (!_values.contains(val))
       _values += { val, n };
     else
       _values[val] += n;
@@ -1144,7 +1273,8 @@ public:
     \return         total number of times <i>value</i> has been added
 */
   unsigned int value(const T& val) const
-    { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
+//    { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
+    { return ( _values.contains(val) ? _values.at(val) : 0 ); }
 };
 
 // convenient syntactic sugar for some STL functions
@@ -1154,7 +1284,7 @@ public:
     \param  element     element to insert
 */
 template <typename C, typename K, typename V>
-inline void operator+=(C& mum, std::pair<K, V>&& element)
+void operator+=(C& mum, std::pair<K, V>&& element)
   requires ( (is_mum_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
              (is_mmumm_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
@@ -1168,7 +1298,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>
-inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
+void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
   requires (is_mum_v<C> or is_mmumm_v<C>)
   { mum.emplace(il); }
 
@@ -1237,10 +1367,6 @@ constexpr bool NONE_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges:
     \param  oi      iterator on final container
     \return         <i>oi</i>
 */
-//template<class Input, class OutputIterator>
-//inline OutputIterator COPY_ALL(Input& first, OutputIterator oi)
-//  { return (std::copy(first.begin(), first.end(), oi)); }
-//  { return (std::ranges::copy(first, oi)); }
 
 //https://en.cppreference.com/w/cpp/algorithm/ranges/copy
 template< std::input_iterator I, std::sentinel_for<I> S, std::weakly_incrementable O > requires  std::indirectly_copyable<I, O>
@@ -1256,7 +1382,7 @@ constexpr std::ranges::in_out_result<std::ranges::borrowed_iterator_t<R>, O> COP
     Does not work for maps
 */
 template <class Input, class UnaryPredicate>
-inline void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
+void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
   { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
 
 /*! \brief          Remove map/unordered map values that match a predicate, and resize the map
@@ -1521,6 +1647,21 @@ V operator+(const V& v1, const V& v2)
   return rv;
 }
 
+/*! \brief        Add all the elements of a SUS to a vector
+    \param  dest  destination vector
+    \param  sus   source SUS
+    \return       <i>dest</i> with all the elements of <i>sus</i> appended
+
+    Note that in general this means that the vector is subsequently going to be ordered
+*/
+template <typename V, typename SUS>
+  requires (is_vector_v<V>) and (is_sus_v<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
+inline void operator+=(V& vec, const SUS& sus)
+  { vec.reserve(vec.size() + sus.size());
+    //dest.insert(dest.end(), src.begin(), src.end()); &&&
+    COPY_ALL(sus, back_inserter(vec));
+  }
+
 /*! \brief              Add an element to a vector
     \param  dest        destination vector
     \param  element     element to append
@@ -1662,17 +1803,14 @@ inline void operator-=(D& d, const typename D::iterator& it)
 template <typename C, typename E>
   requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
- // { return std::find(c.cbegin(), c.cend(), element) != c.cend(); }        // don't use ranges here because it might be dangling
   { return std::ranges::find(c, element) != c.cend(); }
 
-//template <typename C, typename E>
-//  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
-//inline bool contains(C&& c, const E& element)
-//  { return std::ranges::find(std::forward<C>(c), element) != c.cend(); }       // don't use ranges here because it might be dangling
-//  { return contains(std::forward<C>(c), element); }       // don't use ranges here because it might be dangling
-
+/*! \brief        Obtain a view of a range of numbers
+    \param  u     the lowest value in the range
+    \param  v     one more than the highest value in the range
+    \return       a view of the values from <i>u</i> to <i>v-1</i>
+*/
 template <typename T = int, typename U, typename V>
-//ranges::iota_view { 0u, call.length() - 2 } )
 auto RANGE(const U u, const V v)
   { return std::ranges::iota_view { static_cast<T>(u), static_cast<T>(v) }; }
 
@@ -1705,6 +1843,5 @@ typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
 template <typename C>
 inline void operator-=(C& c1, C c2)
   { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
-//  { c1.erase(std::remove_if(c2.begin(), c2.end(), [&c1] (const C::value_type& v) { contains(c1, v); }), c1.end());}
 
 #endif    // MACROS_H

@@ -1,4 +1,4 @@
-// $Id: scp.h 197 2021-11-21 14:52:50Z  $
+// $Id: scp.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,7 +91,8 @@ public:
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
+//    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
+    { return (call.empty() ? false : _db[substring(call, 0, 2)].contains(call) ); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call

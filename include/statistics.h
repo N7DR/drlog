@@ -1,4 +1,4 @@
-// $Id: statistics.h 202 2022-03-07 21:01:02Z  $
+// $Id: statistics.h 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,20 +42,20 @@ class running_statistics
 {
 protected:
   
-  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
-  bool                                                              _callsign_mults_used { false };   ///< are callsign mults used? Copied from rules
+  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one)
+  bool                                                              _callsign_mults_used { false };     ///< are callsign mults used? Copied from rules
 
-  multiplier                                                        _country_multipliers;   ///< country multipliers
-  bool                                                              _country_mults_used { false };    ///< are country mults used? Copied from rules
-  bool                                                              _auto_country_mults { false };    ///< can the list of country multipliers change?
+  multiplier                                                        _country_multipliers;               ///< country multipliers
+  bool                                                              _country_mults_used { false };      ///< are country mults used? Copied from rules
+  bool                                                              _auto_country_mults { false };      ///< can the list of country multipliers change?
 
-  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
-  bool                                                              _exchange_mults_used { false };   ///< are country mults used? Copied from rules
-  std::set<std::string>                                             _exch_mult_fields;      ///< names of the exch fields that are mults
+  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;              ///< exchange multipliers; vector so we can keep the correct order
+  bool                                                              _exchange_mults_used { false };     ///< are country mults used? Copied from rules
+  std::set<std::string>                                             _exch_mult_fields;                  ///< names of the exch fields that are mults
 
-  bool                                                              _include_qtcs { false };          ///< do we include QTC information?
+  bool                                                              _include_qtcs { false };            ///< do we include QTC information?
 
-  location_database                                                 _location_db;           ///< database for location-based lookups
+  location_database                                                 _location_db;               ///< database for location-based lookups
 
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes    { {} };         ///< number of dupes, per band and mode; Josuttis 2nd ed., p.262 -- initializes all elements with zero
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos     { {} };         ///< number of QSOs, per band and mode
@@ -93,7 +93,7 @@ public:
     \param  context         drlog context
     \param  rules           rules for this contest
 */
-  inline running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
+  inline running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules) :
     _callsign_mults_used(rules.callsign_mults_used()),
     _country_mults_used(rules.country_mults_used()),
     _exchange_mults_used(rules.exchange_mults_used()),
@@ -342,7 +342,8 @@ class call_history
 protected:
 
   std::map<std::string, std::set<bandmode> > _history;                                      ///< container for the history
-  pt_mutex                                   _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
+
+  mutable pt_mutex                           _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
 
 public:
 
@@ -357,34 +358,34 @@ public:
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-  bool worked(const std::string& s, const BAND b, const MODE m);
+  bool worked(const std::string& s, const BAND b, const MODE m) const;
 
 /*! \brief      Has a call been worked on a particular band?
     \param  s   callsign to test
     \param  b   band to test
     \return     whether <i>s</i> has been worked on band <i>b</i>
 */
-  bool worked(const std::string& s, const BAND b);
+  bool worked(const std::string& s, const BAND b) const;
 
 /*! \brief      Has a call been worked on a particular mode?
     \param  s   callsign to test
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on mode <i>m</i>
 */
-  bool worked(const std::string& s, const MODE m);
+  bool worked(const std::string& s, const MODE m) const;
 
 /*! \brief      Has a call been worked?
     \param  s   callsign to test
     \return     whether <i>s</i> has been worked
 */
-  bool worked(const std::string& s);
+  bool worked(const std::string& s) const;
 
 /*! \brief      Has a call been worked on any other band?
     \param  s   callsign to test
     \param  b   band NOT to test
     \return     whether <i>s</i> has been worked on a band other than <i>b</i>
 */
-  bool worked_on_another_band(const std::string& s, const BAND b);
+  bool worked_on_another_band(const std::string& s, const BAND b) const;
 
 /*! \brief      Has a call been worked on any other mode?
     \param  s   callsign to test

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 196 2021-11-14 21:39:45Z  $
+// $Id: cty_data.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -106,7 +106,8 @@ cty_record::cty_record(const string& record)
 
   _continent = fields[CTY_CONTINENT];
 
-  if ( !(CONTINENT_SET > _continent) )
+//  if ( !(CONTINENT_SET > _continent) )
+  if (!CONTINENT_SET.contains(_continent))
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
 //  _latitude = from_string<decltype(_latitude)>(fields[CTY_LAT]);
@@ -675,7 +676,8 @@ location_info location_database::info(const string& callpart) const
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
-      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
+//      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
+      if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
       { const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
         if (posn_1 != string::npos)
@@ -733,7 +735,8 @@ location_info location_database::info(const string& callpart) const
     static const set<string> russian_long_prefixes { "RU4W"s };
 
     if (found_1 and !found_0)                        // second part had an exact match
-    { if (!(russian_long_prefixes > parts[1]))         // the normal case
+    { //if (!(russian_long_prefixes > parts[1]))         // the normal case
+      if (!russian_long_prefixes.contains(parts[1]))         // the normal case
         return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       else                                             // the pathological case, a call like "K4/RU4W"
         return insert_best_info( info(parts[0]) );
@@ -926,7 +929,8 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
   { const vector<string> lines { to_lines(replace_char(read_file(path, filename), '\t', ' ')) };
 
     for (const auto& line : lines)
-    { if (!starts_with(line, "//"s))
+    { //if (!starts_with(line, "//"s))
+      if (!line.starts_with("//"s))
       { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
 
         for (const auto& sstring : substrings)

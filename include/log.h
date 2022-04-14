@@ -287,6 +287,12 @@ public:
 */
   std::set<std::string> calls(void) const;
 
+/*! \brief      Reserve space for a known number of calls
+    \param  n   number of calls for which space is to be reserved
+*/
+  inline void reserve(const size_t n)
+    { _log_vec.reserve(n); }
+
 /// serialise logbook
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -425,6 +431,15 @@ protected:
                                  std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
                                >
                     > _olog;    ///< ADIF3 log of old QSOs (used for QSLs)
+
+/*! \brief          Return an iterator to the data for a particular callsign
+    \param  call    callsign
+    \return         An iterator to the data for <i>call</i>
+
+    The data for <i>call</i> are created if they don't already exist, and the corresponding iterator returned
+*/
+  decltype(_olog)::iterator _find_or_create(const std::string& call);
+
 public:
 
 /*! \brief          Return total number of QSLs from a particular callsign

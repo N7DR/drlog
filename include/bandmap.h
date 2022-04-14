@@ -1,4 +1,4 @@
-// $Id: bandmap.h 202 2022-03-07 21:01:02Z  $
+// $Id: bandmap.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -224,7 +224,8 @@ public:
     \return     whether <i>v</i> is needed
 */
   inline bool is_value_needed(const T& v) const
-    { return _is_needed ? !contains(_values, v) : false; }
+//    { return _is_needed ? !contains(_values, v) : false; }
+    { return _is_needed ? !(v < _values) : false; }
 
 /*! \brief      Remove a needed value
     \param  v   value to remove
@@ -233,7 +234,9 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { if (!_is_needed or !contains(_values, v))
+  { //if (!_is_needed or !contains(_values, v))
+    //if (!_is_needed or !_values.contains(v))
+    if (!_is_needed or !(v < _values))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -314,10 +317,10 @@ class bandmap_filter_type
 {
 protected:
 
-  std::vector<std::string>  _continents;                ///< continents to filter
+  std::vector<std::string>  _continents  { };           ///< continents to filter
   bool                      _enabled     { false };     ///< is bandmap filtering enabled?
   bool                      _hide        { true };      ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _prefixes;                  ///< canonical country prefixes to filter
+  std::vector<std::string>  _prefixes    { };           ///< canonical country prefixes to filter
 
 public:
 
@@ -557,8 +560,8 @@ public:
     { return is_needed(); }
 
 ///  is this a needed mult?
-  inline bool is_a_needed_mult(void) const
-    { return is_needed_mult(); }
+//  inline bool is_a_needed_mult(void) const
+//    { return is_needed_mult(); }
 
 /*! \brief          Does <i>_frequency_str</i> match a target value?
     \param  target  target value of <i>_frequency_str</i>
@@ -612,7 +615,7 @@ public:
 
     <i>statistics</i> must be updated to be current before this is called
 */
-  bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
+  bool remark(contest_rules& rules, const call_history& q_history, running_statistics& statistics);
 
 /*! \brief      Return the (absolute) difference in frequency between two bandmap entries
     \param  be  other bandmap entry
@@ -1016,7 +1019,8 @@ public:
      The return value can be tested with .empty() to see if a station was found
 */
   inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
+//    { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
+    { return needed(&bandmap_entry::is_needed_mult, dirn); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
     \param dirn    direction in which to search
@@ -1087,7 +1091,7 @@ public:
 */
   inline bool is_recent_call(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      return (_recent_calls > callsign);
+      return (callsign < _recent_calls);
     }
 
 /*!  \brief             Add a call to the do-not-add list

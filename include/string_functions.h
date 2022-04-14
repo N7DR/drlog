@@ -1,4 +1,4 @@
-// $Id: string_functions.h 200 2022-01-16 14:48:14Z  $
+// $Id: string_functions.h 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -384,8 +384,8 @@ inline void write_file(const std::string& cs, const std::string& filename)
 
     See https://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a
 */
-inline bool starts_with(const std::string& cs, const std::string& ss)
-  { return (cs.rfind(ss, 0) == 0); }
+//inline bool starts_with(const std::string& cs, const std::string& ss)
+//  { return (cs.rfind(ss, 0) == 0); }
 
 /*! \brief      Does a string begin with one of a number of particular substrings?
     \param  cs  string to test
@@ -395,23 +395,24 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 template <typename T>
 inline bool starts_with(const std::string& cs, const T& ss)
   requires (is_string_v<typename T::value_type>)
-  { return ANY_OF(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
+//  { return ANY_OF(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
+  { return ANY_OF(ss, [=] (const std::string& str) { return cs.starts_with(str); }); }
 
 /*! \brief      Does a string begin with a particular substring?
     \param  cs  string to test
     \param  ss  substring to look for
     \return     whether <i>cs</i> begins with <i>ss</i>
 */
-inline bool begins_with(const std::string& cs, const std::string& ss)
-  { return (starts_with(cs, ss) ); }
+//inline bool begins_with(const std::string& cs, const std::string& ss)
+//  { return (starts_with(cs, ss) ); }
 
 /*! \brief      Does a string end with a particular substring?
     \param  cs  string to test
     \param  ss  substring to look for
     \return     whether <i>cs</i> ends with <i>ss</i>
 */
-inline bool ends_with(const std::string& cs, const std::string& ss)
-  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
+//inline bool ends_with(const std::string& cs, const std::string& ss)
+//  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
 
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
@@ -432,7 +433,7 @@ inline std::string remove_from_end(const std::string& s, const unsigned int n)
     If <i>e</i> is not present, just returns <i>s</i>
 */
 inline std::string remove_from_end(const std::string& s, const std::string& e)
-  { return ( ends_with(s, e) ? remove_from_end(s, e.length()) : s ); }
+  { return ( s.ends_with(e) ? remove_from_end(s, e.length()) : s ); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -799,7 +800,7 @@ inline std::string to_lower(const std::string& cs)
     \return             whether <i>callsign</i> appears to be a maritime mobile
 */
 inline bool is_maritime_mobile(const std::string& callsign)
-  { return ( ends_with(to_upper(callsign), "/MM"s ) ); }
+  { return to_upper(callsign).ends_with("/MM"s); }
 
 /*! \brief          Convert an integer to a character-separated string
     \param  n       number to convert
@@ -1035,24 +1036,6 @@ std::string YYYYMMDD_utc(void);
     \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
 */
 std::string remove_substrings(const std::string& cs, const std::vector<std::string>& vs);
-
-/*! \brief              Return all strings from a container that match a particular regular expression string
-    \param  container   container of strings
-    \param  s           regular expression string
-    \return             All the elements of <i>container</i> that match <i>s</i>
-*/
-#if 0
-template <class T, class C>
-T regex_matches(const C& container, const std::string& s)
-{ T rv;
-     
-  const std::regex rgx { s }
-
-  FOR_ALL(container | std::ranges::views::filter([=] (const std::string& target) { return regex_match(target, rgx); }), [=, &rv](const std::string& target) { rv += target; }); 
-
-  return rv;
-}
-#endif
 
 /*! \brief              Return all strings from a container that match a particular regular expression string
     \param  container   container of strings

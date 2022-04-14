@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 196 2021-11-14 21:39:45Z  $
+// $Id: exchange.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -192,7 +192,8 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   if (rv)
   { const char lchar { last_char(str) };
 
-    rv = isdigit(lchar) or (legal_prec > lchar);
+//    rv = isdigit(lchar) or (legal_prec > lchar);
+    rv = isdigit(lchar) or legal_prec.contains(lchar);
   }
 
   return rv;
@@ -653,7 +654,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 // find first received field that's a match for any exchange field and that we haven't used
 //    const auto cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
-    const auto cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+ //   const auto cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+    const auto cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return FIELD_NAMES(t).contains(ef.name()); } ) };
 
     if (cit != exchange_template.cend())
     { processed_field_on_last_pass = true;
@@ -690,7 +692,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
       const TRIPLET& t   { tuple_deque[0] };
 //      const auto     cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
-      const auto     cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+//      const auto     cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+      const auto     cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return FIELD_NAMES(t).contains(ef.name()); } ) };
 
       if (cit == exchange_template.cend())
       { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
@@ -737,7 +740,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       }
 
 // we might revoke the validity flag here, if we spot a problem
-      if (!found_map and !(optional_field_names > name))
+//      if (!found_map and !(optional_field_names > name))
+      if (!found_map and !optional_field_names.contains(name))
       { ost << "WARNING: unable to find map assignment for key = " << name << endl;
         _valid = false;
       }
@@ -896,7 +900,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
   }
 
 // if it's a QTHX, then don't go any further if the country doesn't match
-  if (starts_with(field_name, "QTHX["s))
+//  if (starts_with(field_name, "QTHX["s))
+  if (field_name.starts_with("QTHX["s))
   { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -1096,7 +1101,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
-  if ( (field_name == "JAPREF"s) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+//  if ( (field_name == "JAPREF"s) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+  if ( (field_name == "JAPREF"s) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s }.contains(location_db.canonical_prefix(callsign) ) ) )
     return insert_value(drm_line.qth());
 
   if (field_name == "NAME"s)
@@ -1105,7 +1111,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
   if (field_name == "PREC"s)
     return insert_value(drm_line.precedence());    // I think that this should work 
 
-  if (starts_with(field_name, "QTHX["s))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+//  if (starts_with(field_name, "QTHX["s))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+  if (field_name.starts_with("QTHX["s))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
   { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -1121,7 +1128,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
     string rv;
 
-    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN"s)) )
+//    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)/* starts_with(callsign, "RI1AN"s) */) )
+    if (!drm_line.empty() and (countries.contains(location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
     { rv = drm_line.qth();
 
       if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file

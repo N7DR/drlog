@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 202 2022-03-07 21:01:02Z  $
+// $Id: autocorrect.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,7 +45,8 @@ public:
     { FOR_ALL(callsigns, [this] (const std::string& str) { _calls += str; } ); }
 
   inline bool contains(const std::string& putative_call) const
-    { return ::contains(_calls, putative_call); }
+//    { return ::contains(_calls, putative_call); }
+    { return _calls.contains(putative_call); }
 
   inline unsigned int n_calls(void) const
     { return _calls.size(); }

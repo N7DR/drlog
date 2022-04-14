@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 202 2022-03-07 21:01:02Z  $
+// $Id: autocorrect.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,13 +54,15 @@ string autocorrect_database::corrected_call(const string& str) const
     return insert(str, str);
 
 // extraneous E in front of a US K call
-  if (starts_with(str, "EK"s))
+//  if (starts_with(str, "EK"s))
+  if (str.starts_with("EK"s))
   { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // JA miscopied as JT
-  if (starts_with(str, "JT"s))
+//  if (starts_with(str, "JT"s))
+  if (str.starts_with("JT"s))
   { if (!contains(str))
     { if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -68,7 +70,8 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // initial W copied as an initial M
-  if (starts_with(str, "M"s))
+//  if (starts_with(str, "M"s))
+  if (str.starts_with('M'))
   { if (!contains(str))
     { if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -76,7 +79,8 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // initial J copied as an initial O
-  if (starts_with(str, "O"s) and (str.size() > 3))
+//  if (starts_with(str, "O"s) and (str.size() > 3))
+  if (str.starts_with('O') and (str.size() > 3))
   { switch (str[1])
     { case 'A' :
       case 'E' :
@@ -104,7 +108,8 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // extraneous T in front of a US K call
-  if (starts_with(str, "TK"s))
+//  if (starts_with(str, "TK"s))
+  if (str.starts_with("TK"s))
   { //const string call_to_test { substring(str, 1) };
 
     if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
@@ -113,7 +118,8 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // extraneous T in front of a US N call
-  if (starts_with(str, "TN"s))
+//  if (starts_with(str, "TN"s))
+  if (str.starts_with("TN"s))
   { //const string call_to_test { substring(str, 1) };
 
     if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
@@ -122,7 +128,8 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // initial PY copied as initial TM
-  if (starts_with(str, "TM"s))
+//  if (starts_with(str, "TM"s))
+  if (str.starts_with("TM"s))
   { if (!contains(str))
     { //const string call_to_test { "PY"s + substring(str, 2) };
 

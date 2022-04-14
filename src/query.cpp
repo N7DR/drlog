@@ -29,7 +29,8 @@ using namespace std;
     <i>call<i> is added to the dynamic database iff it is not already present in either database
 */
 void query_database::operator+=(const std::string& call)
-{ if (!( _qdb > call))
+{ //if (!( _qdb > call))
+  if (!_qdb.contains(call))
     _dynamic_qdb += call;
 }
 

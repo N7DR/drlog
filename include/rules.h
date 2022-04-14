@@ -94,7 +94,8 @@ public:
     \return             whether there is an alternative field for <i>field_name</i>
 */
   inline bool is_choice(const std::string& field_name) const
-    { return contains(_choices, field_name); }
+//    { return contains(_choices, field_name); }
+    { return _choices.contains(field_name); }
 
 /// return the inverse of whether there are any choices
   inline bool empty(void) const
@@ -212,7 +213,8 @@ public:
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline bool canonical_value_present(const std::string& putative_cv_value) const
-    { return contains(_values, putative_cv_value); }
+//    { return contains(_values, putative_cv_value); }
+    { return _values.contains(putative_cv_value); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
     \param  putative_cv_value   string to test
@@ -686,7 +688,8 @@ public:
   inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
-      return contains(_permitted_exchange_values, field_name);
+//      return contains(_permitted_exchange_values, field_name);
+      return _permitted_exchange_values.contains(field_name);
     }
 
 /*! \brief              Is a particular exchange field a regex?

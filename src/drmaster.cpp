@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 196 2021-11-14 21:39:45Z  $
+// $Id: drmaster.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -516,7 +516,8 @@ trmaster::trmaster(const string& filename)
 // is there already a record for this call?
       const string call { record.call() };
 
-      if (contains(_records, call))
+//      if (contains(_records, call))
+      if (_records.contains(call))
         record += _records[call];
 
       _records += { call, record };
@@ -577,7 +578,8 @@ r = SKCC state/province/country
 */
 string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
 { for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
-  { if (starts_with(*cit, field_indicator))
+  { //if (starts_with(*cit, field_indicator))
+    if (cit->starts_with(field_indicator))
       return (cit->substr(field_indicator.length()));
   }
 
@@ -939,7 +941,8 @@ void drmaster::operator+=(const string& call)
 { if (!::contains(call, SPACE_STR))                                                // basic sanity check for a call
   { //if (_records.find(call) == _records.end())
     //  _records.insert( { call, static_cast<drmaster_line>(call) } );    // cast needed in order to keep the temporary around long enough to use
-    if (!::contains(_records, call))
+//    if (!::contains(_records, call))
+    if (!_records.contains(call))
       _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use
   }
 }
@@ -954,7 +957,8 @@ void drmaster::operator+=(const drmaster_line& drml)
 
 //  if (_records.find(call) == _records.end())        // no pre-existing record
 //    _records.insert( { call, drml } );
-  if (!::contains(_records, call))
+//  if (!::contains(_records, call))
+  if (!_records.contains(call))
     _records += { call, drml };
   else
   { drmaster_line old_drml { _records[call] };

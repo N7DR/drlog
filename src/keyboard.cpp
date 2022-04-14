@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 193 2021-10-03 20:05:48Z  $
+// $Id: keyboard.cpp 203 2022-03-28 22:08:50Z  $
 
 /*! \file 	keyboard.cpp
 
@@ -289,11 +289,11 @@ void keyboard_queue::process_events(void)
 }
 
 /// how many events are in the queue?
-size_t keyboard_queue::size(void) const
-{ SAFELOCK(_keyboard);
-
-  return _events.size();
-}
+//size_t keyboard_queue::size(void) const
+//{ SAFELOCK(_keyboard);
+//
+//  return _events.size();
+//}
 
 /// is the queue empty?
 bool keyboard_queue::empty(void) const
@@ -336,11 +336,11 @@ keyboard_event keyboard_queue::pop(void)
 }
 
 /// get the event most recently popped
-keyboard_event keyboard_queue::last(void)
-{ SAFELOCK(_keyboard);
-
-  return _last_event;
-}
+//keyboard_event keyboard_queue::last(void)
+//{ SAFELOCK(_keyboard);
+//
+//  return _last_event;
+//}
 
 /*! \brief      Emulate the pressing of a character key
     \param  c   pressed character
@@ -354,8 +354,8 @@ void keyboard_queue::push_key_press(const char c)
       break;
 
     default:
-    { const string c_str = create_string(c);
-      const KeySym ks = XStringToKeysym(c_str.c_str());
+    { const string c_str { create_string(c) };
+      const KeySym ks    { XStringToKeysym(c_str.c_str()) };
 
       push_key_press(ks);
     }

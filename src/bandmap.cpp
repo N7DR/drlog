@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 202 2022-03-07 21:01:02Z  $
+// $Id: bandmap.cpp 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -128,12 +128,14 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
+{ //vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
+  vector<string>* vs_p { ( CONTINENT_SET.contains(str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
-  if (ss > str)              // remove a value
+//  if (ss > str)              // remove a value
+  if (ss.contains(str))              // remove a value
     ss -= str;
   else                       // add a value
     ss += str;
@@ -275,15 +277,17 @@ bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 
     <i>statistics</i> must be updated to be current before this is called
 */
-bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
+bool bandmap_entry::remark(contest_rules& rules, const call_history& q_history, running_statistics& statistics)
 { const bool original_is_needed { _is_needed };
 
 // if this contest allows only one QSO with a station (e.g., SS)
   if (!rules.work_if_different_band())
-  { _is_needed = true;
+  { //_is_needed = true;
 
-    for (auto& b : rules.permitted_bands())
-      _is_needed = ( _is_needed and !q_history.worked(_callsign, b) );      // there is no &&= operator in C++
+    //for (auto& b : rules.permitted_bands())
+      //_is_needed = ( _is_needed and !q_history.worked(_callsign, b) );      // there is no &&= operator in C++
+
+    _is_needed = NONE_OF(rules.permitted_bands(), [this, &q_history] (const BAND b) { return q_history.worked(_callsign, b); } );
   }
   else
    _is_needed = !q_history.worked(_callsign, _band);
@@ -330,7 +334,8 @@ bool bandmap_entry::matches_criteria(void) const
 
   { SAFELOCK(batch_messages);
 
-    if (contains(batch_messages, _callsign))
+//    if (contains(batch_messages, _callsign))
+    if (batch_messages.contains(_callsign))
       return false;             // skip any call with a batch message
   }
 
@@ -565,7 +570,8 @@ void bandmap::operator+=(bandmap_entry& be)
   const string& callsign               { be.callsign() };
 
 // do not add if it's already been done recently, or matches several other conditions
-  bool add_it { !(_do_not_add > callsign) };
+//  bool add_it { !(_do_not_add > callsign) };
+  bool add_it { !_do_not_add.contains(callsign) };
 
   if (add_it)
     add_it = be.freq().is_within_ham_band();

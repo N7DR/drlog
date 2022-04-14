@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 192 2021-09-19 14:03:15Z  $
+// $Id: diskfile.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,7 +53,8 @@ bool file_exists(const string& filename)
 */
 string find_file(const vector<string>& path, const string& filename)
 { for (const auto& dir : path)
-  { const string sep { ends_with(dir, "/"s) ? ""s : "/"s };
+  { //const string sep { ends_with(dir, "/"s) ? ""s : "/"s };
+    const string sep { dir.ends_with('/') ? ""s : "/"s };
 
     if ( const auto fullname { dir + sep + filename }; file_exists(fullname) )
       return fullname;

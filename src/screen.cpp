@@ -1,4 +1,4 @@
-// $Id: screen.cpp 197 2021-11-21 14:52:50Z  $
+// $Id: screen.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -965,10 +965,12 @@ COLOUR_TYPE string_to_colour(const string& str)
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-  if (begins_with(s, "COLOUR_"s))
+//  if (begins_with(s, "COLOUR_"s))
+  if (s.starts_with("COLOUR_"s))
     return (from_string<COLOUR_TYPE>(substring(s, 7)));
 
-  if (begins_with(s, "COLOR_"s))
+//  if (begins_with(s, "COLOR_"s))
+  if (s.starts_with("COLOR_"s))
     return (from_string<COLOUR_TYPE>(substring(s, 6)));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits

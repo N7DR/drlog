@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 199 2021-12-05 21:36:40Z  $
+// $Id: cluster.cpp 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -288,10 +288,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             if (bra_posn != string::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
               _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
-
- //             const location_info poster_li { db.info(_poster) };
-
- //             _poster_continent = poster_li.continent();
               _poster_continent = db.info(_poster).continent();
 
               _valid = true;
@@ -325,10 +321,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
           if (fields.size() >= 6)
           { _poster = substring(fields[2], 0, fields[2].length() - 1);      // remove colon
-
-//            const location_info poster_li { db.info(_poster) };
-
-//            _poster_continent = poster_li.continent();
             _poster_continent = db.info(_poster).continent();
 
             _frequency_str = fields[3];
@@ -354,11 +346,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
   
           if (const size_t colon_posn { copy.find(':') }; colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
-
- //           const location_info poster_li { db.info(_poster) };
-
- //           _poster_continent = poster_li.continent();
-
             _poster_continent = db.info(_poster).continent();
 
             size_t char_posn  { copy.find_first_not_of(SPACE_STR, colon_posn + 1) };
@@ -465,7 +452,8 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
-  return (_callsigns > callsign);
+//  return (_callsigns > callsign);
+  return _callsigns.contains(callsign);
 }
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>

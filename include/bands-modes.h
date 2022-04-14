@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 195 2021-11-01 01:21:22Z  $
+// $Id: bands-modes.h 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,30 +60,29 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                     "10"s
                                                                  } };         ///< names of bands
 
-static /* const */ std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
-                                                                { "80"s,  BAND_80 },
-                                                                { "60"s,  BAND_60 },
-                                                                { "40"s,  BAND_40 },
-                                                                { "30"s,  BAND_30 },
-                                                                { "20"s,  BAND_20 },
-                                                                { "17"s,  BAND_17 },
-                                                                { "15"s,  BAND_15 },
-                                                                { "12"s,  BAND_12 },
-                                                                { "10"s,  BAND_10 }
-                                                              };                    ///< map a band name to a band
+static std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
+                                                    { "80"s,  BAND_80 },
+                                                    { "60"s,  BAND_60 },
+                                                    { "40"s,  BAND_40 },
+                                                    { "30"s,  BAND_30 },
+                                                    { "20"s,  BAND_20 },
+                                                    { "17"s,  BAND_17 },
+                                                    { "15"s,  BAND_15 },
+                                                    { "12"s,  BAND_12 },
+                                                    { "10"s,  BAND_10 }
+                                                  };                    ///< map a band name to a band
 
-static /* const */ std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },
-                                                                      { "80m"s,  BAND_80 },
-                                                                      { "60m"s,  BAND_60 },
-                                                                      { "40m"s,  BAND_40 },
-                                                                      { "30m"s,  BAND_30 },
-                                                                      { "20m"s,  BAND_20 },
-                                                                      { "17m"s,  BAND_17 },
-                                                                      { "15m"s,  BAND_15 },
-                                                                      { "12m"s,  BAND_12 },
-                                                                      { "10m"s,  BAND_10 }
-                                                                    };                    ///< map an ADIF3 band to a band
-
+static std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so not const
+                                                          { "80m"s,  BAND_80 },
+                                                          { "60m"s,  BAND_60 },
+                                                          { "40m"s,  BAND_40 },
+                                                          { "30m"s,  BAND_30 },
+                                                          { "20m"s,  BAND_20 },
+                                                          { "17m"s,  BAND_17 },
+                                                          { "15m"s,  BAND_15 },
+                                                          { "12m"s,  BAND_12 },
+                                                          { "10m"s,  BAND_10 }
+                                                        };                    ///< map an ADIF3 band to a band
 
 /// modes that drlog knows about
 enum MODE { MODE_CW = 0,
@@ -274,6 +273,19 @@ public:
     }
 };
 
+// user-defined literals for frequency
+
+/// _Hz (int)
+inline frequency operator""_Hz(const unsigned long long int f)
+  { return frequency(f); }
+
+/// _kHz (int)
+inline frequency operator""_kHz(const unsigned long long int f)
+  { return frequency(f); }                                      // automatically converts from kHz to Hz
+
+inline frequency operator""_MHz(const long double f)
+  { return frequency(f); }                                      // automatically converts from MHz to Hz
+
 /// ostream << frequency
 std::ostream& operator<<(std::ostream& ost, const frequency& f);
 
@@ -303,6 +315,7 @@ inline std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
+#if 0
 static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency { 1'900 } },
                                                     { BAND_80,  frequency { 3'600 } },
                                                     { BAND_60,  frequency { 5'500 } },
@@ -314,7 +327,19 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency { 1'90
                                                     { BAND_12,  frequency { 24'910 } },
                                                     { BAND_10,  frequency { 28'300 } }
                                                   };
+#endif
 
+static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
+                                                    { BAND_80,  3'600_kHz },
+                                                    { BAND_60,  5'500_kHz },
+                                                    { BAND_40,  7'100_kHz },
+                                                    { BAND_30,  10'150_kHz },
+                                                    { BAND_20,  14'150_kHz },
+                                                    { BAND_17,  18'900_kHz },
+                                                    { BAND_15,  21'200_kHz },
+                                                    { BAND_12,  24'910_kHz },
+                                                    { BAND_10,  28'300_kHz }
+                                                  };
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency

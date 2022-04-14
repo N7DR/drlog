@@ -196,14 +196,16 @@ public:
     \return         whether <i>call</i> is an alternative callsign
 */
   inline bool is_alternative_callsign(const std::string& call) const
-    { return contains(_alt_callsigns, call); }
+//    { return contains(_alt_callsigns, call); }
+    { return _alt_callsigns.contains(call); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
   inline bool is_alternative_prefix(const std::string& pfx) const
-    { return contains(_alt_prefixes, pfx); }
+//    { return contains(_alt_prefixes, pfx); }
+    { return _alt_prefixes.contains(pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };

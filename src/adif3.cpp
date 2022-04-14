@@ -42,7 +42,8 @@ void adif3_field::_normalise(void)
   }
 
 // force some values into upper case
-  if (uc_fields > _name)
+//  if (uc_fields > _name)
+  if (uc_fields.contains(_name))
   { _value = to_upper(_value);
     return;
   }
@@ -87,7 +88,8 @@ void adif3_field::_verify(void) const
     break;
       
     case ADIF3_DATA_TYPE::ENUMERATION_BAND :
-    { if (!(_ENUMERATION_BAND > to_lower(_value)))
+    { //if (!(_ENUMERATION_BAND > to_lower(_value)))
+      if (!_ENUMERATION_BAND.contains(to_lower(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -96,19 +98,22 @@ void adif3_field::_verify(void) const
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
-      if (!contains(_ENUMERATION_DXCC_ENTITY_CODE, from_string<int>(_value)))
+//      if (!contains(_ENUMERATION_DXCC_ENTITY_CODE, from_string<int>(_value)))
+      if (!_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
     break;
     
     case ADIF3_DATA_TYPE::ENUMERATION_MODE :
-    { if (!(_ENUMERATION_MODE > to_upper(_value)))
+    { //if (!(_ENUMERATION_MODE > to_upper(_value)))
+      if (!_ENUMERATION_MODE.contains(to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
  
     case ADIF3_DATA_TYPE::ENUMERATION_QSL_RECEIVED :
-    { if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
+    { //if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
+      if (!_ENUMERATION_QSL_RECEIVED.contains(to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -359,7 +364,8 @@ string adif3_record::to_string(void) const
 { string rv;
 
   for (const auto& element : _elements)
-  { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
+  { //if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
+    if (const ADIF3_DATA_TYPE dt { element.second.type() }; !_import_only.contains(dt) )       // don't output if this type is import-only
     { switch (dt)
       { default :
           rv += element.second.to_string();    // output without any checks

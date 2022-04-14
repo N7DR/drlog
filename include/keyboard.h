@@ -1,4 +1,4 @@
-// $Id: keyboard.h 168 2020-10-07 18:34:59Z  $
+// $Id: keyboard.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -226,7 +226,10 @@ public:
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(x_multithreaded, _keyboard);
 
 /// how many events are in the queue?
-  size_t size(void) const;
+  inline size_t size(void) const
+    { SAFELOCK(_keyboard);
+      return _events.size();
+    }
 
 /// is the queue empty?
   bool empty(void) const;
@@ -246,7 +249,10 @@ public:
   keyboard_event pop(void);
 
 /// get the event most recently popped
-  keyboard_event last(void);
+  inline keyboard_event last(void)
+    { SAFELOCK(_keyboard);
+      return _last_event;
+    }
 
 /*! \brief      Emulate the pressing of a character key
     \param  c   pressed character

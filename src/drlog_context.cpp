@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 202 2022-03-07 21:01:02Z  $
+// $Id: drlog_context.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -471,7 +471,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange = RHS;
 
 // EXCHANGE[
-    if (starts_with(testline, "EXCHANGE["s))
+//    if (starts_with(testline, "EXCHANGE["s))
+    if (testline.starts_with("EXCHANGE["s))
     { const string  country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
 
       FOR_ALL(clean_split_string(country_list), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
@@ -601,7 +602,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       _long_t = from_string<decltype(_long_t)>(rhs);
 
 // MARK FREQUENCIES [CW|SSB]
-    if (starts_with(testline, "MARK FREQUENCIES"s) and !rhs.empty())
+//    if (starts_with(testline, "MARK FREQUENCIES"s) and !rhs.empty())
+    if (testline.starts_with("MARK FREQUENCIES"s) and !rhs.empty())
     { const vector<string> ranges { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       vector<pair<frequency, frequency>> frequencies;
@@ -732,17 +734,20 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // POINTS
 // don't use LHS here because the command might be something like "POINTS[80] ="
-    if (starts_with(testline, "POINTS"s) and !starts_with(testline, "POINTS CW"s) and !starts_with(testline, "POINTS SSB"s))  // there may be an "=" in the points definitions
+//    if (starts_with(testline, "POINTS"s) and !starts_with(testline, "POINTS CW"s) and !starts_with(testline, "POINTS SSB"s))  // there may be an "=" in the points definitions
+    if (testline.starts_with("POINTS"s) and !testline.starts_with("POINTS CW"s) and !testline.starts_with("POINTS SSB"s))  // there may be an "=" in the points definitions
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
     }
 
 // POINTS CW
-    if (starts_with(testline, "POINTS CW"s))
+//    if (starts_with(testline, "POINTS CW"s))
+    if (testline.starts_with("POINTS CW"s))
       _set_points(testline, MODE_CW);
 
 // POINTS SSB
-    if (starts_with(testline, "POINTS SSB"s))
+//    if (starts_with(testline, "POINTS SSB"s))
+    if (testline.starts_with("POINTS SSB"s))
       _set_points(testline, MODE_SSB);
 
 // PTT DELAY (0 => no PTT)
@@ -763,7 +768,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 //      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
       
 //      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
-      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
+//      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
+      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
     }
 
 // P3
@@ -824,7 +830,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
-    if (starts_with(testline, "QTHX["s))
+//    if (starts_with(testline, "QTHX["s))
+    if (testline.starts_with("QTHX["s))
     { const vector<string> fields { remove_peripheral_spaces(split_string(testline, "="s)) };
 
       if (fields.size() == 2)
@@ -910,7 +917,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       _russian_filename = rhs;
 
 // SCORE BANDS
-    if (starts_with(testline, "SCORE BANDS"s))
+//    if (starts_with(testline, "SCORE BANDS"s))
+    if (testline.starts_with("SCORE BANDS"s))
     { const vector<string> bands_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       for (const auto& band_str : bands_str)
@@ -925,7 +933,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCORE MODES
-    if (starts_with(testline, "SCORE MODES"s))
+//    if (starts_with(testline, "SCORE MODES"s))
+    if (testline.starts_with("SCORE MODES"s))
     { if (contains(testline, "CW"s))
         _score_modes += MODE_CW;
 
@@ -1218,27 +1227,33 @@ ssb audio = 1500:1800 / 1300:1600
       _cabrillo_address_3 = rhs;
 
 // CABRILLO ADDRESS fourth line
-    if (starts_with(testline, "CABRILLO ADDRESS 4"s))
+//    if (starts_with(testline, "CABRILLO ADDRESS 4"s))
+    if (testline.starts_with("CABRILLO ADDRESS 4"s))
       _cabrillo_address_4 = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-CITY
-    if (starts_with(testline, "CABRILLO ADDRESS-CITY"))
+//    if (starts_with(testline, "CABRILLO ADDRESS-CITY"))
+    if (testline.starts_with("CABRILLO ADDRESS-CITY"))
       _cabrillo_address_city = remove_peripheral_spaces((split_string(line, "="))[1]);
 
 // CABRILLO ADDRESS-STATE-PROVINCE
-    if (starts_with(testline, "CABRILLO ADDRESS-STATE-PROVINCE"s))
+//    if (starts_with(testline, "CABRILLO ADDRESS-STATE-PROVINCE"s))
+    if (testline.starts_with("CABRILLO ADDRESS-STATE-PROVINCE"s))
       _cabrillo_address_state_province = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-POSTALCODE
-    if (starts_with(testline, "CABRILLO ADDRESS-POSTALCODE"s))
+//    if (starts_with(testline, "CABRILLO ADDRESS-POSTALCODE"s))
+    if (testline.starts_with("CABRILLO ADDRESS-POSTALCODE"s))
       _cabrillo_address_postalcode = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-COUNTRY
-    if (starts_with(testline, "CABRILLO ADDRESS-COUNTRY"s))
+//    if (starts_with(testline, "CABRILLO ADDRESS-COUNTRY"s))
+    if (testline.starts_with("CABRILLO ADDRESS-COUNTRY"s))
       _cabrillo_address_country = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO OPERATORS
-    if (starts_with(testline, "CABRILLO OPERATORS"s))
+//    if (starts_with(testline, "CABRILLO OPERATORS"s))
+    if (testline.starts_with("CABRILLO OPERATORS"s))
       _cabrillo_operators = RHS;
 
 /*
@@ -1402,7 +1417,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
-    if (starts_with(testline, "MESSAGE KEY"s))
+//    if (starts_with(testline, "MESSAGE KEY"s))
+    if (testline.starts_with("MESSAGE KEY"s))
     { vector<string> message_info { split_string(testline, SPACE_STR) };
 
       if (message_info.size() >= 5 and contains(testline, "="s))
@@ -1433,7 +1449,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { const int& keysym { cit->second };
 
  //             if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
-              if (!contains(_messages, keysym))  // only if there is no message for this key
+ //             if (!contains(_messages, keysym))  // only if there is no message for this key
+              if (!_messages.contains(keysym))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
  //               _messages.insert( { keysym, str } );
@@ -1500,7 +1517,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (actual_modes.size() == 1)
     { try
-      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) > _cabrillo_qso_template)
+      { //if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) > _cabrillo_qso_template)
+        if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
         {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 202 2022-03-07 21:01:02Z  $
+// $Id: rules.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,7 +90,8 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
-{ if (!contains(_values, cv))
+{ //if (!contains(_values, cv))
+  if (!_values.contains(cv))
     _values += { cv, set<string>( { cv } ) };
 }
 
@@ -145,7 +146,8 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
   const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
-  return contains(ss, putative_value);
+//  return contains(ss, putative_value);
+  return ss.contains(putative_value);
 }
 
 // -------------------------  exchange_field  ---------------------------
@@ -377,7 +379,8 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
  //   for (auto str : remove_peripheral_spaces(split_string(pce.second, ","s)))
     for (auto str : clean_split_string(pce.second))
-    { if (begins_with(str, "CHOICE:"s))
+    { //if (begins_with(str, "CHOICE:"s))
+      if (str.starts_with("CHOICE:"s))
         str = substring(str, 7);
 
  //     const vector<string> expanded_choice { remove_peripheral_spaces(split_string(str, "/"s)) };
@@ -476,7 +479,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
   }
 
-  if (CONTINENT_SET > context.country_mults_filter())
+//  if (CONTINENT_SET > context.country_mults_filter())
+  if (CONTINENT_SET.contains(context.country_mults_filter()))
   { const string target_continent { context.country_mults_filter() };
 
 //    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) { return (location_db.continent(cp) == target_continent); } );
@@ -514,10 +518,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     add_permitted_mode(MODE_SSB);
 
 // the sent exchange
-  if (_permitted_modes > MODE_CW)
+//  if (_permitted_modes > MODE_CW)
+  if (_permitted_modes.contains(MODE_CW))
     _sent_exchange_names += { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) };
 
-  if (_permitted_modes > MODE_SSB)
+//  if (_permitted_modes > MODE_SSB)
+  if (_permitted_modes.contains(MODE_SSB))
     _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
 
 // add the permitted bands
@@ -548,7 +554,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // create expanded version
   for (const string& unexpanded_exchange_mult_name : _exchange_mults)
-  { if (!begins_with(unexpanded_exchange_mult_name, "CHOICE:"s))            // not a choice
+  { //if (!begins_with(unexpanded_exchange_mult_name, "CHOICE:"s))            // not a choice
+    if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"s))            // not a choice
       _expanded_exchange_mults += unexpanded_exchange_mult_name;
     else
     { const string str                     { substring(str, 7) };                                   // remove "CHOICE:"
@@ -626,7 +633,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       static const set<string> special_points_set { "IARU"s, "STEW"s };
 
-      const bool is_special_points { ( special_points_set > context_points ) };
+//      const bool is_special_points { ( special_points_set > context_points ) };
+      const bool is_special_points { special_points_set.contains(context_points) };
 
       if (is_special_points)
       { if (context_points == "IARU"s)  // special
@@ -742,7 +750,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
     bool read_file_ok { false };
 
-    if (!(no_canonical_values > field_name))
+//    if (!(no_canonical_values > field_name))
+    if (!no_canonical_values.contains(field_name))
     { try
       { entire_file = read_file(path, field_name + ".values"s);
         read_file_ok = true;
@@ -763,7 +772,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       { string lhs;
         set<string> equivalent_values;    // includes the canonical
 
-        if (!line.empty() and line[0] != ';' and !starts_with(line, "//"s) ) // ";" and "//" introduce comments
+        if (!line.empty() and line[0] != ';' and !line.starts_with("//"s)/* !starts_with(line, "//"s) */ ) // ";" and "//" introduce comments
         { if (contains(line, "="s) )
           { vector<string> lhsrhs { split_string(line, "="s) };
 
@@ -1064,7 +1073,8 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
     return actual_value;
 
-  if (!(exch_permitted_values(field_name) > actual_value))               // is the actual value a permitted value for this field?
+//  if (!(exch_permitted_values(field_name) > actual_value))               // is the actual value a permitted value for this field?
+  if (!exch_permitted_values(field_name).contains(actual_value))               // is the actual value a permitted value for this field?
     return string();
 /*
   std::map
@@ -1134,7 +1144,8 @@ BAND contest_rules::next_band_up(const BAND current_band) const
       if (band_nr > MAX_BAND)
         band_nr = MIN_BAND;
 
-      bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
+ //     bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
+      const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
 
       if (is_permitted)
         return (static_cast<BAND>(band_nr));
@@ -1165,7 +1176,8 @@ BAND contest_rules::next_band_down(const BAND current_band) const
       if (band_nr < MIN_BAND)
         band_nr = MAX_BAND;
 
-      bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
+//      bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
+      const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
 
       if (is_permitted)
         return (static_cast<BAND>(band_nr));
@@ -1190,12 +1202,14 @@ BAND contest_rules::next_band_down(const BAND current_band) const
 unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
 { const BAND b { qso.band() };
 
-  if (!(_score_bands > b))    // no points if we're not scoring this band
+//  if (!(_score_bands > b))    // no points if we're not scoring this band
+  if (!_score_bands.contains(b))    // no points if we're not scoring this band
     return 0;
 
   const MODE m { qso.mode() };
 
-  if (!(_score_modes > m))    // no points if we're not scoring this mode
+//  if (!(_score_modes > m))    // no points if we're not scoring this mode
+  if (!_score_modes.contains(m))    // no points if we're not scoring this mode
     return 0;
 
 // is an exchange field that will determine the number of points present?
@@ -1323,7 +1337,8 @@ bool contest_rules::country_mults_used(const string& cp) const
   if (_country_mults.empty())
     return false;
 
-  return (_country_mults > cp);
+//  return (_country_mults > cp);
+  return _country_mults.contains(cp);
 }
 
 /*! \brief          Is an exchange field a mult?
@@ -1373,11 +1388,13 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
   bool is_a_per_country_field { false };
 
   for (const auto& ssets : _per_country_exchange_fields)
-  { if (ssets.second > field_name)
+  { //if (ssets.second > field_name)
+    if (ssets.second.contains(field_name))
       is_a_per_country_field = true;
 
     if (ssets.first == canonical_prefix)
-      return (ssets.second > field_name);
+//      return (ssets.second > field_name);
+      return ssets.second.contains(field_name);
   }
 
   return !is_a_per_country_field;       // a known field, and this is not a special country
@@ -1491,7 +1508,8 @@ string wpx_prefix(const string& call)
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
 
-    if (mobiles > last(callsign, 2))
+//    if (mobiles > last(callsign, 2))
+    if (mobiles.contains(last(callsign, 2)))
       callsign = substring(callsign, 0, callsign.length() - 3);
   }
 
@@ -1566,7 +1584,8 @@ string sac_prefix(const string& call)
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 
-  if ( !(scandinavian_countries > canonical_prefix) )
+//  if ( !(scandinavian_countries > canonical_prefix) )
+  if (!scandinavian_countries.contains(canonical_prefix))
     return string();
 
 // it is a scandinavian call

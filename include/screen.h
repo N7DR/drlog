@@ -1,4 +1,4 @@
-// $Id: screen.h 197 2021-11-21 14:52:50Z  $
+// $Id: screen.h 203 2022-03-28 22:08:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -76,6 +76,8 @@ constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
 using COLOUR_TYPE        = short;
 using PAIR_NUMBER_TYPE   = short;
 
+using PAIR_OF_COLOURS = std::pair<COLOUR_TYPE, COLOUR_TYPE>;
+
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
                       COLOUR_RED     { COLOR_RED },           ///< red
@@ -88,7 +90,7 @@ constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
                        
 extern pt_mutex screen_mutex;                   ///< mutex for the screen
 
-/*! \brief      Return a pair of colours
+/*! \brief      Return a pair of colours (in a single int)
     \param  n   pair number
     \return     the pair of colours that constitute pair number <i>n</i>
     
@@ -114,7 +116,7 @@ class cpair
 {
 protected:
 
-  std::vector< std::pair< COLOUR_TYPE, COLOUR_TYPE> > _colours;    ///< the (globally) used colour pairs
+  std::vector<PAIR_OF_COLOURS> _colours;    ///< the (globally) used colour pairs
 
   pt_mutex _colours_mutex { "CPAIR COLOURS"s };                         ///< allow thread-safe access
 
@@ -122,7 +124,7 @@ protected:
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-  PAIR_NUMBER_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
+  PAIR_NUMBER_TYPE _add_to_vector(const PAIR_OF_COLOURS& p);
 
 public:
 
@@ -143,7 +145,7 @@ public:
     \param  pair_nr     number of the pair
     \return             the foreground and background colours of the pair number <i>pair_nr</i>
 */
-  std::pair<COLOUR_TYPE, COLOUR_TYPE> fgbg(const PAIR_NUMBER_TYPE pair_nr) const;
+  PAIR_OF_COLOURS fgbg(const PAIR_NUMBER_TYPE pair_nr) const;
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
@@ -335,6 +337,10 @@ public:
   READ_AND_WRITE(fg);               ///< foreground colour
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
+
+/// get the foreground and background colours
+  inline PAIR_OF_COLOURS fgbg(void) const
+    { return { _fg, _bg }; }
   
 /*! \brief      Get a pointer to the underlying WINDOW
     \return     a pointer to the WINDOW

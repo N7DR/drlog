@@ -1,4 +1,4 @@
-// $Id: qso.cpp 192 2021-09-19 14:03:15Z  $
+// $Id: qso.cpp 204 2022-04-10 14:54:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -48,7 +48,8 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
 bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
 { string name_copy { field_name };
 
-  if (begins_with(name_copy, "received-"s))
+//  if (begins_with(name_copy, "received-"s))
+  if (name_copy.starts_with("received-"s))
     name_copy = substring(name_copy, 9);
 
   for (const auto& ef : fields_from_rules)
@@ -126,7 +127,8 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
   if (!processed and (name == "mycall"s))
     processed = ( _my_call = value, true );
 
-  if (!processed and (starts_with(name, "sent-"s)))
+//  if (!processed and (starts_with(name, "sent-"s)))
+  if (!processed and name.starts_with("sent-"s))
     processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
 
   return processed;
@@ -274,12 +276,14 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     const string& name  { nv.first };
     const string& value { nv.second };
 
-    if (!processed and (starts_with(name, "received-"s)))
+ //   if (!processed and (starts_with(name, "received-"s)))
+    if (!processed and name.starts_with("received-"s))
     { const string name_upper { to_upper(name.substr(9)) };
 
 //      ost << "name_upper = " << name_upper << endl;
 
-      if (!(rules.all_known_field_names() > name_upper))
+//      if (!(rules.all_known_field_names() > name_upper))
+      if (!rules.all_known_field_names().contains(name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
         alert("Unknown exch field: "s + name_upper);
       }
@@ -407,7 +411,8 @@ void QSO::populate_from_verbose_format(const string& str)
     const string& name  { nv.first };
     const string& value { nv.second };
 
-    if (!processed and (starts_with(name, "received-"s)))
+//    if (!processed and (starts_with(name, "received-"s)))
+    if (!processed and name.starts_with("received-"s))
     { const string         name_upper { to_upper(name.substr(9)) };
       const received_field rf         { name_upper, value , false, false };    // just populate name and value
 
@@ -493,7 +498,8 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
-    if (!processed and (starts_with(field, "sent-"s)))
+//    if (!processed and (starts_with(field, "sent-"s)))
+    if (!processed and field.starts_with("sent-"s))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = field_value;
       processed = true;
@@ -505,7 +511,8 @@ void QSO::populate_from_log_line(const string& str)
 //  present in original and not present in new
 //  present in original and present in new
 
-    if (!processed and (starts_with(field, "received-"s)))
+//    if (!processed and (starts_with(field, "received-"s)))
+    if (!processed and field.starts_with("received-"s))
     { if (_is_received_field_optional(field, exchange_fields))
       { ost << "OPTIONAL received field = " << field << endl;
 
@@ -606,7 +613,8 @@ void QSO::populate_from_log_line(const string& str)
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
-          if (starts_with(field, "received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
+//          if (starts_with(field, "received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
+          if (field.starts_with("received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           { //ost << "** received-PREC **" << endl;
             _received_exchange[received_index++].value(_callsign);
             //ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
@@ -785,7 +793,8 @@ specification tells us otherwise, that's what we do.
       value = _my_call;
       
 // TEXCH-xxx
-    if (starts_with(name, "TEXCH-"s))
+//    if (starts_with(name, "TEXCH-"s))
+    if (name.starts_with("TEXCH-"s))
     { const string field_name { name.substr(6) };
     
       if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
@@ -805,7 +814,8 @@ specification tells us otherwise, that's what we do.
     }
 
 // REXCH-xxx
-    if (starts_with(name, "REXCH-"s))
+//    if (starts_with(name, "REXCH-"s))
+    if (name.starts_with("REXCH-"s))
     { const string field_name { substring(name, 6) };
 
       if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
