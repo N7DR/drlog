@@ -25,15 +25,15 @@
 #include <netinet/tcp.h>
 
 using namespace std;
-using namespace   chrono;        // std::chrono
-using namespace   this_thread;   // std::this_thread
+using namespace   chrono;           // std::chrono
+using namespace   chrono_literals;  // std::chrono_literals
+using namespace   this_thread;      // std::this_thread
 
 extern message_stream ost;              ///< for debugging and logging
 extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 
 extern bool exiting;                    ///< is the program exiting?
 
-//pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };          ///< mutex for the cluster buffer
 pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
 
@@ -88,7 +88,8 @@ reconnect:
 
     catch (const socket_support_error& E)
     { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
-      sleep_for(minutes(1));    // sleep for one minute before retrying
+ //     sleep_for(minutes(1));    // sleep for one minute before retrying
+      sleep_for(1min);
 
       { SAFELOCK(thread_check);
 
@@ -255,7 +256,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
     { try
-      { size_t char_posn { copy.find(SPACE_STR) };
+      { size_t char_posn { copy.find(' ') };
 
         size_t space_posn;
 
@@ -264,8 +265,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
           _freq = frequency(_frequency_str);
 
           if (_valid_frequency())
-          { char_posn = copy.find_first_not_of(SPACE_STR, char_posn);
-            space_posn = copy.find_first_of(SPACE_STR, char_posn);
+          { char_posn = copy.find_first_not_of(' ', char_posn);
+            space_posn = copy.find_first_of(' ', char_posn);
 
             _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -274,16 +275,16 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             _canonical_prefix = li.canonical_prefix();
             _continent = li.continent();
 
-            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
-            space_posn = copy.find_first_of(SPACE_STR, char_posn);
+            char_posn = copy.find_first_not_of(' ', space_posn);
+            space_posn = copy.find_first_of(' ', char_posn);
 
             const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
 
-            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
-            space_posn = copy.find_first_of(SPACE_STR, char_posn);
-            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
+            char_posn = copy.find_first_not_of(' ', space_posn);
+            space_posn = copy.find_first_of(' ', char_posn);
+            char_posn = copy.find_first_not_of(' ', space_posn);
 
-            const size_t bra_posn { copy.find_last_of("<"s) };
+            const size_t bra_posn { copy.find_last_of('<') };
 
             if (bra_posn != string::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
@@ -342,22 +343,22 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
         }
 
         if (!_valid)
-        { const string copy       { remove_leading_spaces(substring(received_info, 6)) };
+        { const string copy{ remove_leading_spaces(substring(received_info, 6)) };
   
           if (const size_t colon_posn { copy.find(':') }; colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
             _poster_continent = db.info(_poster).continent();
 
-            size_t char_posn  { copy.find_first_not_of(SPACE_STR, colon_posn + 1) };
-            size_t space_posn { copy.find_first_of(SPACE_STR, char_posn) };
+            size_t char_posn  { copy.find_first_not_of(' ', colon_posn + 1) };
+            size_t space_posn { copy.find_first_of(' ', char_posn) };
 
             _frequency_str = copy.substr(char_posn, space_posn - char_posn);
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
             if (_valid_frequency())
-            { char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
-              space_posn = copy.find_first_of(SPACE_STR, char_posn);
+            { char_posn = copy.find_first_not_of(' ', space_posn);
+              space_posn = copy.find_first_of(' ', char_posn);
 
               _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -366,8 +367,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
 
-              char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
-              space_posn = copy.find_last_of(SPACE_STR);
+              char_posn = copy.find_first_not_of(' ', space_posn);
+              space_posn = copy.find_last_of(' ');
 
               _comment = copy.substr(char_posn);
               _valid = true;
@@ -452,8 +453,7 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
-//  return (_callsigns > callsign);
-  return _callsigns.contains(callsign);
+  return (callsign < _callsigns);
 }
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>
@@ -512,12 +512,14 @@ void monitored_posts::operator+=(const string& new_call)
 void monitored_posts::operator-=(const string& call_to_remove)
 { SAFELOCK(monitored_posts);
 
-  _callsigns.erase(call_to_remove);
+//  _callsigns.erase(call_to_remove);
+  _callsigns -= call_to_remove;
 
 // remove any entries that have this call
   const size_t original_size { _entries.size() };
 
-  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
+//  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
+  erase_if(_entries, [call_to_remove] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
 
   _is_dirty |= (original_size != _entries.size());
 }
@@ -530,7 +532,8 @@ void monitored_posts::prune(void)
 
   const size_t original_size { _entries.size() };
 
-  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+//  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+  erase_if(_entries, [now] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());
 }

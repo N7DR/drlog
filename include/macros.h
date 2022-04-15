@@ -227,17 +227,20 @@ concept bool VecInt = Vec<T> &&
   std::is_same_v<int, typename T::value_type>;
 */
 
+// see: https://stackoverflow.com/questions/51032671/idiomatic-way-to-write-concept-that-says-that-type-is-a-stdvector
+
 template <class, template<class...> class>
 inline constexpr bool is_specialization = false;
 
 template <template<class...> class T, class... Args>
 inline constexpr bool is_specialization<T<Args...>, T> = true;
 
-template <class T> concept is_deque_v = is_specialization<T, std::deque>;
+// basic types
+template <class T> concept is_int = std::is_same_v<T, int>;
+template <class T> concept is_uint = std::is_same_v<T, unsigned int>;
 
-template <class T> concept is_int_v = std::is_same_v<T, int>;
-
-template <class T> concept is_uint_v = std::is_same_v<T, unsigned int>;
+// standard containers
+template <class T> concept is_deque = is_specialization<T, std::deque>;
 
 template <class T> concept is_list_v = is_specialization<T, std::list>;
 
@@ -272,34 +275,6 @@ template <class T> concept is_sus_v = is_set_v<T> or is_unordered_set_v<T>;
 template <class T> concept is_ssuss_v = is_multiset_v<T> or is_unordered_multiset_v<T>;
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
-
-// is a type a deque?
-#if 0
-template<class T>
-struct is_deque
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_deque<std::deque<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_deque_v = is_deque<T>::value;
-#endif
-
-// is a type int?
-#if 0
-template<class T>
-struct is_int 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_int<int> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_int_v { is_int<T>::value };
-#endif
 
 #if 0
 // is a type a list?
@@ -473,20 +448,6 @@ struct is_string<std::string>
 
 template< class T>
 constexpr bool is_string_v = is_string<T>::value;
-#endif
-
-#if 0
-// is a type unsigned int?
-template<class T>
-struct is_unsigned_int 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_unsigned_int<unsigned int> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_unsigned_int_v = is_unsigned_int<T>::value;
 #endif
 
 #if 0
@@ -1114,7 +1075,7 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
 
 template <class M, class K>
 inline bool operator>(const M& m, const K& k)
-  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
+  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type> ) */
 { //using V  = typename M::mapped_type;
   //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
 
@@ -1126,7 +1087,7 @@ inline bool operator>(const M& m, const K& k)
 
 template <class M, class K>
 inline bool operator<(const K& k, const M& m)
-  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
+  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type>) */
 { //using V  = typename M::mapped_type;
   //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
 
@@ -1699,7 +1660,7 @@ auto operator+(const S& s1, E&& element) -> S
 */
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
-  requires is_deque_v<C> or is_list_v<C> or is_vector_v<C>
+  requires is_deque<C> or is_list_v<C> or is_vector_v<C>
 { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
@@ -1708,7 +1669,7 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 */
 template <typename C, typename E>
 inline void operator+=(C& c1, const E& element)
-  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 { c1.push_back(element); }
 
 /*! \brief      Insert an element into a list
@@ -1772,7 +1733,7 @@ inline void operator+=(Q& q1, const E& element)
 */
 template <typename D>
 void operator--(D& d /*, int*/) // int for post-decrement
-  requires is_deque_v<D>
+  requires is_deque<D>
 { if (!d.empty())
     d.pop_front();
 }
@@ -1783,7 +1744,7 @@ void operator--(D& d /*, int*/) // int for post-decrement
 */
 template <typename D>
 inline void operator-=(D& d, typename D::iterator&& it)
-  requires is_deque_v<D>
+  requires is_deque<D>
 { d.erase(std::forward<typename D::iterator>(it)); }
 
 /*! \brief      Remove an element referenced by an iterator from a deque
@@ -1792,7 +1753,7 @@ inline void operator-=(D& d, typename D::iterator&& it)
 */
 template <typename D>
 inline void operator-=(D& d, const typename D::iterator& it)
-  requires is_deque_v<D>
+  requires is_deque<D>
 { d.erase(it); }
 
 /*! \brief              Is an element in a deque, list or vector?
@@ -1801,7 +1762,7 @@ inline void operator-=(D& d, const typename D::iterator& it)
     \return             whether <i>element</i> is an element of <i>v</i>
 */
 template <typename C, typename E>
-  requires (is_deque_v<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
   { return std::ranges::find(c, element) != c.cend(); }
 

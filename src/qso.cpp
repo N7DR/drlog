@@ -46,11 +46,11 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
 bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
-{ string name_copy { field_name };
+{ const string name_copy { remove_from_start(field_name, "received-"s) };
 
 //  if (begins_with(name_copy, "received-"s))
-  if (name_copy.starts_with("received-"s))
-    name_copy = substring(name_copy, 9);
+//  if (name_copy.starts_with("received-"s))
+//    name_copy = substring(name_copy, 9);
 
   for (const auto& ef : fields_from_rules)
   { if (ef.name() == name_copy)
@@ -127,7 +127,6 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
   if (!processed and (name == "mycall"s))
     processed = ( _my_call = value, true );
 
-//  if (!processed and (starts_with(name, "sent-"s)))
   if (!processed and name.starts_with("sent-"s))
     processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
 
@@ -156,14 +155,14 @@ time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
 
 /// constructor
 QSO::QSO(void) :
-  _epoch_time(time(NULL))          // now
+  _epoch_time(time(NULL))           // now
 { constexpr int BUFSIZE { 26 };     // see man page for asctime_r
 
   struct tm    structured_time;
 
   gmtime_r(&_epoch_time, &structured_time);     // convert to UTC
   
-  array<char, BUFSIZE> buf;                          // buffer to hold the ASCII date/time info; see man page for gmtime()
+  array<char, BUFSIZE> buf;                     // buffer to hold the ASCII date/time info; see man page for gmtime()
   
   asctime_r(&structured_time, buf.data());      // convert to ASCII
 
@@ -211,86 +210,20 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 //    ost << "name = " << nv.first << ", value = " << nv.second << endl;
 //    ost << "Processed = " << boolalpha << processed << endl;
 
-#if 0
-    bool processed { false };
-
     const string& name  { nv.first };
     const string& value { nv.second };
 
-    if (!processed and (name == "number"s))
-       processed = ( _number = from_string<decltype(_number)>(value), true );
-
-    if (!processed and (name == "date"s))
-      processed = ( _date = value, true );
-
-    if (!processed and (name == "utc"s))
-      processed = ( _utc = value, true );
-
-    if (!processed and (name == "mode"s))
-      processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
-
-    if (!processed and (name == "frequency"s))               // old version
-    { _frequency_tx = value;
-
-      const double    f    { from_string<double>(_frequency_tx) };
-      const frequency freq { f };
-
-      processed = ( _band = static_cast<BAND>(freq), true );
-    }
-
-    if (!processed and (name == "frequency-tx"s))
-    { _frequency_tx = value;
-
-      if (!_frequency_tx.empty())
-      { const double    f    { from_string<double>(_frequency_tx) };
-        const frequency freq { f };
-
-        _band = static_cast<BAND>(freq);
-      }
-      processed = true;
-    }
-
-    if (!processed and (name == "frequency-rx"s))
-    { _frequency_rx = value;
-
-      if (!_frequency_rx.empty())
-      { }                                       // add something here when we actually use frequency-rx
-
-      processed = true;
-    }
-
-    if (!processed and (name == "hiscall"s))
-    { _callsign = value;
-      _canonical_prefix = location_db.canonical_prefix(_callsign);
-      _continent = location_db.continent(_callsign);
-      processed = true;
-    }
-
-    if (!processed and (name == "mycall"s))
-      processed = ( _my_call = value, true );
-
-    if (!processed and (starts_with(name, "sent-"s)))
-      processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
-#endif
-
-    const string& name  { nv.first };
-    const string& value { nv.second };
-
- //   if (!processed and (starts_with(name, "received-"s)))
     if (!processed and name.starts_with("received-"s))
     { const string name_upper { to_upper(name.substr(9)) };
 
 //      ost << "name_upper = " << name_upper << endl;
 
-//      if (!(rules.all_known_field_names() > name_upper))
-      if (!rules.all_known_field_names().contains(name_upper))
+      if (!(rules.all_known_field_names() > name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
         alert("Unknown exch field: "s + name_upper);
       }
 
       const bool is_possible_mult { rules.is_exchange_mult(name_upper) };
-
- //     ost << "is_possible_mult = " << is_possible_mult << endl;
 
       if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
         statistics.add_known_exchange_mult(name_upper, value);
@@ -316,9 +249,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 #endif
 
   _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
-
-//  ost << "_is_country_mult = " << _is_country_mult << endl;
-
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
@@ -346,72 +276,9 @@ void QSO::populate_from_verbose_format(const string& str)
   for (const auto& nv : name_value)
   { bool processed { _process_name_value_pair(nv) };
 
-#if 0
-    bool processed { false };
-
     const string& name  { nv.first };
     const string& value { nv.second };
 
-    if (!processed and (name == "number"s))
-       processed = ( _number = from_string<decltype(_number)>(value), true );
-
-    if (!processed and (name == "date"s))
-      processed = ( _date = value, true );
-
-    if (!processed and (name == "utc"s))
-      processed = ( _utc = value, true );
-
-    if (!processed and (name == "mode"s))
-      processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
-
-    if (!processed and (name == "frequency"s))               // old version
-    { _frequency_tx = value;
-
-      const double    f    { from_string<double>(_frequency_tx) };
-      const frequency freq { f };
-
-      processed = ( _band = static_cast<BAND>(freq), true );
-    }
-
-    if (!processed and (name == "frequency-tx"s))
-    { _frequency_tx = value;
-
-      if (!_frequency_tx.empty())
-      { const double    f    { from_string<double>(_frequency_tx) };
-        const frequency freq { f };
-
-        _band = static_cast<BAND>(freq);
-      }
-      processed = true;
-    }
-
-    if (!processed and (name == "frequency-rx"s))
-    { _frequency_rx = value;
-
-      if (!_frequency_rx.empty())
-      { }                                       // add something here when we actually use frequency-rx
-
-      processed = true;
-    }
-
-    if (!processed and (name == "hiscall"s))
-    { _callsign = value;
-      _canonical_prefix = location_db.canonical_prefix(_callsign);
-      _continent = location_db.continent(_callsign);
-      processed = true;
-    }
-
-    if (!processed and (name == "mycall"s))
-      processed = ( _my_call = value, true );
-
-    if (!processed and (starts_with(name, "sent-"s)))
-      processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
-#endif
-
-    const string& name  { nv.first };
-    const string& value { nv.second };
-
-//    if (!processed and (starts_with(name, "received-"s)))
     if (!processed and name.starts_with("received-"s))
     { const string         name_upper { to_upper(name.substr(9)) };
       const received_field rf         { name_upper, value , false, false };    // just populate name and value
@@ -458,7 +325,6 @@ void QSO::populate_from_log_line(const string& str)
   for (size_t idx { 0 }; idx < _received_exchange.size(); ++idx)
     ost << "  [" << idx << "] = " << _received_exchange[idx].value() << endl;
 
-
   for (size_t n { 0 }; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
     const string& field_value { vec[n] };
@@ -498,7 +364,6 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
-//    if (!processed and (starts_with(field, "sent-"s)))
     if (!processed and field.starts_with("sent-"s))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = field_value;
@@ -511,7 +376,6 @@ void QSO::populate_from_log_line(const string& str)
 //  present in original and not present in new
 //  present in original and present in new
 
-//    if (!processed and (starts_with(field, "received-"s)))
     if (!processed and field.starts_with("received-"s))
     { if (_is_received_field_optional(field, exchange_fields))
       { ost << "OPTIONAL received field = " << field << endl;
@@ -558,25 +422,7 @@ void QSO::populate_from_log_line(const string& str)
        { ost << "field has been removed in new" << endl;
           _received_exchange[received_index++].value(string());
        }
-
       }
-
-
-
-#if 0      
-      if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
-      { ost << "field = " << field << endl;
-        ost << "OPTIONAL AND NOT LEGAL VALUE" << endl;
-        ost << "Field to be tested = *" << substring(field, 9) << "*" << endl;
-        ost << "Value to be tested = *" << _received_exchange[received_index].value()<< "*" << endl;
-        ost << "Is legal value = " << boolalpha << rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()) << endl;
-
-        _received_exchange[received_index++].value(string());
-
-        if (received_index < _received_exchange.size())
-          _received_exchange[received_index++].value(field_value);  // assume that only one field is optional
-      }
-#endif
       else
       { if (received_index < _received_exchange.size())
         { ost << "NOT OPTIONAL" << endl;
@@ -613,7 +459,6 @@ void QSO::populate_from_log_line(const string& str)
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
-//          if (starts_with(field, "received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           if (field.starts_with("received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           { //ost << "** received-PREC **" << endl;
             _received_exchange[received_index++].value(_callsign);
@@ -631,14 +476,17 @@ void QSO::populate_from_log_line(const string& str)
   ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
 }
 
+#if 0
 /// is any of the exchange fields a mult?
 bool QSO::is_exchange_mult(void) const
-{ for (const auto& field : _received_exchange)
-    if (field.is_mult())
-      return true;
+{ //for (const auto& field : _received_exchange)
+  //  if (field.is_mult())
+  //    return true;
 
-  return false;
+  //return false;
+  return ANY_OF(_received_exchange, [] (const auto& field) { field.is_mult(); });
 }
+#endif
 
 /*! \brief              Set a field to be an exchange mult
     \param  field_name  name of field
@@ -665,10 +513,10 @@ string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   static vector< vector< string> > individual_values;
   
   if (!record_length)                                         // if we don't yet know the record length
-  { const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
+  { const vector<string> template_fields { split_string(cabrillo_qso_template, ',') };         // colon-delimited values
   
     for (const auto& template_field : template_fields)
-      individual_values += split_string(remove_peripheral_spaces(template_field), ":"s);
+      individual_values += split_string(remove_peripheral_spaces(template_field), ':');
   
     for (const auto& value : individual_values)
     { const unsigned int last_char_posn { from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1 };
@@ -793,12 +641,12 @@ specification tells us otherwise, that's what we do.
       value = _my_call;
       
 // TEXCH-xxx
-//    if (starts_with(name, "TEXCH-"s))
     if (name.starts_with("TEXCH-"s))
     { const string field_name { name.substr(6) };
     
-      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
-      { const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
+      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
+      { //const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
+        const vector<string> vec { clean_split_string(field_name, '+') };
 
         for (const auto& name : vec)
         { for (const auto& pss : _sent_exchange)
@@ -814,12 +662,12 @@ specification tells us otherwise, that's what we do.
     }
 
 // REXCH-xxx
-//    if (starts_with(name, "REXCH-"s))
     if (name.starts_with("REXCH-"s))
     { const string field_name { substring(name, 6) };
 
       if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
-      { const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
+      { //const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
+        const vector<string> vec { clean_split_string(field_name, '+') };
 
         for (const auto& name : vec)
         { if (!received_exchange(name).empty())
@@ -906,6 +754,8 @@ string QSO::verbose_format(void) const
 
     <i>rule_to_match is</i> from the configuration file, and looks like:
       [IOTA != -----]
+
+    I don't think that this is currently used.
 */
 bool QSO::exchange_match(const string& rule_to_match) const
 {
@@ -952,17 +802,20 @@ bool QSO::exchange_match(const string& rule_to_match) const
   return false;
 }
 
+#if 0
 /*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
 bool QSO::exchange_match_string(const string& target) const
-{ for (const auto& field : _received_exchange)
-    if (field.value() == target)
-      return true;
+{ //for (const auto& field : _received_exchange)
+  //  if (field.value() == target)
+  //    return true;
 
-  return false;
+  //return false;
+  return ANY_OF(_received_exchange, [] (onst auto& field) { return (field.value() == target); } );
 }
+#endif
 
 /*! \brief              Return a single field from the received exchange
     \param  field_name  the name of the field
@@ -998,14 +851,17 @@ string QSO::sent_exchange(const string& field_name) const
     \param  field_name  the name of the field
     \return             whether <i>field_name</i> is present in the sent exchange
 */
+#if 0
 bool QSO::sent_exchange_includes(const string& field_name) const
-{ for (const auto& field : _sent_exchange)
-  { if (field.first == field_name)
-      return true;
-  }
+{ //for (const auto& field : _sent_exchange)
+  //{ if (field.first == field_name)
+  //    return true;
+  //}
 
-  return false;
+  //return false;
+  return ANY_OF(_sent_exchange, [] (const auto& field) { return (field.first == field_name); });
 }
+#endif
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
     \return     QSO formatted for writing into the LOG window
@@ -1204,23 +1060,27 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
   if (posn >= str.size())
     return (posn = string::npos, empty_pair);
 
-  const size_t first_char_posn { str.find_first_not_of(SPACE_STR, posn) };
+//  const size_t first_char_posn { str.find_first_not_of(SPACE_STR, posn) };
+  const size_t first_char_posn { str.find_first_not_of(' ', posn) };
 
   if (first_char_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
-  const size_t equals_posn { str.find("="s, first_char_posn) };
+//  const size_t equals_posn { str.find("="s, first_char_posn) };
+  const size_t equals_posn { str.find('=', first_char_posn) };
 
   if (equals_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
   const string name                  { remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn)) };
-  const size_t value_first_char_posn { str.find_first_not_of(SPACE_STR, equals_posn + 1) };
+//  const size_t value_first_char_posn { str.find_first_not_of(SPACE_STR, equals_posn + 1) };
+  const size_t value_first_char_posn { str.find_first_not_of(' ', equals_posn + 1) };
 
   if (value_first_char_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
-  const size_t space_posn { str.find(SPACE_STR, value_first_char_posn) };
+//  const size_t space_posn { str.find(SPACE_STR, value_first_char_posn) };
+  const size_t space_posn { str.find(' ', value_first_char_posn) };
   const string value      { (space_posn == string::npos) ? str.substr(value_first_char_posn)
                                                          : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };
 

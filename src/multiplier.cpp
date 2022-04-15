@@ -32,13 +32,9 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
 MULTIPLIER_VALUES multiplier::_filter_asterisks(const MULTIPLIER_VALUES& mv) const
 { MULTIPLIER_VALUES rv { mv };
 
-//    REMOVE_IF_AND_RESIZE(rv, [] (const std::string& str) { return contains(str, '*'); } );
-    erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
+  erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
 
-//    FOR_ALL(mv, [&rv] (const std::string& str) { if (!contains(str, '*')) rv += str; } );
-//    std::ranges::copy_if(mv.begin(), mv.end(), rv.begin(), [] (const auto& str) { return !contains(str, '*'); } );    // I don't know why this doesn't work
-
-    return rv;
+  return rv;
 }
 
 /*! \brief          Add a value to the set of known values
@@ -72,7 +68,6 @@ void multiplier::remove_known(const string& str)
   if (_used)
     _known.erase(str);
 
-//  _all_values_are_mults = ANY_OF(_known, [] (const string& str) { return contains(str, '*'); } );
   _all_values_are_mults = ALL_OF(_known, [] (const string& str) { return !contains(str, '*'); } );
 }
 
@@ -83,8 +78,7 @@ void multiplier::remove_known(const string& str)
 bool multiplier::is_known(const string& str) const
 { SAFELOCK(multiplier);
 
-//  return (_used ? (_known > str) : false);
-  return (_used ? _known.contains(str) : false);
+  return (_used ? (_known > str) : false);
 }
 
 /*! \brief          Add a worked multiplier
@@ -107,12 +101,15 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
 
     if (rv)
-    { pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
+    { //pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
+      pb[ANY_BAND] += str;        // ANY_BAND, MODE
 
       auto& pb_any { _worked[ANY_MODE] };
 
-      pb_any[b_nr].insert(str);        // BAND, ANY_MODE
-      pb_any[ANY_BAND].insert(str);    // ANY_BAND, ANY_MODE
+//      pb_any[b_nr].insert(str);        // BAND, ANY_MODE
+//      pb_any[ANY_BAND].insert(str);    // ANY_BAND, ANY_MODE
+      pb_any[b_nr] += str;        // BAND, ANY_MODE
+      pb_any[ANY_BAND] += str;    // ANY_BAND, ANY_MODE
     }
 
     return rv;
@@ -154,9 +151,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 // is it still present in any band for this mode?
     bool present { false };
 
-    for (int n {MIN_BAND}; n < MAX_BAND; ++n)
-//      present |= (_worked[m_nr][n] > str);
-      present |= _worked[m_nr][n].contains(str);
+    for (int n {MIN_BAND}; !present and (n <= MAX_BAND); ++n)
+      present = (_worked[m_nr][n] > str);
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
@@ -164,17 +160,14 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 // is it still present in any mode for this band?
     present = false;
 
-    for (int n {MIN_MODE}; n < MAX_MODE; ++n)
-//      present |= (_worked[n][b_nr] > str);
-      present |= _worked[n][b_nr].contains(str);
+    for (int n {MIN_MODE}; !present and (n <= MAX_MODE); ++n)
+      present = (_worked[n][b_nr] > str);
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
 
 // is it still present in any band and any mode?
-//    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
-    present = _worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str);
-
+    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
 
     if (!present)
       _worked[ANY_MODE][ANY_BAND].erase(str);
@@ -197,7 +190,8 @@ bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
   const MULTIPLIER_VALUES& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
 
 //  return (worked_this_band.find(str) != worked_this_band.cend());
-  return worked_this_band.contains(str);
+//  return worked_this_band.contains(str);
+  return (worked_this_band > str);
 }
 
 /*! \brief      Number of mults worked on a particular band and mode

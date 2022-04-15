@@ -419,6 +419,21 @@ string remove_char(const string& cs, const char char_to_remove)
   return rv;
 } 
 
+/*! \brief      Remove specific string from the start of a string if it is present
+    \param  s   original string
+    \param  ss  substring to remove
+    \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
+*/
+string remove_from_start(const string& s, const string& ss)
+{ if (ss.empty())
+    return s;
+
+  if (s.starts_with(ss))
+    return substring(s, ss.size());
+
+  return s;
+}
+
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
     \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>

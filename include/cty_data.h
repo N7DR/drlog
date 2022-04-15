@@ -196,8 +196,8 @@ public:
     \return         whether <i>call</i> is an alternative callsign
 */
   inline bool is_alternative_callsign(const std::string& call) const
-//    { return contains(_alt_callsigns, call); }
-    { return _alt_callsigns.contains(call); }
+//    { return contains(_alt_callsigns, call); }   
+    { return (_alt_callsigns > call); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
@@ -205,7 +205,8 @@ public:
 */
   inline bool is_alternative_prefix(const std::string& pfx) const
 //    { return contains(_alt_prefixes, pfx); }
-    { return _alt_prefixes.contains(pfx); }
+//    { return _alt_prefixes.contains(pfx); }
+    { return (_alt_prefixes > pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };
@@ -429,6 +430,8 @@ protected:
   using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
   using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
 
+  mutable std::recursive_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
+
   LOCATION_DBTYPE _db;          ///< prefix-associated info -- the original database
   LOCATION_DBTYPE _alt_call_db; ///< database of alternative calls
 
@@ -454,8 +457,6 @@ protected:
 */
   void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
 
-//  mutable pt_mutex _location_database_mutex { "LOCATION DATABASE"s };  ///< to make location_database objects thread-safe;
-  mutable std::recursive_mutex _location_database_mutex;
 
 public:
 
@@ -475,7 +476,7 @@ public:
   inline explicit location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC)
     { _init(cty, country_list); }
 
-/// copy constructor
+/// no copy constructor
   location_database(const location_database&) = delete;
 
 /*! \brief                  Prepare a default-constructed object for use
@@ -515,7 +516,7 @@ public:
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
-  auto countries(void) const -> std::unordered_set<std::string>;
+  std::unordered_set<std::string> countries(void) const;
 
 /// create a set of all the canonical prefixes for a particular continent
   std::unordered_set<std::string> countries(const std::string& cont_target) const;

@@ -47,7 +47,8 @@ protected:
     into the correct element of the <i>_db</i> array
 */
   inline size_t _to_valid_size(const size_t sz) const
-    { return std::max(std::min(sz, MAX_FUZZY_SIZE), MIN_FUZZY_SIZE); }
+//    { return std::max(std::min(sz, MAX_FUZZY_SIZE), MIN_FUZZY_SIZE); }
+    { return std::clamp(sz, MIN_FUZZY_SIZE, MAX_FUZZY_SIZE); }
 
 public:
 
@@ -98,8 +99,7 @@ public:
     \return         whether <i>call</i> is present in the database
 */
   inline bool contains(const std::string& call) const
-//    { return (_db[ _to_valid_size(call.length()) ] > call); }
-    { return _db[ _to_valid_size(call.length()) ].contains(call); }
+    { return (_db[ _to_valid_size(call.length()) ] > call); }
   
 /*! \brief          Return matches
     \param  key     basic call against which to compare

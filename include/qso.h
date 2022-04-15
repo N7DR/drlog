@@ -130,7 +130,8 @@ public:
   READ(is_dupe);                        ///< is this QSO a dupe?
   
 /// is any exchange field a mult?
-  bool is_exchange_mult(void) const;
+  inline bool is_exchange_mult(void) const
+    { return ANY_OF(_received_exchange, [] (const auto& field) { return field.is_mult(); }); }
 
 /*! \brief              Set a field to be an exchange mult
     \param  field_name  name of field
@@ -199,8 +200,10 @@ public:
     \param  rule_to_match   boolean rule to attempt to match
     \return                 whether the exchange in the QSO matches <i>rule_to_match</i>
 
-    <i>rule_to_match</i> is from the configuration file, and looks like:
+    <i>rule_to_match is</i> from the configuration file, and looks like:
       [IOTA != -----]
+
+    I don't think that this is currently used.
 */
   bool exchange_match(const std::string& rule_to_match) const;
 
@@ -208,7 +211,8 @@ public:
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
-  bool exchange_match_string(const std::string& target) const;
+  inline bool exchange_match_string(const std::string& target) const
+    { return ANY_OF(_received_exchange, [target] (const auto& field) { return (field.value() == target); } ); }
 
 /*! \brief              Return a single field from the received exchange
     \param  field_name  name of field to return
@@ -246,7 +250,8 @@ public:
     \param  field_name  name of field to test
     \return             whether the sent exchange includes the field <i>field_name</i>
 */
-  bool sent_exchange_includes(const std::string& field_name) const;
+  inline bool sent_exchange_includes(const std::string& field_name) const
+    { return ANY_OF(_sent_exchange, [field_name] (const auto& field) { return (field.first == field_name); }); }
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
     \return     QSO formatted for writing into the LOG window

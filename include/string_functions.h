@@ -406,6 +406,13 @@ inline bool starts_with(const std::string& cs, const T& ss)
 //inline bool begins_with(const std::string& cs, const std::string& ss)
 //  { return (starts_with(cs, ss) ); }
 
+/*! \brief      Remove specific string from the start of a string if it is present
+    \param  s   original string
+    \param  ss  substring to remove
+    \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
+*/
+std::string remove_from_start(const std::string& s, const std::string& ss);
+
 /*! \brief      Does a string end with a particular substring?
     \param  cs  string to test
     \param  ss  substring to look for

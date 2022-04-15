@@ -95,7 +95,8 @@ public:
 */
   inline bool is_choice(const std::string& field_name) const
 //    { return contains(_choices, field_name); }
-    { return _choices.contains(field_name); }
+//    { return _choices.contains(field_name); }
+    { return (_choices > field_name); }
 
 /// return the inverse of whether there are any choices
   inline bool empty(void) const
@@ -119,6 +120,7 @@ class exchange_field_values
 protected:
 
   std::string _name;                           ///< name of the exchange field
+
   std::map<std::string,                        /* a canonical field value */
           std::set                             /* each equivalent value is a member of the set, including the canonical value */
             <std::string                       /* indistinguishable legal values */
@@ -214,7 +216,8 @@ public:
 */
   inline bool canonical_value_present(const std::string& putative_cv_value) const
 //    { return contains(_values, putative_cv_value); }
-    { return _values.contains(putative_cv_value); }
+//    { return _values.contains(putative_cv_value); }
+    { return (_values > putative_cv_value); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
     \param  putative_cv_value   string to test
@@ -290,7 +293,7 @@ public:
  std::vector<exchange_field> expand(void) const;
 
 /// exchange_field < exchange_field
-  inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to work
+  inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to be valid
     { return (_name < ef.name()); }
 
 /// serialise
@@ -446,6 +449,14 @@ protected:
 */
   std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \param  m                   mode
+    \param  expand_choices      whether to expand CHOICE fields
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
+*/
+  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
+
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         context for this contest
     \param  location_db     location database
@@ -476,14 +487,6 @@ protected:
     Incorporates the parsed information into _exch
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
-
-/*! \brief                      Get the expected exchange fields for a particular canonical prefix
-    \param  canonical_prefix    canonical prefix
-    \param  m                   mode
-    \param  expand_choices      whether to expand CHOICE fields
-    \return                     the exchange fields associated with <i>canonical_prefix</i>
-*/
-  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
 
 public:
   
@@ -689,7 +692,8 @@ public:
     { SAFELOCK(rules);
 
 //      return contains(_permitted_exchange_values, field_name);
-      return _permitted_exchange_values.contains(field_name);
+//      return _permitted_exchange_values.contains(field_name);
+      return (_permitted_exchange_values > field_name);
     }
 
 /*! \brief              Is a particular exchange field a regex?
