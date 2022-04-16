@@ -631,13 +631,6 @@ public:
 */
   std::vector<std::string> window_name_contains(const std::string& substr) const;
 
-/*! \brief      Is a particular frequency within any marked range?
-    \param  m   mode
-    \param  f   frequency to test
-    \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
-*/
-//  bool mark_frequency(const MODE, const frequency& f);
-
 /*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange
 */

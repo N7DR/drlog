@@ -94,28 +94,23 @@ cty_record::cty_record(const string& record)
   
   _country_name = fields[CTY_NAME];
 
-//  _cq_zone = from_string<decltype(_cq_zone)>(fields[CTY_CQZ]);
   auto_from_string(fields[CTY_CQZ], _cq_zone);
   if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
-//  _itu_zone = from_string<decltype(_itu_zone)>(fields[CTY_ITUZ]);
   auto_from_string(fields[CTY_ITUZ], _itu_zone);
   if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
   _continent = fields[CTY_CONTINENT];
 
-//  if ( !(CONTINENT_SET > _continent) )
-  if (!CONTINENT_SET.contains(_continent))
+  if ( !(CONTINENT_SET > _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
-//  _latitude = from_string<decltype(_latitude)>(fields[CTY_LAT]);
   auto_from_string(fields[CTY_LAT], _latitude);
   if (_latitude < -90 or _latitude > 90)
     throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[CTY_LAT] + " in record for "s + _country_name);
 
-//  _longitude = from_string<decltype(_longitude)>(fields[CTY_LONG]);
   auto_from_string(fields[CTY_LONG], _longitude);
   if (_longitude < -180 or _longitude > 180)
     throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[CTY_LONG] + " in record for "s + _country_name);
@@ -145,14 +140,15 @@ cty_record::cty_record(const string& record)
     _prefix = _prefix.substr(1);        // remove the asterisk
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
-  const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[CTY_ALTS], ","s)) };
+ // const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[CTY_ALTS], ","s)) };
+  const vector<string> presumptive_prefixes { clean_split_string(fields[CTY_ALTS], ',') };
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;
   vector<string> alt_prefixes;
   
   for (const auto& candidate : presumptive_prefixes)
-  { vector<string>* vsp { ( contains(candidate, "="s) ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
+  { vector<string>* vsp { ( contains(candidate, '=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
     (*vsp) += candidate;
   }
@@ -238,15 +234,15 @@ alternative_country_info::alternative_country_info(const string& record, const s
   { _identifier = substring(record, 0, end_identifier);      // read up to the first delimiter
   
     if (const string cq_zone_str { delimited_substring(record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
-    { //_cq_zone = from_string<decltype(_cq_zone)>(cq_zone_str);
-      auto_from_string(cq_zone_str, _cq_zone);
+    { auto_from_string(cq_zone_str, _cq_zone);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
     if (const string itu_zone_str { delimited_substring(record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
-    { _itu_zone = from_string<int>(itu_zone_str);
+    { //_itu_zone = from_string<int>(itu_zone_str);
+      auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
         throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in alternative record for "s + _identifier);
@@ -279,7 +275,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 */
 cty_data::cty_data(const string& filename)
 { //const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
-  const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
+  //const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
+  const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ';') };                  // read file, remove EOL markers and split into records
   
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
@@ -292,7 +289,8 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 { //const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };   // read file and remove EOL markers
   //const vector<string> records     { split_string(entire_file, ";"s) };                                 // split into records
 
-  const vector<string> records { split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
+//  const vector<string> records { split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
+  const vector<string> records { split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR } ) , ';') };                  // read file, remove EOL markers and split into records
 
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );        // applies to base class
 }
@@ -521,7 +519,8 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
       add_to_database(rec, aci, prefix_or_callsign);
     }
     else                                  // country is in DXCC list; don't add if there's an entry already
-    { if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
+    { //if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
+      if (!(db > prefix_or_callsign))    // if it's not already in the database
         add_to_database(rec, aci, prefix_or_callsign);
     }
   }
@@ -532,16 +531,6 @@ location_database::location_database(const string& filename, const COUNTRY_LIST 
 { if (!filename.empty())
     _init(cty_data(filename), country_list);
 }
-
-/// construct from CTY.DAT data and the definition of which country list to use
-//location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list)
-//{ _init(cty, country_list);
-//}
-
-/// prepare a default-constructed object for use
-//void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
-//{ _init(cty, country_list);
-//}
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>
@@ -569,7 +558,6 @@ location_info location_database::info(const string& callpart) const
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
-//  SAFELOCK(_location_database);
   lock_guard lg(_location_database_mutex);
 
   LOCATION_DBTYPE::const_iterator db_posn { _db_checked.find(callsign) };
@@ -591,8 +579,10 @@ location_info location_database::info(const string& callpart) const
                                                              };
 
 // see if it's some guy already in the db but now signing /QRP
-  if ( (callsign.length() >= 5) and (last(callsign, 4) == "/QRP"s) )
-  { const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
+//  if ( (callsign.length() >= 5) and (last(callsign, 4) == "/QRP"s) )
+  if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"s) )
+  { //const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
+    const string target { remove_from_end(callsign, 4) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
     
@@ -607,11 +597,13 @@ location_info location_database::info(const string& callpart) const
   }
 
 // /MM and /AM are in no country
-  if ( (last(callsign, 3) == "/AM"s) or (last(callsign, 3) == "/MM"s) )
+//  if ( (last(callsign, 3) == "/AM"s) or (last(callsign, 3) == "/MM"s) )
+  if (callsign.ends_with("/AM"s) or callsign.ends_with("/MM"s))
     return insert_best_info(location_info());
   
 // try to determine the canonical prefix
-  if (!contains(callsign, "/"s) or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
+//  if (!contains(callsign, "/"s) or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
+  if (!contains(callsign, '/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
@@ -676,8 +668,7 @@ location_info location_database::info(const string& callpart) const
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
-//      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
-      if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
+      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
       { const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
         if (posn_1 != string::npos)
@@ -710,7 +701,7 @@ location_info location_database::info(const string& callpart) const
 
 // it looks like maybe it's a reciprocal license
 // how many slashes are there?
-  vector<string> parts { split_string(callsign, "/"s) };
+  vector<string> parts { split_string(callsign, '/') };
 
   if (parts.size() == 1)        // slash is first or last character
     return location_info();
@@ -729,20 +720,19 @@ location_info location_database::info(const string& callpart) const
     if (found_0 and !found_1)                        // first part had an exact match
       return insert_best_info( guess_zones(callsign, db_posn_0->second) );
 
-// we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
+// we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat;
 // add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
 // should be a very rare occurrence
     static const set<string> russian_long_prefixes { "RU4W"s };
 
     if (found_1 and !found_0)                        // second part had an exact match
-    { //if (!(russian_long_prefixes > parts[1]))         // the normal case
-      if (!russian_long_prefixes.contains(parts[1]))         // the normal case
+    { if (!(russian_long_prefixes > parts[1]))         // the normal case
         return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       else                                             // the pathological case, a call like "K4/RU4W"
         return insert_best_info( info(parts[0]) );
     }
 
-    if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
+    if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2)
     { if (parts[0].length() > parts[1].length())  // choose longest match
         return insert_best_info( guess_zones(callsign, db_posn_0->second) );
       else
@@ -814,7 +804,6 @@ location_info location_database::info(const string& callpart) const
     
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
-//    _db_checked.erase(target);
     _db_checked -= target;
     _db_checked += { callsign, best_info };
         
@@ -829,9 +818,12 @@ auto location_database::countries(void) const -> unordered_set<string>
 { std::lock_guard lg(_location_database_mutex);
 
   unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
-// std::result_of<decltype(&foo::memfun1)(foo, int)>::type  https://stackoverflow.com/questions/26107041/how-can-i-determine-the-return-type-of-a-c11-member-function
-//  result_of<decltype(&location_database::countries)(location_database, void) const>::type rv;
-//    std::result_of<decltype(&C::Func)(C, char, int&)>::type g = 3.14;  // https://en.cppreference.com/w/cpp/types/result_of
+
+//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >;
+
+//  using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
+//if constexpr(std::is_same_v<std::invoke_result_t<Callable, Args...>, void>) {
+//using ptr_to_print_type = std::result_of_t<decltype(&Foo::print)(Foo, Args ...)>
 
   FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
 
@@ -844,7 +836,6 @@ unordered_set<string> location_database::countries(const string& cont_target) co
 
   unordered_set <string> rv;
 
-//  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
   ranges::copy_if(all_countries, inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
@@ -864,10 +855,12 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
+ // const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
+  const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
 
 //  if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
-  if (!contains(substrings, ss))
+//  if (!contains(substrings, ss))
+  if (!(substrings > ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
   const size_t posn_1 { line.find(']') };
@@ -878,7 +871,8 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
 
   _region_name = ::substring(line, posn_1 + 1, posn_2 - posn_1 - 1);
 
-  const vector<string> fields { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), SPACE_STR)) };
+//  const vector<string> fields { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), SPACE_STR)) };
+  const vector<string> fields { clean_split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), ' ') };
 
   try
   { _region_abbreviation = fields.at(0);
@@ -929,9 +923,9 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
   { const vector<string> lines { to_lines(replace_char(read_file(path, filename), '\t', ' ')) };
 
     for (const auto& line : lines)
-    { //if (!starts_with(line, "//"s))
-      if (!line.starts_with("//"s))
-      { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
+    { if (!line.starts_with("//"s))
+      { //const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
+        const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
 
         for (const auto& sstring : substrings)
           _data += { sstring, russian_data_per_substring(sstring, line) };

@@ -185,48 +185,6 @@ public: \
 template<typename T>
 using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
-// https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
-// https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
-
-//(std::is_same_v<typename T::value_type, U>)
-//template< typename T1, typename T2 >
-//struct is_type
-//  { constexpr static bool value { false }; };
-
-#if 0
-template< typename T1, typename T2 >
-struct is_type
-  { constexpr static bool value { std::is_same_v<base_type<T1>, base_type<T2>> }; };
-
-template< typename T1, typename T2 >
-  constexpr bool is_type_v = is_type<T1, T2>::value;
-
-template< typename T1, typename T2 >
-using IS_DEQUE = is_type_v<T1, std::deque<T2>>
-
-#endif
-
-//template< typename T1, typename T2 >
-//struct is_same_type      { enum { result = false }; };
-
-//template< typename T>
-//struct is_same_type<T,T> { enum { result = true }; };
-/*
-https://stackoverflow.com/questions/51032671/idiomatic-way-to-write-concept-that-says-that-type-is-a-stdvector
-
-template<class, template<class...> class>
-inline constexpr bool is_specialization = false;
-template<template<class...> class T, class... Args>
-inline constexpr bool is_specialization<T<Args...>, T> = true;
-
-template<class T>
-concept bool Vec = is_specialization<T, std::vector>;
-
-template<class T>
-concept bool VecInt = Vec<T> && 
-  std::is_same_v<int, typename T::value_type>;
-*/
-
 // see: https://stackoverflow.com/questions/51032671/idiomatic-way-to-write-concept-that-says-that-type-is-a-stdvector
 
 template <class, template<class...> class>
@@ -236,17 +194,14 @@ template <template<class...> class T, class... Args>
 inline constexpr bool is_specialization<T<Args...>, T> = true;
 
 // basic types
-template <class T> concept is_int = std::is_same_v<T, int>;
+template <class T> concept is_int  = std::is_same_v<T, int>;
 template <class T> concept is_uint = std::is_same_v<T, unsigned int>;
 
 // standard containers
 template <class T> concept is_deque = is_specialization<T, std::deque>;
-
-template <class T> concept is_list_v = is_specialization<T, std::list>;
-
-template <class T> concept is_map_v = is_specialization<T, std::map>;
-
-template <class T> concept is_multimap_v = is_specialization<T, std::multimap>;
+template <class T> concept is_list  = is_specialization<T, std::list>;
+template <class T> concept is_map   = is_specialization<T, std::map>;
+template <class T> concept is_multimap = is_specialization<T, std::multimap>;
 
 template <class T> concept is_queue_v = is_specialization<T, std::queue>;
 
@@ -266,43 +221,15 @@ template <class T> concept is_unordered_set_v = is_specialization<T, std::unorde
 
 template <class T> concept is_vector_v = is_specialization<T, std::vector>;
 
-template <class T> concept is_mum_v = is_map_v<T> or is_unordered_map_v<T>;
+template <class T> concept is_mum_v = is_map<T> or is_unordered_map_v<T>;
 
-template <class T> concept is_mmumm_v = is_multimap_v<T> or is_unordered_multimap_v<T>;
+template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap_v<T>;
 
 template <class T> concept is_sus_v = is_set_v<T> or is_unordered_set_v<T>;
 
 template <class T> concept is_ssuss_v = is_multiset_v<T> or is_unordered_multiset_v<T>;
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
-
-#if 0
-// is a type a list?
-template<class T>
-struct is_list 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_list<std::list<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_list_v = is_list<T>::value;
-#endif
-
-#if 0
-// is a type a map?
-template<class T>
-struct is_map 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_map<std::map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_map_v = is_map<T>::value;
-#endif
 
 #if 0
 // is a type a queue?
@@ -351,10 +278,6 @@ template< class T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 #endif
 
-// is a type a map or unordered map?
-//template<class T>
-//constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
-
 #if 0
 // is a type an unordered set?
 template<class T>
@@ -380,17 +303,6 @@ template <class T> concept SUS = is_sus_v<T>;
 
 #if 0
 // is a type a multimap or unordered multimap?
-template<class T>
-struct is_multimap 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_multimap<std::multimap<K, V>> 
-  { constexpr static bool value { true }; };
-  
-template<class T>
-constexpr bool is_multimap_v { is_multimap<T>::value };
-
 template<class T>
 struct is_unordered_multimap 
   { constexpr static bool value { false }; };
@@ -1011,13 +923,23 @@ public:                                                                         
     { std::get<7>(*this) = var; }                                                           \
 }
 
+/*! \brief      Does a vector contain a particular member?
+    \param  v   vector to be tested
+    \param  e   object to be tested for membership
+    \return     Whether <i>e</i> is a member of <i>v</i>
+*/
+template <class T, class U>
+inline bool operator>(const T& v, const U& e)
+  requires (is_vector_v<T>) and (std::is_same_v<typename T::value_type, U>)
+  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
+
 /*! \brief      Does a set or unordered_set contains a particular member?
     \param  s   set or unordered_set  to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
 template <class T, class U>
-bool operator>(const T& s, const U& v)
+inline bool operator>(const T& s, const U& v)
   requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
   { return s.contains(v); }
 
@@ -1027,7 +949,7 @@ bool operator>(const T& s, const U& v)
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
 template <class E, class S>
-bool operator<(const E& v, const S& s)
+inline bool operator<(const E& v, const S& s)
   requires (is_sus_v<S>) and (std::is_same_v<typename S::value_type, E>)
 //  { return s.contains(v); }
   { return (s > v); }
@@ -1660,7 +1582,7 @@ auto operator+(const S& s1, E&& element) -> S
 */
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
-  requires is_deque<C> or is_list_v<C> or is_vector_v<C>
+  requires is_deque<C> or is_list<C> or is_vector_v<C>
 { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
@@ -1669,7 +1591,7 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 */
 template <typename C, typename E>
 inline void operator+=(C& c1, const E& element)
-  requires (is_deque<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 { c1.push_back(element); }
 
 /*! \brief      Insert an element into a list
@@ -1678,7 +1600,7 @@ inline void operator+=(C& c1, const E& element)
 */
 template <typename L>
 inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
-  requires is_list_v<L>
+  requires is_list<L>
 { l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
 
 /*! \brief      Insert an element into a list
@@ -1687,7 +1609,7 @@ inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::
 */
 template <typename L>
 inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
-  requires is_list_v<L>
+  requires is_list<L>
 { l1.insert(pr.first, pr.second); }
 
 /*! \brief              Remove all elements with a particular value from a list
@@ -1696,7 +1618,7 @@ inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typena
 */
 template <typename C>
 inline void operator-=(C& c1, typename C::value_type&& element)
-  requires is_list_v<C>
+  requires is_list<C>
 { c1.remove(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Remove all elements with a particular value from a list
@@ -1705,7 +1627,7 @@ inline void operator-=(C& c1, typename C::value_type&& element)
 */
 template <typename C>
 inline void operator-=(C& c1, const typename C::value_type& element)
-  requires is_list_v<C>
+  requires is_list<C>
 { c1.remove(element); }
 
 /*! \brief              Append an element to a queue
@@ -1762,7 +1684,7 @@ inline void operator-=(D& d, const typename D::iterator& it)
     \return             whether <i>element</i> is an element of <i>v</i>
 */
 template <typename C, typename E>
-  requires (is_deque<C> or is_list_v<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
   { return std::ranges::find(c, element) != c.cend(); }
 
@@ -1788,7 +1710,7 @@ auto RANGE(std::initializer_list<T> l)
     \return         first element in <i>c<i> for which <i>pred</i> is true; if none, then a default-constructed element
 */
 template <class C, class UnaryPredicate>
-  requires is_list_v<C>
+  requires is_list<C>
 typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
   { const auto cit { FIND_IF(c, pred) };
 
