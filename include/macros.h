@@ -208,8 +208,7 @@ template <class T> concept is_queue              = is_specialization<T, std::que
 template <class T> concept is_set                = is_specialization<T, std::set>;
 template <class T> concept is_unordered_map      = is_specialization<T, std::unordered_map>;
 template <class T> concept is_unordered_multimap = is_specialization<T, std::unordered_multimap>;
-
-template <class T> concept is_unordered_multiset_v = is_specialization<T, std::unordered_multiset>;
+template <class T> concept is_unordered_multiset = is_specialization<T, std::unordered_multiset>;
 
 template <class T> concept is_unordered_set_v = is_specialization<T, std::unordered_set>;
 
@@ -221,7 +220,7 @@ template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap<
 
 template <class T> concept is_sus_v = is_set<T> or is_unordered_set_v<T>;
 
-template <class T> concept is_ssuss_v = is_multiset<T> or is_unordered_multiset_v<T>;
+template <class T> concept is_ssuss_v = is_multiset<T> or is_unordered_multiset<T>;
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
 
@@ -253,39 +252,6 @@ template<class T>
 constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
 
 template <class T> concept SUS = is_sus_v<T>;
-#endif
-
-#if 0
-// is a type a multiset or unordered multiset?
-template<class T>
-struct is_unordered_multiset 
-  { constexpr static bool value { false }; };
-
-template<class E>
-struct is_unordered_multiset<std::unordered_multiset<E>> 
-  { constexpr static bool value { true }; };
-  
-template<class T>
-constexpr bool is_unordered_multiset_v { is_unordered_multiset<T>::value };
-
-template<class T>
-constexpr bool is_ssuss_v { is_multiset_v<T> or is_unordered_multiset_v<T> };
-
-template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
-#endif
-
-#if 0
-// is a type a string?
-template<class T>
-struct is_string 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_string<std::string> 
-  { constexpr static bool value { true }; };
-
-template< class T>
-constexpr bool is_string_v = is_string<T>::value;
 #endif
 
 #if 0
