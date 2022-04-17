@@ -452,7 +452,8 @@ public:
     \param  call    callsign
     \param  n       number of QSLs from <i>call</i>
 */
-  void n_qsls(const std::string& call, const unsigned int n);
+  inline void n_qsls(const std::string& call, const unsigned int n)
+    { get<0>(_find_or_create(call) -> second) = n; }
 
 /*! \brief          Increment the number of QSLs from a particular callsign
     \param  call    callsign
@@ -470,7 +471,8 @@ public:
     \param  call    callsign
     \param  n       number of QSOs with <i>call</i>
 */
-  void n_qsos(const std::string& call, const unsigned int n);
+  inline void n_qsos(const std::string& call, const unsigned int n)
+    { get<1>(_find_or_create(call) -> second) = n; }
 
 /*! \brief          Increment the number of QSOs associated with a particular callsign
     \param  call    callsign for which the number of QSOs should be incremented
@@ -507,7 +509,8 @@ public:
     \param  b       target band
     \param  m       target mode
 */
-  void qsl_received(const std::string& call, const BAND b, const MODE m);
+  inline void qsl_received(const std::string& call, const BAND b, const MODE m)
+    { get<2>(_find_or_create(call) -> second) += { b, m }; }
 };
 
 #endif    // LOG_H

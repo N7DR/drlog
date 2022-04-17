@@ -92,9 +92,6 @@ screen::screen(void)
     exit(-1);
   }
 
-//  use_default_colors();
-//  init_color(COLOR_BLACK, 1, 1, 1);
-
   if (refresh() == ERR)
   { cerr << "Error calling refresh()" << endl;
     sleep(2);
@@ -546,7 +543,8 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       break;
 
     case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
-    { const size_t posn { read().find_last_not_of(SPACE_STR) };
+    { //const size_t posn { read().find_last_not_of(SPACE_STR) };
+      const size_t posn { read().find_last_not_of(' ') };
 
       move_cursor(posn + 1, cursor_position().y());
       break;
@@ -677,7 +675,7 @@ string window::read(const int x, const int y)
   move_cursor(c.x(), c.y());          // restore the logical cursor position
   
   if (n_chars != ERR)
-    tmp[n_chars] = '\0';   // in theory, not necessary
+    tmp[n_chars] = '\0';   // in theory not necessary
 
   return string(tmp);
 }
@@ -846,10 +844,6 @@ bool window::common_processing(const keyboard_event& e)
   if (e.is_unmodified() and e.is_char('/'))
     return (win <= e.str(), true);
 
-// '
-  //if (e.is_unmodified() and e.is_char('\''))
-  //  return (win <= e.str(), true);
-
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
   { win.delete_character(win.cursor_position().x());
@@ -860,7 +854,7 @@ bool window::common_processing(const keyboard_event& e)
 // END
   if (e.is_unmodified() and e.symbol() == XK_End)
   { const string contents { win.read() };
-    const size_t posn     { contents.find_last_not_of(SPACE_STR) };
+    const size_t posn     { contents.find_last_not_of(' ') };
 
     return (win <= cursor(posn + 1, 0), true);
   }
@@ -923,9 +917,7 @@ PAIR_NUMBER_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
   if (_colours.empty())
     return _add_to_vector(fgbg);
 
-//  const auto it { find(_colours.begin(), _colours.end(), fgbg) };
   const auto it { ranges::find(_colours, fgbg) };
-//  const auto it { FIND(_colours, fgbg) };
 
   return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_NUMBER_TYPE>( distance(_colours.begin(), it) + 1));
 }
@@ -965,13 +957,17 @@ COLOUR_TYPE string_to_colour(const string& str)
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-//  if (begins_with(s, "COLOUR_"s))
-  if (s.starts_with("COLOUR_"s))
-    return (from_string<COLOUR_TYPE>(substring(s, 7)));
+//  if (s.starts_with("COLOUR_"s))
+//    return (from_string<COLOUR_TYPE>(substring(s, 7)));
 
-//  if (begins_with(s, "COLOR_"s))
-  if (s.starts_with("COLOR_"s))
-    return (from_string<COLOUR_TYPE>(substring(s, 6)));
+  if (const string str { "COLOUR_"s }; s.starts_with(str))
+    return from_string<COLOUR_TYPE>(remove_from_start(s, str));
+
+//  if (s.starts_with("COLOR_"s))
+//    return (from_string<COLOUR_TYPE>(substring(s, 6)));
+
+  if (const string str { "COLOR_"s }; s.starts_with(str))
+    return from_string<COLOUR_TYPE>(remove_from_start(s, str));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
     return from_string<COLOUR_TYPE>(s);

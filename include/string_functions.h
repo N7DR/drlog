@@ -165,7 +165,7 @@ std::string to_string(const T val)
     \return         <i>val</i>
 */
 template <class T>
-  requires is_string_v<T>
+  requires is_string<T>
 inline std::string to_string(T&& val)
   { return std::forward<T>(val); } 
 
@@ -394,8 +394,7 @@ inline void write_file(const std::string& cs, const std::string& filename)
 */
 template <typename T>
 inline bool starts_with(const std::string& cs, const T& ss)
-  requires (is_string_v<typename T::value_type>)
-//  { return ANY_OF(ss, [=] (const std::string& str) { return starts_with(cs, str); }); }
+  requires (is_string<typename T::value_type>)
   { return ANY_OF(ss, [=] (const std::string& str) { return cs.starts_with(str); }); }
 
 /*! \brief      Does a string begin with a particular substring?
@@ -482,7 +481,7 @@ inline std::string remove_peripheral_spaces(const std::string& cs)
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
 template <typename T>
-  requires (is_string_v<typename T::value_type>)
+  requires (is_string<typename T::value_type>)
 T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
@@ -496,7 +495,7 @@ T remove_peripheral_spaces(const T& t)
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
 template <typename T>
-  requires (is_string_v<typename T::value_type>)
+  requires (is_string<typename T::value_type>)
 T remove_peripheral_spaces(T&& t)
 { T rv;
 
@@ -622,7 +621,7 @@ inline std::string remove_char(std::string& s, const char char_to_remove)
     \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
 */
 template <typename C>
-  requires (is_string_v<typename C::value_type>)
+  requires (is_string<typename C::value_type>)
 C remove_char(C& t, const char char_to_remove)
 { typename std::remove_const<C>::type rv;
 
@@ -637,7 +636,7 @@ C remove_char(C& t, const char char_to_remove)
     \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
 */
 template <typename C>
-  requires (is_string_v<typename C::value_type>)
+  requires (is_string<typename C::value_type>)
 C remove_char(C&& t, const char char_to_remove)
 { C rv;
 
@@ -713,7 +712,7 @@ std::vector<std::string> delimited_substrings(const std::string& cs, const char 
 */
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
-  requires (is_string_v<typename T::value_type>)
+  requires (is_string<typename T::value_type>)
 { std::string rv;
 
   for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)

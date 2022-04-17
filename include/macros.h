@@ -193,21 +193,18 @@ inline constexpr bool is_specialization = false;
 template <template<class...> class T, class... Args>
 inline constexpr bool is_specialization<T<Args...>, T> = true;
 
-// basic types
-template <class T> concept is_int  = std::is_same_v<T, int>;
-template <class T> concept is_uint = std::is_same_v<T, unsigned int>;
+// basic types + string
+template <class T> concept is_int    = std::is_same_v<T, int>;
+template <class T> concept is_uint   = std::is_same_v<T, unsigned int>;
+template <class T> concept is_string = std::is_same_v<T, std::string>;
 
 // standard containers
-template <class T> concept is_deque = is_specialization<T, std::deque>;
-template <class T> concept is_list  = is_specialization<T, std::list>;
-template <class T> concept is_map   = is_specialization<T, std::map>;
+template <class T> concept is_deque    = is_specialization<T, std::deque>;
+template <class T> concept is_list     = is_specialization<T, std::list>;
+template <class T> concept is_map      = is_specialization<T, std::map>;
 template <class T> concept is_multimap = is_specialization<T, std::multimap>;
-
-template <class T> concept is_queue_v = is_specialization<T, std::queue>;
-
-template <class T> concept is_set_v = is_specialization<T, std::set>;
-
-template <class T> concept is_string_v = std::is_same_v<T, std::string>;
+template <class T> concept is_queue    = is_specialization<T, std::queue>;
+template <class T> concept is_set      = is_specialization<T, std::set>;
 
 template <class T> concept is_multiset_v = is_specialization<T, std::multiset>;
 
@@ -225,39 +222,13 @@ template <class T> concept is_mum_v = is_map<T> or is_unordered_map_v<T>;
 
 template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap_v<T>;
 
-template <class T> concept is_sus_v = is_set_v<T> or is_unordered_set_v<T>;
+template <class T> concept is_sus_v = is_set<T> or is_unordered_set_v<T>;
 
 template <class T> concept is_ssuss_v = is_multiset_v<T> or is_unordered_multiset_v<T>;
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
 
 #if 0
-// is a type a queue?
-template<class T>
-struct is_queue 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_queue<std::queue<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_queue_v = is_queue<T>::value;
-#endif
-
-#if 0
-// is a type a set?
-template<class T>
-struct is_set 
-  { constexpr static bool value { false }; };
-
-template<class T, class C, class A>
-struct is_set<std::set<T, C, A>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_set_v { is_set<T>::value };
-
 template<typename T>
 concept SET = requires(T a) 
 { is_set<T>::value == true;
@@ -967,7 +938,7 @@ inline bool operator<(const E& v, const S& s)
 /// union of two sets of the same type
 template<class T>
 T operator+(const T& s1, const T& s2)
-  requires (is_set_v<T>)
+  requires (is_set<T>)
   { T rv;
 
     std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
@@ -1636,7 +1607,7 @@ inline void operator-=(C& c1, const typename C::value_type& element)
 */
 template <typename Q>
 inline void operator+=(Q& q1, typename Q::value_type&& element)
-  requires is_queue_v<Q>
+  requires is_queue<Q>
 { q1.push(std::forward<typename Q::value_type>(element)); }
 
 /*! \brief              Append an element to a queue
@@ -1645,7 +1616,7 @@ inline void operator+=(Q& q1, typename Q::value_type&& element)
 */
 template <typename Q, typename E>
 inline void operator+=(Q& q1, const E& element)
-  requires is_queue_v<Q> and (std::is_convertible_v<E, typename Q::value_type>)
+  requires is_queue<Q> and (std::is_convertible_v<E, typename Q::value_type>)
 { q1.push(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 

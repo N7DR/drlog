@@ -69,16 +69,20 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
     qso.my_call(value);
 
 // transmitted exchange
-  if (name.starts_with("TEXCH-"s))
-   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { name.substr(6), value });    // remove "TEXCH-" before adding the field and value
+//  if (name.starts_with("TEXCH-"s))
+//   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { name.substr(6), value });    // remove "TEXCH-" before adding the field and value
+  if (const string str { "TEXCH-"s }; name.starts_with(str))
+   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start(name, str), value });    // remove "TEXCH-" before adding the field and value
 
 // rcall
   if (name == "RCALL"s)
     qso.callsign(value);
 
 // received exchange
-  if (name.starts_with("REXCH-"s))
-    qso.received_exchange(qso.received_exchange() + received_field { name.substr(6), value, false, false });    // remove "REXCH-" before adding the field and value
+//  if (name.starts_with("REXCH-"s))
+//    qso.received_exchange(qso.received_exchange() + received_field { name.substr(6), value, false, false });    // remove "REXCH-" before adding the field and value
+  if (const string str { "TEXCH-"s }; name.starts_with(str))
+    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start(name, str), value, false, false });    // remove "REXCH-" before adding the field and value
 }
 
 /*! \brief      Add a QSO to the logbook
@@ -118,9 +122,11 @@ void logbook::operator-=(const unsigned int n)
 
   const size_t index { n - 1 };    // because the interface is wrt 1
 
-  auto it { _log_vec.begin() };
+//  auto it { _log_vec.begin() };
 
-  advance(it, index);            // move to the correct QSO
+ // advance(it, index);            // move to the correct QSO
+
+  auto it { _log_vec.begin() + index };
 
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
@@ -139,12 +145,11 @@ vector<QSO> logbook::worked(const string& call) const
 
   { SAFELOCK(_log);
   
-//    for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv += qso.second; } );
     for_each(_LB(call), _UB(call), [&rv] (const pair<string, QSO>& qso) { rv += qso.second; } );
   }
 
 // https://www.youtube.com/watch?v=SYLgG7Q5Zws  39:40
-  ranges::sort(rv, {}, [](const QSO& q) { return q.epoch_time(); });    // use a projection to put in chronological order
+  ranges::sort(rv, { }, [](const QSO& q) { return q.epoch_time(); });    // use a projection to put in chronological order
 
   return rv;
 }
@@ -344,43 +349,43 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
   rv += "CREATED-BY: drlog version "s + VERSION + EOL_STRING;
   
 // name of operator
-  if (context.cabrillo_name() != string())
+  if (!context.cabrillo_name().empty())
     rv += "NAME: "s + context.cabrillo_name() + EOL_STRING;
 
 // address lines http://www.kkn.net/~trey/cabrillo/tags.html: "A maximum of four ADDRESS: lines is permitted."
-  if (context.cabrillo_address_1() != string())
+  if (!context.cabrillo_address_1().empty())
   { rv += "ADDRESS: "s + context.cabrillo_address_1() + EOL_STRING;
 
-    if (context.cabrillo_address_2() != string())
+    if (!context.cabrillo_address_2().empty())
     { rv += "ADDRESS: "s + context.cabrillo_address_2() + EOL_STRING;
 
-      if (context.cabrillo_address_3() != string())
+      if (!context.cabrillo_address_3().empty())
       { rv += "ADDRESS: "s + context.cabrillo_address_3() + EOL_STRING;
 
-        if (context.cabrillo_address_4() != string())
+        if (!context.cabrillo_address_4().empty())
           rv += "ADDRESS: "s + context.cabrillo_address_4() + EOL_STRING;
       }
     }
   }
  
 // address city
-  if (context.cabrillo_address_city() != string())
+  if (!context.cabrillo_address_city().empty())
     rv += "ADDRESS-CITY: "s + context.cabrillo_address_city() + EOL_STRING;
   
 // address state/province
-  if (context.cabrillo_address_state_province() != string())
+  if (!context.cabrillo_address_state_province().empty())
     rv += "ADDRESS-STATE-PROVINCE: "s + context.cabrillo_address_state_province() + EOL_STRING;
   
 // address postcode
-  if (context.cabrillo_address_postalcode() != string())
+  if (!context.cabrillo_address_postalcode().empty())
     rv += "ADDRESS-POSTALCODE: "s + context.cabrillo_address_postalcode() + EOL_STRING;
   
 // address country
-  if (context.cabrillo_address_country() != string())
+  if (!context.cabrillo_address_country().empty())
     rv += "ADDRESS-COUNTRY: "s + context.cabrillo_address_country() + EOL_STRING;
   
 // list of operators
-  if (context.cabrillo_operators() != string())
+  if (!context.cabrillo_operators().empty())
     rv += "OPERATORS: "s + context.cabrillo_operators() + EOL_STRING;
   
 // Categories
@@ -397,33 +402,33 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
   rv += "CATEGORY-OPERATOR: "s + context.cabrillo_category_operator() + EOL_STRING;
 
 // overlay
-  if (context.cabrillo_category_overlay() != string())
+  if (!context.cabrillo_category_overlay().empty())
     rv += "CATEGORY-OVERLAY: "s + context.cabrillo_category_overlay() + EOL_STRING;
 
 // power
   rv += "CATEGORY-POWER: "s + context.cabrillo_category_power() + EOL_STRING;
 
 // station
-  if (context.cabrillo_category_station() != string())
+  if (!context.cabrillo_category_station().empty())
     rv += "CATEGORY-STATION: "s + context.cabrillo_category_station() + EOL_STRING;
 
 // time
-  if (context.cabrillo_category_time() != string())
+  if (!context.cabrillo_category_time().empty())
     rv += "CATEGORY-TIME: "s + context.cabrillo_category_time() + EOL_STRING;
 
 // transmitter
   rv += "CATEGORY-TRANSMITTER: "s + context.cabrillo_category_transmitter() + EOL_STRING;
 
 // club
-  if (context.cabrillo_club() != string())
+  if (!context.cabrillo_club().empty())
     rv += "CLUB: "s + context.cabrillo_club() + EOL_STRING;
 
 // location
-  if (context.cabrillo_location() != string())
+  if (!context.cabrillo_location().empty())
     rv += "LOCATION: "s + context.cabrillo_location() + EOL_STRING;
     
 // e-mail
-  if (context.cabrillo_e_mail() != string())
+  if (!context.cabrillo_e_mail().empty())
     rv += "EMAIL: "s + context.cabrillo_e_mail() + EOL_STRING;
 
 // claimed score
@@ -741,6 +746,7 @@ unsigned int old_log::n_qsls(const string& call) const
     \param  call    callsign
     \param  n       number of QSLs from <i>call</i>
 */
+#if 0
 void old_log::n_qsls(const string& call, const unsigned int n)
 { //auto it { _olog.find(call) };
 
@@ -752,6 +758,7 @@ void old_log::n_qsls(const string& call, const unsigned int n)
   //get<0>(it->second) = n;
   get<0>(_find_or_create(call) -> second) = n;
 }
+#endif
 
 /*! \brief          Increment the number of QSLs from a particular callsign
     \param  call    callsign
@@ -788,6 +795,7 @@ unsigned int old_log::n_qsos(const string& call) const
     \param  call    callsign
     \param  n       number of QSOs with <i>call</i>
 */
+#if 0
 void old_log::n_qsos(const string& call, const unsigned int n)
 { //auto it { _olog.find(call) };
 
@@ -799,6 +807,7 @@ void old_log::n_qsos(const string& call, const unsigned int n)
   //get<1>(it->second) = n;
   get<1>(_find_or_create(call) -> second) = n;
 }
+#endif
 
 /*! \brief          increment the number of QSOs associated with a particular callsign
     \param  call    callsign for which the number of QSOs should be incremented
@@ -840,16 +849,7 @@ unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) con
     \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
 unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
-{ //auto it { _olog.find(call) };
-
-  //if (it == _olog.end())
-  //{ _olog[call];
-  //  it = _olog.find(call);
-  //}
-
-  //get<3>(it->second) += { b, m };
-
-  get<3>(_find_or_create(call) -> second) += { b, m };
+{ get<3>(_find_or_create(call) -> second) += { b, m };
 
   return n_qsos(call, b, m);
 }
@@ -863,12 +863,11 @@ unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const M
 bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
-  if (cit == _olog.cend())
-    return false;
+//  if (cit == _olog.cend())
+//    return false;
 
-//  return (get<2>(cit->second) > ( pair<BAND, MODE>( { b, m } ) ) );
-//  return get<2>(cit->second).contains( pair<BAND, MODE>( { b, m } ) );
-  return (( pair<BAND, MODE>( { b, m } ) < get<2>(cit->second) ) );
+//  return ( pair<BAND, MODE>( { b, m } ) < get<2>(cit->second) );
+  return ( cit == _olog.cend() ? false : get<2>(cit->second) > pair<BAND, MODE>( { b, m } ) );
 }
 
 /*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
@@ -876,6 +875,7 @@ bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
     \param  b       target band
     \param  m       target mode
 */
+#if 0
 void old_log::qsl_received(const string& call, const BAND b, const MODE m)
 { //auto it { _olog.find(call) };
 
@@ -888,3 +888,4 @@ void old_log::qsl_received(const string& call, const BAND b, const MODE m)
 
   get<2>(_find_or_create(call) -> second) += { b, m };
 }
+#endif

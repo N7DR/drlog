@@ -1110,7 +1110,7 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
 template<typename C>
-  requires (is_string_v<typename C::value_type>)
+  requires (is_string<typename C::value_type>)
   inline void do_not_add(const C& calls)
     { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
 
@@ -1120,7 +1120,7 @@ template<typename C>
      Calls in the do-not-add list are never added to the bandmap
 */
 template<typename C>
-  requires (is_string_v<typename C::value_type>)
+  requires (is_string<typename C::value_type>)
   inline void do_not_add(C&& calls)
     { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
 

@@ -53,8 +53,7 @@ bool file_exists(const string& filename)
 */
 string find_file(const vector<string>& path, const string& filename)
 { for (const auto& dir : path)
-  { //const string sep { ends_with(dir, "/"s) ? ""s : "/"s };
-    const string sep { dir.ends_with('/') ? ""s : "/"s };
+  { const string sep { dir.ends_with('/') ? ""s : "/"s };
 
     if ( const auto fullname { dir + sep + filename }; file_exists(fullname) )
       return fullname;
@@ -108,9 +107,9 @@ void file_copy(const string& source_filename, const string& destination_filename
 */
 void file_rename(const string& source_filename, const string& destination_filename)
 { if (file_exists(source_filename))
-  { const int status { rename(source_filename.c_str(), destination_filename.c_str()) };
+  { //const int status { rename(source_filename.c_str(), destination_filename.c_str()) };
 
-    if (status)
+    if (const int status { rename(source_filename.c_str(), destination_filename.c_str()) }; status)
       throw exception();
   }
 }
@@ -119,9 +118,9 @@ void file_rename(const string& source_filename, const string& destination_filena
     \param  dirname     name of the directory to create
 */
 void directory_create(const string& dirname)
-{ const int status { mkdir(dirname.c_str(), 0xff) };
+{ //const int status { mkdir(dirname.c_str(), 0xff) };
 
-  if (status)
+  if (const int status { mkdir(dirname.c_str(), 0xff) }; status)
     throw exception();
 }
 
@@ -132,9 +131,9 @@ void directory_create(const string& dirname)
 bool directory_exists(const string& dirname) noexcept
 { struct stat stat_buffer;
 
-  const int status { stat(dirname.c_str(), &stat_buffer) };
+//  const int status { stat(dirname.c_str(), &stat_buffer) };
 
-  if (status)
+  if (const int status { stat(dirname.c_str(), &stat_buffer) }; status)
     return false;
 
   const bool rv { ((stat_buffer.st_mode & S_IFDIR) != 0) };
@@ -165,9 +164,7 @@ vector<string> directory_contents(const string& dirname)
     return rv;                                  // shouldn't happen
 
   for (int n { 0 }; n < status; n++)
-  { //const string name { namelist[n]->d_name };
-
-    if (const string name { namelist[n]->d_name }; (name != "."s) and (name != ".."s))
+  { if (const string name { namelist[n]->d_name }; (name != "."s) and (name != ".."s))
       rv += name;
   }
 
