@@ -199,18 +199,15 @@ template <class T> concept is_uint   = std::is_same_v<T, unsigned int>;
 template <class T> concept is_string = std::is_same_v<T, std::string>;
 
 // standard containers
-template <class T> concept is_deque    = is_specialization<T, std::deque>;
-template <class T> concept is_list     = is_specialization<T, std::list>;
-template <class T> concept is_map      = is_specialization<T, std::map>;
-template <class T> concept is_multimap = is_specialization<T, std::multimap>;
-template <class T> concept is_queue    = is_specialization<T, std::queue>;
-template <class T> concept is_set      = is_specialization<T, std::set>;
-
-template <class T> concept is_multiset_v = is_specialization<T, std::multiset>;
-
-template <class T> concept is_unordered_map_v = is_specialization<T, std::unordered_map>;
-
-template <class T> concept is_unordered_multimap_v = is_specialization<T, std::unordered_multimap>;
+template <class T> concept is_deque              = is_specialization<T, std::deque>;
+template <class T> concept is_list               = is_specialization<T, std::list>;
+template <class T> concept is_map                = is_specialization<T, std::map>;
+template <class T> concept is_multimap           = is_specialization<T, std::multimap>;
+template <class T> concept is_multiset           = is_specialization<T, std::multiset>;
+template <class T> concept is_queue              = is_specialization<T, std::queue>;
+template <class T> concept is_set                = is_specialization<T, std::set>;
+template <class T> concept is_unordered_map      = is_specialization<T, std::unordered_map>;
+template <class T> concept is_unordered_multimap = is_specialization<T, std::unordered_multimap>;
 
 template <class T> concept is_unordered_multiset_v = is_specialization<T, std::unordered_multiset>;
 
@@ -218,13 +215,13 @@ template <class T> concept is_unordered_set_v = is_specialization<T, std::unorde
 
 template <class T> concept is_vector_v = is_specialization<T, std::vector>;
 
-template <class T> concept is_mum_v = is_map<T> or is_unordered_map_v<T>;
+template <class T> concept is_mum_v = is_map<T> or is_unordered_map<T>;
 
-template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap_v<T>;
+template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap<T>;
 
 template <class T> concept is_sus_v = is_set<T> or is_unordered_set_v<T>;
 
-template <class T> concept is_ssuss_v = is_multiset_v<T> or is_unordered_multiset_v<T>;
+template <class T> concept is_ssuss_v = is_multiset<T> or is_unordered_multiset_v<T>;
 
 template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
 
@@ -233,20 +230,6 @@ template<typename T>
 concept SET = requires(T a) 
 { is_set<T>::value == true;
 };
-#endif
-
-#if 0
-// is a type an unordered map?
-template<class T>
-struct is_unordered_map 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_unordered_map<std::unordered_map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template< class T>
-constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 #endif
 
 #if 0
@@ -273,35 +256,7 @@ template <class T> concept SUS = is_sus_v<T>;
 #endif
 
 #if 0
-// is a type a multimap or unordered multimap?
-template<class T>
-struct is_unordered_multimap 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_unordered_multimap<std::unordered_multimap<K, V>> 
-  { constexpr static bool value { true }; };
-  
-template<class T>
-constexpr bool is_unordered_multimap_v { is_unordered_multimap<T>::value };
-
-template<class T>
-constexpr bool is_mmumm_v { is_multimap_v<T> or is_unordered_multimap_v<T> };
-#endif
-
-#if 0
 // is a type a multiset or unordered multiset?
-template<class T>
-struct is_multiset 
-  { constexpr static bool value { false }; };
-
-template<class E>
-struct is_multiset<std::multiset<E>> 
-  { constexpr static bool value { true }; };
-  
-template<class T>
-constexpr bool is_multiset_v { is_multiset<T>::value };
-
 template<class T>
 struct is_unordered_multiset 
   { constexpr static bool value { false }; };
