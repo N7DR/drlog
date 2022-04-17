@@ -90,7 +90,7 @@ string to_string(const BANDMAP_ENTRY_SOURCE bes)
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
 */
-unsigned int bandmap_buffer::n_posters(const string& callsign)
+unsigned int bandmap_buffer::n_posters(const string& callsign) const
 { SAFELOCK(_bandmap_buffer);
 
 //  const auto cit { _data.find(callsign) };
@@ -918,7 +918,8 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 1 :                                                        // N7DR criteria
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
-      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
+ //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
+      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
 
       return rv;
     }
@@ -926,7 +927,8 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 2 :                                                        // new on this band+mode
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
-      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
+ //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
+      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
 
       return rv;
     }
@@ -934,7 +936,8 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 3 :                                                        // never worked anywhere
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
-      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
+ //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
+      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
 
       return rv;
     }    
@@ -958,13 +961,12 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   const BM_ENTRIES fe                 { displayed_entries() };
 
 // why can't this be const?
-  auto marker_it { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
-//  /* const */ auto marker_it { ranges::find_if(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
+  auto marker_it { FIND_IF(fe, [] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
   if (marker_it == fe.cend())             // should never be true
     return bandmap_entry();
 
-  const frequency target_freq     { marker_it->freq() };
+  const frequency target_freq { marker_it->freq() };
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
   { const auto crit  { prev(reverse_iterator<decltype(marker_it)>(marker_it)) };             // Josuttis first ed. p. 66f.
@@ -1127,10 +1129,7 @@ string bandmap::to_str(void)
 bool bandmap::is_present(const string& target_callsign) const
 { SAFELOCK(_bandmap);
 
-//  return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
-
-//  return ranges::any_of(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
-  return ANY_OF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
+  return ANY_OF(_entries, [target_callsign] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
 }
 
 /*! \brief         Process an insertion queue, adding the elements to the bandmap
@@ -1143,10 +1142,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
   while (!biq.empty())
-  { //bandmap_entry be { biq.front() };
-
-    //*this += be;
-    *this += biq.front();
+  { *this += biq.front();
 
     biq.pop();
   }
@@ -1242,12 +1238,7 @@ window& bandmap::write_to_window(window& win)
 
       const bool is_marked_entry { bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()) };
 
-//      win < cursor(x, y) < colour_pair(cpu);
-
 // switch to red if marked frequency and we are showing marked frequencies
- //     if (bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()))
-//        win < colours.add(COLOUR_WHITE, COLOUR_RED);
-
       win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(COLOUR_WHITE, COLOUR_RED) : cpu );
 
       if (reverse)

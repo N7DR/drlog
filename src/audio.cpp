@@ -242,6 +242,7 @@ void audio_recorder::_set_params(void)
   snd_pcm_uframes_t start_threshold { static_cast<snd_pcm_uframes_t>( ( (double)rate * _start_delay / 1'000'000 ) + ( (_start_delay <= 0) ? n : 0 ) ) };
 
   start_threshold = LIMIT(start_threshold, 1, n);
+//  start_threshold = clamp(start_threshold, static_cast<snd_pcm_uframes_t>(1), static_cast<snd_pcm_uframes_t>(n));
   err = snd_pcm_sw_params_set_start_threshold(_handle, swparams, start_threshold);
 
   if (err < 0)

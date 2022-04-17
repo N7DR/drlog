@@ -209,16 +209,15 @@ template <class T> concept is_set                = is_specialization<T, std::set
 template <class T> concept is_unordered_map      = is_specialization<T, std::unordered_map>;
 template <class T> concept is_unordered_multimap = is_specialization<T, std::unordered_multimap>;
 template <class T> concept is_unordered_multiset = is_specialization<T, std::unordered_multiset>;
+template <class T> concept is_unordered_set      = is_specialization<T, std::unordered_set>;
+template <class T> concept is_vector             = is_specialization<T, std::vector>;
 
-template <class T> concept is_unordered_set_v = is_specialization<T, std::unordered_set>;
-
-template <class T> concept is_vector_v = is_specialization<T, std::vector>;
-
-template <class T> concept is_mum_v = is_map<T> or is_unordered_map<T>;
+// combination concepts
+template <class T> concept is_mum = is_map<T> or is_unordered_map<T>;
 
 template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap<T>;
 
-template <class T> concept is_sus_v = is_set<T> or is_unordered_set_v<T>;
+template <class T> concept is_sus_v = is_set<T> or is_unordered_set<T>;
 
 template <class T> concept is_ssuss_v = is_multiset<T> or is_unordered_multiset<T>;
 
@@ -232,42 +231,12 @@ concept SET = requires(T a)
 #endif
 
 #if 0
-// is a type an unordered set?
-template<class T>
-struct is_unordered_set 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_unordered_set<std::unordered_set<T>> 
-  { constexpr static bool value { true }; };
-
-template< class T>
-constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
-#endif
-
-#if 0
 // is a type a set or unordered set?
 
 template<class T>
 constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
 
 template <class T> concept SUS = is_sus_v<T>;
-#endif
-
-#if 0
-// is a type a vector?
-template<class T>
-struct is_vector 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_vector<std::vector<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_vector_v = is_vector<T>::value;
-
-template<typename T> concept VECTOR = is_vector_v<T>;
 #endif
 
 // ---------------------------------------------------------------------------
@@ -822,7 +791,7 @@ public:                                                                         
 */
 template <class T, class U>
 inline bool operator>(const T& v, const U& e)
-  requires (is_vector_v<T>) and (std::is_same_v<typename T::value_type, U>)
+  requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
   { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
 
 /*! \brief      Does a set or unordered_set contains a particular member?
@@ -889,7 +858,7 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
 
 template <class M, class K>
 inline bool operator>(const M& m, const K& k)
-  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type> ) */
+  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type> ) */
 { //using V  = typename M::mapped_type;
   //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
 
@@ -901,7 +870,7 @@ inline bool operator>(const M& m, const K& k)
 
 template <class M, class K>
 inline bool operator<(const K& k, const M& m)
-  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type>) */
+  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type>) */
 { //using V  = typename M::mapped_type;
   //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
 
@@ -921,7 +890,7 @@ inline bool operator<(const K& k, const M& m)
 */
 template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-  requires (is_mum_v<C>) && (std::is_same_v<typename C::key_type, K>)
+  requires (is_mum<C>) && (std::is_same_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
@@ -936,7 +905,7 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
 */
 template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
 auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
-  requires (is_mum_v<C>) and (std::is_same_v<typename C::key_type, K>)
+  requires (is_mum<C>) and (std::is_same_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
@@ -1059,8 +1028,8 @@ public:
     \param  element     element to insert
 */
 template <typename C, typename K, typename V>
-void operator+=(C& mum, std::pair<K, V>&& element)
-  requires ( (is_mum_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
+inline void operator+=(C& mum, std::pair<K, V>&& element)
+  requires ( (is_mum<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
              (is_mmumm_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
   { mum.emplace(std::move(element)); }
@@ -1073,8 +1042,8 @@ void operator+=(C& mum, std::pair<K, V>&& element)
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>
-void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
-  requires (is_mum_v<C> or is_mmumm_v<C>)
+inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
+  requires (is_mum<C> or is_mmumm_v<C>)
   { mum.emplace(il); }
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
@@ -1156,24 +1125,24 @@ constexpr std::ranges::in_out_result<std::ranges::borrowed_iterator_t<R>, O> COP
 
     Does not work for maps
 */
-template <class Input, class UnaryPredicate>
-void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
-  { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
+//template <class Input, class UnaryPredicate>
+//void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
+//  { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
 
 /*! \brief          Remove map/unordered map values that match a predicate, and resize the map
     \param  items   map
     \param  pred    predicate to apply
 */
-template<typename M, typename PredicateT>
-  requires (is_mum_v<M>)
-void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
-{ for( auto it { items.begin() }; it != items.end(); )
-  { if( pred(*it) )
-      it = items.erase(it);
-    else
-      ++it;
-  }
-};
+//template<typename M, typename PredicateT>
+//  requires (is_mum<M>)
+//void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
+//{ for( auto it { items.begin() }; it != items.end(); )
+//  { if( pred(*it) )
+//      it = items.erase(it);
+//    else
+//      ++it;
+//  }
+//};
 
 /*! \brief      Reverse the contents of a container
     \param  v   container
@@ -1181,15 +1150,6 @@ void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
 template <class Input>
 inline void REVERSE(Input& v)
   { std::ranges::reverse(v); }
-
-/*! \brief          Find first value in a container that matches a predicate
-    \param  v       container
-    \param  pred    (boolean) predicate to apply
-    \return         first value in <i>v</i> for which <i>pred</i> is true
-*/
-//template <typename Input, typename UnaryPredicate>
-//inline auto FIND_IF(Input& v, UnaryPredicate pred) -> typename Input::iterator
-//  { return std::find_if(v.begin(), v.end(), pred); }
 
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container (const)
@@ -1210,9 +1170,9 @@ constexpr std::ranges::borrowed_iterator_t<R> FIND_IF( R&& r, Pred pred, Proj pr
     \param  high_val    upper bound
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
-template <typename T>
-inline T LIMIT(const T val, const T low_val, const T high_val)
-  { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
+//template <typename T>
+//inline T LIMIT(const T val, const T low_val, const T high_val)
+//  { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
 
 /*! \brief              Bound a value within limits
     \param  val         value to bound
@@ -1222,7 +1182,8 @@ inline T LIMIT(const T val, const T low_val, const T high_val)
 */
 template <typename T, typename U, typename V>
 inline T LIMIT(const T val, const U low_val, const V high_val)
-  { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
+//  { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
+  { return std::clamp(val, static_cast<T>(low_val), static_cast<T>(high_val)); }
 
 /// a version of floor() that returns a float instead of a double (not quite the same as floorf)
 template <typename T>
@@ -1316,7 +1277,7 @@ inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_typ
 */
 template <typename C, typename V>
 inline void operator+=(C& sus, const V& vec)
-  requires is_sus_v<C> and is_vector_v<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
+  requires is_sus_v<C> and is_vector<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
   { std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); };
 
 /*! \brief              Remove an element from a set, map, unordered set or unordered map
@@ -1325,7 +1286,7 @@ inline void operator+=(C& sus, const V& vec)
 */
 template <typename C, typename T>
 inline void operator-=(C& sus, const T& element)
-  requires (is_sus_v<C> or is_mum_v<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
+  requires (is_sus_v<C> or is_mum<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set
@@ -1350,7 +1311,7 @@ inline void operator+=(std::multiset<std::pair<F, S>>& s, const std::pair<F, S>&
     \return       <i>dest</i> with <i>src</i> inserted
 */
 template <typename MUMD, typename MUMS>
-  requires ( ( (is_mum_v<MUMD>) and (is_mum_v<MUMS>) and
+  requires ( ( (is_mum<MUMD>) and (is_mum<MUMS>) and
              (std::is_same_v<typename MUMD::key_type, typename MUMS::key_type>) and (std::is_same_v<typename MUMD::mapped_type, typename MUMS::mapped_type>) ) or
              ( (is_sus_v<MUMD>) and (is_sus_v<MUMS>) and (std::is_same_v<typename MUMD::value_type, typename MUMS::value_type>) ) )
 inline void operator+=(MUMD& dest, const MUMS& src)
@@ -1362,7 +1323,7 @@ inline void operator+=(MUMD& dest, const MUMS& src)
     \return       <i>dest</i> with <i>src</i> appended
 */
 template <typename V>
-  requires (is_vector_v<V>)
+  requires (is_vector<V>)
 inline void operator+=(V& dest, V&& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
@@ -1382,7 +1343,7 @@ inline void operator+=(V& dest, V&& src)
     \return       <i>dest</i> with <i>src</i> appended
 */
 template <typename V>
-  requires (is_vector_v<V>)
+  requires (is_vector<V>)
 inline void operator+=(V& dest, const V& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
@@ -1397,7 +1358,7 @@ inline void operator+=(V& dest, const V& src)
     \param  src   source vector
     \return       <i>dest</i> with <i>src</i> appended
 */
-template <typename V> requires (is_vector_v<V>)
+template <typename V> requires (is_vector<V>)
 V operator+(const V& v1, V&& v2)
 { V rv(v1.size() + v2.size());
 
@@ -1412,7 +1373,7 @@ V operator+(const V& v1, V&& v2)
     \param  src   source vector
     \return       <i>dest</i> with <i>src</i> appended
 */
-template <typename V> requires (is_vector_v<V>)
+template <typename V> requires (is_vector<V>)
 V operator+(const V& v1, const V& v2)
 { V rv(v1.size() + v2.size());
 
@@ -1430,7 +1391,7 @@ V operator+(const V& v1, const V& v2)
     Note that in general this means that the vector is subsequently going to be ordered
 */
 template <typename V, typename SUS>
-  requires (is_vector_v<V>) and (is_sus_v<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
+  requires (is_vector<V>) and (is_sus_v<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
 inline void operator+=(V& vec, const SUS& sus)
   { vec.reserve(vec.size() + sus.size());
     //dest.insert(dest.end(), src.begin(), src.end()); &&&
@@ -1444,7 +1405,7 @@ inline void operator+=(V& vec, const SUS& sus)
 */
 template <typename V, typename E>
 auto operator+(const V& v1, E&& element) -> V
-  requires is_vector_v<V> and (std::is_same_v<typename V::value_type, base_type<E>>)
+  requires is_vector<V> and (std::is_same_v<typename V::value_type, base_type<E>>)
 { V rv(v1.size() + 1);
 
   rv = v1;
@@ -1474,7 +1435,7 @@ auto operator+(const S& s1, E&& element) -> S
 */
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
-  requires is_deque<C> or is_list<C> or is_vector_v<C>
+  requires is_deque<C> or is_list<C> or is_vector<C>
 { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
@@ -1483,7 +1444,7 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 */
 template <typename C, typename E>
 inline void operator+=(C& c1, const E& element)
-  requires (is_deque<C> or is_list<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::is_convertible_v<E, typename C::value_type>)
 { c1.push_back(element); }
 
 /*! \brief      Insert an element into a list
@@ -1576,7 +1537,7 @@ inline void operator-=(D& d, const typename D::iterator& it)
     \return             whether <i>element</i> is an element of <i>v</i>
 */
 template <typename C, typename E>
-  requires (is_deque<C> or is_list<C> or is_vector_v<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::is_convertible_v<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
   { return std::ranges::find(c, element) != c.cend(); }
 

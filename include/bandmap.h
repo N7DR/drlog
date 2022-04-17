@@ -105,7 +105,7 @@ protected:
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
-  pt_mutex _bandmap_buffer_mutex { "BANDMAP BUFFER"s };             ///< mutex for thread-safe access
+  mutable pt_mutex _bandmap_buffer_mutex { "BANDMAP BUFFER"s };     ///< mutex for thread-safe access
 
 public:
 
@@ -120,7 +120,7 @@ public:
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
 */
-  unsigned int n_posters(const std::string& callsign);
+  unsigned int n_posters(const std::string& callsign) const;
 
 /*! \brief              Associate a poster with a call
     \param  callsign    the callsign
@@ -144,7 +144,7 @@ public:
     \param  callsign    the callsign to test
     \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
 */
-  inline bool sufficient_posters(const std::string& callsign)
+  inline bool sufficient_posters(const std::string& callsign) const
     { return (n_posters(callsign) >= _min_posters); }
 };
 
@@ -224,8 +224,7 @@ public:
     \return     whether <i>v</i> is needed
 */
   inline bool is_value_needed(const T& v) const
-//    { return _is_needed ? !contains(_values, v) : false; }
-    { return _is_needed ? !(v < _values) : false; }
+    { return _is_needed ? !(_values > v) : false; }
 
 /*! \brief      Remove a needed value
     \param  v   value to remove
@@ -234,9 +233,7 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { //if (!_is_needed or !contains(_values, v))
-    //if (!_is_needed or !_values.contains(v))
-    if (!_is_needed or !(v < _values))
+  { if (!_is_needed or !(_values > v))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -247,9 +244,19 @@ public:
     return rv;
   }
 
+/*! \brief      Remove a needed value
+    \param  v   value to remove
+
+    Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
+*/
   inline void operator-=(const T& v)
     { remove(v); }
 
+/*! \brief      Remove a needed value
+    \param  v   value to remove
+
+    Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
+*/
   inline void operator-=(T&& v)
     { remove(forward<T>(v)); }
 
@@ -559,10 +566,6 @@ public:
   inline bool is_stn_needed(void) const
     { return is_needed(); }
 
-///  is this a needed mult?
-//  inline bool is_a_needed_mult(void) const
-//    { return is_needed_mult(); }
-
 /*! \brief          Does <i>_frequency_str</i> match a target value?
     \param  target  target value of <i>_frequency_str</i>
     \return         whether <i>_frequency</i> matches <i>target</i>
@@ -737,7 +740,7 @@ class bandmap
 {
 protected:
 
-  mutable pt_mutex                        _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
+  mutable pt_mutex                _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
   
   int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                        ///< cull function number to apply
@@ -753,8 +756,8 @@ protected:
   bool                            _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)              _rbn_threshold_filtered_and_culled_entries;           ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string> _recent_calls;                                        ///< calls recently added
-  COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                                       ///< colour to use for entries < 120 seconds old (if black, then not used)
-  uint32_t                        _verno         { 0 };                                               ///< version number (not currently used, I believe)
+  COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
+//  uint32_t                        _verno         { 0 };                                 ///< version number (not currently used, I believe)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -819,7 +822,7 @@ public:
   }
   
 /// version number -- just needs to be read via this function, so don't need to lock the mutex
-  READ(verno);
+//  READ(verno);
 
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
@@ -895,7 +898,7 @@ public:
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
   void not_needed_callsign_mult(std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-                                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  mult_type               name of mult type
@@ -925,7 +928,7 @@ public:
 */
   void filter_enabled(const bool torf);
 
-/// return all the countries and continents currently in the filter
+/// return all the continents and countries currently in the filter
   inline std::vector<std::string> filter(void)
     { return _filter_p->filter(); }
 
@@ -1019,7 +1022,6 @@ public:
      The return value can be tested with .empty() to see if a station was found
 */
   inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
-//    { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
     { return needed(&bandmap_entry::is_needed_mult, dirn); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location

@@ -177,8 +177,7 @@ protected:
       <i>n</i><i>precedence</i>
 */
   inline bool _is_possible_prec(const std::string& str) const
-//    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
-    { return ( (str.length() == 1) ? legal_prec.contains(last_char(str)) : (_is_possible_serno(str) and legal_prec.contains(last_char(str))) ); }
+    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check
@@ -242,7 +241,7 @@ protected:
 
     THIS IS CURRENTLY UNUSED
 */
-  void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
+//  void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
@@ -300,7 +299,7 @@ public:
     Returns empty string if <i>n</i> is out of range
 */
   inline std::string field_value(const size_t n) const
-    { return (n >= _fields.size() ? std::string() : _fields[n].value()); }
+    { return (n >= _fields.size() ? std::string { } : _fields[n].value()); }
 
 /*! \brief      Is a field a mult?
     \param  n   number of field for which the mult status is requested
@@ -318,7 +317,7 @@ public:
     Returns empty string if <i>n</i> is out of range
 */
   inline std::string mult_value(const size_t n) const
-    { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
+    { return (n >= _fields.size() ? std::string { } : _fields[n].mult_value()); }
 
 /*! \brief          Return the names and values of matched fields
     \param  rules   rules for this contest
@@ -369,7 +368,8 @@ public:
     \param  field_name  name of the field for the guess
     \return             Guessed value of <i>field_name</i> for <i>callsign</i>
 
-    Returns empty string if no sensible guess can be made
+    Returns empty string if no sensible guess can be made.
+    The returned value is inserted into the database.
 */
   std::string guess_value(const std::string& callsign, const std::string& field_name);
 

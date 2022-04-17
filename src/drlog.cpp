@@ -2200,7 +2200,7 @@ void* display_rig_status(void* vp)
 
 // get the bandmap version number; probably no longer used
 //        const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
-        const uint32_t initial_verno { bandmaps[current_band].verno() };
+//        const uint32_t initial_verno { bandmaps[current_band].verno() };
         const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
         const string   ds_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
 
@@ -2264,8 +2264,8 @@ void* display_rig_status(void* vp)
           { //const uint32_t current_verno { bandmaps[safe_get_band()].verno() };
           
 //            if (const uint32_t current_verno { bandmaps[safe_get_band()].verno() }; current_verno == initial_verno)         // don't update bm if the version number has changed
-            if (const uint32_t current_verno { bandmaps[current_band].verno() }; current_verno == initial_verno)         // don't update bm if the version number has changed
-              update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+//            if (const uint32_t current_verno { bandmaps[current_band].verno() }; current_verno == initial_verno)         // don't update bm if the version number has changed
+//              update_based_on_frequency_change(f, m);   // changes windows, including bandmap
           }
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect

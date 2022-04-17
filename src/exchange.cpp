@@ -420,6 +420,7 @@ ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
 
     THIS IS CURRENTLY UNUSED
 */
+#if 0
 void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
 { set<int>          matched_field_numbers;
   set<string>       matched_field_names;
@@ -436,6 +437,7 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
     }
   }
 }
+#endif
 
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
@@ -476,7 +478,8 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 
 // eliminate matched fields from sets of possible matches
 // remove assigned tuples (changes tuple_deque)
-    REMOVE_IF_AND_RESIZE(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
+//    REMOVE_IF_AND_RESIZE(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
+    erase_if(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
     for (auto& t : unassigned_tuples)
     { set<string>& ss { FIELD_NAMES(t) };
@@ -821,7 +824,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
     \param  field_name  name of the field for the guess
     \return             guessed value of <i>field_name</i> for <i>callsign</i>
 
-    Returns empty string if no sensible guess can be made
+    Returns empty string if no sensible guess can be made.
+    The returned value is inserted into the database.
 */
 string exchange_field_database::guess_value(const string& callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
