@@ -506,7 +506,8 @@ public:
 */
 template <class T>
 window& operator<(const T& sus)
-  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, std::string>)
+//  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, std::string>)
+  requires (is_sus<T> and is_string<typename T::value_type>)
 { if (!_wp)
     return *this;
 

@@ -691,8 +691,6 @@ public:
   inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
-//      return contains(_permitted_exchange_values, field_name);
-//      return _permitted_exchange_values.contains(field_name);
       return (_permitted_exchange_values > field_name);
     }
 

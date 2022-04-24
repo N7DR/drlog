@@ -37,9 +37,6 @@
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
-//constexpr std::string EOL_a { "\n" };
-
-// the next five are defined in string_functions.cpp
 static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
@@ -377,16 +374,6 @@ inline std::string read_file(const std::string& filename, const std::vector<std:
 inline void write_file(const std::string& cs, const std::string& filename)
   { std::ofstream(filename.c_str(), std::ofstream::binary) << cs; }
 
-/*! \brief      Does a string begin with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> begins with <i>ss</i>
-
-    See https://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a
-*/
-//inline bool starts_with(const std::string& cs, const std::string& ss)
-//  { return (cs.rfind(ss, 0) == 0); }
-
 /*! \brief      Does a string begin with one of a number of particular substrings?
     \param  cs  string to test
     \param  ss  container of substrings to look for
@@ -397,28 +384,12 @@ inline bool starts_with(const std::string& cs, const T& ss)
   requires (is_string<typename T::value_type>)
   { return ANY_OF(ss, [=] (const std::string& str) { return cs.starts_with(str); }); }
 
-/*! \brief      Does a string begin with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> begins with <i>ss</i>
-*/
-//inline bool begins_with(const std::string& cs, const std::string& ss)
-//  { return (starts_with(cs, ss) ); }
-
 /*! \brief      Remove specific string from the start of a string if it is present
     \param  s   original string
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
 std::string remove_from_start(const std::string& s, const std::string& ss);
-
-/*! \brief      Does a string end with a particular substring?
-    \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> ends with <i>ss</i>
-*/
-//inline bool ends_with(const std::string& cs, const std::string& ss)
-//  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
 
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
@@ -453,7 +424,7 @@ std::string remove_leading(const std::string& cs, const char c);
     \return     <i>cs</i> with any leading spaces removed
 */
 inline std::string remove_leading_spaces(const std::string& cs)
-  { return remove_leading(cs, SPACE_CHAR); }
+  { return remove_leading(cs, ' '); }
 
 /*! \brief      Remove all instances of a specific trailing character
     \param  cs  original string
@@ -479,6 +450,8 @@ inline std::string remove_peripheral_spaces(const std::string& cs)
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
+
+    NB There should be specialisation of this for vectors that uses reserve()
 */
 template <typename T>
   requires (is_string<typename T::value_type>)
@@ -493,6 +466,8 @@ T remove_peripheral_spaces(const T& t)
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
+
+    NB There should be specialisation of this for vectors that uses reserve()
 */
 template <typename T>
   requires (is_string<typename T::value_type>)
@@ -625,7 +600,7 @@ template <typename C>
 C remove_char(C& t, const char char_to_remove)
 { typename std::remove_const<C>::type rv;
 
-  FOR_ALL(t, [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+  FOR_ALL(t, [char_to_remove, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -640,7 +615,7 @@ template <typename C>
 C remove_char(C&& t, const char char_to_remove)
 { C rv;
 
-  FOR_ALL(std::forward<C>(t), [=, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+  FOR_ALL(std::forward<C>(t), [char_to_remove, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -902,7 +877,8 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
+inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
+  { return (split_string(legal_values, separator) > value); }
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -910,7 +886,8 @@ bool is_legal_value(const std::string& value, const std::string& legal_values, c
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator);
+inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator)
+  { return (split_string(legal_values, separator) > value); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call
@@ -1062,8 +1039,8 @@ T regex_matches(C&& container, const std::string& s)
      
   const std::regex rgx { s };
 
-  FOR_ALL(std::forward<C>(container) | std::ranges::views::filter([=] (const std::string& target) { return regex_match(target, rgx); }),
-            [=, &rv](const std::string& target) { rv += target; }); 
+  FOR_ALL(std::forward<C>(container) | std::ranges::views::filter([rgx] (const std::string& target) { return regex_match(target, rgx); }),
+            [&rv](const std::string& target) { rv += target; }); 
 
   return rv;
 }

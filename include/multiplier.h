@@ -97,7 +97,7 @@ public:
       SAFELOCK(multiplier);
 
       if (_used)
-        FOR_ALL(k, [&] (const std::string& str) { if (add_known(str)) rv++; } );
+        FOR_ALL(k, [this, &rv] (const std::string& str) { if (add_known(str)) rv++; } );
 
       return rv;
     }

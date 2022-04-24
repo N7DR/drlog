@@ -227,8 +227,8 @@ class monitored_posts
 {
 protected:
 
-  std::set<std::string> _callsigns   { };           ///< monitored calls
-  bool                  _is_dirty    { false };     ///< whether info has changed since last output
+  std::set<std::string>     _callsigns   { };           ///< monitored calls
+  bool                      _is_dirty    { false };     ///< whether info has changed since last output
   std::atomic<unsigned int> _max_entries { 0 };         ///< number of displayable entries
 
   std::deque<monitored_posts_entry> _entries;       ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
@@ -242,8 +242,6 @@ public:
   READ(is_dirty);                               ///< whether info has changed since last output
 
   SAFE_READ_AND_WRITE(callsigns, monitored_posts);      ///< monitored calls
-//  SAFE_READ_AND_WRITE(max_entries, monitored_posts);    ///< number of displayable entries
-//  ATOMIC_READ_AND_WRITE(max_entries);                          ///< number of displayable entries
 
   inline void max_entries(const unsigned int v)
     { _max_entries = v; }

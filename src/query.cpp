@@ -29,8 +29,7 @@ using namespace std;
     <i>call<i> is added to the dynamic database iff it is not already present in either database
 */
 void query_database::operator+=(const std::string& call)
-{ //if (!( _qdb > call))
-  if (!_qdb.contains(call))
+{ if (!( _qdb > call))
     _dynamic_qdb += call;
 }
 
@@ -51,8 +50,6 @@ pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](cons
   set<string> rv_2 { _query(replace(key, "?"s, ".{1,}"s)) };
 
 // remove any elements in rv_1 from rv_2
-//  for (const auto& el1 : rv_1)
-//    rv_2 -= el1;
   rv_2 -= rv_1;
 
   return { rv_1, rv_2 };

@@ -72,7 +72,7 @@ static std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       
                                                     { "10"s,  BAND_10 }
                                                   };                    ///< map a band name to a band
 
-static std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so not const
+static std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
                                                           { "80m"s,  BAND_80 },
                                                           { "60m"s,  BAND_60 },
                                                           { "40m"s,  BAND_40 },
@@ -283,6 +283,7 @@ inline frequency operator""_Hz(const unsigned long long int f)
 inline frequency operator""_kHz(const unsigned long long int f)
   { return frequency(f); }                                      // automatically converts from kHz to Hz
 
+/// _MHz (double)
 inline frequency operator""_MHz(const long double f)
   { return frequency(f); }                                      // automatically converts from MHz to Hz
 
@@ -315,20 +316,6 @@ inline std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
-#if 0
-static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency { 1'900 } },
-                                                    { BAND_80,  frequency { 3'600 } },
-                                                    { BAND_60,  frequency { 5'500 } },
-                                                    { BAND_40,  frequency { 7'100 } },
-                                                    { BAND_30,  frequency { 10'150 } },
-                                                    { BAND_20,  frequency { 14'150 } },
-                                                    { BAND_17,  frequency { 18'900 } },
-                                                    { BAND_15,  frequency { 21'200 } },
-                                                    { BAND_12,  frequency { 24'910 } },
-                                                    { BAND_10,  frequency { 28'300 } }
-                                                  };
-#endif
-
 static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
                                                     { BAND_80,  3'600_kHz },
                                                     { BAND_60,  5'500_kHz },
@@ -357,6 +344,8 @@ template<class T> const BAND to_BAND(T f)
   if (f < 1'000'000)    // kHz
     return to_BAND(static_cast<long>(f) * 1000);
 
+// at this point, f is in Hz
+
   const static std::vector<BAND> non_warc_bands { BAND_160, BAND_80, BAND_60, BAND_40, BAND_20, BAND_15, BAND_10 };
 
 // non-WARC bands
@@ -365,7 +354,7 @@ template<class T> const BAND to_BAND(T f)
       return non_warc_band;
   }
 
-// WARC bands
+// WARC bands; remember, f is in Hz
   if ( (f == 10'000'000) or ((f >= lower_edge(BAND_30).hz()) and (f <= upper_edge(BAND_30).hz())) )
     return BAND_30;
 

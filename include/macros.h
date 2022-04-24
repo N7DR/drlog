@@ -213,31 +213,13 @@ template <class T> concept is_unordered_set      = is_specialization<T, std::uno
 template <class T> concept is_vector             = is_specialization<T, std::vector>;
 
 // combination concepts
-template <class T> concept is_mum = is_map<T> or is_unordered_map<T>;
+template <class T> concept is_mum   = is_map<T>      or is_unordered_map<T>;
+template <class T> concept is_mmumm = is_multimap<T> or is_unordered_multimap<T>;
+template <class T> concept is_sus   = is_set<T>      or is_unordered_set<T>;
+template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>;
 
-template <class T> concept is_mmumm_v = is_multimap<T> or is_unordered_multimap<T>;
-
-template <class T> concept is_sus_v = is_set<T> or is_unordered_set<T>;
-
-template <class T> concept is_ssuss_v = is_multiset<T> or is_unordered_multiset<T>;
-
-template <class T> concept ANYSET = is_sus_v<T> or is_ssuss_v<T>;
-
-#if 0
-template<typename T>
-concept SET = requires(T a) 
-{ is_set<T>::value == true;
-};
-#endif
-
-#if 0
-// is a type a set or unordered set?
-
-template<class T>
-constexpr bool is_sus_v { is_set_v<T> or is_unordered_set_v<T> };
-
-template <class T> concept SUS = is_sus_v<T>;
-#endif
+// combinations of combinations
+template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 
 // ---------------------------------------------------------------------------
 
@@ -801,7 +783,7 @@ inline bool operator>(const T& v, const U& e)
 */
 template <class T, class U>
 inline bool operator>(const T& s, const U& v)
-  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
+  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
   { return s.contains(v); }
 
 /*! \brief      Is an object a member of a set or unordered_set?
@@ -811,8 +793,7 @@ inline bool operator>(const T& s, const U& v)
 */
 template <class E, class S>
 inline bool operator<(const E& v, const S& s)
-  requires (is_sus_v<S>) and (std::is_same_v<typename S::value_type, E>)
-//  { return s.contains(v); }
+  requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
   { return (s > v); }
 
 /*! \brief      Is an object a member of a set, an unordered_set, or a key in a map or unordered map?
@@ -1003,8 +984,7 @@ public:
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
   bool add(const T& val, const COUNTER n = 1)
-  { //if (!contains(_values, val))
-    if (!_values.contains(val))
+  { if (!(_values > val))
       _values += { val, n };
     else
       _values[val] += n;
@@ -1017,8 +997,7 @@ public:
     \return         total number of times <i>value</i> has been added
 */
   unsigned int value(const T& val) const
-//    { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
-    { return ( _values.contains(val) ? _values.at(val) : 0 ); }
+    { return ( (_values > val) ? _values.at(val) : 0 ); }
 };
 
 // convenient syntactic sugar for some STL functions
@@ -1030,7 +1009,7 @@ public:
 template <typename C, typename K, typename V>
 inline void operator+=(C& mum, std::pair<K, V>&& element)
   requires ( (is_mum<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
-             (is_mmumm_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
+             (is_mmumm<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
   { mum.emplace(std::move(element)); }
 
@@ -1038,12 +1017,12 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
     \param  m           destination MUM
     \param  element     element to insert
 */
-/* The perceived "wisdom" is that requires clauses are clearer than SFINAE,. In this case, that is clearly untrue.
+/* The perceived "wisdom" is that requires clauses are clearer than SFINAE. In this case, that is clearly untrue.
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>
 inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
-  requires (is_mum<C> or is_mmumm_v<C>)
+  requires (is_mum<C> or is_mmumm<C>)
   { mum.emplace(il); }
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
@@ -1101,7 +1080,7 @@ template< std::ranges::input_range R, class Proj = std::identity, std::indirect_
 constexpr bool ALL_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::all_of(std::forward<R>(r), pred, proj); };
 
 template< std::input_iterator I, std::sentinel_for<I> S, class Proj = std::identity, std::indirect_unary_predicate<std::projected<I, Proj>> Pred >
-constexpr bool NONE_OF( I first, S last, Pred pred, Proj proj = {} )  { return std::ranges::none_of(first, last, pred, proj); };
+constexpr bool NONE_OF( I first, S last, Pred pred, Proj proj = {} ) { return std::ranges::none_of(first, last, pred, proj); };
 
 template< std::ranges::input_range R, class Proj = std::identity, std::indirect_unary_predicate<std::projected<std::ranges::iterator_t<R>,Proj>> Pred >
 constexpr bool NONE_OF( R&& r, Pred pred, Proj proj = {} ) { return std::ranges::none_of(std::forward<R>(r), pred, proj); };
@@ -1234,16 +1213,11 @@ inline void SORT(C& v, F f = F())
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-#if 1
 template <typename C, typename T>
 inline void operator+=(C& sus, T&& element)
-//  requires is_sus_v<C> and (std::is_convertible_v<typename C::value_type, base_type<T>>) or
-//           is_ssuss_v<C> and (std::is_convertible_v<typename C::value_type, base_type<T>>)
-//  requires (is_sus_v<C> and (std::is_convertible_v<base_type<T>, typename C::value_type>)) or
-//           (is_ssuss_v<C> and (std::is_convertible_v<base_type<T>, typename C::value_type>))
-  requires (is_sus_v<C> or is_ssuss_v<C>) and (std::is_convertible_v<base_type<T>, typename C::value_type>)
+  requires (is_sus<C> or is_ssuss<C>) and (std::is_convertible_v<base_type<T>, typename C::value_type>)
   { sus.insert(std::forward<T>(element)); }
-#endif
+
 //inline void operator+=(ANYSET auto& sus, typename decltype(sus)::value_type&& element)
 //  { sus.insert(std::forward<typename decltype(sus)::value_type>(element)); }
 
@@ -1277,7 +1251,7 @@ inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_typ
 */
 template <typename C, typename V>
 inline void operator+=(C& sus, const V& vec)
-  requires is_sus_v<C> and is_vector<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
+  requires is_sus<C> and is_vector<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
   { std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); };
 
 /*! \brief              Remove an element from a set, map, unordered set or unordered map
@@ -1286,7 +1260,7 @@ inline void operator+=(C& sus, const V& vec)
 */
 template <typename C, typename T>
 inline void operator-=(C& sus, const T& element)
-  requires (is_sus_v<C> or is_mum<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
+  requires (is_sus<C> or is_mum<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set
@@ -1313,7 +1287,7 @@ inline void operator+=(std::multiset<std::pair<F, S>>& s, const std::pair<F, S>&
 template <typename MUMD, typename MUMS>
   requires ( ( (is_mum<MUMD>) and (is_mum<MUMS>) and
              (std::is_same_v<typename MUMD::key_type, typename MUMS::key_type>) and (std::is_same_v<typename MUMD::mapped_type, typename MUMS::mapped_type>) ) or
-             ( (is_sus_v<MUMD>) and (is_sus_v<MUMS>) and (std::is_same_v<typename MUMD::value_type, typename MUMS::value_type>) ) )
+             ( (is_sus<MUMD>) and (is_sus<MUMS>) and (std::is_same_v<typename MUMD::value_type, typename MUMS::value_type>) ) )
 inline void operator+=(MUMD& dest, const MUMS& src)
   { dest.insert(src.cbegin(), src.cend()); }
 
@@ -1391,10 +1365,10 @@ V operator+(const V& v1, const V& v2)
     Note that in general this means that the vector is subsequently going to be ordered
 */
 template <typename V, typename SUS>
-  requires (is_vector<V>) and (is_sus_v<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
-inline void operator+=(V& vec, const SUS& sus)
+  requires (is_vector<V>) and (is_sus<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
+  void operator+=(V& vec, const SUS& sus)
   { vec.reserve(vec.size() + sus.size());
-    //dest.insert(dest.end(), src.begin(), src.end()); &&&
+
     COPY_ALL(sus, back_inserter(vec));
   }
 
@@ -1421,7 +1395,7 @@ auto operator+(const V& v1, E&& element) -> V
 */
 template <typename S, typename E>
 auto operator+(const S& s1, E&& element) -> S
-  requires is_sus_v<S> and (std::is_same_v<typename S::value_type, base_type<E>>)
+  requires is_sus<S> and (std::is_same_v<typename S::value_type, base_type<E>>)
 { S rv { s1 };
 
   rv.insert(std::forward<E>(element));
@@ -1436,7 +1410,7 @@ auto operator+(const S& s1, E&& element) -> S
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
   requires is_deque<C> or is_list<C> or is_vector<C>
-{ c1.push_back(std::forward<typename C::value_type>(element)); }
+  { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
     \param  c1          destination deque, list or vector

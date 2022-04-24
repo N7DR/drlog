@@ -51,7 +51,7 @@ protected:
 // not possible to put that in chronological order without including seconds...
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
-  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap; we need call ordering
+  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
 /*! \brief          Modify a passed QSO with a new value for a named field
@@ -144,7 +144,7 @@ public:
   inline bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
 
-      return (_log.lower_bound(call) != _log.upper_bound(call)); 
+      return (_LB(call) != _UB(call)); 
     }
     
 /*! \brief          Has a call been worked on a particular band?

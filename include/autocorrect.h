@@ -46,7 +46,8 @@ public:
 
   inline bool contains(const std::string& putative_call) const
 //    { return ::contains(_calls, putative_call); }
-    { return _calls.contains(putative_call); }
+//    { return _calls.contains(putative_call); }
+    { return (_calls > putative_call); }
 
   inline unsigned int n_calls(void) const
     { return _calls.size(); }
@@ -63,5 +64,8 @@ public:
 
 inline bool contains(const autocorrect_database& db, const std::string& str)
   { return db.contains(str); }
+
+inline bool operator>(const autocorrect_database& db, const std::string& str)
+  { return contains(db, str); }
 
 #endif    // AUTOCORRECT.H

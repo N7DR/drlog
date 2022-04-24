@@ -437,8 +437,7 @@ public:
     \return         whether <i>call</i> is present
 */
   inline bool contains(const std::string& call) const
-//    { return ::contains(_records, call); }
-  { return _records.contains(call); }
+    { return (_records > call); }
 };
 
 #endif    // DRMASTER_H

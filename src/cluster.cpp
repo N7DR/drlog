@@ -88,8 +88,7 @@ reconnect:
 
     catch (const socket_support_error& E)
     { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
- //     sleep_for(minutes(1));    // sleep for one minute before retrying
-      sleep_for(1min);
+      sleep_for(1min);    // sleep for one minute before retrying
 
       { SAFELOCK(thread_check);
 
@@ -124,17 +123,28 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 { 
 // set the keepalive option
   _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);
+
+//  ost << "connection: " << _connection << endl;
   
   string buf;
+
+  extern string hhmmss(void);
+
+//  ost << "_timeout = " << _timeout << endl;
 
 // send the login information as soon as we receive anything from the server
   while (buf.empty())
   { try
     { buf = _connection.read(_timeout);
 
+//      ost << hhmmss() << ": buf read; size = " << buf.length() << ": ***" << buf << "***" << ((src == POSTING_SOURCE::CLUSTER) ? " CLUSTER" : " RBN") << endl;
+
+      if (!buf.empty())
       { SAFELOCK(rbn_buffer);
         _unprocessed_input += buf;
       }
+      else
+        sleep_for(2s);              // just in case we somehow read zero bytes from the connection: this *can* happen, even though it's not supposed to; match CLUSTER_TIMEOUT
     }
 
     catch (const socket_support_error& e)
@@ -512,13 +522,11 @@ void monitored_posts::operator+=(const string& new_call)
 void monitored_posts::operator-=(const string& call_to_remove)
 { SAFELOCK(monitored_posts);
 
-//  _callsigns.erase(call_to_remove);
   _callsigns -= call_to_remove;
 
 // remove any entries that have this call
   const size_t original_size { _entries.size() };
 
-//  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
   erase_if(_entries, [call_to_remove] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
 
   _is_dirty |= (original_size != _entries.size());
@@ -532,7 +540,6 @@ void monitored_posts::prune(void)
 
   const size_t original_size { _entries.size() };
 
-//  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
   erase_if(_entries, [now] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());

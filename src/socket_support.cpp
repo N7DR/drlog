@@ -394,7 +394,9 @@ string tcp_socket::read(void)
     Throws an exception if the read times out
 */
 string tcp_socket::read(const unsigned long timeout_secs)
-{ string rv;
+{ //ost << "in read(); timeout_secs = " << timeout_secs << endl;
+
+  string rv;
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
@@ -411,9 +413,13 @@ string tcp_socket::read(const unsigned long timeout_secs)
     throw socket_support_error(SOCKET_SUPPORT_UNABLE_TO_LISTEN);
   }
 
+//  ost << "HERE" << endl;
+
   const int max_socket_number { _sock + 1 };               // see p. 292 of Linux socket programming
 
   int socket_status { select(max_socket_number, &ps_set, NULL, NULL, &timeout) };  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
+
+//  ost << "socket status = " << socket_status << endl;
 
   switch (socket_status)
   { case 0:                    // timeout
@@ -427,7 +433,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
     }
 
-    default:                   // response is waiting to be read
+    default:                   // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
     { constexpr int BUFSIZE { 4096 };   // a reasonable size for a buffer
 
       char cp[BUFSIZE];

@@ -42,8 +42,7 @@ void adif3_field::_normalise(void)
   }
 
 // force some values into upper case
-//  if (uc_fields > _name)
-  if (uc_fields.contains(_name))
+  if (uc_fields > _name)
   { _value = to_upper(_value);
     return;
   }
@@ -88,8 +87,7 @@ void adif3_field::_verify(void) const
     break;
       
     case ADIF3_DATA_TYPE::ENUMERATION_BAND :
-    { //if (!(_ENUMERATION_BAND > to_lower(_value)))
-      if (!_ENUMERATION_BAND.contains(to_lower(_value)))
+    { if (!(_ENUMERATION_BAND > to_lower(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -99,21 +97,20 @@ void adif3_field::_verify(void) const
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
 //      if (!contains(_ENUMERATION_DXCC_ENTITY_CODE, from_string<int>(_value)))
-      if (!_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value)))
+//      if (!_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value)))
+      if (!(_ENUMERATION_DXCC_ENTITY_CODE > from_string<int>(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
     break;
     
     case ADIF3_DATA_TYPE::ENUMERATION_MODE :
-    { //if (!(_ENUMERATION_MODE > to_upper(_value)))
-      if (!_ENUMERATION_MODE.contains(to_upper(_value)))
+    { if (!(_ENUMERATION_MODE > to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
  
     case ADIF3_DATA_TYPE::ENUMERATION_QSL_RECEIVED :
-    { //if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
-      if (!_ENUMERATION_QSL_RECEIVED.contains(to_upper(_value)))
+    { if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -172,8 +169,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     break;
     
     case ADIF3_DATA_TYPE::POSITIVE_INTEGER :      // an unsigned sequence of one or more Digits representing a decimal integer that has a value greater than 0.  Leading zeroes are allowed. 
-    { //if (_value.find_first_not_of(DIGITS) != string::npos)
-      if (!is_digits(_value))
+    { if (!is_digits(_value))
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
 
 // CQZ : 1..40
@@ -364,8 +360,7 @@ string adif3_record::to_string(void) const
 { string rv;
 
   for (const auto& element : _elements)
-  { //if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
-    if (const ADIF3_DATA_TYPE dt { element.second.type() }; !_import_only.contains(dt) )       // don't output if this type is import-only
+  { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
     { switch (dt)
       { default :
           rv += element.second.to_string();    // output without any checks
@@ -468,7 +463,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  FOR_ALL(begin_it, end_it, [=, &rv](const auto& map_entry) 
+  FOR_ALL(begin_it, end_it, [b, m, &rv](const auto& map_entry) 
     { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
         rv += map_entry.second; 
     });
@@ -485,7 +480,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  FOR_ALL(begin_it, end_it, [=, &rv](const auto& map_entry) { rv += map_entry.second; });
+  FOR_ALL(begin_it, end_it, [&rv](const auto& map_entry) { rv += map_entry.second; });
   
   return rv;
 }
@@ -497,7 +492,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
 size_t skip_adif3_header(const std::string& str)
 { const auto posn_1 { case_insensitive_find(str, "<EOH>"s) };
 
-  return ( (posn_1 == string::npos) ? 0 : (str.find("<"s, posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
+  return ( (posn_1 == string::npos) ? 0 : (str.find('<', posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
 }
 
 /// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
