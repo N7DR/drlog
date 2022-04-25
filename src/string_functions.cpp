@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 196 2021-11-14 21:39:45Z  $
+// $Id: string_functions.cpp 205 2022-04-24 16:05:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -943,38 +943,6 @@ bool compare_mults(const string& mult1, const string& mult2)
   else
     return compare_calls(mult1, mult2);
 }
-
-/*! \brief          Does a string contain any letters?
-    \param  str     string to test
-    \return         whether <i>str</i> contains any letters
-
-    This should be faster than the find_next_of() or C++ is_letter or similar generic functions
-*/
-#if 0
-bool contains_letter(const string& str)
-{ for (const char& c : str)
-    if ( (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z') )
-      return true;
-
-  return false;
-}
-#endif
-
-/*! \brief          Does a string contain any digits?
-    \param  str     string to test
-    \return         whether <i>str</i> contains any digits
-
-    This should be faster than the find_next_of() or C++ is_digit or similar generic functions
-*/
-#if 0
-bool contains_digit(const string& str)
-{ for (const char& c : str)
-    if (c >= '0' and c <= '9')
-      return true;
-
-  return false;
-}
-#endif
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value

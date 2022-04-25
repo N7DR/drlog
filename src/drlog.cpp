@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 204 2022-04-10 14:54:55Z  $
+// $Id: drlog.cpp 205 2022-04-24 16:05:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7043,16 +7043,34 @@ void* p3_screenshot_thread(void* vp)
 void* spawn_dx_cluster(void* vp)
 { win_cluster_line <= "UNCONNECTED"s;
 
-  try
-  { cluster_p = new dx_cluster(context, POSTING_SOURCE::CLUSTER);
+  bool cluster_started { false };
+  bool signalled_failure { false };
 
-    ost << "Cluster connection: " << cluster_p->connection_status() << endl;
-  }
+  cluster_p = nullptr;          // should be unnecessary
 
-  catch (...)
-  { ost << "UNABLE TO CREATE CLUSTER" << endl;
-    alert("UNABLE TO CREATE CLUSTER; PROCEEDING WITHOUT CLUSTER"s);
-    return nullptr;
+  while (!cluster_started)
+  { try
+    { cluster_p = new dx_cluster(context, POSTING_SOURCE::CLUSTER);
+
+      ost << "Cluster connection: " << cluster_p->connection_status() << endl;
+      cluster_started = true;
+    }
+
+    catch (...)
+    { ost << "UNABLE TO CREATE CLUSTER" << endl;
+      if (!signalled_failure)
+      { alert("UNABLE TO CREATE CLUSTER; PROCEEDING WITHOUT CLUSTER"s);
+        signalled_failure = true;
+      }
+//      return nullptr;
+
+      if (cluster_p)
+      { delete cluster_p;
+        cluster_p = nullptr;
+      }
+
+      sleep_for(1min);
+    }
   }
 
   win_cluster_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
@@ -7078,28 +7096,55 @@ void* spawn_dx_cluster(void* vp)
 void* spawn_rbn(void* vp)
 { win_rbn_line <= "UNCONNECTED"s;
 
-  try
-  { rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
+  bool rbn_started { false };
+  bool signalled_failure { false };
 
-    ost << "RBN connection: " << rbn_p->connection_status() << endl;
-  }
+  rbn_p = nullptr;          // should be unnecessary
+
+  while (!rbn_started)
+  { try
+    { rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
+
+      ost << "RBN connection: " << rbn_p->connection_status() << endl;
+      rbn_started = true;
+    }
   
-  catch (const x_error& e)
-  { ost << "UNABLE TO CREATE RBN: error = " << e.reason() << endl;
-    alert("UNABLE TO CREATE RBN; PROCEEDING WITHOUT RBN"s);
-    return nullptr;
+    catch (const x_error& e)
+    { ost << "UNABLE TO CREATE RBN: error = " << e.reason() << endl;
+      if (!signalled_failure)
+      { alert("UNABLE TO CREATE RBN; PROCEEDING WITHOUT RBN"s);
+        signalled_failure = true;
+      }
+//      return nullptr;
 
 //    ost << "Error creating dx_cluster object; exiting: " << e.reason() << endl;
 //    exit(-1);
-  }
+      if (rbn_p)
+      { delete rbn_p;
+        rbn_p = nullptr;
+      }
+
+      sleep_for(1min);
+    }
   
-  catch (...)
-  { //ost << "Unknown error creating dx_cluster object; exiting." << endl;
+    catch (...)
+    { //ost << "Unknown error creating dx_cluster object; exiting." << endl;
     //exit(-1);
 
-    ost << "UNABLE TO CREATE RBN" << endl;
-    alert("UNABLE TO CREATE RBN; PROCEEDING WITHOUT RBN"s);
-    return nullptr;
+      ost << "UNABLE TO CREATE RBN" << endl;
+      if (!signalled_failure)
+      { alert("UNABLE TO CREATE RBN; PROCEEDING WITHOUT RBN"s);
+//    return nullptr;
+       signalled_failure = true;
+      }
+
+      if (rbn_p)
+      { delete rbn_p;
+        rbn_p = nullptr;
+      }
+
+      sleep_for(1min);
+    }
   }
 
   win_rbn_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
@@ -7283,32 +7328,27 @@ void allow_for_callsign_mults(QSO& qso)
 { if (callsign_mults_used)
   { string mult_name;
 
-//    if ( (rules.callsign_mults() > "AAPX"s) and (location_db.continent(qso.callsign()) == "AS"s) )  // All Asian
-    if ( rules.callsign_mults().contains("AAPX"s) and (location_db.continent(qso.callsign()) == "AS"s) )  // All Asian
+    if ( (rules.callsign_mults() > "AAPX"s) and (location_db.continent(qso.callsign()) == "AS"s) )  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "AAPX"s;
     }
 
- //   if ( (rules.callsign_mults() > "OCPX"s) and (location_db.continent(qso.callsign()) == "OC"s) )  // Oceania
-    if ( rules.callsign_mults().contains("OCPX"s) and (location_db.continent(qso.callsign()) == "OC"s) )  // Oceania
+    if ( (rules.callsign_mults() > "OCPX"s) and (location_db.continent(qso.callsign()) == "OC"s) )  // Oceania
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "OCPX"s;
     }
 
- //   if ( (rules.callsign_mults() > "SACPX"s) )      // SAC
-    if ( rules.callsign_mults().contains("SACPX"s) )      // SAC
+    if ( (rules.callsign_mults() > "SACPX"s) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
       mult_name = "SACPX"s;
     }
 
- //   if ( (rules.callsign_mults() > "UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
-    if ( rules.callsign_mults().contains("UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
+    if ( (rules.callsign_mults() > "UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "UBAPX"s;
     }
 
-//    if (rules.callsign_mults() > "WPXPX"s)
-    if (rules.callsign_mults().contains("WPXPX"s))
+    if (rules.callsign_mults() > "WPXPX"s)
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "WPXPX"s;
     }

@@ -1,4 +1,4 @@
-// $Id: audio.cpp 195 2021-11-01 01:21:22Z  $
+// $Id: audio.cpp 205 2022-04-24 16:05:06Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -522,7 +522,8 @@ void audio_recorder::initialise(void)
       ost << "error number " << status << endl;
       ost << snd_strerror(status) << endl;
       n_failures++;
-      sleep_for(seconds(5));
+//      sleep_for(seconds(5));
+      sleep_for(5s);
     }
   }  while ((status < 0) and (n_failures <= MAX_FAILURES));
 
@@ -727,7 +728,6 @@ void bext_chunk::write_to_file(FILE* fp) const
   }
 
 // now write the actual data
-//  string str_1 = convert_for_output(_description, 256);
 
   items = fwrite(convert_for_output(_description, 256).data(), 1, 256, fp);
 

@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 204 2022-04-10 14:54:55Z  $
+// $Id: exchange.cpp 205 2022-04-24 16:05:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1070,7 +1070,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
     string rv;
 
     if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
-//    if (!drm_line.empty() and (countries.contains(location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
     { rv = drm_line.qth();
 
       if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file

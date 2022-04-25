@@ -1,4 +1,4 @@
-// $Id: bandmap.h 203 2022-03-28 22:08:50Z  $
+// $Id: bandmap.h 205 2022-04-24 16:05:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -757,7 +757,6 @@ protected:
   decltype(_entries)              _rbn_threshold_filtered_and_culled_entries;           ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string> _recent_calls;                                        ///< calls recently added
   COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
-//  uint32_t                        _verno         { 0 };                                 ///< version number (not currently used, I believe)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -820,9 +819,6 @@ public:
   { SAFELOCK(_bandmap);
     return _entries.size(); 
   }
-  
-/// version number -- just needs to be read via this function, so don't need to lock the mutex
-//  READ(verno);
 
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
@@ -1093,7 +1089,7 @@ public:
 */
   inline bool is_recent_call(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      return (callsign < _recent_calls);
+      return (_recent_calls > callsign);
     }
 
 /*!  \brief             Add a call to the do-not-add list
