@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: drlog.cpp 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3116,7 +3116,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .ADD <call> -- remove call from the do-not-show list
 //      if (starts_with(command, "ADD"s))
-      if (command.starts_with("ADD"s))
+      if ( command.starts_with("ADD"s) or command.starts_with("SHOW"s) )
       { if (contains(command, SPACE_STR))
         { const string callsign { remove_peripheral_spaces(substring(command, command.find(SPACE_STR))) };
 
@@ -3140,7 +3140,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
 // .CULL <n>
-//      if (starts_with(command, "CULL"s))
       if (command.starts_with("CULL"s))
       { if (contains(command, SPACE_STR))
         { const int cull_function { from_string<int>(substring(command, command.find(SPACE_STR))) };
@@ -3148,7 +3147,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
         }
 
-//        bandmap& bm { bandmaps[safe_get_band()] };
         bandmap& bm { bandmaps[current_band] };
 
         win_bandmap <= bm;
@@ -3161,7 +3159,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         insert_memory();
 
 // .MONITOR <call> -- add <call> to those being monitored
-//      if (starts_with(command, "MON"s))
       if (command.starts_with("MON"s))
       { if (contains(command, SPACE_STR))
         { const string callsign { remove_peripheral_spaces(substring(command, command.find(SPACE_STR))) };
@@ -3173,7 +3170,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // .QTC QRS <n>
-//      if (starts_with(command, "QTC QRS "s))
       if (command.starts_with("QTC QRS "s))
       { const unsigned int new_qrs { from_string<unsigned int>(substring(command, 8)) };
 
@@ -3195,13 +3191,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         { ok_to_poll_k3 = false;        // we might be partway through a poll, but that should be OK
 
           rig.rig_frequency(freq);
-//          safe_set_band(static_cast<BAND>(freq));
           current_band = static_cast<BAND>(freq);
 
           rig.rig_mode(me.mode());
-//          safe_set_mode(me.mode());
           current_mode = me.mode();
-//          display_band_mode(win_band_mode, safe_get_band(), me.mode());
+
           display_band_mode(win_band_mode, current_band, me.mode());
           enter_cq_or_sap_mode(me.drlog_mode());
           update_based_on_frequency_change(freq, me.mode());
@@ -7372,11 +7366,11 @@ void allow_for_callsign_mults(QSO& qso)
     \param  e   keyboard event to process
 
    ALT-Q - start process of sending QTC batch
+   ALT-Y -- mark most-recently sent QTC as unsent
    ESCAPE - abort CW
    R -- repeat introduction (i.e., no QTCs sent)
    ENTER - send next QSO or finish
    CTRL-X, ALT-X -- Abort and go back to prior window
-   ALT-Y -- mark most-recently sent QTC as unsent
 
    T, U -- repeat time
    C -- repeat call
@@ -7399,12 +7393,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static const string EU { "EU"s };
 
   const unsigned int qtc_qrs { context.qtc_qrs() };
-//  const bool         cw      { (safe_get_mode() == MODE_CW) };  // just to keep it easy to determine if we are on CW
   const bool         cw      { current_mode == MODE_CW };  // just to keep it easy to determine if we are on CW
 
   bool processed { false };
 
-  auto send_msg = [=](const string& msg)
+  auto send_msg = [cw](const string& msg)
     { if (cw)
         (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
     };
@@ -7465,8 +7458,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
 
     if (!processed)
-    { //const string mode_str { (safe_get_mode() == MODE_CW ? "CW"s : "PH"s) };
-      const string mode_str { (current_mode == MODE_CW ? "CW"s : "PH"s) };
+    { const string mode_str { (current_mode == MODE_CW ? "CW"s : "PH"s) };
 
       series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
 
@@ -7658,8 +7650,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // C -- repeat call
   if (!processed and ( (e.is_char('c'))) )
   { if (cw)
-    { if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
-        send_msg(series[qtc_nr].first.callsign());
+    { //if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
+      //  send_msg(series[qtc_nr].first.callsign());
+      if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
+        send_msg(series[vqn.value()].first.callsign());
     }
 
     processed = true;
@@ -7668,8 +7662,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // N, S -- repeat number
   if (!processed and ( (e.is_char('n')) or (e.is_char('s'))))
   { if (cw)
-    { if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
-      { const string serno { pad_left(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, 'T') };
+    { //if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
+      if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
+      { //const string serno { pad_left(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, 'T') };
+        const string serno { pad_left(remove_leading(remove_peripheral_spaces(series[vqn.value()].first.serno()), '0'), 3, 'T') };
 
         send_msg(serno);
       }
@@ -7681,8 +7677,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // A, R -- repeat all
   if (!processed and ( (e.is_char('a')) or (e.is_char('r'))))
   { if (cw)
-    { if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
-      { const qtc_entry& qe { series[qtc_nr].first };
+    { //if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
+      if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
+      { //const qtc_entry& qe { series[qtc_nr].first };
+        const qtc_entry& qe { series[vqn.value()].first };
 
         send_qtc_entry(qe, false);
       }
@@ -7759,13 +7757,9 @@ void display_nearby_callsign(const string& callsign)
       win_log_extract <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
   }
   else
-  { //const bool dupe       { logbk.is_dupe(callsign, safe_get_band(), safe_get_mode(), rules) };
-//    const bool dupe       { logbk.is_dupe(callsign, current_band, safe_get_mode(), rules) };
-    const bool dupe       { logbk.is_dupe(callsign, current_band, current_mode, rules) };
-//    const bool worked     { q_history.worked(callsign, safe_get_band(), safe_get_mode()) };
-//    const bool worked     { q_history.worked(callsign, current_band, safe_get_mode()) };
+  { const bool dupe       { logbk.is_dupe(callsign, current_band, current_mode, rules) };
     const bool worked     { q_history.worked(callsign, current_band, current_mode) };
-    const int  foreground { win_nearby.fg() };  // save the default colours
+    const int  foreground { win_nearby.fg() };                      // save the default colours
     const int  background { win_nearby.bg() };
 
 // in what colour should we display this call?
@@ -7837,9 +7831,7 @@ void test_exchange_templates(const contest_rules& rules, const string& test_file
 
 /// calculate the time/QSO value of a mult and update <i>win_mult_value</i>
 void update_mult_value(void)
-{ //const float        mult_value    { statistics.mult_to_qso_value(rules, safe_get_band(), safe_get_mode()) };
-//  const float        mult_value    { statistics.mult_to_qso_value(rules, current_band, safe_get_mode()) };
-  const float        mult_value    { statistics.mult_to_qso_value(rules, current_band, current_mode) };
+{ const float        mult_value    { statistics.mult_to_qso_value(rules, current_band, current_mode) };
   const unsigned int mult_value_10 { static_cast<unsigned int>( (mult_value * 10) + 0.5) };
   const string       term_1        { to_string(mult_value_10 / 10) };
   const string       term_2        { substring(to_string(mult_value_10 - (10 * (mult_value_10 / 10) )), 0, 1) };

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 205 2022-04-24 16:05:06Z  $
+// $Id: string_functions.h 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -382,7 +382,7 @@ inline void write_file(const std::string& cs, const std::string& filename)
 template <typename T>
 inline bool starts_with(const std::string& cs, const T& ss)
   requires (is_string<typename T::value_type>)
-  { return ANY_OF(ss, [=] (const std::string& str) { return cs.starts_with(str); }); }
+  { return ANY_OF(ss, [cs] (const std::string& str) { return cs.starts_with(str); }); }
 
 /*! \brief      Remove specific string from the start of a string if it is present
     \param  s   original string
@@ -549,7 +549,7 @@ inline std::vector<std::string> split_string(const std::string& cs, const int re
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-std::string squash(const std::string& cs, const char c = SPACE_CHAR);
+std::string squash(const std::string& cs, const char c = ' ');
 
 /*! \brief          Remove empty lines from a vector of lines
     \param  lines   the original vector of lines

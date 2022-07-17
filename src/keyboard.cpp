@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 203 2022-03-28 22:08:50Z  $
+// $Id: keyboard.cpp 206 2022-05-22 12:47:37Z  $
 
 /*! \file 	keyboard.cpp
 
@@ -335,13 +335,6 @@ keyboard_event keyboard_queue::pop(void)
   return rv;
 }
 
-/// get the event most recently popped
-//keyboard_event keyboard_queue::last(void)
-//{ SAFELOCK(_keyboard);
-//
-//  return _last_event;
-//}
-
 /*! \brief      Emulate the pressing of a character key
     \param  c   pressed character
 
@@ -412,7 +405,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
     \param  ms_delay    delay in milliseconds between each character in <i>str</i>
 */
 void keyboard_queue::push_key_press(const string& str, const int ms_delay)
-{ for (size_t n = 0; n < str.length(); ++n)
+{ for (size_t n { 0 }; n < str.length(); ++n)
   { push_key_press(str[n]);
 
     if (n != str.length() - 1)
@@ -425,39 +418,39 @@ void keyboard_queue::push_key_press(const string& str, const int ms_delay)
     This is used to decode access to the correct CW messages when a key is pressed
     See the file drlog_context.cpp to see this in use
 */
-const map<string, int> key_names = { { "kp_0",      XK_KP_0 },
-                                     { "kp_1",      XK_KP_1 },
-                                     { "kp_2",      XK_KP_2 },
-                                     { "kp_3",      XK_KP_3 },
-                                     { "kp_4",      XK_KP_4 },
-                                     { "kp_5",      XK_KP_5 },
-                                     { "kp_6",      XK_KP_6 },
-                                     { "kp_7",      XK_KP_7 },
-                                     { "kp_8",      XK_KP_8 },
-                                     { "kp_9",      XK_KP_9 },
-                                     { "kp_insert", XK_KP_Insert },
-                                     { "kp_end",    XK_KP_End },
-                                     { "kp_down",   XK_KP_Down },
-                                     { "kp_next",   XK_KP_Next },
-                                     { "kp_left",   XK_KP_Left },
-                                     { "kp_begin",  XK_KP_Begin },
-                                     { "kp_right",  XK_KP_Right },
-                                     { "kp_home",   XK_KP_Home },
-                                     { "kp_up",     XK_KP_Up },
-                                     { "kp_prior",  XK_KP_Prior }
+const map<string, int> key_names = { { "kp_0"s,      XK_KP_0 },
+                                     { "kp_1"s,      XK_KP_1 },
+                                     { "kp_2"s,      XK_KP_2 },
+                                     { "kp_3"s,      XK_KP_3 },
+                                     { "kp_4"s,      XK_KP_4 },
+                                     { "kp_5"s,      XK_KP_5 },
+                                     { "kp_6"s,      XK_KP_6 },
+                                     { "kp_7"s,      XK_KP_7 },
+                                     { "kp_8"s,      XK_KP_8 },
+                                     { "kp_9"s,      XK_KP_9 },
+                                     { "kp_insert"s, XK_KP_Insert },
+                                     { "kp_end"s,    XK_KP_End },
+                                     { "kp_down"s,   XK_KP_Down },
+                                     { "kp_next"s,   XK_KP_Next },
+                                     { "kp_left"s,   XK_KP_Left },
+                                     { "kp_begin"s,  XK_KP_Begin },
+                                     { "kp_right"s,  XK_KP_Right },
+                                     { "kp_home"s,   XK_KP_Home },
+                                     { "kp_up"s,     XK_KP_Up },
+                                     { "kp_prior"s,  XK_KP_Prior }
                                    };
 
 /// key names that are equivalent to one another
-const map<string, string> equivalent_key_names = { { "kp_0", "kp_insert" },
-                                                   { "kp_1", "kp_end" },
-                                                   { "kp_2", "kp_down" },
-                                                   { "kp_3", "kp_next" },
-                                                   { "kp_4", "kp_left" },
-                                                   { "kp_5", "kp_begin" },
-                                                   { "kp_6", "kp_right" },
-                                                   { "kp_7", "kp_home" },
-                                                   { "kp_8", "kp_up" },
-                                                   { "kp_9", "kp_prior" }
+const map<string, string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
+                                                   { "kp_1"s, "kp_end"s },
+                                                   { "kp_2"s, "kp_down"s },
+                                                   { "kp_3"s, "kp_next"s },
+                                                   { "kp_4"s, "kp_left"s },
+                                                   { "kp_5"s, "kp_begin"s },
+                                                   { "kp_6"s, "kp_right"s },
+                                                   { "kp_7"s, "kp_home"s },
+                                                   { "kp_8"s, "kp_up"s },
+                                                   { "kp_9"s, "kp_prior"s }
                                                  };
 
 /// names of keys on the keypad

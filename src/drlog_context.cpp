@@ -354,6 +354,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         const string lhs { str_vec[0] };
 
         if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
+//        if ( !lhs.contains('[') or lhs.contains("[*]"s) )             // for all bands
         { string new_str;
 
           for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -384,7 +385,6 @@ void drlog_context::_process_configuration_file(const string& filename)
             }
 
             tmp_str = to_upper(remove_peripheral_spaces(new_str));
-//            _per_band_country_mult_factor += { b, from_string<int>(tmp_str) };
             _per_band_country_mult_factor += { b, from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
           }
         }
@@ -505,53 +505,74 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE SAP"s)
       _exchange_sap = RHS;
 
+    auto update_sent_exchange = [line, testline] (auto& exchange)
+      { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
+        const vector<string> fields               { split_string(comma_delimited_list) };
+
+        for (const auto& this_field : fields)
+        { const vector<string> field { clean_split_string(this_field, ':') };
+
+          if (fields.size() != 2)
+            print_error_and_exit(testline);
+
+          exchange += { field[0], field[1] };
+        }
+      };
+
 // EXCHANGE SENT
 // e.g., exchange sent = RST:599, CQZONE:4
     if (LHS == "EXCHANGE SENT"s)
+      update_sent_exchange(_sent_exchange);
+#if 0
     { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
       const vector<string> fields               { split_string(comma_delimited_list) };
 
       for (const auto& this_field : fields)
       { const vector<string> field { clean_split_string(this_field, ':') };
 
+        if (fields.size() != 2)
+          print_error_and_exit(testline);
+
         _sent_exchange += { field[0], field[1] };
       }
     }
+#endif
 
 // EXCHANGE SENT CW
     if (LHS == "EXCHANGE SENT CW"s)
+      update_sent_exchange(_sent_exchange_cw);
+#if 0
     { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
       const vector<string> fields               { split_string(comma_delimited_list, ',') };
 
       for (const auto& this_field : fields)
-      { //const vector<string> field { split_string(this_field, ':') };
-        const vector<string> field { clean_split_string(this_field, ':') };
+      { const vector<string> field { clean_split_string(this_field, ':') };
 
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
-//        _sent_exchange_cw += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
         _sent_exchange_cw += { field[0], field[1] };
       }
     }
+#endif
 
 // EXCHANGE SENT SSB
     if (LHS == "EXCHANGE SENT SSB"s)
-    { //const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
-      const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
+      update_sent_exchange(_sent_exchange_ssb);
+#if 0
+    { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
       const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
-      { //const vector<string> field { split_string(this_field, ":"s) };
-        const vector<string> field { clean_split_string(this_field, ':') };
+      { const vector<string> field { clean_split_string(this_field, ':') };
 
         if (fields.size() != 2)
           print_error_and_exit(testline);
 
-//        _sent_exchange_ssb += { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) };
         _sent_exchange_ssb += { field[0], field[1] };
       }
     }
+#endif
 
 // FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH"s)

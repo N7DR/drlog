@@ -1,4 +1,4 @@
-// $Id: socket_support.h 200 2022-01-16 14:48:14Z  $
+// $Id: socket_support.h 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -127,10 +127,7 @@ inline unsigned int port(const sockaddr& sin)
     \return         dotted decimal string
 */
 inline std::string dotted_decimal_address(const sockaddr_in& sin)
-  {//const std::string rv { inet_ntoa(sin.sin_addr) 
-
-    return (inet_ntoa(sin.sin_addr)); 
-  }
+  { return (inet_ntoa(sin.sin_addr)); }
 
 /*! \brief          Extract address from a sockaddr
     \param  sin     sockaddr_in

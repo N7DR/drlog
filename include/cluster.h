@@ -1,4 +1,4 @@
-// $Id: cluster.h 205 2022-04-24 16:05:06Z  $
+// $Id: cluster.h 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,6 +42,7 @@ class dx_cluster
 protected:
 
   tcp_socket          _connection;                  ///< TCP socket for communication with the network
+  TIME_POINT          _last_data_received { };      ///< time point of last data received
   std::string         _login_id;                    ///< my login identifier
   std::string         _my_ip;                       ///< my IP address
   unsigned int        _port;                        ///< server port
@@ -49,8 +50,6 @@ protected:
   enum POSTING_SOURCE _source;                      ///< source for postings
   unsigned int        _timeout;                     ///< timeout in seconds (defaults to 1)
   std::string         _unprocessed_input;           ///< buffer for messages from the network
-
-  TIME_POINT          _last_data_received { };      ///< time point of last data received
 
 /// process a read error
   void _process_error(void);
@@ -227,11 +226,10 @@ class monitored_posts
 {
 protected:
 
-  std::set<std::string>     _callsigns   { };           ///< monitored calls
-  bool                      _is_dirty    { false };     ///< whether info has changed since last output
-  std::atomic<unsigned int> _max_entries { 0 };         ///< number of displayable entries
-
-  std::deque<monitored_posts_entry> _entries;       ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
+  std::set<std::string>             _callsigns   { };           ///< monitored calls
+  std::deque<monitored_posts_entry> _entries;                   ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
+  bool                              _is_dirty    { false };     ///< whether info has changed since last output
+  std::atomic<unsigned int>         _max_entries { 0 };         ///< number of displayable entries
 
 public:
 

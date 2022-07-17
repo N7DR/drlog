@@ -1,4 +1,4 @@
-// $Id: macros.h 205 2022-04-24 16:05:06Z  $
+// $Id: macros.h 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1553,5 +1553,16 @@ typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
 template <typename C>
 inline void operator-=(C& c1, C c2)
   { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
+
+#if 0
+template <typename InputIt, typename T, typename OP>
+auto ACCIP(InputIt first, InputIt last, T init, OP op) -> T
+{
+    for (; first != last; ++first)
+    { init += (op(*first));
+    }
+    return init;
+}
+#endif
 
 #endif    // MACROS_H

@@ -118,6 +118,12 @@ string autocorrect_database::corrected_call(const string& str) const
 //      return insert(str, call_to_test);
 //  }
 
+// US N call copied as T#
+  if (!contains(str) and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))
+  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
+      return insert(str, call_to_test);
+  }
+
 // initial PY copied as initial TM
   if (str.starts_with("TM"s))
   { if (!contains(str))

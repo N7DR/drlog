@@ -1,4 +1,4 @@
-// $Id: screen.h 205 2022-04-24 16:05:06Z  $
+// $Id: screen.h 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -505,18 +505,17 @@ public:
     Stops writing if there's insufficient room for the next string.
 */
 template <class T>
-window& operator<(const T& sus)
-//  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, std::string>)
+  window& operator<(const T& sus)
   requires (is_sus<T> and is_string<typename T::value_type>)
-{ if (!_wp)
-    return *this;
+  { if (!_wp)
+      return *this;
 
-  std::vector<std::string> v { sus.cbegin(), sus.cend() };
+    std::vector<std::string> v { sus.cbegin(), sus.cend() };
 
-  SORT(v, compare_calls);
+    SORT(v, compare_calls);
 
-  return (*this < v);
-}
+    return (*this < v);
+  }
 
 /*! \brief          Write a vector of strings with possible different colours to a window
     \param  vec     vector of pairs <string, int [colour number]> to write
@@ -531,7 +530,7 @@ window& operator<(const T& sus)
     \return     the window
 */
 template <class T>
-window& operator<(const T n)
+  window& operator<(const T n)
   requires (std::is_integral_v<T>)
     { return (*this < to_string(n)); }
 

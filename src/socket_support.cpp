@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: socket_support.cpp 206 2022-05-22 12:47:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -467,8 +467,6 @@ void tcp_socket::idle_time(const unsigned int seconds)
   
   SAFELOCK(_tcp_socket);
 
-//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) };
-
   if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time"s);
 }
@@ -481,8 +479,6 @@ void tcp_socket::retry_time(const unsigned int seconds)
   
   SAFELOCK(_tcp_socket);
 
-//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) };
-
   if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time"s);
 }
@@ -494,8 +490,6 @@ void tcp_socket::max_retries(const unsigned int n)
 { const int optval { static_cast<int>(n) };
   
   SAFELOCK(_tcp_socket);
-
-//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) };
 
   if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries"s);
@@ -511,9 +505,6 @@ void tcp_socket::keep_alive(const bool torf)
   
   SAFELOCK(_tcp_socket);
 
-//  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) };
-
-//  if (status)
   if ( setsockopt(_sock, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) )
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_KEEPALIVE"s);
 }
@@ -540,9 +531,6 @@ void tcp_socket::reuse(const bool torf)
   
   SAFELOCK(_tcp_socket);
 
-//  const int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) };      // char* cast is needed for Windows
-
-//  if (status)
   if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
 }
