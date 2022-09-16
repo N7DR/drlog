@@ -50,7 +50,7 @@ include/bandmap.h : include/cluster.h include/drlog_context.h include/log.h incl
 include/bands-modes.h : include/string_functions.h
 	touch include/bands-modes.h
 
-include/cabrillo.h : macros.h
+include/cabrillo.h : include/macros.h
 	touch cabrillo.h
 
 include/cluster.h : include/drlog_context.h include/macros.h include/socket_support.h
@@ -296,6 +296,9 @@ bin/adif3.o : src/adif3.cpp
 
 bin/audio.o : src/audio.cpp
 	$(CC) $(CFLAGS) -o $@ src/audio.cpp
+
+bin/autocorrect.o : src/autocorrect.cpp
+	$(CC) $(CFLAGS) -o $@ src/autocorrect.cpp
 
 bin/bandmap.o : src/bandmap.cpp
 	$(CC) $(CFLAGS) -o $@ src/bandmap.cpp
