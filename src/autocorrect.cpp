@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: autocorrect.cpp 208 2022-08-01 11:33:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,12 +53,6 @@ string autocorrect_database::corrected_call(const string& str) const
   if (contains(str))            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
     return insert(str, str);
 
-// extraneous E in front of a US K call
-//  if (str.starts_with("EK"s))
- // { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
- //     return insert(str, call_to_test);
-//  }
-
 // extraneous:
 //   E in front of a US K call
 //   T in front of a US K call
@@ -111,12 +105,6 @@ string autocorrect_database::corrected_call(const string& str) const
         break;
     }
   }
-
-// extraneous T in front of a US N call
-//  if (str.starts_with("TN"s))
-//  { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
-//      return insert(str, call_to_test);
-//  }
 
 // US N call copied as T#
   if (!contains(str) and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))

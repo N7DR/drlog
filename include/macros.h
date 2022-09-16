@@ -1,4 +1,4 @@
-// $Id: macros.h 206 2022-05-22 12:47:37Z  $
+// $Id: macros.h 208 2022-08-01 11:33:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1213,29 +1213,18 @@ inline void SORT(C& v, F f = F())
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-template <typename C, typename T>
-inline void operator+=(C& sus, T&& element)
-  requires (is_sus<C> or is_ssuss<C>) and (std::is_convertible_v<base_type<T>, typename C::value_type>)
-  { sus.insert(std::forward<T>(element)); }
+template <typename C, typename E>
+inline void operator+=(C& sus, E&& element)
+  requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
+  { sus.insert(std::forward<E>(element)); }
 
-//inline void operator+=(ANYSET auto& sus, typename decltype(sus)::value_type&& element)
+//inline void operator+=(ANYSET auto& sus, typename decltype(sus)::value_type&& element)    // I don't know why this doesn't work
 //  { sus.insert(std::forward<typename decltype(sus)::value_type>(element)); }
 
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
-// OK
-//template <typename C>
-//inline void operator+=(C& sus, const typename C::value_type& element)
-//  requires is_sus_v<C>
-//  { sus.insert(element); }
-
-// OK
-//template <SUS C>
-//inline void operator+=(C& sus, const typename C::value_type& element)
-//  { sus.insert(element); }
-
 // Seems to be OK; https://www.youtube.com/watch?v=SYLgG7Q5Zws at 16:28; I think that the single ampersand is right
 // see also https://www.sandordargo.com/blog/2021/02/17/cpp-concepts-4-ways-to-use-them
 inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_type& element)
@@ -1418,7 +1407,7 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 */
 template <typename C, typename E>
 inline void operator+=(C& c1, const E& element)
-  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::convertible_to<E, typename C::value_type>)
 { c1.push_back(element); }
 
 /*! \brief      Insert an element into a list
@@ -1472,7 +1461,7 @@ inline void operator+=(Q& q1, typename Q::value_type&& element)
 */
 template <typename Q, typename E>
 inline void operator+=(Q& q1, const E& element)
-  requires is_queue<Q> and (std::is_convertible_v<E, typename Q::value_type>)
+  requires is_queue<Q> and (std::convertible_to<E, typename Q::value_type>)
 { q1.push(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 
@@ -1511,7 +1500,7 @@ inline void operator-=(D& d, const typename D::iterator& it)
     \return             whether <i>element</i> is an element of <i>v</i>
 */
 template <typename C, typename E>
-  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::is_convertible_v<E, typename C::value_type>)
+  requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::convertible_to<E, typename C::value_type>)
 inline bool contains(const C& c, const E& element)
   { return std::ranges::find(c, element) != c.cend(); }
 
@@ -1523,13 +1512,6 @@ inline bool contains(const C& c, const E& element)
 template <typename T = int, typename U, typename V>
 auto RANGE(const U u, const V v)
   { return std::ranges::iota_view { static_cast<T>(u), static_cast<T>(v) }; }
-
-#if 0
-template <typename T = int>
-//ranges::iota_view { 0u, call.length() - 2 } )
-auto RANGE(std::initializer_list<T> l)
-  { return std::ranges::iota_view { static_cast<T>(l.data[0]), static_cast<T>(l.data[1]) }; }
-#endif
 
 /*! \brief          Find the first element in a container that matches a predicate, or return the default-constructed element if none match
     \param  c       the container

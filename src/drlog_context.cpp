@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: drlog_context.cpp 208 2022-08-01 11:33:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -523,56 +523,14 @@ void drlog_context::_process_configuration_file(const string& filename)
 // e.g., exchange sent = RST:599, CQZONE:4
     if (LHS == "EXCHANGE SENT"s)
       update_sent_exchange(_sent_exchange);
-#if 0
-    { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
-      const vector<string> fields               { split_string(comma_delimited_list) };
-
-      for (const auto& this_field : fields)
-      { const vector<string> field { clean_split_string(this_field, ':') };
-
-        if (fields.size() != 2)
-          print_error_and_exit(testline);
-
-        _sent_exchange += { field[0], field[1] };
-      }
-    }
-#endif
 
 // EXCHANGE SENT CW
     if (LHS == "EXCHANGE SENT CW"s)
       update_sent_exchange(_sent_exchange_cw);
-#if 0
-    { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
-      const vector<string> fields               { split_string(comma_delimited_list, ',') };
-
-      for (const auto& this_field : fields)
-      { const vector<string> field { clean_split_string(this_field, ':') };
-
-        if (fields.size() != 2)
-          print_error_and_exit(testline);
-
-        _sent_exchange_cw += { field[0], field[1] };
-      }
-    }
-#endif
 
 // EXCHANGE SENT SSB
     if (LHS == "EXCHANGE SENT SSB"s)
       update_sent_exchange(_sent_exchange_ssb);
-#if 0
-    { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
-      const vector<string> fields               { split_string(comma_delimited_list, ","s) };
-
-      for (const auto& this_field : fields)
-      { const vector<string> field { clean_split_string(this_field, ':') };
-
-        if (fields.size() != 2)
-          print_error_and_exit(testline);
-
-        _sent_exchange_ssb += { field[0], field[1] };
-      }
-    }
-#endif
 
 // FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH"s)
@@ -612,14 +570,12 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MARK FREQUENCIES [CW|SSB]
     if (testline.starts_with("MARK FREQUENCIES"s) and !rhs.empty())
-    { //const vector<string> ranges { remove_peripheral_spaces(split_string(rhs, ","s)) };
-      const vector<string> ranges { clean_split_string(rhs, ',') };
+    { const vector<string> ranges { clean_split_string(rhs, ',') };
 
       vector<pair<frequency, frequency>> frequencies;
 
       for (const string& range : ranges)
-      { //const vector<string> bounds { remove_peripheral_spaces(split_string(range, "-"s)) };
-        const vector<string> bounds { clean_split_string(range, '-') };
+      { const vector<string> bounds { clean_split_string(range, '-') };
 
         try
         { frequencies += { frequency(bounds.at(0)), frequency(bounds.at(1))};

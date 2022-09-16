@@ -51,7 +51,7 @@ include/bands-modes.h : include/string_functions.h
 	touch include/bands-modes.h
 
 include/cabrillo.h : macros.h
-  touch cabrillo.h
+	touch cabrillo.h
 
 include/cluster.h : include/drlog_context.h include/macros.h include/socket_support.h
 	touch include/cluster.h

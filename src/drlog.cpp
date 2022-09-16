@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 206 2022-05-22 12:47:37Z  $
+// $Id: drlog.cpp 208 2022-08-01 11:33:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3205,7 +3205,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
-//      if ( starts_with(command, "REMOVE"s) or starts_with(command, "RM"s))
       if ( command.starts_with("REMOVE"s) or command.starts_with("RM"s))
       { if (contains(command, SPACE_STR))
         { const size_t posn     { command.find(SPACE_STR) };
@@ -3213,13 +3212,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           
           do_not_show(callsign);
 
-//          win_bandmap <= bandmaps[safe_get_band()];
           win_bandmap <= bandmaps[current_band];
         }
       }
 
 // .RESCOREB or .SCOREB
-//      if ( starts_with(command, "RESCOREB"s) or starts_with(command, "SCOREB"s) )
       if ( command.starts_with("RESCOREB"s) or command.starts_with("SCOREB"s) )
       { if (contains(command, SPACE_STR))
         { size_t posn { command.find(SPACE_STR) };
@@ -3259,15 +3256,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // .RESCOREM or .SCOREM
-//      if ( starts_with(command, "RESCOREM"s) or starts_with(command, "SCOREM"s) )
       if ( command.starts_with("RESCOREM"s) or command.starts_with("SCOREM"s) )
       { if (contains(command, ' '))
-        { //size_t posn { command.find(SPACE_STR) };
-          //string rhs  { substring(command, posn) };
+        { set<MODE> score_modes;
 
-          set<MODE> score_modes;
-
-//          for (const auto& mode_str : clean_split_string(rhs, ','))
           for (const auto& mode_str : clean_split_string(substring(command, command.find(' '))))
           { try
             { score_modes += MODE_FROM_NAME.at(mode_str);
@@ -3382,11 +3374,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           const frequency new_frequency     { ( (contains_plus or contains_minus) ? cur_rig_frequency.hz() + (value * 1000) : value ) };
           const BAND new_band               { to_BAND(new_frequency) };
 
-//          bool valid { permitted_bands_set > new_band };
           bool valid { permitted_bands_set.contains(new_band) };
 
           if ( (valid) and (new_band == BAND_160))                                                  // check that it's not just BAND_160 because there's been a problem
-//            valid = ( (new_frequency.hz() >= 1'800'000) and (new_frequency.hz() <= 2'000'000) );
             valid = ( (new_frequency >= 1'800_kHz) and (new_frequency <= 2'000_kHz) );
 
           if (valid)
@@ -3408,8 +3398,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             display_band_mode(win_band_mode, new_band, m);
 
             if (new_band != cur_band)
-            { //safe_set_band(new_band);
-              current_band = new_band;
+            { current_band = new_band;
 
               update_based_on_frequency_change(new_frequency, m);
 
@@ -3513,12 +3502,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             { static const set<string> state_multiplier_countries { "K"s, "VE"s, "XE"s };
 
               const string canonical_prefix { location_db.canonical_prefix(contents) };
+              const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(contents, "10MSTATE"s) : string() };
 
-              string state_guess;
+ //             string state_guess;
 
-//              if (state_multiplier_countries > canonical_prefix)
-              if (state_multiplier_countries.contains(canonical_prefix))
-                state_guess = exchange_db.guess_value(contents, "10MSTATE"s);
+ //             if (state_multiplier_countries.contains(canonical_prefix))
+//                state_guess = exchange_db.guess_value(contents, "10MSTATE"s);
 
               exchange_str += state_guess;
               processed_field = true;
@@ -3566,8 +3555,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           }
 
           if (!processed_field)
-          { //if (!(variable_exchange_fields > exf.name()))    // if not a variable field
-            if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field
+          { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field
             { //const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) };
 
               if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) }; !guess.empty())
