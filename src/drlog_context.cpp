@@ -512,7 +512,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         for (const auto& this_field : fields)
         { const vector<string> field { clean_split_string(this_field, ':') };
 
-          if (fields.size() != 2)
+          if (field.size() != 2)
             print_error_and_exit(testline);
 
           exchange += { field[0], field[1] };
