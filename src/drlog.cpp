@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 208 2022-08-01 11:33:30Z  $
+// $Id: drlog.cpp 209 2022-10-02 19:10:21Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -93,8 +93,7 @@ screen monitor;                             ///< the ncurses screen;  declare at
 
 string VERSION;         ///< version string
 string DP("·"s);        ///< character for decimal point            // things get too painful if we use a wchar_t
-//wchar_t DP { '·' };          ///< character for decimal point
-//string TS(","s);        ///< character for thousands separator
+
 char TS { ',' };        ///< character for thousands separator
 
 static const set<string> variable_exchange_fields { "SERNO"s };  ///< mutable exchange fields
@@ -331,7 +330,6 @@ bool                    display_grid;                               ///< whether
 string                  do_not_show_filename;                       ///< name of DO NOT SHOW file
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
-//exchange_field_prefill  prefill_data;                               ///< exchange prefill data from external files
 
 bool                    filter_remaining_country_mults { false };   ///< whether to apply filter to remaining country mults
 
@@ -384,12 +382,16 @@ bool                    sending_qtc_series { false };       ///< am I senting a 
 unsigned int            serno_spaces { 0 };                 ///< number of additional half-spaces in serno
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
 int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
-unsigned int            shift_poll  { 0 };                  ///< polling interval for SHIFT keys
+unsigned int            shift_poll           { 0 };         ///< polling interval for SHIFT keys
 int                     ssb_bandwidth_narrow { 1600 };      ///< narrow SSB bandwidth, in Hz
 int                     ssb_bandwidth_wide   { 1800 };      ///< wide SSB bandwidth, in Hz
 int                     ssb_centre_narrow    { 1300 };      ///< narrow SSB bandwidth centre frequency, in Hz
 int                     ssb_centre_wide      { 1500 };      ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
+
+deque<string>           wicm_calls;                         ///< calls in the WICM window
+bool                    wicm_calls_is_dirty  { false };     ///< whether there has been a change requiring redisplay to wicm_calls  
+size_t                  wicm_calls_size      { 0 };         ///< maximum number of calls in the WICM window
 
 // QTC variables
 qtc_database    qtc_db;                 ///< sent QTCs
@@ -435,12 +437,12 @@ window win_band_mode,                   ///< the band and mode indicator
        win_individual_qtc_count,        ///< number of QTCs sent to an individual
        win_info,                        ///< summary of info about current station being worked
        win_last_qrg,                    ///< last QRG of a posted call
-       win_log_extract,                 ///< to show earlier QSOs
-       win_name,                        ///< name of operator
-       win_qtc_hint,                    ///< hint as to whether to send QTC
        win_local_time,                  ///< window for local time
        win_log,                         ///< main visible log
+       win_log_extract,                 ///< to show earlier QSOs
        win_memories,                    ///< the memory contents
+       win_name,                        ///< name of operator
+       win_qtc_hint,                    ///< hint as to whether to send QTC
        win_system_memory,               ///< system memory
        win_message,                     ///< messages from drlog to the user
        win_mult_value,                  ///< value of a mult
@@ -472,6 +474,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_summary,                     ///< overview of score
        win_time,                        ///< current UTC
        win_title,                       ///< title of the contest
+       win_wicm,                        ///< who is calling me?
        win_wpm;                         ///< CW speed in WPM
 
 map<string /* name */, window*> win_remaining_exch_mults_p;     ///< map from name of an exchange mult to a pointer to the corresponding window
@@ -593,14 +596,11 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 { using CALL_AND_COLOURS = pair<string, PAIR_NUMBER_TYPE>;
 
   if (callsign.length() >= context.match_minimum())
-  { //const COLOUR_TYPE win_fg { win.fg() };
-    //const COLOUR_TYPE win_bg { win.bg() };
-    const auto [win_fg, win_bg] { win.fgbg() };
+  { const auto [win_fg, win_bg] { win.fgbg() };
 
 // put in right order and also get the colours right
     vector<string> vec_str;
 
-//    COPY_ALL(matches, back_inserter(vec_str));
     vec_str += matches;
     SORT(vec_str, compare_calls);
     match_vector.clear();
@@ -625,25 +625,13 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     }
 
     for (const auto& cs : tmp_exact_matches)
-    { //if (is_dupe(cs))
-      //  match_vector += { cs, colours.add(REJECT_COLOUR, win.bg()) };
-      //else
-      //  match_vector += { cs, colours.add( (logbk.qso_b4(cs) ? ACCEPT_COLOUR : win.fg()), win.bg() ) };
-      match_vector += (is_dupe(cs) ? CALL_AND_COLOURS { cs, colours.add(REJECT_COLOUR, win_bg) }
+    { match_vector += (is_dupe(cs) ? CALL_AND_COLOURS { cs, colours.add(REJECT_COLOUR, win_bg) }
                                    : CALL_AND_COLOURS { cs, colours.add( (logbk.qso_b4(cs) ? ACCEPT_COLOUR : win_fg), win_bg ) });
     }
 
-//    for (const auto& cs : tmp_green_matches)
-//      match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) };
-    FOR_ALL(tmp_green_matches, [win_bg, &match_vector] (const string& cs) { match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) }; });
-
- //   for (const auto& cs : tmp_ordinary_matches)
- //     match_vector += { cs, colours.add(win_fg, win_bg) };
+    FOR_ALL(tmp_green_matches,    [win_bg, &match_vector] (const string& cs)         { match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) }; });
     FOR_ALL(tmp_ordinary_matches, [win_bg, win_fg, &match_vector] (const string& cs) { match_vector += { cs, colours.add(win_fg, win_bg) }; });
-
- //   for (const auto& cs : tmp_red_matches)
- //     match_vector += { cs, colours.add(REJECT_COLOUR, win_bg) };
-    FOR_ALL(tmp_red_matches, [win_bg, &match_vector] (const string& cs) { match_vector += { cs, colours.add(REJECT_COLOUR, win_bg) }; });
+    FOR_ALL(tmp_red_matches,      [win_bg, &match_vector] (const string& cs)         { match_vector += { cs, colours.add(REJECT_COLOUR, win_bg) }; });
 
     win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= match_vector;
   }
@@ -1440,6 +1428,11 @@ int main(int argc, char** argv)
 
 // TIME window
     win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
+
+// WICM window
+    win_wicm.init(context.window_info("WICM"s), WINDOW_NO_CURSOR);
+    if (win_wicm.valid())
+      wicm_calls_size = win_wicm.height();
 
 // WPM window
  //   if (rules.permitted_modes() > MODE_CW)                                    // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
@@ -2445,11 +2438,25 @@ void* process_rbn_info(void* vp)
               const pair<string, frequency> target      { dx_callsign, post.freq() };
               const bool                    is_me       { (dx_callsign == my_call) };
 
+// POSTED BY 
               if (is_me and is_rbn)
               { const bool add_post { ( posted_by_continents.empty() ? (post.poster_continent() != my_continent) : (posted_by_continents > post.poster_continent()) ) };
                 
                 if (add_post)
                   posted_by_vector += post;
+              }
+
+// Possibly process WICM info
+              { if ( (dx_band == cur_band) and (drlog_mode == DRLOG_MODE::CQ) and (current_mode == MODE_CW) and !is_me and (post.freq().difference(cq_mode_frequency).hz() <= 200) )
+                { if (!contains(wicm_calls, dx_callsign))
+                  { wicm_calls += dx_callsign;
+
+                    while (wicm_calls.size() > wicm_calls_size) // should just be one too many
+                      --wicm_calls;
+
+                    wicm_calls_is_dirty = true;
+                  } 
+                }
               }
 
 // record as the most recent QRG for this station
@@ -2592,6 +2599,21 @@ void* process_rbn_info(void* vp)
 
     if (cluster_mult_win_was_changed)    // update the window on the screen
       cluster_mult_win.refresh();
+
+// possibly update WICM window
+    if (wicm_calls_is_dirty)
+    { win_wicm < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+      unsigned int y { static_cast<unsigned int>( (win_wicm.height() - 1) /* - (wicm_calls.size() - 1) */ ) };
+
+      for (const auto& wicm_call : wicm_calls)
+      { win_wicm < cursor(0, y--);
+        win_wicm < wicm_call;
+      }
+
+      win_wicm.refresh();
+      wicm_calls_is_dirty = false;
+    }
 
 // update monitored posts if there was a change
     if (mp.is_dirty())
@@ -5595,6 +5617,10 @@ void enter_sap_mode(void)
   catch (const rig_interface_error& e)
   { alert("Error communicating with rig when entering SAP mode"s);
   }
+
+  win_wicm.clear();
+  wicm_calls.clear();
+  wicm_calls_is_dirty = false;
 }
 
 /// toggle between CQ mode and SAP mode
