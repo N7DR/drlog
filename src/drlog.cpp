@@ -297,6 +297,9 @@ DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };     ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                                       ///< callsign mults we know about in AUTO mode
 
+pt_mutex            wicm_mutex {"WICM" };
+deque<string>       wicm_calls;                         ///< calls in the WICM window
+
 map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges { };  ///< frequency ranges to be marked on-screen
 bandmap_entry       my_bandmap_entry;                                       ///< last bandmap entry that refers to me (usually from poll)
 
@@ -389,7 +392,7 @@ int                     ssb_centre_narrow    { 1300 };      ///< narrow SSB band
 int                     ssb_centre_wide      { 1500 };      ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
-deque<string>           wicm_calls;                         ///< calls in the WICM window
+//deque<string>           wicm_calls;                         ///< calls in the WICM window
 bool                    wicm_calls_is_dirty  { false };     ///< whether there has been a change requiring redisplay to wicm_calls  
 size_t                  wicm_calls_size      { 0 };         ///< maximum number of calls in the WICM window
 
@@ -2448,7 +2451,9 @@ void* process_rbn_info(void* vp)
 
 // Possibly process WICM info
               { if ( (dx_band == cur_band) and (drlog_mode == DRLOG_MODE::CQ) and (current_mode == MODE_CW) and !is_me and (post.freq().difference(cq_mode_frequency).hz() <= 200) )
-                { if (!contains(wicm_calls, dx_callsign))
+                { SAFELOCK(wicm);
+
+                  if (!contains(wicm_calls, dx_callsign))
                   { wicm_calls += dx_callsign;
 
                     while (wicm_calls.size() > wicm_calls_size) // should just be one too many
@@ -2601,18 +2606,21 @@ void* process_rbn_info(void* vp)
       cluster_mult_win.refresh();
 
 // possibly update WICM window
-    if (wicm_calls_is_dirty)
-    { win_wicm < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    { SAFELOCK(wicm);
 
-      unsigned int y { static_cast<unsigned int>( (win_wicm.height() - 1) /* - (wicm_calls.size() - 1) */ ) };
+      if (wicm_calls_is_dirty)
+      { win_wicm < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-      for (const auto& wicm_call : wicm_calls)
-      { win_wicm < cursor(0, y--);
-        win_wicm < wicm_call;
+        unsigned int y { static_cast<unsigned int>( (win_wicm.height() - 1) /* - (wicm_calls.size() - 1) */ ) };
+
+        for (const auto& wicm_call : wicm_calls)
+        { win_wicm < cursor(0, y--);
+          win_wicm < wicm_call;
+        }
+
+        win_wicm.refresh();
+        wicm_calls_is_dirty = false;
       }
-
-      win_wicm.refresh();
-      wicm_calls_is_dirty = false;
     }
 
 // update monitored posts if there was a change
@@ -5617,6 +5625,8 @@ void enter_sap_mode(void)
   catch (const rig_interface_error& e)
   { alert("Error communicating with rig when entering SAP mode"s);
   }
+
+  SAFELOCK(wicm);
 
   win_wicm.clear();
   wicm_calls.clear();
