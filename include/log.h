@@ -293,6 +293,8 @@ public:
   inline void reserve(const size_t n)
     { _log_vec.reserve(n); }
 
+  std::string last_worked_eu_call(void) const;
+
 /// serialise logbook
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

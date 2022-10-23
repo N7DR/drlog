@@ -87,13 +87,8 @@ void drlog_context::_set_points(const string& command, const MODE m)
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { //const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
-        const string bands_str     { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
-//        const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
+      { const string bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
 
-//        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
-//        std::ranges::for_each(bands, [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
-//        ranges::for_each(remove_peripheral_spaces(split_string(bands_str, ","s)), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
         FOR_ALL(clean_split_string(bands_str, ','), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
       }
     }
@@ -125,46 +120,46 @@ void drlog_context::_process_configuration_file(const string& filename)
 // generate a number of useful variables
     const string testline       { remove_leading_spaces(to_upper(line)) };
     const vector<string> fields { split_string(line, '=') };
-    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : ""s) };      // the stuff to the right of the "="
+    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : string { }) };      // the stuff to the right of the "="
     const string RHS            { to_upper(rhs) };                                                          // converted to upper case
-    const bool is_true          { (RHS == "TRUE"s) };                                                       // is right hand side == "TRUE"?
-    const string lhs            { squash( (fields.empty()) ? ""s : remove_peripheral_spaces(fields[0]) ) }; // the stuff to the left of the "="
+    const bool is_true          { (RHS == "TRUE"sv) };                                                       // is right hand side == "TRUE"?
+    const string lhs            { squash( (fields.empty()) ? string { } : remove_peripheral_spaces(fields[0]) ) }; // the stuff to the left of the "="
     const string LHS            { to_upper(lhs) };                                                          // converted to upper case
 
 // ACCEPT COLOUR
-    if ( ( (LHS == "ACCEPT COLOUR"s) or (LHS == "ACCEPT COLOR"s) ) and !rhs.empty() )
+    if ( ( (LHS == "ACCEPT COLOUR"sv) or (LHS == "ACCEPT COLOR"sv) ) and !rhs.empty() )
       _accept_colour = string_to_colour(RHS);
 
 // ALLOW AUDIO RECORDING
-    if (LHS == "ALLOW AUDIO RECORDING"s)
+    if (LHS == "ALLOW AUDIO RECORDING"sv)
       _allow_audio_recording = is_true;
 
 // ALTERNATIVE EXCHANGE CQ
-    if (LHS == "ALTERNATIVE EXCHANGE CQ"s)
+    if (LHS == "ALTERNATIVE EXCHANGE CQ"sv)
       _alternative_exchange_cq = RHS;
 
 // ALTERNATIVE EXCHANGE SAP
-    if (LHS == "ALTERNATIVE EXCHANGE SAP"s)
+    if (LHS == "ALTERNATIVE EXCHANGE SAP"sv)
       _alternative_exchange_sap = RHS;
 
 // ALTERNATIVE QSL MESSAGE
-    if ( (LHS == "ALTERNATIVE QSL MESSAGE"s) or (LHS == "QUICK QSL MESSAGE"s) )
+    if ( (LHS == "ALTERNATIVE QSL MESSAGE"sv) or (LHS == "QUICK QSL MESSAGE"sv) )
       _alternative_qsl_message = RHS;
 
 // ARCHIVE
-    if ( (LHS == "ARCHIVE"s) and !rhs.empty() )
+    if ( (LHS == "ARCHIVE"sv) and !rhs.empty() )
       _archive_name = rhs;
 
 // AUDIO CHANNELS
-    if (LHS == "AUDIO CHANNELS"s)
+    if (LHS == "AUDIO CHANNELS"sv)
       _audio_channels = from_string<decltype(_audio_channels)>(rhs);
 
 // AUDIO DEVICE
-    if ( (LHS == "AUDIO DEVICE"s) or (LHS == "AUDIO DEVICE NAME"s) )
+    if ( (LHS == "AUDIO DEVICE"sv) or (LHS == "AUDIO DEVICE NAME"sv) )
       _audio_device_name = rhs;
 
 // AUDIO DURATION
-    if (LHS == "AUDIO DURATION"s)
+    if (LHS == "AUDIO DURATION"sv)
       _audio_duration = from_string<decltype(_audio_duration)>(rhs);
 
 // AUDIO FILE
@@ -663,7 +658,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // N MEMORIES
     if (LHS == "N MEMORIES"s)
-//      _n_memories = min(from_string<decltype(_n_memories)>(rhs), 10u);  // maximum number of memories is 10
       _n_memories = min(from_string<decltype(_n_memories)>(rhs), static_cast<decltype(_n_memories)>(10));  // maximum number of memories is 10
 
 // NEARBY EXTRACT

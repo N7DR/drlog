@@ -83,6 +83,15 @@ protected:
 */
   bool _process_name_value_pair(const std::pair<std::string, std::string>& nv);
 
+/*! \brief      Process a name/value pair from a drlog log line to insert values in the QSO object
+    \param  nv  name and value to be processed
+    \return     whether <i>nv</i> was processed
+
+    Does not process fields whose name begins with "received-"
+*/
+  inline bool _process_name_value_pair(const std::string& nm, const std::string& val)
+    { return _process_name_value_pair( { nm, val } ); }
+
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
@@ -94,6 +103,17 @@ public:
   
 /// constructor; automatically fills in the current date and time
   QSO(void);
+
+/*! \brief              Constructor from a line in the disk log
+    \param  context     drlog context
+    \param  str         string from log file
+    \param  rules       rules for this contest
+    \param  statistics  contest statistics
+
+    line in disk log looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+*/
+  QSO(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE(callsign);             ///< call

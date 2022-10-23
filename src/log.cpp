@@ -619,6 +619,16 @@ set<string> logbook::calls(void) const
   return rv;
 }
 
+string logbook::last_worked_eu_call(void) const
+{ static const string EU { "EU"s };
+
+  SAFELOCK(_log);
+
+  const auto cit { find_if(_log_vec.rbegin(), _log_vec.rend(), [] (const QSO& q) { return (q.continent() == EU); } ) };
+
+  return ( (cit == _log_vec.rend()) ? string { } : cit->callsign() );
+}
+
 // -----------  log_extract  ----------------
 
 /*! \class  log_extract
