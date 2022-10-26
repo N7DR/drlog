@@ -87,6 +87,9 @@ cty_record::cty_record(const string& record)
   constexpr int CTY_PREFIX     { 7 };
   constexpr int CTY_ALTS       { 8 };
 
+// map prefixes if they collide with a content
+  static const map<string, string> map_prefix { { "EU"s, "EW"s } };
+
   const vector<string> fields { remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":"s )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
@@ -180,6 +183,13 @@ cty_record::cty_record(const string& record)
   
     _alt_callsigns += { aci.identifier(), aci };
   }
+
+// map prefix if necessary
+  if (map_prefix.contains(_prefix))
+    _prefix = map_prefix.at(_prefix);
+
+//  ost << "record: " << record << endl;
+//  ost << "  _prefix: " << _prefix << endl;
 }
 
 /*! \brief          Write a <i>cty_record</i> object to an output stream

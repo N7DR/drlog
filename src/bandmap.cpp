@@ -128,17 +128,42 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ //vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
-  vector<string>* vs_p { ( CONTINENT_SET.contains(str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
+{ //ost << "in add_or_subtract, parameter = " << str << endl;
+
+  const bool is_continent { CONTINENT_SET.contains(str) };
+
+ // string str_copy = str;
+
+//  if (!is_continent)
+//  { const location_info li { location_db.info(str)};
+//
+//    str_copy = li.canonical_prefix();
+//
+//    if (str_copy == "EU"sv)
+//      str_copy = "EW";
+//  }
+
+//vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
+//  vector<string>* vs_p { ( CONTINENT_SET.contains(str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
+  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };        // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
-//  if (ss > str)              // remove a value
+  for (const string& ss_value : ss)
+    ost << "ss contains: " << ss_value << endl;
+
+//  if (ss.contains(str_copy))              // remove a value
+//    ss -= str_copy;
+//  else                       // add a value
+//    ss += str_copy;
+
+#if 1
   if (ss.contains(str))              // remove a value
     ss -= str;
   else                       // add a value
     ss += str;
+#endif
 
   vs_p->clear();                                        // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
@@ -864,10 +889,7 @@ BM_ENTRIES bandmap::filtered_entries(void)
   { if (be.is_my_marker() or be.is_mode_marker())
       rv += be;
     else                                              // start by assuming that we are in show mode
-    { //const string& canonical_prefix { be.canonical_prefix() };
-      //const string& continent        { be.continent() };
-
-      bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
+    { bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
 
       if (filter_hide())                              // hide is the opposite of show
         display_this_entry = !display_this_entry;
