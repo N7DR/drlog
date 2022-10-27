@@ -130,15 +130,14 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 void bandmap_filter_type::add_or_subtract(const string& str)
 { //ost << "in add_or_subtract, parameter = " << str << endl;
 
-  const bool is_continent { CONTINENT_SET.contains(str) };
+  const bool   is_continent { CONTINENT_SET.contains(str) };
+  const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
- // string str_copy = str;
+ // if (!is_continent)
+ // { const location_info li { location_db.info(str)};
 
-//  if (!is_continent)
-//  { const location_info li { location_db.info(str)};
-//
-//    str_copy = li.canonical_prefix();
-//
+ //   str_copy = li.canonical_prefix();
+
 //    if (str_copy == "EU"sv)
 //      str_copy = "EW";
 //  }
@@ -150,15 +149,15 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
-  for (const string& ss_value : ss)
-    ost << "ss contains: " << ss_value << endl;
+//  for (const string& ss_value : ss)
+//    ost << "ss contains: " << ss_value << endl;
 
-//  if (ss.contains(str_copy))              // remove a value
-//    ss -= str_copy;
-//  else                       // add a value
-//    ss += str_copy;
+  if (ss.contains(str_copy))              // remove a value
+    ss -= str_copy;
+  else                       // add a value
+    ss += str_copy;
 
-#if 1
+#if 0
   if (ss.contains(str))              // remove a value
     ss -= str;
   else                       // add a value
@@ -167,7 +166,7 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 
   vs_p->clear();                                        // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
-  SORT(*vs_p, compare_calls);  // make it easy for humans
+  SORT(*vs_p, compare_calls);                           // make it easy for humans
 }
 
 // -----------  bandmap_entry  ----------------
