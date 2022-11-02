@@ -543,8 +543,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       break;
 
     case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
-    { //const size_t posn { read().find_last_not_of(SPACE_STR) };
-      const size_t posn { read().find_last_not_of(' ') };
+    { const size_t posn { read().find_last_not_of(' ') };
 
       move_cursor(posn + 1, cursor_position().y());
       break;
@@ -957,16 +956,14 @@ COLOUR_TYPE string_to_colour(const string& str)
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-//  if (s.starts_with("COLOUR_"s))
-//    return (from_string<COLOUR_TYPE>(substring(s, 7)));
 
-  if (const string str { "COLOUR_"s }; s.starts_with(str))
+  if (const string_view str { "COLOUR_"s }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));
 
 //  if (s.starts_with("COLOR_"s))
 //    return (from_string<COLOUR_TYPE>(substring(s, 6)));
 
-  if (const string str { "COLOR_"s }; s.starts_with(str))
+  if (const string_view str { "COLOR_"s }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits

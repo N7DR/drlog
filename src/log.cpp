@@ -1,4 +1,4 @@
-// $Id: log.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: log.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -619,6 +619,11 @@ set<string> logbook::calls(void) const
   return rv;
 }
 
+/*! \brief      Return the most recent EU call worked
+    \return     the most recently worked EU call
+
+    Returns the empty string if no European calls are in the log
+*/
 string logbook::last_worked_eu_call(void) const
 { static const string EU { "EU"s };
 
@@ -752,24 +757,6 @@ unsigned int old_log::n_qsls(const string& call) const
   return (cit == _olog.cend() ? 0 : get<0>(cit->second));
 }
 
-/*! \brief          Set the number of QSLs from a particular callsign
-    \param  call    callsign
-    \param  n       number of QSLs from <i>call</i>
-*/
-#if 0
-void old_log::n_qsls(const string& call, const unsigned int n)
-{ //auto it { _olog.find(call) };
-
-  //if (it == _olog.end())
-  //{ _olog[call];   // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
-   // it = _olog.find(call);
-  //}
-
-  //get<0>(it->second) = n;
-  get<0>(_find_or_create(call) -> second) = n;
-}
-#endif
-
 /*! \brief          Increment the number of QSLs from a particular callsign
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
@@ -800,24 +787,6 @@ unsigned int old_log::n_qsos(const string& call) const
 
   return (cit == _olog.cend() ? 0 : get<1>(cit->second));
 }
-
-/*! \brief          Set the number of QSOs with a particular callsign
-    \param  call    callsign
-    \param  n       number of QSOs with <i>call</i>
-*/
-#if 0
-void old_log::n_qsos(const string& call, const unsigned int n)
-{ //auto it { _olog.find(call) };
-
-  //if (it == _olog.end())    // no entry for this call; create one
-  //{ _olog[call];
-  //  it = _olog.find(call);
-  //}
-
-  //get<1>(it->second) = n;
-  get<1>(_find_or_create(call) -> second) = n;
-}
-#endif
 
 /*! \brief          increment the number of QSOs associated with a particular callsign
     \param  call    callsign for which the number of QSOs should be incremented
@@ -873,29 +842,5 @@ unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const M
 bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
-//  if (cit == _olog.cend())
-//    return false;
-
-//  return ( pair<BAND, MODE>( { b, m } ) < get<2>(cit->second) );
   return ( cit == _olog.cend() ? false : get<2>(cit->second) > pair<BAND, MODE>( { b, m } ) );
 }
-
-/*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
-    \param  call    target callsign
-    \param  b       target band
-    \param  m       target mode
-*/
-#if 0
-void old_log::qsl_received(const string& call, const BAND b, const MODE m)
-{ //auto it { _olog.find(call) };
-
-  //if (it == _olog.end())
-  //{ _olog[call];
-  //  it = _olog.find(call);
-  //}
-
-  //get<2>(it->second) += { b, m };
-
-  get<2>(_find_or_create(call) -> second) += { b, m };
-}
-#endif

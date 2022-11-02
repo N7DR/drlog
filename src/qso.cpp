@@ -1,4 +1,4 @@
-// $Id: qso.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: qso.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -642,36 +642,31 @@ specification tells us otherwise, that's what we do.
       value = _my_call;
       
 // TEXCH-xxx
-    if (name.starts_with("TEXCH-"s))
+    if (name.starts_with("TEXCH-"sv))
     { const string field_name { name.substr(6) };
     
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
       { const vector<string> vec { clean_split_string(field_name, '+') };
 
         for (const auto& name : vec)
-        { //for (const auto& pss : _sent_exchange)
-          //  if (pss.first == name)
-          //    value = pss.second;
-          for (const auto [nm, val] : _sent_exchange)
+        { for (const auto [nm, val] : _sent_exchange)
             if (nm == name)
               value = val;
         }
       }
       else
-      { //for (const auto& pss : _sent_exchange)
-         // if (pss.first == field_name)
-         //   value = pss.second;
-        for (const auto [nm, val] : _sent_exchange)
+      { for (const auto [nm, val] : _sent_exchange)
           if (nm == field_name)
             value = val;
       }
     }
 
 // REXCH-xxx
-    if (name.starts_with("REXCH-"s))
+    if (name.starts_with("REXCH-"sv))
     { const string field_name { substring(name, 6) };
 
-      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
+//      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
+      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
       { const vector<string> vec { clean_split_string(field_name, '+') };
 
         for (const auto& name : vec)
@@ -684,11 +679,11 @@ specification tells us otherwise, that's what we do.
     }
     
 // RCALL
-    if (name == "RCALL"s)
+    if (name == "RCALL"sv)
       value = _callsign;  
 
 // TXID
-    if (name == "TXID"s)
+    if (name == "TXID"sv)
       value = "0"s;
   
     value = pad_string(value, len, pdirn, pad_char);
@@ -807,21 +802,6 @@ bool QSO::exchange_match(const string& rule_to_match) const
   return false;
 }
 
-#if 0
-/*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
-    \param  target  target string
-    \return         whether any of the exchange fields contain the value <i>target</i>
-*/
-bool QSO::exchange_match_string(const string& target) const
-{ //for (const auto& field : _received_exchange)
-  //  if (field.value() == target)
-  //    return true;
-
-  //return false;
-  return ANY_OF(_received_exchange, [] (onst auto& field) { return (field.value() == target); } );
-}
-#endif
-
 /*! \brief              Return a single field from the received exchange
     \param  field_name  the name of the field
     \return             the value of <i>field_name</i> in the received exchange
@@ -851,22 +831,6 @@ string QSO::sent_exchange(const string& field_name) const
 
   return string();
 }
-
-/*! \brief              Does the sent exchange include a particular field?
-    \param  field_name  the name of the field
-    \return             whether <i>field_name</i> is present in the sent exchange
-*/
-#if 0
-bool QSO::sent_exchange_includes(const string& field_name) const
-{ //for (const auto& field : _sent_exchange)
-  //{ if (field.first == field_name)
-  //    return true;
-  //}
-
-  //return false;
-  return ANY_OF(_sent_exchange, [] (const auto& field) { return (field.first == field_name); });
-}
-#endif
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
     \return     QSO formatted for writing into the LOG window
@@ -922,7 +886,7 @@ string QSO::log_line(void)
     const string& name { field.name() };
 
 // skip the CALL field from SS, since it's already on the line
-    if (name != "CALL"s and name != "CALLSIGN"s)
+    if (name != "CALL"sv and name != "CALLSIGN"sv)
     { try
       { field_width = field_widths.at(name);
       }
@@ -1065,26 +1029,22 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
   if (posn >= str.size())
     return (posn = string::npos, empty_pair);
 
-//  const size_t first_char_posn { str.find_first_not_of(SPACE_STR, posn) };
   const size_t first_char_posn { str.find_first_not_of(' ', posn) };
 
   if (first_char_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
-//  const size_t equals_posn { str.find("="s, first_char_posn) };
   const size_t equals_posn { str.find('=', first_char_posn) };
 
   if (equals_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
   const string name                  { remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn)) };
-//  const size_t value_first_char_posn { str.find_first_not_of(SPACE_STR, equals_posn + 1) };
   const size_t value_first_char_posn { str.find_first_not_of(' ', equals_posn + 1) };
 
   if (value_first_char_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
-//  const size_t space_posn { str.find(SPACE_STR, value_first_char_posn) };
   const size_t space_posn { str.find(' ', value_first_char_posn) };
   const string value      { (space_posn == string::npos) ? str.substr(value_first_char_posn)
                                                          : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };

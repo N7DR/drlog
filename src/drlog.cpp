@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 209 2022-10-02 19:10:21Z  $
+// $Id: drlog.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2766,6 +2766,7 @@ void* prune_bandmap(void* vp)
     CTRL-B        -- fast bandwidth
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
+    CTRL-G        -- display QRG of call
     CTRL-I        -- refresh geomagnetic indices
     CTRL-M        -- Monitor call
     CTRL-Q        -- swap QSL and QUICK QSL messages
@@ -2785,6 +2786,7 @@ void* prune_bandmap(void* vp)
     ESCAPE
     F10           -- toggle filter_remaining_country_mults
     F11           -- band map filtering
+    KP Del        -- remove from bandmap and add to do-not-add list (like .REMOVE)
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
     KP-              -- toggle 1300:1600/1500:1800 centre/bandwidth if on SSB
@@ -2803,10 +2805,9 @@ void* prune_bandmap(void* vp)
     F1 -- first step in SAP QSO during run
     F4 -- swap contents of CALL and BCALL windows
 
-    KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     TAB -- switch between CQ and SAP mode
-    CTRL-G -- display QRG of call
+
     ALT-G go to the frequency in win_last_qrg
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
@@ -2988,7 +2989,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-N -- toggle notch status if on SSB
   if (!processed and e.is_alt('n'))
   { if (current_mode == MODE_SSB)
-      rig.k3_tap(K3_BUTTON::NOTCH);    
+ //     rig.k3_tap(K3_BUTTON::NOTCH);
+      rig.toggle_notch_status();  
 
     processed = true;
   }

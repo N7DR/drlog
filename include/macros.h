@@ -194,9 +194,10 @@ template <template<class...> class T, class... Args>
 inline constexpr bool is_specialization<T<Args...>, T> = true;
 
 // basic types + string
-template <class T> concept is_int    = std::is_same_v<T, int>;
-template <class T> concept is_uint   = std::is_same_v<T, unsigned int>;
-template <class T> concept is_string = std::is_same_v<T, std::string>;
+template <class T> concept is_int         = std::is_same_v<T, int>;
+template <class T> concept is_uint        = std::is_same_v<T, unsigned int>;
+template <class T> concept is_string      = std::is_same_v<T, std::string>;
+template <class T> concept is_string_view = std::is_same_v<T, std::string_view>;
 
 // standard containers
 template <class T> concept is_deque              = is_specialization<T, std::deque>;
@@ -220,6 +221,10 @@ template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>
 
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
+
+// const string& or plain string_view
+template <class T> concept STRING_PARAM = (is_string<T> and std::is_const_v<T> and std::is_reference_v<T>) or
+                                            (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
 
 // ---------------------------------------------------------------------------
 

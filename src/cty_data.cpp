@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: cty_data.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -251,8 +251,7 @@ alternative_country_info::alternative_country_info(const string& record, const s
     }
   
     if (const string itu_zone_str { delimited_substring(record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
-    { //_itu_zone = from_string<int>(itu_zone_str);
-      auto_from_string(itu_zone_str, _itu_zone);
+    { auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
         throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in alternative record for "s + _identifier);
@@ -284,9 +283,7 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ //const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
-  //const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ";"s) };                  // read file, remove EOL markers and split into records
-  const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) , ';') };                  // read file, remove EOL markers and split into records
+{ const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ), ';') };                  // read file, remove EOL markers and split into records
   
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }

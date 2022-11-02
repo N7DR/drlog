@@ -391,6 +391,8 @@ inline bool starts_with(const std::string& cs, const T& ss)
 */
 std::string remove_from_start(const std::string& s, const std::string& ss);
 
+std::string remove_from_start(const std::string& s, std::string_view sv);
+
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
     \param  n   number of chars to remove

@@ -1,4 +1,4 @@
-// $Id: log.h 205 2022-04-24 16:05:06Z  $
+// $Id: log.h 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -293,6 +293,11 @@ public:
   inline void reserve(const size_t n)
     { _log_vec.reserve(n); }
 
+/*! \brief      Return the most recent EU call worked
+    \return     the most recently worked EU call
+
+    Returns the empty string if no European calls are in the log
+*/
   std::string last_worked_eu_call(void) const;
 
 /// serialise logbook

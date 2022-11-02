@@ -440,6 +440,16 @@ string remove_from_start(const string& s, const string& ss)
   return s;
 }
 
+string remove_from_start(const string& s, string_view sv)
+{ if (sv.empty())
+    return s;
+
+  if (s.starts_with(sv))
+    return substring(s, sv.size());
+
+  return s;
+}
+
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
     \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>

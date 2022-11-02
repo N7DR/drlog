@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: bandmap.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -128,41 +128,18 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ //ost << "in add_or_subtract, parameter = " << str << endl;
-
-  const bool   is_continent { CONTINENT_SET.contains(str) };
+{ const bool   is_continent { CONTINENT_SET.contains(str) };
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
- // if (!is_continent)
- // { const location_info li { location_db.info(str)};
-
- //   str_copy = li.canonical_prefix();
-
-//    if (str_copy == "EU"sv)
-//      str_copy = "EW";
-//  }
-
-//vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
-//  vector<string>* vs_p { ( CONTINENT_SET.contains(str) ? &_continents : &_prefixes ) };        // create pointer to correct vector
   vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };        // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
-//  for (const string& ss_value : ss)
-//    ost << "ss contains: " << ss_value << endl;
-
   if (ss.contains(str_copy))              // remove a value
     ss -= str_copy;
   else                       // add a value
     ss += str_copy;
-
-#if 0
-  if (ss.contains(str))              // remove a value
-    ss -= str;
-  else                       // add a value
-    ss += str;
-#endif
 
   vs_p->clear();                                        // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
@@ -306,15 +283,9 @@ bool bandmap_entry::remark(contest_rules& rules, const call_history& q_history, 
 
 // if this contest allows only one QSO with a station (e.g., SS)
   if (!rules.work_if_different_band())
-  { //_is_needed = true;
-
-    //for (auto& b : rules.permitted_bands())
-      //_is_needed = ( _is_needed and !q_history.worked(_callsign, b) );      // there is no &&= operator in C++
-
     _is_needed = NONE_OF(rules.permitted_bands(), [this, &q_history] (const BAND b) { return q_history.worked(_callsign, b); } );
-  }
   else
-   _is_needed = !q_history.worked(_callsign, _band);
+    _is_needed = !q_history.worked(_callsign, _band);
 
 // multi-mode contests
   const bool original_is_needed_callsign_mult { is_needed_callsign_mult() };
@@ -358,7 +329,6 @@ bool bandmap_entry::matches_criteria(void) const
 
   { SAFELOCK(batch_messages);
 
-//    if (contains(batch_messages, _callsign))
     if (batch_messages.contains(_callsign))
       return false;             // skip any call with a batch message
   }
@@ -594,7 +564,6 @@ void bandmap::operator+=(bandmap_entry& be)
   const string& callsign               { be.callsign() };
 
 // do not add if it's already been done recently, or matches several other conditions
-//  bool add_it { !(_do_not_add > callsign) };
   bool add_it { !_do_not_add.contains(callsign) };
 
   if (add_it)
@@ -703,9 +672,6 @@ void bandmap::prune(void)
 bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
-//  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); }) };
-
-//  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
   return VALUE_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); });
 }
 
@@ -718,9 +684,6 @@ bandmap_entry bandmap::operator[](const string& str)
 bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
-//  const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); }) };
-
-//  return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
   return VALUE_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); });
 }
 

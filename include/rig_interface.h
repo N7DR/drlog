@@ -560,8 +560,19 @@ public:
 */
   void centre_frequency(const unsigned int fc);
 
-/// is notch enabled?
+/*! \brief              Is notch enabled?
+    \param  ds_result   previously-obtained result of a DS command, or empty string
+    \return             whether notch is currently enabled
+
+    Works only with K3
+*/
   bool notch_enabled(const std::string& ds_result = std::string());
+
+/*! \brief              Toggle the notch status
+
+    Works only with K3
+*/
+  void toggle_notch_status(void);
 
 /// place K3 into extended mode
   void k3_extended_mode(void);

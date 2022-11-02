@@ -563,8 +563,8 @@ public:
 // next three needed in order to pass as parameters to find_if, since I don't know how to choose among multiple overloaded functions
 
 /// do we need to work this call?
-  inline bool is_stn_needed(void) const
-    { return is_needed(); }
+//  inline bool is_stn_needed(void) const
+//    { return is_needed(); }
 
 /*! \brief          Does <i>_frequency_str</i> match a target value?
     \param  target  target value of <i>_frequency_str</i>
@@ -1009,7 +1009,8 @@ public:
      The return value can be tested with .empty() to see if a station was found
 */
   inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_stn_needed, dirn); }
+//    { return needed(&bandmap_entry::is_stn_needed, dirn); }
+    { return needed(&bandmap_entry::is_needed, dirn); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
      \param dirn    direction in which to search

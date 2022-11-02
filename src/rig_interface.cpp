@@ -1467,7 +1467,12 @@ void rig_interface::rx_ant(const bool torf)
   }
 }
 
-/// is notch enabled?
+/*! \brief              Is notch enabled?
+    \param  ds_result   previously-obtained result of a DS command, or empty string
+    \return             whether notch is currently enabled
+
+    Works only with K3
+*/
 bool rig_interface::notch_enabled(const string& ds_result)
 { if (!_rig_connected)
     return false;
@@ -1488,6 +1493,15 @@ bool rig_interface::notch_enabled(const string& ds_result)
   }
 
   return false;
+}
+
+/*! \brief  Toggle the notch status
+
+    Works only with K3
+*/
+void rig_interface::toggle_notch_status(void)
+{ if (_model == RIG_MODEL_K3)
+    k3_tap(K3_BUTTON::NOTCH);
 }
 
 /// place K3 into extended mode

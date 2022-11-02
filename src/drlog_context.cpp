@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 209 2022-10-02 19:10:21Z  $
+// $Id: drlog_context.cpp 210 2022-10-31 17:26:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,48 +163,48 @@ void drlog_context::_process_configuration_file(const string& filename)
       _audio_duration = from_string<decltype(_audio_duration)>(rhs);
 
 // AUDIO FILE
-    if (LHS == "AUDIO FILE"s)
+    if (LHS == "AUDIO FILE"sv)
       _audio_file = rhs;
 
 // AUDIO RATE
-    if (LHS == "AUDIO RATE"s)
+    if (LHS == "AUDIO RATE"sv)
       _audio_rate = from_string<decltype(_audio_rate)>(rhs);
 
 // AUTO BACKUP
-    if ( ((LHS == "AUTO BACKUP DIRECTORY"s) or (LHS == "AUTO BACKUP"s)) and !rhs.empty() )  // AUTO BACKUP was the old name for this command
+    if ( ((LHS == "AUTO BACKUP DIRECTORY"sv) or (LHS == "AUTO BACKUP"sv)) and !rhs.empty() )  // AUTO BACKUP was the old name for this command
       _auto_backup_directory = rhs;
 
 // AUTOCORRECT
-    if ( (LHS == "AUTOCORRECT"s) or (LHS == "AUTO CORRECT"s) or (LHS == "AUTOCORRECT RBN"s) )
+    if ( (LHS == "AUTOCORRECT"sv) or (LHS == "AUTO CORRECT"sv) or (LHS == "AUTOCORRECT RBN"sv) )
       _autocorrect_rbn = is_true;
 
 // AUTO CQ MODE SSB
-    if (LHS == "AUTO CQ MODE SSB"s)
+    if (LHS == "AUTO CQ MODE SSB"sv)
       _auto_cq_mode_ssb = is_true;
 
 // AUTO SCREENSHOT
-    if ( (LHS == "AUTO SCREENSHOT"s) and !rhs.empty() )
+    if ( (LHS == "AUTO SCREENSHOT"sv) and !rhs.empty() )
       _auto_screenshot = is_true;
 
 // BAND MAP CULL FUNCTION
-    if ( ( (LHS == "BAND MAP CULL FUNCTION"s) or (LHS == "BANDMAP CULL FUNCTION"s) ) and !rhs.empty() )
+    if ( ( (LHS == "BAND MAP CULL FUNCTION"sv) or (LHS == "BANDMAP CULL FUNCTION"sv) ) and !rhs.empty() )
       _bandmap_cull_function = from_string<decltype(_bandmap_cull_function)>(rhs);
 
 // BAND MAP DECAY TIME CLUSTER
-    if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER"s) or (LHS == "BANDMAP DECAY TIME CLUSTER"s) ) and !rhs.empty() )
+    if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER"sv) or (LHS == "BANDMAP DECAY TIME CLUSTER"sv) ) and !rhs.empty() )
       _bandmap_decay_time_cluster = from_string<decltype(_bandmap_decay_time_cluster)>(rhs);
 
 // BAND MAP DECAY TIME LOCAL
-    if ( ( (LHS == "BAND MAP DECAY TIME LOCAL"s) or (LHS == "BANDMAP DECAY TIME LOCAL"s) ) and !rhs.empty() )
+    if ( ( (LHS == "BAND MAP DECAY TIME LOCAL"sv) or (LHS == "BANDMAP DECAY TIME LOCAL"sv) ) and !rhs.empty() )
       _bandmap_decay_time_local = from_string<decltype(_bandmap_decay_time_local)>(rhs);
 
 // BAND MAP DECAY TIME RBN
-    if ( (LHS == "BAND MAP DECAY TIME RBN"s) or (LHS == "BANDMAP DECAY TIME RBN"s) )
+    if ( (LHS == "BAND MAP DECAY TIME RBN"sv) or (LHS == "BANDMAP DECAY TIME RBN"sv) )
       _bandmap_decay_time_rbn = from_string<decltype(_bandmap_decay_time_rbn)>(rhs);
 
 // BAND MAP FADE COLOURS
-    if ( (LHS == "BAND MAP FADE COLOURS"s) or (LHS == "BANDMAP FADE COLOURS"s) or
-         (LHS == "BAND MAP FADE COLORS"s) or (LHS == "BANDMAP FADE COLORS"s) )
+    if ( (LHS == "BAND MAP FADE COLOURS"sv) or (LHS == "BANDMAP FADE COLOURS"sv) or
+         (LHS == "BAND MAP FADE COLORS"sv) or (LHS == "BANDMAP FADE COLORS"sv) )
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
