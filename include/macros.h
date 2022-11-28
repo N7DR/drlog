@@ -219,12 +219,19 @@ template <class T> concept is_mmumm = is_multimap<T> or is_unordered_multimap<T>
 template <class T> concept is_sus   = is_set<T>      or is_unordered_set<T>;
 template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>;
 
+// const string& or plain string_view
+//template <class T> concept is_string_param = (is_string<T> and std::is_const_v<T> /* and std::is_lvalue_reference_v<T> */) or
+//                                               (is_string<T> and std::is_rvalue_reference_v<T>) or
+//                                                 (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
+//template <class T> concept is_string_param = (is_string<T> or is_string_view<T>);
+
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 
 // const string& or plain string_view
-template <class T> concept STRING_PARAM = (is_string<T> and std::is_const_v<T> and std::is_reference_v<T>) or
-                                            (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
+//template <class T> concept STRING_PARAM = (is_string<T> and std::is_const_v<T> and std::is_reference_v<T>) or
+//                                            (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
+//template <class T> concept STRING_PARAM = is_string_param<T>;
 
 // ---------------------------------------------------------------------------
 
@@ -1154,19 +1161,8 @@ constexpr std::ranges::borrowed_iterator_t<R> FIND_IF( R&& r, Pred pred, Proj pr
     \param  high_val    upper bound
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
-//template <typename T>
-//inline T LIMIT(const T val, const T low_val, const T high_val)
-//  { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
-
-/*! \brief              Bound a value within limits
-    \param  val         value to bound
-    \param  low_val     lower bound
-    \param  high_val    upper bound
-    \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
-*/
 template <typename T, typename U, typename V>
 inline T LIMIT(const T val, const U low_val, const V high_val)
-//  { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
   { return std::clamp(val, static_cast<T>(low_val), static_cast<T>(high_val)); }
 
 /// a version of floor() that returns a float instead of a double (not quite the same as floorf)
@@ -1297,14 +1293,6 @@ inline void operator+=(V& dest, V&& src)
     dest.insert(dest.end(), src.begin(), src.end());
   }
 
-// too confusing
-//template <typename V>
-//  requires (is_vector_v<V>)
-//void operator+=(VECTOR auto& dest, const VECTOR auto&& src)
-//  { dest.reserve(dest.size() + src.size());
-//    dest.insert(dest.end(), src.begin(), src.end());
-//  }
-
 /*! \brief        Append one vector to another
     \param  dest  destination vector
     \param  src   source vector
@@ -1316,10 +1304,6 @@ inline void operator+=(V& dest, const V& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
   }
-//void operator+=(VECTOR auto& dest, const VECTOR auto& src)
-//  { dest.reserve(dest.size() + src.size());
-//    dest.insert(dest.end(), src.begin(), src.end());
-//  }
 
 /*! \brief        Concatenate two vectors
     \param  dest  destination vector

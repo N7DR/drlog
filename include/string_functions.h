@@ -37,7 +37,10 @@
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
+// see https://stackoverflow.com/questions/44636549/why-is-there-no-support-for-concatenating-stdstring-and-stdstring-view
+// brain-dead: cannot perform s + sv until at least C++26
 static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
+//constexpr std::string_view EOL  { "\n"sv };            ///< end-of-line marker as string
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
@@ -57,10 +60,10 @@ static const std::string EMPTY_STR { };             ///< an empty string
 static const std::string FULL_STOP { "."s };        ///< full stop as string
 static const std::string SPACE_STR { " "s };        ///< space as string
 
-static const std::string CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };    ///< convenient place to hold all characters that are legal in callsigns
-static const std::string DIGITS                        { "0123456789"s };                               ///< convenient place to hold all digits
-static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };     ///< convenient place to hold all digits and upper case letters
-static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };               ///< convenient place to hold all upper case letters
+constexpr std::string_view CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"sv };    ///< convenient place to hold all characters that are legal in callsigns
+constexpr std::string_view DIGITS                        { "0123456789"sv };                               ///< convenient place to hold all digits
+constexpr std::string_view DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };     ///< convenient place to hold all digits and upper case letters
+constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };               ///< convenient place to hold all upper case letters
 
 constexpr char BACKSLASH_CHAR { '\\' };
 constexpr char SPACE_CHAR     { ' ' };
@@ -389,9 +392,7 @@ inline bool starts_with(const std::string& cs, const T& ss)
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
-std::string remove_from_start(const std::string& s, const std::string& ss);
-
-std::string remove_from_start(const std::string& s, std::string_view sv);
+std::string remove_from_start(const std::string& s, std::string_view ss);
 
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
@@ -487,6 +488,7 @@ T remove_peripheral_spaces(T&& t)
     \return             vector containing the separate components
 */
 std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
+//std::vector<std::string> split_string(const std::string& cs, std::string_view separator);
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string
@@ -567,6 +569,7 @@ std::vector<std::string> remove_empty_lines(const std::vector<std::string>& line
     \return             vector containing the separate lines
 */
 inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
+//inline std::vector<std::string> to_lines(const std::string& cs, std::string_view eol_marker = EOL)
   { return split_string(cs, eol_marker); }
 
 /*! \brief      Remove peripheral instances of a specific character
@@ -783,7 +786,7 @@ inline std::string to_lower(const std::string& cs)
     \return             whether <i>callsign</i> appears to be a maritime mobile
 */
 inline bool is_maritime_mobile(const std::string& callsign)
-  { return to_upper(callsign).ends_with("/MM"s); }
+  { return to_upper(callsign).ends_with("/MM"sv); }
 
 /*! \brief          Convert an integer to a character-separated string
     \param  n       number to convert
@@ -1008,7 +1011,8 @@ inline std::string truncate_before_first(const std::string& str, const char c)
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-size_t find_and_go_to_end_of(const std::string_view str, const std::string_view target);
+//size_t find_and_go_to_end_of(const std::string_view str, const std::string_view target);
+size_t find_and_go_to_end_of(std::string_view str, std::string_view target);
 
 /*! \brief              Get the base portion of a call
     \param  callsign    original callsign

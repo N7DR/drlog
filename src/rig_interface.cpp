@@ -1552,21 +1552,24 @@ void rig_interface::base_state(void)
   { rit_disable();
 
     if (_model == RIG_MODEL_K3)
-      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
   if (split_enabled())
   { split_disable();
 
     if (_model == RIG_MODEL_K3)
-      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
   if (sub_receiver_enabled())
   { sub_receiver_disable();
 
     if (_model == RIG_MODEL_K3)
-      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
+      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 }
 

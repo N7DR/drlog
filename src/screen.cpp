@@ -957,13 +957,13 @@ COLOUR_TYPE string_to_colour(const string& str)
 
 // should change this so it works with a colour name and not just a number
 
-  if (const string_view str { "COLOUR_"s }; s.starts_with(str))
+  if (const string_view str { "COLOUR_"sv }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));
 
 //  if (s.starts_with("COLOR_"s))
 //    return (from_string<COLOUR_TYPE>(substring(s, 6)));
 
-  if (const string_view str { "COLOR_"s }; s.starts_with(str))
+  if (const string_view str { "COLOR_"sv }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits

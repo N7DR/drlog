@@ -30,11 +30,15 @@
 using namespace std::literals::string_literals;
 
 // error numbers
-constexpr int QTC_INVALID_FORMAT            { -1 };   ///< error reading from file
+constexpr int QTC_INVALID_FORMAT { -1 };   ///< error reading from file
 
 enum class QTC_STATUS { SENT,                   ///< QTC has been sent
                         UNSENT                  ///< QTC has not been sent
                       };
+
+class qtc_entry;
+
+using QTC_AND_STATUS = std::pair<qtc_entry, QTC_STATUS>;
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
@@ -65,7 +69,7 @@ public:
 /// construct from a QSO
   inline explicit qtc_entry(const QSO& qso) :
     _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
-    _callsign( (qso.continent() == "EU"s) ? qso.callsign() : std::string()),
+    _callsign( (qso.continent() == "EU"sv) ? qso.callsign() : std::string()),
     _serno(pad_right(qso.received_exchange("SERNO"s), 4))                    // force width to 4
   { }
 
@@ -83,13 +87,10 @@ public:
   inline bool operator==(const QSO& qso) const
     { return ( *this == qtc_entry { qso } ); }
 
-/// qtc_entry != qso
-  inline bool operator!=(const QSO& qso) const
-    { return !(*this == qso); }
-
 /// qtc_entry == qtc_entry
-  inline bool operator==(const qtc_entry& entry) const
-    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
+  inline bool operator==(const qtc_entry& entry) const = default;
+//  inline bool operator==(const qtc_entry& entry) const
+//    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// convert to printable string
   std::string to_string(void) const;
@@ -133,11 +134,10 @@ inline std::ostream& operator<<(std::ostream& ost, const qtc_entry& qe)
 */
 
 class qtc_series
-{
+{ 
 protected:
 
-//  std::vector<std::pair<qtc_entry, bool>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
-  std::vector<std::pair<qtc_entry, QTC_STATUS>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
+  std::vector<QTC_AND_STATUS> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
 
   std::string _target;              ///< to whom is the QTC series to be sent?
   std::string _id;                  ///< QTC ID (e.g., "1/10")
@@ -152,7 +152,6 @@ protected:
     \param  qstatus     the status of the QTCs to return
     \return             all the QTCs whose status matches <i>qstatus</i>
 */
-//  std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
   std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const;
 
 public:
@@ -166,11 +165,10 @@ public:
     \param  my_call     my call
     \param  b           whether the QTC has been sent
 */
-//  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
-  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const QTC_STATUS qstatus = QTC_STATUS::UNSENT) :
+  inline qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const QTC_STATUS qstatus = QTC_STATUS::UNSENT) :
     _mode(mode_str),
     _source(my_call)
-    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += std::pair<qtc_entry, QTC_STATUS>( { qe, qstatus } ); } ); }
+  { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += { qe, qstatus }; } ); }
 
   READ_AND_WRITE(target);             ///< to whom is the QTC series to be sent?
   READ_AND_WRITE(id);                 ///< QTC ID (e.g., "1/10")
@@ -224,8 +222,7 @@ public:
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-//  bool operator+=(const std::pair<qtc_entry, bool>& param);
-  bool operator+=(const std::pair<qtc_entry, QTC_STATUS>& param);
+  bool operator+=(const QTC_AND_STATUS& param);
 
 /*! \brief      Return an entry
     \param  n   index number to return (wrt 0)
@@ -233,8 +230,7 @@ public:
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-//  std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
-  std::pair<qtc_entry, QTC_STATUS> operator[](const unsigned int n) const;
+  QTC_AND_STATUS operator[](const unsigned int n) const;
 
 /*! \brief      Mark a particular entry as having been sent
     \param  n   index number to mark (wrt 0)
@@ -387,11 +383,8 @@ protected:
 // it pains me, but I think that these both have to be lists; because there is no way
 // to put the values into chronological order (for a set), because the QTC file format
 // as defined by DARC does not contain the date of the QSO being sent, only the UTC
-//  std::list<qtc_entry> _unsent_qtcs;    ///< the unsent QTCs, in logbook order
-  std::list<qtc_entry> _unsent_qtcs;    ///< the unsent QTCs, in logbook order
-
-//  std::set<qtc_entry> _sent_qtcs;       ///< unordered_set won't serialize
-  std::list<qtc_entry> _sent_qtcs;       ///< the sent QTCs, in the sent order
+  std::list<qtc_entry> _unsent_qtcs;        ///< the unsent QTCs, in logbook order
+  std::list<qtc_entry> _sent_qtcs;          ///< the sent QTCs, in the sent order
 
 public:
 

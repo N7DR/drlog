@@ -243,7 +243,9 @@ public:
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
-  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+//  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+  inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
+    { FOR_ALL(split_string(remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [&] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
@@ -320,7 +322,7 @@ std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& in
 /*! \class  location_info
     \brief  Location information associated with a call, prefix or country
         
-    This is basically just a simple 8-tuple
+    This is basically just a simple tuple
 */
 
 class location_info

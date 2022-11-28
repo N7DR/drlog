@@ -212,7 +212,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER
-    if ( (LHS == "BAND MAP FILTER"s) or (LHS == "BANDMAP FILTER"s) )
+    if ( (LHS == "BAND MAP FILTER"sv) or (LHS == "BANDMAP FILTER"sv) )
     { if (!RHS.empty())
       { vector<string> filters { clean_split_string(RHS, ',') };
 
@@ -222,8 +222,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER COLOURS
-    if ( (LHS == "BAND MAP FILTER COLOURS"s) or (LHS == "BAND MAP FILTER COLORS"s) or
-         (LHS == "BANDMAP FILTER COLOURS"s) or (LHS == "BANDMAP FILTER COLORS"s) )
+    if ( (LHS == "BAND MAP FILTER COLOURS"sv) or (LHS == "BAND MAP FILTER COLORS"sv) or
+         (LHS == "BANDMAP FILTER COLOURS"sv) or (LHS == "BANDMAP FILTER COLORS"sv) )
     { if (!RHS.empty())
       { const vector<string> colours { clean_split_string(RHS) };
 
@@ -242,105 +242,103 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER ENABLE
-    if ( (LHS == "BAND MAP FILTER ENABLE"s) or (LHS == "BANDMAP FILTER ENABLE"s) )
+    if ( (LHS == "BAND MAP FILTER ENABLE"sv) or (LHS == "BANDMAP FILTER ENABLE"sv) )
       _bandmap_filter_enabled = is_true;
 
 // BAND MAP FILTER MODE
-    if ( (LHS == "BAND MAP FILTER MODE"s) or (LHS == "BANDMAP FILTER MODE"s) )
-      _bandmap_filter_show = (RHS == "SHOW"s);
+    if ( (LHS == "BAND MAP FILTER MODE"sv) or (LHS == "BANDMAP FILTER MODE"sv) )
+      _bandmap_filter_show = (RHS == "SHOW"sv);
 
 // BAND MAP FREQUENCY UP
-    if ( (LHS == "BAND MAP FREQUENCY UP"s) or (LHS == "BANDMAP FREQUENCY UP"s) )
+    if ( (LHS == "BAND MAP FREQUENCY UP"sv) or (LHS == "BANDMAP FREQUENCY UP"sv) )
       _bandmap_frequency_up = is_true;
 
 // BAND MAP GUARD BAND CW
-    if ( (LHS == "BAND MAP GUARD BAND CW"s) or (LHS == "BANDMAP GUARD BAND CW"s) )
-//      _guard_band[MODE_CW] = from_string<unsigned int>(rhs);
+    if ( (LHS == "BAND MAP GUARD BAND CW"sv) or (LHS == "BANDMAP GUARD BAND CW"sv) )
       _guard_band[MODE_CW] = from_string<decltype(_guard_band)::mapped_type>(rhs);
 
 // BAND MAP GUARD BAND SSB
-    if ( (LHS == "BAND MAP GUARD BAND SSB"s) or (LHS == "BANDMAP GUARD BAND SSB"s) )
-//      _guard_band[MODE_SSB] = from_string<unsigned int>(rhs);
+    if ( (LHS == "BAND MAP GUARD BAND SSB"sv) or (LHS == "BANDMAP GUARD BAND SSB"sv) )
       _guard_band[MODE_SSB] = from_string<decltype(_guard_band)::mapped_type>(rhs);
 
 // BAND MAP RECENT COLOUR
-    if ( (LHS == "BAND MAP RECENT COLOUR"s) or (LHS == "BANDMAP RECENT COLOUR"s) or
-         (LHS == "BANDMAP RECENT COLOR"s) or (LHS == "BANDMAP RECENT COLOR"s) )
+    if ( (LHS == "BAND MAP RECENT COLOUR"sv) or (LHS == "BANDMAP RECENT COLOUR"sv) or
+         (LHS == "BANDMAP RECENT COLOR"sv) or (LHS == "BANDMAP RECENT COLOR"sv) )
     { if (!RHS.empty())
         _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces(RHS));
     }
 
 // BAND MAP SHOW MARKED FREQUENCIES
-    if ( (LHS == "BAND MAP SHOW MARKED FREQUENCIES"s) or (LHS == "BANDMAP SHOW MARKED FREQUENCIES"s) )
+    if ( (LHS == "BAND MAP SHOW MARKED FREQUENCIES"sv) or (LHS == "BANDMAP SHOW MARKED FREQUENCIES"sv) )
       _bandmap_show_marked_frequencies = is_true;
 
 // BANDS
-    if (LHS == "BANDS"s)
+    if (LHS == "BANDS"sv)
       _bands = RHS;
 
 // BATCH MESSAGES FILE
-    if (LHS == "BATCH MESSAGES FILE"s)
+    if (LHS == "BATCH MESSAGES FILE"sv)
       _batch_messages_file = rhs;
 
 // BEST DX UNIT
-    if ( (LHS == "BEST DX UNIT"s) or (LHS == "BEST DX UNITS"s) )
+    if ( (LHS == "BEST DX UNIT"sv) or (LHS == "BEST DX UNITS"sv) )
       _best_dx_unit = RHS;
 
 // CABRILLO FILENAME
-    if (LHS == "CABRILLO FILENAME"s)
+    if (LHS == "CABRILLO FILENAME"sv)
       _cabrillo_filename = rhs;
 
 // CALL HISTORY BANDS
-    if (LHS == "CALL HISTORY BANDS"s)
+    if (LHS == "CALL HISTORY BANDS"sv)
       FOR_ALL(clean_split_string(rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
 
 // CALL OK NOW MESSAGE
-    if (LHS == "CALL OK NOW MESSAGE"s)
+    if (LHS == "CALL OK NOW MESSAGE"sv)
       _call_ok_now_message = rhs;
 
 // CALLSIGN MULTS
-    if (LHS == "CALLSIGN MULTS"s)
+    if (LHS == "CALLSIGN MULTS"sv)
       ranges::move(clean_split_string(RHS), inserter(_callsign_mults, _callsign_mults.begin()));
 
 // CALLSIGN MULTS PER BAND
-    if (LHS == "CALLSIGN MULTS PER BAND"s)
+    if (LHS == "CALLSIGN MULTS PER BAND"sv)
       _callsign_mults_per_band = is_true;
 
 // CALLSIGN MULTS PER MODE
-    if (LHS == "CALLSIGN MULTS PER MODE"s)
+    if (LHS == "CALLSIGN MULTS PER MODE"sv)
       _callsign_mults_per_mode = is_true;
 
 // CLUSTER PORT
-    if (LHS == "CLUSTER PORT"s)
+    if (LHS == "CLUSTER PORT"sv)
       _cluster_port = from_string<decltype(_cluster_port)>(rhs);
 
 // CLUSTER SERVER
-    if (LHS == "CLUSTER SERVER"s)
+    if (LHS == "CLUSTER SERVER"sv)
       _cluster_server = rhs;
 
 // CLUSTER USERNAME
-    if (LHS == "CLUSTER USERNAME"s)
+    if (LHS == "CLUSTER USERNAME"sv)
       _cluster_username = rhs;
 
 // CONTEST
-    if (LHS == "CONTEST"s)
+    if (LHS == "CONTEST"sv)
       _contest_name = RHS;
 
 // COUNTRY FILENAME
-    if (LHS == "COUNTRY FILENAME"s)
+    if (LHS == "COUNTRY FILENAME"sv)
       _cty_filename = rhs;
 
 // COUNTRY LIST
-    if ( LHS == "COUNTRY LIST"s)
-    { if (RHS == "DXCC"s)
+    if ( LHS == "COUNTRY LIST"sv)
+    { if (RHS == "DXCC"sv)
         _country_list = COUNTRY_LIST::DXCC;
 
-      if ( (RHS == "WAEDC"s) or (RHS == "WAE"s) )
+      if ( (RHS == "WAEDC"sv) or (RHS == "WAE"sv) )
         _country_list = COUNTRY_LIST::WAEDC;
     }
 
 // COUNTRY MULT FACTOR
-    if (LHS == "COUNTRY MULT FACTOR"s)  // there may be an "=" in the points definitions
+    if (LHS == "COUNTRY MULT FACTOR"sv)  // there may be an "=" in the points definitions
     { const vector<string> str_vec { split_string(line, '=') };
 
       if (!str_vec.empty())
@@ -349,7 +347,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         const string lhs { str_vec[0] };
 
         if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
-//        if ( !lhs.contains('[') or lhs.contains("[*]"s) )             // for all bands
         { string new_str;
 
           for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -387,23 +384,23 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // COUNTRY MULTS PER BAND
-    if (LHS == "COUNTRY MULTS PER BAND"s)
+    if (LHS == "COUNTRY MULTS PER BAND"sv)
       _country_mults_per_band = is_true;
 
 // COUNTRY MULTS PER MODE
-    if (LHS == "COUNTRY MULTS PER MODE"s)
+    if (LHS == "COUNTRY MULTS PER MODE"sv)
       _country_mults_per_mode = is_true;
 
 // CQ AUTO LOCK
-    if (LHS == "CQ AUTO LOCK"s)
+    if (LHS == "CQ AUTO LOCK"sv)
       _cq_auto_lock = is_true;
 
 // CQ AUTO RIT
-    if (LHS == "CQ AUTO RIT"s)
+    if (LHS == "CQ AUTO RIT"sv)
       _cq_auto_rit = is_true;
 
 // CW BANDWIDTH
-    if (LHS == "CW BANDWIDTH"s)
+    if (LHS == "CW BANDWIDTH"sv)
     { const vector<string> bw { clean_split_string(RHS, '/') };
 
       if (bw.size() == 2)
@@ -413,64 +410,64 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // CW PRIORITY
-    if (LHS == "CW PRIORITY"s)
+    if (LHS == "CW PRIORITY"sv)
       _cw_priority = from_string<decltype(_cw_priority)>(RHS);
 
 // CW SPEED
-    if (LHS == "CW SPEED"s)
+    if (LHS == "CW SPEED"sv)
       _cw_speed = from_string<decltype(_cw_speed)>(RHS);
 
 // CW SPEED CHANGE
-    if (LHS == "CW SPEED CHANGE"s)
+    if (LHS == "CW SPEED CHANGE"sv)
       _cw_speed_change = from_string<decltype(_cw_speed_change)>(RHS);
 
 // DECIMAL POINT
-    if (LHS == "DECIMAL POINT"s)
+    if (LHS == "DECIMAL POINT"sv)
     { if (rhs.size() >= 1)
         _decimal_point = rhs[0];
     }
 
 // DISPLAY COMMUNICATION ERRORS
-    if (LHS == "DISPLAY COMMUNICATION ERRORS"s)
+    if (LHS == "DISPLAY COMMUNICATION ERRORS"sv)
       _display_communication_errors = is_true;
 
 // DISPLAY GRID
-    if (LHS == "DISPLAY GRID"s)
+    if (LHS == "DISPLAY GRID"sv)
       _display_grid = is_true;
 
 // DO NOT SHOW
-    if (LHS == "DO NOT SHOW"s)
+    if (LHS == "DO NOT SHOW"sv)
       _do_not_show = clean_split_string(RHS);
 
 // DO NOT SHOW FILE
-    if (LHS == "DO NOT SHOW FILE"s)
+    if (LHS == "DO NOT SHOW FILE"sv)
       _do_not_show_filename = rhs;
 
 // DRMASTER FILENAME
-    if (LHS == "DRMASTER FILENAME"s)
+    if (LHS == "DRMASTER FILENAME"sv)
       _drmaster_filename = rhs;
 
 // EXCHANGE
-    if (LHS == "EXCHANGE"s)
+    if (LHS == "EXCHANGE"sv)
       _exchange = RHS;
 
 // EXCHANGE[
-    if (testline.starts_with("EXCHANGE["s))
+    if (testline.starts_with("EXCHANGE["sv))
     { const string  country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
 
       FOR_ALL(clean_split_string(country_list), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
-    if (LHS == "EXCHANGE CQ"s)
+    if (LHS == "EXCHANGE CQ"sv)
       _exchange_cq = RHS;
 
 // EXCHANGE FIELDS FILENAME (for all the regex-based exchange fields)
-    if (LHS == "EXCHANGE FIELDS FILENAME"s)
+    if (LHS == "EXCHANGE FIELDS FILENAME"sv)
       _exchange_fields_filename = rhs;
 
 // EXCHANGE MULTS
-    if (LHS == "EXCHANGE MULTS"s)
+    if (LHS == "EXCHANGE MULTS"sv)
     { _exchange_mults = RHS;
 
       if (contains(_exchange_mults, ','))      // if there is more than one exchange mult
@@ -478,7 +475,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE MULTS PER BAND
-    if (LHS == "EXCHANGE MULTS PER BAND"s)
+    if (LHS == "EXCHANGE MULTS PER BAND"sv)
       _exchange_mults_per_band = is_true;
 
 // EXCHANGE MULTS PER MODE

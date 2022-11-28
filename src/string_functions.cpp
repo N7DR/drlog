@@ -430,6 +430,31 @@ string remove_char(const string& cs, const char char_to_remove)
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
+#if 0
+std::string remove_from_start(const std::string& s, auto sp)
+{ if (sp.empty())
+    return s;
+
+  if (s.starts_with(sp))
+    return substring(s, sp.size());
+
+  return s;
+}
+#endif
+
+#if 0
+string remove_from_start(const string& s, STRING_PARAM sp)
+{ if (sp.empty())
+    return s;
+
+  if (s.starts_with(sp))
+    return substring(s, sp.size());
+
+  return s;
+}
+#endif
+
+#if 0
 string remove_from_start(const string& s, const string& ss)
 { if (ss.empty())
     return s;
@@ -439,7 +464,9 @@ string remove_from_start(const string& s, const string& ss)
 
   return s;
 }
+#endif
 
+#if 1
 string remove_from_start(const string& s, string_view sv)
 { if (sv.empty())
     return s;
@@ -449,6 +476,7 @@ string remove_from_start(const string& s, string_view sv)
 
   return s;
 }
+#endif
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
@@ -500,7 +528,6 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
 string remove_chars(const string& s, const string& chars_to_remove)
 { string rv { s };
 
-//  rv.erase( remove_if(rv.begin(), rv.end(), [=](const char& c) { return chars_to_remove.find(c) != string::npos; } ), rv.end() );
   erase_if(rv, [chars_to_remove](const char& c) { return contains(chars_to_remove, c); } );
 
   return rv;
@@ -691,7 +718,6 @@ vector<size_t> starts_of_words(const string& s)
     return rv;
 
 // start of first word
-//  size_t posn { s.find_first_not_of(SPACE_STR, 0) };
   size_t posn { s.find_first_not_of(' ', 0) };
 
   if (posn == string::npos)
@@ -701,13 +727,11 @@ vector<size_t> starts_of_words(const string& s)
 
 // next space
   while (1)
-  { //posn = s.find_first_of(SPACE_STR, posn);
-    posn = s.find_first_of(' ', posn);
+  { posn = s.find_first_of(' ', posn);
 
     if (posn == string::npos)
       return rv;
 
-//    posn = s.find_first_not_of(SPACE_STR, posn);
     posn = s.find_first_not_of(' ', posn);
 
     if (posn == string::npos)
@@ -731,12 +755,9 @@ size_t next_word_posn(const string& str, const size_t current_posn)
   const bool is_space { (str[current_posn] == ' ') };
 
   if (is_space)
-//    return ( str.find_first_not_of(SPACE_STR, current_posn) );
     return ( str.find_first_not_of(' ', current_posn) );
 
 // we are inside a word
-//  const size_t space_posn { str.find_first_of(SPACE_STR, current_posn) };
-//  const size_t word_posn  { str.find_first_not_of(SPACE_STR, space_posn) };
   const size_t space_posn { str.find_first_of(' ', current_posn) };
   const size_t word_posn  { str.find_first_not_of(' ', space_posn) };
 
@@ -779,7 +800,7 @@ string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
 size_t n_chars(const string& str)
-{ if (string(nl_langinfo(CODESET)) != "UTF-8"s)
+{ if (string(nl_langinfo(CODESET)) != "UTF-8"sv)
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + string(nl_langinfo(CODESET)));
 
   const size_t n_bytes { str.size() };
@@ -801,9 +822,7 @@ size_t n_chars(const string& str)
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 bool is_legal_ipv4_address(const string& cs)
-{ //static const string separator { "."s };
-
-  const vector<string> fields { split_string(cs, '.') };
+{ const vector<string> fields { split_string(cs, '.') };
 
   if (fields.size() != 4)
     return false;
@@ -829,8 +848,7 @@ bool is_legal_ipv4_address(const string& cs)
     \return         dotted decimal string corresponding to <i>val</i>
 */
 string convert_to_dotted_decimal(const uint32_t val)
-{ //static const string separator { "."s };
-
+{ 
 // put into network order (so that we can guarantee the order of the octets in the long)
   const uint32_t network_val { htonl(val) };
 
@@ -841,7 +859,6 @@ string convert_to_dotted_decimal(const uint32_t val)
   for (int n = 0; n < 3; n++)
   { const unsigned char c { cp[n] };
   
-//    rv += to_string((int)c) + separator;
     rv += to_string((int)c) + '.';
   }
 
@@ -851,37 +868,6 @@ string convert_to_dotted_decimal(const uint32_t val)
 
   return rv;
 }
-
-/*! \brief                  Is a string a legal value from a list?
-    \param  value           target string
-    \param  legal_values    all the legal values, separated by <i>separator</i>
-    \param  separator       separator in the string <i>legal_values</i>
-    \return                 whether <i>value</i> appears in <i>legal_values</i>
-*/
-#if 0
-bool is_legal_value(const string& value, const string& legal_values, const string& separator)
-{ //const vector<string> vec { split_string(legal_values, separator) };
-
-//  return (find(vec.begin(), vec.end(), value) != vec.end());
-//  return contains(split_string(legal_values, separator), value);
-  return (split_string(legal_values, separator) > value);
-}
-#endif
-
-/*! \brief                  Is a string a legal value from a list?
-    \param  value           target string
-    \param  legal_values    all the legal values, separated by <i>separator</i>
-    \param  separator       separator in the string <i>legal_values</i>
-    \return                 whether <i>value</i> appears in <i>legal_values</i>
-*/
-#if 0
-bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator)
-{ //const vector<string> vec { split_string(legal_values, separator) };
-
-  //return (vec > value);
-  return (split_string(legal_values, separator) > value);
-}
-#endif
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call
@@ -1175,7 +1161,8 @@ vector<string> delimited_substrings(const string& cs, const string& delim_1, con
     is the conclusion of <i>str</i>
 */
 //const size_t find_and_go_to_end_of(const std::string& str, const std::string& target)
-size_t find_and_go_to_end_of(const string_view str, const string_view target)
+//size_t find_and_go_to_end_of(const string_view str, const string_view target)
+size_t find_and_go_to_end_of(string_view str, string_view target)
 { size_t posn { str.find(target) };
 
   if (posn == string::npos)

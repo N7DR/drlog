@@ -876,7 +876,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     { if (!isdigit(call_area))
         return string();
 
-       static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
+       static const array<string, 10> abbreviations { { string { }, "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string { }, "NB"s} };
 
        return abbreviations[call_area - '0'];    // convert to number
     };
@@ -884,7 +884,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
   string rv;
 
 // currently identical to 10MSTATE, except look up different value on the drmaster line
-  if (field_name == "160MSTATE"s)
+  if (field_name == "160MSTATE"sv)
   { string rv;
 
     if (!drm_line.empty())
@@ -911,7 +911,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
 
-  if (field_name == "10MSTATE"s)
+  if (field_name == "10MSTATE"sv)
   { string rv;
 
     if (!drm_line.empty())
@@ -921,13 +921,13 @@ string exchange_field_database::guess_value(const string& callsign, const string
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"s) )  // can often guess province for VEs
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
     { const string pfx { wpx_prefix(callsign) };
 
-      if (pfx == "VY2"s)
+      if (pfx == "VY2"sv)
         rv = "PE"s;
 
-      if (rv.empty() and (pfx == "VO1"s))
+      if (rv.empty() and (pfx == "VO1"sv))
         rv = "NF"s;
 
       if (rv.empty())
@@ -937,10 +937,10 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
 
-  if (field_name == "CHECK"s)
+  if (field_name == "CHECK"sv)
     return insert_value(drm_line.check()); 
 
-  if (field_name == "CQZONE"s)
+  if (field_name == "CQZONE"sv)
   { const string rv { drm_line.cq_zone() };
 
     if (!rv.empty())
@@ -950,25 +950,25 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(to_string(location_db.cq_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
-  if (field_name == "CWPOWER"s)
+  if (field_name == "CWPOWER"sv)
     return insert_value(drm_line.cw_power());
 
-  if ( (field_name == "DOK"s) and (location_db.canonical_prefix(callsign) == "DL"s) )
+  if ( (field_name == "DOK"sv) and (location_db.canonical_prefix(callsign) == "DL"sv) )
     return insert_value(drm_line.qth());    // DL QTH is the DOK
 
-  if (field_name == "FDEPT"s)
+  if (field_name == "FDEPT"sv)
     return insert_value(drm_line.qth());    // F (and French territories) QTH is the dept
 
-  if (field_name == "GRID"s)
+  if (field_name == "GRID"sv)
   { const string grid_value { drm_line.grid() };
 
     return insert_value( (grid_value.length() > 4) ? substring(grid_value, 0, 4) : grid_value );
   }
 
-  if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
+  if (field_name == "HADXC"sv)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
     return insert_value(drm_line.qth());    // I think that this should work
 
-  if (field_name == "IOTA"s)
+  if (field_name == "IOTA"sv)
   { string rv { drm_line.iota() };
 
     if (rv.empty())
@@ -1034,7 +1034,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
       return insert_value(rv);    // I think that this should work
   }
 
-  if (field_name == "ITUZONE"s)
+  if (field_name == "ITUZONE"sv)
   { const string rv { drm_line.itu_zone() };
 
     if (!rv.empty())
@@ -1044,16 +1044,16 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
-  if ( (field_name == "JAPREF"s) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+  if ( (field_name == "JAPREF"sv) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
     return insert_value(drm_line.qth());
 
-  if (field_name == "NAME"s)
+  if (field_name == "NAME"sv)
     return insert_value(drm_line.name());    // I think that this should work
 
-  if (field_name == "PREC"s)
+  if (field_name == "PREC"sv)
     return insert_value(drm_line.precedence());    // I think that this should work 
 
-  if (field_name.starts_with("QTHX["s))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+  if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
   { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -1064,7 +1064,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
   }
 
-  if ((field_name == "RDA"s) or (field_name == "RD2"s))
+  if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
   { static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
@@ -1072,7 +1072,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
     { rv = drm_line.qth();
 
-      if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
+      if (field_name == "RD2"sv and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
         rv = substring(rv, 0, 2);
 
       return insert_value(rv); 
@@ -1084,26 +1084,26 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(rv);    // I think that this should work, but not absolutely certain 
   }
 
-  if (field_name == "SECTION"s)
+  if (field_name == "SECTION"sv)
     return insert_value(drm_line.section());
 
-  if (field_name == "SKCCNO"s)               // shouldn't really get here, because there should be a pre-fill file
+  if (field_name == "SKCCNO"sv)               // shouldn't really get here, because there should be a pre-fill file
     return insert_value(drm_line.skcc());
 
-  if (field_name == "SOCIETY"s)
+  if (field_name == "SOCIETY"sv)
     return insert_value(drm_line.society());
 
-  if (field_name == "SPC"s)
+  if (field_name == "SPC"sv)
     return insert_value(drm_line.spc());
 
-  if (field_name == "SSBPOWER"s)
+  if (field_name == "SSBPOWER"sv)
     return insert_value(drm_line.ssb_power());
 
-  if (field_name == "UKEICODE"s)
+  if (field_name == "UKEICODE"sv)
     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);
 
 // choices
-  if (field_name == "ITUZONE+SOCIETY"s)    // IARU
+  if (field_name == "ITUZONE+SOCIETY"sv)    // IARU
   { string rv { drm_line.society() };
 
     if (rv.empty())
@@ -1151,10 +1151,10 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     { const vector<string> lines { to_lines(to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
       for (unsigned int n { 0 }; n < lines.size(); ++n)
-      { const string         line   { squash(replace_char(lines[n], '\t', ' '), ' ') };
+      { const string line { squash(replace_char(lines[n], '\t', ' '), ' ') };
 
         if (const vector<string> tokens { clean_split_string(line, ' ') }; tokens.size() == 2)
-        { if ( (n == 0) and (tokens[0] == "CALL"s) )
+        { if ( (n == 0) and (tokens[0] == "CALL"sv) )
             continue;
 
           set_value(tokens[0] /* call */, field_name, tokens[1] /* value */);

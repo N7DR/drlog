@@ -71,8 +71,8 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 // transmitted exchange
 //  if (name.starts_with("TEXCH-"s))
 //   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { name.substr(6), value });    // remove "TEXCH-" before adding the field and value
-  if (const string str { "TEXCH-"s }; name.starts_with(str))
-   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start(name, str), value });    // remove "TEXCH-" before adding the field and value
+  if (const string_view str { "TEXCH-"sv }; name.starts_with(str))
+    qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start(name, str), value });    // remove "TEXCH-" before adding the field and value
 
 // rcall
   if (name == "RCALL"s)
@@ -81,7 +81,7 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 // received exchange
 //  if (name.starts_with("REXCH-"s))
 //    qso.received_exchange(qso.received_exchange() + received_field { name.substr(6), value, false, false });    // remove "REXCH-" before adding the field and value
-  if (const string str { "TEXCH-"s }; name.starts_with(str))
+  if (const string_view str { "TEXCH-"sv }; name.starts_with(str))
     qso.received_exchange(qso.received_exchange() + received_field { remove_from_start(name, str), value, false, false });    // remove "REXCH-" before adding the field and value
 }
 
@@ -121,12 +121,7 @@ void logbook::operator-=(const unsigned int n)
     return;
 
   const size_t index { n - 1 };    // because the interface is wrt 1
-
-//  auto it { _log_vec.begin() };
-
- // advance(it, index);            // move to the correct QSO
-
-  auto it { _log_vec.begin() + index };
+  auto  it           { _log_vec.begin() + index };     // move to the correct QSO
 
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
@@ -334,7 +329,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 // the Cabrillo file should be accepted by the contest sponsor.
 //  string EOL_STRING { LF };
 
-  const string EOL_STRING { (context.cabrillo_eol() == "CR"s) ? CR : ( (context.cabrillo_eol() == "CRLF"s) ? CRLF : LF ) };
+  const string EOL_STRING { (context.cabrillo_eol() == "CR"sv) ? CR : ( (context.cabrillo_eol() == "CRLF"sv) ? CRLF : LF ) };
 
 // this goes first
   rv += "START-OF-LOG: 3.0"s + EOL_STRING;
@@ -473,7 +468,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
   vector< vector< string> > individual_values;
 
-  const vector<string> template_fields { clean_split_string(cabrillo_qso_template, ',') };         // colon-delimited values
+  const vector<string> template_fields { clean_split_string(cabrillo_qso_template) };         // colon-delimited values
   
   for (unsigned int n { 0 }; n < template_fields.size(); ++n)
     individual_values += split_string(template_fields[n], ':');
@@ -570,7 +565,7 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
 vector<QSO> logbook::match_exchange(const string& target) const
 { vector<QSO> rv;
 
-  FOR_ALL(_log_vec, [=, &rv] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
+  FOR_ALL(_log_vec, [&target, &rv] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
 
   return rv;
 }
@@ -625,7 +620,8 @@ set<string> logbook::calls(void) const
     Returns the empty string if no European calls are in the log
 */
 string logbook::last_worked_eu_call(void) const
-{ static const string EU { "EU"s };
+{ //static const string EU { "EU"s };
+  static const string_view EU { "EU"sv };
 
   SAFELOCK(_log);
 
@@ -739,12 +735,14 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
 { auto it { _olog.find(call) };
 
-  if (it == _olog.end())        // no data
-  { _olog[call];                // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
-    it = _olog.find(call);
-  }
+  return ( (it == _olog.end()) ? (_olog[call], _olog.find(call)) : it );    // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
 
-  return it;
+//  if (it == _olog.end())        // no data
+//  { _olog[call];                // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
+//    it = _olog.find(call);
+//  }
+
+//  return it;
 }
 
 /*! \brief          Return total number of QSLs from a particular callsign

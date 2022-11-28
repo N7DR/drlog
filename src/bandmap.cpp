@@ -902,7 +902,6 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 1 :                                                        // N7DR criteria
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
- //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
       erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
 
       return rv;
@@ -911,7 +910,6 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 2 :                                                        // new on this band+mode
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
- //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
       erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
 
       return rv;
@@ -920,7 +918,6 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 3 :                                                        // never worked anywhere
     { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
 
- //     REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
       erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
 
       return rv;
@@ -966,9 +963,9 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   { const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
-    { const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
+    { //const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
 
-      if (cit3 != fe.cend())
+      if (const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) }; cit3 != fe.cend())
         return (*cit3);
     }
   }
@@ -1187,7 +1184,7 @@ window& bandmap::write_to_window(window& win)
       PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != /* 16 */ COLOUR_BLACK))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != COLOUR_BLACK))
         cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)

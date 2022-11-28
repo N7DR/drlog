@@ -45,8 +45,7 @@ string qtc_entry::to_string(void) const
 vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const
 { vector<qtc_entry> rv;
 
-//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv += pqeb.first; } );
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (qstatus == pqeb.second) rv += pqeb.first; } );  // should use COPY_IF
+  FOR_ALL(_qtc_entries, [&] (const QTC_AND_STATUS& pqeb) { if (qstatus == pqeb.second) rv += pqeb.first; } );  // should use COPY_IF
 
   return rv;
 }
@@ -55,14 +54,11 @@ vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const QTC_STATUS qstat
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-//bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
-bool qtc_series::operator+=(const pair<qtc_entry, QTC_STATUS>& p)
+bool qtc_series::operator+=(const QTC_AND_STATUS& p)
 { const qtc_entry& entry { p.first };
-  //const bool       sent  { p.second };
 
   if (entry.valid() and (entry.callsign() != _target))
-  { //_qtc_entries += { entry, sent };
-    _qtc_entries += p;
+  { _qtc_entries += p;
     return true;
   }
 
@@ -75,9 +71,8 @@ bool qtc_series::operator+=(const pair<qtc_entry, QTC_STATUS>& p)
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-//pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
-pair<qtc_entry, QTC_STATUS> qtc_series::operator[](const unsigned int n) const
-{ static const pair<qtc_entry, QTC_STATUS> empty_return_value { { }, QTC_STATUS::UNSENT };
+QTC_AND_STATUS qtc_series::operator[](const unsigned int n) const
+{ static const QTC_AND_STATUS empty_return_value { { }, QTC_STATUS::UNSENT };
 
   return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
 }
@@ -112,9 +107,13 @@ qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 { unsigned int index { posn };
 
   while (index < _qtc_entries.size())
-  { //if (!_qtc_entries[index].second)
-    if (_qtc_entries[index].second == QTC_STATUS::UNSENT)
-      return _qtc_entries[index].first;
+  { const auto& [ qe, status ] { _qtc_entries[index] };
+
+ //   if (_qtc_entries[index].second == QTC_STATUS::UNSENT)
+ //     return _qtc_entries[index].first;
+
+    if (status == QTC_STATUS::UNSENT)
+      return qe;
 
     index++;
   }
@@ -128,8 +127,7 @@ qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 unsigned int qtc_series::n_sent(void) const
 { unsigned int rv { 0 };
 
-//  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv++; } );
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (pqeb.second == QTC_STATUS::SENT) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const QTC_AND_STATUS& pqeb) { if (pqeb.second == QTC_STATUS::SENT) rv++; } );
 
   return rv;
 }
@@ -140,8 +138,7 @@ unsigned int qtc_series::n_sent(void) const
 unsigned int qtc_series::n_unsent(void) const
 { unsigned int rv { 0 };
 
-//  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv++; } );
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, QTC_STATUS>& pqeb) { if (pqeb.second == QTC_STATUS::UNSENT) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const QTC_AND_STATUS& pqeb) { if (pqeb.second == QTC_STATUS::UNSENT) rv++; } );
 
   return rv;
 }
@@ -163,9 +160,9 @@ string qtc_series::output_string(const unsigned int n) const
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
   rv += substring(pad_right(_target, 13), 0, 13) + SPACE_STR;
 
-  const vector<string> qtc_ser { split_string(_id, "/"s) };
+//  const vector<string> qtc_ser { split_string(_id, "/"s) };
+  const vector<string> qtc_ser { split_string(_id, '/') };
 
-//  rv += pad_left(qtc_ser[0], 3, '0') + "/"s + pad_left(qtc_ser[1], 2, '0') + create_string(' ', 5);
   rv += pad_leftz(qtc_ser[0], 3) + "/"s + pad_leftz(qtc_ser[1], 2) + create_string(' ', 5);
   rv += substring(pad_right(_source, 13), 0, 13) + SPACE_STR;
   rv += qe.utc() + SPACE_STR;
@@ -211,8 +208,22 @@ window& operator<(window& win, const qtc_series& qs)
 
   size_t index { 0 };    // keep track of where we are in vector of entries
 
-  const auto qtc_entries { qs.qtc_entries() };
+//  const auto qtc_entries { qs.qtc_entries() };  //vector<pair<qtc_entry, QTC_STATUS>>
 
+  for (const auto& [ qe, status ] : qs.qtc_entries())  //vector<pair<qtc_entry, QTC_STATUS>>
+  { const string entry_str { qe.to_string() };
+    const int    cpu       { static_cast<int>(colours.add(win.fg(), (status == QTC_STATUS::SENT) ? COLOUR_RED : win.bg())) };
+
+// work out where to start the display of this call
+    const unsigned int x { static_cast<unsigned int>( (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) ) };
+    const unsigned int y { static_cast<unsigned int>( (win.height() - 1) - (index % win.height()) ) };
+
+    win < cursor(x, y) < colour_pair(cpu) < entry_str;
+
+    index++;
+  }
+
+#if 0
   for (const auto& pr : qtc_entries)
   { const string entry_str { pr.first.to_string() };
     const int    cpu       { static_cast<int>(colours.add(win.fg(), (pr.second == QTC_STATUS::SENT) ? COLOUR_RED : win.bg())) };
@@ -225,6 +236,7 @@ window& operator<(window& win, const qtc_series& qs)
 
     index++;
   }
+#endif
 
   return win;
 }

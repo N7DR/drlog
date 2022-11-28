@@ -302,9 +302,9 @@ pt_mutex            wicm_mutex {"WICM" };
 deque<string>       wicm_calls;                         ///< calls in the WICM window
 
 map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges { };  ///< frequency ranges to be marked on-screen
-bandmap_entry       my_bandmap_entry;                                       ///< last bandmap entry that refers to me (usually from poll)
+//bandmap_entry       my_bandmap_entry;                                       ///< last bandmap entry that refers to me (usually from poll)
 
-pt_condition_variable frequency_change_condvar;             ///< condvar associated with updating windows related to a frequency change
+pt_condition_variable frequency_change_condvar;                                             ///< condvar associated with updating windows related to a frequency change
 pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR"s };       ///< mutex associated with frequency_change_condvar
 
 // global variables
@@ -351,6 +351,7 @@ unsigned int            max_qsos_without_qsl;                       ///< limit f
 memory_information      meminfo;                                    ///< to monitor the state of memory
 monitored_posts         mp;                                         ///< the calls being monitored
 bool                    multiple_modes { false };                   ///< are multiple modes permitted in the contest?
+bandmap_entry           my_bandmap_entry;                           ///< last bandmap entry that refers to me (usually from poll)
 string                  my_call;                                    ///< what is my callsign?
 string                  my_continent;                               ///< what continent am I on? (two-letter abbreviation)
 grid_square             my_grid;                                    ///< what is my (four-character) grid square?
@@ -530,10 +531,14 @@ scp_database  scp_db,                           ///< static SCP database from fi
 scp_databases scp_dbs;                          ///< container for the SCP databases
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
-vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > scp_matches;      ///< SCP matches
-vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > fuzzy_matches;    ///< fuzzy matches
-vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_1_matches;  ///< query 1 matches
-vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > query_n_matches;  ///< query n matches
+using MATCH_TYPE = vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >;
+
+array<MATCH_TYPE, 4> matches_array;
+
+MATCH_TYPE& scp_matches     { matches_array[0] };
+MATCH_TYPE& fuzzy_matches   { matches_array[1] };
+MATCH_TYPE& query_1_matches { matches_array[2] };
+MATCH_TYPE& query_n_matches { matches_array[3] };
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
@@ -3634,18 +3639,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     const BM_ENTRIES entries { bandmaps[current_band].displayed_entries() };
 
-    auto cit { FIND_IF(entries, [=] (const bandmap_entry& be) { return (be.callsign() == original_contents); }) };
+//    auto cit { FIND_IF(entries, [=] (const bandmap_entry& be) { return (be.callsign() == original_contents); }) };
 
-    if (cit != entries.cend())
+    if (const auto cit { FIND_IF(entries, [=] (const bandmap_entry& be) { return (be.callsign() == original_contents); }) }; cit != entries.cend())
     { found_call = true;
       be = *cit;
 
       ctrl_enter_activity(be);
     }
     else    // didn't find an exact match; try a substring search
-    { cit = FIND_IF(entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), original_contents); });
+    { //cit = FIND_IF(entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), original_contents); });
 
-      if (cit != entries.cend())     // if we found a match
+      if (const auto cit { FIND_IF(entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), original_contents); }) }; cit != entries.cend())     // if we found a match
       { found_call = true;
         be = *cit;
         win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
@@ -3875,7 +3880,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
   const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
-  const bool cursor_up   { (e.is_unmodified() and e.symbol() == XK_Up) }; ///< is the event a CURSOR DOWN?
+  const bool cursor_up   { (e.is_unmodified() and e.symbol() == XK_Up) };   ///< is the event a CURSOR DOWN?
 
   static bool in_scp_matching { false };  ///< are we walking through the calls?
   static int  scp_index       { -1 };     ///< index into matched calls
@@ -3933,7 +3938,20 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
-        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+
+ //       ost << "size of scp_matches = " << scp_matches.size() << endl;
+ //       ost << "size of fuzzy_matches = " << fuzzy_matches.size() << endl;
+ //       ost << "size of query_1_matches = " << query_1_matches.size() << endl;
+ //       ost << "size of query_n_matches = " << query_n_matches.size() << endl;
+
+        for (const auto& these_matches : matches_array)
+        { //ost << "size of these_matches = " << these_matches.size() << endl;
+          FOR_ALL(these_matches, [] (const pair<string, PAIR_NUMBER_TYPE>& psi) { all_matches += psi.first; } );
+          //ost << "size of all_matches = " << all_matches.size() << endl; 
+        }
+
+#if 0
+        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } ); /// &&&
 
 // add fuzzy matches
         FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
@@ -3943,11 +3961,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // add query_n matches
         FOR_ALL(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
+#endif
 
 // remove any duplicates from all_matches
         const vector<string> all_matches_copy { all_matches };
 
-        set<string> already_present;
+        unordered_set<string> already_present;
 
         all_matches.clear();
 
@@ -4337,12 +4356,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
-  { //pair<frequency, MODE> old_quick_qsy_info { quick_qsy_map.at(current_band) };
-    auto                  [old_frequency, old_mode] { quick_qsy_map.at(current_band) };
+  { auto                  [old_frequency, old_mode] { quick_qsy_map.at(current_band) };
     pair<frequency, MODE> new_quick_qsy_info        { get_frequency_and_mode() };
 
-//    rig.rig_frequency(old_quick_qsy_info.first);
-//    rig.rig_mode(old_quick_qsy_info.second);
     rig.rig_frequency(old_frequency);
     rig.rig_mode(old_mode);
 
@@ -4353,7 +4369,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
                   <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second]; 
     
-//    update_based_on_frequency_change(old_quick_qsy_info.first, old_quick_qsy_info.second);
     update_based_on_frequency_change(old_frequency, old_mode);
 
     processed = true;
@@ -4464,8 +4479,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     ALT-K         -- toggle CW
     ALT-N         -- toggle notch status if on SSB
     ALT-KP_4      -- decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
-    ALT-R -- toggle RX antenna
-    ALT-S -- toggle sub receiver
+    ALT-R         -- toggle RX antenna
+    ALT-S         -- toggle sub receiver
 
     CTRL-B -- fast bandwidth
     CTRL-S -- send contents of CALL window to scratchpad
@@ -4523,7 +4538,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // ALT-N -- toggle notch status if on SSB
   if (!processed and e.is_alt('n'))
   { if (current_mode == MODE_SSB)
-      rig.k3_tap(K3_BUTTON::NOTCH);    
+      rig.toggle_notch_status();
+//      rig.k3_tap(K3_BUTTON::NOTCH);
 
     processed = true;
   }
@@ -4583,7 +4599,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     string new_rst;
 
 // figure out whether we have sent a different RST (in SKCC)
-    const string rst_character { "'"s };    // apostrophe
+//    const string rst_character { "'"s };    // apostrophe
+    constexpr char rst_character { '\'' };    // apostrophe
 
     if (contains(exchange_contents, rst_character))
     { const size_t last_apostrophe { exchange_contents.find_last_of(rst_character) };
@@ -4615,7 +4632,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
-      if ( contains(value, "."s) and (value.size() != 1) )    // ignore a field that is just "."
+//      if ( contains(value, "."s) and (value.size() != 1) )    // ignore a field that is just "."
+      if ( contains(value, '.') and (value.size() != 1) )    // ignore a field that is just "."
         from_callsign = remove_char(value, '.');
 
     const string                 canonical_prefix  { location_db.canonical_prefix(from_callsign) };
@@ -4633,7 +4651,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     { size_t n_fields_without_new_callsign { 0 };
 
       for (const auto& values : exchange_field_values)
-        if (!contains(values, "."s))
+ //       if (!contains(values, "."s))
+        if (!contains(values, '.'))
           n_fields_without_new_callsign++;
 
       if ( (!is_ss and (exchange_template.size() - n_optional_fields) > n_fields_without_new_callsign) )
@@ -4680,7 +4699,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
             if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))    // in CQ mode, he does
-            { const vector<string> call_contents_fields { split_string(call_contents, SPACE_STR) };
+            { //const vector<string> call_contents_fields { split_string(call_contents, SPACE_STR) };
+              const vector<string> call_contents_fields { split_string(call_contents, ' ') };
               const string         original_callsign    { call_contents_fields[call_contents_fields.size() - 1] };
 
               string callsign { original_callsign };
@@ -4711,7 +4731,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // callsign is the last entry in the CALL window
           if (!call_contents.empty()) // to speed things up, probably should make this test earlier, before we send the exchange info
-          { const vector<string> call_contents_fields { split_string(call_contents, SPACE_STR) };
+          { //const vector<string> call_contents_fields { split_string(call_contents, SPACE_STR) };
+            const vector<string> call_contents_fields { split_string(call_contents, ' ') };
             const string         original_callsign    { call_contents_fields[call_contents_fields.size() - 1] };
 
             string callsign { original_callsign };
@@ -4765,8 +4786,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             vector<parsed_exchange_field> vec_pef { pexch.chosen_fields(rules) };
 
 // keep track of which fields are mults
-            for (auto& pef : vec_pef)
-              pef.is_mult(rules.is_exchange_mult(pef.name()));
+//            for (auto& pef : vec_pef)
+//              pef.is_mult(rules.is_exchange_mult(pef.name()));
+            FOR_ALL(vec_pef, [] (auto& pef) { pef.is_mult(rules.is_exchange_mult(pef.name())); } );
 
             for (auto& pef : vec_pef)
             { const bool is_mult_field { pef.is_mult() };
@@ -4802,8 +4824,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             const MULTIPLIER_VALUES old_worked_country_mults { statistics.worked_country_mults(cur_band, cur_mode) };
 
 // and any exchange multipliers
-            const map<string /* field name */, MULTIPLIER_VALUES /* values */ >  old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
-            const vector<exchange_field>                                         exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
+            const map<string /* field name */, MULTIPLIER_VALUES /* values */ > old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+            const vector<exchange_field>                                        exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
 
             for (const auto& exch_field : exchange_fields)
             { const string& name { exch_field.name() };
@@ -4855,14 +4877,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
             { const size_t old_size { (cit->second).size() };
 
-//              map<string, MULTIPLIER_VALUES>::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
-
- //             if (ncit != new_worked_exchange_mults.cend())    // should never be equal
               if (const auto ncit { new_worked_exchange_mults.find(cit->first) }; ncit != new_worked_exchange_mults.cend())    // should never be equal
-              { //const size_t new_size { (ncit->second).size() };
-
-                //no_exchange_mults_this_qso = (old_size == new_size);
-                no_exchange_mults_this_qso = ( old_size == ncit->second.size() );   // has the size changed?
+              { no_exchange_mults_this_qso = ( old_size == ncit->second.size() );   // has the size changed?
 
                 if (!no_exchange_mults_this_qso)
                   update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
@@ -4874,7 +4890,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { for (const auto& current_exchange_mult : new_worked_exchange_mults)
               { set<string> difference;
 
-//                const auto               tmp            { old_worked_exchange_mults.find(current_exchange_mult.first) };
                 const MULTIPLIER_VALUES& current_values { current_exchange_mult.second };
 
                 if (const auto tmp { old_worked_exchange_mults.find(current_exchange_mult.first) }; tmp != old_worked_exchange_mults.end())
@@ -4963,15 +4978,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // exchange mult status
           if (exchange_mults_used and !exchange_mults_this_qso.empty())
           { if (rules.exchange_mults_per_band())
-            { //for (const auto& pss : exchange_mults_this_qso)
-              //  bandmap_this_band.not_needed_exchange_mult(pss.first, pss.second);
-              for (const auto& [field_name, field_value] : exchange_mults_this_qso)
+            { for (const auto& [field_name, field_value] : exchange_mults_this_qso)
                 bandmap_this_band.not_needed_exchange_mult(field_name, field_value);
             }
             else
-            { //for (const auto& pss : exchange_mults_this_qso)
-              //  FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_exchange_mult(pss.first, pss.second); } );
-              for (const auto& [field_name, field_value] : exchange_mults_this_qso)
+            { for (const auto& [field_name, field_value] : exchange_mults_this_qso)
                 FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_exchange_mult(field_name, field_value); } );
             }
           }
@@ -5135,8 +5146,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           if (static_cast<int>(word_posn[n]) <= original_posn.x())
             start_current_word = word_posn[n];
 
- //       const size_t end_current_word { contents.find_first_of(SPACE_STR, original_posn.x()) };
-
         if (const size_t end_current_word { contents.find_first_of(SPACE_STR, original_posn.x()) }; end_current_word != string::npos)  // word is followed by space
         { string new_contents { (start_current_word != 0) ? substring(contents, 0, start_current_word) : string() };
 
@@ -5145,12 +5154,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
         }
         else
-        { //string new_contents;
-
-          //if (start_current_word != 0)
-          //  new_contents = substring(contents, 0, start_current_word - 1);
-
-          const string new_contents { (start_current_word != 0) ? substring(contents, 0, start_current_word - 1) : string { } };
+        { const string new_contents { (start_current_word != 0) ? substring(contents, 0, start_current_word - 1) : string { } };
 
           win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
         }
@@ -5351,7 +5355,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // log window at:  editable_log.recent_qsos(logbk, true); about 100 lines below
 
 // add the new QSOs
-        for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
+        for (size_t n { 0 }; n < new_win_log_snapshot.size(); ++n)
         { if (!remove_peripheral_spaces(new_win_log_snapshot[n]).empty())
           { QSO qso { original_qsos[n] };           // start with the original QSO as a basis *** THIS IS A PROBLEM, AS THE MEANING OF A EXCHANGE COLUMN MIGHT CHANGE
 
@@ -5391,9 +5395,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // pretend that we just entered this station on the bandmap by hand
 // do this just for QSOs that have changed
             if (!contains(original_qsos, qso))
-            { const BAND qso_band { qso.band() };
+            { //const BAND qso_band { qso.band() };
 
-              bandmap& bm { bandmaps[qso_band] };
+              //bandmap& bm { bandmaps[qso_band] };
+              bandmap& bm { bandmaps[qso.band()] };
 
               bandmap_entry be;                       // defaults to manual entry
 
@@ -5467,7 +5472,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         for (auto& bm : bandmaps)
         { BM_ENTRIES bme { bm.entries() };
 
-          for (auto& be : bme)
+//          for (auto& be : bme)
+          for (bandmap_entry& be : bme)
           { if (be.remark(rules, q_history, statistics))
             { ost << "remarked following log edit: " << be << endl;
               bm += be;
@@ -5599,6 +5605,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
 
 // the original list of callsign mults
   set<string> original;
+//  CALL_SET original;
 
   if (context.auto_remaining_callsign_mults())
     SAFELOCK_SET(known_callsign_mults_mutex, original, known_callsign_mults);
@@ -5606,10 +5613,11 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     original = context.remaining_callsign_mults_list();
 
   if (filter_remaining_country_mults)
-  { set<string> copy;
+  { //set<string> copy;
 
-    copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (!worked_callsign_mults.contains(s)); } );
-    original = copy;
+    //copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (!worked_callsign_mults.contains(s)); } );
+    //original = move(copy);
+    erase_if(original, [&worked_callsign_mults] (const string& s) { return (worked_callsign_mults.contains(s)); } );
   }
 
 // put in right order and get the colours right
