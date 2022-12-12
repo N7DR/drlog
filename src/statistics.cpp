@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: statistics.cpp 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1095,7 +1095,7 @@ bool call_history::worked_on_another_band(const string& s, const BAND b) const
     \param  m   mode NOT to test
     \return     whether <i>s</i> has been worked on a mode other than <i>m</i>
 */
-bool call_history::worked_on_another_mode(const string& s, const MODE m)
+bool call_history::worked_on_another_mode(const string& s, const MODE m) const
 { SAFELOCK(_history);
 
  // for (const auto& pssbm : _history)
@@ -1107,9 +1107,12 @@ bool call_history::worked_on_another_mode(const string& s, const MODE m)
  //   }
  // }
 
-  for (const auto& pssbm : _history)
-  { if (const string& call { pssbm.first }; s == call)
-    { if (ANY_OF(pssbm.second, [m] (const auto& bm) { return (bm.second != m); } ))
+//  for (const auto& pssbm : _history)
+  for (const auto& [ call, bmodes] : _history)
+  { //if (const string& call { pssbm.first }; s == call)
+    if (call == s)
+    { //if (ANY_OF(pssbm.second, [m] (const auto& bm) { return (bm.second != m); } ))
+      if (ANY_OF(bmodes, [m] (const auto& bm) { return (bm.second != m); } ))
         return true;
     }
   }

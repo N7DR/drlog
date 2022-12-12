@@ -1,4 +1,4 @@
-// $Id: qtc.h 193 2021-10-03 20:05:48Z  $
+// $Id: qtc.h 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -347,7 +347,7 @@ public:
 
     Returns an empty series if <i>n</i> is out of bounds
 */
-  qtc_series operator[](size_t n);
+  qtc_series operator[](size_t n) const;
 
 /*! \brief                          Get the number of QTCs that have been sent to a particular station
     \param   destination_callsign   the station to which the QTCs have been sent
@@ -393,7 +393,7 @@ public:
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string());
+  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string()) const;
 
 /*! \brief          Add all unsent QSOs from a logbook to the buffer
     \param  logbk   logbook

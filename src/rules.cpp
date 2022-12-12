@@ -1,4 +1,4 @@
-// $Id: rules.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: rules.cpp 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -519,8 +519,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 //  if ( _exchange_mults.contains("DOK"s)  and !context.auto_remaining_exchange_mults("DOK"s) )
   { exchange_field_values dok_values { "DOK"s };
 
-    for (const char c : UPPER_CASE_LETTERS)
-      dok_values.add_canonical_value(create_string(c));
+//    for (const char c : UPPER_CASE_LETTERS)
+//      dok_values.add_canonical_value(create_string(c));
+    FOR_ALL(UPPER_CASE_LETTERS, [&dok_values] (const char c) { dok_values.add_canonical_value(create_string(c)); } );
 
     _exch_values += dok_values;
   }
@@ -530,13 +531,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"s))            // not a choice
       _expanded_exchange_mults += unexpanded_exchange_mult_name;
     else
-    { const string         str             { remove_from_start(unexpanded_exchange_mult_name, "CHOICE:"sv) };             // remove "CHOICE:"
-      const vector<string> expanded_choice { clean_split_string(str) };
+    { //const string         str             { remove_from_start(unexpanded_exchange_mult_name, "CHOICE:"sv) };             // remove "CHOICE:"
+      //const vector<string> expanded_choice { clean_split_string(str) };
+      const vector<string> expanded_choice { clean_split_string(remove_from_start(unexpanded_exchange_mult_name, "CHOICE:"sv)) };
 
       for (const string& this_expanded_name : expanded_choice)
-//        if (find(_expanded_exchange_mults.begin(), _expanded_exchange_mults.end(), this_expanded_name) == _expanded_exchange_mults.end() )
         if (!contains(_expanded_exchange_mults, this_expanded_name))
-//        if (!(_expanded_exchange_mults > this_expanded_name))
           _expanded_exchange_mults += this_expanded_name;
     }
   }
@@ -553,13 +553,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     auto& choice_equivalents_this_mode { _choice_exchange_equivalents[m] };     // map<prefix, choice_equivalents>
 
     for (const auto& qth_vec_field : unexpanded_exch)
-    { const string& prefix              { qth_vec_field.first };
-      const vector<exchange_field>& vef { qth_vec_field.second };
+    { //const string& prefix              { qth_vec_field.first };
+      //const vector<exchange_field>& vef { qth_vec_field.second };
+      const auto& [ prefix, vef ] { qth_vec_field };
 
       vector<exchange_field> expanded_vef;
 
       for (const auto& field : vef)
-      { if (!field.is_choice())
+      { //if (!field.is_choice())
+        if (field.is_not_choice())
           expanded_vef += field;
         else
         { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null prefix implies applies to all
@@ -575,20 +577,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _expanded_received_exchange += { m, expanded_exch};
 
     for (const auto& [key, vef] : expanded_exch)
-    { //const vector<exchange_field>& vef { psvef.second };
-
-      for (const auto& ef : vef)
+    { for (const exchange_field& ef : vef)
         _exchange_field_eft += { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) };
     }
-
-#if 0
-    for (const auto& psvef : expanded_exch)
-    { const vector<exchange_field>& vef { psvef.second };
-
-      for (const auto& ef : vef)
-        _exchange_field_eft += { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) };
-    }
-#endif
   }
 
 // define the points structure; this can be quite complex
@@ -610,13 +601,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       static const set<string> special_points_set { "IARU"s, "STEW"s };
 
-      const bool is_special_points { ( special_points_set > context_points ) };
+ //     const bool is_special_points { ( special_points_set > context_points ) };
+      const bool is_special_points { ( special_points_set.contains(context_points) ) };
 
       if (is_special_points)
-      { if (context_points == "IARU"s)  // special
+      { if (context_points == "IARU"sv)  // special
           pb[b].points_type(POINTS::IARU);
 
-        if (context_points == "STEW"s)  // special
+        if (context_points == "STEW"sv)  // special
           pb[b].points_type(POINTS::STEW);
       }
       else                              // ordinary points structure
@@ -624,11 +616,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
 
-//        const vector<string> points_str_vec { remove_peripheral_spaces( split_string(context_points, ","s) ) };
         const vector<string> points_str_vec { clean_split_string(context_points) };
 
-        for (unsigned int n { 0 }; n < points_str_vec.size(); ++n)
-        { const string         points_str { points_str_vec[n] };
+//        for (unsigned int n { 0 }; n < points_str_vec.size(); ++n)
+        for (const string& points_str : points_str_vec)
+        { //const string         points_str { points_str_vec[n] };
           const vector<string> fields     { split_string(points_str, ':') };
 
 // default?
@@ -645,13 +637,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // country
               if (!processed and !fields[1].empty())
- //             { if (contains(fields[1], "["s))    // possible multiple countries
               { if (contains(fields[1], '['))    // possible multiple countries
                 { const string countries { delimited_substring(fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
-                  { //const vector<string> country_vec { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' ')) };  // use space instead of comma because we've already split on commas
-                    const vector<string> country_vec { clean_split_string(remove_peripheral_spaces(squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
+                  { const vector<string> country_vec { clean_split_string(remove_peripheral_spaces(squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
 
                     FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) }; } );
                   }
@@ -703,17 +693,18 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   vector<exchange_field> leaves_vec;
 
-  for (const auto& m : _permitted_modes)
-  { const map<string, vector<exchange_field>>& unexpanded_exch { _received_exchange.at(m) };
+//  for (const auto& m : _permitted_modes)
+  for (const MODE m : _permitted_modes)
+  { //const map<string /* cp */, vector<exchange_field>>& unexpanded_exch { _received_exchange.at(m) };
 
-    for (auto cit { unexpanded_exch.cbegin() }; cit != unexpanded_exch.cend(); ++cit)
-    { const vector<exchange_field> vec_1 { cit->second };
+    for (const auto& [ cp, vef ] : _received_exchange.at(m))                        // vef is unexpanded
+      FOR_ALL(vef, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
 
-//      for (const auto& ef: vec_1)
-//        leaves_vec += ef.expand();
-
-      FOR_ALL(vec_1, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
-    }
+//    for (auto cit { unexpanded_exch.cbegin() }; cit != unexpanded_exch.cend(); ++cit)
+//    { const vector<exchange_field> vec_1 { cit->second };
+//
+//      FOR_ALL(vec_1, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
+//    }
   }
 
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
@@ -727,7 +718,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
     bool read_file_ok { false };
 
-    if (!(no_canonical_values > field_name))
+//    if (!(no_canonical_values > field_name))
+    if (!no_canonical_values.contains(field_name))
     { try
       { entire_file = read_file(path, field_name + ".values"s);
         read_file_ok = true;
@@ -750,14 +742,13 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
         if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
         { if (contains(line, '=') )
-          { vector<string> lhsrhs { split_string(line, '=') };
+          { const vector<string> lhsrhs { split_string(line, '=') };
 
             lhs = remove_peripheral_spaces(lhsrhs[0]);
             equivalent_values += lhs;                  // canonical value
 
             if (lhsrhs.size() != 1)
             { const string&        rhs                         { lhsrhs[1] };
-//              const vector<string> remaining_equivalent_values { remove_peripheral_spaces(split_string(rhs, ","s)) };
               const vector<string> remaining_equivalent_values { clean_split_string(rhs) };
 
               FOR_ALL(remaining_equivalent_values, [&equivalent_values] (const string& rev) { equivalent_values += rev; });

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 210 2022-10-31 17:26:13Z  $
+// $Id: bandmap.cpp 211 2022-11-28 21:29:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,7 +29,6 @@ extern unordered_map<string, string> batch_messages;                    ///< bat
 extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
 extern bool                          bandmap_show_marked_frequencies;   ///< whether to display entries that would be marked
 extern bool                          bandmap_frequency_up;              ///< whether increasing frequency goes upwards in the bandmap
-//extern drlog_context                 context;                           ///< context
 extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                       ///< location information
 extern unsigned int                  max_qsos_without_qsl;              ///< limit for the N7DR matches_criteria() algorithm
@@ -76,6 +75,32 @@ string to_string(const BANDMAP_ENTRY_SOURCE bes)
     default :
       return "UNKNOWN"s;
   }
+}
+
+// -----------   bandmap_insertion_queue ----------------
+
+/*! \class  bandmap_insertion_queue
+    \brief  Thread-safe insertion queue
+*/
+
+// append to queue
+void bandmap_insertion_queue::operator+=(const bandmap_entry& be)
+{ SAFELOCK(_q);
+
+  _q.push(be);
+}
+
+optional<bandmap_entry> bandmap_insertion_queue::pop(void)
+{ SAFELOCK(_q);
+
+  if (_q.empty())
+    return { };
+
+  bandmap_entry tmp { _q.front() };
+  
+  _q.pop();
+  
+  return tmp;
 }
 
 // -----------   bandmap_buffer ----------------
@@ -1119,6 +1144,16 @@ bool bandmap::is_present(const string& target_callsign) const
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
+void bandmap::process_insertion_queue(bandmap_insertion_queue& biq)
+{ SAFELOCK(_bandmap);
+
+  optional<bandmap_entry> obe { };
+
+  while (obe = biq.pop(), obe)
+    *this += obe.value();
+}
+
+#if 0
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
@@ -1128,6 +1163,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     biq.pop();
   }
 }
+#endif
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
@@ -1136,7 +1172,8 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
+//void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
+void bandmap::process_insertion_queue(bandmap_insertion_queue& biq, window& w)
 { process_insertion_queue(biq);
 
   w <= (*this);

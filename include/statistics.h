@@ -1,4 +1,4 @@
-// $Id: statistics.h 205 2022-04-24 16:05:06Z  $
+// $Id: statistics.h 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -392,7 +392,7 @@ public:
     \param  m   mode NOT to test
     \return     whether <i>s</i> has been worked on a mode other than <i>m</i>
 */
-  bool worked_on_another_mode(const std::string& s, const MODE m);
+  bool worked_on_another_mode(const std::string& s, const MODE m) const;
 
 /*! \brief      Has a call been worked on any other band and mode combination?
     \param  s   callsign to test

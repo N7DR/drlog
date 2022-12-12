@@ -1,4 +1,4 @@
-// $Id: bandmap.h 206 2022-05-22 12:47:37Z  $
+// $Id: bandmap.h 211 2022-11-28 21:29:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,13 +53,37 @@ extern old_log             olog;                                ///< old (ADIF) 
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
 
-using BANDMAP_INSERTION_QUEUE = std::queue<bandmap_entry>;
+//using BANDMAP_INSERTION_QUEUE = std::queue<bandmap_entry>;      // std::queue is NOT thread safe!!
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
 */
 std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
+
+// -----------   bandmap_insertion_queue ----------------
+
+/*! \class  bandmap_insertion_queue
+    \brief  Thread-safe insertion queue
+
+    See: https://codetrips.com/2020/07/26/modern-c-writing-a-thread-safe-queue/
+*/
+class bandmap_insertion_queue
+{
+protected:
+
+  std::queue<bandmap_entry> _q;
+
+  mutable pt_mutex _q_mutex { "BANDMAP INSERTION QUEUE"s };    ///< mutex for the queue
+
+public:
+
+// append to queue
+  void operator+=(const bandmap_entry& be);
+
+  std::optional<bandmap_entry> pop(void);
+
+};
 
 // -----------   bandmap_buffer_entry ----------------
 
@@ -1149,7 +1173,8 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+  void process_insertion_queue(bandmap_insertion_queue& biq);
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
@@ -1158,7 +1183,8 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
+//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
+  void process_insertion_queue(bandmap_insertion_queue& biq, window& w);
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window to which to write

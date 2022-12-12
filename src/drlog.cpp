@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 210 2022-10-31 17:26:13Z  $
+// $Id: drlog.cpp 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -513,7 +513,8 @@ ACTIVE_WINDOW active_window       { ACTIVE_WINDOW::CALL };  ///< start with the 
 ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
-array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
+//array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
+array<bandmap_insertion_queue, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
 array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
@@ -531,14 +532,16 @@ scp_database  scp_db,                           ///< static SCP database from fi
 scp_databases scp_dbs;                          ///< container for the SCP databases
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
-using MATCH_TYPE = vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >;
+using STR_COLOUR_PAIR = pair<string, PAIR_NUMBER_TYPE>; 
+//using MATCHES_TYPE = vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >;
+using MATCHES_TYPE = vector<STR_COLOUR_PAIR>;  // str = callsign
 
-array<MATCH_TYPE, 4> matches_array;
+array<MATCHES_TYPE, 4> matches_array;
 
-MATCH_TYPE& scp_matches     { matches_array[0] };
-MATCH_TYPE& fuzzy_matches   { matches_array[1] };
-MATCH_TYPE& query_1_matches { matches_array[2] };
-MATCH_TYPE& query_n_matches { matches_array[3] };
+MATCHES_TYPE& scp_matches     { matches_array[0] };
+MATCHES_TYPE& fuzzy_matches   { matches_array[1] };
+MATCHES_TYPE& query_1_matches { matches_array[2] };
+MATCHES_TYPE& query_n_matches { matches_array[3] };
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
@@ -3939,31 +3942,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
 
- //       ost << "size of scp_matches = " << scp_matches.size() << endl;
- //       ost << "size of fuzzy_matches = " << fuzzy_matches.size() << endl;
- //       ost << "size of query_1_matches = " << query_1_matches.size() << endl;
- //       ost << "size of query_n_matches = " << query_n_matches.size() << endl;
-
         for (const auto& these_matches : matches_array)
         { //ost << "size of these_matches = " << these_matches.size() << endl;
           FOR_ALL(these_matches, [] (const pair<string, PAIR_NUMBER_TYPE>& psi) { all_matches += psi.first; } );
+//          FOR_ALL(these_matches, [] (const auto& [call, clrs]) { all_matches += call; } );                        // for non-obvious reasons, this isn't allowed
           //ost << "size of all_matches = " << all_matches.size() << endl; 
         }
 
-#if 0
-        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } ); /// &&&
-
-// add fuzzy matches
-        FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
-
-// add query_1 matches
-        FOR_ALL(query_1_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
-
-// add query_n matches
-        FOR_ALL(query_n_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
-#endif
-
-// remove any duplicates from all_matches
+// remove any duplicates from all_matches while maintaining ordering
         const vector<string> all_matches_copy { all_matches };
 
         unordered_set<string> already_present;
@@ -3980,7 +3966,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       if (!all_matches.empty())                         // if there are some matches
       { if (scp_index == -1)
-        { scp_index = 0;                                  // go to first call
+        { scp_index = 0;                                // go to first call
           
           if (all_matches[scp_index] == remove_peripheral_spaces(win.read()))               // there was a best match and it's the same as the first SCP/fuzzy match
             scp_index = min(scp_index + 1, static_cast<int>(all_matches.size() - 1));
@@ -4091,7 +4077,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
     catch (const rig_interface_error& e)
-    { alert( "Error toggling SUBRX: "s + e.reason());
+    { alert("Error toggling SUBRX: "s + e.reason());
     }
 
     processed = true;
@@ -4249,7 +4235,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.symbol() == XK_F2))
   { if (rig.split_enabled())
     { rig.split_disable();
-
       enter_cq_or_sap_mode(a_drlog_mode);
     }
     else
@@ -4287,15 +4272,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // put cursor in correct window
       if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to CALL window
-      { win_call.move_cursor(call_contents.find(' '), 0);            // first empty space
+      { win_call.move_cursor(call_contents.find(' '), 0);               // first empty space
         win_call.refresh();
         set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
       }
       else                                                              // go to EXCHANGE window
-      { const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };  // first empty space
+      { //const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };  // first empty space
 
-        if (posn != string::npos)
+        if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // posn of first empty space
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
           set_active_window(ACTIVE_WINDOW::EXCHANGE);
@@ -4399,7 +4384,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         break;
 
       case MODE_SSB :
-          processed = ssb_toggle_bandwidth();
+        processed = ssb_toggle_bandwidth();
         break;
 
       default :
@@ -4432,11 +4417,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-G go to the frequency in win_last_qrg
   if (!processed and (e.is_alt('g')))
   { const string contents { win_last_qrg.read() };
-    const size_t posn     { contents.find(':') };
+    //const size_t posn     { contents.find(':') };
 
-    if ((posn != string::npos) and (posn != (contents.size() - 1)))
-    { const string    fstr { remove_peripheral_spaces(substring(contents, posn + 1)) };
-      const frequency f    { fstr };
+    if (const size_t posn { contents.find(':') }; (posn != string::npos) and (posn != (contents.size() - 1)))
+    { //const string    fstr { remove_peripheral_spaces(substring(contents, posn + 1)) };
+      //const frequency f    { fstr };
+      const frequency f { remove_peripheral_spaces(substring(contents, posn + 1)) };
 
       rig.rig_frequency(f);
     }
@@ -5624,7 +5610,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<string> vec_str(original.begin(), original.end());
   SORT(vec_str, compare_calls);
 
-  vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
+  vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec; // &&&
 
   for (const auto& canonical_prefix : vec_str)
   { const bool             is_needed          { !worked_callsign_mults.contains(canonical_prefix) };

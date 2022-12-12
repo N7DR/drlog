@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 210 2022-10-31 17:26:13Z  $
+// $Id: drlog_context.cpp 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -479,12 +479,12 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_mults_per_band = is_true;
 
 // EXCHANGE MULTS PER MODE
-    if (LHS == "EXCHANGE MULTS PER MODE"s)
+    if (LHS == "EXCHANGE MULTS PER MODE"sv)
       _exchange_mults_per_mode = is_true;
 
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
-    if ( (LHS == "EXCHANGE PREFILL FILE"s) or (LHS == "EXCHANGE PREFILL FILES"s) )
+    if ( (LHS == "EXCHANGE PREFILL FILE"sv) or (LHS == "EXCHANGE PREFILL FILES"sv) )
     { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']', DELIMITERS::DROP)) };
 
       for (const auto& file : files)
@@ -494,7 +494,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE SAP
-    if (LHS == "EXCHANGE SAP"s)
+    if (LHS == "EXCHANGE SAP"sv)
       _exchange_sap = RHS;
 
     auto update_sent_exchange = [line, testline] (auto& exchange)
@@ -513,51 +513,51 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE SENT
 // e.g., exchange sent = RST:599, CQZONE:4
-    if (LHS == "EXCHANGE SENT"s)
+    if (LHS == "EXCHANGE SENT"sv)
       update_sent_exchange(_sent_exchange);
 
 // EXCHANGE SENT CW
-    if (LHS == "EXCHANGE SENT CW"s)
+    if (LHS == "EXCHANGE SENT CW"sv)
       update_sent_exchange(_sent_exchange_cw);
 
 // EXCHANGE SENT SSB
-    if (LHS == "EXCHANGE SENT SSB"s)
+    if (LHS == "EXCHANGE SENT SSB"sv)
       update_sent_exchange(_sent_exchange_ssb);
 
 // FAST CQ BANDWIDTH; used only in CW mode
-    if (LHS == "FAST CQ BANDWIDTH"s)
+    if (LHS == "FAST CQ BANDWIDTH"sv)
       _fast_cq_bandwidth = from_string<decltype(_fast_cq_bandwidth)>(RHS);
 
 // FAST SAP BANDWIDTH; used only in CW mode
-    if (LHS == "FAST SAP BANDWIDTH"s)
+    if (LHS == "FAST SAP BANDWIDTH"sv)
       _fast_sap_bandwidth = from_string<decltype(_fast_sap_bandwidth)>(RHS);
 
 // GEOMAGNETIC INDICES COMMAND
-    if (LHS == "GEOMAGNETIC INDICES COMMAND"s)
+    if (LHS == "GEOMAGNETIC INDICES COMMAND"sv)
       _geomagnetic_indices_command = rhs;
 
 // HOME EXCHANGE WINDOW
-    if (LHS == "HOME EXCHANGE WINDOW"s)
+    if (LHS == "HOME EXCHANGE WINDOW"sv)
       _home_exchange_window = is_true;
 
 // INACTIVTY TIMER
-    if (LHS == "INACTIVITY TIMER"s)
+    if (LHS == "INACTIVITY TIMER"sv)
       _inactivity_timer = from_string<decltype(_inactivity_timer)>(rhs);
 
 // INDIVIDUAL MESSAGES FILE
-    if (LHS == "INDIVIDUAL MESSAGES FILE"s)
+    if (LHS == "INDIVIDUAL MESSAGES FILE"sv)
       _individual_messages_file = rhs;
 
 // KEYER PORT
-    if (LHS == "KEYER PORT"s)
+    if (LHS == "KEYER PORT"sv)
       _keyer_port = rhs;
 
 // LOG
-    if ( (LHS == "LOG"s) and !rhs.empty() )
+    if ( (LHS == "LOG"sv) and !rhs.empty() )
       _logfile = rhs;
 
 // LONG T
-    if (LHS == "LONG T"s)
+    if (LHS == "LONG T"sv)
       _long_t = from_string<decltype(_long_t)>(rhs);
 
 // MARK FREQUENCIES [CW|SSB]
@@ -578,95 +578,96 @@ void drlog_context::_process_configuration_file(const string& filename)
         }
       }
 
-      if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES CW"s)
+      if (LHS == "MARK FREQUENCIES"sv or LHS == "MARK FREQUENCIES CW"sv)
         _mark_frequencies += { MODE_CW, frequencies };
 
-      if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES SSB"s)
+      if (LHS == "MARK FREQUENCIES"sv or LHS == "MARK FREQUENCIES SSB"sv)
         _mark_frequencies += { MODE_SSB, frequencies };
     }
 
 // MATCH MINIMUM
-    if (LHS == "MATCH MINIMUM"s)
+    if (LHS == "MATCH MINIMUM"sv)
       _match_minimum = from_string<decltype(_match_minimum)>(RHS);
 
 // MATCH MINIMUM
-    if (LHS == "MAX QSOS WITHOUT QSL"s)
+    if (LHS == "MAX QSOS WITHOUT QSL"sv)
       _max_qsos_without_qsl = from_string<decltype(_max_qsos_without_qsl)>(RHS);
 
 // MM COUNTRY MULTS
-    if (LHS == "MM COUNTRY MULTS"s)
+    if (LHS == "MM COUNTRY MULTS"sv)
       _mm_country_mults = is_true;
 
 // MODES
-    if (LHS == "MODES"s)
+    if (LHS == "MODES"sv)
     { _modes = RHS;
 
       if (contains(_modes, ','))        // if more than one mode
         _mark_mode_break_points = true;
       else
-      { if (_modes == "SSB"s)
+      { if (_modes == "SSB"sv)
           _start_mode = MODE_SSB;
       }
     }
 
 // MODE BREAK POINTS
-    if (LHS == "MODE BREAK POINTS"s)
+    if (LHS == "MODE BREAK POINTS"sv)
     { const vector<string> break_points { clean_split_string(RHS, ',') };
 
       for (const auto& break_point : break_points)
       { const frequency f { break_point };
-        const BAND      b { to_BAND(f) };
+        //const BAND      b { to_BAND(f) };
 
-        _mode_break_points += { b, f };
+        //_mode_break_points += { b, f };
+        _mode_break_points += { to_BAND(f), f };
       }
     }
 
 // MY CALL
-    if (LHS == "MY CALL"s)
+    if (LHS == "MY CALL"sv)
       _my_call = RHS;
 
 // MY CONTINENT
-    if (LHS == "MY CONTINENT"s)
+    if (LHS == "MY CONTINENT"sv)
       _my_continent = RHS;
 
 // MY CQ ZONE
-    if (LHS == "MY CQ ZONE"s)
+    if (LHS == "MY CQ ZONE"sv)
       _my_cq_zone = from_string<decltype(_my_cq_zone)>(RHS);
 
 // MY GRID
-    if (LHS == "MY GRID"s)
+    if (LHS == "MY GRID"sv)
       _my_grid = rhs;
 
 // MY IP
-    if (LHS == "MY IP"s)
+    if (LHS == "MY IP"sv)
       _my_ip = rhs;
 
 // MY LATITUDE
-    if (LHS == "MY LATITUDE"s)
+    if (LHS == "MY LATITUDE"sv)
       _my_latitude = from_string<decltype(_my_latitude)>(rhs);
 
 // MY LATITUDE
-    if (LHS == "MY LONGITUDE"s)
+    if (LHS == "MY LONGITUDE"sv)
       _my_longitude = from_string<decltype(_my_longitude)>(rhs);
 
 // MY ITU ZONE
-    if (LHS == "MY ITU ZONE"s)
+    if (LHS == "MY ITU ZONE"sv)
       _my_itu_zone = from_string<decltype(_my_itu_zone)>(RHS);
 
 // N MEMORIES
-    if (LHS == "N MEMORIES"s)
+    if (LHS == "N MEMORIES"sv)
       _n_memories = min(from_string<decltype(_n_memories)>(rhs), static_cast<decltype(_n_memories)>(10));  // maximum number of memories is 10
 
 // NEARBY EXTRACT
-    if (LHS == "NEARBY EXTRACT"s)
+    if (LHS == "NEARBY EXTRACT"sv)
       _nearby_extract = is_true;
 
 // NO DEFAULT RST
-    if (LHS == "NO DEFAULT RST"s)
+    if (LHS == "NO DEFAULT RST"sv)
       _no_default_rst = is_true;
 
 // NORMALISE RATE(S)
-    if ( (LHS == "NORMALISE RATE"s) or (LHS == "NORMALIZE RATE"s) or (LHS == "NORMALISE RATES"s) or (LHS == "NORMALIZE RATES"s) )
+    if ( (LHS == "NORMALISE RATE"sv) or (LHS == "NORMALIZE RATE"sv) or (LHS == "NORMALISE RATES"sv) or (LHS == "NORMALIZE RATES"sv) )
       _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS

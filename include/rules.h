@@ -1,4 +1,4 @@
-// $Id: rules.h 205 2022-04-24 16:05:06Z  $
+// $Id: rules.h 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -286,6 +286,10 @@ public:
 /// is this field a choice?
   inline bool is_choice(void) const
     { return !_choice.empty(); }
+
+/// is this field not a choice?
+  inline bool is_not_choice(void) const
+    { return !is_choice(); }
 
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices

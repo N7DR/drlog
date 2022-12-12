@@ -208,8 +208,6 @@ window& operator<(window& win, const qtc_series& qs)
 
   size_t index { 0 };    // keep track of where we are in vector of entries
 
-//  const auto qtc_entries { qs.qtc_entries() };  //vector<pair<qtc_entry, QTC_STATUS>>
-
   for (const auto& [ qe, status ] : qs.qtc_entries())  //vector<pair<qtc_entry, QTC_STATUS>>
   { const string entry_str { qe.to_string() };
     const int    cpu       { static_cast<int>(colours.add(win.fg(), (status == QTC_STATUS::SENT) ? COLOUR_RED : win.bg())) };
@@ -269,7 +267,7 @@ void qtc_database::operator+=(const qtc_series& q)
 
     Returns an empty series if <i>n</i> is out of bounds
 */
-qtc_series qtc_database::operator[](size_t n)
+qtc_series qtc_database::operator[](size_t n) const
 { if (n >= size())
     return qtc_series();
 
@@ -314,7 +312,7 @@ void qtc_database::read(const string& filename)
 
   unsigned int line_nr { 0 };
 
-  string last_id;
+  string     last_id;
   qtc_series series;
 
 // 28100.0 CW 2014-07-18 15:32:42 G1AAA         001/10     N7DR          1516 YL2BJ         477
@@ -331,8 +329,6 @@ void qtc_database::read(const string& filename)
   constexpr int QSO_UTC_FIELD   { 7 };
   constexpr int QSO_CALL_FIELD  { 8 };
   constexpr int QSO_SERNO_FIELD { 9 };
-
-//  enum class QTC_FIELD { FREQ = 0 };
 
   while (line_nr < lines.size())
   { const string&        line   { lines[line_nr++] };
@@ -353,36 +349,35 @@ void qtc_database::read(const string& filename)
       last_id = id;    // ready to process the new ID
       series.clear();
     }
-//    else
-    { if (series.id().empty())
-        series.id(id);
 
-      if (series.frequency_str().empty())
-        series.frequency_str(fields[FREQ_FIELD]);
+    if (series.id().empty())
+      series.id(id);
 
-      if (series.mode().empty())
-        series.mode(fields[MODE_FIELD]);
+    if (series.frequency_str().empty())
+      series.frequency_str(fields[FREQ_FIELD]);
 
-      if (series.date().empty())
-        series.date(fields[DATE_FIELD]);
+    if (series.mode().empty())
+      series.mode(fields[MODE_FIELD]);
 
-      if (series.utc().empty())
-        series.utc(fields[UTC_FIELD]);
+    if (series.date().empty())
+      series.date(fields[DATE_FIELD]);
 
-      if (series.destination().empty())
-        series.destination(fields[DEST_FIELD]);
+    if (series.utc().empty())
+      series.utc(fields[UTC_FIELD]);
 
-      if (series.source().empty())
-        series.source(fields[SRC_FIELD]);
+    if (series.destination().empty())
+      series.destination(fields[DEST_FIELD]);
 
-      qtc_entry qe;
+    if (series.source().empty())
+      series.source(fields[SRC_FIELD]);
 
-      qe.utc(fields[QSO_UTC_FIELD]);
-      qe.callsign(fields[QSO_CALL_FIELD]);
-      qe.serno(fields[QSO_SERNO_FIELD]);
+    qtc_entry qe;
 
-      series += { qe, QTC_STATUS::SENT };
-    }
+    qe.utc(fields[QSO_UTC_FIELD]);
+    qe.callsign(fields[QSO_CALL_FIELD]);
+    qe.serno(fields[QSO_SERNO_FIELD]);
+
+    series += { qe, QTC_STATUS::SENT };
   }
 
 // add the last series to the database
@@ -435,7 +430,7 @@ void qtc_buffer::rebuild_unsent_list(const logbook& logbk)
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
+vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target) const
 { vector<qtc_entry> rv;
 
   auto cit { _unsent_qtcs.cbegin() };

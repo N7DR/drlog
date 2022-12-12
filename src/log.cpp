@@ -1,4 +1,4 @@
-// $Id: log.cpp 210 2022-10-31 17:26:13Z  $
+// $Id: log.cpp 212 2022-12-12 17:58:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,22 +42,22 @@ extern string VERSION;          ///< version string
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
 { 
 // frequency
-  if (name == "FREQ"s)
+  if (name == "FREQ"sv)
     qso.freq_and_band(value);
 
 // mode
-  if (name == "MODE"s)
-  { if (value == "CW"s)
+  if (name == "MODE"sv)
+  { if (value == "CW"sv)
       qso.mode(MODE_CW);
 
-    if (value == "SSB"s)
+    if (value == "SSB"sv)
       qso.mode(MODE_SSB);
 //    if (value == "RTTY")
 //      qso.mode(MODE_DIGI);
   }
 
 // date
-  if (name == "DATE"s)
+  if (name == "DATE"sv)
     qso.date(value);
 
 // time
@@ -482,10 +482,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
 // go through the fields
       for (unsigned int n { 0 }; n < individual_values.size(); ++n)
-      { const vector<string>& vec  { individual_values[n] };
-        const string          name { vec[0] };
-        const unsigned int    posn { from_string<unsigned int>(vec[1]) - 1 };
-        const unsigned int    len  { from_string<unsigned int>(vec[2]) };
+      { const vector<string>& vec   { individual_values[n] };
+        const string&         name  { vec[0] };
+        const unsigned int    posn  { from_string<unsigned int>(vec[1]) - 1 };
+        const unsigned int    len   { from_string<unsigned int>(vec[2]) };
         const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces(line.substr(posn, len)) : string()) };
       
         _modify_qso_with_name_and_value(qso, name, value);
@@ -620,8 +620,7 @@ set<string> logbook::calls(void) const
     Returns the empty string if no European calls are in the log
 */
 string logbook::last_worked_eu_call(void) const
-{ //static const string EU { "EU"s };
-  static const string_view EU { "EU"sv };
+{ static const string_view EU { "EU"sv };
 
   SAFELOCK(_log);
 
@@ -736,13 +735,6 @@ auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
 { auto it { _olog.find(call) };
 
   return ( (it == _olog.end()) ? (_olog[call], _olog.find(call)) : it );    // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
-
-//  if (it == _olog.end())        // no data
-//  { _olog[call];                // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
-//    it = _olog.find(call);
-//  }
-
-//  return it;
 }
 
 /*! \brief          Return total number of QSLs from a particular callsign
