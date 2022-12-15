@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 188 2021-07-25 14:44:04Z  $
+// $Id: cw_buffer.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,11 +59,21 @@ extern message_stream ost;              ///< for debugging, info
     negative values represent key up;
     zero represents the start of an embedded command
 */
+#if 0
+void cw_buffer::_add_action(const int n)
+{ //SAFELOCK(_key_buffer);
+
+  _key_buffer += n;
+}
+#endif
+
+#if 1
 void cw_buffer::_add_action(const int n)
 { SAFELOCK(_key_buffer);
 
   _key_buffer += n;
 }
+#endif
 
 /*! \brief          Wrapper function to play the buffer
     \param  arg     "this" pointer

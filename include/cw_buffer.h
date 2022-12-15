@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 189 2021-08-16 00:34:00Z  $
+// $Id: cw_buffer.h 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,6 +26,7 @@
 #include "parallel_port.h"
 #include "pthread_support.h"
 #include "rig_interface.h"
+//#include "ts_queue.h"
 
 #include <queue>
 #include <string>
@@ -53,7 +54,8 @@ protected:
     the duration of key up/down is in units in which 100 == the standard length of a dot
 */
   std::queue<int>       _key_buffer;                                ///< the queue of key up/down motions remaining to be executed
-  pt_mutex      _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
+  pt_mutex              _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
+//  ts_queue<int>         _key_buffer;                                ///< the queue of key up/down motions remaining to be executed
   parallel_port         _port;                                      ///< the associated parallel port
   unsigned int          _ptt_delay;                                 ///< delay between asserting PTT and transmitting the start of a character, in milliseconds
   rig_interface*        _rigp             { nullptr };              ///< associated rig
@@ -216,11 +218,14 @@ class cw_messages
 {
 protected:
 
-  std::map<int, std::string > _messages;                 ///< map number to message
+  std::map<int, std::string> _messages;                 ///< map number to message
 
-  mutable pt_mutex _messages_mutex { "CW MESSAGES"s };   ///< mutex to allow for thread-safe access
+  mutable pt_mutex _messages_mutex { "CW MESSAGES"s };  ///< mutex to allow for thread-safe access
 
 public:
+
+/// default constructor
+  cw_messages(void) = default;
 
 /*! \brief      Constructor
     \param  m   map of message numbers and message contents
@@ -228,9 +233,6 @@ public:
   inline explicit cw_messages(const std::map<int /* message number */, std::string >& m) :
     _messages(m)
     { }
-
-/// default constructor
-  cw_messages(void) = default;
 
 /*! \brief      Initialise [default-constructed object] with a pre-existing map of message numbers and message contents
     \param  m   map of message numbers and message contents

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 212 2022-12-12 17:58:32Z  $
+// $Id: drlog.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -513,8 +513,8 @@ ACTIVE_WINDOW active_window       { ACTIVE_WINDOW::CALL };  ///< start with the 
 ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
-//array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
-array<bandmap_insertion_queue, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
+array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
+//array<bandmap_insertion_queue, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
 array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
@@ -533,7 +533,6 @@ scp_databases scp_dbs;                          ///< container for the SCP datab
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 using STR_COLOUR_PAIR = pair<string, PAIR_NUMBER_TYPE>; 
-//using MATCHES_TYPE = vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >;
 using MATCHES_TYPE = vector<STR_COLOUR_PAIR>;  // str = callsign
 
 array<MATCHES_TYPE, 4> matches_array;
@@ -779,7 +778,7 @@ int main(int argc, char** argv)
     autocorrect_rbn                 = context.autocorrect_rbn();
     bandmap_frequency_up            = context.bandmap_frequency_up();
     bandmap_show_marked_frequencies = context.bandmap_show_marked_frequencies();
-    best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
+    best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"sv);
     call_history_bands              = context.call_history_bands();
     cw_bandwidth_narrow             = context.cw_bandwidth_narrow();
     cw_bandwidth_wide               = context.cw_bandwidth_wide();
@@ -938,7 +937,7 @@ int main(int argc, char** argv)
     if (rules.n_modes() == 1)
     { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
 
-      if (ANY_OF(exchange_template, [](const exchange_field& ef) { return (ef.name() == "PREC"s); }))                // if there's a field with this name, it must be SS
+      if (ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); }))                // if there's a field with this name, it must be SS
         is_ss = true;
     }
 
@@ -1049,14 +1048,14 @@ int main(int argc, char** argv)
       rig.base_state();
 
 // configure bandmaps so user's call and calls in the do-not-show list do not display
-      { const auto dns { context.do_not_show() };
+//      { //const auto dns { context.do_not_show() };
       
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call);
+        FOR_ALL(bandmaps, [dns = context.do_not_show()] (bandmap& bm) { bm.do_not_add(my_call);
                                               
-                                              if (!dns.empty())
-                                                bm.do_not_add(dns); 
-                                            } );
-      }
+                                                                        if (!dns.empty())
+                                                                          bm.do_not_add(dns); 
+                                                                      } );
+//      }
 
 // ditto for other calls in the do-not-show files
       if (!do_not_show_filename.empty())
@@ -1069,7 +1068,7 @@ int main(int argc, char** argv)
         }
 
         for (const auto& callsign : calls_from_do_not_show_file(ALL_BANDS))
-          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+          FOR_ALL(bandmaps, [callsign] (bandmap& bm) { bm.do_not_add(callsign); } );
 
 // now the individual bands
         for (BAND b { MIN_BAND }; b <= MAX_BAND; b = (BAND)((int)b + 1))
@@ -1085,11 +1084,11 @@ int main(int argc, char** argv)
 
 // set the RBN threshold for each bandmap
       if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
+        FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-      if (const int cull_function { context.bandmap_cull_function() }; cull_function)
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+      if (const int cull_function { context.bandmap_cull_function() }; cull_function)   // if not cull function number zero
+        FOR_ALL(bandmaps, [cull_function] (bandmap& bm) { bm.cull_function(cull_function); } );
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function

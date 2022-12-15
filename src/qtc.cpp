@@ -465,7 +465,8 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
 { const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
 
-  FOR_ALL(sent_qtc_entries, [&] (const qtc_entry& qe) { unsent_to_sent(qe); } );
+//  FOR_ALL(sent_qtc_entries, [&] (const qtc_entry& qe) { unsent_to_sent(qe); } );
+  FOR_ALL(sent_qtc_entries, [this] (const qtc_entry& qe) { unsent_to_sent(qe); } );
 }
 
 /*! \brief      The unsent list in human-readable format

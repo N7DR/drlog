@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 211 2022-11-28 21:29:23Z  $
+// $Id: bandmap.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -77,6 +77,7 @@ string to_string(const BANDMAP_ENTRY_SOURCE bes)
   }
 }
 
+#if 0
 // -----------   bandmap_insertion_queue ----------------
 
 /*! \class  bandmap_insertion_queue
@@ -102,6 +103,7 @@ optional<bandmap_entry> bandmap_insertion_queue::pop(void)
   
   return tmp;
 }
+#endif
 
 // -----------   bandmap_buffer ----------------
 
@@ -1144,7 +1146,8 @@ bool bandmap::is_present(const string& target_callsign) const
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-void bandmap::process_insertion_queue(bandmap_insertion_queue& biq)
+//void bandmap::process_insertion_queue(bandmap_insertion_queue& biq)
+void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
   optional<bandmap_entry> obe { };
@@ -1172,8 +1175,8 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-//void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-void bandmap::process_insertion_queue(bandmap_insertion_queue& biq, window& w)
+void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
+//void bandmap::process_insertion_queue(bandmap_insertion_queue& biq, window& w)
 { process_insertion_queue(biq);
 
   w <= (*this);
@@ -1184,7 +1187,8 @@ void bandmap::process_insertion_queue(bandmap_insertion_queue& biq, window& w)
     \return         the window
 */
 window& bandmap::write_to_window(window& win)
-{ constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
+{ constexpr time_t      GREEN_TIME                 { 120 };             // time in seconds for which calls are marked in green
+  constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
   constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
@@ -1221,7 +1225,7 @@ window& bandmap::write_to_window(window& win)
       PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != COLOUR_BLACK))
+      if ( (age_since_original_inserted < GREEN_TIME) and !be.is_marker() and (recent_colour() != COLOUR_BLACK) )
         cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)

@@ -44,7 +44,7 @@ include/autocorrect.h : include/macros.h
 	touch include/autocorrect.h
 
 include/bandmap.h : include/cluster.h include/drlog_context.h include/log.h include/pthread_support.h include/rules.h \
-                    include/screen.h include/serialization.h include/statistics.h
+                    include/screen.h include/serialization.h include/statistics.h include/ts_queue.h
 	touch include/bandmap.h
 	
 include/bands-modes.h : include/string_functions.h

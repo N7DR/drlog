@@ -1,4 +1,4 @@
-// $Id: bandmap.h 211 2022-11-28 21:29:23Z  $
+// $Id: bandmap.h 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,6 +24,7 @@
 #include "screen.h"
 #include "serialization.h"
 #include "statistics.h"
+#include "ts_queue.h"
 
 #include <array>
 #include <list>
@@ -54,6 +55,7 @@ extern old_log             olog;                                ///< old (ADIF) 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
 
 //using BANDMAP_INSERTION_QUEUE = std::queue<bandmap_entry>;      // std::queue is NOT thread safe!!
+using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // std::queue is NOT thread safe!!
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -61,6 +63,7 @@ constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in 
 */
 std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
+#if 0
 // -----------   bandmap_insertion_queue ----------------
 
 /*! \class  bandmap_insertion_queue
@@ -84,6 +87,7 @@ public:
   std::optional<bandmap_entry> pop(void);
 
 };
+#endif
 
 // -----------   bandmap_buffer_entry ----------------
 
@@ -125,7 +129,7 @@ class bandmap_buffer
 {
 protected:
 
-  unsigned int _min_posters;                                        ///< minumum number of posters needed to appear on bandmap, default = 1
+  unsigned int _min_posters { 1 };                                  ///< minumum number of posters needed to appear on bandmap, default = 1
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
@@ -134,7 +138,12 @@ protected:
 public:
 
 /// default constructor
-  inline explicit bandmap_buffer(const unsigned int n_posters = 1) :
+  bandmap_buffer(void) = default;
+
+/*! \brief              Construct, setting minimum number of posters to non-default value
+    \param  n_posters   minumum number of posters needed to appear on bandmap
+*/
+  inline explicit bandmap_buffer(const unsigned int n_posters) :
     _min_posters(n_posters)
   { }
 
@@ -248,7 +257,8 @@ public:
     \return     whether <i>v</i> is needed
 */
   inline bool is_value_needed(const T& v) const
-    { return _is_needed ? !(_values > v) : false; }
+//    { return _is_needed ? !(_values > v) : false; }
+    { return _is_needed ? !(_values.contains(v)) : false; }
 
 /*! \brief      Remove a needed value
     \param  v   value to remove
@@ -1173,8 +1183,8 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-  void process_insertion_queue(bandmap_insertion_queue& biq);
+  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+//  void process_insertion_queue(bandmap_insertion_queue& biq);
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
@@ -1183,8 +1193,8 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
-  void process_insertion_queue(bandmap_insertion_queue& biq, window& w);
+  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
+//  void process_insertion_queue(bandmap_insertion_queue& biq, window& w);
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window to which to write

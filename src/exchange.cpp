@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 211 2022-11-28 21:29:23Z  $
+// $Id: exchange.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -881,6 +881,11 @@ string exchange_field_database::guess_value(const string& callsign, const string
        return abbreviations[call_area - '0'];    // convert to number
     };
 
+  static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
+                                                                              { "VO2"s, "LB"s },
+                                                                              { "VY2"s, "PE"s }
+                                                                            };
+
   string rv;
 
 // currently identical to 10MSTATE, except look up different value on the drmaster line
@@ -894,11 +899,11 @@ string exchange_field_database::guess_value(const string& callsign, const string
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"s) )  // can often guess province for VEs
-    { static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
-                                                                                  { "VO2"s, "LB"s },
-                                                                                  { "VY2"s, "PE"s }
-                                                                                };
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
+    { //static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
+      //                                                                            { "VO2"s, "LB"s },
+      //                                                                            { "VY2"s, "PE"s }
+      //                                                                          };
 
       const string pfx { wpx_prefix(callsign) };
 
@@ -924,11 +929,13 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
     { const string pfx { wpx_prefix(callsign) };
 
-      if (pfx == "VY2"sv)
-        rv = "PE"s;
+      //if (pfx == "VY2"sv)
+      //  rv = "PE"s;
 
-      if (rv.empty() and (pfx == "VO1"sv))
-        rv = "NF"s;
+      //if (rv.empty() and (pfx == "VO1"sv))
+      //  rv = "NF"s;
+
+      rv = MUM_VALUE(province_map, pfx);
 
       if (rv.empty())
         rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
@@ -1044,7 +1051,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
-  if ( (field_name == "JAPREF"sv) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+//  if ( (field_name == "JAPREF"sv) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+  if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth());
 
   if (field_name == "NAME"sv)
@@ -1069,7 +1077,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
     string rv;
 
-    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
+//    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
+    if (!drm_line.empty() and ( (countries.contains(location_db.canonical_prefix(callsign))) or callsign.starts_with("RI1AN"s)) )
     { rv = drm_line.qth();
 
       if (field_name == "RD2"sv and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
@@ -1109,7 +1118,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (rv.empty())
     { rv = drm_line.itu_zone();
 
-      if (rv.empty())  // no entry in drmaster database; can we determine from the location database?
+      if (rv.empty())                                   // no entry in drmaster database; can we determine from the location database?
         rv = to_string(location_db.itu_zone(callsign));
     }
 

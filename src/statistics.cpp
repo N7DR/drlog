@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 212 2022-12-12 17:58:32Z  $
+// $Id: statistics.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1138,9 +1138,16 @@ bool call_history::worked_on_another_band_and_mode(const string& s, const BAND b
 //    }
 //  }
 
-  for (const auto& pssbm : _history)
-  { if (const string& call { pssbm.first }; s == call)
-    { if (ANY_OF(pssbm.second, [b, m] (const auto& bm) { return ((bm.first != b) and (bm.second != m)); }) )
+ // for (const auto& pssbm : _history)
+//  { if (const string& call { pssbm.first }; s == call)
+//    { if (ANY_OF(pssbm.second, [b, m] (const auto& bm) { return ((bm.first != b) and (bm.second != m)); }) )
+//        return true;
+//    }
+//  }
+
+  for (const auto& [call, sbm] : _history)
+  { if (s == call)
+    { if (ANY_OF(sbm, [b, m] (const auto& bm) { return ((bm.first != b) and (bm.second != m)); }) )
         return true;
     }
   }

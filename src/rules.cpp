@@ -1,4 +1,4 @@
-// $Id: rules.cpp 212 2022-12-12 17:58:32Z  $
+// $Id: rules.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -774,11 +774,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the sets of all acceptable values
   const set<string> field_names { all_known_field_names() };
 
-  FOR_ALL(field_names, [&] (const string& field_name) { _permitted_exchange_values += { field_name, _all_exchange_values(field_name) }; });
+  FOR_ALL(field_names, [this] (const string& field_name) { _permitted_exchange_values += { field_name, _all_exchange_values(field_name) }; });
 
 // generate all the mappings from permitted to canonical values
-  for (auto cit { _exch_values.cbegin() }; cit != _exch_values.cend(); ++cit)
-    _permitted_to_canonical += { cit->name(), INVERT_MAPPING(cit->values()) };
+//  for (auto cit { _exch_values.cbegin() }; cit != _exch_values.cend(); ++cit)
+//    _permitted_to_canonical += { cit->name(), INVERT_MAPPING(cit->values()) };
+  FOR_ALL(_exch_values, [this] (const exchange_field_values& efv) { _permitted_to_canonical += { efv.name(), INVERT_MAPPING(efv.values()) }; } );
 }
 
 /// default constructor
@@ -827,10 +828,10 @@ set<string> contest_rules::all_known_field_names(void) const
   { const map<string, vector<exchange_field>>& expanded_exchange { _expanded_received_exchange.at(m) };
 
     for (const auto& msvef : expanded_exchange)
-    { const vector<exchange_field>& vef { msvef.second };
+    { //const vector<exchange_field>& vef { msvef.second };
 
-//      FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.insert(ef.name()); } );
-      FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); } );
+      //FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); } );
+      FOR_ALL(msvef.second, [&rv] (const exchange_field& ef) { rv += ef.name(); } );
     }
   }
 
@@ -846,9 +847,10 @@ set<string> contest_rules::all_known_field_names(void) const
 EFT contest_rules::exchange_field_eft(const string& field_name) const
 { SAFELOCK(rules);
 
-  const auto v { _exchange_field_eft.find(field_name) };
+//  const auto v { _exchange_field_eft.find(field_name) };
 
-  return ( (v == _exchange_field_eft.cend()) ? EFT("none") : (v->second) );
+//  return ( (v == _exchange_field_eft.cend()) ? EFT("none") : (v->second) );
+  return MUM_VALUE(_exchange_field_eft, field_name, EFT("none"));
 }
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
@@ -857,11 +859,12 @@ EFT contest_rules::exchange_field_eft(const string& field_name) const
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::EXPAND) };
+{ //const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::EXPAND) };
 
   vector<string> rv;
 
-  FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); });
+  //FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); });
+  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::EXPAND), [&rv] (const exchange_field& ef) { rv += ef.name(); });
 
   return rv;
 }
@@ -872,13 +875,12 @@ vector<string> contest_rules::expanded_exchange_field_names(const string& canoni
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND) };
+{ //const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND) };
 
   vector<string> rv;
 
-//  for (const auto& ef : vef
-//    rv += ef.name();
-  FOR_ALL(vef, [&rv] (const auto& ef) { rv += ef.name(); });
+  //FOR_ALL(vef, [&rv] (const auto& ef) { rv += ef.name(); });
+  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND), [&rv] (const auto& ef) { rv += ef.name(); });
 
   return rv;
 }

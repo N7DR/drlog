@@ -1,4 +1,4 @@
-// $Id: log.cpp 212 2022-12-12 17:58:32Z  $
+// $Id: log.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,11 +61,11 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
     qso.date(value);
 
 // time
-  if (name == "TIME"s)
+  if (name == "TIME"sv)
     qso.utc( (value.length() == 5) ? (value.substr(0, 2) + value.substr(3, 2)) : value ); // handle hh:mm and hhmm formats
 
 // tcall
-  if (name == "TCALL"s)
+  if (name == "TCALL"sv)
     qso.my_call(value);
 
 // transmitted exchange
@@ -75,7 +75,7 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
     qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start(name, str), value });    // remove "TEXCH-" before adding the field and value
 
 // rcall
-  if (name == "RCALL"s)
+  if (name == "RCALL"sv)
     qso.callsign(value);
 
 // received exchange
@@ -126,7 +126,7 @@ void logbook::operator-=(const unsigned int n)
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
 
-  FOR_ALL(_log_vec, [&](const QSO& qso) { _log += { qso.callsign(), qso }; } );     // rebuild the log
+  FOR_ALL(_log_vec, [this] (const QSO& qso) { _log += { qso.callsign(), qso }; } );     // rebuild the log
 }
 
 /*! \brief          All the QSOs with a particular call, in chronological order
@@ -144,7 +144,7 @@ vector<QSO> logbook::worked(const string& call) const
   }
 
 // https://www.youtube.com/watch?v=SYLgG7Q5Zws  39:40
-  ranges::sort(rv, { }, [](const QSO& q) { return q.epoch_time(); });    // use a projection to put in chronological order
+  ranges::sort(rv, { }, [] (const QSO& q) { return q.epoch_time(); });    // use a projection to put in chronological order
 
   return rv;
 }
@@ -169,7 +169,7 @@ unsigned int logbook::n_worked(const string& call) const
 bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
-  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.band() == b); });
+  return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
 }
 
 /*! \brief          Has a call been worked on a particular mode?

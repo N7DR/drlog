@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 212 2022-12-12 17:58:32Z  $
+// $Id: drlog_context.cpp 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -671,79 +671,69 @@ void drlog_context::_process_configuration_file(const string& filename)
       _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS
-    if (LHS == "NOT COUNTRY MULTS"s)
-    { if (!rhs.empty())
-        _not_country_mults = rhs;
-    }
+    if ( (LHS == "NOT COUNTRY MULTS"sv) and (!rhs.empty()) )
+      _not_country_mults = rhs;
 
 // OLD ADIF LOG NAME
-    if (LHS == "OLD ADIF LOG NAME"s)
+    if (LHS == "OLD ADIF LOG NAME"sv)
       _old_adif_log_name = rhs;
 
 // OLD QSO AGE LIMIT
-    if (LHS == "OLD QSO AGE LIMIT"s)
+    if (LHS == "OLD QSO AGE LIMIT"sv)
       _old_qso_age_limit = from_string<decltype(_old_qso_age_limit)>(rhs);
 
 // PATH
-    if (LHS == "PATH"s)
-    { if (!rhs.empty())
- //       _path = remove_peripheral_spaces(split_string(rhs, ";"s));
-        _path = clean_split_string(rhs, ';');
-    }
+    if ( (LHS == "PATH"sv) and (!rhs.empty()) )
+      _path = clean_split_string(rhs, ';');
 
 // POINTS
 // don't use LHS here because the command might be something like "POINTS[80] ="
-    if (testline.starts_with("POINTS"s) and !testline.starts_with("POINTS CW"s) and !testline.starts_with("POINTS SSB"s))  // there may be an "=" in the points definitions
+    if (testline.starts_with("POINTS"sv) and !testline.starts_with("POINTS CW"sv) and !testline.starts_with("POINTS SSB"sv))  // there may be an "=" in the points definitions
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
     }
 
 // POINTS CW
-    if (testline.starts_with("POINTS CW"s))
+    if (testline.starts_with("POINTS CW"sv))
       _set_points(testline, MODE_CW);
 
 // POINTS SSB
-    if (testline.starts_with("POINTS SSB"s))
+    if (testline.starts_with("POINTS SSB"sv))
       _set_points(testline, MODE_SSB);
 
 // PTT DELAY (0 => no PTT)
-    if (LHS == "PTT DELAY"s)
+    if (LHS == "PTT DELAY"sv)
       _ptt_delay = from_string<decltype(_ptt_delay)>(RHS);
 
 // POST MONITOR
-    if (LHS == "POST MONITOR"s)
-    { //const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
-
-      //FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls += callsign; } );
-//      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& callsign) { _post_monitor_calls += callsign; } );
-      FOR_ALL(clean_split_string(RHS, ','), [&] (const string& callsign) { _post_monitor_calls += callsign; } );
-    }
+    if (LHS == "POST MONITOR"sv)
+      FOR_ALL(clean_split_string(RHS, ','), [this] (const string& callsign) { _post_monitor_calls += callsign; } );
 
 // POSTED BY CONTINENTS
-    if (LHS == "POSTED BY CONTINENTS"s)
+    if (LHS == "POSTED BY CONTINENTS"sv)
     { const set<string>    continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
 //      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
       
 //      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
 //      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
 //      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
-      FOR_ALL(clean_split_string(RHS, ','), [&] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+      FOR_ALL(clean_split_string(RHS, ','), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
     }
 
 // P3
-    if (LHS == "P3"s)
+    if (LHS == "P3"sv)
       _p3 = is_true;
 
 // P3 IGNORE CHECKSUM ERROR
-    if (LHS == "P3 IGNORE CHECKSUM ERROR"s)
+    if (LHS == "P3 IGNORE CHECKSUM ERROR"sv)
       _p3_ignore_checksum_error = is_true;
 
 // P3 SNAPSHOT FILE
-    if (LHS == "P3 SNAPSHOT FILE"s)
+    if (LHS == "P3 SNAPSHOT FILE"sv)
       _p3_snapshot_file = rhs;
 
 // P3 SPAN CQ
-    if (LHS == "P3 SPAN CQ"s)
+    if (LHS == "P3 SPAN CQ"sv)
       _p3_span_cq = from_string<decltype(_p3_span_cq)>(RHS);
 
 // P3 SPAN SAP

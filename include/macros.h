@@ -1,4 +1,4 @@
-// $Id: macros.h 211 2022-11-28 21:29:23Z  $
+// $Id: macros.h 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -996,7 +996,8 @@ public:
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
   bool add(const T& val, const COUNTER n = 1)
-  { if (!(_values > val))
+  { //if (!(_values > val))
+    if (!(_values.contains(val)))
       _values += { val, n };
     else
       _values[val] += n;
@@ -1008,8 +1009,9 @@ public:
     \param  val     target value
     \return         total number of times <i>value</i> has been added
 */
-  unsigned int value(const T& val) const
-    { return ( (_values > val) ? _values.at(val) : 0 ); }
+  inline unsigned int value(const T& val) const
+//    { return ( (_values > val) ? _values.at(val) : 0 ); }
+    { return ( (_values.contains(val)) ? _values.at(val) : 0 ); }
 };
 
 // convenient syntactic sugar for some STL functions
@@ -1435,9 +1437,12 @@ inline void operator-=(C& c1, const typename C::value_type& element)
   requires is_list<C>
 { c1.remove(element); }
 
+#if 1
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
     \param  element     element to append
+
+    std::queue is NOT thread safe; so this must be called only when protected by a mutex
 */
 template <typename Q>
 inline void operator+=(Q& q1, typename Q::value_type&& element)
@@ -1447,11 +1452,14 @@ inline void operator+=(Q& q1, typename Q::value_type&& element)
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
     \param  element     element to append
+
+    std::queue is NOT thread safe; so this must be called only when protected by a mutex
 */
 template <typename Q, typename E>
 inline void operator+=(Q& q1, const E& element)
   requires is_queue<Q> and (std::convertible_to<E, typename Q::value_type>)
 { q1.push(element); }
+#endif
 
 /*! \brief              Remove and call destructor on front element of deque 
     \param  D1          destination deque

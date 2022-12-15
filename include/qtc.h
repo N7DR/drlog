@@ -1,4 +1,4 @@
-// $Id: qtc.h 212 2022-12-12 17:58:32Z  $
+// $Id: qtc.h 213 2022-12-15 17:11:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -459,7 +459,7 @@ public:
 /*! \brief      The unsent list in human-readable format
     \return     the unsent list as a string (in chronological order)
 */
-std::string unsent_list_as_string(void) const;
+  std::string unsent_list_as_string(void) const;
 
 /// serialise
   template<typename Archive>
