@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: exchange_field_template.cpp 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@
 
 #include "exchange_field_template.h"
 
-using namespace boost;                  // for regex
+//using namespace boost;                  // for regex
 using namespace std;
 
 // -------------------------  EFT  ---------------------------
@@ -42,7 +42,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-  _is_mult = contains(clean_split_string(context.exchange_mults(), ','), _name);  // correct value of is_mult
+  _is_mult = contains(clean_split_string(context.exchange_mults() /*, ',' */), _name);  // correct value of is_mult
 }
 
 /*! \brief              Get regex expression from file
@@ -94,7 +94,7 @@ bool EFT::read_values_file(const vector<string>& path, const string& filename)
   { for (const auto& line : to_lines(read_file(path, filename + ".values"s)))
     { set<string> equivalent_values;                    // includes the canonical value
 
-      if (!line.empty() and line[0] != ';' and !line.starts_with("//"s)) // ";" and "//" introduce comments
+      if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
       { if (contains(line, '=') )
         { const vector<string> lhsrhs { split_string(line, '=') };
           const string         lhs    { remove_peripheral_spaces(lhsrhs[0]) };
@@ -132,21 +132,25 @@ bool EFT::read_values_file(const vector<string>& path, const string& filename)
     \param  location_db     location database
 */
 void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ if (!_name.starts_with("QTHX["s))
+{ if (!_name.starts_with("QTHX["sv))
     return;
 
-  const auto& context_qthx { context.qthx() };  // map; key = canonical prefix; value = set of legal values
+//  const auto& context_qthx { context.qthx() };  // map; key = canonical prefix; value = set of legal values
+  const map<string /* cp */, set<string> /* legal values */>& context_qthx { context.qthx() };
 
   if (context_qthx.empty())
     return;
 
-  for (const auto& this_qthx : context_qthx)
-  { const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
+//  for (const auto& this_qthx : context_qthx)
+  for (const auto& [ cp, legal_values ] : context_qthx)
+  { //const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
+    const string canonical_prefix { location_db.canonical_prefix(cp) };
 
     if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']', DELIMITERS::DROP)))
-    { const set<string>& ss { this_qthx.second };
+    { //const set<string>& ss { this_qthx.second };
 
-      for (const auto& this_value : ss)
+//      for (const auto& this_value : ss)
+      for (const auto& this_value : legal_values)
       { if (!contains(this_value, '|'))
           add_canonical_value(this_value);
         else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
@@ -207,13 +211,6 @@ bool EFT::is_legal_value(const string& str) const
   if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
     return true;
 
-//  if (!_values.empty())
-//    return (_legal_non_regex_values > str);
-//    return _legal_non_regex_values.contains(str);
-//    return (str < _legal_non_regex_values);
-
-//  return false;
-
   return (_values.empty() ? false : (str < _legal_non_regex_values));
 
 }
@@ -265,12 +262,15 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 //  const auto values { eft.values() };
 
 //  for (const auto& sss : values)
-  for (const auto& sss : eft.values())
-  { ost << "  canonical value = " << sss.first << endl;
+//  for (const auto& sss : eft.values())
+  for (const auto& [ canonical_value, legal_values ] : eft.values())
+  { //ost << "  canonical value = " << sss.first << endl;
+    ost << "  canonical value = " << canonical_value << endl;
 
-    const auto& ss { sss.second };
+//    const auto& ss { sss.second };
 
-    for (const auto& s : ss)
+//    for (const auto& s : ss)
+    for (const auto& s : legal_values)
       ost << "  value = " << s << endl;
   }
 
@@ -278,8 +278,9 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 
   if (!v.empty())
   { ost << "  legal_non_regex_values : ";
-    for (const auto& str : v)
-      ost << "  " << str;
+//    for (const auto& str : v)
+//      ost << "  " << str;
+    FOR_ALL(v, [&ost] (const string& str) { ost << "  " << str; });
 
     ost << endl;
   }
@@ -289,8 +290,10 @@ ostream& operator<<(ostream& ost, const EFT& eft)
   if (!vcv.empty())
   { ost << "  v -> cv : " << endl;
 
-    for (const auto& pss : vcv)
-      ost << "    " << pss.first << " -> " << pss.second << endl;
+//    for (const auto& pss : vcv)
+//      ost << "    " << pss.first << " -> " << pss.second << endl;
+
+    FOR_ALL(vcv, [&ost] (const auto& pss) { ost << "    " << pss.first << " -> " << pss.second << endl; });
   }
 
   return ost;

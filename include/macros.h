@@ -1,4 +1,4 @@
-// $Id: macros.h 213 2022-12-15 17:11:46Z  $
+// $Id: macros.h 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -193,6 +193,13 @@ inline constexpr bool is_specialization = false;
 template <template<class...> class T, class... Args>
 inline constexpr bool is_specialization<T<Args...>, T> = true;
 
+// arrays are different; https://stackoverflow.com/questions/62940931/c20-concepts-and-templates-fixe-size-and-resizable-array
+template<class A>
+inline constexpr bool is_stdarray = false;
+
+template<class T, std::size_t I>
+inline constexpr bool is_stdarray<std::array<T, I>> = true;
+
 // basic types + string
 template <class T> concept is_int         = std::is_same_v<T, int>;
 template <class T> concept is_uint        = std::is_same_v<T, unsigned int>;
@@ -200,6 +207,7 @@ template <class T> concept is_string      = std::is_same_v<T, std::string>;
 template <class T> concept is_string_view = std::is_same_v<T, std::string_view>;
 
 // standard containers
+template <class T> concept is_array              = is_stdarray<T>;
 template <class T> concept is_deque              = is_specialization<T, std::deque>;
 template <class T> concept is_list               = is_specialization<T, std::list>;
 template <class T> concept is_map                = is_specialization<T, std::map>;
@@ -218,12 +226,6 @@ template <class T> concept is_mum   = is_map<T>      or is_unordered_map<T>;
 template <class T> concept is_mmumm = is_multimap<T> or is_unordered_multimap<T>;
 template <class T> concept is_sus   = is_set<T>      or is_unordered_set<T>;
 template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>;
-
-// const string& or plain string_view
-//template <class T> concept is_string_param = (is_string<T> and std::is_const_v<T> /* and std::is_lvalue_reference_v<T> */) or
-//                                               (is_string<T> and std::is_rvalue_reference_v<T>) or
-//                                                 (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
-//template <class T> concept is_string_param = (is_string<T> or is_string_view<T>);
 
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
@@ -1112,31 +1114,6 @@ constexpr std::ranges::in_out_result<I, O> COPY_ALL( I first, S last, O result )
 template< std::ranges::input_range R, std::weakly_incrementable O > requires  std::indirectly_copyable<std::ranges::iterator_t<R>, O>
 constexpr std::ranges::in_out_result<std::ranges::borrowed_iterator_t<R>, O> COPY_ALL( R&& r, O result )  { return std::ranges::copy(std::forward<R>(r), result); };
 
-/*! \brief          Remove values in a container that match a predicate, and resize the container
-    \param  first   container
-    \param  pred    predicate to apply
-
-    Does not work for maps
-*/
-//template <class Input, class UnaryPredicate>
-//void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
-//  { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
-
-/*! \brief          Remove map/unordered map values that match a predicate, and resize the map
-    \param  items   map
-    \param  pred    predicate to apply
-*/
-//template<typename M, typename PredicateT>
-//  requires (is_mum<M>)
-//void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
-//{ for( auto it { items.begin() }; it != items.end(); )
-//  { if( pred(*it) )
-//      it = items.erase(it);
-//    else
-//      ++it;
-//  }
-//};
-
 /*! \brief      Reverse the contents of a container
     \param  v   container
 */
@@ -1346,11 +1323,11 @@ V operator+(const V& v1, const V& v2)
 */
 template <typename V, typename SUS>
   requires (is_vector<V>) and (is_sus<SUS>) and (std::is_same_v<base_type<typename V::value_type>, base_type<typename SUS::value_type>>)
-  void operator+=(V& vec, const SUS& sus)
-  { vec.reserve(vec.size() + sus.size());
+void operator+=(V& vec, const SUS& sus)
+{ vec.reserve(vec.size() + sus.size());
 
-    COPY_ALL(sus, back_inserter(vec));
-  }
+  COPY_ALL(sus, back_inserter(vec));
+}
 
 /*! \brief              Add an element to a vector
     \param  dest        destination vector

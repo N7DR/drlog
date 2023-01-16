@@ -1,4 +1,4 @@
-// $Id: log.cpp 213 2022-12-15 17:11:46Z  $
+// $Id: log.cpp 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -180,7 +180,7 @@ bool logbook::qso_b4(const string& call, const BAND b) const
 bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
 
-  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.mode() == m); });
+  return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
 }
 
 /*! \brief          Has a call been worked on a particular band and mode?
@@ -192,7 +192,7 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
 bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
 
-  return ANY_OF(_LB(call), _UB(call), [=] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
+  return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
 }
 
 /*! \brief          Get a string list of bands on which a call is needed
@@ -203,8 +203,9 @@ bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 string logbook::call_needed(const string& call, const contest_rules& rules) const
 { string rv;
 
-  for (const auto& b : rules.permitted_bands())
-    rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]);
+//  for (const auto& b : rules.permitted_bands())
+//    rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]);
+  FOR_ALL(rules.permitted_bands(), [this, &call, &rv] (const BAND b) { rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]); } );
   
   return rv;
 }
@@ -440,9 +441,9 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 */
   
 // generate time-ordered container
-  const string    cabrillo_qso_template { context.cabrillo_qso_template() };
+  const string cabrillo_qso_template { context.cabrillo_qso_template() };
   
-  FOR_ALL(as_list(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
+  FOR_ALL(as_list(), [&cabrillo_qso_template, &EOL_STRING, &rv] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
  
 // soapbox
   rv += "SOAPBOX: "s + EOL_STRING;
@@ -470,8 +471,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
   const vector<string> template_fields { clean_split_string(cabrillo_qso_template) };         // colon-delimited values
   
-  for (unsigned int n { 0 }; n < template_fields.size(); ++n)
-    individual_values += split_string(template_fields[n], ':');
+//  for (int n { 0 }; n < ssize(template_fields); ++n)
+//    individual_values += split_string(template_fields[n], ':');
+  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string(tplate_field, ':'); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -511,8 +513,8 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   unsigned int last_qso_number { 0 };
 
   for (const auto& line : lines)
-  { if (starts_with(line, qso_markers))
-    { QSO qso;
+  { if (starts_with(line, qso_markers))     // qso_markers is a vector of strings
+    { QSO qso { };
   
       const vector<string> fields { split_string(squash(line.substr(4)), ' ') }; // skip first four characters
       

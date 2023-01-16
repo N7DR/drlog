@@ -1,4 +1,4 @@
-// $Id: rules.cpp 213 2022-12-15 17:11:46Z  $
+// $Id: rules.cpp 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -895,7 +895,8 @@ vector<string> contest_rules::exch_canonical_values(const string& field_name) co
 
   { SAFELOCK(rules);
 
-    for (unsigned int n = 0; n < _exch_values.size(); ++n)
+ //   for (unsigned int n { 0 }; n < _exch_values.size(); ++n)
+    for (int n { 0 }; n < ssize(_exch_values); ++n)
     { if (_exch_values[n].name() == field_name)
       { const map<string, set<string>>& m { _exch_values[n].values() };
 
@@ -921,7 +922,8 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 
   bool found_it { false };
 
-  for (unsigned int n = 0; n < _exch_values.size() and !found_it; ++n)
+//  for (unsigned int n = 0; n < _exch_values.size() and !found_it; ++n)
+  for (int n { 0 }; n < ssize(_exch_values) and !found_it; ++n)
   { if (_exch_values[n].name() == field_name)
     { found_it = true;
 
@@ -1013,9 +1015,6 @@ set<string> contest_rules::exch_permitted_values(const string& field_name) const
 
   SAFELOCK(rules);
 
-//  const auto it { _permitted_exchange_values.find(field_name) };
-
-//  return (it == _permitted_exchange_values.cend() ? empty_set : it->second);
   return MUM_VALUE(_permitted_exchange_values, field_name, empty_set);
 }
 
@@ -1031,10 +1030,10 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
 { if (actual_value.empty())
     return actual_value;
 
-  if (field_name == "DOK"s)    // DOK is special because loads of actual_values map to the same value; keep the actual value
+  if (field_name == "DOK"sv)    // DOK is special because loads of actual_values map to the same value; keep the actual value
     return actual_value;       // we convert to the single letter version elsewhere
 
-  if ((field_name == "IOTA"s) and actual_value.length() > 2)    // IOTA is special because there are so many possible received values, many of which are not canonical
+  if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
     return (substring(actual_value, 0, 2) + pad_left(substring(actual_value, 2), 3, '0'));  // XXnnn
 
   set<string> ss { exch_permitted_values(field_name) };
@@ -1085,8 +1084,7 @@ MODE contest_rules::next_mode(const MODE current_mode) const
 void contest_rules::add_permitted_band(const BAND b)
 { SAFELOCK(rules);
 
-//  if (!_permitted_bands > b)
-    _permitted_bands += b;
+  _permitted_bands += b;
 }
 
 /// get the next band up
@@ -1138,8 +1136,8 @@ BAND contest_rules::next_band_down(const BAND current_band) const
       if (band_nr < MIN_BAND)
         band_nr = MAX_BAND;
 
-      const bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
-//      const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
+//      const bool is_permitted { (pbs > static_cast<BAND>(band_nr)) };
+      const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
 
       if (is_permitted)
         return (static_cast<BAND>(band_nr));
@@ -1160,28 +1158,30 @@ BAND contest_rules::next_band_down(const BAND current_band) const
 unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
 { const BAND b { qso.band() };
 
-  if (!(_score_bands > b))    // no points if we're not scoring this band
-//  if (!_score_bands.contains(b))    // no points if we're not scoring this band
+ // if (!(_score_bands > b))    // no points if we're not scoring this band
+  if (!_score_bands.contains(b))    // no points if we're not scoring this band
     return 0;
 
   const MODE m { qso.mode() };
 
-  if (!(_score_modes > m))    // no points if we're not scoring this mode
-//  if (!_score_modes.contains(m))    // no points if we're not scoring this mode
+//  if (!(_score_modes > m))    // no points if we're not scoring this mode
+  if (!_score_modes.contains(m))    // no points if we're not scoring this mode
     return 0;
 
 // is an exchange field that will determine the number of points present?
-  for (const auto& this_exchange_present_points : _exchange_present_points)
-  { const string& exchange_field_name { this_exchange_present_points.first };
+//  for (const auto& this_exchange_present_points : _exchange_present_points)
+  for (const auto& [ exchange_field_name, points ] : _exchange_present_points)
+  { //const string& exchange_field_name { this_exchange_present_points.first };
 
     if (qso.is_exchange_field_present(exchange_field_name))
-      return this_exchange_present_points.second;
+ //     return this_exchange_present_points.second;
+      return points;
   }
 
   const string call             { qso.callsign() };
   const string canonical_prefix { location_db.canonical_prefix(call) };
 
-  if (canonical_prefix == "NONE"s)      // unable to determine country
+  if (canonical_prefix == "NONE"sv)      // unable to determine country
     return 0;
 
   const auto& pb { _points[m] };          // select the correct mode
@@ -1193,23 +1193,23 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
     return 0;
   }
 
-  const points_structure& points_this_band { pb.at(b) };           // valid because of the prior check
+//  const points_structure& points_this_band { pb.at(b) };           // valid because of the prior check
 
-  switch (points_this_band.points_type())
+  switch (const points_structure& points_this_band { pb.at(b) }; points_this_band.points_type())
   { default :
     case POINTS::NORMAL :
     { const map<string, unsigned int>& country_points { points_this_band.country_points() };
 
-      auto cit { country_points.find(canonical_prefix) };
+ //     auto cit { country_points.find(canonical_prefix) };
 
-      if (cit != country_points.cend())    // if points are defined for this country
+      if (auto cit { country_points.find(canonical_prefix) }; cit != country_points.cend())    // if points are defined for this country
         return cit->second;
 
       const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
 
-      cit = continent_points.find(location_db.continent(call));
+ //     cit = continent_points.find(location_db.continent(call));
 
-      if (cit != continent_points.cend())  // if points are defined for this continent
+      if (auto cit { continent_points.find(location_db.continent(call)) }; cit != continent_points.cend())  // if points are defined for this continent
         return cit->second;
 
       return points_this_band.default_points();
@@ -1295,8 +1295,8 @@ bool contest_rules::country_mults_used(const string& cp) const
   if (_country_mults.empty())
     return false;
 
-  return (_country_mults > cp);
-//  return _country_mults.contains(cp);
+//  return (_country_mults > cp);
+  return _country_mults.contains(cp);
 }
 
 /*! \brief          Is an exchange field a mult?
@@ -1309,7 +1309,9 @@ bool contest_rules::is_exchange_mult(const string& name) const
 { SAFELOCK(rules);
 
 //  return ( find(_exchange_mults.cbegin(), _exchange_mults.cend(), name) != _exchange_mults.cend() );
-  return (_exchange_mults > name);
+//  return (_exchange_mults > name);
+//  return _exchange_mults.contains(name);
+  return contains(_exchange_mults, name);
 }
 
 /*! \brief          Does the sent exchange include a particular field?
@@ -1324,7 +1326,9 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
   { const auto& se { _sent_exchange_names.at(m) };
 
  //   return (find(se.cbegin(), se.cend(), str) != se.cend());
-    return (se > str);
+ //   return (se > str);
+//    return se.contains(str);
+    return contains(se, str);
   }
 
   catch (...)
@@ -1341,12 +1345,22 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
 bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 { SAFELOCK(rules);
 
-  if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
+//  if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
+  if (!_exchange_field_eft.contains(field_name))
     return false;    // not a known field name
 
 // if a field appears in the per-country rules, are we in the right country?
   bool is_a_per_country_field { false };
 
+  for (const auto& [ cp, exchange_field_names_set ] : _per_country_exchange_fields)
+  { if (exchange_field_names_set.contains(field_name))
+      is_a_per_country_field = true;
+
+    if (cp == canonical_prefix)
+      return (exchange_field_names_set.contains(field_name));
+  }
+
+#if 0
   for (const auto& ssets : _per_country_exchange_fields)
   { if (ssets.second > field_name)
       is_a_per_country_field = true;
@@ -1354,6 +1368,7 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
     if (ssets.first == canonical_prefix)
       return (ssets.second > field_name);
   }
+#endif
 
   return !is_a_per_country_field;       // a known field, and this is not a special country
 }
@@ -1364,7 +1379,6 @@ set<string> contest_rules::exchange_field_names(void) const
 
 //std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
-//  FOR_ALL(_exchange_field_eft, [&] (const pair<string, EFT>& pse) { rv.insert(pse.first); } );
   FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );
 
   return rv;
@@ -1440,29 +1454,30 @@ string wpx_prefix(const string& call)
 {
 // callsign has to contain three characters
   if (call.length() < 3)
-    return string();
+    return string { };
 
-//  static const string digits( { "0123456789" } );
   string callsign          { call };
   char   portable_district { 0 } ;   // portable call district
 
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-//  if (last(callsign, 4) == "/QRP"s)
-  if (callsign.ends_with("/QRP"s))
-    callsign = substring(callsign, 0, callsign.length() - 4);
+//  if (callsign.ends_with("/QRP"s))
+ //   callsign = substring(callsign, 0, callsign.length() - 4);
+  callsign = remove_from_end(callsign, "/QRP"s);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
-  { static const string portables { "AEJMP"s };
+  { static const string portables { "AEJMP"s };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
-      callsign = substring(callsign, 0, callsign.length() - 2);
+//      callsign = substring(callsign, 0, callsign.length() - 2);
+      callsign = remove_from_end(callsign, 2);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
-        callsign = substring(callsign, 0, callsign.length() - 2);
+        //callsign = substring(callsign, 0, callsign.length() - 2);
+        callsign = remove_from_end(callsign, 2);
       }
   }
 
@@ -1470,8 +1485,11 @@ string wpx_prefix(const string& call)
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
 
-    if (mobiles > last(callsign, 2))
-      callsign = substring(callsign, 0, callsign.length() - 3);
+    if (mobiles.contains(last(callsign, 2)))
+      callsign = remove_from_end(callsign, 3);
+
+ //   if (mobiles > last(callsign, 2))
+ //     callsign = substring(callsign, 0, callsign.length() - 3);
   }
 
 // trivial -- and almost unknown -- case first: no digits
@@ -1558,7 +1576,7 @@ string sac_prefix(const string& call)
   if (digits.empty())
     return string();    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
 
-  return ( (canonical_prefix != "OH0"s and canonical_prefix != "OJ0"s) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
+  return ( ( (canonical_prefix != "OH0"s) and (canonical_prefix != "OJ0"s) ) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
 }
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
@@ -1571,7 +1589,7 @@ string sac_prefix(const string& call)
     Adding IOTA.
 */
 string MULT_VALUE(const string& field_name, const string& received_value)
-{ if (field_name == "DOK"s)
+{ if (field_name == "DOK"sv)
   { if (!received_value.empty())
     { const auto posn { received_value.find_first_of(UPPER_CASE_LETTERS) };
 
@@ -1581,7 +1599,7 @@ string MULT_VALUE(const string& field_name, const string& received_value)
       return received_value;  // same as string()
   }
 
-  if ( (field_name == "IOTA"s) and (received_value.size() > 2) )
+  if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
     return (substring(received_value, 0, 2) + pad_left(substring(received_value, 2), 3, '0'));  // XXnnn
 
   return received_value;

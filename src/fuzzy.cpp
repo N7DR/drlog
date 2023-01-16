@@ -61,6 +61,9 @@ set<string> fuzzy_database::operator[](const string& key) const
   for (size_t posn { 0 }; posn < key.length(); ++posn)
     rv += regex_matches<set<string>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );
 
+// 230116 do not include the key in the output set
+  rv -= key;
+
   return rv;
 }
 

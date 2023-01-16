@@ -282,6 +282,9 @@ protected:
   std::map<std::string, window_information >   _windows                                 { };                                ///< size and position info for each window
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
+  int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
+  bool                                         _xscp_enable                             { false };                          ///< whether to enable use of XSCP
+
 /*! \brief              Process a configuration file
     \param  filename    name of file to process
 
@@ -565,6 +568,9 @@ public:
 
   CONTEXTREAD(worked_mults_colour);              ///< colour of worked mults in the mult windows
 
+  CONTEXTREAD(xscp_cutoff);                      ///< use XCSP values >= this value
+  CONTEXTREAD(xscp_enable);                      ///< whether to enable use of XSCP
+
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band
     \param  m   mode
@@ -601,7 +607,7 @@ public:
 */
   inline std::vector<std::string> band_names(void) const
   { SAFELOCK(_context);
-    return split_string(_bands /*, ',' */);
+    return split_string(_bands);
   }
 
 /*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
@@ -609,7 +615,7 @@ public:
 */
   inline std::vector<std::string> mode_names(void) const
   { SAFELOCK(_context);
-    return split_string(_modes /*, ',' */);
+    return split_string(_modes);
   }
 
 /// how many bands are used in this contest?

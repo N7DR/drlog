@@ -488,7 +488,6 @@ T remove_peripheral_spaces(T&& t)
     \return             vector containing the separate components
 */
 std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
-//std::vector<std::string> split_string(const std::string& cs, std::string_view separator);
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string
@@ -569,7 +568,6 @@ std::vector<std::string> remove_empty_lines(const std::vector<std::string>& line
     \return             vector containing the separate lines
 */
 inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
-//inline std::vector<std::string> to_lines(const std::string& cs, std::string_view eol_marker = EOL)
   { return split_string(cs, eol_marker); }
 
 /*! \brief      Remove peripheral instances of a specific character
@@ -605,7 +603,7 @@ template <typename C>
 C remove_char(C& t, const char char_to_remove)
 { typename std::remove_const<C>::type rv;
 
-  FOR_ALL(t, [char_to_remove, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+  FOR_ALL(t, [char_to_remove, &rv] (const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -620,7 +618,7 @@ template <typename C>
 C remove_char(C&& t, const char char_to_remove)
 { C rv;
 
-  FOR_ALL(std::forward<C>(t), [char_to_remove, &rv](const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
+  FOR_ALL(std::forward<C>(t), [char_to_remove, &rv] (const std::string& cs) { rv += remove_char(cs, char_to_remove); } );
 
   return rv;
 }
@@ -1011,7 +1009,6 @@ inline std::string truncate_before_first(const std::string& str, const char c)
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-//size_t find_and_go_to_end_of(const std::string_view str, const std::string_view target);
 size_t find_and_go_to_end_of(std::string_view str, std::string_view target);
 
 /*! \brief              Get the base portion of a call
@@ -1046,7 +1043,7 @@ T regex_matches(C&& container, const std::string& s)
   const std::regex rgx { s };
 
   FOR_ALL(std::forward<C>(container) | std::ranges::views::filter([rgx] (const std::string& target) { return regex_match(target, rgx); }),
-            [&rv](const std::string& target) { rv += target; }); 
+            [&rv] (const std::string& target) { rv += target; }); 
 
   return rv;
 }

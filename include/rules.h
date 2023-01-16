@@ -1,4 +1,4 @@
-// $Id: rules.h 213 2022-12-15 17:11:46Z  $
+// $Id: rules.h 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -778,7 +778,6 @@ public:
 
 /// get the permitted bands as a set
   inline std::set<BAND> permitted_bands_set(void) const
-//    { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
     { return std::set<BAND> { _permitted_bands.cbegin(), _permitted_bands.cend() }; }
 
 /*! \brief                      Is a particular field used for QSOs with a particular country?

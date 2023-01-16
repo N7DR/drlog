@@ -558,7 +558,8 @@ u = Sweepstakes precedence
 t = state for ARRL 10m contest (W, VE, XE only)
 s = state for ARRL 160m contest (W, VE, only)
 r = SKCC state/province/country
-
+q = SKCC number
+p = XSCP value
 */
 
 /*! \brief                      Extract a single field from the record
@@ -618,6 +619,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _ssb_power  = _extract_field(fields, "=x"s);
   _state_160  = _extract_field(fields, "=s"s);
   _state_10   = _extract_field(fields, "=t"s);
+  _xscp       = _extract_field(fields, "=p"s);
 }
 
 /// convert to string
@@ -697,6 +699,9 @@ string drmaster_line::to_string(void) const
   if (!state_10().empty())
     rv += " =t"s + state_10();
 
+  if (!xscp().empty())
+    rv += " =p"s + xscp();
+
   return rv;
 }
 
@@ -775,6 +780,9 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
   if (rv.state_10().empty())
     rv.state_10(state_10());
 
+  if (rv.xscp().empty())
+    rv.xscp(xscp());
+
   return rv;
 }
 
@@ -786,23 +794,39 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     A drmaster file is a superset of a TRMASTER.ASC file
 */
 
-void drmaster::_prepare_from_file_contents(const string& contents)
-{ FOR_ALL(to_lines(contents), [this] (const string& line) { const drmaster_line record { line };
+/*! \brief              Prepare an object for use, from a file's contents
+    \param  contents    the contents of a drmaster file
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
 
-                                                            _records += { record.call(), record } ;
-                                                          } );
+    Lines without XSCP data are always included
+*/
+void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
+{ for (const string& line : to_lines(contents))
+  { const drmaster_line record { line };
+
+    if (record.xscp().empty() or (from_string<int>(record.xscp()) >= xscp_limit))
+      _records += { record.call(), record } ;
+  } 
+
+//FOR_ALL(to_lines(contents), [this] (const string& line) { const drmaster_line record { line };
+//
+//                                                            _records += { record.call(), record } ;
+//                                                          } );
 }
 
 /*! \brief              Construct from a file
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
+
+    Lines without XSCP data are always included
 
     Throws exception if the file does not exist or is incorrectly formatted;
     except creates empty object if called with default filename that does not exist
 */
-drmaster::drmaster(const string& filename)
+drmaster::drmaster(const string& filename, const int xscp_limit)
 { if (!filename.empty())
   { try
-    { _prepare_from_file_contents(read_file(filename));      // throws exception if fails
+    { _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
     }
 
     catch (...)
@@ -815,34 +839,39 @@ drmaster::drmaster(const string& filename)
 /*! \brief              Construct from a file
     \param  path        directories to check
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
 
+    Lines without XSCP data are always included
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-drmaster::drmaster(const vector<string>& path, const string& filename)
+drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
 { if (!filename.empty())
-    _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
+    _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
 
+    Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-void drmaster::prepare(const string& filename)
+void drmaster::prepare(const string& filename, const int xscp_limit)
 { if (!filename.empty())
-    _prepare_from_file_contents(read_file(filename));      // throws exception if fails
+    _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
 }
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
 
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
 */
-void drmaster::prepare(const vector<string>& path, const string& filename)
+void drmaster::prepare(const vector<string>& path, const string& filename, const int xscp_limit)
 { if (!filename.empty())
-    _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
+    _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
 
 /// all the calls (in alphabetical order)
@@ -882,7 +911,7 @@ string drmaster::to_string(void) const
     If there's already an entry for <i>call</i>, then does nothing
 */
 void drmaster::operator+=(const string& call)
-{ if (!::contains(call, ' ') and !(_records > call))           // basic sanity check for a call, and whether is already in the database
+{ if (!::contains(call, ' ') and !_records.contains(call))           // basic sanity check for a call, and whether is already in the database
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use
 }
 
@@ -894,7 +923,7 @@ void drmaster::operator+=(const string& call)
 void drmaster::operator+=(const drmaster_line& drml)
 { const string call { drml.call() };
 
-  if (!(_records > call))
+  if (!_records.contains(call))
     _records += { call, drml };
   else
   { drmaster_line old_drml { _records[call] };

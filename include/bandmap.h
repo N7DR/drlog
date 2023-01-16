@@ -1,4 +1,4 @@
-// $Id: bandmap.h 213 2022-12-15 17:11:46Z  $
+// $Id: bandmap.h 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,7 +267,8 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { if (!_is_needed or !(_values > v))
+  { //if (!_is_needed or !(_values > v))
+    if (!_is_needed or !(_values.contains(v)))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -432,8 +433,8 @@ public:
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
   explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_SOURCE::LOCAL) :
-    _source(s),                             // source is as given in <i>s</i>
-    _time(::time(NULL))                     // now
+    _source(s),                                                 // source is as given in <i>s</i>
+    _time(::time(NULL))                                         // now
   { }
 
   READ(band);                           ///< band
@@ -593,12 +594,6 @@ public:
 /// is this a needed mult of any type?
   inline bool is_needed_mult(void) const
     { return is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult(); }
-
-// next three needed in order to pass as parameters to find_if, since I don't know how to choose among multiple overloaded functions
-
-/// do we need to work this call?
-//  inline bool is_stn_needed(void) const
-//    { return is_needed(); }
 
 /*! \brief          Does <i>_frequency_str</i> match a target value?
     \param  target  target value of <i>_frequency_str</i>
@@ -781,15 +776,15 @@ protected:
   std::unordered_set<std::string> _do_not_add             { };                          ///< do not add these calls
   BM_ENTRIES                      _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
-  decltype(_entries)              _filtered_entries;                                    ///< entries, with the filter applied
+  decltype(_entries)              _filtered_entries       { };                          ///< entries, with the filter applied
   bool                            _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*            _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                       _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
   unsigned int                    _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
-  decltype(_entries)              _rbn_threshold_and_filtered_entries;                  ///< entries, with the filter and RBN threshold applied
+  decltype(_entries)              _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
   bool                            _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
-  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries;           ///< entries, with the RBN threshold, filter and cull function applied
-  std::unordered_set<std::string> _recent_calls;                                        ///< calls recently added
+  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
+  std::unordered_set<std::string> _recent_calls           { };                          ///< calls recently added
   COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
 
 ///  Mark filtered and rbn/filtered entries as dirty
@@ -945,7 +940,7 @@ public:
 /// prune the bandmap
   void prune(void);
 
-// filter functions -- these affect all bandmaps, since there's just one (global) filter
+// filter functions -- these affect all bandmaps, as there's just one (global) filter
 
 /// is the filter enabled?
   inline bool filter_enabled(void) const
@@ -1043,7 +1038,6 @@ public:
      The return value can be tested with .empty() to see if a station was found
 */
   inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
-//    { return needed(&bandmap_entry::is_stn_needed, dirn); }
     { return needed(&bandmap_entry::is_needed, dirn); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
@@ -1184,7 +1178,6 @@ template<typename C>
     other threads MUST NOT access biq while this is executing
 */
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-//  void process_insertion_queue(bandmap_insertion_queue& biq);
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
@@ -1194,7 +1187,6 @@ template<typename C>
     other threads MUST NOT access biq while this is executing
 */
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
-//  void process_insertion_queue(bandmap_insertion_queue& biq, window& w);
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window to which to write

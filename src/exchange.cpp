@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 213 2022-12-15 17:11:46Z  $
+// $Id: exchange.cpp 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1159,7 +1159,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     if (!contents.empty())
     { const vector<string> lines { to_lines(to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
-      for (unsigned int n { 0 }; n < lines.size(); ++n)
+      for (int n { 0 }; n < ssize(lines); ++n)
       { const string line { squash(replace_char(lines[n], '\t', ' '), ' ') };
 
         if (const vector<string> tokens { clean_split_string(line, ' ') }; tokens.size() == 2)

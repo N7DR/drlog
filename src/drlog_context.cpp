@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 213 2022-12-15 17:11:46Z  $
+// $Id: drlog_context.cpp 214 2022-12-18 15:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -737,43 +737,43 @@ void drlog_context::_process_configuration_file(const string& filename)
       _p3_span_cq = from_string<decltype(_p3_span_cq)>(RHS);
 
 // P3 SPAN SAP
-    if (LHS == "P3 SPAN SAP"s)
+    if (LHS == "P3 SPAN SAP"sv)
       _p3_span_sap = from_string<decltype(_p3_span_sap)>(RHS);
 
 // QSL MESSAGE
-    if (LHS == "QSL MESSAGE"s)
+    if (LHS == "QSL MESSAGE"sv)
       _qsl_message = RHS;
 
 // QSO MULTIPLE BANDS
-    if (LHS == "QSO MULTIPLE BANDS"s)
+    if (LHS == "QSO MULTIPLE BANDS"sv)
       _qso_multiple_bands = is_true;
 
 // QSO MULTIPLE MODES
-    if (LHS == "QSO MULTIPLE MODES"s)
+    if (LHS == "QSO MULTIPLE MODES"sv)
       _qso_multiple_modes = is_true;
 
 // QSY ON STARTUP
-    if (LHS == "QSY ON STARTUP"s)
+    if (LHS == "QSY ON STARTUP"sv)
       _qsy_on_startup = is_true;
 
 // QTCS
-    if (LHS == "QTCS"s)
+    if (LHS == "QTCS"sv)
       _qtcs = is_true;
 
 // QTC DOUBLE SPACE
-    if (LHS == "QTC DOUBLE SPACE"s)
+    if (LHS == "QTC DOUBLE SPACE"sv)
       _qtc_double_space = is_true;
 
 // QTC FILENAME
-    if (LHS == "QTC FILENAME"s)
+    if (LHS == "QTC FILENAME"sv)
       _qtc_filename = rhs;
 
 // QTC LONG T
-    if (LHS == "QTC LONG T"s)
+    if (LHS == "QTC LONG T"sv)
       _qtc_long_t = from_string<decltype(_qtc_long_t)>(rhs);
 
 // QTC QRS
-    if (LHS == "QTC QRS"s)
+    if (LHS == "QTC QRS"sv)
       _qtc_qrs = from_string<decltype(_qtc_qrs)>(rhs);
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
@@ -784,7 +784,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring(fields[0], '[', ']', DELIMITERS::DROP) };
-//        const vector<string> values           { remove_peripheral_spaces(split_string(RHS, ","s)) };
         const vector<string> values           { clean_split_string(RHS, ',') };
         const set<string>    ss               { values.cbegin(), values.cend() };
 
@@ -793,81 +792,81 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // RATE
-    if (LHS == "RATE"s)
+    if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-//      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
-//      FOR_ALL(remove_peripheral_spaces(split_string(rhs, ","s)), [&new_rates] (const string& str) { new_rates += from_string<unsigned int>(str); } );
-      FOR_ALL(clean_split_string(rhs, ','), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+//      FOR_ALL(clean_split_string(rhs, ','), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+      FOR_ALL(clean_split_string(rhs), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
     }
 
 // RBN BEACONS
-    if (LHS == "RBN BEACONS"s)
+    if (LHS == "RBN BEACONS"sv)
       _rbn_beacons = is_true;
 
 // RBN PORT
-    if (LHS == "RBN PORT"s)
+    if (LHS == "RBN PORT"sv)
       _rbn_port = from_string<decltype(_rbn_port)>(rhs);
 
 // RBN SERVER
-    if (LHS == "RBN SERVER"s)
+    if (LHS == "RBN SERVER"sv)
       _rbn_server = rhs;
 
 // RBN THRESHOLD
-    if (LHS == "RBN THRESHOLD"s)
+    if (LHS == "RBN THRESHOLD"sv)
       _rbn_threshold = from_string<decltype(_rbn_threshold)>(rhs);
 
 // RBN USERNAME
-    if (LHS == "RBN USERNAME"s)
+    if (LHS == "RBN USERNAME"sv)
       _rbn_username = rhs;
 
 // REJECT COLOUR
-    if ( ( (LHS == "REJECT COLOUR"s) or (LHS == "REJECT COLOR"s) ) and !rhs.empty() )
+    if ( ( (LHS == "REJECT COLOUR"sv) or (LHS == "REJECT COLOR"sv) ) and !rhs.empty() )
       _reject_colour = string_to_colour(RHS);
 
 // REQUIRE DOT IN REPLACEMENT CALL
-    if (LHS == "REQUIRE DOT IN REPLACEMENT CALL"s)
+    if (LHS == "REQUIRE DOT IN REPLACEMENT CALL"sv)
       _require_dot_in_replacement_call = is_true;
 
 // RIG 1 BAUD
-    if ( (LHS == "RIG 1 BAUD"s) or (LHS == "RIG BAUD"s) )
+    if ( (LHS == "RIG 1 BAUD"sv) or (LHS == "RIG BAUD"sv) )
       _rig1_baud = from_string<decltype(_rig1_baud)>(rhs);
 
 // RIG 1 DATA BITS
-    if ( (LHS == "RIG 1 DATA BITS"s) or (LHS == "RIG DATA BITS"s) )
+    if ( (LHS == "RIG 1 DATA BITS"sv) or (LHS == "RIG DATA BITS"sv) )
       _rig1_data_bits = from_string<decltype(_rig1_data_bits)>(rhs);
 
 // RIG 1 NAME
-    if ( (LHS == "RIG 1 NAME"s) or (LHS == "RADIO ONE NAME"s) )
+    if ( (LHS == "RIG 1 NAME"sv) or (LHS == "RADIO ONE NAME"sv) )
       _rig1_name = rhs;
 
 // RIG 1 PORT
-    if ( (LHS == "RIG 1 PORT"s) or (LHS == "RADIO ONE CONTROL PORT"s) )
+    if ( (LHS == "RIG 1 PORT"sv) or (LHS == "RADIO ONE CONTROL PORT"sv) )
       _rig1_port = rhs;
 
 // RIG 1 STOP BITS
-    if ( (LHS == "RIG 1 STOP BITS"s) or (LHS == "RIG STOP BITS"s) )
+    if ( (LHS == "RIG 1 STOP BITS"sv) or (LHS == "RIG STOP BITS"sv) )
       _rig1_stop_bits = from_string<decltype(_rig1_stop_bits)>(rhs);
 
 // RIG 1 TYPE
-    if (LHS == "RIG 1 TYPE"s)
+    if (LHS == "RIG 1 TYPE"sv)
       _rig1_type = RHS;
 
 // RULES
-    if (LHS == "RULES"s)
+    if (LHS == "RULES"sv)
       _process_configuration_file(rhs);
 
 // RUSSIAN DATA
-    if (LHS == "RUSSIAN DATA"s)
+    if (LHS == "RUSSIAN DATA"sv)
       _russian_filename = rhs;
 
 // SCORE BANDS
-    if (testline.starts_with("SCORE BANDS"s))
-    { //const vector<string> bands_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
-      const vector<string> bands_str { clean_split_string(rhs, ',') };
+    if (testline.starts_with("SCORE BANDS"sv))
+    { 
+ //     const vector<string> bands_str { clean_split_string(rhs, ',') };
+      const vector<string> bands_str { clean_split_string(rhs) };
 
       for (const auto& band_str : bands_str)
       { try
@@ -889,49 +888,49 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCORING
-    if (LHS == "SCORING"s)
+    if (LHS == "SCORING"sv)
       _scoring_enabled = is_true;
 
 // SCREEN SNAPSHOT FILE
-    if ( (LHS == "SCREEN SNAPSHOT FILE"s) or (LHS == "SCREENSHOT FILE"s) )
+    if ( (LHS == "SCREEN SNAPSHOT FILE"sv) or (LHS == "SCREENSHOT FILE"sv) )
       _screen_snapshot_file = rhs;
 
 // SCREEN SNAPSHOT ON EXIT
-    if ( (LHS == "SCREEN SNAPSHOT ON EXIT"s) or (LHS == "SCREENSHOT ON EXIT"s) )
+    if ( (LHS == "SCREEN SNAPSHOT ON EXIT"sv) or (LHS == "SCREENSHOT ON EXIT"sv) )
       _screen_snapshot_on_exit = is_true;
 
 // SERIAL NUMBER SPACES
-    if (LHS == "SERIAL NUMBER SPACES"s)
+    if (LHS == "SERIAL NUMBER SPACES"sv)
       _serno_spaces = from_string<decltype(_serno_spaces)>(rhs);
 
 // SHIFT DELTA
-    if (LHS == "SHIFT DELTA"s)
+    if (LHS == "SHIFT DELTA"sv)
     { _shift_delta_cw = from_string<decltype(_shift_delta_cw)>(rhs);
       _shift_delta_ssb = _shift_delta_cw;
     }
 
 // SHIFT DELTA CW
-    if (LHS == "SHIFT DELTA CW"s)
+    if (LHS == "SHIFT DELTA CW"sv)
       _shift_delta_cw = from_string<decltype(_shift_delta_cw)>(rhs);
 
 // SHIFT DELTA SSB
-    if (LHS == "SHIFT DELTA SSB"s)
+    if (LHS == "SHIFT DELTA SSB"sv)
       _shift_delta_ssb = from_string<decltype(_shift_delta_ssb)>(rhs);
 
 // SHIFT POLL
-    if (LHS == "SHIFT POLL"s)
+    if (LHS == "SHIFT POLL"sv)
       _shift_poll = from_string<decltype(_shift_poll)>(rhs);
 
 // SHORT SERIAL NUMBER
-    if (LHS == "SHORT SERIAL NUMBER"s)
+    if (LHS == "SHORT SERIAL NUMBER"sv)
       _short_serno = is_true;
 
 // SOCIETY LIST FILENAME
-    if (LHS == "SOCIETY LIST FILENAME"s)
+    if (LHS == "SOCIETY LIST FILENAME"sv)
       _society_list_filename = rhs;
 
 // SSB AUDIO
-    if (LHS == "SSB AUDIO"s)
+    if (LHS == "SSB AUDIO"sv)
     { const vector<string> cbw { clean_split_string(RHS, '/') };
 
       if (cbw.size() == 2)
@@ -948,19 +947,19 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // START AUDIO RECORDING
-    if (LHS == "START AUDIO RECORDING"s)
-    { if (rhs == "auto"s)
+    if (LHS == "START AUDIO RECORDING"sv)
+    { if (rhs == "auto"sv)
         _start_audio_recording = AUDIO_RECORDING::AUTO;
 
-      if (rhs == "false"s)
+      if (rhs == "false"sv)
         _start_audio_recording = AUDIO_RECORDING::DO_NOT_START;
 
-      if (rhs == "true"s)
+      if (rhs == "true"sv)
         _start_audio_recording = AUDIO_RECORDING::START;
     }
 
 // START BAND
-    if (LHS == "START BAND"s)
+    if (LHS == "START BAND"sv)
     { const auto cit { BAND_FROM_NAME.find(RHS) };
 
       if (cit != BAND_FROM_NAME.cend())
@@ -968,34 +967,43 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // START MODE
-    if (LHS == "START MODE"s)
-    { if (RHS == "SSB"s)
+    if (LHS == "START MODE"sv)
+    { if (RHS == "SSB"sv)
         _start_mode = MODE_SSB;
     }
 
 // SYNC KEYER
-    if (LHS == "SYNC KEYER"s)
+    if (LHS == "SYNC KEYER"sv)
       _sync_keyer = is_true;
 
 // TEST
-    if (LHS == "TEST"s)
+    if (LHS == "TEST"sv)
       _test = is_true;
 
 // THOUSANDS SEPARATOR
-    if (LHS == "THOUSANDS SEPARATOR"s)
-    { if (rhs.size() >= 1)
-        _thousands_separator = rhs[0];
-      else
-        _thousands_separator = ' ';
+    if (LHS == "THOUSANDS SEPARATOR"sv)
+    { //if (rhs.size() >= 1)
+      //  _thousands_separator = rhs[0];
+      //else
+      //  _thousands_separator = ' ';
+      _thousands_separator = ( (rhs.size() >= 1) ? rhs[0] : ' ' );
     }
 
 // UBA BONUS
-    if (LHS == "UBA BONUS"s)
+    if (LHS == "UBA BONUS"sv)
       _uba_bonus = is_true;
 
 // WORKED MULTS COLOUR
-    if ( (LHS == "WORKED MULTS COLOUR"s) or (LHS == "WORKED MULTS COLOR"s) )
+    if ( (LHS == "WORKED MULTS COLOUR"sv) or (LHS == "WORKED MULTS COLOR"sv) )
       _worked_mults_colour = string_to_colour(RHS);
+
+// XSCP CUTOFF
+    if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
+      _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);
+
+// XSCP ENABLE
+    if (LHS == "XSCP ENABLE"sv)
+      _xscp_enable = is_true;
 
 // ---------------------------------------------  MULTIPLIERS  ---------------------------------
 

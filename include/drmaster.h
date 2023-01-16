@@ -234,6 +234,7 @@ protected:
   std::string _ssb_power;                                       ///< power received in ARRL DX SSB
   std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
   std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
+  std::string _xscp;                                            ///< extended SCP value
 
 /*! \brief                      Extract a single field from the record
     \param  fields              all the fields
@@ -296,6 +297,7 @@ public:
   READ_AND_WRITE(ssb_power);                                       ///< power received in ARRL DX SSB
   READ_AND_WRITE(state_160);                                       ///< for CQ 160m contest: W and VE only
   READ_AND_WRITE(state_10);                                        ///< for ARRL 10m contest; W, VE and XE only
+  READ_AND_WRITE(xscp);                                            ///< extended SCP value
 
 /// merge with another drmaster_line; new values take precedence if there's a conflict
   drmaster_line operator+(const drmaster_line&) const;
@@ -334,42 +336,65 @@ protected:
 
   std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
 
-  void _prepare_from_file_contents(const std::string& contents);
+/*! \brief              Prepare an object for use, from a file's contents
+    \param  contents    the contents of a drmaster file
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
+
+    Lines without XSCP data are always included
+*/
+  void _prepare_from_file_contents(const std::string& contents, const int xscp_limit = 1);
 
 public:
 
+  drmaster(void) = default;
+
 /*! \brief              Construct from a file
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
+
+    Lines without XSCP data are always included
 
     Throws exception if the file does not exist or is incorrectly formatted;
-    except creates empty object if called with default filename that does not exist
+//    except creates empty object if called with default filename that does not exist
 */
-  explicit drmaster(const std::string& filename = "drmaster"s);
+//  explicit drmaster(const std::string& filename = "drmaster"s);
+  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Construct from a file
     \param  path        directories to check
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
+
+    Lines without XSCP data are always included
 
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  explicit drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
+//  explicit drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
+  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
 
+    Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::string& filename = "drmaster"s);
+//  void prepare(const std::string& filename = "drmaster"s);
+  void prepare(const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check
     \param  filename    name of file to read
+    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
+
+    Lines without XSCP data are always included
 
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
+//  void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
+  void prepare(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;

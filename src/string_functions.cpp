@@ -410,13 +410,6 @@ string remove_trailing(const string& cs, const char c)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-//string remove_char(const string& cs, const char char_to_remove)
-//{ string rv { cs };
-//
- // rv.erase( remove(rv.begin(), rv.end(), char_to_remove), rv.end() );
-//
-//  return rv;
-//} 
 string remove_char(const string& cs, const char char_to_remove)
 { string rv { cs };
 
@@ -449,18 +442,6 @@ string remove_from_start(const string& s, STRING_PARAM sp)
 
   if (s.starts_with(sp))
     return substring(s, sp.size());
-
-  return s;
-}
-#endif
-
-#if 0
-string remove_from_start(const string& s, const string& ss)
-{ if (ss.empty())
-    return s;
-
-  if (s.starts_with(ss))
-    return substring(s, ss.size());
 
   return s;
 }
@@ -505,8 +486,8 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
       return (rv + remove_char(substring(cs, posn_1), char_to_remove));
 
 // we have matching delimiters
-    size_t substr_length   { posn_2 - posn_1 + 1 };
-    string modified_substr { remove_char(substring(cs, posn_1, substr_length), char_to_remove) };  // keeps the delimiters in the string
+    const size_t substr_length   { posn_2 - posn_1 + 1 };
+    const string modified_substr { remove_char(substring(cs, posn_1, substr_length), char_to_remove) };  // keeps the delimiters in the string
 
     rv += ( cs.substr(start_posn, posn_1) + modified_substr );
 
@@ -528,7 +509,7 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
 string remove_chars(const string& s, const string& chars_to_remove)
 { string rv { s };
 
-  erase_if(rv, [chars_to_remove](const char& c) { return contains(chars_to_remove, c); } );
+  erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
 
   return rv;
 }
@@ -726,7 +707,7 @@ vector<size_t> starts_of_words(const string& s)
   rv += posn;
 
 // next space
-  while (1)
+  while (true)
   { posn = s.find_first_of(' ', posn);
 
     if (posn == string::npos)
@@ -856,7 +837,7 @@ string convert_to_dotted_decimal(const uint32_t val)
 
   string rv;
 
-  for (int n = 0; n < 3; n++)
+  for (int n { 0 }; n < 3; n++)
   { const unsigned char c { cp[n] };
   
     rv += to_string((int)c) + '.';
@@ -1015,9 +996,12 @@ string reformat_for_wprintw(const string& str, const int width)
 */
 vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int width)
 { vector<string> rv;
+  rv.reserve(vecstr.size());
 
-  for (const auto& s : vecstr)
-    rv += reformat_for_wprintw(s, width);
+//  for (const auto& s : vecstr)
+//    rv += reformat_for_wprintw(s, width);
+
+  FOR_ALL(vecstr, [width, &rv] (const string& s) { rv += reformat_for_wprintw(s, width); });
 
   return rv;
 }
