@@ -230,11 +230,6 @@ template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 
-// const string& or plain string_view
-//template <class T> concept STRING_PARAM = (is_string<T> and std::is_const_v<T> and std::is_reference_v<T>) or
-//                                            (is_string_view<T> and /* !std::is_const_v<T> and */ !std::is_reference_v<T>);
-//template <class T> concept STRING_PARAM = is_string_param<T>;
-
 // ---------------------------------------------------------------------------
 
 // classes for tuples... it seems like there should be a way to do this with TMP,

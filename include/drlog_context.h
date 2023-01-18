@@ -283,7 +283,7 @@ protected:
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
-  bool                                         _xscp_enable                             { false };                          ///< whether to enable use of XSCP
+  bool                                         _xscp_sort                               { false };                          ///< whether to enable use of XSCP when displaying matches
 
 /*! \brief              Process a configuration file
     \param  filename    name of file to process
@@ -569,7 +569,7 @@ public:
   CONTEXTREAD(worked_mults_colour);              ///< colour of worked mults in the mult windows
 
   CONTEXTREAD(xscp_cutoff);                      ///< use XCSP values >= this value
-  CONTEXTREAD(xscp_enable);                      ///< whether to enable use of XSCP
+  CONTEXTREAD(xscp_sort);                        ///< whether to enable use of XSCP when displaying matches
 
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band

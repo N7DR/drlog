@@ -1144,8 +1144,6 @@ vector<string> delimited_substrings(const string& cs, const string& delim_1, con
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-//const size_t find_and_go_to_end_of(const std::string& str, const std::string& target)
-//size_t find_and_go_to_end_of(const string_view str, const string_view target)
 size_t find_and_go_to_end_of(string_view str, string_view target)
 { size_t posn { str.find(target) };
 

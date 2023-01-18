@@ -207,7 +207,7 @@ src/drlog_context.cpp : include/diskfile.h include/drlog_context.h include/excha
 src/drlog_error.cpp : include/drlog_error.h
 	touch src/drlog_error.cpp
 	
-src/drmaster.cpp : include/drmaster.h
+src/drmaster.cpp : include/drmaster.h include/log_message.h
 	touch src/drmaster.cpp
 	
 src/exchange.cpp : include/cty_data.h include/diskfile.h include/drmaster.h include/exchange.h include/log.h include/exchange_field_template.h \

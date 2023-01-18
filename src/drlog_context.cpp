@@ -1001,9 +1001,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
       _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);
 
-// XSCP ENABLE
-    if (LHS == "XSCP ENABLE"sv)
-      _xscp_enable = is_true;
+// XSCP SORT
+    if (LHS == "XSCP SORT"sv)
+      _xscp_sort = is_true;
 
 // ---------------------------------------------  MULTIPLIERS  ---------------------------------
 
@@ -1012,16 +1012,16 @@ void drlog_context::_process_configuration_file(const string& filename)
 // Currently supported: ALL
 //                      NONE
 // any single continent
-    if (LHS == "COUNTRY MULTS"s)
+    if (LHS == "COUNTRY MULTS"sv)
     { _country_mults_filter = RHS;
 
-      if (_country_mults_filter == "NONE"s)
+      if (_country_mults_filter == "NONE"sv)
         QSO_DISPLAY_COUNTRY_MULT = false;                  // since countries aren't mults, don't take up space in the log line
     }
 
 // REMAINING CALLSIGN MULTS
-    if (LHS == "REMAINING CALLSIGN MULTS"s)
-    { _auto_remaining_callsign_mults = (RHS == "AUTO"s);
+    if (LHS == "REMAINING CALLSIGN MULTS"sv)
+    { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
       { const vector<string> tokens { split_string(RHS, ' ') };
@@ -1030,8 +1030,7 @@ void drlog_context::_process_configuration_file(const string& filename)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { //const vector<string> mults { remove_peripheral_spaces(split_string(RHS, ","s)) };
-        const vector<string> mults { clean_split_string(RHS, ',') };
+      { const vector<string> mults { clean_split_string(RHS, ',') };
 
         _remaining_callsign_mults_list = set<string>(mults.cbegin(), mults.cend());
       }

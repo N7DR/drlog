@@ -91,7 +91,8 @@ public:
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
+//    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
+    { return (call.empty() ? false : (_db[substring(call, 0, 2)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call
@@ -142,8 +143,7 @@ public:
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
   inline void remove_call(const std::string& call)
- //   { FIND_IF(_vec.rbegin(), _vec.rend(), [=] (auto& db) { return (db->remove_call(call)); } ); }
-    { FIND_IF(_vec, [=] (auto& db) { return (db->remove_call(call)); } ); }
+    { FIND_IF(_vec, [&call] (auto& db) { return (db->remove_call(call)); } ); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
   inline void operator-=(const std::string& call)

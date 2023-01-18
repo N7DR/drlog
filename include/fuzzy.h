@@ -24,6 +24,8 @@
 #include <string>
 #include <unordered_set>
 
+using FUZZY_SET = std::unordered_set<std::string>;    ///< define the type of set used in fuzzy functions
+
 // -----------  fuzzy_database  ----------------
 
 /*! \class  fuzzy_database
@@ -37,7 +39,8 @@ class fuzzy_database
 {
 protected:
 
-  std::array< std::set<std::string>, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
+//  std::array< std::set<std::string>, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
+  std::array<FUZZY_SET, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
   
 /*! \brief      Force a value to be within the legal range of sizes
     \param  sz  size that may need to be forced to change
@@ -47,7 +50,6 @@ protected:
     into the correct element of the <i>_db</i> array
 */
   inline size_t _to_valid_size(const size_t sz) const
-//    { return std::max(std::min(sz, MAX_FUZZY_SIZE), MIN_FUZZY_SIZE); }
     { return std::clamp(sz, MIN_FUZZY_SIZE, MAX_FUZZY_SIZE); }
 
 public:
@@ -61,13 +63,13 @@ public:
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
   inline explicit fuzzy_database(const std::string& filename)
-    { FOR_ALL(to_lines(to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [&] (const std::string& x) { *this += x; } ); }
+    { FOR_ALL(to_lines(to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
 
 /*! \brief          Construct from a <i>drmaster</i> object
     \param  drm     <i>drmaster</i> object from which to construct
 */
   inline explicit fuzzy_database(const drmaster& drm)
-    { FOR_ALL(drm.calls(), [&] (const std::string& x) { *this += x; } ); }
+    { FOR_ALL(drm.calls(), [this] (const std::string& x) { *this += x; } ); }
 
 /*! \brief          Add the calls in a vector to the database
     \param  calls   calls to be added
@@ -75,7 +77,7 @@ public:
     Does nothing for any calls already in the database
 */
   inline void init_from_calls(const std::vector<std::string>& calls)
-    { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
+    { FOR_ALL(calls, [this] (const std::string& this_call) { *this += this_call; } ); }
 
 /*! \brief          Add a call to the database
     \param  call    call to be added
@@ -99,17 +101,18 @@ public:
     \return         whether <i>call</i> is present in the database
 */
   inline bool contains(const std::string& call) const
-    { return (_db[ _to_valid_size(call.length()) ] > call); }
+//    { return (_db[ _to_valid_size(call.length()) ] > call); }
+    { return (_db[ _to_valid_size(call.length()) ].contains(call)); }
   
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
 */
-  std::set<std::string> operator[](const std::string& key) const;
+  FUZZY_SET operator[](const std::string& key) const;
 
 /// empty the database
   inline void clear(void)
-    { _db.fill( std::set<std::string> { } ); }
+    { _db.fill( std::unordered_set<std::string> { } ); }
 };
 
 // -----------  fuzzy_databases  ----------------
@@ -144,7 +147,7 @@ public:
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-  std::set<std::string> operator[](const std::string& key) const;
+  FUZZY_SET operator[](const std::string& key) const;
 };
 
 #endif    // FUZZY_H

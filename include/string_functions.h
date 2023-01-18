@@ -1038,7 +1038,7 @@ std::string remove_substrings(const std::string& cs, const std::vector<std::stri
 */
 template <class T, class C>
 T regex_matches(C&& container, const std::string& s)
-{ T rv;
+{ T rv { };
      
   const std::regex rgx { s };
 

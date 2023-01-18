@@ -397,7 +397,7 @@ running_statistics      statistics;                         ///< all the QSO sta
 bool                    wicm_calls_is_dirty  { false };     ///< whether there has been a change requiring redisplay to wicm_calls  
 size_t                  wicm_calls_size      { 0 };         ///< maximum number of calls in the WICM window
 
-bool                    xscp_enable          { false };     ///< whether to enable XSCP ordering in matches
+bool                    xscp_sort          { false };       ///< whether to enable XSCP ordering in matches
 
 // QTC variables
 qtc_database    qtc_db;                 ///< sent QTCs
@@ -587,8 +587,14 @@ bool country_mults_used  { false };            ///< do the rules call for countr
 bool exchange_mults_used { false };            ///< do the rules call for exchange mults?
 bool mm_country_mults    { false };            ///< can /MM stns be country mults?
 
-inline bool xscp_order(const string& c1, const string& c2)
-  { return (drm_db[c1].xscp() < drm_db[c2].xscp()); }
+inline bool xscp_order_greater(const string& c1, const string& c2)
+  { //ost << "c1 = " << c1 << ", p = " << drm_db[c1].xscp() << "; c2 = " << c2 << ", p = " << drm_db[c2].xscp();
+
+    //bool rv = (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp()));
+
+    //ost << boolalpha << "; greater = " << rv << endl;
+
+    return (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp())); }
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
@@ -645,32 +651,29 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     }
 
 // change the order within each category if XSCP ordering is to be used
-    if (xscp_enable)
-    { auto conditional_sort = [] (vector<string>& matches) { if (matches.size() > 1)
-                                                               SORT(matches, xscp_order);
-                                                           };
+    if (xscp_sort)
+    { //auto conditional_sort = [] (vector<string>& matches) { if (matches.size() > 1)
+      //                                                         SORT(matches, xscp_order_greater);
+       //                                                    };
 
-      conditional_sort(tmp_exact_matches);
-      conditional_sort(tmp_green_matches);
-      conditional_sort(tmp_ordinary_matches);
-      conditional_sort(tmp_red_matches);
+//      ost << "size of tmp_exact_matches = " << tmp_exact_matches.size() << endl;
+//      ost << "size of tmp_green_matches = " << tmp_green_matches.size() << endl;
+//      ost << "size of tmp_ordinary_matches = " << tmp_ordinary_matches.size() << endl;
+ //     ost << "size of tmp_red_matches = " << tmp_red_matches.size() << endl;
 
-#if 0
-      if (tmp_exact_matches.size() > 1)
-        SORT(tmp_exact_matches, xscp_order);
+//      for (const auto& call : tmp_ordinary_matches)
+//        ost << "CALL BEFORE = " << call << endl;
 
-      if (tmp_green_matches.size() > 1)
-        SORT(tmp_green_matches, xscp_order);
+//      conditional_sort(tmp_exact_matches);
+ //     conditional_sort(tmp_green_matches);
+//      conditional_sort(tmp_ordinary_matches);
+//      conditional_sort(tmp_red_matches);
 
-      if (tmp_ordinary_matches.size() > 1)
-      { //FOR_ALL(tmp_ordinary_matches, [] (const string& call) { ost << "BEFORE: " << call << endl; } );
-        SORT(tmp_ordinary_matches, xscp_order);
-        //FOR_ALL(tmp_ordinary_matches, [] (const string& call) { ost << "AFTER: " << call << endl; } );
-      }
-
-      if (tmp_red_matches.size() > 1)
-        SORT(tmp_red_matches, xscp_order);
-#endif
+ //     for (const auto& call : tmp_ordinary_matches)
+ //       ost << "CALL AFTER = " << call << endl;
+      for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })
+        if (matches_p->size() > 1)
+         SORT(*matches_p, xscp_order_greater);
     }
 
     FOR_ALL(tmp_green_matches,    [win_bg, &match_vector] (const string& cs)         { match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) }; });
@@ -845,7 +848,7 @@ int main(int argc, char** argv)
     ssb_bandwidth_wide              = context.ssb_bandwidth_wide();
     ssb_centre_narrow               = context.ssb_centre_narrow();
     ssb_centre_wide                 = context.ssb_centre_wide();
-    xscp_enable                     = context.xscp_enable();
+    xscp_sort                       = context.xscp_sort();
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
@@ -882,12 +885,7 @@ int main(int argc, char** argv)
     const cty_data& country_data { *country_data_p };
 
     try
-    { //int xscp_limit { 1 };     // default value => read all lines in drmaster database file
-
-      //if (context.xscp_enable() and (context.xscp_cutoff() > 1))
-      //  xscp_limit = context.xscp_cutoff();
-
-      drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+    { drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
     }
 
     catch (...)
@@ -1088,14 +1086,11 @@ int main(int argc, char** argv)
       rig.base_state();
 
 // configure bandmaps so user's call and calls in the do-not-show list do not display
-//      { //const auto dns { context.do_not_show() };
-      
-        FOR_ALL(bandmaps, [dns = context.do_not_show()] (bandmap& bm) { bm.do_not_add(my_call);
+      FOR_ALL(bandmaps, [dns = context.do_not_show()] (bandmap& bm) { bm.do_not_add(my_call);
                                               
-                                                                        if (!dns.empty())
-                                                                          bm.do_not_add(dns); 
-                                                                      } );
-//      }
+                                                                      if (!dns.empty())
+                                                                        bm.do_not_add(dns); 
+                                                                    } );
 
 // ditto for other calls in the do-not-show files
       if (!do_not_show_filename.empty())
@@ -1123,7 +1118,7 @@ int main(int argc, char** argv)
       }
 
 // set the RBN threshold for each bandmap
-      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
+      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so there may be no need to change
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
@@ -1159,10 +1154,7 @@ int main(int argc, char** argv)
 
 // static windows may contain either defined information or the contents of a file
       for (const auto& this_static_window : swindows)
-      { //const string&                     win_contents { this_static_window.second.first };
-        //const vector<window_information>& vec_win_info { this_static_window.second.second };
-
-        const auto& [win_contents, vec_win_info] { this_static_window.second };
+      { const auto& [win_contents, vec_win_info] { this_static_window.second };
 
         for (const auto& winfo : vec_win_info)
         { window* window_p { new window() };

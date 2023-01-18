@@ -16,8 +16,11 @@
 */
 
 #include "drmaster.h"
+#include "log_message.h"
 
 using namespace std;
+
+extern message_stream    ost;       ///< debugging/logging output
 
 // -----------------------------------------------------  master_dta  ---------------------------------
 
@@ -515,8 +518,8 @@ trmaster::trmaster(const string& filename)
       const string call { record.call() };
 
 //      if (contains(_records, call))
-//      if (_records.contains(call))
-       if (_records > call)
+      if (_records.contains(call))
+ //      if (_records > call)
         record += _records[call];
 
       _records += { call, record };
@@ -808,6 +811,7 @@ void drmaster::_prepare_from_file_contents(const string& contents, const int xsc
       _records += { record.call(), record } ;
   } 
 
+  ost << "read " << _records.size() << " drmaster records from file" << endl;
 //FOR_ALL(to_lines(contents), [this] (const string& line) { const drmaster_line record { line };
 //
 //                                                            _records += { record.call(), record } ;

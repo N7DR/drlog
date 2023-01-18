@@ -393,7 +393,6 @@ public:
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
   void prepare(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)
