@@ -594,7 +594,9 @@ inline bool xscp_order_greater(const string& c1, const string& c2)
 
     //ost << boolalpha << "; greater = " << rv << endl;
 
-    return (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp())); }
+ //   return (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp()));
+    return (drm_db[c1].xscp() > drm_db[c2].xscp());
+  }
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
@@ -1110,9 +1112,9 @@ int main(int argc, char** argv)
         { const set<string> callsigns { calls_from_do_not_show_file(b) };
 
           if (!callsigns.empty())
-          { bandmap& bm { bandmaps[b] };
+          { //bandmap& bm { bandmaps[b] };
 
-            FOR_ALL(callsigns, [&bm] (const auto& callsign) { bm.do_not_add(callsign); });
+            FOR_ALL(callsigns, [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
           }
         }
       }

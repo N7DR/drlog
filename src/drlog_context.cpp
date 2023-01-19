@@ -1030,14 +1030,15 @@ void drlog_context::_process_configuration_file(const string& filename)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string> mults { clean_split_string(RHS, ',') };
+      { //const vector<string> mults { clean_split_string(RHS, ',') };
+        const vector<string> mults { clean_split_string(RHS) };
 
-        _remaining_callsign_mults_list = set<string>(mults.cbegin(), mults.cend());
+        _remaining_callsign_mults_list = set<string> { mults.cbegin(), mults.cend() } ;
       }
     }
 
 // REMAINING COUNTRY MULTS
-    if (LHS == "REMAINING COUNTRY MULTS"s)
+    if (LHS == "REMAINING COUNTRY MULTS"sv)
     { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
 
       if (_auto_remaining_country_mults)
@@ -1048,9 +1049,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
       else
       { //const vector<string> countries { remove_peripheral_spaces(split_string(RHS, ","s)) };
-        const vector<string> countries { clean_split_string(RHS, ',') };
+        //const vector<string> countries { clean_split_string(RHS, ',') };
+        const vector<string> countries { clean_split_string(RHS) };
 
-        _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
+//        _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
+        _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
       }
     }
 

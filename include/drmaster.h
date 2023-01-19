@@ -234,7 +234,8 @@ protected:
   std::string _ssb_power;                                       ///< power received in ARRL DX SSB
   std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
   std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
-  std::string _xscp;                                            ///< extended SCP value
+//  std::string _xscp;                                            ///< extended SCP value
+  int _xscp;                                                    ///< extended SCP value
 
 /*! \brief                      Extract a single field from the record
     \param  fields              all the fields

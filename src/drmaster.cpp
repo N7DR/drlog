@@ -578,7 +578,7 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
       return (cit->substr(field_indicator.length()));
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief                  Construct from a call or from a line from a drmaster file
@@ -589,7 +589,6 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 drmaster_line::drmaster_line(const string& line_or_call)
 { const vector<string> fields { split_string(line_or_call, ' ') };
 
-//  if (const size_t n_fields { fields.size() }; n_fields == 0)
   if (fields.empty())
     return;
 
@@ -622,7 +621,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _ssb_power  = _extract_field(fields, "=x"s);
   _state_160  = _extract_field(fields, "=s"s);
   _state_10   = _extract_field(fields, "=t"s);
-  _xscp       = _extract_field(fields, "=p"s);
+  _xscp       = from_string<decltype(_xscp)>(_extract_field(fields, "=p"s));
 }
 
 /// convert to string
@@ -702,8 +701,10 @@ string drmaster_line::to_string(void) const
   if (!state_10().empty())
     rv += " =t"s + state_10();
 
-  if (!xscp().empty())
-    rv += " =p"s + xscp();
+//  if (!xscp().empty())
+//    rv += " =p"s + xscp();
+  if (xscp() != 0)
+    rv += " =p"s + ::to_string(xscp());
 
   return rv;
 }
@@ -783,7 +784,9 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
   if (rv.state_10().empty())
     rv.state_10(state_10());
 
-  if (rv.xscp().empty())
+//  if (rv.xscp().empty())
+//    rv.xscp(xscp());
+  if (xscp() != 0)
     rv.xscp(xscp());
 
   return rv;
@@ -807,15 +810,12 @@ void drmaster::_prepare_from_file_contents(const string& contents, const int xsc
 { for (const string& line : to_lines(contents))
   { const drmaster_line record { line };
 
-    if (record.xscp().empty() or (from_string<int>(record.xscp()) >= xscp_limit))
+//    if (record.xscp().empty() or (from_string<int>(record.xscp()) >= xscp_limit))
+    if ( (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
       _records += { record.call(), record } ;
   } 
 
   ost << "read " << _records.size() << " drmaster records from file" << endl;
-//FOR_ALL(to_lines(contents), [this] (const string& line) { const drmaster_line record { line };
-//
-//                                                            _records += { record.call(), record } ;
-//                                                          } );
 }
 
 /*! \brief              Construct from a file

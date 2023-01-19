@@ -917,55 +917,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
   return rv;
 }
 
-#if 0
-template <class D, class P> // P = parameter; D = data in the database
-class cached_data
-{
-protected:
-  std::map<P, D> _db;
-
-  const D (*_lookup_fn)(const P&);
-
-public:
-  explicit cached_data(const D (*fn)(const P&)) :
-    _lookup_fn(fn)
-  { }
-
-  D data(P& param)
-    { auto it = _db.find(param);
-
-      if (it != _db.end())
-        return it->second;
-
-      D value = _lookup_fn(param);
-
-      _db.insert( { param, value } );
-      return value;
-    }
-
-  D overwrite_data(P& param)
-    { auto it = _db.find(param);
-
-      if (it != _db.end())
-        return it->second;
-
-      D value = _lookup_fn(param);
-
-      _db[param] = value;
-      return value;
-    }
-
-  void erase(P& param)
-  { auto it = _db.find(param);
-
-    if (it == _db.end())
-      return;
-
-    _db.erase(param);
-  }
-};
-#endif
-
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached
 */

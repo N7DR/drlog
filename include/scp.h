@@ -73,7 +73,7 @@ public:
 
 /// populate the database from a vector of calls
   inline void init_from_calls(const std::vector<std::string>& calls)
-    { FOR_ALL(calls, [&] (const std::string& this_call) { *this += this_call; } ); }
+    { FOR_ALL(calls, [this] (const std::string& this_call) { *this += this_call; } ); }
 
 /// add a call to the database
   void operator+=(const std::string& call);
@@ -91,7 +91,6 @@ public:
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
-//    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
     { return (call.empty() ? false : (_db[substring(call, 0, 2)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
