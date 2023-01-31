@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 211 2022-11-28 21:29:23Z  $
+// $Id: string_functions.cpp 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

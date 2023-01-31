@@ -1,4 +1,4 @@
-// $Id: drmaster.h 205 2022-04-24 16:05:06Z  $
+// $Id: drmaster.h 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -235,7 +235,7 @@ protected:
   std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
   std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
 //  std::string _xscp;                                            ///< extended SCP value
-  int _xscp;                                                    ///< extended SCP value
+  int _xscp { 0 };                                              ///< extended SCP value
 
 /*! \brief                      Extract a single field from the record
     \param  fields              all the fields
@@ -356,9 +356,7 @@ public:
     Lines without XSCP data are always included
 
     Throws exception if the file does not exist or is incorrectly formatted;
-//    except creates empty object if called with default filename that does not exist
 */
-//  explicit drmaster(const std::string& filename = "drmaster"s);
   explicit drmaster(const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Construct from a file
@@ -371,7 +369,6 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  explicit drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
   drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
@@ -381,7 +378,6 @@ public:
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  void prepare(const std::string& filename = "drmaster"s);
   void prepare(const std::string& filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
@@ -463,6 +459,8 @@ public:
 */
   inline bool contains(const std::string& call) const
     { return (_records > call); }
+
+  drmaster prune(const int pc) const;
 };
 
 #endif    // DRMASTER_H

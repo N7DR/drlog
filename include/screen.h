@@ -1,4 +1,4 @@
-// $Id: screen.h 206 2022-05-22 12:47:37Z  $
+// $Id: screen.h 216 2023-01-31 19:10:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -206,6 +206,14 @@ public:
 
 /// default constructor
   window_information(void) = default;
+
+/// construct from x, y, w, h
+  inline window_information(const int X, const int Y, const int W, const int H) :
+    _x(X),
+    _y(Y),
+    _w(W),
+    _h(H)
+  { }
 
   READ_AND_WRITE(x);                ///< x location on the screen
   READ_AND_WRITE(y);                ///< y location on the screen

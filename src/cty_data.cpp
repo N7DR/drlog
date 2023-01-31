@@ -588,7 +588,7 @@ location_info location_database::info(const string& callpart) const
 // see if it's some guy already in the db but now signing /QRP
 //  if ( (callsign.length() >= 5) and (last(callsign, 4) == "/QRP"s) )
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string target { remove_from_end(callsign, 4) };    // remove "/QRP"
+  { const string target { remove_from_end(callsign, 4u) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
     

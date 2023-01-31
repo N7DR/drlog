@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 214 2022-12-18 15:11:23Z  $
+// $Id: drlog.cpp 216 2023-01-31 19:10:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -314,7 +314,7 @@ accumulator<string>     acc_countries;                              ///< accumul
 int                     ACCEPT_COLOUR { COLOUR_GREEN };             ///< colour for calls that have been worked, but are not dupes
 unordered_set<string>   all_country_mults;                          ///< all the country mults from the rules
 bool                    allow_audio_recording { false };            ///< may we record audio?
-string                  at_call;                                    ///< call that should replace comat in "call ok now" message
+string                  at_call;                                    ///< call that should replace commat in "call ok now" message
 audio_recorder          audio;                                      ///< provide capability to record audio
 atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
 
@@ -637,7 +637,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     if (contains(vec_str, callsign))
       tmp_exact_matches += callsign;
 
-    auto is_dupe = [](const string& call) { return logbk.is_dupe(call, current_band, current_mode, rules); };
+    auto is_dupe = [] (const string& call) { return logbk.is_dupe(call, current_band, current_mode, rules); };
 
     for (const auto& cs : vec_str)
     { if (cs != callsign)
@@ -654,26 +654,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // change the order within each category if XSCP ordering is to be used
     if (xscp_sort)
-    { //auto conditional_sort = [] (vector<string>& matches) { if (matches.size() > 1)
-      //                                                         SORT(matches, xscp_order_greater);
-       //                                                    };
-
-//      ost << "size of tmp_exact_matches = " << tmp_exact_matches.size() << endl;
-//      ost << "size of tmp_green_matches = " << tmp_green_matches.size() << endl;
-//      ost << "size of tmp_ordinary_matches = " << tmp_ordinary_matches.size() << endl;
- //     ost << "size of tmp_red_matches = " << tmp_red_matches.size() << endl;
-
-//      for (const auto& call : tmp_ordinary_matches)
-//        ost << "CALL BEFORE = " << call << endl;
-
-//      conditional_sort(tmp_exact_matches);
- //     conditional_sort(tmp_green_matches);
-//      conditional_sort(tmp_ordinary_matches);
-//      conditional_sort(tmp_red_matches);
-
- //     for (const auto& call : tmp_ordinary_matches)
- //       ost << "CALL AFTER = " << call << endl;
-      for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })
+    { for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })
         if (matches_p->size() > 1)
          SORT(*matches_p, xscp_order_greater);
     }
@@ -888,6 +869,15 @@ int main(int argc, char** argv)
 
     try
     { drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+
+      ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
+
+      if (context.xscp_percent_cutoff())
+      { //ost << "xscp_percent_cutoff = " << context.xscp_percent_cutoff().value() << endl;
+        drm_db = drm_db.prune(context.xscp_percent_cutoff().value());
+
+        ost << "pruned drmaster database contains " << css(drm_db.size()) << " entries" << endl;
+      }
     }
 
     catch (...)
@@ -4662,7 +4652,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
-//      if ( contains(value, "."s) and (value.size() != 1) )    // ignore a field that is just "."
       if ( contains(value, '.') and (value.size() != 1) )    // ignore a field that is just "."
         from_callsign = remove_char(value, '.');
 
@@ -4671,9 +4660,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
     unsigned int n_optional_fields { 0 };
 
-    FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
-                                                                  n_optional_fields++;
-                                                              } );
+    FOR_ALL(exchange_template, [&n_optional_fields] (const exchange_field& ef) { if (ef.is_optional())
+                                                                                   n_optional_fields++;
+                                                                               } );
 
     bool sent_acknowledgement { false };
 
@@ -4681,7 +4670,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     { size_t n_fields_without_new_callsign { 0 };
 
       for (const auto& values : exchange_field_values)
- //       if (!contains(values, "."s))
         if (!contains(values, '.'))
           n_fields_without_new_callsign++;
 
@@ -4729,8 +4717,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
             if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))    // in CQ mode, he does
-            { //const vector<string> call_contents_fields { split_string(call_contents, SPACE_STR) };
-              const vector<string> call_contents_fields { split_string(call_contents, ' ') };
+            { const vector<string> call_contents_fields { split_string(call_contents, ' ') };
               const string         original_callsign    { call_contents_fields[call_contents_fields.size() - 1] };
 
               string callsign { original_callsign };
@@ -4962,7 +4949,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // possibly change needed status of this call on other bandmaps
             if (!rules.work_if_different_band())
-              FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed(qso.callsign()); } );
+              FOR_ALL(bandmaps, [&qso] (bandmap& bm) { bm.not_needed(qso.callsign()); } );
           }
           else    // SAP; if we are in SAP mode, we may need to change the work/mult designation in the bandmap
           {
@@ -4990,19 +4977,19 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { for (const auto& callsign_mult_name : rules.callsign_mults())
               { const string target_value { callsign_mult_value(callsign_mult_name, qso.callsign()) };
 
-                FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_callsign_mult( &callsign_mult_value, callsign_mult_name, target_value ); } );
+                FOR_ALL(bandmaps, [&callsign_mult_name, &target_value] (bandmap& bm) { bm.not_needed_callsign_mult( &callsign_mult_value, callsign_mult_name, target_value ); } );
               }
             }
           }
 
 // country mult status
           if (country_mults_used)
-          { const string canonical_prefix { location_db.canonical_prefix(qso.callsign()) };
+          { //const string canonical_prefix { location_db.canonical_prefix(qso.callsign()) };
 
-            if (rules.country_mults_per_band())
+            if (const string canonical_prefix { location_db.canonical_prefix(qso.callsign()) }; rules.country_mults_per_band())
               bandmap_this_band.not_needed_country_mult(canonical_prefix);
             else                                                                            // country mults are not per band
-              FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_country_mult(canonical_prefix); } );
+              FOR_ALL(bandmaps, [&canonical_prefix] (bandmap& bm) { bm.not_needed_country_mult(canonical_prefix); } );
           }
 
 // exchange mult status
@@ -5013,7 +5000,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
             else
             { for (const auto& [field_name, field_value] : exchange_mults_this_qso)
-                FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_exchange_mult(field_name, field_value); } );
+                FOR_ALL(bandmaps, [&field_name, &field_value] (bandmap& bm) { bm.not_needed_exchange_mult(field_name, field_value); } );
             }
           }
 
@@ -5081,13 +5068,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // CTRL-CURSOR LEFT -- left one word
   if (!processed and e.is_ctrl() and e.symbol() == XK_Left)
-  { const cursor original_posn { win.cursor_position() };
+  { //const cursor original_posn { win.cursor_position() };
 
-    if (original_posn.x() != 0)    // do nothing if at start of line
+    if (const cursor original_posn { win.cursor_position() }; original_posn.x() != 0)    // do nothing if at start of line
     { const string         contents  { win.read(0, original_posn.y()) };
-      const vector<size_t> word_posn { starts_of_words(contents) };
+ //     const vector<size_t> word_posn { starts_of_words(contents) };
 
-      if (word_posn.empty())                              // there are no words
+      if (const vector<size_t> word_posn { starts_of_words(contents) }; word_posn.empty())                              // there are no words
         win <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
       else                                                // there are some words
       { size_t index;
@@ -5729,7 +5716,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
     \param  m           current mode
 */
 void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
-{ for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [&] (const map<string, window*>::value_type& mult)  // Josuttis 2nd ed., p. 338
+{ for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [b, m, &rules, &statistics] (const map<string, window*>::value_type& mult)  // Josuttis 2nd ed., p. 338
     { update_remaining_exch_mults_window(mult.first, rules, statistics, b, m); } );
 }
 
@@ -6059,28 +6046,22 @@ void* simulator_thread(void* vp)
 
     keyboard.push_key_press(static_cast<KeySym>(XK_Return));
 
-//    sleep_for(seconds(1));
     sleep_for(1s);
 
     if (cw_p)
       while (!cw_p->empty())
- //       sleep_for(milliseconds(500));
         sleep_for(500ms);
 
- //   sleep_for(seconds(1));
     sleep_for(1s);
 
     keyboard.push_key_press(static_cast<KeySym>(XK_Return));
 
-//    sleep_for(seconds(1));
     sleep_for(1s);
 
     if (cw_p)
       while (!cw_p->empty())
-//        sleep_for(milliseconds(500));
         sleep_for(500ms);
 
- //   sleep_for(seconds(1));
     sleep_for(1s);
 
     { SAFELOCK(thread_check);
@@ -6111,7 +6092,7 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
     return;
 
 // local function to perform the update
-  auto perform_update = [=] (const string& callsign_mult_name, const string& prefix)
+  auto perform_update = [force_known] (const string& callsign_mult_name, const string& prefix)
     { if (!prefix.empty())      // because sac_prefix() can return an empty string
       { bool is_known;          // we use the is_known variable because we don't want to perform a window update while holding a lock
 
@@ -6405,7 +6386,6 @@ void* reset_connection(void* vp)
 
   ost << "RBN/cluster connection has been reset" << endl;
 
-//  return nullptr;
   pthread_exit(nullptr);
 }
 
@@ -6422,8 +6402,8 @@ bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
   bool rv { false };
 
-  for (auto field : received_exchange)
-  { if (field.is_possible_mult())                              // see if it's really a mult
+  for (auto field : received_exchange)                          // use a copy
+  { if (field.is_possible_mult())                               // see if it's really a mult
     { if (context.auto_remaining_exchange_mults(field.name()))
         statistics.add_known_exchange_mult(field.name(), field.value());
 
@@ -6595,7 +6575,6 @@ void exit_drlog(void)
 
         if (local_copy == 0)
         { ost << "all threads stopped; exiting" << endl;
- //         sleep_for(seconds(1));                     // just allow some extra time
           sleep_for(1s);                     // just allow some extra time
           exit(0);
         }
@@ -6607,7 +6586,6 @@ void exit_drlog(void)
 
     ost << "after exit test; about to sleep for one second" << endl;
 
-//    sleep_for(seconds(1));
     sleep_for(1s);
   }
 
@@ -6657,14 +6635,14 @@ string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE 
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
 bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
-{ const bool worked_at_all { q_history.worked(callsign) };
+{ //const bool worked_at_all { q_history.worked(callsign) };
 
-  if (!worked_at_all)
+  if (const bool worked_at_all { q_history.worked(callsign) }; !worked_at_all)
     return true;
 
-  const bool worked_this_band_mode { q_history.worked(callsign, b, m) };
+//  const bool worked_this_band_mode { q_history.worked(callsign, b, m) };
 
-  if (worked_this_band_mode)
+  if (const bool worked_this_band_mode { q_history.worked(callsign, b, m) }; worked_this_band_mode)
     return false;
 
 // worked on same band, different mode
@@ -8735,9 +8713,9 @@ pair<float, float> latitude_and_longitude(const string& callsign)
 */
 void do_not_show(const string& callsign, const BAND b)
 { if (b == ALL_BANDS)
-  { FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
-                                          bm.do_not_add(callsign);
-                                        } );
+  { FOR_ALL(bandmaps, [callsign] (bandmap& bm) { bm -= callsign;
+                                                 bm.do_not_add(callsign);
+                                               } );
   }
   else                          // single band
   { bandmap& bm = bandmaps[b];

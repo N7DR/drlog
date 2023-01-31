@@ -1,4 +1,4 @@
-// $Id: macros.h 214 2022-12-18 15:11:23Z  $
+// $Id: macros.h 216 2023-01-31 19:10:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -944,8 +944,7 @@ public:
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
   bool add(const T& val, const COUNTER n = 1)
-  { //if (!(_values > val))
-    if (!(_values.contains(val)))
+  { if (!(_values.contains(val)))
       _values += { val, n };
     else
       _values[val] += n;
@@ -958,7 +957,6 @@ public:
     \return         total number of times <i>value</i> has been added
 */
   inline unsigned int value(const T& val) const
-//    { return ( (_values > val) ? _values.at(val) : 0 ); }
     { return ( (_values.contains(val)) ? _values.at(val) : 0 ); }
 };
 
@@ -1144,9 +1142,6 @@ inline void operator+=(C& sus, E&& element)
   requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
   { sus.insert(std::forward<E>(element)); }
 
-//inline void operator+=(ANYSET auto& sus, typename decltype(sus)::value_type&& element)    // I don't know why this doesn't work
-//  { sus.insert(std::forward<typename decltype(sus)::value_type>(element)); }
-
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
     \param  element     element to insert
@@ -1155,10 +1150,6 @@ inline void operator+=(C& sus, E&& element)
 // see also https://www.sandordargo.com/blog/2021/02/17/cpp-concepts-4-ways-to-use-them
 inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_type& element)
   { sus.insert(element); }
-//template <typename C, typename T>
-//inline void operator+=(C& sus, const typename C::value_type& element)
-//  requires is_sus_v<C> or is_ssuss_v<C>
-//  { sus.insert(element); }
 
 /*! \brief          Add all elements of a vector to a set or unordered set
     \param  sus     destination set or unordered set
@@ -1360,7 +1351,6 @@ inline void operator-=(C& c1, const typename C::value_type& element)
   requires is_list<C>
 { c1.remove(element); }
 
-#if 1
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
     \param  element     element to append
@@ -1382,7 +1372,6 @@ template <typename Q, typename E>
 inline void operator+=(Q& q1, const E& element)
   requires is_queue<Q> and (std::convertible_to<E, typename Q::value_type>)
 { q1.push(element); }
-#endif
 
 /*! \brief              Remove and call destructor on front element of deque 
     \param  D1          destination deque
@@ -1457,13 +1446,31 @@ inline void operator-=(C& c1, C c2)
   { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
 
 #if 0
-template <typename InputIt, typename T, typename OP>
-auto ACCIP(InputIt first, InputIt last, T init, OP op) -> T
-{
-    for (; first != last; ++first)
-    { init += (op(*first));
-    }
-    return init;
+template <typename C>
+typename C::value_type value_line(const C& values, const int pc)
+{ if (values.empty())
+    return std::numeric_limits<typename C::value_type>::max();
+
+  std::vector<typename C::value_type> ordered_vector;
+  ordered_vector.reserve(values.size());
+
+  FOR_ALL(values, [&ordered_vector] (const auto& v) { ordered_vector += v; });
+
+  SORT(ordered_vector);
+
+  const int clamped_pc { std::clamp(pc, 0, 100) };
+
+  ost << "clamped_pc = " << clamped_pc << std::endl;
+
+  if (clamped_pc == 100)
+    return (ordered_vector[0]);     // all match
+
+  if (clamped_pc == 0)
+    return ordered_vector[ordered_vector.size() + 1];   // none match
+
+  const size_t idx { static_cast<size_t>((values.size() * (100 - static_cast<float>(clamped_pc)) / 100) + 0.5) };
+
+  return ordered_vector.at(idx);
 }
 #endif
 

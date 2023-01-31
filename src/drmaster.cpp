@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: drmaster.cpp 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,34 @@
 using namespace std;
 
 extern message_stream    ost;       ///< debugging/logging output
+
+template <typename C>
+typename C::value_type value_line(const C& values, const int pc)
+{ if (values.empty())
+    return std::numeric_limits<typename C::value_type>::max();
+
+  std::vector<typename C::value_type> ordered_vector;
+  ordered_vector.reserve(values.size());
+
+  FOR_ALL(values, [&ordered_vector] (const auto& v) { ordered_vector += v; });
+
+  SORT(ordered_vector);
+
+  const int clamped_pc { std::clamp(pc, 0, 100) };
+
+  ost << "pc = " << pc << endl;
+  ost << "clamped_pc = " << clamped_pc << std::endl;
+
+  if (clamped_pc == 100)
+    return (ordered_vector[0]);     // all match
+
+  if (clamped_pc == 0)
+    return ordered_vector[ordered_vector.size() + 1];   // none match
+
+  const size_t idx { static_cast<size_t>((values.size() * (100 - static_cast<float>(clamped_pc)) / 100) + 0.5) };
+
+  return ordered_vector.at(idx);
+}
 
 // -----------------------------------------------------  master_dta  ---------------------------------
 
@@ -621,7 +649,11 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _ssb_power  = _extract_field(fields, "=x"s);
   _state_160  = _extract_field(fields, "=s"s);
   _state_10   = _extract_field(fields, "=t"s);
-  _xscp       = from_string<decltype(_xscp)>(_extract_field(fields, "=p"s));
+
+//  const string xscp_str { _extract_field(fields, "=p"s) };
+
+  if (const string xscp_str { _extract_field(fields, "=p"s) }; !xscp_str.empty())
+    _xscp       = from_string<decltype(_xscp)>(xscp_str);
 }
 
 /// convert to string
@@ -936,4 +968,29 @@ void drmaster::operator+=(const drmaster_line& drml)
     _records -= call;
     _records += { call, old_drml };
   }
+}
+
+drmaster drmaster::prune(const int pc) const
+{ drmaster    rv;
+  vector<int> xscp_values;
+
+  for (const auto& [ call, line ] : _records)
+  { if (line.xscp() == 0)
+      rv += line;
+    else
+      xscp_values += line.xscp();
+  }
+
+  ost << "number of XSCP = 0 values = " << rv.size() << endl;
+  ost << "number of non-zero values = " << xscp_values.size() << endl;
+
+  const int breakpoint_value { value_line(xscp_values, pc) };
+
+  ost << "breakpoint value = " << breakpoint_value << endl;
+
+  for (const auto& [ call, line ] : _records)
+    if (line.xscp() >= breakpoint_value)
+      rv += line; 
+
+  return rv;
 }

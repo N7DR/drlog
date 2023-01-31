@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 214 2022-12-18 15:11:23Z  $
+// $Id: drlog_context.cpp 216 2023-01-31 19:10:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -999,7 +999,16 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
-      _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);
+    { //ost << "rhs = " << rhs << endl;
+      if (rhs.ends_with('%'))       // if percentage
+      { //ost << "value 1 = " << remove_from_end(rhs, '%') << endl;
+        //ost << "value = " << from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')) << endl;
+        //ost << "clamped value = " << clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')), 0, 100) << endl;
+        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')), 0, 100);
+      }
+      else
+        _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
+    }
 
 // XSCP SORT
     if (LHS == "XSCP SORT"sv)
@@ -1058,152 +1067,135 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
-    if (LHS == "AUTO REMAINING EXCHANGE MULTS"s)
+    if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
     { //const vector<string> mult_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
-      const vector<string> mult_names { clean_split_string(RHS, ',') };
+      //const vector<string> mult_names { clean_split_string(RHS, ',') };
+      //const vector<string> mult_names { clean_split_string(RHS) };
 
-      for (const auto& str : mult_names)
-        _auto_remaining_exchange_mults += str;
+ //     for (const auto& str : mult_names)
+ //       _auto_remaining_exchange_mults += str;
+      FOR_ALL(clean_split_string(RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
     }
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
 // CABRILLO CONTEST
-    if (LHS == "CABRILLO CONTEST"s)
+    if (LHS == "CABRILLO CONTEST"sv)
       _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contest require an illegal value
 
-//    if ( (LHS == "CABRILLO CERTIFICATE"s) and is_legal_value(RHS, "YES,NO"s, ","s) )
-    if ( (LHS == "CABRILLO CERTIFICATE"s) and is_legal_value(RHS, "YES,NO"s, ',') )
+    if ( (LHS == "CABRILLO CERTIFICATE"sv) and is_legal_value(RHS, "YES,NO"s, ',') )
       _cabrillo_certificate = RHS;
 
  // CABRILLO EMAIL (sic)
-    if ( (LHS == "CABRILLO E-MAIL"s) or (LHS == "CABRILLO EMAIL"s) )
+    if ( (LHS == "CABRILLO E-MAIL"sv) or (LHS == "CABRILLO EMAIL"sv) )
       _cabrillo_e_mail = rhs;
 
 // CABRILLO EOL
-    if (LHS == "CABRILLO EOL"s)
+    if (LHS == "CABRILLO EOL"sv)
       _cabrillo_eol = RHS;
 
 // CABRILLO INCLUDE SCORE
-    if (LHS == "CABRILLO INCLUDE SCORE"s)
+    if (LHS == "CABRILLO INCLUDE SCORE"sv)
       _cabrillo_include_score = is_true;
 
 // CABRILLO LOCATION
-    if (LHS == "CABRILLO LOCATION"s)
+    if (LHS == "CABRILLO LOCATION"sv)
       _cabrillo_location = rhs;
 
 // CABRILLO NAME
-    if (LHS == "CABRILLO NAME"s)
+    if (LHS == "CABRILLO NAME"sv)
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-//    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"s) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s, ","s) )
-    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"s) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s, ',') )
+    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"sv) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s /*, ',' */) )
       _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
-    if (LHS == "CABRILLO CATEGORY-BAND"s)
-    {
-// The spec calls for bizarre capitalization
- //     if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s, ","s))
-      if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s, ','))
+    if (LHS == "CABRILLO CATEGORY-BAND"sv)
+    { if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s /*, ',' */)) // The spec calls for bizarre capitalization
         _cabrillo_category_band = rhs;
     }
 
 // CABRILLO CATEGORY-MODE
-    if (LHS == "CABRILLO CATEGORY-MODE"s)
-    { //if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s, ","s))
-      if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s, ','))
+    if (LHS == "CABRILLO CATEGORY-MODE"sv)
+    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s /*, ',' */))
         _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
-    if (LHS == "CABRILLO CATEGORY-OPERATOR"s)
-    { //if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s, ","s))
-      if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s, ','))
+    if (LHS == "CABRILLO CATEGORY-OPERATOR"sv)
+    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s /*, ',' */))
         _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
-    if (LHS == "CABRILLO CATEGORY-OVERLAY"s)
-    { //if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s, ","s))
-      if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s, ','))
+    if (LHS == "CABRILLO CATEGORY-OVERLAY"sv)
+    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s /*, ',' */))
         _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
-    if (LHS == "CABRILLO CATEGORY-POWER"s)
-    { //if (is_legal_value(RHS, "HIGH,LOW,QRP"s, ","s))
-      if (is_legal_value(RHS, "HIGH,LOW,QRP"s, ','))
+    if (LHS == "CABRILLO CATEGORY-POWER"sv)
+    { if (is_legal_value(RHS, "HIGH,LOW,QRP"s /* , ',' */))
         _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
-    if (LHS == "CABRILLO CATEGORY-STATION"s)
-    { //if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s, ","s))
-      if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s, ','))
+    if (LHS == "CABRILLO CATEGORY-STATION"sv)
+    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s /*, ',' */))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TIME
-    if (LHS == "CABRILLO CATEGORY-TIME"s)
-    { //if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s, ","s))
-      if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s, ','))
+    if (LHS == "CABRILLO CATEGORY-TIME"sv)
+    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s /*, ','*/))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
-    if (LHS == "CABRILLO CATEGORY-TRANSMITTER"s)
-    { //if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s, ","s))
-      if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s, ','))
+    if (LHS == "CABRILLO CATEGORY-TRANSMITTER"sv)
+    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s /*, ',' */))
         _cabrillo_category_transmitter = RHS;
     }
 
 // CABRILLO CLUB
-    if (LHS == "CABRILLO CLUB"s)
+    if (LHS == "CABRILLO CLUB"sv)
       _cabrillo_club = RHS;
 
 // CABRILLO ADDRESS first line
-    if (LHS == "CABRILLO ADDRESS 1"s)
+    if (LHS == "CABRILLO ADDRESS 1"sv)
       _cabrillo_address_1 = rhs;
 
 // CABRILLO ADDRESS second line
-    if (LHS == "CABRILLO ADDRESS 2"s)
+    if (LHS == "CABRILLO ADDRESS 2"sv)
       _cabrillo_address_2 = rhs;
 
 // CABRILLO ADDRESS third line
-    if (LHS == "CABRILLO ADDRESS 3"s)
+    if (LHS == "CABRILLO ADDRESS 3"sv)
       _cabrillo_address_3 = rhs;
 
 // CABRILLO ADDRESS fourth line
-    if (testline.starts_with("CABRILLO ADDRESS 4"s))
-//      _cabrillo_address_4 = remove_peripheral_spaces((split_string(line, "="s))[1]);
-//      _cabrillo_address_4 = clean_split_string(line, '=')[1]);
+    if (testline.starts_with("CABRILLO ADDRESS 4"sv))
       _cabrillo_address_4 = rhs;
 
 // CABRILLO ADDRESS-CITY
-    if (testline.starts_with("CABRILLO ADDRESS-CITY"))
-//      _cabrillo_address_city = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (testline.starts_with("CABRILLO ADDRESS-CITY"sv))
       _cabrillo_address_city = rhs;
 
 // CABRILLO ADDRESS-STATE-PROVINCE
-    if (testline.starts_with("CABRILLO ADDRESS-STATE-PROVINCE"s))
-//      _cabrillo_address_state_province = remove_peripheral_spaces((split_string(line, "="s))[1]);
+    if (testline.starts_with("CABRILLO ADDRESS-STATE-PROVINCE"sv))
       _cabrillo_address_state_province = rhs;
 
 // CABRILLO ADDRESS-POSTALCODE
-    if (testline.starts_with("CABRILLO ADDRESS-POSTALCODE"s))
- //     _cabrillo_address_postalcode = remove_peripheral_spaces((split_string(line, "="s))[1]);
+    if (testline.starts_with("CABRILLO ADDRESS-POSTALCODE"sv))
       _cabrillo_address_postalcode = rhs;
 
 // CABRILLO ADDRESS-COUNTRY
-    if (testline.starts_with("CABRILLO ADDRESS-COUNTRY"s))
-//      _cabrillo_address_country = remove_peripheral_spaces((split_string(line, "="s))[1]);
+    if (testline.starts_with("CABRILLO ADDRESS-COUNTRY"sv))
       _cabrillo_address_country = rhs;
 
 // CABRILLO OPERATORS
-//    if (starts_with(testline, "CABRILLO OPERATORS"s))
-    if (testline.starts_with("CABRILLO OPERATORS"s))
+    if (testline.starts_with("CABRILLO OPERATORS"sv))
       _cabrillo_operators = RHS;
 
 /*
@@ -1223,13 +1215,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //                                                 { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
 //    };
 
-    if (LHS == "CABRILLO QSO"s)
+    if (LHS == "CABRILLO QSO"sv)
     { _cabrillo_qso_template = RHS;
 
       if (contains(RHS, "TEMPLATE"s))
       { try
-        { //const string key { remove_peripheral_spaces(split_string(RHS, ":"s))[1] };
-          const string key { clean_split_string(RHS, ':')[1] };
+        { const string key { clean_split_string(RHS, ':')[1] };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1243,30 +1234,43 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
-    if (LHS == "WINDOW"s)
+    if (LHS == "WINDOW"sv)
     { //const vector<string> window_info { remove_peripheral_spaces(split_string(split_string(testline, "="s)[1], ","s)) };
-      const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
+      //const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
+ //     /*const */vector<string> window_info { clean_split_string(split_string(testline, '=')[1] /*, ',' */) };
 
-      if (window_info.size() >= 5)
-      { const string name { window_info[0] };
+      if (vector<string> window_info { clean_split_string(split_string(testline, '=')[1]) }; window_info.size() >= 5)
+      { /*const */string name { window_info[0] };
 
-        window_information winfo; // designated initializers not supported in current g++
+ //       window_information winfo;
 
-        winfo.x(from_string<int>(window_info[1]));
-        winfo.y(from_string<int>(window_info[2]));
-        winfo.w(from_string<int>(window_info[3]));
-        winfo.h(from_string<int>(window_info[4]));
+ //       winfo.x(from_string<int>(window_info[1]));
+ //       winfo.y(from_string<int>(window_info[2]));
+ //       winfo.w(from_string<int>(window_info[3]));
+ //       winfo.h(from_string<int>(window_info[4]));
+
+//        window_information winfo { ._x = from_string<int>(window_info[1]),
+//                                   ._y = from_string<int>(window_info[2]),
+//                                   ._w = from_string<int>(window_info[3]),
+//                                   ._h = from_string<int>(window_info[4])
+//                                 };
+        window_information winfo { from_string<int>(window_info[1]), from_string<int>(window_info[2]), from_string<int>(window_info[3]), from_string<int>(window_info[4]) };
 
         if (window_info.size() >= 6)
-        { winfo.fg_colour(window_info[5]);
+        { //winfo.fg_colour(window_info[5]);
+
+          //if (window_info.size() >= 7)
+          //  winfo.bg_colour(window_info[6]);
+          winfo.fg_colour(move(window_info[5]));
 
           if (window_info.size() >= 7)
-            winfo.bg_colour(window_info[6]);
+            winfo.bg_colour(move(window_info[6]));
 
           winfo.colours_set(true);
         }
 
-        _windows += { name, winfo };
+ //       _windows += { name, winfo };
+        _windows += { move(name), move(winfo) };
       }
     }    // end of WINDOW
 

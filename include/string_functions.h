@@ -1,4 +1,4 @@
-// $Id: string_functions.h 211 2022-11-28 21:29:23Z  $
+// $Id: string_functions.h 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -414,6 +414,16 @@ inline std::string remove_from_end(const std::string& s, const unsigned int n)
 */
 inline std::string remove_from_end(const std::string& s, const std::string& e)
   { return ( s.ends_with(e) ? remove_from_end(s, e.length()) : s ); }
+
+/*! \brief      Remove character if present at the end of a string
+    \param  s   original string
+    \param  c   character to remove
+    \return     <i>s</i> with the <i>c</i> removed, if it was present
+
+    If <i>c</i> is not present, just returns <i>s</i>
+*/
+inline std::string remove_from_end(const std::string& s, const char c)
+  { return ( s.ends_with(c) ? remove_from_end(s, 1u) : s ); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -889,7 +899,7 @@ inline bool is_legal_value(const std::string& value, const std::string& legal_va
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator)
+inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
   { return (split_string(legal_values, separator) > value); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?

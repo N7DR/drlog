@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 205 2022-04-24 16:05:06Z  $
+// $Id: drlog_context.h 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -283,6 +283,7 @@ protected:
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
+  std::optional<int>                           _xscp_percent_cutoff                     { };                                ///< an ordered percentage
   bool                                         _xscp_sort                               { false };                          ///< whether to enable use of XSCP when displaying matches
 
 /*! \brief              Process a configuration file
@@ -569,6 +570,7 @@ public:
   CONTEXTREAD(worked_mults_colour);              ///< colour of worked mults in the mult windows
 
   CONTEXTREAD(xscp_cutoff);                      ///< use XCSP values >= this value
+  CONTEXTREAD(xscp_percent_cutoff);              ///< an ordered percentage
   CONTEXTREAD(xscp_sort);                        ///< whether to enable use of XSCP when displaying matches
 
 /*! \brief      Get the points string for a particular band and mode

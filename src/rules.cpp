@@ -1,4 +1,4 @@
-// $Id: rules.cpp 214 2022-12-18 15:11:23Z  $
+// $Id: rules.cpp 215 2023-01-23 19:37:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1472,12 +1472,12 @@ string wpx_prefix(const string& call)
 
     if (portables.find(last_char(callsign)) != string::npos)
 //      callsign = substring(callsign, 0, callsign.length() - 2);
-      callsign = remove_from_end(callsign, 2);
+      callsign = remove_from_end(callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
         //callsign = substring(callsign, 0, callsign.length() - 2);
-        callsign = remove_from_end(callsign, 2);
+        callsign = remove_from_end(callsign, 2u);
       }
   }
 
@@ -1486,7 +1486,7 @@ string wpx_prefix(const string& call)
   { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last(callsign, 2)))
-      callsign = remove_from_end(callsign, 3);
+      callsign = remove_from_end(callsign, 3u);
 
  //   if (mobiles > last(callsign, 2))
  //     callsign = substring(callsign, 0, callsign.length() - 3);
