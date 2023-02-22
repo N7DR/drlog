@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 215 2023-01-23 19:37:41Z  $
+// $Id: drmaster.cpp 217 2023-02-15 16:05:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,6 +22,14 @@ using namespace std;
 
 extern message_stream    ost;       ///< debugging/logging output
 
+/*  \brief          At what value is a particular percentage point?
+    \param  values  container of values
+    \param  pc      percentage point at which one desires the value
+    \return         value at the <i>pc</i>th percentile
+
+    <i>pc</i> = 100 => all match
+    <i>pc</i> = 0 => none match
+*/
 template <typename C>
 typename C::value_type value_line(const C& values, const int pc)
 { if (values.empty())
@@ -35,9 +43,6 @@ typename C::value_type value_line(const C& values, const int pc)
   SORT(ordered_vector);
 
   const int clamped_pc { std::clamp(pc, 0, 100) };
-
-  ost << "pc = " << pc << endl;
-  ost << "clamped_pc = " << clamped_pc << std::endl;
 
   if (clamped_pc == 100)
     return (ordered_vector[0]);     // all match

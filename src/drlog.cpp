@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 216 2023-01-31 19:10:32Z  $
+// $Id: drlog.cpp 217 2023-02-15 16:05:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -148,12 +148,13 @@ void   enter_cq_or_sap_mode(const DRLOG_MODE new_mode);     ///< enter CQ or SAP
 void   enter_sap_mode(void);                                ///< Enter SAP mode
 void   exit_drlog(void);                                    ///< Cleanup and exit
 string expand_cw_message(const string& msg);                ///< Expand a CW message, replacing special characters
+string expected_received_exchange(const string& callsign);  ///< expected exchange field name
 
-bool fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
+bool fast_cw_bandwidth(void);                           ///< set CW bandwidth to appropriate value for CQ/SAP mode
 
-void* get_indices(void* vp);                                           ///< Get SFI, A, K
+void* get_indices(void* vp);                                       ///< Get SFI, A, K
 
-string hhmmss(void);                                ///< Obtain the current time in HH:MM:SS format
+string hhmmss(void);                                    ///< Obtain the current time in HH:MM:SS format
 
 void insert_memory(void);                                                                               ///< insert an entry into the memories
 bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
@@ -455,6 +456,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
        win_posted_by,                   ///< stations posting me on the RBN
+       win_putative_exchange,           ///< guess at the exchange
        win_query_1,                     ///< query 1 matches
        win_query_n,                     ///< query n matches
        win_quick_qsy,                   ///< QRG and mode for ctrl-=
@@ -588,15 +590,7 @@ bool exchange_mults_used { false };            ///< do the rules call for exchan
 bool mm_country_mults    { false };            ///< can /MM stns be country mults?
 
 inline bool xscp_order_greater(const string& c1, const string& c2)
-  { //ost << "c1 = " << c1 << ", p = " << drm_db[c1].xscp() << "; c2 = " << c2 << ", p = " << drm_db[c2].xscp();
-
-    //bool rv = (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp()));
-
-    //ost << boolalpha << "; greater = " << rv << endl;
-
- //   return (from_string<int>(drm_db[c1].xscp()) > from_string<int>(drm_db[c2].xscp()));
-    return (drm_db[c1].xscp() > drm_db[c2].xscp());
-  }
+  { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
@@ -1328,6 +1322,11 @@ int main(int argc, char** argv)
 
 // POSTED BY window
     win_posted_by.init(context.window_info("POSTED BY"s), WINDOW_NO_CURSOR);
+
+// PUTATIVE EXCHANGE window
+    win_putative_exchange.init(context.window_info("PUTATIVE EXCHANGE"s), WINDOW_NO_CURSOR);
+
+//  win_putative_exchange <= "123456789";
 
 // QTC HINT window
     win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
@@ -2431,7 +2430,10 @@ void* process_rbn_info(void* vp)
       if (!line.empty())
       { const bool is_beacon { contains(line, " BCN "s) or contains(line, "/B "s)  or contains(line, "/B2 "s) };
 
-        if (rbn_beacons or (!rbn_beacons and !is_beacon) )
+        if (!rbn_beacons and is_beacon)
+          continue;
+
+//        if (rbn_beacons or (!rbn_beacons and !is_beacon) )
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
@@ -2445,13 +2447,24 @@ void* process_rbn_info(void* vp)
             if (is_rbn and autocorrect_rbn)
               post.callsign(ac_db.corrected_call(post.callsign()));
 
+// eliminate some obvious busts
+            const string& call  { post.callsign() };
+            const char    first { call[0] };
+
+            if ( (first == '/') or (first == 'Q') or (first == '0') or (first == '1') )
+              continue;          
+
+            const char last { call[call.size() - 1] };
+
+            if (last == '/')
+              continue;
+
             const BAND dx_band { post.band() };
 
 // is this station being monitored?
             if (mp.is_monitored(post.callsign()))
               mp += post;
 
-//            if (permitted_bands_set > dx_band)              // process only if is on a band we care about
             if (permitted_bands_set.contains(dx_band))              // process only if is on a band we care about
             { const BAND                    cur_band    { current_band };
               const string&                 dx_callsign { post.callsign() };
@@ -2461,8 +2474,7 @@ void* process_rbn_info(void* vp)
 
 // POSTED BY 
               if (is_me and is_rbn)
-              { //const bool add_post { ( posted_by_continents.empty() ? (post.poster_continent() != my_continent) : (posted_by_continents > post.poster_continent()) ) };
-                const bool add_post { ( posted_by_continents.empty() ? (post.poster_continent() != my_continent) : (posted_by_continents.contains(post.poster_continent())) ) };
+              { const bool add_post { ( posted_by_continents.empty() ? (post.poster_continent() != my_continent) : (posted_by_continents.contains(post.poster_continent())) ) };
                 
                 if (add_post)
                   posted_by_vector += post;
@@ -2885,7 +2897,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
-    display_call_info(call_contents);    // display information in the INFO window
+    display_call_info(call_contents);    // display information in the INFO window &&&
 
 // KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
@@ -5641,7 +5653,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<string> vec_str(original.begin(), original.end());
   SORT(vec_str, compare_calls);
 
-  vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec; // &&&
+  vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
   { const bool             is_needed          { !worked_callsign_mults.contains(canonical_prefix) };
@@ -5765,6 +5777,7 @@ string sunrise_or_sunset(const string& callsign, const SRSS srss)
       GRID
       INDIVIDUAL QTC COUNT
       NAME
+      PUTATIVE EXCHANGE
  */
 void populate_win_info(const string& callsign)
 { if (win_call_history.valid())
@@ -5871,6 +5884,19 @@ void populate_win_info(const string& callsign)
           win_info < cursor(0, next_y_value-- ) < line;
         }
       }
+
+// PUTATIVE EXCHANGE window
+    if (win_putative_exchange.valid())
+    { const string expected_exchange { expected_received_exchange(callsign) };
+
+      if (!expected_exchange.empty())
+      { const string msg { "["s + expected_exchange + "]"s };
+        
+        win_putative_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg; // &&&
+      }
+      else
+        win_putative_exchange <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    }  
 
 // mults based on the callsign (typically a prefix mult)
 /*! \brief              Set the callsign mult value, according to rules for a particular prefix-based contest
@@ -9170,3 +9196,66 @@ bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& ma
   { return false;
   }
 }
+
+/*! \brief              What exchange do we expect to receive from a particular callsign?
+    \param  callsign    target callsign
+    \return             the exchange value we expect to receive from <i>callsign</i>
+
+    Returns empty string if nothing sensible can be said
+*/
+string expected_received_exchange(const string& callsign)
+{ const string                 canonical_prefix  { location_db.canonical_prefix(callsign) };
+  const vector<exchange_field> expected_exchange { rules.unexpanded_exch(canonical_prefix, current_mode) };
+
+  for (const auto& exf : expected_exchange)
+  {
+// if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
+// need to figure out a way to generalise all this
+    if (exf.is_choice())
+    { if (exf.name() == "ITUZONE+SOCIETY"sv)
+      { string iaru_guess { exchange_db.guess_value(callsign, "SOCIETY"s) };      // start with guessing it's a society
+
+        if (iaru_guess.empty())
+          iaru_guess = to_upper(exchange_db.guess_value(callsign, "ITUZONE"s));   // try ITU zone if no society
+
+        return iaru_guess;
+      }
+
+      if (exf.name() == "10MSTATE+SERNO"sv)
+      { static const set<string> state_multiplier_countries { "K"s, "VE"s, "XE"s };
+
+        const string canonical_prefix { location_db.canonical_prefix(callsign) };
+        const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(callsign, "10MSTATE"s) : string() };
+
+        return state_guess;
+      }
+    }
+
+    if (exf.name() == "DOK"sv)
+    { const string guess { exchange_db.guess_value(callsign, "DOK"s) };
+
+      return guess;
+    }
+
+    if (!no_default_rst and (exf.name() == "RST"sv) and !exf.is_optional())
+      continue;
+
+    if (exf.name() == "RS"sv)
+      continue;
+
+    if ((exf.name() == "GRID"sv))
+    { const string guess { exchange_db.guess_value(callsign, "GRID"s) };
+
+      return guess;
+    }
+
+    { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field (i.e., currently, not SERNO)
+      { if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(callsign, exf.name())) }; !guess.empty())
+          return guess;
+      }
+    }
+  }
+
+  return  string { };
+}
+   

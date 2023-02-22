@@ -49,9 +49,14 @@ string autocorrect_database::corrected_call(const string& str) const
   if (const string from_cache { MUM_VALUE(_cache, str) }; !from_cache.empty())
     return from_cache;
 
+  const bool present { contains(str) };
+  const bool absent {!present };
+
 // return known good call
-  if (contains(str))            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
+  if (present)            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
     return insert(str, str);
+
+// absent should always be true from this point on; but let's not assume it in case we change something later
 
 // extraneous:
 //   E in front of a US K call
@@ -64,15 +69,23 @@ string autocorrect_database::corrected_call(const string& str) const
 
 // JA miscopied as JT
   if (str.starts_with("JT"s))
-  { if (!contains(str))
+  { if (absent)
     { if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
+        return insert(str, call_to_test);
+    }
+  }
+
+// initial K copied as an initial M
+  if (str.starts_with('M'))
+  { if (absent)
+    { if (const string call_to_test { "K"s + substring(str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
 
 // initial W copied as an initial M
   if (str.starts_with('M'))
-  { if (!contains(str))
+  { if (absent)
     { if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
@@ -104,6 +117,18 @@ string autocorrect_database::corrected_call(const string& str) const
       default :
         break;
     }
+  }
+
+// US N call copied as I#
+  if (!absent and str.starts_with('I') and (str.length() > 1) and isdigit(str[1]))
+  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
+      return insert(str, call_to_test);
+  }
+
+// US K call copied as TT#
+  if (!contains(str) and str.starts_with("TT") and (str.length() > 2) and isdigit(str[2]))
+  { if (const string call_to_test { "K"s + substring(str, 2) }; contains(call_to_test))
+      return insert(str, call_to_test);
   }
 
 // US N call copied as T#

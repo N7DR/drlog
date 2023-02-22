@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 216 2023-01-31 19:10:32Z  $
+// $Id: drlog_context.cpp 217 2023-02-15 16:05:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -982,12 +982,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // THOUSANDS SEPARATOR
     if (LHS == "THOUSANDS SEPARATOR"sv)
-    { //if (rhs.size() >= 1)
-      //  _thousands_separator = rhs[0];
-      //else
-      //  _thousands_separator = ' ';
       _thousands_separator = ( (rhs.size() >= 1) ? rhs[0] : ' ' );
-    }
 
 // UBA BONUS
     if (LHS == "UBA BONUS"sv)
@@ -999,13 +994,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
-    { //ost << "rhs = " << rhs << endl;
-      if (rhs.ends_with('%'))       // if percentage
-      { //ost << "value 1 = " << remove_from_end(rhs, '%') << endl;
-        //ost << "value = " << from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')) << endl;
-        //ost << "clamped value = " << clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')), 0, 100) << endl;
+    { if (rhs.ends_with('%'))       // if percentage
         _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')), 0, 100);
-      }
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
     }
@@ -1039,8 +1029,7 @@ void drlog_context::_process_configuration_file(const string& filename)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { //const vector<string> mults { clean_split_string(RHS, ',') };
-        const vector<string> mults { clean_split_string(RHS) };
+      { const vector<string> mults { clean_split_string(RHS) };
 
         _remaining_callsign_mults_list = set<string> { mults.cbegin(), mults.cend() } ;
       }
@@ -1057,11 +1046,8 @@ void drlog_context::_process_configuration_file(const string& filename)
           _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { //const vector<string> countries { remove_peripheral_spaces(split_string(RHS, ","s)) };
-        //const vector<string> countries { clean_split_string(RHS, ',') };
-        const vector<string> countries { clean_split_string(RHS) };
+      { const vector<string> countries { clean_split_string(RHS) };
 
-//        _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
         _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
       }
     }
