@@ -7104,7 +7104,7 @@ void* spawn_rbn(void* vp)
 
       if (!signalled_failure)
       { alert("UNABLE TO CREATE RBN; PROCEEDING WITHOUT RBN"s);
-       signalled_failure = true;
+        signalled_failure = true;
       }
 
       if (rbn_p)
@@ -7297,31 +7297,26 @@ void allow_for_callsign_mults(QSO& qso)
 { if (callsign_mults_used)
   { string mult_name;
 
-//    if ( (rules.callsign_mults() > "AAPX"s) and (location_db.continent(qso.callsign()) == "AS"s) )  // All Asian
     if ( rules.callsign_mults().contains("AAPX"s) and (location_db.continent(qso.callsign()) == "AS"sv) )  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "AAPX"s;
     }
 
-//    if ( (rules.callsign_mults() > "OCPX"s) and (location_db.continent(qso.callsign()) == "OC"s) )  // Oceania
     if ( rules.callsign_mults().contains("OCPX"s) and (location_db.continent(qso.callsign()) == "OC"sv) )  // Oceania
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "OCPX"s;
     }
 
-//    if ( (rules.callsign_mults() > "SACPX"s) )      // SAC
     if ( rules.callsign_mults().contains("SACPX"s) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
       mult_name = "SACPX"s;
     }
 
-//    if ( (rules.callsign_mults() > "UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
     if ( rules.callsign_mults().contains("UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "UBAPX"s;
     }
 
-//    if (rules.callsign_mults() > "WPXPX"s)
     if (rules.callsign_mults().contains("WPXPX"s))
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "WPXPX"s;

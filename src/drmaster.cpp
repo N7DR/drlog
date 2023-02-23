@@ -183,7 +183,7 @@ trmaster_line::trmaster_line(const string& line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-  const size_t length_of_call      { (contains(line, ' ') ? line.find(' ') : line.length()) };
+  const size_t length_of_call { (contains(line, ' ') ? line.find(' ') : line.length()) };
 
   _call = to_upper(substring(line, 0, length_of_call));
 

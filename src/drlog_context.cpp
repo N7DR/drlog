@@ -1054,14 +1054,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
-    { //const vector<string> mult_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
-      //const vector<string> mult_names { clean_split_string(RHS, ',') };
-      //const vector<string> mult_names { clean_split_string(RHS) };
-
- //     for (const auto& str : mult_names)
- //       _auto_remaining_exchange_mults += str;
       FOR_ALL(clean_split_string(RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
-    }
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
@@ -1093,12 +1086,12 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"sv) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s /*, ',' */) )
+    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"sv) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s) )
       _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
     if (LHS == "CABRILLO CATEGORY-BAND"sv)
-    { if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s /*, ',' */)) // The spec calls for bizarre capitalization
+    { if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s)) // The spec calls for bizarre capitalization
         _cabrillo_category_band = rhs;
     }
 

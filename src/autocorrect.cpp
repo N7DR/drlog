@@ -67,6 +67,20 @@ string autocorrect_database::corrected_call(const string& str) const
       return insert(str, call_to_test);
   }
 
+// PA copied as GA
+  if (str.starts_with("GA"s))
+  { if (absent)
+    { if (const string call_to_test { "PA"s + substring(str, 2) }; contains(call_to_test))
+        return insert(str, call_to_test);
+    }
+  }
+
+// US N call copied as I#
+  if (absent and str.starts_with('I') and (str.length() > 1) and isdigit(str[1]))
+  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
+      return insert(str, call_to_test);
+  }
+
 // JA miscopied as JT
   if (str.starts_with("JT"s))
   { if (absent)
@@ -87,6 +101,14 @@ string autocorrect_database::corrected_call(const string& str) const
   if (str.starts_with('M'))
   { if (absent)
     { if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
+        return insert(str, call_to_test);
+    }
+  }
+
+// UA copied as MA
+  if (str.starts_with("MA"s))
+  { if (absent)
+    { if (const string call_to_test { "UA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -119,20 +141,14 @@ string autocorrect_database::corrected_call(const string& str) const
     }
   }
 
-// US N call copied as I#
-  if (!absent and str.starts_with('I') and (str.length() > 1) and isdigit(str[1]))
-  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
-      return insert(str, call_to_test);
-  }
-
 // US K call copied as TT#
-  if (!contains(str) and str.starts_with("TT") and (str.length() > 2) and isdigit(str[2]))
+  if (absent and str.starts_with("TT") and (str.length() > 2) and isdigit(str[2]))
   { if (const string call_to_test { "K"s + substring(str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // US N call copied as T#
-  if (!contains(str) and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))
+  if (absent and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))
   { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
