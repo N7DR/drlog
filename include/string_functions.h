@@ -1,4 +1,4 @@
-// $Id: string_functions.h 217 2023-02-15 16:05:07Z  $
+// $Id: string_functions.h 219 2023-03-06 23:02:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -295,6 +295,15 @@ inline bool contains_digit(const std::string& str)
 inline bool is_digits(const std::string& str)
   { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
+/*! \brief          Is a character a digit?
+    \param  c   character to test
+    \return     whether <i>c</i> is a digit
+
+    This is present because C-based isdigit(c) returns an int
+*/
+  inline bool is_digit(const char c)
+    { return static_cast<bool>(isdigit(c)); }
+
 /*! \brief              Pad a string to a particular size
     \param  s           original string
     \param  len         length of returned string
@@ -471,7 +480,7 @@ template <typename T>
 T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
-  FOR_ALL(t, [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+  FOR_ALL(t, [&rv] (const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
 }
@@ -487,7 +496,7 @@ template <typename T>
 T remove_peripheral_spaces(T&& t)
 { T rv;
 
-  FOR_ALL(std::forward<T>(t), [&rv](const std::string& s) { rv += remove_peripheral_spaces(s); } );
+  FOR_ALL(std::forward<T>(t), [&rv] (const std::string& s) { rv += remove_peripheral_spaces(s); } );
 
   return rv;
 }
@@ -701,7 +710,7 @@ std::vector<std::string> delimited_substrings(const std::string& cs, const char 
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
   requires (is_string<typename T::value_type>)
-{ std::string rv;
+{ std::string rv { };
 
   for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)
   { if (cit != ct.cbegin())
@@ -806,8 +815,7 @@ inline bool is_maritime_mobile(const std::string& callsign)
 template <typename T>
 std::string separated_string(const T n, const char sep = ',')
 { std::string tmp { to_string(n) };
-
-  std::string rv;
+  std::string rv  { };
 
   while (!tmp.empty())
   { for (unsigned int N { 0 }; N < 3 and !tmp.empty(); ++N)
@@ -891,7 +899,8 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
-  { return (split_string(legal_values, separator) > value); }
+//  { return (split_string(legal_values, separator) > value); }
+  { return (contains(split_string(legal_values, separator), value)); }
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -900,7 +909,8 @@ inline bool is_legal_value(const std::string& value, const std::string& legal_va
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
-  { return (split_string(legal_values, separator) > value); }
+//  { return (split_string(legal_values, separator) > value); }
+  { return (contains(split_string(legal_values, separator), value)); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call

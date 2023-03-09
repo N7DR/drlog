@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 217 2023-02-15 16:05:07Z  $
+// $Id: drlog_context.cpp 219 2023-03-06 23:02:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1097,43 +1097,43 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-MODE
     if (LHS == "CABRILLO CATEGORY-MODE"sv)
-    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s /*, ',' */))
+    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s))
         _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
     if (LHS == "CABRILLO CATEGORY-OPERATOR"sv)
-    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s /*, ',' */))
+    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s))
         _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
     if (LHS == "CABRILLO CATEGORY-OVERLAY"sv)
-    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s /*, ',' */))
+    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s))
         _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
     if (LHS == "CABRILLO CATEGORY-POWER"sv)
-    { if (is_legal_value(RHS, "HIGH,LOW,QRP"s /* , ',' */))
+    { if (is_legal_value(RHS, "HIGH,LOW,QRP"s))
         _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
     if (LHS == "CABRILLO CATEGORY-STATION"sv)
-    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s /*, ',' */))
+    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TIME
     if (LHS == "CABRILLO CATEGORY-TIME"sv)
-    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s /*, ','*/))
+    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
     if (LHS == "CABRILLO CATEGORY-TRANSMITTER"sv)
-    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s /*, ',' */))
+    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s))
         _cabrillo_category_transmitter = RHS;
     }
 
@@ -1199,9 +1199,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
       if (contains(RHS, "TEMPLATE"s))
       { try
-        { const string key { clean_split_string(RHS, ':')[1] };
+        { //const string key { clean_split_string(RHS, ':')[1] };
 
-          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+          _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string(RHS, ':')[1] );
         }
 
         catch (...)
@@ -1214,33 +1214,13 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"sv)
-    { //const vector<string> window_info { remove_peripheral_spaces(split_string(split_string(testline, "="s)[1], ","s)) };
-      //const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
- //     /*const */vector<string> window_info { clean_split_string(split_string(testline, '=')[1] /*, ',' */) };
+    { if (vector<string> window_info { clean_split_string(split_string(testline, '=')[1]) }; window_info.size() >= 5)
+      { string name { window_info[0] };
 
-      if (vector<string> window_info { clean_split_string(split_string(testline, '=')[1]) }; window_info.size() >= 5)
-      { /*const */string name { window_info[0] };
-
- //       window_information winfo;
-
- //       winfo.x(from_string<int>(window_info[1]));
- //       winfo.y(from_string<int>(window_info[2]));
- //       winfo.w(from_string<int>(window_info[3]));
- //       winfo.h(from_string<int>(window_info[4]));
-
-//        window_information winfo { ._x = from_string<int>(window_info[1]),
-//                                   ._y = from_string<int>(window_info[2]),
-//                                   ._w = from_string<int>(window_info[3]),
-//                                   ._h = from_string<int>(window_info[4])
-//                                 };
         window_information winfo { from_string<int>(window_info[1]), from_string<int>(window_info[2]), from_string<int>(window_info[3]), from_string<int>(window_info[4]) };
 
         if (window_info.size() >= 6)
-        { //winfo.fg_colour(window_info[5]);
-
-          //if (window_info.size() >= 7)
-          //  winfo.bg_colour(window_info[6]);
-          winfo.fg_colour(move(window_info[5]));
+        { winfo.fg_colour(move(window_info[5]));
 
           if (window_info.size() >= 7)
             winfo.bg_colour(move(window_info[6]));
@@ -1248,7 +1228,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           winfo.colours_set(true);
         }
 
- //       _windows += { name, winfo };
         _windows += { move(name), move(winfo) };
       }
     }    // end of WINDOW
@@ -1257,16 +1236,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     static map<string /* name */, bool /* whether verbatim */> verbatim;
 
-    if (LHS == "STATIC WINDOW"s)
-    { //const vector<string> fields { remove_peripheral_spaces(split_string(rhs, ","s)) };
-      const vector<string> fields { clean_split_string(rhs, ',') };
+    if (LHS == "STATIC WINDOW"sv)
+    { const vector<string> fields { clean_split_string(rhs, ',') };
 
       if (fields.size() == 2)  // name, contents
       { const string name { fields[0] };
 
         string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
 
-//        verbatim[name] = contains(fields[1], "\"");     // verbatim if contains quotation mark
         verbatim[name] = contains(fields[1], '"');     // verbatim if contains quotation mark
 
         if (file_exists(contents))
@@ -1278,8 +1255,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (LHS == "STATIC WINDOW INFO"s)  // must come after the corresponding STATIC WINDOW command
-    { //const vector<string> window_info { remove_peripheral_spaces(split_string(split_string(testline, "="s)[1], ","s)) };
-      const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
+    { const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
 
       if (!window_info.empty())
       { const string name { window_info[0] };
@@ -1354,8 +1330,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
-    if (testline.starts_with("MESSAGE KEY"s))
-    { vector<string> message_info { split_string(testline, SPACE_STR) };
+    if (testline.starts_with("MESSAGE KEY"sv))
+    { vector<string> message_info { split_string(testline, ' ') };
 
       if (message_info.size() >= 5 and contains(testline, '='))
       {
@@ -1369,7 +1345,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           const string         str     { remove_leading_spaces(vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
-//          _messages.insert( { cit->second, str } );
           _messages += { cit->second, str };
 
           ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
@@ -1386,8 +1361,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
  //             if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
  //             if (!contains(_messages, keysym))  // only if there is no message for this key
- //             if (!_messages.contains(keysym))  // only if there is no message for this key
-              if (!(_messages > keysym))  // only if there is no message for this key
+              if (!_messages.contains(keysym))  // only if there is no message for this key
+ //             if (!(_messages > keysym))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
                 _messages += { keysym, str };
@@ -1398,7 +1373,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       }
     }
 
-    if (LHS == "MESSAGE CQ 1"s)
+    if (LHS == "MESSAGE CQ 1"sv)
     { const vector<string> tokens { split_string(testline, '=') };
 
       if (tokens.size() != 2)
@@ -1407,7 +1382,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       _message_cq_1 = tokens[1];
     }
 
-    if (LHS == "MESSAGE CQ 2"s)
+    if (LHS == "MESSAGE CQ 2"sv)
     { const vector<string> tokens { split_string(testline, '=') };
 
       if (tokens.size() == 2)
@@ -1435,8 +1410,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { //const vector<string> bands_vec { remove_peripheral_spaces( split_string(bands(), ","s) ) };
-    const vector<string> bands_vec { clean_split_string(bands(), ',') };
+  { const vector<string> bands_vec { clean_split_string(bands(), ',') };
 
     for (const auto& str : bands_vec)
     { try

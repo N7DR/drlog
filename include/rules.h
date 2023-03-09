@@ -1,4 +1,4 @@
-// $Id: rules.h 215 2023-01-23 19:37:41Z  $
+// $Id: rules.h 218 2023-02-26 16:21:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -394,18 +394,18 @@ protected:
   std::map<std::string /* exchange field name */, unsigned int>                             _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
-  std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
-  std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
-  std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
+  std::vector<BAND>                                     _permitted_bands;   ///< bands allowed in this contest; use a vector container in order to keep the frequency order
+  std::set<MODE>                                        _permitted_modes;   ///< modes allowed in this contest
+  std::array<std::map<BAND, points_structure>, N_MODES> _points;            ///< points structure for each band and mode
   
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;             ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
   std::map<MODE, std::map<std::string /* canonical prefix */, choice_equivalents>>          _choice_exchange_equivalents;   ///< choices
 
   std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
-  bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
-  bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
-  
+  bool                  _work_if_different_band;     ///< is it OK to work the same station on different bands?
+  bool                  _work_if_different_mode;     ///< is it OK to work the same station on different modes?
+
 // structures to hold information about the possible values of exchange fields
 
 /// all the equivalent values for all exchange fields; the enclosed map is empty if there are no canonical values

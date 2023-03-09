@@ -1,4 +1,4 @@
-// $Id: drmaster.h 217 2023-02-15 16:05:07Z  $
+// $Id: drmaster.h 219 2023-03-06 23:02:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -234,7 +234,7 @@ protected:
   std::string _ssb_power;                                       ///< power received in ARRL DX SSB
   std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
   std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
-//  std::string _xscp;                                            ///< extended SCP value
+
   int _xscp { 0 };                                              ///< extended SCP value
 
 /*! \brief                      Extract a single field from the record
@@ -458,8 +458,14 @@ public:
     \return         whether <i>call</i> is present
 */
   inline bool contains(const std::string& call) const
-    { return (_records > call); }
+    { //return (_records > call);
+      return _records.contains(call);
+    }
 
+/*! \brief      Return object with only records with xscp below a given percentage value
+    \param  pc  percentage limit
+    \return     <i>drmaster</i> object containing only records with no xscp, and thiose for which the xscp value is >= the <i>pc</i> value 
+*/
   drmaster prune(const int pc) const;
 };
 

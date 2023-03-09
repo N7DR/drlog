@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 208 2022-08-01 11:33:30Z  $
+// $Id: autocorrect.cpp 218 2023-02-26 16:21:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -154,11 +154,9 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // initial PY copied as initial TM
-  if (str.starts_with("TM"s))
-  { if (!contains(str))
-    { if (const string call_to_test { "PY"s + substring(str, 2) }; contains(call_to_test))
-        return insert(str, call_to_test);
-    }
+  if (absent and str.starts_with("TM"s))
+  { if (const string call_to_test { "PY"s + substring(str, 2) }; contains(call_to_test))
+      return insert(str, call_to_test);
   }
 
   return insert(str, str);

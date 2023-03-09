@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 217 2023-02-15 16:05:07Z  $
+// $Id: cty_data.cpp 219 2023-03-06 23:02:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -586,7 +586,6 @@ location_info location_database::info(const string& callpart) const
                                                              };
 
 // see if it's some guy already in the db but now signing /QRP
-//  if ( (callsign.length() >= 5) and (last(callsign, 4) == "/QRP"s) )
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
   { const string target { remove_from_end(callsign, 4u) };    // remove "/QRP"
   
@@ -645,7 +644,7 @@ location_info location_database::info(const string& callpart) const
       len++;
     }
 
-   auto redefine_best = [this](const string& cp) { return pair { cp, _db.find(cp)->second }; }; 
+   auto redefine_best = [this] (const string& cp) { return pair { cp, _db.find(cp)->second }; }; 
 
 // Guantanamo Bay is a mess
     if ( (best_fit == "KG4"sv) and (callsign.length() != 5) )
@@ -672,7 +671,8 @@ location_info location_database::info(const string& callpart) const
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
-      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
+//      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
+      if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
       { const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
         if (posn_1 != string::npos)
@@ -705,7 +705,7 @@ location_info location_database::info(const string& callpart) const
 
 // it looks like maybe it's a reciprocal license
 // how many slashes are there?
-  vector<string> parts { split_string(callsign, '/') };
+  const vector<string> parts { split_string(callsign, '/') };
 
   if (parts.size() == 1)        // slash is first or last character
     return location_info();
@@ -729,23 +729,26 @@ location_info location_database::info(const string& callpart) const
 // should be a very rare occurrence
     static const set<string> russian_long_prefixes { "RU4W"s };
 
-    if (found_1 and !found_0)                        // second part had an exact match
-    { if (!(russian_long_prefixes > parts[1]))         // the normal case
+    if (found_1 and !found_0)                               // second part had an exact match
+    { if (!(russian_long_prefixes > parts[1]))              // the normal case
         return insert_best_info( guess_zones(callsign, db_posn_1->second) );
-      else                                             // the pathological case, a call like "K4/RU4W"
+      else                                                  // the pathological case, a call like "K4/RU4W"
         return insert_best_info( info(parts[0]) );
     }
 
-    if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2)
-    { if (parts[0].length() > parts[1].length())  // choose longest match
-        return insert_best_info( guess_zones(callsign, db_posn_0->second) );
-      else
-        return insert_best_info( guess_zones(callsign, db_posn_1->second) );
+    if (found_0 and found_1)                            // both parts had an exact match (should never happen: KH6/KP2)
+    { //if (parts[0].length() > parts[1].length())        // choose longest match
+      //  return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+      //else
+     //   return insert_best_info( guess_zones(callsign, db_posn_1->second) );
+      return insert_best_info( guess_zones(callsign, ((parts[0].length() > parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );    // choose longest match
     }
 
     if (!found_0 and !found_1)    // neither matched exactly; use one that ends with a digit if there is one
-    { const bool first_ends_with_digit  { static_cast<bool>(isdigit(parts[0][parts[0].length()-1])) };
-      const bool second_ends_with_digit { static_cast<bool>(isdigit(parts[1][parts[1].length()-1])) };
+    { //const bool first_ends_with_digit  { static_cast<bool>(isdigit(parts[0][parts[0].length()-1])) };
+      //const bool second_ends_with_digit { static_cast<bool>(isdigit(parts[1][parts[1].length()-1])) };
+      const bool first_ends_with_digit  { is_digit(parts[0][parts[0].length()-1]) };
+      const bool second_ends_with_digit { is_digit(parts[1][parts[1].length()-1]) };
       
       if (first_ends_with_digit and !second_ends_with_digit)
         return info(parts[0]);
@@ -757,8 +760,7 @@ location_info location_database::info(const string& callpart) const
     if (!found_0 and !found_1)    // neither matched exactly; use the one with the longest match
     {
 // length of match for part 0
-    
-      auto match_info = [this](const string& part)
+      auto match_info = [this] (const string& part)
         { unsigned int return_len { 0 };
 
           LOCATION_DBTYPE::const_iterator return_posn;
@@ -783,7 +785,8 @@ location_info location_database::info(const string& callpart) const
       const auto [ len_1, db_posn_1 ] = match_info(parts[1]);
       
       if (len_0 != len_1)   // if one has a longer match, use it 
-        return insert_best_info( guess_zones(callsign, (len_0 > len_1) ? db_posn_0->second : db_posn_1->second) );
+ //       return insert_best_info( guess_zones(callsign, (len_0 > len_1) ? db_posn_0->second : db_posn_1->second) );
+        return insert_best_info( guess_zones(callsign, ((len_0 > len_1) ? db_posn_0 : db_posn_1) -> second) );
 
 // they both match equally well; choose shortest
 // neither matched at all
@@ -791,7 +794,8 @@ location_info location_database::info(const string& callpart) const
         return location_info();    // we know nothing about either part of the call
       
       if (parts[0].length() == parts[1].length())
-        return insert_best_info( guess_zones(callsign, (parts[0].length() < parts[1].length()) ? db_posn_0->second : db_posn_1->second) );
+ //       return insert_best_info( guess_zones(callsign, (parts[0].length() < parts[1].length()) ? db_posn_0->second : db_posn_1->second) );
+        return insert_best_info( guess_zones(callsign, ((parts[0].length() < parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );
  
 // same length; arbitrarily choose the first
       return insert_best_info( guess_zones(callsign, db_posn_0->second) );
@@ -823,14 +827,8 @@ auto location_database::countries(void) const -> unordered_set<string>
 
   unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
 
-//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >;
-//  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;
-
-//call(static_cast<void (foo::*)(const std::string&)>(&foo::func), "hello");
-
-//  using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
-//if constexpr(std::is_same_v<std::invoke_result_t<Callable, Args...>, void>) {
-//using ptr_to_print_type = std::result_of_t<decltype(&Foo::print)(Foo, Args ...)>
+//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
+//  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
 
   FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
 
@@ -839,12 +837,9 @@ auto location_database::countries(void) const -> unordered_set<string>
 
 /// create a set of all the canonical prefixes for a particular continent
 unordered_set<string> location_database::countries(const string& cont_target) const
-{ //const auto all_countries { countries() };
+{ unordered_set <string> rv { };
 
-  unordered_set <string> rv;
-
-  //ranges::copy_if(all_countries, inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
-  ranges::copy_if(countries(), inserter(rv, rv.begin()), [=, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+  ranges::copy_if(countries(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
 }
@@ -866,8 +861,8 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
 
 //  if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
-//  if (!contains(substrings, ss))
-  if (!(substrings > ss))
+  if (!contains(substrings, ss))
+//  if (!(substrings > ss))
 //  if (!(substrings.contains(ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
@@ -933,8 +928,6 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
     { if (!line.starts_with("//"s))
       { const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
 
- //       for (const auto& sstring : substrings)
- //         _data += { sstring, russian_data_per_substring(sstring, line) };
         FOR_ALL(substrings, [line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
       }
     }

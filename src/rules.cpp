@@ -1,4 +1,4 @@
-// $Id: rules.cpp 217 2023-02-15 16:05:07Z  $
+// $Id: rules.cpp 218 2023-02-26 16:21:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1487,13 +1487,11 @@ string wpx_prefix(const string& call)
 
     if (mobiles.contains(last(callsign, 2)))
       callsign = remove_from_end(callsign, 3u);
-
- //   if (mobiles > last(callsign, 2))
- //     callsign = substring(callsign, 0, callsign.length() - 3);
   }
 
 // trivial -- and almost unknown -- case first: no digits
-  if (callsign.find_first_of(DIGITS) == string::npos)
+//  if (callsign.find_first_of(DIGITS) == string::npos)
+  if (!contains_digit(callsign))
     return (substring(callsign, 0, 2) + "0"s);
 
   size_t slash_posn { callsign.find('/') };
@@ -1563,8 +1561,9 @@ string sac_prefix(const string& call)
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 
-  if ( !(scandinavian_countries > canonical_prefix) )
-    return string();
+//  if ( !(scandinavian_countries > canonical_prefix) )
+  if ( !(scandinavian_countries.contains(canonical_prefix)) )
+    return string { };
 
 // it is a scandinavian call
   const string wpx { wpx_prefix(call) };
@@ -1574,7 +1573,7 @@ string sac_prefix(const string& call)
   const string digits           { substring(wpx, last_letter_posn + 1) };
 
   if (digits.empty())
-    return string();    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
+    return string { };    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
 
   return ( ( (canonical_prefix != "OH0"s) and (canonical_prefix != "OJ0"s) ) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
 }

@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 217 2023-02-15 16:05:07Z  $
+// $Id: drmaster.cpp 219 2023-03-06 23:02:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -548,14 +548,12 @@ trmaster::trmaster(const string& filename)
     { trmaster_line record { _get_binary_record(contents, pointer) };
 
 // is there already a record for this call?
-      const string call { record.call() };
+      string call { record.call() };
 
-//      if (contains(_records, call))
       if (_records.contains(call))
- //      if (_records > call)
         record += _records[call];
 
-      _records += { call, record };
+      _records += { move(call), move(record) };
     }
   }
   else              // not binary
@@ -655,8 +653,6 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _state_160  = _extract_field(fields, "=s"s);
   _state_10   = _extract_field(fields, "=t"s);
 
-//  const string xscp_str { _extract_field(fields, "=p"s) };
-
   if (const string xscp_str { _extract_field(fields, "=p"s) }; !xscp_str.empty())
     _xscp       = from_string<decltype(_xscp)>(xscp_str);
 }
@@ -738,8 +734,6 @@ string drmaster_line::to_string(void) const
   if (!state_10().empty())
     rv += " =t"s + state_10();
 
-//  if (!xscp().empty())
-//    rv += " =p"s + xscp();
   if (xscp() != 0)
     rv += " =p"s + ::to_string(xscp());
 
@@ -821,8 +815,6 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
   if (rv.state_10().empty())
     rv.state_10(state_10());
 
-//  if (rv.xscp().empty())
-//    rv.xscp(xscp());
   if (xscp() != 0)
     rv.xscp(xscp());
 
@@ -847,7 +839,6 @@ void drmaster::_prepare_from_file_contents(const string& contents, const int xsc
 { for (const string& line : to_lines(contents))
   { const drmaster_line record { line };
 
-//    if (record.xscp().empty() or (from_string<int>(record.xscp()) >= xscp_limit))
     if ( (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
       _records += { record.call(), record } ;
   } 
@@ -871,7 +862,7 @@ drmaster::drmaster(const string& filename, const int xscp_limit)
     }
 
     catch (...)
-    { if (filename != "drmaster"s)      // don't fail if we couldn't find the default file; simply create empty object
+    { if (filename != "drmaster"sv)      // don't fail if we couldn't find the default file; simply create empty object
         throw;
     }
   }
@@ -975,6 +966,10 @@ void drmaster::operator+=(const drmaster_line& drml)
   }
 }
 
+/*! \brief      Return object with only records with xscp below a given percentage value
+    \param  pc  percentage limit
+    \return     <i>drmaster</i> object containing only records with no xscp, and thiose for which the xscp value is >= the <i>pc</i> value 
+*/
 drmaster drmaster::prune(const int pc) const
 { drmaster    rv;
   vector<int> xscp_values;
