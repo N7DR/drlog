@@ -1424,8 +1424,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"s) or (_cabrillo_qso_template == "CQ WW"s) )
-  { //const vector<string> actual_modes { remove_peripheral_spaces(split_string(_modes, ","s)) };
-    const vector<string> actual_modes { clean_split_string(_modes, ',') };
+  { const vector<string> actual_modes { clean_split_string(_modes, ',') };
 
     if (actual_modes.size() == 1)
     { try
@@ -1457,8 +1456,7 @@ drlog_context::drlog_context(const std::string& filename)
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { //vector<string> bands_str { remove_peripheral_spaces(split_string(_bands, ","s)) };
-    const vector<string> bands_str { clean_split_string(_bands, ',') };
+  { const vector<string> bands_str { clean_split_string(_bands, ',') };
 
     for (const auto& band_name : bands_str)
     { try

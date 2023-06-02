@@ -161,6 +161,17 @@ public:
 /// default constructor
   frequency(void) = default;
 
+/*! \brief      Construct from an HZ_TYPE
+    \param f    frequency in HZ_TYPE
+*/
+//  inline explicit frequency(const HZ_TYPE f) :
+//    _hz(f)
+//  { }
+
+//  explicit frequency(const uint32_t f) :
+//    _hz(f)
+//  { }
+
 /*! \brief      Construct from a double
     \param f    frequency in Hz, kHz or MHz
 */

@@ -899,7 +899,6 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
-//  { return (split_string(legal_values, separator) > value); }
   { return (contains(split_string(legal_values, separator), value)); }
 
 /*! \brief                  Is a string a legal value from a list?
@@ -909,7 +908,6 @@ inline bool is_legal_value(const std::string& value, const std::string& legal_va
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
-//  { return (split_string(legal_values, separator) > value); }
   { return (contains(split_string(legal_values, separator), value)); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 219 2023-03-06 23:02:40Z  $
+// $Id: drlog.cpp 220 2023-03-27 15:42:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2464,7 +2464,17 @@ void* process_rbn_info(void* vp)
               mp += post;
 
             if (permitted_bands_set.contains(dx_band))              // process only if is on a band we care about
-            { const BAND                    cur_band    { current_band };
+            { 
+// for now assume rbn posts are to be dynamically checked
+              if (is_rbn)
+              { static dynamic_autocorrect_database dad;
+ 
+                const bool status { dad.insert(post) };
+
+
+              }
+
+              const BAND                    cur_band    { current_band };
               const string&                 dx_callsign { post.callsign() };
               const string&                 poster      { post.poster() };
               const pair<string, frequency> target      { dx_callsign, post.freq() };
@@ -3962,14 +3972,32 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       new_callsign = match_callsign(scp_matches, current_contents);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
+      ost << "new 1 = " << new_callsign << endl;
+
       if (new_callsign.empty())
-      { new_callsign = match_callsign(fuzzy_matches);
+      { 
+// if there was no obvious best match, but there were some matches on offer, choose the first
+        if (new_callsign.empty() and !scp_matches.empty())
+        { new_callsign = scp_matches[0].first;
+
+          ost << "new 2a = " << new_callsign << endl;
+        }
+        else
+        { new_callsign = match_callsign(fuzzy_matches);
+
+          ost << "new 2 = " << new_callsign << endl;
+        }
 
         if (new_callsign.empty())
         { new_callsign = match_callsign(query_1_matches);
 
+          ost << "new 3 = " << new_callsign << endl;
+
           if (new_callsign.empty())
-            new_callsign = match_callsign(query_n_matches);
+          { new_callsign = match_callsign(query_n_matches);
+            
+            ost << "new 4 = " << new_callsign << endl;
+          }
         }
       }
       

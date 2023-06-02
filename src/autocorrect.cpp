@@ -161,3 +161,45 @@ string autocorrect_database::corrected_call(const string& str) const
 
   return insert(str, str);
 }
+
+// -----------  band_dynamic_autocorrect_database  ----------------
+
+/*! \class  band_dynamic_autocorrect_database
+    \brief  A single-band database for the dynamic lookup
+*/
+
+// constructor
+  band_dynamic_autocorrect_database::band_dynamic_autocorrect_database(const BAND b) :
+    _b(b),
+    _f_min_100(lower_edge(b).hz() / 100),
+    _f_max_100(upper_edge(b).hz() / 100),
+    _data(_f_max_100 - _f_min_100 + 1)
+  { 
+
+  }
+
+bool band_dynamic_autocorrect_database::insert(const dx_post& post)
+{ if (post.band() != _b)    // check that the band is correct
+    return false;
+
+  const frequency& f { post.freq() };
+ // const frequency f_100 { 
+
+
+  return false;
+}
+
+// -----------  dynamic_autocorrect_database  ----------------
+
+/*! \class  dynamic_autocorrect_database
+    \brief  A database for the dynamic lookup
+*/
+
+bool dynamic_autocorrect_database::insert(const dx_post& post)
+{ 
+
+
+
+
+  return false;
+}
