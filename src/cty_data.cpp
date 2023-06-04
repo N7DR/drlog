@@ -860,10 +860,8 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
 // check that the prefix matches the line
   const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
 
-//  if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
+//  if (!substrings.contains(ss))
   if (!contains(substrings, ss))
-//  if (!(substrings > ss))
-//  if (!(substrings.contains(ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
   const size_t posn_1 { line.find(']') };

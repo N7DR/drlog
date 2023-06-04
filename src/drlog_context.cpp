@@ -1492,32 +1492,6 @@ vector<string> drlog_context::window_name_contains(const string& substr) const
   return rv;
 }
 
-/*! \brief      Is a particular frequency within any marked range?
-    \param  m   mode
-    \param  f   frequency to test
-    \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
-*/
-#if 0
-bool drlog_context::mark_frequency(const MODE m, const frequency& f)
-{ SAFELOCK(_context);
-
-  try
-  { const vector<pair<frequency, frequency>>& vec { _mark_frequencies.at(m) };
-
-    for (const auto& pff : vec)
-    { if ( (f >= pff.first) and (f <= pff.second))
-        return true;
-    }
-  }
-
-  catch (...)
-  { return false;
-  }
-
-  return false;
-}
-#endif
-
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band
     \param  m   mode

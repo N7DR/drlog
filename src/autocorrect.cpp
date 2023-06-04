@@ -159,6 +159,14 @@ string autocorrect_database::corrected_call(const string& str) const
       return insert(str, call_to_test);
   }
 
+// /P is quite often reported by the RBN as /W, especially in NFD
+  if (absent and str.ends_with("/W"s))
+  { const string base_call_to_test { substring(str, 0, str.length() - 2) };
+
+    if (contains(base_call_to_test) or contains(base_call_to_test + "/P"s))
+      return insert(str, base_call_to_test + "/P"s);
+  }
+
   return insert(str, str);
 }
 
