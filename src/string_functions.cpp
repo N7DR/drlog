@@ -1157,3 +1157,59 @@ size_t find_and_go_to_end_of(string_view str, string_view target)
 
   return (posn + ts);
 }
+
+/*! \brief          Are two calls busts of each other?
+    \param  call1   first call
+    \param  call2   second call
+    \return         whether <i>call1</i> and <i>call2</i> are possible busts of each other
+
+    Testing for busts is a symmetrical function.
+*/
+bool is_bust_call(const string& call1, const string& call2) noexcept
+{ if (call1 == call2)
+    return false;                // not a bust if both calls are the same
+
+  if ( abs(static_cast<int>(call1.length()) - static_cast<int>(call2.length())) >= 2 )
+    return false;                // not a bust if the lengths differ by 2 or more
+
+  if ( abs(static_cast<int>(call1.length()) - static_cast<int>(call2.length())) == 1 )  // lengths differ by unity
+  { const string& longer  { (call1.length() > call2.length() ? call1 : call2) };
+    const string& shorter { (call1.length() > call2.length() ? call2 : call1) };
+
+    if (contains(longer, shorter))
+      return true;
+
+// is the bust in the form of an additional character somewhere in the call?
+    for (size_t posn { 1 }; posn < longer.length() - 1; ++posn)
+    { const string tmp { longer.substr(0, posn) + longer.substr(posn + 1) };
+
+      if (tmp == shorter)
+        return true;
+    }
+
+    return false;
+  }
+
+// the calls are the same length; do they differ by exactly one character?
+  int differences { 0 };
+
+  for (size_t posn = 0; posn < call1.length(); ++posn)
+  { if (call1[posn] != call2[posn])
+      differences++;
+  }
+
+  if (differences == 1)
+    return true;
+
+// is there a character inversion?
+  for (unsigned int posn = 0; posn < call1.length() - 1; ++posn)
+  { string call_tmp { call1 };
+
+    swap(call_tmp[posn], call_tmp[posn + 1]);
+
+    if (call_tmp == call2)
+      return true;
+  }
+
+  return false;
+}

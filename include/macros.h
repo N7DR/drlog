@@ -1474,4 +1474,37 @@ typename C::value_type value_line(const C& values, const int pc)
 }
 #endif
 
+/*! \brief          Return all the keys in a map or unordered_map
+    \param  m       map or unordered_map
+    \return         all the keys in <i>m</i>
+*/
+template <typename RV, typename M>
+  requires is_mum<M>
+auto ALL_KEYS(const M& m) -> RV
+{ RV rv;
+
+  for (const auto& [ k, v ] : m)
+    rv += k;
+
+  return rv;
+}
+
+/*! \brief          Return all the keys in a map or unordered_map as a set
+    \param  m       map or unordered_map
+    \return         all the keys in <i>m</i>
+*/
+template <typename M>
+  requires is_mum<M>
+inline auto ALL_KEYS_SET(const M& m) -> std::set<typename M::key_type>
+  { return ALL_KEYS <std::set<typename M::key_type>> (m); }
+
+/*! \brief          Return all the keys in a map or unordered_map as an unordered_set
+    \param  m       map or unordered_map
+    \return         all the keys in <i>m</i>
+*/
+template <typename M>
+  requires is_mum<M>
+inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type>
+  { return ALL_KEYS <std::unordered_set<typename M::key_type>> (m); }
+
 #endif    // MACROS_H

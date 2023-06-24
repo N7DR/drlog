@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: bands-modes.cpp 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -170,47 +170,36 @@ ostream& operator<<(ostream& ost, const frequency& f)
 frequency lower_edge(const BAND b)
 { switch (b)
   { case BAND_160 :
-//      return frequency { 1'800'000 };
       return 1'800_kHz;
 
     case BAND_80 :
-//      return frequency { 3'500'000 };
       return 3'500_kHz;
 
     case BAND_60 :
-//      return frequency { 5'000'000 };
       return 5'000_kHz;
 
     case BAND_40 :
-//      return frequency { 7'000'000 };
       return 7'000_kHz;
 
     case BAND_30 :
-//      return frequency { 10'100'000 };
       return 10'100_kHz;
 
     case BAND_20 :
-//      return frequency { 14'000'000 };
       return 14'000_kHz;
 
     case BAND_17 :
-//      return frequency { 18'068'000 };
       return 18'068_kHz;
 
     case BAND_15 :
-//      return frequency { 21'000'000 };
       return 21'000_kHz;
 
     case BAND_12 :
-//      return frequency { 24'890'000 };
       return 24'890_kHz;
 
     case BAND_10 :
-//      return frequency { 28'000'000 };
       return 28'000_kHz;
 
     default :
-//      return frequency { 1'800'000 };
       return 1'800_kHz;
   }
 }
@@ -222,46 +211,36 @@ frequency lower_edge(const BAND b)
 frequency upper_edge(const BAND b)
 { switch (b)
   { case BAND_160 :
-//      return frequency { 2'000'000 };
       return 2'000_kHz;
 
     case BAND_80 :
-//      return frequency { 4'000'000 };
       return 4'000_kHz;
 
     case BAND_60 :
-//      return frequency { 6'000'000 };
       return 6'000_kHz;
 
     case BAND_40 :
-//      return frequency { 7'300'000 };
       return 7'300_kHz;
 
     case BAND_30 :
-//      return frequency { 10'150'000 };
       return 10'150_kHz;
 
     case BAND_20 :
-//      return frequency { 14'350'000 };
       return 14'350_kHz;
 
     case BAND_17 :
-//      return frequency { 18'168'000 };
       return 18'168_kHz;
 
     case BAND_15 :
-//      return frequency { 21'450'000 };
       return 21'450_kHz;
 
     case BAND_12 :
-//      return frequency { 24'990'000 };
+      return 24'990_kHz;
 
     case BAND_10 :
-//      return frequency { 29'700'000 };
       return 29'700_kHz;
 
     default :
-//      return frequency { 1'800'000 };
       return 1'800_kHz;
   }
 }

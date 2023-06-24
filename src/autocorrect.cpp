@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 218 2023-02-26 16:21:08Z  $
+// $Id: autocorrect.cpp 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -19,7 +19,8 @@
 
 using namespace std;
 
-extern message_stream    ost;       ///< for debugging and logging
+extern message_stream ost;          ///< for debugging and logging
+extern MINUTES_TYPE   now_minutes;  ///< access the current time in minutes
 
 // -----------  autocorrect_database  ----------------
 
@@ -176,25 +177,98 @@ string autocorrect_database::corrected_call(const string& str) const
     \brief  A single-band database for the dynamic lookup
 */
 
-// constructor
-  band_dynamic_autocorrect_database::band_dynamic_autocorrect_database(const BAND b) :
-    _b(b),
-    _f_min_100(lower_edge(b).hz() / 100),
-    _f_max_100(upper_edge(b).hz() / 100),
-    _data(_f_max_100 - _f_min_100 + 1)
-  { 
+set<std::string> band_dynamic_autocorrect_database::_get_all_calls(void) const
+{ set<std::string> rv;
 
-  }
+  lock_guard<recursive_mutex> lg(_mtx);
+
+// std::map<time_t, std::map<std::string /* call */, std::map<uint32_t /* f_100 */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, callsign, number of times the call appears
+
+  for (const auto& [t, cfn] : _data_map_map_map)
+    for (const auto& [c, fn] : cfn)
+      rv += c;
+  
+  return rv;
+}
+
+void band_dynamic_autocorrect_database::prune(const int n_minutes)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  const auto now_min    { now_minutes };
+  const auto target_min { now_min - n_minutes };
+
+// in theory this is unnecessary, as there will be, at most, only one element. But be paranoid.
+  set<int> keys_to_remove;
+
+  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)
+    if (it->first <= target_min)
+      keys_to_remove += it->first;
+
+ // ost << "number of keys to remove for band " << BAND_NAME.at(_b) << " = " << keys_to_remove.size() << endl;
+
+  FOR_ALL(keys_to_remove, [this] (const int key_to_remove) { /* ost << "erasing key: " << key_to_remove << endl; */ _data_map_map_map.erase(key_to_remove); });
+}
+
+void band_dynamic_autocorrect_database::to_band(const BAND b)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  _b = b;
+  _f_min_100 = lower_edge(b).hz() / 100;
+  _f_max_100 = upper_edge(b).hz() / 100;
+  _data = vector<post_struct>(_f_max_100 - _f_min_100 + 1) ;     // create vector with correct number of elements, one for each 100 Hz in the band
+}
 
 bool band_dynamic_autocorrect_database::insert(const dx_post& post)
-{ if (post.band() != _b)    // check that the band is correct
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  if (post.band() != _b)    // check that the band is correct
     return false;
 
-  const frequency& f { post.freq() };
- // const frequency f_100 { 
+  const decltype(_f_min_100) f_100       { static_cast<decltype(_f_min_100)>(post.freq().hz() / 100) };    // frequency of the post in the correct units
+  const string&              call        { post.callsign() };
+  const auto                 now_min     { now_minutes };
 
+  auto& data_this_minute          = _data_map_map_map[now_min];  // creates if doesn't exist
+  auto& data_this_minute_and_call = data_this_minute[call];      // creates if doesn't exist
+  auto& data_minute_call_f100     = data_this_minute_and_call[f_100];
+
+  data_minute_call_f100++;
 
   return false;
+}
+
+string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  string rv { post.callsign() };
+
+  const decltype(_f_min_100) f_100 { static_cast<decltype(_f_min_100)>(post.freq().hz() / 100) };    // frequency of the post in the correct units
+  const string&              call  { post.callsign() };
+
+  return rv;
+}
+
+//   std::map<time_t, std::map<std::string /* call */, std::map<uint32_t /* f_100 */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, callsign, number of times the call appears
+string band_dynamic_autocorrect_database::to_string(const int n_spaces) const
+{ string rv;
+
+  const string leading_spaces { (n_spaces == 0) ? ""s : create_string(' ', n_spaces) };
+
+  lock_guard<recursive_mutex> lg(_mtx);
+
+  for (const auto& [t, cfn] : _data_map_map_map)
+  { rv += leading_spaces + ::to_string(t) + ":"s + EOL;
+
+    for (const auto& [c, fn] : cfn)
+    { rv += leading_spaces + "  "s + ::to_string(c) + "  :"s + EOL;
+
+      for (const auto& [f, n] : fn)
+      { rv += leading_spaces + "    "s + ::to_string(f) + "    :"s + ::to_string(n) + EOL;
+      }
+    }
+  }
+
+  return rv;
 }
 
 // -----------  dynamic_autocorrect_database  ----------------
@@ -203,11 +277,150 @@ bool band_dynamic_autocorrect_database::insert(const dx_post& post)
     \brief  A database for the dynamic lookup
 */
 
+set<BAND> dynamic_autocorrect_database::_known_bands(void) const
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  return ALL_KEYS <set<BAND>> (_per_band_db);
+}
+
+bool dynamic_autocorrect_database::contains_band(const BAND b) const
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  return _per_band_db.contains(b); 
+}
+
+void dynamic_autocorrect_database::operator+=(const BAND b)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  if (!_per_band_db.contains(b))
+    _per_band_db[b].to_band(b);
+}
+
 bool dynamic_autocorrect_database::insert(const dx_post& post)
-{ 
+{ lock_guard<recursive_mutex> lg(_mtx);
 
-
-
+  if (_per_band_db.contains(post.band()))
+    _per_band_db[post.band()].insert(post);
 
   return false;
 }
+
+void dynamic_autocorrect_database::prune(const int n_minutes)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  FOR_ALL(_known_bands(), [this, n_minutes] (const BAND b) { _per_band_db[b].prune(n_minutes); }); 
+}
+
+string dynamic_autocorrect_database::to_string(void) const
+{ string rv;
+
+//  lock_guard<recursive_mutex> lg(_mtx);
+
+//  for (const auto& [b, tcfn] : _per_band_db)
+  const set<BAND> bands { _known_bands() };
+
+  for (const BAND b : bands)
+  { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
+
+    rv += _per_band_db.at(b).to_string(2) + EOL;
+  }
+
+  return rv;
+}
+
+#if 0
+
+// -----------  band_n_posters_database  ----------------
+
+/*! \class  band_n_posters_database
+    \brief  A single-band database for the number of posters  of stations
+
+    
+*/
+
+void band_n_posters_database::operator+=(const dx_post& post)
+{ if (post.band() != _b)
+    return;
+
+  const auto now_min { now_minutes };
+
+  lock_guard<recursive_mutex> lg(_mtx);
+
+  auto& data_time_call { _data[now_min][post.callsign()] };
+
+  data_time_call += post.poster();
+}
+
+//   std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; // time in minutes, callsign, number of posters
+int band_n_posters_database::n_posters(const string& call) const
+{ int rv { 0 };
+
+  lock_guard<recursive_mutex> lg(_mtx);
+
+  const set<time_t> times { all_keys<set<time_t>>(_data) };
+
+  for (const auto t : times)
+  { if (_data.at(t).contains(call))
+      rv += _data.at(t).at(call).size();
+  }
+
+  return rv;
+}
+
+void band_n_posters_database::prune(const int n_minutes)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  const auto now_min    { now_minutes };
+  const auto target_min { now_min - n_minutes };
+
+// in theory this is unnecessary, as there will be, at most, only one element. But be paranoid.
+  set<int> keys_to_remove;
+
+  for (auto it { _data.begin() }; it != _data.end(); ++it)
+    if (it->first <= target_min)
+      keys_to_remove += it->first;
+
+ // ost << "number of keys to remove for band " << BAND_NAME.at(_b) << " = " << keys_to_remove.size() << endl;
+
+  FOR_ALL(keys_to_remove, [this] (const int key_to_remove) { /* ost << "erasing key: " << key_to_remove << endl; */ _data.erase(key_to_remove); });
+}
+
+// -----------  n_posters_database  ----------------
+
+/*! \class  n_posters_database
+    \brief  database for the number of posters  of stations
+*/
+
+set<BAND> n_posters_database::_known_bands(void) const
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  return all_keys<set<BAND>>(_per_band_db);
+}
+
+bool n_posters_database::contains_band(const BAND b) const
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  return _per_band_db.contains(b); 
+}
+
+void n_posters_database::operator+=(const BAND b)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  if (!_per_band_db.contains(b))
+    _per_band_db[b].to_band(b);
+}
+
+void n_posters_database::operator+=(const dx_post& post)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  if (_per_band_db.contains(post.band()))
+    _per_band_db[post.band()] += post;
+}
+
+void n_posters_database::prune(const int n_minutes)
+{ lock_guard<recursive_mutex> lg(_mtx);
+
+  FOR_ALL(_known_bands(), [this, n_minutes] (const BAND b) { _per_band_db[b].prune(n_minutes); }); 
+}
+
+#endif     // 0

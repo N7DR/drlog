@@ -1,4 +1,4 @@
-// $Id: bandmap.h 215 2023-01-23 19:37:41Z  $
+// $Id: bandmap.h 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,8 @@ enum class BANDMAP_DIRECTION { DOWN,
                                UP
                              };
 
+using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
+
 // forward declarations
 class bandmap_entry;
 class bandmap_filter_type;
@@ -54,8 +56,7 @@ extern old_log             olog;                                ///< old (ADIF) 
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
 
-//using BANDMAP_INSERTION_QUEUE = std::queue<bandmap_entry>;      // std::queue is NOT thread safe!!
-using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // std::queue is NOT thread safe!!
+using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // ordinary std::queue is NOT thread safe!!
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -63,31 +64,54 @@ using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // std::queue is N
 */
 std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
-#if 0
-// -----------   bandmap_insertion_queue ----------------
+// -----------  n_posters_database  ----------------
 
-/*! \class  bandmap_insertion_queue
-    \brief  Thread-safe insertion queue
-
-    See: https://codetrips.com/2020/07/26/modern-c-writing-a-thread-safe-queue/
+/*! \class  n_posters_database
+    \brief  A database for the number of posters of stations
 */
-class bandmap_insertion_queue
+
+class n_posters_database
 {
 protected:
 
-  std::queue<bandmap_entry> _q;
+  std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters
 
-  mutable pt_mutex _q_mutex { "BANDMAP INSERTION QUEUE"s };    ///< mutex for the queue
+  std::unordered_set<std::string> _known_good_calls;        ///< calls whose number of posters meets or exceeds _min_posters
+
+  int _min_posters { 1 };                                   ///< minumum number of posters needed to appear on bandmap, default = 1
+  int _width       { 15 };                                  ///< width in minutes
+
+  mutable std::recursive_mutex  _mtx;                       ///< mutex
 
 public:
 
-// append to queue
-  void operator+=(const bandmap_entry& be);
+/// Constructor
+  n_posters_database(void) = default;
 
-  std::optional<bandmap_entry> pop(void);
+  READ_AND_WRITE(min_posters);      ///< minumum number of posters needed to appear on bandmap
 
+/*! \brief      Add a call and poster to the database
+    \param  pr  call and poster to be added
+*/
+  void operator+=(const std::pair<std::string /* call */, std::string /* poster */>& pr);
+
+/*! \brief      Get all the times in the database
+    \return     all the times in <i>_data</i>
+*/
+  std::set<time_t> times(void) const;
+
+/*! \brief          Test whether a call appears enough times to be considered "good", and add to <i>_known_good_calls</i> if so
+    \param  call    call to test
+    \return         whether <i>call</i> is a known good call
+*/
+  bool test_call(const std::string& call);
+
+/// Prune the database
+  void prune(void);
+
+/// Convert to printable string
+  std::string to_string(void) const;
 };
-#endif
 
 // -----------   bandmap_buffer_entry ----------------
 
@@ -257,7 +281,6 @@ public:
     \return     whether <i>v</i> is needed
 */
   inline bool is_value_needed(const T& v) const
-//    { return _is_needed ? !(_values > v) : false; }
     { return _is_needed ? !(_values.contains(v)) : false; }
 
 /*! \brief      Remove a needed value
@@ -267,8 +290,7 @@ public:
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
   bool remove(const T& v)
-  { //if (!_is_needed or !(_values > v))
-    if (!_is_needed or !(_values.contains(v)))
+  { if (!_is_needed or !(_values.contains(v)))
       return false;
 
     const bool rv { (_values.erase(v) == 1) };
@@ -769,7 +791,7 @@ class bandmap
 {
 protected:
 
-  mutable pt_mutex                _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
+  mutable pt_mutex                _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
   int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                        ///< cull function number to apply

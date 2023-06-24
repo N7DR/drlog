@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 205 2022-04-24 16:05:06Z  $
+// $Id: bands-modes.h 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -161,17 +161,6 @@ public:
 /// default constructor
   frequency(void) = default;
 
-/*! \brief      Construct from an HZ_TYPE
-    \param f    frequency in HZ_TYPE
-*/
-//  inline explicit frequency(const HZ_TYPE f) :
-//    _hz(f)
-//  { }
-
-//  explicit frequency(const uint32_t f) :
-//    _hz(f)
-//  { }
-
 /*! \brief      Construct from a double
     \param f    frequency in Hz, kHz or MHz
 */
@@ -326,16 +315,16 @@ inline BAND to_BAND(const frequency& f)
 inline std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
-/// mode break points; CW below the break point, SSB above it
+/// mode break points; CW below the break point, SSB above it; see http://www.arrl.org/images/view//Charts/Band_Chart_Image_for_ARRL_Web.jpg
 static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
                                                     { BAND_80,  3'600_kHz },
                                                     { BAND_60,  5'500_kHz },
-                                                    { BAND_40,  7'100_kHz },
+                                                    { BAND_40,  7'125_kHz },
                                                     { BAND_30,  10'150_kHz },
                                                     { BAND_20,  14'150_kHz },
-                                                    { BAND_17,  18'900_kHz },
+                                                    { BAND_17,  18'110_kHz },
                                                     { BAND_15,  21'200_kHz },
-                                                    { BAND_12,  24'910_kHz },
+                                                    { BAND_12,  24'930_kHz },
                                                     { BAND_10,  28'300_kHz }
                                                   };
 

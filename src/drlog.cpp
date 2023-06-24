@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 220 2023-03-27 15:42:01Z  $
+// $Id: drlog.cpp 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,7 +60,7 @@ using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
 using namespace   this_thread;   // std::this_thread
 
-using CALL_SET = set<string, decltype(&compare_calls)>;    // set in callsign order
+using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
 
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
@@ -112,6 +112,7 @@ WRAPPER_3(memory_entry,
 deque<memory_entry> memories;
 
 // some forward declarations; others, that depend on these, occur later
+
 string active_window_name(void);                                                ///< Return the name of the active window in printable form
 void   add_qso(const QSO& qso);                                                 ///< Add a QSO into the all the objects that need to know about it
 void   adif3_build_old_log(void);                                               ///< build the old log from an ADIF3 file
@@ -164,6 +165,8 @@ bool is_needed_qso(const string& callsign, const BAND b, const MODE m);         
 pair<float, float> latitude_and_longitude(const string& callsign);    ///< obtain latitude and longtide associated with a call
 
 string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& matches, const string& do_not_return = string());   ///< Get best fuzzy or SCP match
+
+MINUTES_TYPE NOW_MINUTES(void);                                                         ///< time in absolute minutes
 
 void populate_win_call_history(const string& str);                                      ///< Populate the QSO/QSL call history window
 void populate_win_info(const string& str);                                              ///< Populate the information window
@@ -231,6 +234,8 @@ bool update_rx_ant_window(void);                                                
 void update_score_window(const unsigned int score);                                                                     ///< update the SCORE window
 void update_system_memory(void);                                                                                        ///< update the SYSTEM MEMORY window
 void update_win_posted_by(const vector<dx_post>&);                                                                      ///< update, but do not refresh, the POSTED BY window
+
+bool xscp_order_greater(const string& c1, const string& c2);                                                            ///< is <i>c1</i> before <i>c2</i> i XSCP order?
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -330,6 +335,7 @@ int                     cw_bandwidth_narrow;                        ///< narrow 
 int                     cw_bandwidth_wide;                          ///< wide CW bandwidth, in Hz
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
+dynamic_autocorrect_database dad;                                   ///< dynamic autocorrect database
 bool                    debug { false };                            ///< whether to log additional information
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
 string                  do_not_show_filename;                       ///< name of DO NOT SHOW file
@@ -361,9 +367,12 @@ float                   my_longitude;                               ///< my long
 
 unordered_map<string, string> names;                                ///< map from call to name
 unsigned int                  next_qso_number { 1 };                ///< actual number of next QSO
+atomic<MINUTES_TYPE>          now_minutes { NOW_MINUTES() };        ///< current absolute number of minutes
 bool                          no_default_rst { false };             ///< do we not assign a default received RST?
 unsigned int                  n_modes { 0 };                        ///< number of modes allowed in the contest
 unsigned int                  n_memories { 0 };                     ///< number of memories on the rig
+n_posters_database            n_posters_db_cluster { };             ///< number of posters of calls from cluster (sliding window, per-band)
+n_posters_database            n_posters_db_rbn { };                 ///< number of posters of calls from RBN (sliding window, per-band)
 
 unsigned int            octothorpe { 1 };                   ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
@@ -589,9 +598,6 @@ bool country_mults_used  { false };            ///< do the rules call for countr
 bool exchange_mults_used { false };            ///< do the rules call for exchange mults?
 bool mm_country_mults    { false };            ///< can /MM stns be country mults?
 
-inline bool xscp_order_greater(const string& c1, const string& c2)
-  { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
-
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
     \param  match_vector    OUTPUT vector of pairs of calls and colours (in display order)
@@ -607,6 +613,8 @@ inline bool xscp_order_greater(const string& c1, const string& c2)
     red matches
 
     Might want to put red matches after green matches
+
+  This has to go before the inline functions that use it
 */
 template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
@@ -665,9 +673,25 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // simple inline functions
 
+inline time_t NOW(void)
+  { return ::time(NULL); }           // get the time from the kernel
+
+inline MINUTES_TYPE NOW_MINUTES(void)
+  { return static_cast<MINUTES_TYPE>(NOW() / 60); }
+
 /// recall a memory
 inline memory_entry recall_memory(const unsigned int n)
   { return ( (n < memories.size()) ? memories[n] : memory_entry() ); }
+
+/*! \brief      Am I sending CW?
+    \return     whether I appear to be sending CW
+
+    This does not need to be, and is not, either robust or clever. It's used only to control
+    behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
+    a slow machine if the CW is not being sent on a thread with RT scheduling.
+*/
+inline bool sending_cw(void)
+  { return (cw_p != nullptr) and !(cw_p->empty()); }
 
 /// get the frequency and mode
 inline pair<frequency, MODE> get_frequency_and_mode(void)
@@ -715,15 +739,13 @@ inline void update_recording_status_window(void)
 inline void update_scp_window(const string& callsign)
   { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
 
-/*! \brief      Am I sending CW?
-    \return     whether I appear to be sending CW
-
-    This does not need to be, and is not, either robust or clever. It's used only to control
-    behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
-    a slow machine if the CW is not being sent on a thread with RT scheduling.
+/*! \brief      Is one call before another when ordered according to the number of XSCP entries for each call?
+    \param  c1  first call
+    \param  c2  second call
+    \return     whether the XSCP value for <i>c1</i> is less than the XSCP value for <i>c2</i>
 */
-inline bool sending_cw(void)
-  { return (cw_p != nullptr) and !(cw_p->empty()); }
+inline bool xscp_order_greater(const string& c1, const string& c2)
+  { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
 int main(int argc, char** argv)
 { 
@@ -827,6 +849,8 @@ int main(int argc, char** argv)
     ssb_centre_wide                 = context.ssb_centre_wide();
     xscp_sort                       = context.xscp_sort();
 
+    n_posters_db_cluster.min_posters(context.cluster_threshold());
+    n_posters_db_rbn.min_posters(context.rbn_threshold());         // &&&
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
 // set up initial quick qsy information
@@ -1982,7 +2006,8 @@ void* display_date_and_time(void* vp)
   update_local_time();                          // update the LOCAL TIME window
 
   while (true)                                  // forever
-  { const time_t now { ::time(NULL) };          // get the time from the kernel
+  { //const time_t now { ::time(NULL) };          // get the time from the kernel
+    const time_t now { NOW() };          // get the time from the kernel
 
     struct tm structured_time;                  // for holding the time
 
@@ -2013,10 +2038,30 @@ void* display_date_and_time(void* vp)
       if (last_second % 60 == 0)
       { ost << "Time: " << substring(string(buf.data(), 26), 11, 8) << endl;
 
+        now_minutes = NOW_MINUTES();        // update global time in minutes
+
         update_local_time();
         update_rate_window();
         update_mult_value();
         update_bandmap_size_window();
+
+        if (cluster_p and (n_posters_db_cluster.min_posters() != 1))
+          n_posters_db_cluster.prune();
+
+        if (rbn_p and (n_posters_db_rbn.min_posters() != 1))
+          n_posters_db_rbn.prune();
+
+        ost << "AFTER PRUNING RBN" << endl;
+        ost << n_posters_db_rbn.to_string() << endl;
+
+#if 0
+// possibly prune dynamic autocorrect databases  &&&
+        ost << dad.to_string();
+        dad.prune(10);
+
+        ost << "AFTER PRUNING" << endl <<endl;
+        ost << dad.to_string();        
+#endif
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup_directory().empty())
@@ -2464,15 +2509,27 @@ void* process_rbn_info(void* vp)
               mp += post;
 
             if (permitted_bands_set.contains(dx_band))              // process only if is on a band we care about
-            { 
-// for now assume rbn posts are to be dynamically checked
+            { //if (!n_posters_db.contains_band(dx_band))            // add the band if this is the very first occurrence of this band
+              //    n_posters_db += dx_band;
+
+// for now assume rbn posts are to be dynamically checked &&&
+#if 0
               if (is_rbn)
-              { static dynamic_autocorrect_database dad;
+              { if (!dad.contains_band(dx_band))            // add the band if this is the very first occurrence of this band
+                  dad += dx_band;
  
+// do we dynamically autocorrect the callsign???
+
+
+
+
                 const bool status { dad.insert(post) };
+
+                ost << "Added post: " << post.callsign() << " posted by " << post.poster() << endl;
 
 
               }
+#endif
 
               const BAND                    cur_band    { current_band };
               const string&                 dx_callsign { post.callsign() };
@@ -2561,7 +2618,6 @@ void* process_rbn_info(void* vp)
                   if (!is_recent_call)
                     is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 
-//                const bool is_interesting_mode { (rules.score_modes() > be.mode()) };
                 const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };
 
 // CLUSTER MULT window
@@ -2608,16 +2664,30 @@ void* process_rbn_info(void* vp)
                 if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
-                    case BANDMAP_ENTRY_SOURCE::RBN :
-                      bm_buffer += { be.callsign(), post.poster() };
 
-                      if (bm_buffer.sufficient_posters(be.callsign()))
+//                     bm_buffer += { be.callsign(), post.poster() };        // associate poster with the call  &&&
+                      n_posters_db_cluster += { be.callsign(), post.poster() };        // associate poster with the call
+
+                      if (n_posters_db_cluster.test_call(be.callsign()))
                       { bandmap_insertion_queues[dx_band] += be;
                         changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
                       }
                       break;
 
-                    default :
+                    case BANDMAP_ENTRY_SOURCE::RBN :
+                      bm_buffer += { be.callsign(), post.poster() };        // associate poster with the call  &&&
+                      n_posters_db_rbn += { be.callsign(), post.poster() };        // associate poster with the call
+
+ //                     ost << n_posters_db.to_string() << endl;
+
+ //                     if (bm_buffer.sufficient_posters(be.callsign()) or n_posters_db.test_call(be.callsign()))
+                      if (n_posters_db_rbn.test_call(be.callsign()))
+                      { bandmap_insertion_queues[dx_band] += be;
+                        changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
+                      }
+                      break;
+
+                    default :                                       // neither cluster nor RBN
                       bandmap_insertion_queues[dx_band] += be;
                       changed_bands += dx_band;         // prepare to display the bandmap if we just made a change for this band
                   }
@@ -2671,7 +2741,8 @@ void* process_rbn_info(void* vp)
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-      const time_t              now             { ::time(NULL) };
+//      const time_t              now             { ::time(NULL) };
+      const time_t              now             { NOW() };
       const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
       const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
       const float               interval        { 1.0f / n_colours };
@@ -2905,7 +2976,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
-    display_call_info(call_contents);    // display information in the INFO window &&&
+    display_call_info(call_contents);    // display information in the INFO window
 
 // KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
@@ -6350,7 +6421,8 @@ void rescore(const contest_rules& rules)
 /*! \brief  Obtain the current time in HH:MM:SS format
 */
 string hhmmss(void)
-{ const time_t now { ::time(NULL) };           // get the time from the kernel
+{ //const time_t now { ::time(NULL) };           // get the time from the kernel
+  const time_t now { NOW() };
 
   struct tm structured_time;
   array<char, 26> buf;                       // buffer to hold the ASCII date/time info; see man page for gmtime()
@@ -6370,7 +6442,8 @@ string hhmmss(void)
 void alert(const string& msg, const SHOW_TIME show_time/* const bool show_time */)
 {
   { SAFELOCK(alert);
-    alert_time = ::time(NULL);
+//    alert_time = ::time(NULL);
+    alert_time = NOW();
   }
 
   const string now { hhmmss() };
@@ -6560,7 +6633,8 @@ void update_local_time(void)
   { struct tm       structured_local_time;
     array<char, 26> buf_local_time;
 
-    const time_t now { ::time(NULL) };                            // get the time from the kernel
+ //   const time_t now { ::time(NULL) };                            // get the time from the kernel
+    const time_t now { NOW() };
 
     localtime_r(&now, &structured_local_time);                     // convert to local time
     asctime_r(&structured_local_time, buf_local_time.data());      // and now to ASCII

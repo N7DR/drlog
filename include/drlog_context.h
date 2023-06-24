@@ -126,6 +126,7 @@ protected:
   bool                                         _callsign_mults_per_mode                 { false };                      ///< are callsign mults per-mode?
   unsigned int                                 _cluster_port                            { 23 };                         ///< port on the cluster server; standard telnet server port
   std::string                                  _cluster_server                          { };                            ///< hostname or IP of cluster server
+  unsigned int                                 _cluster_threshold                       { 1 };                          ///< number of different stations that have to post a station to the cluster before it appears on the bandmap
   std::string                                  _cluster_username                        { };                            ///< username to use on the cluster
   std::string                                  _contest_name                            { };                            ///< name of the contest
   COUNTRY_LIST                                 _country_list                            { COUNTRY_LIST::WAEDC };         ///< DXCC or WAE list?
@@ -402,6 +403,7 @@ public:
   CONTEXTREAD(callsign_mults_per_mode);          ///< are callsign mults per-mode?
   CONTEXTREAD(cluster_port);                     ///< port on the cluster server
   CONTEXTREAD(cluster_server);                   ///< hostname or IP of cluster server
+  CONTEXTREAD(cluster_threshold);                ///< number of different stations that have to post a station to the cluster before it appears on the bandmap
   CONTEXTREAD(cluster_username);                 ///< username to use on the cluster
   CONTEXTREAD(contest_name);                     ///< name of the contest
   CONTEXTREAD(country_list);                     ///< DXCC or WAE list?

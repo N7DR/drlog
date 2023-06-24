@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 219 2023-03-06 23:02:40Z  $
+// $Id: drlog_context.cpp 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -315,6 +315,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // CLUSTER SERVER
     if (LHS == "CLUSTER SERVER"sv)
       _cluster_server = rhs;
+
+// CLUSTER THRESHOLD
+    if (LHS == "CLUSTER THRESHOLD"sv)
+      _cluster_threshold = from_string<decltype(_cluster_threshold)>(rhs);
 
 // CLUSTER USERNAME
     if (LHS == "CLUSTER USERNAME"sv)
@@ -795,7 +799,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-//      FOR_ALL(clean_split_string(rhs, ','), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
       FOR_ALL(clean_split_string(rhs), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())

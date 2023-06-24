@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 214 2022-12-18 15:11:23Z  $
+// $Id: bandmap.cpp 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,6 +24,8 @@
 
 using namespace std;
 
+using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
+
 extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
 extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
@@ -32,6 +34,7 @@ extern bool                          bandmap_frequency_up;              ///< whe
 extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                       ///< location information
 extern unsigned int                  max_qsos_without_qsl;              ///< limit for the N7DR matches_criteria() algorithm
+extern MINUTES_TYPE                  now_minutes;                       ///< access the current time in minutes
 extern map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges;
 extern message_stream                ost;                               ///< debugging/logging output
 
@@ -77,33 +80,145 @@ string to_string(const BANDMAP_ENTRY_SOURCE bes)
   }
 }
 
-#if 0
-// -----------   bandmap_insertion_queue ----------------
+// -----------  n_posters_database  ----------------
 
-/*! \class  bandmap_insertion_queue
-    \brief  Thread-safe insertion queue
+/*! \class  n_posters_database
+    \brief  A database for the number of posters of stations
 */
 
-// append to queue
-void bandmap_insertion_queue::operator+=(const bandmap_entry& be)
-{ SAFELOCK(_q);
+/*! \brief      Add a call and poster to the database
+    \param  pr  call and poster to be added
+*/
+void n_posters_database::operator+=(const pair<string /* call */, string /* poster */>& pr)
+{ const time_t  now_m  { now_minutes };
+  const string& call   { pr.first };
+  const string& poster { pr.second };
 
-  _q.push(be);
+  lock_guard<recursive_mutex> lg(_mtx);
+
+  if (_min_posters > 1)
+  { _data[now_m][call] += poster;
+
+    test_call(call);
+  }
 }
 
-optional<bandmap_entry> bandmap_insertion_queue::pop(void)
-{ SAFELOCK(_q);
+/*! \brief      Get all the times in the database
+    \return     all the times in <i>_data</i>
+*/
+set<time_t> n_posters_database::times(void) const
+{ std::lock_guard<std::recursive_mutex> lg(_mtx); 
 
-  if (_q.empty())
-    return { };
-
-  bandmap_entry tmp { _q.front() };
-  
-  _q.pop();
-  
-  return tmp;
+  return ALL_KEYS <set<time_t>> (_data);
 }
-#endif
+
+/*! \brief          Test whether a call appears enough times to be considered "good", and add to <i>_known_good_calls</i> if so
+    \param  call    call to test
+*/
+bool n_posters_database::test_call(const string& call)
+{ std::lock_guard<std::recursive_mutex> lg(_mtx); 
+
+  if ( (_min_posters == 1) or _known_good_calls.contains(call) )
+    return true;
+ //   return;
+
+  const set<time_t> all_times { times() };
+
+  bool known_good      { false };
+  int  count_n_posters { 0 };
+
+  for (auto it { all_times.cbegin() }; !known_good and (it != all_times.end()); ++it)
+  { const unordered_map<string /* call */, unordered_set<string>>& um { _data.at(*it) };
+
+    if (um.contains(call))
+    { count_n_posters += um.at(call).size();
+
+      if (count_n_posters >= _min_posters)
+      { _known_good_calls += call;
+        
+        return true;
+ //       return;
+      }
+    }
+  }
+
+  return false;
+//  return;
+}
+
+/// Prune the database
+void n_posters_database::prune(void)
+{ const time_t now_m { now_minutes };
+
+  std::lock_guard<std::recursive_mutex> lg(_mtx);
+
+  if (_min_posters == 1)
+    return;
+
+  const time_t target_time { now_m - _width };
+
+  set<time_t> all_times { times() };
+
+  bool need_to_clear_known_good_calls { false };
+
+  for (const auto t : all_times)
+  { if (t < target_time)
+    { _data -= t;
+      need_to_clear_known_good_calls = true;        // have to rebuild _known_good_calls if we've removed a minute
+    }
+  }
+
+  if (need_to_clear_known_good_calls)
+  { all_times = move(times());
+    _known_good_calls.clear();
+
+// rebuild _known_good_calls
+    unordered_set<string> all_calls;
+
+    FOR_ALL(all_times, [&all_calls, this] (const time_t t)     { all_calls += move(ALL_KEYS_USET(_data.at(t))); });
+    FOR_ALL(all_calls, [this]             (const string& call) { test_call(call); });
+  }
+}
+
+/// Convert to printable string
+string n_posters_database::to_string(void) const
+{ string rv;
+
+  lock_guard<recursive_mutex> lg(_mtx);
+
+  for (const auto& [t, cp] : _data)
+  { rv += ::to_string(t) + ":"s + EOL;
+
+    for (const auto& [c, p] : cp)
+    { rv += "  "s + ::to_string(c) + "  :"s + EOL;
+
+      for (const auto& poster : p)
+        rv += "    "s + poster + " "s;
+      
+      rv += EOL;
+      rv += "n_posters = "s + ::to_string(p.size()) + EOL;
+    }
+  }
+
+  rv += EOL;
+
+  if (_known_good_calls.empty())
+    rv += "No known good calls"s + EOL;
+  else
+  { rv += "Known good calls: "s;
+
+    CALL_SET ordered_known_good_calls(compare_calls);
+
+    FOR_ALL(_known_good_calls,        [&ordered_known_good_calls] (const string& call) { ordered_known_good_calls += call; } );
+    FOR_ALL(ordered_known_good_calls, [&rv]                       (const string& call) { rv += (call + " "s); } );
+
+    rv += EOL + "Number of known good calls = "s + ::to_string(ordered_known_good_calls.size()) + EOL;
+  }
+
+  rv += EOL;
+
+  return rv;
+}
 
 // -----------   bandmap_buffer ----------------
 
@@ -904,7 +1019,6 @@ BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
   }
 
   BM_ENTRIES filtered { filtered_entries() };  // splice is going to change this
-
   BM_ENTRIES rv;
 
   rv.splice(rv.end(), filtered);
@@ -990,11 +1104,8 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   { const auto cit2 { find_if(marker_it, fe.cend(), [=] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
-    { //const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) };
-
       if (const auto cit3 { find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); }) }; cit3 != fe.cend())
         return (*cit3);
-    }
   }
 
   return bandmap_entry();

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 219 2023-03-06 23:02:40Z  $
+// $Id: string_functions.h 221 2023-06-19 01:57:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1073,6 +1073,38 @@ T regex_matches(C&& container, const std::string& s)
 */
 inline size_t number_of_occurrences(const std::string& str, const char c)
   { return static_cast<size_t>(std::count(str.begin(), str.end(), c)); }
+
+/*! \brief          Are two calls busts of each other?
+    \param  call1   first call
+    \param  call2   second call
+    \return         whether <i>call1</i> and <i>call2</i> are possible busts of each other
+
+    Testing for busts is a symmetrical function.
+*/
+bool is_bust_call(const std::string& call1, const std::string& call2) noexcept;
+
+/*! \brief              Create a container of bust mappings from a container of calls
+    \param  container   a container of calls
+    \return             A container (a map of some kind) mapping calls to all the busts of the call
+*/
+template <class RV, class C>
+  requires (is_string<typename C::value_type>) and is_mum<RV> and is_string<typename RV::key_type>
+    and is_sus<typename RV::value_type> and is_string<typename RV::value_type::value_type>
+//std::unordered_map<std::string, std::unordered_set<std::string>> bust_map(const C& container)
+auto bust_map(const C& container) -> RV
+{ RV rv;
+
+  for (auto it { container.cbegin() }; it != container.cend(); ++it)
+  { for (auto it2 { next(it) }; it2 != container.cend(); ++it2)
+    { if (is_bust(*it, *it2))
+      { rv[*it] += *it2;
+        rv[*it2] += *it;
+      }
+    }
+  }
+
+  return rv;
+}
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                
