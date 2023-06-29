@@ -327,7 +327,6 @@ atomic<bool>            autocorrect_rbn { false };                  ///< whether
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
 bool                    bandmap_show_marked_frequencies { false };  ///< whether to display entries that would be marked
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
-bandmap_buffer          bm_buffer;                                  ///< global control buffer for all the bandmaps
 
 set<BAND>               call_history_bands;                         ///< bands displayed in CALL HISTORY window
 drlog_context           context;                                    ///< context taken from configuration file
@@ -339,6 +338,7 @@ dynamic_autocorrect_database dad;                                   ///< dynamic
 bool                    debug { false };                            ///< whether to log additional information
 bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
 string                  do_not_show_filename;                       ///< name of DO NOT SHOW file
+bool                    dynamic_autocorrect_rbn { false };          ///< whether to try to autocorrect posts from the RBN dynamically
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
 
@@ -821,6 +821,7 @@ int main(int argc, char** argv)
     cw_speed_change                 = context.cw_speed_change();
     display_grid                    = context.display_grid();
     do_not_show_filename            = context.do_not_show_filename();
+    dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
     long_t                          = context.long_t();
@@ -850,7 +851,7 @@ int main(int argc, char** argv)
     xscp_sort                       = context.xscp_sort();
 
     n_posters_db_cluster.min_posters(context.cluster_threshold());
-    n_posters_db_rbn.min_posters(context.rbn_threshold());         // &&&
+    n_posters_db_rbn.min_posters(context.rbn_threshold());
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
 // set up initial quick qsy information
@@ -2051,16 +2052,15 @@ void* display_date_and_time(void* vp)
         if (rbn_p and (n_posters_db_rbn.min_posters() != 1))
           n_posters_db_rbn.prune();
 
-        ost << "AFTER PRUNING RBN" << endl;
-        ost << n_posters_db_rbn.to_string() << endl;
+#if 1
+// possibly prune dynamic autocorrect databases
+       if (dynamic_autocorrect_rbn)
+       { //ost << dad.to_string();
+          dad.prune(10);
 
-#if 0
-// possibly prune dynamic autocorrect databases  &&&
-        ost << dad.to_string();
-        dad.prune(10);
-
-        ost << "AFTER PRUNING" << endl <<endl;
-        ost << dad.to_string();        
+//         ost << "AFTER PRUNING" << endl <<endl;
+          ost << dad.to_string();
+       }       
 #endif
 
 // possibly run thread to perform auto backup
@@ -2508,28 +2508,22 @@ void* process_rbn_info(void* vp)
             if (mp.is_monitored(post.callsign()))
               mp += post;
 
-            if (permitted_bands_set.contains(dx_band))              // process only if is on a band we care about
-            { //if (!n_posters_db.contains_band(dx_band))            // add the band if this is the very first occurrence of this band
-              //    n_posters_db += dx_band;
-
-// for now assume rbn posts are to be dynamically checked &&&
-#if 0
-              if (is_rbn)
+            if (permitted_bands_set.contains(dx_band))      // process only if is on a band we care about
+            { if (is_rbn and dynamic_autocorrect_rbn)       // possibly apply dynamic autocorrection
               { if (!dad.contains_band(dx_band))            // add the band if this is the very first occurrence of this band
                   dad += dx_band;
  
-// do we dynamically autocorrect the callsign???
+                dad += post;                   // add it even though it might be wrong... wrongness is determined by voting
 
+ //               ost << "Added post: " << post.callsign() << " posted by " << post.poster() << endl;
 
+                const string old_call { post.callsign() };
 
+                post.callsign(dad.autocorrect(post));       // replace call in the post, so that subsequent reads return the possibly-autocorrected call
 
-                const bool status { dad.insert(post) };
-
-                ost << "Added post: " << post.callsign() << " posted by " << post.poster() << endl;
-
-
+                if (post.callsign() != old_call)
+                  ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << BAND_NAME[post.band()] << "m" << endl;
               }
-#endif
 
               const BAND                    cur_band    { current_band };
               const string&                 dx_callsign { post.callsign() };
@@ -2664,28 +2658,16 @@ void* process_rbn_info(void* vp)
                 if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
-
-//                     bm_buffer += { be.callsign(), post.poster() };        // associate poster with the call  &&&
-                      n_posters_db_cluster += { be.callsign(), post.poster() };        // associate poster with the call
-
-                      if (n_posters_db_cluster.test_call(be.callsign()))
-                      { bandmap_insertion_queues[dx_band] += be;
-                        changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
-                      }
-                      break;
-
                     case BANDMAP_ENTRY_SOURCE::RBN :
-                      bm_buffer += { be.callsign(), post.poster() };        // associate poster with the call  &&&
-                      n_posters_db_rbn += { be.callsign(), post.poster() };        // associate poster with the call
+                    { n_posters_database* dbp { (be.source() == BANDMAP_ENTRY_SOURCE::CLUSTER) ? &n_posters_db_cluster : &n_posters_db_rbn };   // choose correct n_posters database
 
- //                     ost << n_posters_db.to_string() << endl;
+                      (*dbp) += { be.callsign(), post.poster() };        // associate poster with the call 
 
- //                     if (bm_buffer.sufficient_posters(be.callsign()) or n_posters_db.test_call(be.callsign()))
-                      if (n_posters_db_rbn.test_call(be.callsign()))
+                      if (dbp -> test_call(be.callsign()))              // if good call
                       { bandmap_insertion_queues[dx_band] += be;
                         changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
-                      }
-                      break;
+                      }                   
+                    }
 
                     default :                                       // neither cluster nor RBN
                       bandmap_insertion_queues[dx_band] += be;
@@ -2741,7 +2723,6 @@ void* process_rbn_info(void* vp)
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-//      const time_t              now             { ::time(NULL) };
       const time_t              now             { NOW() };
       const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
       const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
@@ -2874,6 +2855,7 @@ void* prune_bandmap(void* vp)
 /*  KP numbers    -- CW messages
     ALT-KPDel     -- Add call to single-band DO NOT SHOW list
     ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
+    ALT-G go to the frequency in win_last_qrg
     ALT-K         -- toggle CW
     ALT-M         -- change mode
     ALT-N         -- toggle notch status if on SSB
@@ -2888,6 +2870,7 @@ void* prune_bandmap(void* vp)
     ALT-CTRL-KP-LEFT-ARROW, ALT-CTRL-KP-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     ALT-CTRL-KP-DOWN-ARROW, ALT-CTRL-KP-UP-ARROW: up or down to next stn that matches the N7DR criteria
     ALT-F4        -- toggle DEBUG state
+    ALT-<-        -- VFO B -> VFO A
     ALT-->        -- VFO A -> VFO B
     BACKSLASH     -- send to the scratchpad
     CTRL-B        -- fast bandwidth
@@ -2911,6 +2894,8 @@ void* prune_bandmap(void* vp)
     CURSOR DOWN   -- possibly replace call with SCP info
     ENTER, ALT-ENTER -- log the QSO
     ESCAPE
+    F1 -- first step in SAP QSO during run
+    F4 -- swap contents of CALL and BCALL windows
     F10           -- toggle filter_remaining_country_mults
     F11           -- band map filtering
     KP Del        -- remove from bandmap and add to do-not-add list (like .REMOVE)
@@ -2918,22 +2903,13 @@ void* prune_bandmap(void* vp)
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
     KP-              -- toggle 1300:1600/1500:1800 centre/bandwidth if on SSB
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     SHIFT (RIT control)
     SPACE -- generally, dupe check
+    TAB -- switch between CQ and SAP mode
     ' -- Place NEARBY call into CALL window and update QSL window
-
     ; -- down to next stn that matches the N7DR criteria
     ' -- up to next stn that matches the N7DR criteria
-
-    ALT-<- -- VFO B -> VFO A
-
-    F1 -- first step in SAP QSO during run
-    F4 -- swap contents of CALL and BCALL windows
-
-    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
-    TAB -- switch between CQ and SAP mode
-
-    ALT-G go to the frequency in win_last_qrg
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -3272,14 +3248,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .CULL <n>
       if (command.starts_with("CULL"sv))
-      { //if (contains(command, SPACE_STR))
-        //if (contains(command, ' '))
-        if (const auto posn { command.find(' ') }; posn != string::npos)
-        { //const int cull_function { from_string<int>(substring(command, command.find(SPACE_STR))) };
-
- //         FOR_ALL(bandmaps, [cull_function = from_string<int>(substring(command, command.find(' ')))] (bandmap& bm) { bm.cull_function(cull_function); } );
+      { if (const auto posn { command.find(' ') }; posn != string::npos)
           FOR_ALL(bandmaps, [cull_function = from_string<int>(substring(command, posn))] (bandmap& bm) { bm.cull_function(cull_function); } );
-        }
 
         bandmap& bm { bandmaps[current_band] };
 

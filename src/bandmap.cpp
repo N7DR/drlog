@@ -28,7 +28,7 @@ using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign o
 
 extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
-extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
+//extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
 extern bool                          bandmap_show_marked_frequencies;   ///< whether to display entries that would be marked
 extern bool                          bandmap_frequency_up;              ///< whether increasing frequency goes upwards in the bandmap
 extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
@@ -109,7 +109,8 @@ void n_posters_database::operator+=(const pair<string /* call */, string /* post
 set<time_t> n_posters_database::times(void) const
 { std::lock_guard<std::recursive_mutex> lg(_mtx); 
 
-  return ALL_KEYS <set<time_t>> (_data);
+//  return ALL_KEYS <set<time_t>> (_data);
+  return ALL_KEYS_SET(_data);
 }
 
 /*! \brief          Test whether a call appears enough times to be considered "good", and add to <i>_known_good_calls</i> if so
@@ -120,7 +121,6 @@ bool n_posters_database::test_call(const string& call)
 
   if ( (_min_posters == 1) or _known_good_calls.contains(call) )
     return true;
- //   return;
 
   const set<time_t> all_times { times() };
 
@@ -137,13 +137,11 @@ bool n_posters_database::test_call(const string& call)
       { _known_good_calls += call;
         
         return true;
- //       return;
       }
     }
   }
 
   return false;
-//  return;
 }
 
 /// Prune the database
@@ -220,43 +218,6 @@ string n_posters_database::to_string(void) const
   return rv;
 }
 
-// -----------   bandmap_buffer ----------------
-
-/*! \class  bandmap_buffer
-    \brief  Class to control which cluster/RBN posts reach the bandmaps
-
-    A single bandmap_buffer is used to control all bandmaps
-*/
-
-/*! \brief              Get the number of posters associated with a call
-    \param  callsign    the callsign to test
-    \return             The number of posters associated with <i>callsign</i>
-*/
-unsigned int bandmap_buffer::n_posters(const string& callsign) const
-{ SAFELOCK(_bandmap_buffer);
-
-//  const auto cit { _data.find(callsign) };
-
-//  return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
-
-// std::map<std::string /* call */, bandmap_buffer_entry>  _data;
-
-  return MUMF_VALUE(_data, callsign, &bandmap_buffer_entry::size);  // is this correct??? I think that it is
-}
-
-/*! \brief              Associate a poster with a call
-    \param  callsign    the callsign
-    \param  poster      poster to associate with <i>callsign</i>
-    \return             The number of posters associated with <i>callsign</i>, after this association is added
-
-    Creates an entry in the buffer if no entry for <i>callsign</i> exists
-*/
-unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
-{ SAFELOCK(_bandmap_buffer);
-
-  return _data[callsign].add(poster);
-}
-
 // -----------   bandmap_filter_type ----------------
 
 /*! \class  bandmap_filter_type
@@ -274,9 +235,10 @@ void bandmap_filter_type::add_or_subtract(const string& str)
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
   vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };        // create pointer to correct vector
-  set<string> ss;                                                                        // temporary place to build new container of strings
+//  set<string> ss;                                                                        // temporary place to build new container of strings
 
-  for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
+//  for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
+  set<string> ss { vs_p->begin(), vs_p->end() };  // create a copy of current values
 
   if (ss.contains(str_copy))              // remove a value
     ss -= str_copy;

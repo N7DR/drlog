@@ -28,7 +28,7 @@ using MINUTES_TYPE = int64_t;                               // type for holding 
 // -----------  autocorrect_database  ----------------
 
 /*! \class  autocorrect_database
-    \brief  The database of good calls for the autocorrect function
+    \brief  The database of good calls for the (non-dynamic) autocorrect function
 */
 
 class autocorrect_database
@@ -41,7 +41,7 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   autocorrect_database(void) = default;
 
 /*! \brief              Initialise the database from a container of known-good calls
@@ -57,10 +57,12 @@ public:
   inline bool contains(const std::string& putative_call) const
     { return _calls.contains(putative_call); }
 
-  inline unsigned int n_calls(void) const
+/// return the number of known-good calls
+  inline size_t n_calls(void) const
     { return _calls.size(); }
 
-  inline unsigned int size(void) const
+/// return the number of known-good calls
+  inline size_t size(void) const
     { return n_calls(); }
 
 /*! \brief          Obtain an output call from an input
@@ -70,52 +72,24 @@ public:
   std::string corrected_call(const std::string& str) const;
 };
 
-// -----------  post_struct  ----------------
-
-/*! \class  post_struct
-    \brief  Information from a <i>dx_post</i>
-*/
-
-class post_struct
-{
-protected:
-
-  std::string _call;
-  size_t      _n_posts;
-  time_t      _post_time;
-
-public:
-
-  post_struct(void) = default;
-
-  inline explicit post_struct(const dx_post& dx) :
-    _call(dx.callsign()),
-    _n_posts(1),
-    _post_time(dx.time_processed())
-  { }
-
-};
-
 // -----------  band_dynamic_autocorrect_database  ----------------
 
 /*! \class  band_dynamic_autocorrect_database
     \brief  A single-band database for the dynamic lookup
-
-    
 */
 
 class band_dynamic_autocorrect_database
 {
 protected:
 
-  BAND _b;                  ///< band to which this database applies
+  using F100_TYPE = uint32_t;   // type of frequency measured to 100 Hz
 
-  uint32_t _f_min_100;      ///< minimum frequency in hundreds of Hz
-  uint32_t _f_max_100;      ///< maximum frequency in hundreds of Hz
+  BAND _b;                      ///< band to which this database applies
 
-  std::vector<post_struct>  _data;  // arranged according to frequency
+  F100_TYPE _f_min_100;         ///< minimum frequency in hundreds of Hz
+  F100_TYPE _f_max_100;         ///< maximum frequency in hundreds of Hz
 
-  std::map<time_t, std::map<std::string /* call */, std::map<uint32_t /* f_100 */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, callsign, number of times the call appears
+  std::map<time_t, std::map<F100_TYPE /* f_100 */, std::unordered_map<std::string /* call */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the call appears
 
   std::set<std::string> _all_calls;
 
@@ -125,22 +99,39 @@ protected:
 // (https://en.cppreference.com/w/cpp/container/map/try_emplace)
   mutable std::recursive_mutex  _mtx;   ///< per-band mutex
 
-  std::set<std::string> _get_all_calls(void) const;
-
 public:
 
+/// constructor
   band_dynamic_autocorrect_database(void) = default;
 
+/// delete the copy constructor
   band_dynamic_autocorrect_database(const band_dynamic_autocorrect_database&) = delete;
 
+/*! \brief              Prune the database by removing old minutes
+    \param  n_minutes   remove all data older than <i>n_minutes</i> ago
+*/
   void prune(const int n_minutes);
 
+/*! \brief      Set the value of the band
+    \param  b   the new value of the band
+*/
   void to_band(const BAND b);
 
-  bool insert(const dx_post& post);
+/*! \brief          Add a post to the database
+    \param  post    post to add
+*/
+  void insert(const dx_post& post);
 
+/*! \brief              Convert to a printable string
+    \param  n_spaces    number of spaces to prepend to each line
+    \return             printable string describing the database
+*/
   std::string to_string(const int n_spaces = 0) const;
 
+/*! \brief          Perform dynamic autocorrection on a call (if necessary)
+    \param  post    post as received from the RBN
+    \return         autocorrected call from the post
+*/
   std::string autocorrect(const dx_post& post);
 };
 
@@ -154,97 +145,98 @@ class dynamic_autocorrect_database
 {
 protected:
 
-  std::map<BAND, band_dynamic_autocorrect_database> _per_band_db;
+  std::map<BAND, band_dynamic_autocorrect_database> _per_band_db;   ///< per-band databases
 
-  mutable std::recursive_mutex  _mtx;   ///< mutex
+  mutable std::recursive_mutex  _mtx;               ///< mutex
 
+/*! \brief      Return the bands that are in the database
+    \return     the bands containing data in the database
+*/
   std::set<BAND> _known_bands(void) const;
 
 public:
 
+/*! \brief      Does the database contain data from a particular band?
+    \param  b   band to test
+    \return     whether the database contains data from band <i>b</i>
+*/
   bool contains_band(const BAND b) const;
 
+/*! \brief      Add a band to the database
+    \param  b   band to add
+*/
   void operator+=(const BAND b);
 
-  bool insert(const dx_post& post);
+/*! \brief          Add a post to the database
+    \param  post    post to add
+*/
+  void insert(const dx_post& post);
 
+/*! \brief          Add a post to the database
+    \param  post    post to add
+*/
   inline void operator+=(const dx_post& post)
     { insert(post); }
 
+/*! \brief              Prune the database by removing old minutes
+    \param  n_minutes   remove all data older than <i>n_minutes</i> ago
+*/
   void prune(const int n_minutes);
-//  inline void prune(const int n_minutes)
-//    { FOR_ALL(_known_bands(), [this, n_minutes] (const BAND b) { _per_band_db[b].prune(n_minutes); }); }
 
+/*! \brief              Convert to a printable string
+    \return             printable string describing the database
+*/
   std::string to_string(void) const;
+
+/*! \brief          Perform dynamic autocorrection on a call
+    \param  post    post to subject to autocorrection
+    \return         possibly-autocorrected call from <i>post</i>
+*/
+  std::string autocorrect(const dx_post& post);
 };
 
-#if 0
-// -----------  band_n_posters_database  ----------------
+// -----------  busts_database  ----------------
 
-/*! \class  band_n_posters_database
-    \brief  A single-band database for the number of posters  of stations
+/*! \class  busts_database
+    \brief  A database for caching bust and non-bust information
+
+    This class is not thread-safe
 */
 
-class band_n_posters_database
+/*! \brief          Generate a single string from a pair of calls
+    \param  call1   first call
+    \param  call2   second call
+    \return         single string to be used as index into sets
+
+    Returns the same string for (call1, call2) and (call2, call1)
+*/
+inline std::string pair_index(const std::string& call1, const std::string& call2)
+  { return (call1 < call2) ? (call1 + "+"s + call2) : (call2 + "+"s + call1); }
+
+class busts_database
 {
 protected:
 
-  BAND _b;                  ///< band to which this database applies
-
-  std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; // time in minutes, callsign, number of posters
-
-  mutable std::recursive_mutex  _mtx;   ///< mutex
+  std::unordered_set<std::string> _known_busts;         ///< all the known bust-pairs
+  std::unordered_set<std::string> _known_non_busts;     ///< all the known non-bust pairs
 
 public:
 
-  band_n_posters_database(void) = default;
+/// is a pair of calls a known bust pair?
+  inline bool is_known_bust(const std::string& index_string) const
+    { return _known_busts.contains(index_string); }
 
-  inline explicit band_n_posters_database(const BAND b) :
-    _b(b)
-  { }
+/// is a pair of calls a known non-bust pair?
+  inline bool is_known_non_bust(const std::string& index_string) const
+    { return _known_non_busts.contains(index_string); }
 
-  inline void to_band(const BAND b)
-    { _b = b; }
+/// add a pair of calls to the set of known busts
+  inline void known_bust(const std::string& index_string)
+    { _known_busts += index_string; }
 
-  void operator+=(const dx_post& post);
-
-  std::set<time_t> times(void) const
-  { std::lock_guard<std::recursive_mutex> lg(_mtx); 
-
-    return all_keys<std::set<time_t>>(_data);
-  }
-
-  int n_posters(const std::string& call) const; // in all minutes
-
-  void prune(const int n_minutes);
+/// add a pair of calls to the set of known non-busts
+  inline void known_non_bust(const std::string& index_string)
+    { _known_non_busts += index_string; }
 };
-
-// -----------  n_posters_database  ----------------
-
-/*! \class  n_posters_database
-    \brief  database for the number of posters  of stations
-*/
-
-class n_posters_database
-{
-protected:
-
-  std::map<BAND, band_n_posters_database> _per_band_db;
-
-  mutable std::recursive_mutex  _mtx;   ///< mutex
-
-  std::set<BAND> _known_bands(void) const;
-
-public:
-
-  bool contains_band(const BAND b) const;
-
-  void operator+=(const BAND b);
-
-  void operator+=(const dx_post& post);
-
-  void prune(const int n_minutes);
-};
-#endif    // 0
 
 #endif    // AUTOCORRECT.H

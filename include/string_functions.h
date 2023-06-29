@@ -1090,7 +1090,6 @@ bool is_bust_call(const std::string& call1, const std::string& call2) noexcept;
 template <class RV, class C>
   requires (is_string<typename C::value_type>) and is_mum<RV> and is_string<typename RV::key_type>
     and is_sus<typename RV::value_type> and is_string<typename RV::value_type::value_type>
-//std::unordered_map<std::string, std::unordered_set<std::string>> bust_map(const C& container)
 auto bust_map(const C& container) -> RV
 { RV rv;
 

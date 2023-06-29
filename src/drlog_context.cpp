@@ -451,13 +451,17 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "DRMASTER FILENAME"sv)
       _drmaster_filename = rhs;
 
+// DYNAMIC AUTOCORRECT RBN
+    if (LHS == "DYNAMIC AUTOCORRECT RBN"sv)
+      _dynamic_autocorrect_rbn = is_true;
+
 // EXCHANGE
     if (LHS == "EXCHANGE"sv)
       _exchange = RHS;
 
 // EXCHANGE[
     if (testline.starts_with("EXCHANGE["sv))
-    { const string  country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
+    { const string country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
 
       FOR_ALL(clean_split_string(country_list), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
@@ -619,9 +623,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       for (const auto& break_point : break_points)
       { const frequency f { break_point };
-        //const BAND      b { to_BAND(f) };
 
-        //_mode_break_points += { b, f };
         _mode_break_points += { to_BAND(f), f };
       }
     }
@@ -715,12 +717,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // POSTED BY CONTINENTS
     if (LHS == "POSTED BY CONTINENTS"sv)
-    { const set<string>    continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
-//      const vector<string> continents_from_file    { remove_peripheral_spaces(split_string(RHS, ',')) };
-      
-//      FOR_ALL(continents_from_file, [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
-//      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if ( continent_abbreviations > co ) _posted_by_continents += co; } );
-//      FOR_ALL(remove_peripheral_spaces(split_string(RHS, ',')), [&] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+    { const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
+
       FOR_ALL(clean_split_string(RHS, ','), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
     }
 
@@ -783,8 +781,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
     if (testline.starts_with("QTHX["s))
-    { //const vector<string> fields { remove_peripheral_spaces(split_string(testline, "="s)) };
-      const vector<string> fields { clean_split_string(testline, '=') };
+    { const vector<string> fields { clean_split_string(testline, '=') };
 
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring(fields[0], '[', ']', DELIMITERS::DROP) };
@@ -867,9 +864,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { 
- //     const vector<string> bands_str { clean_split_string(rhs, ',') };
-      const vector<string> bands_str { clean_split_string(rhs) };
+    { const vector<string> bands_str { clean_split_string(rhs) };
 
       for (const auto& band_str : bands_str)
       { try

@@ -1193,7 +1193,7 @@ bool is_bust_call(const string& call1, const string& call2) noexcept
 // the calls are the same length; do they differ by exactly one character?
   int differences { 0 };
 
-  for (size_t posn = 0; posn < call1.length(); ++posn)
+  for (size_t posn { 0 }; posn < call1.length(); ++posn)
   { if (call1[posn] != call2[posn])
       differences++;
   }
@@ -1202,7 +1202,7 @@ bool is_bust_call(const string& call1, const string& call2) noexcept
     return true;
 
 // is there a character inversion?
-  for (unsigned int posn = 0; posn < call1.length() - 1; ++posn)
+  for (unsigned int posn { 0 }; (posn < call1.length() - 1); ++posn)
   { string call_tmp { call1 };
 
     swap(call_tmp[posn], call_tmp[posn + 1]);

@@ -148,6 +148,7 @@ protected:
   std::vector<std::string>                     _do_not_show                             { };                            ///< do not show these calls when spotted (MY CALL is automatically not shown)
   std::string                                  _do_not_show_filename                    { };                            ///< filename containing calls (one per line) not to be shown
   std::string                                  _drmaster_filename                       { "drmaster"s };                ///< filename of drmaster file
+  bool                                         _dynamic_autocorrect_rbn                 { false };                      ///< whether to try to autocorrect posts from the RBN dynamically
 
   std::string                                  _exchange                                { "RST"s };                      ///< comma-delimited received exchange
   std::string                                  _exchange_cq                             { };                            ///< exchange in CQ mode
@@ -425,6 +426,7 @@ public:
   CONTEXTREAD(do_not_show);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
   CONTEXTREAD(do_not_show_filename);             ///< filename of calls (one per line) not to be shown
   CONTEXTREAD(drmaster_filename);                ///< filename of drmaster file (default = "drmaster")
+  CONTEXTREAD(dynamic_autocorrect_rbn);          ///< whether to try to autocorrect posts from the RBN dynamically
 
   CONTEXTREAD(exchange);                         ///< comma-delimited received exchange
   CONTEXTREAD(exchange_cq);                      ///< exchange in CQ mode
