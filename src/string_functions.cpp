@@ -354,7 +354,7 @@ vector<string> split_string(const string& cs, const unsigned int record_length)
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
 string squash(const string& cs, const char c)
-{ auto both_match = [=](const char lhs, const char rhs) { return ( (lhs == rhs) and (lhs == c) ); }; ///< do both match the target character?
+{ auto both_match = [c] (const char lhs, const char rhs) { return ( (lhs == rhs) and (lhs == c) ); }; ///< do both match the target character?
 
   string rv { cs };
 
@@ -423,17 +423,6 @@ string remove_char(const string& cs, const char char_to_remove)
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
-#if 0
-std::string remove_from_start(const std::string& s, auto sp)
-{ if (sp.empty())
-    return s;
-
-  if (s.starts_with(sp))
-    return substring(s, sp.size());
-
-  return s;
-}
-#endif
 
 #if 0
 string remove_from_start(const string& s, STRING_PARAM sp)

@@ -890,6 +890,16 @@ bool window::common_processing(const keyboard_event& e)
 PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours += fgbg;
 
+  if (fgbg.first >= COLORS)
+  { ost << "Attempt to set foreground to colour " << fgbg.first << " with only " << COLORS << " colours available" << endl;
+    throw exception();
+  }
+
+  if (fgbg.second >= COLORS)
+  { ost << "Attempt to set background to colour " << fgbg.second << " with only " << COLORS << " colours available" << endl;
+    throw exception();
+  }
+
   const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
   if (status == ERR)

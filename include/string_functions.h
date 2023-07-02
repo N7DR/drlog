@@ -39,26 +39,37 @@ using namespace std::literals::string_view_literals;
 
 // see https://stackoverflow.com/questions/44636549/why-is-there-no-support-for-concatenating-stdstring-and-stdstring-view
 // brain-dead: cannot perform s + sv until at least C++26
-static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
+//static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
+constexpr std::string EOL { "\n"s };            ///< end-of-line marker as string
 //constexpr std::string_view EOL  { "\n"sv };            ///< end-of-line marker as string
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
-static const std::string  LF     { "\n"s };         ///< LF as string
-static const std::string& LF_STR { LF };            ///< LF as string
+//static const std::string  LF     { "\n"s };         ///< LF as string
+//static const std::string& LF_STR { LF };            ///< LF as string
+constexpr std::string LF     { "\n"s };         ///< LF as string
+constexpr std::string LF_STR { "\n"s };            ///< LF as string
 
 constexpr char LF_CHAR { '\n' };                    ///< LF as character
 
-static const std::string  CR     { "\r"s };         ///< CR as string
-static const std::string& CR_STR { CR };            ///< CR as string
+//static const std::string  CR     { "\r"s };         ///< CR as string
+//static const std::string& CR_STR { CR };            ///< CR as string
+constexpr std::string CR     { "\r"s };         ///< CR as string
+constexpr std::string CR_STR { "\r"s };            ///< CR as string
 
 constexpr char CR_CHAR { '\r' };                    ///< CR as character
 
-static const std::string CRLF { "\r\n"s };          ///< CR followed by LF
+//static const std::string CRLF { "\r\n"s };          ///< CR followed by LF
 
-static const std::string EMPTY_STR { };             ///< an empty string
-static const std::string FULL_STOP { "."s };        ///< full stop as string
-static const std::string SPACE_STR { " "s };        ///< space as string
+//static const std::string EMPTY_STR { };             ///< an empty string
+//static const std::string FULL_STOP { "."s };        ///< full stop as string
+//static const std::string SPACE_STR { " "s };        ///< space as string
+
+constexpr std::string CRLF { "\r\n"s };          ///< CR followed by LF
+
+constexpr std::string EMPTY_STR { };             ///< an empty string
+constexpr std::string FULL_STOP { "."s };        ///< full stop as string
+constexpr std::string SPACE_STR { " "s };        ///< space as string
 
 constexpr std::string_view CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"sv };    ///< convenient place to hold all characters that are legal in callsigns
 constexpr std::string_view DIGITS                        { "0123456789"sv };                               ///< convenient place to hold all digits

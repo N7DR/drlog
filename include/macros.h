@@ -784,7 +784,7 @@ public:                                                                         
 template <class T, class U>
 inline bool operator>(const T& v, const U& e)
   requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
-  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
+{ return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
 
 /*! \brief      Does a set or unordered_set contains a particular member?
     \param  s   set or unordered_set  to be tested
@@ -794,7 +794,7 @@ inline bool operator>(const T& v, const U& e)
 template <class T, class U>
 inline bool operator>(const T& s, const U& v)
   requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
-  { return s.contains(v); }
+{ return s.contains(v); }
 
 /*! \brief      Is an object a member of a set or unordered_set?
     \param  v   object to be tested for membership
@@ -804,48 +804,18 @@ inline bool operator>(const T& s, const U& v)
 template <class E, class S>
 inline bool operator<(const E& v, const S& s)
   requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
-  { return (s > v); }
-
-/*! \brief      Is an object a member of a set, an unordered_set, or a key in a map or unordered map?
-    \param  s   set or unordered_set  to be tested
-    \param  v   object to be tested for membership
-    \return     Whether <i>t</i> is a member/key of <i>s</i>
-*/
-//template <class T, class U>
-//bool contains(const T& s, const U& v)
-//  requires (is_sus_v<T> or is_mum_v<T>) and (std::is_same_v<typename T::key_type, U>)
-//  { return s.find(v) != s.cend(); }
+{ return (s > v); }
 
 /// union of two sets of the same type
 template<class T>
 T operator+(const T& s1, const T& s2)
   requires (is_set<T>)
-  { T rv;
+{ T rv;
 
-    std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
+  std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
 
-    return rv;
-  }
-
-/*! \brief      Is an object a key of a map or unordered_map and, if so, return the value (or the default-constructed value)
-    \param  m   map or unordered_map to be searched
-    \param  k   target key
-    \return     Whether <i>k</i> is a member of <i>m</i> and, if so, the corresponding value (or the default-constructed value)
-    
-    // possibly should return variant instead
-*/
-#if 0
-template <class M, class K>
-std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
-  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
-{ using V  = typename M::mapped_type;
-  using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
-
-  const auto cit { m.find(k) };
-
-  return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
+  return rv;
 }
-#endif
 
 template <class M, class K>
 inline bool operator>(const M& m, const K& k)
@@ -901,67 +871,6 @@ auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
 
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
 } 
-
-/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
-    \param  original_mapping    original mapping
-    \return                     inverted mapping
-*/
-template <typename M>  // M = map<T, set<T> >
-auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
-{ std::map<typename M::key_type, typename M::key_type> rv;
-
-  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
-  { for (const auto& p : cit->second)
- //     rv += { p, cit->first };
-    rv.insert(std::pair { p, cit->first });
-  }
-
-  return rv;
-}
-
-/*! \class  accumulator
-    \brief  accumulate values, and inform when a threshold is reached
-*/
-template <typename T>
-class accumulator
-{ using COUNTER = unsigned int;
-
-protected:
-
-  std::map<T, COUNTER> _values;                ///< all the known values, with the number of times each has been added
-  COUNTER              _threshold;             ///< threshold value
-
-public:
-
-/// default constructor
-  explicit accumulator(const COUNTER thold = 1) :
-    _threshold(thold)
-  { }
-
-  READ_AND_WRITE(threshold);                        ///< threshold value
-
-/*! \brief          Add a value or increment it a known number of times
-    \param  val     value to add or increment
-    \param  n       number of times to add it
-    \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
-*/
-  bool add(const T& val, const COUNTER n = 1)
-  { if (!(_values.contains(val)))
-//      _values += { val, n };
-      _values.insert( std::pair { val, n } );   // need to figure out why prior line doesn't work in g++12
-    else
-      _values[val] += n;
-
-    return (_values[val] >= _threshold);
-  }
-
-/*! \brief          Number of times a value has been added
-    \param  val     target value
-    \return         total number of times <i>value</i> has been added
-*/
-  inline unsigned int value(const T& val) const
-    { return ( (_values.contains(val)) ? _values.at(val) : 0 ); }
-};
 
 // convenient syntactic sugar for some STL functions
 
@@ -1509,5 +1418,66 @@ template <typename M>
   requires is_mum<M>
 inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type>
   { return ALL_KEYS <std::unordered_set<typename M::key_type>> (m); }
+
+/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
+    \param  original_mapping    original mapping
+    \return                     inverted mapping
+*/
+template <typename M>  // M = map<T, set<T> >
+auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
+{ std::map<typename M::key_type, typename M::key_type> rv;
+
+  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
+  { for (const auto& p : cit->second)
+      rv += { p, cit->first };
+ //   rv.insert(std::pair { p, cit->first });
+  }
+
+  return rv;
+}
+
+/*! \class  accumulator
+    \brief  accumulate values, and inform when a threshold is reached
+*/
+template <typename T>
+class accumulator
+{ using COUNTER = unsigned int;
+
+protected:
+
+  std::map<T, COUNTER> _values;                ///< all the known values, with the number of times each has been added
+  COUNTER              _threshold;             ///< threshold value
+
+public:
+
+/// default constructor
+  explicit accumulator(const COUNTER thold = 1) :
+    _threshold(thold)
+  { }
+
+  READ_AND_WRITE(threshold);                        ///< threshold value
+
+/*! \brief          Add a value or increment it a known number of times
+    \param  val     value to add or increment
+    \param  n       number of times to add it
+    \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
+*/
+  bool add(const T& val, const COUNTER n = 1)
+  { if (!(_values.contains(val)))
+      _values += { val, n };
+//      _values.insert( std::pair { val, n } );   // need to figure out why prior line doesn't work in g++12
+    else
+      _values[val] += n;
+
+    return (_values[val] >= _threshold);
+  }
+
+/*! \brief          Number of times a value has been added
+    \param  val     target value
+    \return         total number of times <i>value</i> has been added
+*/
+  inline unsigned int value(const T& val) const
+    { return ( (_values.contains(val)) ? _values.at(val) : 0 ); }
+};
 
 #endif    // MACROS_H

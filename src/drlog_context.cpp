@@ -208,7 +208,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
-        FOR_ALL(clean_split_string(RHS, ','), [&] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
+        FOR_ALL(clean_split_string(RHS, ','), [this] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
     }
 
 // BAND MAP FILTER
@@ -463,7 +463,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (testline.starts_with("EXCHANGE["sv))
     { const string country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
 
-      FOR_ALL(clean_split_string(country_list), [&] (const string& str) { _exchange_per_country += { str, RHS }; } );
+      FOR_ALL(clean_split_string(country_list), [RHS, this] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
