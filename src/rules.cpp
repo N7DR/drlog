@@ -221,7 +221,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
   SAFELOCK(rules);
 
-  for (const auto this_qthx : context_qthx)
+  for (const auto& this_qthx : context_qthx)
   { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
     const set<string> ss               { this_qthx.second };
 
@@ -229,7 +229,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
     qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
 
-    for (const auto this_value : ss)
+    for (const auto& this_value : ss)
     { if (!contains(this_value, '|'))
         qthx.add_canonical_value(this_value);
       else

@@ -1014,7 +1014,7 @@ vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int widt
 ostream& operator<<(ostream& ost, const vector<string>& vec)
 { unsigned int idx { 0 };
 
-  for (const auto str : vec)
+  for (const auto& str : vec)
   { ost << "[" << idx++ << "]: " << str;
 
     if (idx != vec.size())

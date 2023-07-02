@@ -142,7 +142,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     const set<string>&  callsign_mults { rules.callsign_mults() };      // collection of types of mults based on callsign (e.g., "WPXPX")
 
     if (!callsign_mults.empty())
-    { for (const auto mult_name : callsign_mults)
+    { for (const auto& mult_name : callsign_mults)
       { const MODE m { ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE) };
 
         line = pad_right(mult_name, FIRST_FIELD_WIDTH);

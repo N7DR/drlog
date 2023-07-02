@@ -25,6 +25,7 @@
 #include <iostream>
 #include <queue>
 #include <map>
+#include <ranges>
 #include <set>
 #include <tuple>
 #include <unordered_set>
@@ -911,7 +912,8 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
   { for (const auto& p : cit->second)
-      rv += { p, cit->first };
+ //     rv += { p, cit->first };
+    rv.insert(std::pair { p, cit->first });
   }
 
   return rv;
@@ -945,7 +947,8 @@ public:
 */
   bool add(const T& val, const COUNTER n = 1)
   { if (!(_values.contains(val)))
-      _values += { val, n };
+//      _values += { val, n };
+      _values.insert( std::pair { val, n } );   // need to figure out why prior line doesn't work in g++12
     else
       _values[val] += n;
 

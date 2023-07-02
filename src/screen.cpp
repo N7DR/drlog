@@ -578,7 +578,7 @@ window& window::refresh(void)
 
     if (_hidden_cursor)
     { setsyx(_sy, _sx);
-      doupdate();
+      doupdate();           // is this necessary?
     }
   }
 

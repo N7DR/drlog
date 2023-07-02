@@ -368,7 +368,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         else    // not all bands
         { const string         bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
 
-          for (const auto b_str: clean_split_string(bands_str))
+          for (const auto& b_str: clean_split_string(bands_str))
           { const BAND b { BAND_FROM_NAME[b_str] };
 
             string new_str;

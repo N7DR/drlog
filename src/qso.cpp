@@ -649,13 +649,13 @@ specification tells us otherwise, that's what we do.
       { const vector<string> vec { clean_split_string(field_name, '+') };
 
         for (const auto& name : vec)
-        { for (const auto [nm, val] : _sent_exchange)
+        { for (const auto& [nm, val] : _sent_exchange)
             if (nm == name)
               value = val;
         }
       }
       else
-      { for (const auto [nm, val] : _sent_exchange)
+      { for (const auto& [nm, val] : _sent_exchange)
           if (nm == field_name)
             value = val;
       }

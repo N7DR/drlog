@@ -30,7 +30,7 @@ PROG = all
 # -O2 works
 #CFLAGS = $(INCL) -no-pie -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -Wno-reorder -std=c++20 `libpng-config --cflags`
 #CFLAGS = $(INCL) -c -g3 -O0 -pipe -Wno-reorder -std=c++20 `libpng-config --cflags`
-CFLAGS = $(INCL) -c -g3 -O2 -pipe -Wno-reorder -std=c++20 -fcoroutines
+CFLAGS = $(INCL) -c -g3 -O2 -pipe -Wno-reorder -std=c++2b
 
 #LINKFLAGS = $(LIBRARIES)
 
