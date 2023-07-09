@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 221 2023-06-19 01:57:55Z  $
+// $Id: autocorrect.h 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,6 +121,12 @@ public:
     \param  post    post to add
 */
   void insert(const dx_post& post);
+
+/*! \brief          Add a post to the database
+    \param  post    post to add
+*/
+  inline void operator+=(const dx_post& post)
+    { this->insert(post); }
 
 /*! \brief              Convert to a printable string
     \param  n_spaces    number of spaces to prepend to each line

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: drlog_context.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1355,12 +1355,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             const string alternative { cit2->second };
 
             if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
-            { const int& keysym { cit->second };
+            { const int keysym { cit->second };
 
- //             if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
- //             if (!contains(_messages, keysym))  // only if there is no message for this key
               if (!_messages.contains(keysym))  // only if there is no message for this key
- //             if (!(_messages > keysym))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
                 _messages += { keysym, str };
@@ -1421,7 +1418,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   }
 
 // possibly fix Cabrillo template
-  if ( (_cabrillo_qso_template == "ARRL DX"s) or (_cabrillo_qso_template == "CQ WW"s) )
+  if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
   { const vector<string> actual_modes { clean_split_string(_modes, ',') };
 
     if (actual_modes.size() == 1)
@@ -1556,7 +1553,7 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
     \param  m   target mode
     \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
 */
-decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)        // doxygen complains about the decltype; I have no idea why
+decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m) const      // doxygen complains about the decltype; I have no idea why
 { SAFELOCK(_context);
 
   decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
@@ -1565,13 +1562,13 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
   { rv = _sent_exchange;
 
 // fix RST/RS if using non-mode-specific exchange
-    for (unsigned int n { 0 }; n < rv.size(); ++n)
+    for (size_t n { 0 }; n < rv.size(); ++n)
     { pair<string, string>& pss { rv[n] };
 
-      if ( (m == MODE_SSB) and (pss.first == "RST"s) )
+      if ( (m == MODE_SSB) and (pss.first == "RST"sv) )
         pss = { "RS"s, "59"s };       // hardwire report
 
-      if ( (m == MODE_CW) and (pss.first == "RS"s) )
+      if ( (m == MODE_CW) and (pss.first == "RS"sv) )
         pss = { "RST"s, "599"s };     // hardwire report
     }
   }

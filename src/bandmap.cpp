@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: bandmap.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,11 +26,10 @@ using namespace std;
 
 using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
 
-extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
-extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
-//extern bandmap_buffer                bm_buffer;                         ///< global control buffer for all the bandmaps
 extern bool                          bandmap_show_marked_frequencies;   ///< whether to display entries that would be marked
 extern bool                          bandmap_frequency_up;              ///< whether increasing frequency goes upwards in the bandmap
+extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
+extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
 extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                       ///< location information
 extern unsigned int                  max_qsos_without_qsl;              ///< limit for the N7DR matches_criteria() algorithm
@@ -55,8 +54,8 @@ constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separatio
 
 constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it 
 
-const string        MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
-const string        MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
+constexpr string MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
+constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
@@ -65,14 +64,16 @@ bandmap_filter_type BMF;                            ///< the global bandmap filt
     \return         printable version of <i>bes</i>
 */
 string to_string(const BANDMAP_ENTRY_SOURCE bes)
-{ switch (bes)
-  { case BANDMAP_ENTRY_SOURCE::LOCAL :
-      return "BANDMAP_ENTRY_LOCAL"s;
+{ using enum BANDMAP_ENTRY_SOURCE;
 
-    case BANDMAP_ENTRY_SOURCE::CLUSTER :
+  switch (bes)
+  { case CLUSTER :
       return "BANDMAP_ENTRY_CLUSTER"s;
 
-    case BANDMAP_ENTRY_SOURCE::RBN :
+    case LOCAL :
+      return "BANDMAP_ENTRY_LOCAL"s;
+
+    case RBN :
       return "BANDMAP_ENTRY_RBN"s;
 
     default :
@@ -109,12 +110,12 @@ void n_posters_database::operator+=(const pair<string /* call */, string /* post
 set<time_t> n_posters_database::times(void) const
 { std::lock_guard<std::recursive_mutex> lg(_mtx); 
 
-//  return ALL_KEYS <set<time_t>> (_data);
   return ALL_KEYS_SET(_data);
 }
 
 /*! \brief          Test whether a call appears enough times to be considered "good", and add to <i>_known_good_calls</i> if so
     \param  call    call to test
+    \return         whether <i>call</i> is a known good call
 */
 bool n_posters_database::test_call(const string& call)
 { std::lock_guard<std::recursive_mutex> lg(_mtx); 
@@ -235,10 +236,7 @@ void bandmap_filter_type::add_or_subtract(const string& str)
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
   vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };        // create pointer to correct vector
-//  set<string> ss;                                                                        // temporary place to build new container of strings
-
-//  for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
-  set<string> ss { vs_p->begin(), vs_p->end() };  // create a copy of current values
+  set<string>     ss   { vs_p->begin(), vs_p->end() };  // create a copy of current values
 
   if (ss.contains(str_copy))              // remove a value
     ss -= str_copy;
@@ -291,9 +289,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // callsign mult
   clear_callsign_mult();
 
-  const set<string> callsign_mults { rules.callsign_mults() };
+//  const set<string> callsign_mults { rules.callsign_mults() };
 
-  for (const auto& callsign_mult_name : callsign_mults)
+//  for (const auto& callsign_mult_name : callsign_mults)
+  for ( const auto& callsign_mult_name : rules.callsign_mults() )
   { const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) };
 
     if (!callsign_mult_val.empty())

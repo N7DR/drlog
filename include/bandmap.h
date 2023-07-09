@@ -1,4 +1,4 @@
-// $Id: bandmap.h 221 2023-06-19 01:57:55Z  $
+// $Id: bandmap.h 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,7 +138,7 @@ public:
 */
   inline explicit needed_mult_details(const T& v) :
     _is_needed(true)
-    { _values += v; }
+  { _values += v; }
 
 /// is any value needed?
   inline bool is_any_value_needed(void) const
@@ -884,7 +884,7 @@ public:
   void filter_enabled(const bool torf);
 
 /// return all the continents and countries currently in the filter
-  inline std::vector<std::string> filter(void)
+  inline std::vector<std::string> filter(void) const
     { return _filter_p->filter(); }
 
 /*!  \brief         Add a string to, or remove a string from, the filter associated with this bandmap

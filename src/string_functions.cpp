@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 215 2023-01-23 19:37:41Z  $
+// $Id: string_functions.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -251,8 +251,8 @@ string read_file(const string& filename)
     throw string_function_error(STRING_FILE_IS_DIRECTORY, filename + " is a directory"s);
 
 // now perform the actual read
-  std::ifstream file { filename };
-  std::string   str  {std::istreambuf_iterator<char>(file), {} };
+  ifstream file { filename };
+  string   str  {std::istreambuf_iterator<char>(file), {} };
 
   return str;
 }
@@ -423,20 +423,6 @@ string remove_char(const string& cs, const char char_to_remove)
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
-
-#if 0
-string remove_from_start(const string& s, STRING_PARAM sp)
-{ if (sp.empty())
-    return s;
-
-  if (s.starts_with(sp))
-    return substring(s, sp.size());
-
-  return s;
-}
-#endif
-
-#if 1
 string remove_from_start(const string& s, string_view sv)
 { if (sv.empty())
     return s;
@@ -446,7 +432,6 @@ string remove_from_start(const string& s, string_view sv)
 
   return s;
 }
-#endif
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string

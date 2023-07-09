@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 217 2023-02-15 16:05:07Z  $
+// $Id: drlog_context.h 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -546,7 +546,7 @@ public:
     \param  m   target mode
     \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
 */
-  decltype(_sent_exchange) sent_exchange(const MODE m);        // doxygen complains about the decltype; I have no idea why
+  decltype(_sent_exchange) sent_exchange(const MODE m) const;        // doxygen complains about the decltype; I have no idea why
 
   CONTEXTREAD(sent_exchange_cw);                 ///< names and values of sent exchange fields, CW
   CONTEXTREAD(sent_exchange_ssb);                ///< names and values of sent exchange fields, SSB

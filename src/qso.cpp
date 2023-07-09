@@ -1,4 +1,4 @@
-// $Id: qso.cpp 211 2022-11-28 21:29:23Z  $
+// $Id: qso.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

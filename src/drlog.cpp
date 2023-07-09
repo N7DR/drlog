@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: drlog.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,6 +47,8 @@
 #include "trlog.h"
 #include "version.h"
 
+//import <chrono>;  // not yet supported
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -55,6 +57,8 @@
 #include <cstdlib>
 
 #include <png++/png.hpp>
+
+//import std;  // not yet supported
 
 using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
@@ -274,8 +278,8 @@ atomic<frequency> cq_mode_frequency;
 pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
 string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
-pt_mutex            individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
-map<string, string> individual_messages;        ///< individual messages associated with calls
+pt_mutex                      individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
+unordered_map<string, string> individual_messages;                                   ///< individual messages associated with calls
 
 pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
@@ -308,7 +312,6 @@ pt_mutex            wicm_mutex {"WICM" };
 deque<string>       wicm_calls;                         ///< calls in the WICM window
 
 map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges { };  ///< frequency ranges to be marked on-screen
-//bandmap_entry       my_bandmap_entry;                                       ///< last bandmap entry that refers to me (usually from poll)
 
 pt_condition_variable frequency_change_condvar;                                             ///< condvar associated with updating windows related to a frequency change
 pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR"s };       ///< mutex associated with frequency_change_condvar
@@ -335,10 +338,10 @@ int                     cw_bandwidth_wide;                          ///< wide CW
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
 dynamic_autocorrect_database dad;                                   ///< dynamic autocorrect database
-bool                    debug { false };                            ///< whether to log additional information
-bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
-string                  do_not_show_filename;                       ///< name of DO NOT SHOW file
-bool                    dynamic_autocorrect_rbn { false };          ///< whether to try to autocorrect posts from the RBN dynamically
+bool                         debug { false };                       ///< whether to log additional information
+bool                         display_grid;                          ///< whether to display the grid in GRID and INFO windows
+string                       do_not_show_filename;                  ///< name of DO NOT SHOW file
+bool                         dynamic_autocorrect_rbn { false };     ///< whether to try to autocorrect posts from the RBN dynamically
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
 
@@ -525,9 +528,10 @@ window*       win_active_p        { &win_call };            ///< start with the 
 ACTIVE_WINDOW active_window       { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 
+autocorrect_database ac_db;                     ///< the RBN autocorrection database
+
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
-//array<bandmap_insertion_queue, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
 array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
@@ -536,13 +540,11 @@ call_history q_history;                         ///< history of calls worked
 
 rate_meter rate;                                ///< QSO and point rates
 
-vector<string> win_log_snapshot;                ///< individual lines in the LOG window
-
-autocorrect_database ac_db;                     ///< the RBN autocorrection database
-
 scp_database  scp_db,                           ///< static SCP database from file
               scp_dynamic_db;                   ///< dynamic SCP database from QSOs
 scp_databases scp_dbs;                          ///< container for the SCP databases
+
+vector<string> win_log_snapshot;                ///< individual lines in the LOG window
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 using STR_COLOUR_PAIR = pair<string, PAIR_NUMBER_TYPE>; 
@@ -778,6 +780,9 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
+// output the number of colours available
+  ost << "Number of colours supported on screen = " << COLORS << endl;
+
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
     bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
@@ -892,8 +897,7 @@ int main(int argc, char** argv)
       ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
 
       if (context.xscp_percent_cutoff())
-      { //ost << "xscp_percent_cutoff = " << context.xscp_percent_cutoff().value() << endl;
-        drm_db = drm_db.prune(context.xscp_percent_cutoff().value());
+      { drm_db = drm_db.prune(context.xscp_percent_cutoff().value());
 
         ost << "pruned drmaster database contains " << css(drm_db.size()) << " entries" << endl;
       }
@@ -1121,10 +1125,7 @@ int main(int argc, char** argv)
         { const set<string> callsigns { calls_from_do_not_show_file(b) };
 
           if (!callsigns.empty())
-          { //bandmap& bm { bandmaps[b] };
-
             FOR_ALL(callsigns, [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
-          }
         }
       }
 
@@ -1271,7 +1272,7 @@ int main(int argc, char** argv)
         }
       }
 
-// INDIVIDUAL MESSAGES window
+// INDIVIDUAL MESSAGES window; now also handles files that contain an initial (unused) date field; i.e., date: callsign: message
       win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"s), WINDOW_NO_CURSOR);
 
       if (!context.individual_messages_file().empty())
@@ -1279,16 +1280,39 @@ int main(int argc, char** argv)
         { SAFELOCK(individual_messages);
 
           for (const auto& messages_line : to_lines(read_file(context.path(), context.individual_messages_file())))
-          { const vector<string> fields { split_string(messages_line, ':') };
+          { const vector<string> fields { clean_split_string(messages_line, ':') };
 
-            if (!fields.empty())
-            { const string& callsign { fields[0] };
-              const size_t  posn     { messages_line.find(':') };
+ //           if (!fields.empty())
+            if (fields.size() >=2)
+            { const string& f_0 { fields[0] };
 
-              if (posn != messages_line.length() - 1)    // if the colon isn't the last character
-                individual_messages += { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ };
+// is it a date or a call?
+              const string& callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
+
+              string msg { remove_peripheral_spaces(after_first(messages_line, ':')) };
+
+              if (is_digits(f_0))
+                msg = remove_peripheral_spaces(after_first(msg, ':'));
+
+              if (!msg.empty())
+                individual_messages += { callsign, msg };
+
+
+ //             const string& callsign { fields[0] };
+ //             const size_t  posn     { messages_line.find(':') };
+
+ //             if (posn != messages_line.length() - 1)    // if the colon isn't the last character
+ //               individual_messages += { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ };
             }
           }
+
+//          ost << "number of individual messages = " << individual_messages.size() << endl;
+
+ //         for (auto it = individual_messages.begin();
+ //        auto it = individual_messages.begin();
+//
+//         ost << it->first << " : " << it->second << endl;
+
         }
 
         catch (...)
@@ -1565,6 +1589,7 @@ int main(int argc, char** argv)
 
 // create thread to prune the bandmaps every minute
     { static pthread_t thread_id_4;
+
       static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
 
       try
@@ -1595,7 +1620,7 @@ int main(int argc, char** argv)
       bm.filter_enabled(context.bandmap_filter_enabled());
       bm.filter_hide(context.bandmap_filter_hide());
 
-      const vector<string>& original_filter { context.bandmap_filter() };
+//      const vector<string>& original_filter { context.bandmap_filter() };
 
       FOR_ALL( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
@@ -5703,7 +5728,6 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
 
 // the original list of callsign mults
   set<string> original;
-//  CALL_SET original;
 
   if (context.auto_remaining_callsign_mults())
     SAFELOCK_SET(known_callsign_mults_mutex, original, known_callsign_mults);
@@ -5711,12 +5735,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     original = context.remaining_callsign_mults_list();
 
   if (filter_remaining_country_mults)
-  { //set<string> copy;
-
-    //copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (!worked_callsign_mults.contains(s)); } );
-    //original = move(copy);
     erase_if(original, [&worked_callsign_mults] (const string& s) { return (worked_callsign_mults.contains(s)); } );
-  }
 
 // put in right order and get the colours right
   vector<string> vec_str(original.begin(), original.end());
@@ -6880,7 +6899,15 @@ void update_individual_messages_window(const string& callsign)
 //    const auto posn { individual_messages.find(callsign) };
 
     if (const auto posn { individual_messages.find(callsign) }; posn != individual_messages.end())
-    { win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
+    { ost << "about to write for call: " << callsign << endl;
+      
+      const string& msg = posn->second;
+
+      ost << "length of message = " << msg.size() << endl;
+      ost << "message = ***" << msg << "***" << endl; 
+      ost << "window width = " << win_individual_messages.width() << endl;
+
+      win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
       message_written = true;
     }
   }

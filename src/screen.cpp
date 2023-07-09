@@ -278,12 +278,14 @@ window& window::operator<(const string& s)
   SAFELOCK(screen);
 
   if (!_insert)
-    wprintw(_wp, s.c_str());
+//    wprintw(_wp, s.c_str());
+    waddstr(_wp, s.c_str());
   else                                           // insert mode
   { const cursor c         { cursor_position() };
     const string remainder { read(c.x(), c.y()) };
 
-    wprintw(_wp, (s + remainder).c_str());
+//    wprintw(_wp, (s + remainder).c_str());
+    waddstr(_wp, (s + remainder).c_str());
     
     *this < cursor(c.x() + s.length(), c.y());
   }

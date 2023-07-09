@@ -1,4 +1,4 @@
-// $Id: macros.h 217 2023-02-15 16:05:07Z  $
+// $Id: macros.h 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -819,27 +819,13 @@ T operator+(const T& s1, const T& s2)
 
 template <class M, class K>
 inline bool operator>(const M& m, const K& k)
-  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type> ) */
-{ //using V  = typename M::mapped_type;
-  //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
-
-  //const auto cit { m.find(k) };
-
-  //return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
-  return m.contains(k);
-}
+  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
+{ return m.contains(k); }
 
 template <class M, class K>
 inline bool operator<(const K& k, const M& m)
-  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>) /* and (std::is_default_constructible_v<typename M::mapped_type>) */
-{ //using V  = typename M::mapped_type;
-  //using RT = std::invoke_result_t< decltype(operator><M, K>), const M&, const K&>;
-
-  //const auto cit { m.find(k) };
-
-  //return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
-  return (m > k);
-}
+  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
+{ return (m > k); }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
     \param  m   map or unordered map to be searched
@@ -1116,7 +1102,7 @@ inline void operator+=(MUMD& dest, const MUMS& src)
 */
 template <typename V>
   requires (is_vector<V>)
-inline void operator+=(V& dest, V&& src)
+void operator+=(V& dest, V&& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
   }
@@ -1128,7 +1114,7 @@ inline void operator+=(V& dest, V&& src)
 */
 template <typename V>
   requires (is_vector<V>)
-inline void operator+=(V& dest, const V& src)
+void operator+=(V& dest, const V& src)
   { dest.reserve(dest.size() + src.size());
     dest.insert(dest.end(), src.begin(), src.end());
   }

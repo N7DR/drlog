@@ -1,4 +1,4 @@
-// $Id: string_functions.h 221 2023-06-19 01:57:55Z  $
+// $Id: string_functions.h 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1029,6 +1029,14 @@ size_t case_insensitive_find(const std::string& str, const std::string& target, 
 */
 inline std::string truncate_before_first(const std::string& str, const char c)
   { return (substring(str, 0, str.find(c))); }
+
+/*! \brief              Remove up to after the first occurrence of a particular character
+    \param  str         string to truncate
+    \param  c           target character
+    \return             <i>str</i> truncated immediately after <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
+*/
+inline std::string after_first(const std::string& str, const char c)
+  { return (substring(str, str.find(c) + 1)); }
 
 /*! \brief          Return position in a string at the end of a target string, if present
     \param  str     string to search

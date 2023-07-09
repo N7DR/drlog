@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: autocorrect.cpp 222 2023-07-09 12:58:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@ extern MINUTES_TYPE   now_minutes;  ///< access the current time in minutes
 
 void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
 
-/* static */ busts_database busts_db;
+busts_database busts_db;
 
 // -----------  autocorrect_database  ----------------
 
@@ -55,7 +55,7 @@ string autocorrect_database::corrected_call(const string& str) const
     return from_cache;
 
   const bool present { contains(str) };
-  const bool absent {!present };
+  const bool absent  {!present };
 
 // return known good call
   if (present)            // for now, assume that all the calls in the database are good; maybe change this later; note that this test is repeated in the tests below
@@ -67,13 +67,13 @@ string autocorrect_database::corrected_call(const string& str) const
 //   E in front of a US K call
 //   T in front of a US K call
 //   T in front of a US N call
-  if (str.starts_with("EK"s) or str.starts_with("TK"s) or str.starts_with("TN"s))
+  if (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv))
   { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // PA copied as GA
-  if (str.starts_with("GA"s))
+  if (str.starts_with("GA"sv))
   { if (absent)
     { if (const string call_to_test { "PA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -87,7 +87,7 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // JA miscopied as JT
-  if (str.starts_with("JT"s))
+  if (str.starts_with("JT"sv))
   { if (absent)
     { if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -111,7 +111,7 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // UA copied as MA
-  if (str.starts_with("MA"s))
+  if (str.starts_with("MA"sv))
   { if (absent)
     { if (const string call_to_test { "UA"s + substring(str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -147,7 +147,7 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // US K call copied as TT#
-  if (absent and str.starts_with("TT") and (str.length() > 2) and isdigit(str[2]))
+  if (absent and str.starts_with("TT"sv) and (str.length() > 2) and isdigit(str[2]))
   { if (const string call_to_test { "K"s + substring(str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
@@ -159,13 +159,13 @@ string autocorrect_database::corrected_call(const string& str) const
   }
 
 // initial PY copied as initial TM
-  if (absent and str.starts_with("TM"s))
+  if (absent and str.starts_with("TM"sv))
   { if (const string call_to_test { "PY"s + substring(str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // /P is quite often reported by the RBN as /W, especially in NFD
-  if (absent and str.ends_with("/W"s))
+  if (absent and str.ends_with("/W"sv))
   { const string base_call_to_test { substring(str, 0, str.length() - 2) };
 
     if (contains(base_call_to_test) or contains(base_call_to_test + "/P"s))
@@ -192,7 +192,7 @@ void band_dynamic_autocorrect_database::prune(const int n_minutes)
 
   lock_guard<recursive_mutex> lg(_mtx);
 
-  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)
+  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)      // remove old keys (which are times in minutes)
     if (it->first <= target_min)
       keys_to_remove += it->first;
 
@@ -219,12 +219,12 @@ void band_dynamic_autocorrect_database::insert(const dx_post& post)
   if (post.band() != _b)    // check that the band is correct
     return;
 
-  const decltype(_f_min_100) f_100       { static_cast<decltype(_f_min_100)>(post.freq().hz() / 100) };    // frequency of the post in the correct units
-  const string&              call        { post.callsign() };
-  const auto                 now_min     { now_minutes };
+  const F100_TYPE f_100   { static_cast<F100_TYPE>(post.freq().hz() / 100) };    // frequency of the post in the correct units
+  const string&   call    { post.callsign() };
+  const auto      now_min { now_minutes };
 
-  auto& data_this_minute          { _data_map_map_map[now_min] };         // creates if doesn't exist
-  auto& data_this_minute_and_freq { data_this_minute[f_100] };             // creates if doesn't exist
+  auto& data_this_minute          { _data_map_map_map[now_min] };           // creates if doesn't exist
+  auto& data_this_minute_and_freq { data_this_minute[f_100] };              // creates if doesn't exist
   auto& data_minute_f100_call     { data_this_minute_and_freq[call] };
 
   data_minute_f100_call++;
@@ -242,8 +242,8 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
   lock_guard<recursive_mutex> lg(_mtx);
 
   const F100_TYPE f_100       { static_cast<F100_TYPE>(post.freq().hz() / 100) };    // frequency of the post in the correct units
-  const F100_TYPE low_target  { f_100 - 2 };     // target - 200 Hz
-  const F100_TYPE high_target { f_100 + 3 };     // target + 200 Hz
+  const F100_TYPE low_target  { f_100 - 2 };            // target - 200 Hz
+  const F100_TYPE high_target { f_100 + 3 };            // target + 200 Hz
 
   unordered_map<string /* call */, int /* n_occurrences */> hits;
 
@@ -263,14 +263,14 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
         { const string calls { pair_index(post_call, c) };
 
           if (busts_db.is_known_bust(calls))
-            hits[c] += n;                                  // is this right?
+            hits[c] += n;
           else
           { if (!busts_db.is_known_non_bust(calls))    // if neither known bust nor known non-bust
             { const bool bust { is_bust_call(post_call, c) };
 
               if (bust)
               { busts_db.known_bust(calls);
-                hits[c] += n;                       // is this right?
+                hits[c] += n;
               }
               else
                 busts_db.known_non_bust(calls);
@@ -304,15 +304,15 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     if (highest_n > 1)      // don't change if it's a 50/50 chance, since there's just no way to tell if we should do so
       rv = best_match;
 
-    if (rv != post_call)
-    { //ost << "autocorrecting" << endl;
+//    if (rv != post_call)
+//    { //ost << "autocorrecting" << endl;
 
       //ost << "  input call = " << post_call << endl;
       //ost << "  output call = " << rv << endl;
 
       //for (auto it { hits.begin() }; it != hits.end(); ++it)
       //  ost << "    " << it->first << " : " << it->second << endl;
-    }
+//    }
   }
 
   return rv;
@@ -355,7 +355,7 @@ string band_dynamic_autocorrect_database::to_string(const int n_spaces) const
 set<BAND> dynamic_autocorrect_database::_known_bands(void) const
 { lock_guard<recursive_mutex> lg(_mtx);
 
-  return ALL_KEYS <set<BAND>> (_per_band_db);
+  return ALL_KEYS_SET(_per_band_db);
 }
 
 /*! \brief      Does the database contain data from a particular band?
@@ -385,7 +385,8 @@ void dynamic_autocorrect_database::insert(const dx_post& post)
 { lock_guard<recursive_mutex> lg(_mtx);
 
   if (_per_band_db.contains(post.band()))
-    _per_band_db[post.band()].insert(post);
+//    _per_band_db[post.band()].insert(post);
+    _per_band_db[post.band()] += post;
 }
 
 /*! \brief              Prune the database by removing old minutes
@@ -394,7 +395,7 @@ void dynamic_autocorrect_database::insert(const dx_post& post)
 void dynamic_autocorrect_database::prune(const int n_minutes)
 { lock_guard<recursive_mutex> lg(_mtx);
 
-  FOR_ALL(_known_bands(), [this, n_minutes] (const BAND b) { _per_band_db[b].prune(n_minutes); }); 
+  FOR_ALL(_known_bands(), [n_minutes, this] (const BAND b) { _per_band_db[b].prune(n_minutes); }); 
 }
 
 /*! \brief          Perform dynamic autocorrection on a call
@@ -424,7 +425,6 @@ string dynamic_autocorrect_database::to_string(void) const
 
   for (const BAND b : bands)
   { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
-
     rv += _per_band_db.at(b).to_string(2) + EOL;    // the "2" means to prepend each line with two spaces
   }
 
