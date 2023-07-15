@@ -426,7 +426,7 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
 */
 bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 
-const string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
+constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
 
 message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
@@ -675,9 +675,11 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // simple inline functions
 
+// current time (in seconds since the epoch)
 inline time_t NOW(void)
   { return ::time(NULL); }           // get the time from the kernel
 
+// current time (in minutes since the epoch)
 inline MINUTES_TYPE NOW_MINUTES(void)
   { return static_cast<MINUTES_TYPE>(NOW() / 60); }
 
@@ -2077,16 +2079,9 @@ void* display_date_and_time(void* vp)
         if (rbn_p and (n_posters_db_rbn.min_posters() != 1))
           n_posters_db_rbn.prune();
 
-#if 1
 // possibly prune dynamic autocorrect databases
-       if (dynamic_autocorrect_rbn)
-       { //ost << dad.to_string();
+        if (dynamic_autocorrect_rbn)
           dad.prune(10);
-
-//         ost << "AFTER PRUNING" << endl <<endl;
-          ost << dad.to_string();
-       }       
-#endif
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup_directory().empty())
@@ -6899,13 +6894,13 @@ void update_individual_messages_window(const string& callsign)
 //    const auto posn { individual_messages.find(callsign) };
 
     if (const auto posn { individual_messages.find(callsign) }; posn != individual_messages.end())
-    { ost << "about to write for call: " << callsign << endl;
+    { //ost << "about to write for call: " << callsign << endl;
       
-      const string& msg = posn->second;
+      //const string& msg = posn->second;
 
-      ost << "length of message = " << msg.size() << endl;
-      ost << "message = ***" << msg << "***" << endl; 
-      ost << "window width = " << win_individual_messages.width() << endl;
+      //ost << "length of message = " << msg.size() << endl;
+      //ost << "message = ***" << msg << "***" << endl; 
+      //ost << "window width = " << win_individual_messages.width() << endl;
 
       win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
       message_written = true;

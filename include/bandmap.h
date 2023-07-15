@@ -704,6 +704,9 @@ protected:
   int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                             _cull_function          { 0 };                        ///< cull function number to apply
   std::unordered_set<std::string> _do_not_add             { };                          ///< do not add these calls
+ // std::list<std::string>          _do_not_add_regex_str   { };                          ///< do not add these regex calls
+ // std::vector<std::regex>           _do_not_add_regex       { };                        ///< perhaps a list would be better?
+  std::map<std::string, std::regex> _do_not_add_regex { };
   BM_ENTRIES                      _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)              _filtered_entries       { };                          ///< entries, with the filter applied
@@ -748,7 +751,14 @@ protected:
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
   std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
-  
+
+/*!  \brief             Return whether a call is actually a regex
+     \param callsign    call to test
+     \return            whether <i>callsign</i> is actually a regex
+*/ 
+  inline bool _is_regex(const std::string& callsign) const
+    { return (callsign.find_first_not_of(CALLSIGN_CHARS) != std::string::npos); }
+ 
 public:
 
 /// default constructor
@@ -784,6 +794,9 @@ public:
 
 /// all the do-not-add calls
   SAFEREAD_WITH_INTERNAL_MUTEX(do_not_add, _bandmap);
+
+/// all the regex do-not-add calls
+  SAFEREAD_WITH_INTERNAL_MUTEX(do_not_add_regex, _bandmap);
 
 /// all the entries in the bandmap
   SAFEREAD_WITH_INTERNAL_MUTEX(entries, _bandmap);
@@ -1051,15 +1064,12 @@ public:
       return (_recent_calls > callsign);
     }
 
-/*!  \brief             Add a call to the do-not-add list
-     \param callsign    callsign to add
+/*!  \brief             Add a call or regex to the do-not-add list
+     \param callsign    callsign or regex to add
 
      Calls in the do-not-add list are never added to the bandmap
 */
-  inline void do_not_add(const std::string& callsign)
-    { SAFELOCK(_bandmap);
-      _do_not_add += callsign;
-    }
+  void do_not_add(const std::string& callsign);
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1082,15 +1092,11 @@ template<typename C>
     { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
 
 /*!  \brief             Remove a call from the do-not-add list
-     \param callsign    callsign to add
+     \param callsign    callsign or regex to remove
 
      Calls in the do-not-add list are never added to the bandmap
 */
-  inline void remove_from_do_not_add(const std::string& callsign)
-    { SAFELOCK(_bandmap);
-
-       _do_not_add -= callsign;
-    }
+  void remove_from_do_not_add(const std::string& callsign);
 
 /*!  \brief                     Is a particular call present?
      \param target_callsign     callsign to test
@@ -1129,6 +1135,11 @@ template<typename C>
 */
   inline void rename_mutex(const std::string& new_name)
     { _bandmap_mutex.rename(new_name); }
+
+/*! \brief          Return all calls in the bandmap that match a regex string
+    \param  new_name    the new name of the mutex
+*/
+  std::vector<std::string> regex_matches(const std::string& regex_str);
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 

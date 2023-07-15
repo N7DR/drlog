@@ -289,9 +289,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // callsign mult
   clear_callsign_mult();
 
-//  const set<string> callsign_mults { rules.callsign_mults() };
-
-//  for (const auto& callsign_mult_name : callsign_mults)
   for ( const auto& callsign_mult_name : rules.callsign_mults() )
   { const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) };
 
@@ -666,20 +663,42 @@ void bandmap::operator+=(bandmap_entry& be)
 { const bool    mode_marker_is_present { (_mode_marker_frequency.hz() != 0) };
   const string& callsign               { be.callsign() };
 
+  bool add_it { true };  
+
 // do not add if it's already been done recently, or matches several other conditions
-  bool add_it { !_do_not_add.contains(callsign) };
+  { SAFELOCK(_bandmap);
 
-  if (add_it)
-    add_it = be.freq().is_within_ham_band();
+    add_it = !_do_not_add.contains(callsign);
 
-  if (add_it)
-    add_it = !((be.source() != BANDMAP_ENTRY_SOURCE::LOCAL) and is_recent_call(callsign));
+    if (add_it)           // handle regex do-not-match conditions
+    { std::smatch base_match;
+
+ //     add_it = NONE_OF(_do_not_add_regex, [callsign, &base_match] (const auto& rgx) { return regex_match(callsign, base_match, rgx); });
+      bool found_match { false };
+
+//      for (auto& [rgx_str, rgx] : _do_not_add_regex)
+      for ( auto it { _do_not_add_regex.begin() }; !found_match and (it != _do_not_add_regex.end()); ++it)
+      { //const string& rgx_str { it->first };
+        const regex& rgx { it->second };
+
+        found_match = regex_match(callsign, base_match, rgx);
+      }
+
+      add_it = !found_match;
+    }
+
+    if (add_it)
+      add_it = be.freq().is_within_ham_band();
+
+    if (add_it)
+      add_it = !((be.source() != BANDMAP_ENTRY_SOURCE::LOCAL) and is_recent_call(callsign));
 
 // could make this more efficient by having a global container of the mode-marker bandmap entries
-  if (add_it and mode_marker_is_present)
-  { const bandmap_entry mode_marker_be { (*this)[MODE_MARKER] };    // assumes only one mode marker
+    if (add_it and mode_marker_is_present)
+    { const bandmap_entry mode_marker_be { (*this)[MODE_MARKER] };    // assumes only one mode marker
 
-    add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
+      add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
+    }
   }
 
   if (add_it)
@@ -798,12 +817,19 @@ bandmap_entry bandmap::substr(const string& str)
 void bandmap::operator-=(const string& callsign)
 { SAFELOCK(_bandmap);
 
-  const size_t initial_size { _entries.size() };
+  if (_is_regex(callsign))
+  { const vector<string> calls = regex_matches(callsign);
 
-  _entries.remove_if([=] (const bandmap_entry& be) { return (be.callsign() == callsign); });        // OK for lists
+    FOR_ALL(calls, [this] (const string& matched_call) { *this -= matched_call; });
+  }
+  else
+  { const size_t initial_size { _entries.size() };
 
-  if (_entries.size() != initial_size)  // mark as dirty if we removed any
-    _dirty_entries();
+    _entries.remove_if( [callsign] (const bandmap_entry& be) { return (be.callsign() == callsign); } );        // OK for lists
+
+    if (_entries.size() != initial_size)  // mark as dirty if we removed any
+      _dirty_entries();
+  }
 }
 
 /*! \brief              Set the needed status of a call to <i>false</i>
@@ -1352,6 +1378,98 @@ window& bandmap::write_to_window(window& win)
 
   return win;
 }
+
+/*!  \brief             Add a call to the do-not-add list
+     \param callsign    callsign or regex to add
+
+     Calls in the do-not-add list are never added to the bandmap
+*/
+void bandmap::do_not_add(const std::string& callsign)
+{ SAFELOCK(_bandmap);
+
+//  const bool is_regex { callsign.find_first_not_of(CALLSIGN_CHARS) != string::npos };
+
+//  ost << "inside bandmap::do_not_add() for call = " << callsign << endl;
+
+
+  if (_is_regex(callsign))
+  { //ost << "is regex" << endl;
+    _do_not_add_regex += { callsign, regex(callsign) };
+  }
+  else
+  { //ost << "is NOT regex" << endl;
+    _do_not_add += callsign;
+  }
+}
+
+/*!  \brief             Remove a call from the do-not-add list
+     \param callsign    callsign or regex to remove
+
+     Calls in the do-not-add list are never added to the bandmap
+*/
+void bandmap::remove_from_do_not_add(const std::string& callsign)
+{ SAFELOCK(_bandmap);
+
+  if (_is_regex(callsign))
+  { //regex rgx(callsign);
+    _do_not_add_regex -= callsign;      // removes the element with the key = callsign, if one exists
+
+#if 0
+    bool deleted_element { false };
+
+// this is slow, but that shouldn't matter
+    for (auto it { _do_not_add_regex.begin() }; !deleted_element and (it != _do_not_add_regex.end()); ++it)
+    { const string& rgx_str { it->first };
+
+      if (rgx_str == callsign)
+      { _do_not_add_regex.erase(it);
+        deleted_element = true;
+      }
+    }
+#endif
+  }
+  else
+    _do_not_add -= callsign;
+}
+
+/*! \brief          Return all calls in the bandmap that match a regex string
+    \param  new_name    the new name of the mutex
+*/
+vector<string> bandmap::regex_matches(const string& regex_str)
+{ const BM_ENTRIES bme { displayed_entries() };
+  const regex      rgx(regex_str);
+
+  smatch         base_match;
+  vector<string> rv;
+
+  for (const bandmap_entry& displayed_entry : bme)
+  { const string& callsign { displayed_entry.callsign() };
+
+    if (regex_match(callsign, base_match, rgx))
+      rv += callsign;
+  }
+
+  return rv;
+}
+
+#if 0
+   if (add_it)           // handle regex do-not-match conditions
+    { std::smatch base_match;
+
+ //     add_it = NONE_OF(_do_not_add_regex, [callsign, &base_match] (const auto& rgx) { return regex_match(callsign, base_match, rgx); });
+      bool found_match { false };
+
+//      for (auto& [rgx_str, rgx] : _do_not_add_regex)
+      for ( auto it { _do_not_add_regex.begin() }; !found_match and (it != _do_not_add_regex.end()); ++it)
+      { //const string& rgx_str { it->first };
+        const regex& rgx { it->second };
+
+        found_match = regex_match(callsign, base_match, rgx);
+      }
+
+      add_it = !found_match;
+    }
+#endif
 
 /*! \brief          Write a <i>bandmap</i> object to an output stream
     \param  ost     output stream

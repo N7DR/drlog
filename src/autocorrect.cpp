@@ -235,7 +235,7 @@ void band_dynamic_autocorrect_database::insert(const dx_post& post)
     \return         autocorrected call from the post
 */
 string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
-{ string rv { post.callsign() };
+{ string rv { post.callsign() };            // default is to return an unchanged call
 
   const string post_call { post.callsign() };
 
@@ -303,16 +303,6 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
 
     if (highest_n > 1)      // don't change if it's a 50/50 chance, since there's just no way to tell if we should do so
       rv = best_match;
-
-//    if (rv != post_call)
-//    { //ost << "autocorrecting" << endl;
-
-      //ost << "  input call = " << post_call << endl;
-      //ost << "  output call = " << rv << endl;
-
-      //for (auto it { hits.begin() }; it != hits.end(); ++it)
-      //  ost << "    " << it->first << " : " << it->second << endl;
-//    }
   }
 
   return rv;
@@ -385,7 +375,6 @@ void dynamic_autocorrect_database::insert(const dx_post& post)
 { lock_guard<recursive_mutex> lg(_mtx);
 
   if (_per_band_db.contains(post.band()))
-//    _per_band_db[post.band()].insert(post);
     _per_band_db[post.band()] += post;
 }
 
