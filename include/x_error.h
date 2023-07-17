@@ -31,17 +31,17 @@ public:
 
 /*! \brief  Destructor
 */
-  /* virtual */ inline ~x_error(void) throw()
+  inline ~x_error(void) throw()
     { }
 
 /*! \brief  RO access to _code
 */
-  inline const int code(void) const
+  inline int code(void) const
     { return _code; }
 
 /*! \brief  RO access to _reason
 */
-  inline const std::string reason(void) const
+  inline std::string reason(void) const
     { return _reason; }
 };
 

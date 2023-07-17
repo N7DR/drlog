@@ -385,7 +385,7 @@ set<BAND>               permitted_bands_set;                ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
-exchange_field_prefill  prefill_data;                               ///< exchange prefill data from external files
+exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
 
 unsigned short          qtc_long_t { 0 };                   ///< do not send long Ts at beginning of serno in QTCs
 
@@ -676,8 +676,8 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 // simple inline functions
 
 // current time (in seconds since the epoch)
-inline time_t NOW(void)
-  { return ::time(NULL); }           // get the time from the kernel
+//inline time_t NOW(void)
+//  { return ::time(NULL); }           // get the time from the kernel
 
 // current time (in minutes since the epoch)
 inline MINUTES_TYPE NOW_MINUTES(void)
@@ -1443,7 +1443,7 @@ int main(int argc, char** argv)
         wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
         win_remaining_exch_mults_p += { exchange_mult_name, wp };
 
-        (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
+        (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
       }
     }
 
@@ -6035,7 +6035,7 @@ void populate_win_info(const string& callsign)
 string expand_cw_message(const string& msg)
 { string octothorpe_replaced;
 
-  if (contains(msg, "#"s))
+  if (contains(msg, '#'))
   { string octothorpe_str { to_string(octothorpe) };
 
     if (!context.short_serno())
@@ -6047,12 +6047,11 @@ string expand_cw_message(const string& msg)
 
       octothorpe_str.clear();
 
-      for_each(tmp.cbegin(), prev(tmp.cend()), [=, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );
+      for_each(tmp.cbegin(), prev(tmp.cend()), [spaces, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );
 
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
-// %%%%
     if ( (long_t > 0) and (octothorpe < 100) )
     { const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
       const char char_to_send { t_char(long_t) };               // insert the correct char
@@ -6061,7 +6060,7 @@ string expand_cw_message(const string& msg)
       int  n_found   { 0 };
 
       for (size_t n { 0 }; !found_all and (n < octothorpe_str.size() - 1); ++n)
-      { if (!found_all and octothorpe_str[n] == 'T')
+      { if ( !found_all and (octothorpe_str[n] == 'T') )
         { octothorpe_str[n] = char_to_send;
           found_all = (++n_found == n_to_find);
         }
@@ -6405,8 +6404,7 @@ void rescore(const contest_rules& rules)
 /*! \brief  Obtain the current time in HH:MM:SS format
 */
 string hhmmss(void)
-{ //const time_t now { ::time(NULL) };           // get the time from the kernel
-  const time_t now { NOW() };
+{ const time_t now { NOW() };
 
   struct tm structured_time;
   array<char, 26> buf;                       // buffer to hold the ASCII date/time info; see man page for gmtime()
@@ -6426,7 +6424,6 @@ string hhmmss(void)
 void alert(const string& msg, const SHOW_TIME show_time/* const bool show_time */)
 {
   { SAFELOCK(alert);
-//    alert_time = ::time(NULL);
     alert_time = NOW();
   }
 

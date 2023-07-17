@@ -94,9 +94,7 @@ public:
     \return             whether there is an alternative field for <i>field_name</i>
 */
   inline bool is_choice(const std::string& field_name) const
- //   { return contains(_choices, field_name); }
     { return _choices.contains(field_name); }
- //   { return (_choices > field_name); }
 
 /// return the inverse of whether there are any choices
   inline bool empty(void) const
@@ -208,16 +206,24 @@ public:
 
     Returns empty set if there are no canonical values
 */
-  std::set<std::string> all_values(void) const;
+//  std::set<std::string> all_values(void) const;
+//template<typename STYPE = std::set<std::string>>
+template<typename STYPE>
+  auto all_values(void) const -> STYPE
+  { STYPE rv;
+
+    for (const auto& cvv : _values)
+      COPY_ALL(cvv.second, inserter(rv, rv.begin()));
+
+    return rv;
+  }
 
 /*! \brief                      Is a string a known canonical value?
     \param  putative_cv_value   string to test
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline bool canonical_value_present(const std::string& putative_cv_value) const
-//    { return contains(_values, putative_cv_value); }
     { return _values.contains(putative_cv_value); }
-//    { return (_values > putative_cv_value); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
     \param  putative_cv_value   string to test
@@ -231,7 +237,7 @@ public:
     \return         whether <i>value</i> is a legal value of any canonical value
 */
   inline bool is_legal_value(const std::string& value) const
-    { return ANY_OF(canonical_values(), [=, this] (const auto& cv) { return is_legal_value(cv, value); }); }
+    { return ANY_OF(canonical_values(), [value, this] (const auto& cv) { return is_legal_value(cv, value); }); }
 
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value
@@ -451,7 +457,17 @@ protected:
 
     Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-  std::set<std::string> _all_exchange_values(const std::string& field_name) const;
+//  std::set<std::string> _all_exchange_values(const std::string& field_name) const;
+//template <typename STYPE = std::set<std::string>>
+template <typename STYPE>
+auto _all_exchange_values(const std::string& field_name) const -> STYPE
+{ SAFELOCK(rules);
+
+  const auto cit { FIND_IF(_exch_values, [field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
+
+//  return ( (cit == _exch_values.cend()) ? set<string> { } : cit->all_values() );
+  return ( (cit == _exch_values.cend()) ? STYPE { } : cit->template all_values <STYPE> () );
+}
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix

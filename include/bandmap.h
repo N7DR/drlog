@@ -699,26 +699,24 @@ class bandmap
 {
 protected:
 
-  mutable pt_mutex                _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
+  mutable pt_mutex                  _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
-  int                             _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-  int                             _cull_function          { 0 };                        ///< cull function number to apply
-  std::unordered_set<std::string> _do_not_add             { };                          ///< do not add these calls
- // std::list<std::string>          _do_not_add_regex_str   { };                          ///< do not add these regex calls
- // std::vector<std::regex>           _do_not_add_regex       { };                        ///< perhaps a list would be better?
-  std::map<std::string, std::regex> _do_not_add_regex { };
-  BM_ENTRIES                      _entries                { };                          ///< all the entries
-  std::vector<COLOUR_TYPE>        _fade_colours;                                        ///< the colours to use as entries age
-  decltype(_entries)              _filtered_entries       { };                          ///< entries, with the filter applied
-  bool                            _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
-  bandmap_filter_type*            _filter_p               { &BMF };                     ///< pointer to a bandmap filter
-  frequency                       _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
-  unsigned int                    _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
-  decltype(_entries)              _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
-  bool                            _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
-  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
-  std::unordered_set<std::string> _recent_calls           { };                          ///< calls recently added
-  COLOUR_TYPE                     _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
+  int                               _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  int                               _cull_function          { 0 };                        ///< cull function number to apply
+  std::unordered_set<std::string>   _do_not_add             { };                          ///< do not add these calls
+  std::map<std::string, std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
+  BM_ENTRIES                        _entries                { };                          ///< all the entries
+  std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
+  decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
+  bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
+  bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
+  frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
+  unsigned int                      _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
+  decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
+  bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
+  decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
+  std::unordered_set<std::string>   _recent_calls           { };                          ///< calls recently added
+  COLOUR_TYPE                       _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);

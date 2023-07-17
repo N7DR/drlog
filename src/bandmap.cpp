@@ -741,22 +741,22 @@ void bandmap::operator+=(bandmap_entry& be)
       if (be.is_not_marker())
       { const bandmap_entry current_be { (*this)[callsign] };  // the entry in the updated bandmap
 
-        { _entries.remove_if([=] (bandmap_entry& bme) { bool rv { bme.is_not_marker() };
+        { _entries.remove_if( [&current_be] (bandmap_entry& bme) { bool rv { bme.is_not_marker() };
 
-                                                        if (rv)
-                                                        { rv = (bme.callsign() != current_be.callsign());
+                                                                   if (rv)
+                                                                   { rv = (bme.callsign() != current_be.callsign());
 
-                                                          if (rv)
-                                                            rv = bme.frequency_str() == current_be.frequency_str();
-                                                        }
+                                                                     if (rv)
+                                                                       rv = bme.frequency_str() == current_be.frequency_str();
+                                                                   }
 
-                                                        return rv;
-                                                      } );
+                                                                   return rv;
+                                                                 } );
         }
       }
     }
     else    // not RBN
-    { _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
+    { _entries.remove_if( [&be] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
       _insert(be);
     }
 
@@ -774,10 +774,12 @@ void bandmap::operator+=(bandmap_entry& be)
 void bandmap::prune(void)
 { SAFELOCK(_bandmap);                                   // hold the lock for the entire process
 
-  const time_t now          { ::time(NULL) };             // get the time from the kernel
+ // const time_t now          { ::time(NULL) };             // get the time from the kernel
+ // const time_t now          { NOW() };             // get the time from the kernel
   const size_t initial_size { _entries.size() };
 
-  _entries.remove_if([=] (const bandmap_entry& be) { return (be.should_prune(now)); });  // OK for lists
+//  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists
+  _entries.remove_if( [] (const bandmap_entry& be) { return (be.should_prune(NOW())); } );  // OK for lists
 
   if (_entries.size() != initial_size)
     _dirty_entries();

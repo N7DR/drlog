@@ -278,13 +278,11 @@ window& window::operator<(const string& s)
   SAFELOCK(screen);
 
   if (!_insert)
-//    wprintw(_wp, s.c_str());
     waddstr(_wp, s.c_str());
   else                                           // insert mode
   { const cursor c         { cursor_position() };
     const string remainder { read(c.x(), c.y()) };
 
-//    wprintw(_wp, (s + remainder).c_str());
     waddstr(_wp, (s + remainder).c_str());
     
     *this < cursor(c.x() + s.length(), c.y());
@@ -845,6 +843,10 @@ bool window::common_processing(const keyboard_event& e)
   if (e.is_unmodified() and e.is_char('/'))
     return (win <= e.str(), true);
 
+// [ and ] (for regex)
+  if (e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
+    return (win <= e.str(), true);
+
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
   { win.delete_character(win.cursor_position().x());
@@ -971,9 +973,6 @@ COLOUR_TYPE string_to_colour(const string& str)
 
   if (const string_view str { "COLOUR_"sv }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));
-
-//  if (s.starts_with("COLOR_"s))
-//    return (from_string<COLOUR_TYPE>(substring(s, 6)));
 
   if (const string_view str { "COLOR_"sv }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start(s, str));

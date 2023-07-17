@@ -131,7 +131,8 @@ string duplicate_char(const string& s, const char c)
 string date_time_string(const SECONDS include_seconds)
 { constexpr size_t TIME_BUF_LEN { 26 };
 
-  const time_t now { time(NULL) };            // get the time from the kernel
+//  const time_t now { time(NULL) };            // get the time from the kernel
+  const time_t now { NOW() };            // get the time from the kernel
 
   struct tm structured_time;
 
@@ -191,7 +192,7 @@ string replace(const string& s, const string& old_str, const string& new_str)
   size_t posn      { 0 };
   size_t last_posn { 0 };
 
-  while ((posn = s.find(old_str, last_posn)) != string::npos)
+  while ( (posn = s.find(old_str, last_posn)) != string::npos )
   { rv += (s.substr(last_posn, posn - last_posn) + new_str);
     last_posn = posn + old_str.length();
   }
@@ -284,7 +285,8 @@ string read_file(const vector<string>& path, const string& filename)
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components
 */
-vector<string> split_string(const string& cs, const string& separator)
+//vector<string> split_string(const string& cs, const string& separator)
+vector<string> split_string(const string& cs, string_view separator)
 { size_t start_posn { 0 };
 
   vector<string> rv;
@@ -814,12 +816,14 @@ string convert_to_dotted_decimal(const uint32_t val)
   for (int n { 0 }; n < 3; n++)
   { const unsigned char c { cp[n] };
   
-    rv += to_string((int)c) + '.';
+//    rv += to_string((int)c) + '.';
+    rv += to_string(static_cast<int>(c)) + '.';
   }
 
   const unsigned char c { cp[3] };
 
-  rv += to_string((int)c);
+//  rv += to_string((int)c);
+  rv += to_string(static_cast<int>(c));
 
   return rv;
 }

@@ -48,10 +48,6 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
 bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
 { const string name_copy { remove_from_start(field_name, "received-"s) };
 
-//  if (begins_with(name_copy, "received-"s))
-//  if (name_copy.starts_with("received-"s))
-//    name_copy = substring(name_copy, 9);
-
   for (const auto& ef : fields_from_rules)
   { if (ef.name() == name_copy)
       return ef.is_optional();
@@ -75,19 +71,19 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
   const string& name  { nv.first };
   const string& value { nv.second };
 
-  if (!processed and (name == "number"s))
+  if (!processed and (name == "number"sv))
     processed = ( _number = from_string<decltype(_number)>(value), true );
 
-  if (!processed and (name == "date"s))
+  if (!processed and (name == "date"sv))
     processed = ( _date = value, true );
 
-  if (!processed and (name == "utc"s))
+  if (!processed and (name == "utc"sv))
     processed = ( _utc = value, true );
 
-  if (!processed and (name == "mode"s))
-    processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
+  if (!processed and (name == "mode"sv))
+    processed = ( _mode = ( ( value == "CW"sv) ? MODE_CW : MODE_SSB), true );
 
-  if (!processed and (name == "frequency"s))               // old version
+  if (!processed and (name == "frequency"sv))               // old version
   { _frequency_tx = value;
 
     const double    f    { from_string<double>(_frequency_tx) };
@@ -96,7 +92,7 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
     processed = ( _band = static_cast<BAND>(freq), true );
   }
 
-  if (!processed and (name == "frequency-tx"s))
+  if (!processed and (name == "frequency-tx"sv))
   { _frequency_tx = value;
 
     if (!_frequency_tx.empty())
@@ -108,7 +104,7 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
     processed = true;
   }
 
-  if (!processed and (name == "frequency-rx"s))
+  if (!processed and (name == "frequency-rx"sv))
   { _frequency_rx = value;
 
     if (!_frequency_rx.empty())
@@ -117,17 +113,17 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
     processed = true;
   }
 
-  if (!processed and (name == "hiscall"s))
+  if (!processed and (name == "hiscall"sv))
   { _callsign = value;
     _canonical_prefix = location_db.canonical_prefix(_callsign);
     _continent = location_db.continent(_callsign);
     processed = true;
   }
 
-  if (!processed and (name == "mycall"s))
+  if (!processed and (name == "mycall"sv))
     processed = ( _my_call = value, true );
 
-  if (!processed and name.starts_with("sent-"s))
+  if (!processed and name.starts_with("sent-"sv))
     processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
 
   return processed;

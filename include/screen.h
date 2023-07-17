@@ -513,8 +513,8 @@ public:
     Stops writing if there's insufficient room for the next string.
 */
 template <class T>
-  window& operator<(const T& sus)
   requires (is_sus<T> and is_string<typename T::value_type>)
+  window& operator<(const T& sus)
   { if (!_wp)
       return *this;
 
@@ -538,8 +538,8 @@ template <class T>
     \return     the window
 */
 template <class T>
-  window& operator<(const T n)
   requires (std::is_integral_v<T>)
+  inline window& operator<(const T n)
     { return (*this < to_string(n)); }
 
 /*! \brief              Set the colour pair

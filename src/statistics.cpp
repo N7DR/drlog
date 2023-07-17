@@ -26,8 +26,7 @@
 using namespace std;
 
 extern message_stream ost;      ///< for debugging and logging
-
-extern bool scoring_enabled;
+extern bool           scoring_enabled;
 
 pt_mutex statistics_mutex { "STATISTICS"s };      ///< mutex for the (singleton) running_statistics object
 
@@ -86,7 +85,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     string line { pad_right("QSOs"s, FIRST_FIELD_WIDTH) };                                          // accumulator for total qsos
 
     auto add_all_bands = [&line] (const unsigned int sz, const unsigned int n) { if (sz != 1)
-                                                                                   line += pad_left(to_string(n), FIELD_WIDTH);
+                                                                                   line += pad_left(n, FIELD_WIDTH);
                                                                                };
 
     for (const auto& b : permitted_bands)
@@ -96,7 +95,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       { const auto& nq_b { _n_qsos[m][b] };
 
         if (modes.size() == 1)
-          line += pad_left(to_string(nq_b), FIELD_WIDTH);
+          line += pad_left(nq_b, FIELD_WIDTH);
 
         qsos += nq_b;
       }
@@ -104,7 +103,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       qsos_all_bands += qsos;
 
       if (modes.size() != 1)
-        line += pad_left(to_string(qsos), FIELD_WIDTH);
+        line += pad_left(qsos, FIELD_WIDTH);
     }
 
     add_all_bands(permitted_bands.size(), qsos_all_bands);
@@ -123,7 +122,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         { const auto n_countries { _country_multipliers.n_worked(b, m) };
 
           if (modes.size() == 1)
-            line += pad_left(to_string(n_countries), FIELD_WIDTH);
+            line += pad_left(n_countries, FIELD_WIDTH);
 
           countries += n_countries;
         }
@@ -131,7 +130,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         total_countries_all_bands += countries;
 
         if (modes.size() != 1)
-          line += pad_left(to_string(countries), FIELD_WIDTH);
+          line += pad_left(countries, FIELD_WIDTH);
       }
 
       add_all_bands(permitted_bands.size(), total_countries_all_bands);
@@ -150,10 +149,10 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         if (const auto& cit { _callsign_multipliers.find(mult_name) }; cit != _callsign_multipliers.end())    // should always be true
         { const multiplier& mult { cit->second };
 
-          FOR_ALL(permitted_bands, [=, &line] (const BAND& b) { line += pad_left(to_string(mult.n_worked(b, m)), FIELD_WIDTH); } );
+          FOR_ALL(permitted_bands, [m, mult, &line] (const BAND& b) { line += pad_left(mult.n_worked(b, m), FIELD_WIDTH); } );
 
           if (permitted_bands.size() != 1)
-            line += pad_left(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
+            line += pad_left(mult.n_worked(ANY_BAND, m), FIELD_WIDTH);
         }
         else
         { ost << "Error: could not find mult name: " << mult_name << endl;
@@ -184,7 +183,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       for (const auto& b : permitted_bands)
       { const auto n_exchange_mults { mult.n_worked(b, m) };
 
-        line += pad_left(to_string(n_exchange_mults), FIELD_WIDTH);
+        line += pad_left(n_exchange_mults, FIELD_WIDTH);
 
         if (exchange_mults_per_band)
           total += n_exchange_mults;
@@ -194,7 +193,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       { if (exchange_mults_per_band)
           add_all_bands(permitted_bands.size(), total);
         else
-          line += pad_left(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
+          line += pad_left(mult.n_worked(ANY_BAND, m), FIELD_WIDTH);
       }
 
       rv += line + LF;
@@ -212,7 +211,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       { const auto& nd_mb { _n_dupes[m][b] };
 
         if (modes.size() == 1)
-          line += pad_left(to_string(nd_mb), FIELD_WIDTH);
+          line += pad_left(nd_mb, FIELD_WIDTH);
 
         dupes += nd_mb;
       }
@@ -220,7 +219,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       dupes_all_bands += dupes;
 
       if (modes.size() != 1)
-        line += pad_left(to_string(dupes), FIELD_WIDTH);
+        line += pad_left(dupes, FIELD_WIDTH);
     }
 
     add_all_bands(permitted_bands.size(), dupes_all_bands);
@@ -239,7 +238,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         { const auto& qp_mb { _qso_points[m][b] };
 
           if (modes.size() == 1)
-            line += pad_left(to_string(qp_mb), FIELD_WIDTH);
+            line += pad_left(qp_mb, FIELD_WIDTH);
 
           points += qp_mb;
         }
@@ -247,7 +246,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         points_all_bands += points;
 
         if (modes.size() != 1)
-          line += pad_left(to_string(points), FIELD_WIDTH);
+          line += pad_left(points, FIELD_WIDTH);
       }
 
       add_all_bands(permitted_bands.size(), points_all_bands);
@@ -343,8 +342,8 @@ bool running_statistics::known_callsign_mult_name(const string& putative_callsig
 
 //  return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
 //  return contains(_callsign_multipliers, putative_callsign_mult_name);
-//  return _callsign_multipliers.contains(putative_callsign_mult_name);
-  return (putative_callsign_mult_name < _callsign_multipliers);
+  return _callsign_multipliers.contains(putative_callsign_mult_name);
+//  return (putative_callsign_mult_name < _callsign_multipliers);
 }
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?

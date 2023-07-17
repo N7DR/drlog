@@ -39,31 +39,19 @@ using namespace std::literals::string_view_literals;
 
 // see https://stackoverflow.com/questions/44636549/why-is-there-no-support-for-concatenating-stdstring-and-stdstring-view
 // brain-dead: cannot perform s + sv until at least C++26
-//static const std::string EOL  { "\n"s };            ///< end-of-line marker as string
 constexpr std::string EOL { "\n"s };            ///< end-of-line marker as string
-//constexpr std::string_view EOL  { "\n"sv };            ///< end-of-line marker as string
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
-//static const std::string  LF     { "\n"s };         ///< LF as string
-//static const std::string& LF_STR { LF };            ///< LF as string
 constexpr std::string LF     { "\n"s };         ///< LF as string
 constexpr std::string LF_STR { "\n"s };            ///< LF as string
 
 constexpr char LF_CHAR { '\n' };                    ///< LF as character
 
-//static const std::string  CR     { "\r"s };         ///< CR as string
-//static const std::string& CR_STR { CR };            ///< CR as string
 constexpr std::string CR     { "\r"s };         ///< CR as string
 constexpr std::string CR_STR { "\r"s };            ///< CR as string
 
 constexpr char CR_CHAR { '\r' };                    ///< CR as character
-
-//static const std::string CRLF { "\r\n"s };          ///< CR followed by LF
-
-//static const std::string EMPTY_STR { };             ///< an empty string
-//static const std::string FULL_STOP { "."s };        ///< full stop as string
-//static const std::string SPACE_STR { " "s };        ///< space as string
 
 constexpr std::string CRLF { "\r\n"s };          ///< CR followed by LF
 
@@ -189,8 +177,9 @@ inline std::string to_string(T&& val)
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception.
     Compiler error if one uses str.size() - start_posn as a default length; value may not be calculated from other parameters
 */
-inline std::string substring(const std::string& str, const size_t start_posn, const size_t length)
-  { return ( (str.size() > start_posn) ? str.substr(start_posn, length) : EMPTY_STR ); }
+//inline std::string substring(const std::string& str, const size_t start_posn, const size_t length)
+inline std::string substring(std::string_view str, const size_t start_posn, const size_t length)
+  { return ( (str.size() > start_posn) ? static_cast<std::string>(str.substr(start_posn, length)) : EMPTY_STR ); }
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -199,7 +188,8 @@ inline std::string substring(const std::string& str, const size_t start_posn, co
 
     Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
-inline std::string substring(const std::string& str, const size_t start_posn)
+//inline std::string substring(const std::string& str, const size_t start_posn)
+inline std::string substring(std::string_view str, const size_t start_posn)
   { return substring(str, start_posn, str.size() - start_posn); }
 
 /*! \brief              Replace every instance of one character with another
@@ -399,13 +389,18 @@ inline void write_file(const std::string& cs, const std::string& filename)
 
 /*! \brief      Does a string begin with one of a number of particular substrings?
     \param  cs  string to test
-    \param  ss  container of substrings to look for
+    \param  ss  container of substrings (strings or string_views) to look for
     \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
+//template <typename T>
+//inline bool starts_with(const std::string& cs, const T& ss)
+//  requires (is_string<typename T::value_type>)
+//  { return ANY_OF(ss, [cs] (const std::string& str) { return cs.starts_with(str); }); }
+
 template <typename T>
 inline bool starts_with(const std::string& cs, const T& ss)
-  requires (is_string<typename T::value_type>)
-  { return ANY_OF(ss, [cs] (const std::string& str) { return cs.starts_with(str); }); }
+  requires ( (is_string<typename T::value_type>) or (is_string_view<typename T::value_type>) )
+  { return ANY_OF(ss, [cs] (std::string_view str) { return cs.starts_with(str); }); }
 
 /*! \brief      Remove specific string from the start of a string if it is present
     \param  s   original string
@@ -432,7 +427,8 @@ inline std::string remove_from_end(const std::string& s, const unsigned int n)
 
     If <i>e</i> is not present, just returns <i>s</i>
 */
-inline std::string remove_from_end(const std::string& s, const std::string& e)
+//inline std::string remove_from_end(const std::string& s, const std::string& e)
+inline std::string remove_from_end(const std::string& s, std::string_view e)
   { return ( s.ends_with(e) ? remove_from_end(s, e.length()) : s ); }
 
 /*! \brief      Remove character if present at the end of a string
@@ -517,7 +513,8 @@ T remove_peripheral_spaces(T&& t)
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components
 */
-std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
+//std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
+std::vector<std::string> split_string(const std::string& cs, std::string_view separator);
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string

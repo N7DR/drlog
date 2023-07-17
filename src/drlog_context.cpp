@@ -1197,9 +1197,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
       if (contains(RHS, "TEMPLATE"s))
       { try
-        { //const string key { clean_split_string(RHS, ':')[1] };
-
-          _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string(RHS, ':')[1] );
+        { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string(RHS, ':')[1] );
         }
 
         catch (...)
@@ -1480,7 +1478,7 @@ drlog_context::drlog_context(const std::string& filename)
 vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
 
-  for (auto cit = _windows.cbegin(); cit != _windows.cend(); ++cit)
+  for (auto cit { _windows.cbegin() }; cit != _windows.cend(); ++cit)
     if (contains(cit->first, substr))
       rv += (cit->first);
 

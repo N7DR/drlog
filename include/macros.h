@@ -817,11 +817,13 @@ T operator+(const T& s1, const T& s2)
   return rv;
 }
 
+///  does a MUM contain a particular key?
 template <class M, class K>
 inline bool operator>(const M& m, const K& k)
   requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
 { return m.contains(k); }
 
+///  does a MUM contain a particular key?
 template <class M, class K>
 inline bool operator<(const K& k, const M& m)
   requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
@@ -869,7 +871,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
   requires ( (is_mum<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
              (is_mmumm<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
-  { mum.emplace(std::move(element)); }
+{ mum.emplace(std::move(element)); }
 
 /*! \brief              Add an element to a MUM
     \param  m           destination MUM
@@ -881,7 +883,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
 template <typename C>
 inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
   requires (is_mum<C> or is_mmumm<C>)
-  { mum.emplace(il); }
+{ mum.emplace(il); }
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
     \param  ost     output stream
@@ -1451,7 +1453,6 @@ public:
   bool add(const T& val, const COUNTER n = 1)
   { if (!(_values.contains(val)))
       _values += { val, n };
-//      _values.insert( std::pair { val, n } );   // need to figure out why prior line doesn't work in g++12
     else
       _values[val] += n;
 
@@ -1465,5 +1466,9 @@ public:
   inline unsigned int value(const T& val) const
     { return ( (_values.contains(val)) ? _values.at(val) : 0 ); }
 };
+
+// current time (in seconds since the epoch)
+inline time_t NOW(void)
+  { return ::time(NULL); }           // get the time from the kernel
 
 #endif    // MACROS_H
