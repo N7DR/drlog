@@ -43,7 +43,7 @@ protected:
     \return characters converted to an integer
 */
   inline int _convert_to_int(const int posn, const int len) const
-    { return from_string<int>( substring(_record, posn, len) ); }
+    { return from_string<int>( substring <std::string> (_record, posn, len) ); }
 
 public:
 
@@ -77,7 +77,7 @@ public:
 
 /// callsign
   inline std::string call(void) const
-    { return remove_trailing_spaces(to_upper(substring(_record, 29, 14))); }
+    { return remove_trailing_spaces <std::string> (to_upper(substring <std::string> (_record, 29, 14))); }
 
 /// mode
   inline MODE mode(void) const
@@ -108,13 +108,13 @@ public:
 
 /// received RST
   inline int rst_received(void) const
-    { return from_string<int>(substring(_record, 49, _record[51] == ' ' ? 2 : 3)); }
+    { return from_string<int>(substring <std::string> (_record, 49, _record[51] == ' ' ? 2 : 3)); }
 
   std::string frequency(void) const; ///< frequency in MHz
 
 /// the received exchange; maximum of four characters
   inline std::string exchange_received(void) const
-    { return remove_peripheral_spaces(substring(_record, 53, 4)); }
+    { return remove_peripheral_spaces <std::string> (substring <std::string> (_record, 53, 4)); }
 
   inline std::string record(void) const       ///< the entire record
     { return _record; }

@@ -1,3 +1,16 @@
+// $Id$
+
+// Released under the GNU Public License, version 2
+
+// Principal author: N7DR
+
+/*! \file   adif3.cpp
+
+    Objects and functions related to ADIF version 3.1.0 at https://adif.org/310/ADIF_310.htm
+    
+    I refrain from comment on the self-evident quality of this soi-disant "specification"
+*/
+
 #include "adif3.h"
 
 #include <algorithm>
@@ -10,9 +23,9 @@ using namespace std;
     Assumes that names are in upper case
 */
 void adif3_field::_normalise(void)
-{ static const string      zero_zero { "00"s };
-  static const set<string> uc_fields { "CALL"s, "MODE"s, "STATION_CALLSIGN"s };   ///< fields that have UC values
-  
+{ static const set<string> uc_fields { "CALL"s, "MODE"s, "STATION_CALLSIGN"s };   ///< fields that have UC values
+  static const string      zero_zero { "00"s };
+
   switch (_type)
   { case ADIF3_DATA_TYPE::ENUMERATION_BAND :
       _value = to_lower(_value);
@@ -57,18 +70,21 @@ void adif3_field::_verify(void) const
         
       if (_value.length() != 8)
         throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
-        
-      const string year { _value.substr(0, 4) };
+
+//      const string year { substring <string> (_value, 0, 4) };
+      string_view year { substring <string_view> (_value, 0, 4) };
       
       if (year < "1930"s)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid year in "s + _name + ": "s + _value);
         
-      const int month { from_string<int>(_value.substr(4, 2)) };
+//      const int month { from_string<int>(_value.substr(4, 2)) };
+      const int month { from_string<int>(substring <string_view> (_value, 4, 2)) };
       
       if ( (month < 1) or (month > 12) )
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid month in "s + _name + ": "s + _value);
 
-      const int day { from_string<int>(_value.substr(6, 2)) };
+//      const int day { from_string<int>(_value.substr(6, 2)) };
+      const int day { from_string<int>(substring <string_view> (_value, 6, 2)) };
       
       int days_in_month { 31 };
       
@@ -96,8 +112,6 @@ void adif3_field::_verify(void) const
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
-//      if (!contains(_ENUMERATION_DXCC_ENTITY_CODE, from_string<int>(_value)))
-//      if (!_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value)))
       if (!(_ENUMERATION_DXCC_ENTITY_CODE > from_string<int>(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
@@ -199,14 +213,17 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
       if ( (utc.length() != 4) and (utc.length() != 6) )
         throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
  
-      if (const int hours { from_string<int>(utc.substr(0, 2)) }; hours > 23)
+//      if (const int hours { from_string<int>(utc.substr(0, 2)) }; hours > 23)
+      if (const int hours { from_string<int>(substring <string_view> (utc, 0, 2)) }; hours > 23)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid hours value in "s + _name + ": "s + _value);
 
-      if (const int minutes { from_string<int>(utc.substr(2, 2)) }; minutes > 59)
+//      if (const int minutes { from_string<int>(utc.substr(2, 2)) }; minutes > 59)
+      if (const int minutes { from_string<int>(substring <string_view> (utc, 2, 2)) }; minutes > 59)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid minutes value in "s + _name + ": "s + _value);
 
       if (utc.length() == 6)
-      { if (const int seconds { from_string<int>(utc.substr(4, 2)) }; seconds > 59)
+      { //if (const int seconds { from_string<int>(utc.substr(4, 2)) }; seconds > 59)
+        if (const int seconds { from_string<int>(substring <string_view> (utc, 4, 2)) }; seconds > 59)
           throw adif3_error(ADIF3_INVALID_VALUE, "Invalid seconds value in "s + _name + ": "s + _value);   
       }
     }
@@ -265,7 +282,7 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
 
 // if it's the EOR, then jump out
   const string         descriptor_str { str.substr(posn_1 + 1, posn_2 - posn_1 -1) };
-  const vector<string> fields         { split_string(descriptor_str, ":"s) };
+  const vector<string> fields         { split_string <std::string> (descriptor_str, ':') };
 
   if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
     return string::npos;

@@ -576,7 +576,7 @@ void rig_interface::rit(const int hz)
 int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
   { if ( const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"s, 0) )
-      return from_string<int>(substring(value, 2, 5));
+      return from_string<int>(substring <std::string> (value, 2, 5));
     else
     { _error_alert("Invalid rig response in rit(): "s + value);
       return 0;
@@ -823,7 +823,7 @@ int rig_interface::keyer_speed(void)
 
   if (_model == RIG_MODEL_K3)
   { if ( const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"s, 0) )
-      return from_string<int>(substring(response, 2, 3));
+      return from_string<int>(substring <std::string> (response, 2, 3));
     else
     { _error_alert("Invalid response getting keyer_speed: "s + response);
       return false;
@@ -1204,7 +1204,7 @@ int rig_interface::bandwidth(void)
   SAFELOCK(_rig);
 
   if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"s, 0) )
-      return from_string<int>(substring(response, 2, 4)) * 10;
+      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting bandwidth: "s + response);
     return 0;
@@ -1401,7 +1401,7 @@ unsigned int rig_interface::centre_frequency(void)
   SAFELOCK(_rig);
 
   if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
-    return from_string<int>(substring(response, 2, 4)) * 10;
+    return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
     return 0;

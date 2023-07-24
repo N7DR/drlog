@@ -916,11 +916,11 @@ unsigned int n_threads(void)
 { const pid_t          pid      { getpid() };
   const string         filename { "/proc/"s + to_string(pid) + "/status"s };
   const string         contents { read_file(filename) };
-  const vector<string> lines    { to_lines(contents) };
+  const vector<string> lines    { to_lines <std::string> (contents) };
 
   for (const auto& line : lines)
   { if (line.length() > 8 and line.substr(0, 8) == string("Threads:"))
-   { const string       n  { remove_peripheral_spaces(line.substr(8)) };
+   { const string       n  { remove_peripheral_spaces <std::string> (line.substr(8)) };
      const unsigned int rv { from_string<unsigned int>(n) };
 
      return rv;

@@ -57,7 +57,7 @@ public:
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
   inline explicit scp_database(const std::string& filename)
-    { init_from_calls(to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
+    { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
   
 /// construct from vector of calls
   inline explicit scp_database(const std::vector<std::string>& calls)
@@ -91,7 +91,7 @@ public:
 
 /// is a call in the database?
   inline bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring(call, 0, 2)].contains(call))); }
+    { return (call.empty() ? false : (_db[substring <std::string> (call, 0, 2)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call

@@ -72,7 +72,7 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 //  if (name.starts_with("TEXCH-"s))
 //   qso.sent_exchange(qso.sent_exchange() + pair<string, string> { name.substr(6), value });    // remove "TEXCH-" before adding the field and value
   if (const string_view str { "TEXCH-"sv }; name.starts_with(str))
-    qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start(name, str), value });    // remove "TEXCH-" before adding the field and value
+    qso.sent_exchange(qso.sent_exchange() + pair<string, string> { remove_from_start <std::string> (name, str), value });    // remove "TEXCH-" before adding the field and value
 
 // rcall
   if (name == "RCALL"sv)
@@ -81,8 +81,8 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, cons
 // received exchange
 //  if (name.starts_with("REXCH-"s))
 //    qso.received_exchange(qso.received_exchange() + received_field { name.substr(6), value, false, false });    // remove "REXCH-" before adding the field and value
-  if (const string_view str { "TEXCH-"sv }; name.starts_with(str))
-    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start(name, str), value, false, false });    // remove "REXCH-" before adding the field and value
+  if (const string_view str { "REXCH-"sv }; name.starts_with(str))
+    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string> (name, str), value, false, false });    // remove "REXCH-" before adding the field and value
 }
 
 /*! \brief      Add a QSO to the logbook
@@ -461,7 +461,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
-  const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
+  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };
   
 /*
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
@@ -469,11 +469,11 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
   vector< vector< string> > individual_values;
 
-  const vector<string> template_fields { clean_split_string(cabrillo_qso_template) };         // colon-delimited values
+  const vector<string> template_fields { clean_split_string <string> (cabrillo_qso_template) };         // colon-delimited values
   
 //  for (int n { 0 }; n < ssize(template_fields); ++n)
 //    individual_values += split_string(template_fields[n], ':');
-  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string(tplate_field, ':'); } );
+  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -488,7 +488,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         const string&         name  { vec[0] };
         const unsigned int    posn  { from_string<unsigned int>(vec[1]) - 1 };
         const unsigned int    len   { from_string<unsigned int>(vec[2]) };
-        const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces(line.substr(posn, len)) : string()) };
+        const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string()) };
       
         _modify_qso_with_name_and_value(qso, name, value);
 
@@ -508,7 +508,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
-  const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
+  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };
 
   unsigned int last_qso_number { 0 };
 
@@ -516,7 +516,7 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   { if (starts_with(line, qso_markers))     // qso_markers is a vector of strings
     { QSO qso { };
   
-      const vector<string> fields { split_string(squash(line.substr(4)), ' ') }; // skip first four characters
+      const vector<string> fields { split_string <std::string> (squash(line.substr(4)), ' ') }; // skip first four characters
       
       for (unsigned int m { 0 }; m < fields.size(); ++m)
         ost << m << ": *" << fields[m] << "*" << endl; 
@@ -524,7 +524,7 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 // go through the fields
       for (unsigned int n { 0 }; n < cabrillo_fields.size(); ++n)
       { const string name  { cabrillo_fields[n] };
-        const string value { (n < fields.size() ? remove_peripheral_spaces(fields[n]) : string()) };
+        const string value { (n < fields.size() ? remove_peripheral_spaces <std::string> (fields[n]) : string { }) };
 
         _modify_qso_with_name_and_value(qso, name, value);
 

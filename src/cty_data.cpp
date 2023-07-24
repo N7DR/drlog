@@ -76,7 +76,8 @@ Column 	Length 	Description
             The string is assumed to contain a single record. We don't catch all
             possible errors, but we do test for the most obvious ones.
 */
-cty_record::cty_record(const string& record)
+//cty_record::cty_record(const string& record)
+cty_record::cty_record(string_view record)
 { constexpr int CTY_NAME       { 0 };
   constexpr int CTY_CQZ        { 1 };
   constexpr int CTY_ITUZ       { 2 };
@@ -90,10 +91,11 @@ cty_record::cty_record(const string& record)
 // map prefixes if they collide with a content
   static const map<string, string> map_prefix { { "EU"s, "EW"s } };
 
-  const vector<string> fields { remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":"s )) };   // split the record into fields instead of lines
+  const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
+//  const vector<string_view> fields { remove_peripheral_spaces <std::string_view> (split_string <std::string_view> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
-    throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found "s + to_string(fields.size()) + " fields in record for "s + fields[0]);
+    throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found "s + to_string(fields.size()) + " fields in record for "s + string { fields[0] });
   
   _country_name = fields[CTY_NAME];
 
@@ -144,7 +146,8 @@ cty_record::cty_record(const string& record)
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
  // const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[CTY_ALTS], ","s)) };
-  const vector<string> presumptive_prefixes { clean_split_string(fields[CTY_ALTS], ',') };
+//  const vector<string> presumptive_prefixes { clean_split_string <string> (fields[CTY_ALTS]) };
+  const vector<string> presumptive_prefixes { clean_split_string <string> (fields[CTY_ALTS]) };
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;
@@ -241,16 +244,16 @@ alternative_country_info::alternative_country_info(const string& record, const s
 { if (const size_t end_identifier { record.find_first_of("(["s) }; end_identifier == string::npos)
     _identifier = record;                                // no change
   else
-  { _identifier = substring(record, 0, end_identifier);      // read up to the first delimiter
+  { _identifier = substring <std::string> (record, 0, end_identifier);      // read up to the first delimiter
   
-    if (const string cq_zone_str { delimited_substring(record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+    if (const string cq_zone_str { delimited_substring <std::string> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
     { auto_from_string(cq_zone_str, _cq_zone);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-    if (const string itu_zone_str { delimited_substring(record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+    if (const string itu_zone_str { delimited_substring <std::string> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
     { auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
@@ -283,8 +286,9 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ const vector<string> records { split_string( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ), ';') };                  // read file, remove EOL markers and split into records
-  
+{ //const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ), ';') };                  // read file, remove EOL markers and split into records
+  const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
+
   FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
 
@@ -561,7 +565,7 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \return             location information corresponding to <i>call</i>
 */
 location_info location_database::info(const string& callpart) const
-{ const string original_callsign { remove_peripheral_spaces(callpart) };
+{ const string original_callsign { remove_peripheral_spaces <std::string> (callpart) };
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
@@ -587,7 +591,7 @@ location_info location_database::info(const string& callpart) const
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string target { remove_from_end(callsign, 4u) };    // remove "/QRP"
+  { const string target { remove_from_end <std::string> (callsign, 4u) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
     
@@ -619,11 +623,11 @@ location_info location_database::info(const string& callpart) const
     unsigned int len { 1 };
 
     if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n; this changes callsign
-    { const size_t last_digit_posn { substring(callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
+    { const size_t last_digit_posn { substring <std::string> (callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
 
       if (last_digit_posn != string::npos)
       { callsign[last_digit_posn] = last_char(callsign);
-        callsign = substring(callsign, 0, callsign.length() - 2);
+        callsign = substring <std::string> (callsign, 0, callsign.length() - 2);
       }
     }
 
@@ -705,7 +709,7 @@ location_info location_database::info(const string& callpart) const
 
 // it looks like maybe it's a reciprocal license
 // how many slashes are there?
-  const vector<string> parts { split_string(callsign, '/') };
+  const vector<string> parts { split_string <std::string> (callsign, '/') };
 
   if (parts.size() == 1)        // slash is first or last character
     return location_info();
@@ -858,7 +862,7 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
+  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), ',') };
 
 //  if (!substrings.contains(ss))
   if (!contains(substrings, ss))
@@ -870,9 +874,9 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   if (posn_1 == posn_2)
     throw russian_error(RUSSIAN_INVALID_FORMAT, "Delimiter not found"s);
 
-  _region_name = ::substring(line, posn_1 + 1, posn_2 - posn_1 - 1);
+  _region_name = ::substring <std::string> (line, posn_1 + 1, posn_2 - posn_1 - 1);
 
-  const vector<string> fields { clean_split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), ' ') };
+  const vector<string> fields { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(line.substr(posn_2 + 1), ' ')), ' ') };
 
   try
   { _region_abbreviation = fields.at(0);
@@ -920,11 +924,11 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
 */
 russian_data::russian_data(const vector<string>& path, const string& filename)
 { try
-  { const vector<string> lines { to_lines(replace_char(read_file(path, filename), '\t', ' ')) };
+  { const vector<string> lines { to_lines <std::string> (replace_char(read_file(path, filename), '\t', ' ')) };
 
     for (const auto& line : lines)
     { if (!line.starts_with("//"s))
-      { const vector<string> substrings { clean_split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ',') };
+      { const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), ',') };
 
         FOR_ALL(substrings, [line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
       }

@@ -53,7 +53,8 @@ protected:
 /*! \brief      Initialise the name from a string
     \param  nm  tag name
 */
-  void _init_from_string(const std::string& str);
+//  void _init_from_string(const std::string& str);
+  void _init_from_string(std::string_view str);
 
 public:
   

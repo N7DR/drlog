@@ -34,24 +34,24 @@ void memory_information::_get_meminfo(const bool force)
   const system_clock::time_point now { system_clock::now() };
 
   if ( force or ( (now - _last_update_time) >  _minimum_interval) )      // update only of forced or if enough time has passed
-  { const vector<string> file_lines { to_lines(squash(read_file("/proc/meminfo"s))) };  // amazingly, opening the file can fail and throw an exception! I've seen it happen
+  { const vector<string> file_lines { to_lines <std::string> (squash(read_file("/proc/meminfo"s))) };  // amazingly, opening the file can fail and throw an exception! I've seen it happen
 
     _last_update_time = now;                                // update the time of last update
 
     lock_guard<mutex> memory_lock(_memory_mutex);
 
     for (const auto& line : file_lines)
-    { const vector<string> fields { split_string(line, SPACE_STR) };
+    { const vector<string_view> fields { split_string <std::string_view> (line, ' ') };
 
       if ( (fields.size() < 2) or (fields.size() > 3) )
       { cerr << "Fatal error in memory_information::_get_meminfo(void)" << endl;
         exit(-1);
       }
 
-      const string   name  { substring(fields[0], 0, fields[0].length() - 1) };    // remove the terminating colon
-      const string   unit  { (fields.size() == 3) ? fields[2] : string() };
+      string_view name { substring <std::string_view> (fields[0], 0, fields[0].length() - 1) };    // remove the terminating colon
+      string_view unit { (fields.size() == 3) ? fields[2] : string_view { EMPTY_STR } };
 
-      if (!unit.empty() and unit != "kB"s)
+      if (!unit.empty() and unit != "kB"sv)
       { cerr << "Fatal unit error in memory_information::_get_meminfo(void)" << endl;
         exit(-1);
       }
@@ -61,7 +61,7 @@ void memory_information::_get_meminfo(const bool force)
       if (!unit.empty())
         value *= BYTES_PER_KB;
 
-      _values[name] = value;        // creates if necessary
+      _values[string { name }] = value;        // creates if necessary; library does not automatically use string_view
     }
   }
 }

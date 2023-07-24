@@ -235,12 +235,12 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 { const bool   is_continent { CONTINENT_SET.contains(str) };
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
-  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };        // create pointer to correct vector
-  set<string>     ss   { vs_p->begin(), vs_p->end() };  // create a copy of current values
+  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
+  set<string>     ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
 
-  if (ss.contains(str_copy))              // remove a value
+  if (ss.contains(str_copy))    // remove a value
     ss -= str_copy;
-  else                       // add a value
+  else                          // add a value
     ss += str_copy;
 
   vs_p->clear();                                        // empty it
@@ -290,9 +290,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   clear_callsign_mult();
 
   for ( const auto& callsign_mult_name : rules.callsign_mults() )
-  { const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) };
-
-    if (!callsign_mult_val.empty())
+  { if (const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) }; !callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
         add_callsign_mult(callsign_mult_name, callsign_mult_val);
     }
@@ -328,9 +326,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     if (is_possible_exchange_field)
     { exchange_mult_is_possible = true;
 
-      const string guess { rules.canonical_value(exch_mult_name, exchange_db.guess_value(_callsign, exch_mult_name)) };
-
-      if (!guess.empty())
+      if (const string guess { rules.canonical_value(exch_mult_name, exchange_db.guess_value(_callsign, exch_mult_name)) }; !guess.empty())
       { if ( statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode) )
           add_exchange_mult(exch_mult_name, guess);
 
@@ -439,7 +435,7 @@ bool bandmap_entry::matches_criteria(void) const
   if (olog.confirmed(_callsign, _band, _mode))
     return true;
 
-  if (olog.n_qsls(_callsign) and olog.n_qsos(_callsign, _band, _mode) <= max_qsos_without_qsl)
+  if (olog.n_qsls(_callsign) and (olog.n_qsos(_callsign, _band, _mode) <= max_qsos_without_qsl))
     return true;
 
   return false;
@@ -671,15 +667,12 @@ void bandmap::operator+=(bandmap_entry& be)
     add_it = !_do_not_add.contains(callsign);
 
     if (add_it)           // handle regex do-not-match conditions
-    { std::smatch base_match;
+    { smatch base_match;
 
- //     add_it = NONE_OF(_do_not_add_regex, [callsign, &base_match] (const auto& rgx) { return regex_match(callsign, base_match, rgx); });
       bool found_match { false };
 
-//      for (auto& [rgx_str, rgx] : _do_not_add_regex)
       for ( auto it { _do_not_add_regex.begin() }; !found_match and (it != _do_not_add_regex.end()); ++it)
-      { //const string& rgx_str { it->first };
-        const regex& rgx { it->second };
+      { const regex& rgx { it->second };
 
         found_match = regex_match(callsign, base_match, rgx);
       }
@@ -733,7 +726,7 @@ void bandmap::operator+=(bandmap_entry& be)
         }
       }
       else    // this call is not currently present
-      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.is_not_marker())); } );  // remove any real entries at this QRG
+      { _entries.remove_if( [&be] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.is_not_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
 
@@ -779,7 +772,8 @@ void bandmap::prune(void)
   const size_t initial_size { _entries.size() };
 
 //  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists
-  _entries.remove_if( [] (const bandmap_entry& be) { return (be.should_prune(NOW())); } );  // OK for lists
+//  _entries.remove_if( [] (const bandmap_entry& be) { return (be.should_prune(NOW())); } );  // OK for lists
+  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists
 
   if (_entries.size() != initial_size)
     _dirty_entries();
@@ -796,7 +790,7 @@ void bandmap::prune(void)
 bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
-  return VALUE_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); });
+  return VALUE_IF(_entries, [&str] (const bandmap_entry& be) { return (be.callsign() == str); });
 }
 
 /*! \brief              Return the first entry for a partial call
@@ -1307,9 +1301,9 @@ window& bandmap::write_to_window(window& win)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
-      const string frequency_str { substring(entry_str, 0, 7) };
-      const string callsign_str  { substring(entry_str, 8) };
+    { const string entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
+      const string frequency_str { substring <std::string> (entry_str, 0, 7) };
+      const string callsign_str  { substring <std::string> (entry_str, 8) };
       const bool   is_marker     { be.is_marker() };
   
 // change to the correct colour

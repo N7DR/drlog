@@ -457,15 +457,12 @@ protected:
 
     Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-//  std::set<std::string> _all_exchange_values(const std::string& field_name) const;
-//template <typename STYPE = std::set<std::string>>
 template <typename STYPE>
 auto _all_exchange_values(const std::string& field_name) const -> STYPE
 { SAFELOCK(rules);
 
   const auto cit { FIND_IF(_exch_values, [field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
 
-//  return ( (cit == _exch_values.cend()) ? set<string> { } : cit->all_values() );
   return ( (cit == _exch_values.cend()) ? STYPE { } : cit->template all_values <STYPE> () );
 }
 

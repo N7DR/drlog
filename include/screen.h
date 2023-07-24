@@ -483,7 +483,7 @@ public:
   }
 
 /*! \brief      Write a string to the window
-    \param  s   the string to write
+    \param  s   string to write
     \return     the window
 
     wprintw has fairly obnoxious behaviour regarding newlines: if a string
@@ -493,6 +493,9 @@ public:
     to the string
 
     Also see the function reformat_for_wprintw().
+
+    There is no point in supplying operator<(string_view s) because we have
+    to create a std::string anayway, because string_view does not supply c_str().
 */
   window& operator<(const std::string& s);
 
@@ -598,7 +601,7 @@ template <class T>
     Limits <i>line_nr</i> to a valid value for the window before testing the line.
 */
   inline bool line_empty(const int line_nr = 0)
-    { return remove_peripheral_spaces(getline(line_nr)).empty(); }
+    { return remove_peripheral_spaces <std::string> (getline(line_nr)).empty(); }
 
 /*! \brief              Clear a line
     \param  line_nr     number of line to clear (0 is bottommost row)
@@ -637,7 +640,7 @@ template <class T>
 
 /// is the window empty?
   inline bool empty(void)
-    { return remove_peripheral_spaces(read()).empty(); }
+    { return remove_peripheral_spaces <std::string> (read()).empty(); }
 
 /// toggle the hide/show status of the cursor
   inline window& toggle_hidden(void)

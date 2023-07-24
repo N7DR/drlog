@@ -158,15 +158,15 @@ string qtc_series::output_string(const unsigned int n) const
   string rv { pad_left(_frequency, 5) + SPACE_STR };
 
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
-  rv += substring(pad_right(_target, 13), 0, 13) + SPACE_STR;
+  rv += substring <std::string> (pad_right(_target, 13), 0, 13) + SPACE_STR;
 
 //  const vector<string> qtc_ser { split_string(_id, "/"s) };
-  const vector<string> qtc_ser { split_string(_id, '/') };
+  const vector<string> qtc_ser { split_string <std::string> (_id, '/') };
 
   rv += pad_leftz(qtc_ser[0], 3) + "/"s + pad_leftz(qtc_ser[1], 2) + create_string(' ', 5);
-  rv += substring(pad_right(_source, 13), 0, 13) + SPACE_STR;
+  rv += substring <std::string> (pad_right(_source, 13), 0, 13) + SPACE_STR;
   rv += qe.utc() + SPACE_STR;
-  rv += substring(pad_right(qe.callsign(), 13), 0, 13) + SPACE_STR;
+  rv += substring <std::string> (pad_right(qe.callsign(), 13), 0, 13) + SPACE_STR;
   rv += qe.serno();
 
   return rv;
@@ -308,7 +308,7 @@ void qtc_database::read(const string& filename)
 { if (!file_exists(filename))
     return;
 
-  const vector<string> lines { to_lines(read_file(filename)) };
+  const vector<string> lines { to_lines <std::string> (read_file(filename)) };
 
   unsigned int line_nr { 0 };
 
@@ -332,7 +332,7 @@ void qtc_database::read(const string& filename)
 
   while (line_nr < lines.size())
   { const string&        line   { lines[line_nr++] };
-    const vector<string> fields { remove_peripheral_spaces(split_string(squash(line), ' ')) };
+    const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
 
     if (fields.size() != 10)
       throw qtc_error(QTC_INVALID_FORMAT, "QTC has "s + to_string(fields.size()) + " fields; "s + line);

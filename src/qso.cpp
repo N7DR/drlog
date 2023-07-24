@@ -46,7 +46,7 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
 bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
-{ const string name_copy { remove_from_start(field_name, "received-"s) };
+{ const string name_copy { remove_from_start <std::string> (field_name, "received-"s) };
 
   for (const auto& ef : fields_from_rules)
   { if (ef.name() == name_copy)
@@ -308,7 +308,8 @@ void QSO::populate_from_log_line(const string& str)
 
 // separate the line into fields
 //  const vector<string> vec { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
-  const vector<string> vec { clean_split_string(squash(str, ' '), SPACE_STR) };
+//  const vector<string> vec { clean_split_string <string> (squash(str, ' '), SPACE_STR) };
+  const vector<string> vec { clean_split_string <string> (squash(str, ' '), ' ') };
 
   if (vec.size() > _log_line_fields.size())                        // output debugging info; this can be triggered if there are mults on the log line
   { ost << "populate_from_log_line parameter: " << str << endl;
@@ -416,7 +417,7 @@ void QSO::populate_from_log_line(const string& str)
            received_index++;
          }
          else
-         { const bool is_legal_value { rules.is_legal_value(substring(field, 9), field_value) };
+         { const bool is_legal_value { rules.is_legal_value(substring <std::string> (field, 9), field_value) };
 
            if (is_legal_value)
              ost << "field value " << field_value << " is legal" << endl;
@@ -439,13 +440,13 @@ void QSO::populate_from_log_line(const string& str)
 
           ost << "Original received exchange[received_index]: " << _received_exchange[received_index] << endl << endl;
 
-          const bool is_legal { rules.is_legal_value(substring(field, 9), vec[n]) };
+          const bool is_legal { rules.is_legal_value(substring <std::string> (field, 9), vec[n]) };
 
           ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
-          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring(field, 9) << endl;
+          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring <std::string> (field, 9) << endl;
 
 // if the field is a CHOICE and the value isn't legal, for the original choice, see if it's valid for the other
-          if (!rules.is_legal_value(substring(field, 9), field_value))
+          if (!rules.is_legal_value(substring <std::string> (field, 9), field_value))
           { const string&             original_field_name { _received_exchange[received_index].name() };
             const choice_equivalents& ec                  { rules.equivalents(_mode, _canonical_prefix) };
 
@@ -507,13 +508,13 @@ void QSO::set_exchange_mult(const string& field_name)
 string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 { static unsigned int record_length { 0 };
 
-  static vector< vector< string> > individual_values;
+  static vector< vector<string> > individual_values;
   
   if (!record_length)                                         // if we don't yet know the record length
-  { const vector<string> template_fields { split_string(cabrillo_qso_template, ',') };         // colon-delimited values
+  { const vector<string> template_fields { split_string <std::string> (cabrillo_qso_template, ',') };         // colon-delimited values
   
     for (const auto& template_field : template_fields)
-      individual_values += split_string(remove_peripheral_spaces(template_field), ':');
+      individual_values += split_string <std::string> (remove_peripheral_spaces <std::string> (template_field), ':');
   
     for (const auto& value : individual_values)
     { const unsigned int last_char_posn { from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1 };
@@ -642,7 +643,7 @@ specification tells us otherwise, that's what we do.
     { const string field_name { name.substr(6) };
     
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { const vector<string> vec { clean_split_string(field_name, '+') };
+      { const vector<string> vec { clean_split_string <string> (field_name, '+') };
 
         for (const auto& name : vec)
         { for (const auto& [nm, val] : _sent_exchange)
@@ -659,11 +660,11 @@ specification tells us otherwise, that's what we do.
 
 // REXCH-xxx
     if (name.starts_with("REXCH-"sv))
-    { const string field_name { substring(name, 6) };
+    { const string field_name { substring <std::string> (name, 6) };
 
 //      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { const vector<string> vec { clean_split_string(field_name, '+') };
+      { const vector<string> vec { clean_split_string <string> (field_name, '+') };
 
         for (const auto& name : vec)
         { if (!received_exchange(name).empty())
@@ -715,8 +716,8 @@ string QSO::verbose_format(void) const
   rv += " date="s         + _date;
   rv += " utc="s          + _utc;
   rv += " hiscall="s      + pad_right(_callsign, CALLSIGN_WIDTH);
-  rv += " mode="s         + pad_right(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH);
-  rv += " band="s         + pad_right(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
+  rv += " mode="s         + pad_right(remove_peripheral_spaces <std::string> (MODE_NAME[_mode]), MODE_WIDTH);
+  rv += " band="s         + pad_right(remove_peripheral_spaces <std::string> (BAND_NAME[_band]), BAND_WIDTH);
   rv += " frequency-tx="s + pad_right(_frequency_tx, FREQUENCY_WIDTH);
   rv += " frequency-rx="s + pad_right( (_frequency_rx.empty() ? "0"s : _frequency_rx), FREQUENCY_WIDTH );
   rv += " mycall="s       + pad_right(_my_call, CALLSIGN_WIDTH);
@@ -757,13 +758,13 @@ bool QSO::exchange_match(const string& rule_to_match) const
 {
 // remove the [] markers
   const string         target { rule_to_match.substr(1, rule_to_match.length() - 2) };
-  const vector<string> tokens { split_string(target, SPACE_STR) };
+  const vector<string> tokens { split_string <std::string> (target, ' ') };
 
   if (tokens.size() != 3)
   { ost << "Number of tokens = " << tokens.size() << endl;
   }
   else                          // three tokens
-  { const string exchange_field_name { remove_peripheral_spaces(tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+  { const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
 //    string exchange_field_value;                                   // default is empty field
 
@@ -780,11 +781,11 @@ bool QSO::exchange_match(const string& rule_to_match) const
 #endif
 
 // !=
-    if (!remove_leading_spaces(exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
-    { const string op { remove_peripheral_spaces(tokens[1]) };
+    if (!remove_leading_spaces <std::string> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
+    { const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
 
       if (op == "!="s)                                                // precise inequality
-      { const string target { remove_trailing(remove_leading(remove_peripheral_spaces(tokens[2]), '"'), '"') };                   // strip any double quotation marks
+      { const string target { remove_trailing <std::string> (remove_leading <std::string> (remove_peripheral_spaces <std::string> (tokens[2]), '"'), '"') };                   // strip any double quotation marks
 
         ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
@@ -1035,7 +1036,7 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
   if (equals_posn == string::npos)
     return (posn = string::npos, empty_pair);
 
-  const string name                  { remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn)) };
+  const string name                  { remove_peripheral_spaces <std::string> (str.substr(first_char_posn, equals_posn - first_char_posn)) };
   const size_t value_first_char_posn { str.find_first_not_of(' ', equals_posn + 1) };
 
   if (value_first_char_posn == string::npos)

@@ -68,28 +68,28 @@ string autocorrect_database::corrected_call(const string& str) const
 //   T in front of a US K call
 //   T in front of a US N call
   if (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv))
-  { if (const string call_to_test { substring(str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { substring <std::string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // PA copied as GA
   if (str.starts_with("GA"sv))
   { if (absent)
-    { if (const string call_to_test { "PA"s + substring(str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "PA"s + substring <std::string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
 
 // US N call copied as I#
   if (absent and str.starts_with('I') and (str.length() > 1) and isdigit(str[1]))
-  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { "N"s + substring <std::string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // JA miscopied as JT
   if (str.starts_with("JT"sv))
   { if (absent)
-    { if (const string call_to_test { "JA"s + substring(str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "JA"s + substring <std::string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -97,7 +97,7 @@ string autocorrect_database::corrected_call(const string& str) const
 // initial K copied as an initial M
   if (str.starts_with('M'))
   { if (absent)
-    { if (const string call_to_test { "K"s + substring(str, 1) }; contains(call_to_test))
+    { if (const string call_to_test { "K"s + substring <std::string> (str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -105,7 +105,7 @@ string autocorrect_database::corrected_call(const string& str) const
 // initial W copied as an initial M
   if (str.starts_with('M'))
   { if (absent)
-    { if (const string call_to_test { "W"s + substring(str, 1) }; contains(call_to_test))
+    { if (const string call_to_test { "W"s + substring <std::string> (str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -113,7 +113,7 @@ string autocorrect_database::corrected_call(const string& str) const
 // UA copied as MA
   if (str.starts_with("MA"sv))
   { if (absent)
-    { if (const string call_to_test { "UA"s + substring(str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "UA"s + substring <std::string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -138,7 +138,7 @@ string autocorrect_database::corrected_call(const string& str) const
       case 'R' :
       case 'S' :
         
-        if (const string call_to_test { "J"s + substring(str, 1) }; contains(call_to_test))
+        if (const string call_to_test { "J"s + substring <std::string> (str, 1) }; contains(call_to_test))
           return insert(str, call_to_test);
 
       default :
@@ -148,25 +148,25 @@ string autocorrect_database::corrected_call(const string& str) const
 
 // US K call copied as TT#
   if (absent and str.starts_with("TT"sv) and (str.length() > 2) and isdigit(str[2]))
-  { if (const string call_to_test { "K"s + substring(str, 2) }; contains(call_to_test))
+  { if (const string call_to_test { "K"s + substring <std::string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // US N call copied as T#
   if (absent and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))
-  { if (const string call_to_test { "N"s + substring(str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { "N"s + substring <std::string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // initial PY copied as initial TM
   if (absent and str.starts_with("TM"sv))
-  { if (const string call_to_test { "PY"s + substring(str, 2) }; contains(call_to_test))
+  { if (const string call_to_test { "PY"s + substring <std::string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // /P is quite often reported by the RBN as /W, especially in NFD
   if (absent and str.ends_with("/W"sv))
-  { const string base_call_to_test { substring(str, 0, str.length() - 2) };
+  { const string base_call_to_test { substring <std::string> (str, 0, str.length() - 2) };
 
     if (contains(base_call_to_test) or contains(base_call_to_test + "/P"s))
       return insert(str, base_call_to_test + "/P"s);

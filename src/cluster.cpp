@@ -261,7 +261,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // first non-space sharacter is a digit and last character is ">"
 // parsing failures are trapped
   if (last_char(received_info) == '>')
-  { const string copy { remove_leading_spaces(received_info) };
+  { const string copy { remove_leading_spaces <std::string> (received_info) };
   
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
@@ -325,13 +325,13 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
 // we treat everything after the call as a comment
   if (!_valid)
-  { if ( (substring(received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
+  { if ( (substring <std::string> (received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
     { try
       { if (post_source == POSTING_SOURCE::RBN)
-        { const vector<string> fields { split_string(squash(received_info), ' ') };
+        { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
 
           if (fields.size() >= 6)
-          { _poster = substring(fields[2], 0, fields[2].length() - 1);      // remove colon
+          { _poster = substring <std::string> (fields[2], 0, fields[2].length() - 1);      // remove colon
             _poster_continent = db.info(_poster).continent();
 
             _frequency_str = fields[3];
@@ -353,7 +353,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
         }
 
         if (!_valid)
-        { const string copy{ remove_leading_spaces(substring(received_info, 6)) };
+        { const string copy{ remove_leading_spaces <std::string> (substring <std::string> (received_info, 6)) };
   
           if (const size_t colon_posn { copy.find(':') }; colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);

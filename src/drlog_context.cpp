@@ -65,14 +65,21 @@ void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
     return;
 
-  const vector<string> str_vec { split_string(command, '=') };
+//  ost << "inside _set_points()" << endl;
+
+  const vector<string> str_vec { split_string <std::string> (command, '=') };
 
   if (str_vec.size() != 2)
-  { ost << "Invalid command: " << command << endl;
+  { ost << "Invalid command in _set_points(): " << command << endl;
+
+    ost << "size = " << str_vec.size() << endl;
+
+ //   throw exception();
+
     exit(0);
   }
 
-  const string RHS { to_upper(remove_peripheral_spaces(str_vec[1])) };
+  const string RHS { to_upper(remove_peripheral_spaces <std::string> (str_vec[1])) };
 
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
@@ -87,9 +94,9 @@ void drlog_context::_set_points(const string& command, const MODE m)
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { const string bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
+      { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
 
-        FOR_ALL(clean_split_string(bands_str, ','), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+        FOR_ALL(clean_split_string <string> (bands_str), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
       }
     }
   }
@@ -112,19 +119,19 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-  const vector<string> lines { split_string(entire_file, LF_STR) };   // split into lines
+  const vector<string> lines { split_string <std::string> (entire_file, LF_STR) };   // split into lines
 
   for (const auto& tmpline : lines)                                   // process each line
   { const string line { remove_trailing_comment(tmpline) };           // remove any comment
 
 // generate a number of useful variables
-    const string testline       { remove_leading_spaces(to_upper(line)) };
-    const vector<string> fields { split_string(line, '=') };
-    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : string { }) };      // the stuff to the right of the "="
-    const string RHS            { to_upper(rhs) };                                                          // converted to upper case
-    const bool is_true          { (RHS == "TRUE"sv) };                                                       // is right hand side == "TRUE"?
-    const string lhs            { squash( (fields.empty()) ? string { } : remove_peripheral_spaces(fields[0]) ) }; // the stuff to the left of the "="
-    const string LHS            { to_upper(lhs) };                                                          // converted to upper case
+    const string testline       { remove_leading_spaces <std::string> (to_upper(line)) };
+    const vector<string> fields { split_string <std::string> (line, '=') };
+    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
+    const string RHS            { to_upper(rhs) };                                                                              // converted to upper case
+    const bool is_true          { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
+    const string lhs            { squash( (fields.empty()) ? string { } : remove_peripheral_spaces <std::string> (fields[0]) ) };              // the stuff to the left of the "="
+    const string LHS            { to_upper(lhs) };                                                                              // converted to upper case
 
 // ACCEPT COLOUR
     if ( ( (LHS == "ACCEPT COLOUR"sv) or (LHS == "ACCEPT COLOR"sv) ) and !rhs.empty() )
@@ -208,13 +215,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
-        FOR_ALL(clean_split_string(RHS, ','), [this] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
+        FOR_ALL(clean_split_string <string> (RHS), [this] (const string& name) { _bandmap_fade_colours += string_to_colour(name); } );
     }
 
 // BAND MAP FILTER
     if ( (LHS == "BAND MAP FILTER"sv) or (LHS == "BANDMAP FILTER"sv) )
     { if (!RHS.empty())
-      { vector<string> filters { clean_split_string(RHS, ',') };
+      { vector<string> filters { clean_split_string <string> (RHS) };
 
         SORT(filters, compare_calls);    // put the entries into callsign order
         _bandmap_filter = filters;
@@ -225,7 +232,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP FILTER COLOURS"sv) or (LHS == "BAND MAP FILTER COLORS"sv) or
          (LHS == "BANDMAP FILTER COLOURS"sv) or (LHS == "BANDMAP FILTER COLORS"sv) )
     { if (!RHS.empty())
-      { const vector<string> colours { clean_split_string(RHS) };
+      { const vector<string> colours { clean_split_string <string> (RHS) };
 
         if (colours.size() >= 1)
           _bandmap_filter_foreground_colour = string_to_colour(colours[0]);
@@ -265,7 +272,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP RECENT COLOUR"sv) or (LHS == "BANDMAP RECENT COLOUR"sv) or
          (LHS == "BANDMAP RECENT COLOR"sv) or (LHS == "BANDMAP RECENT COLOR"sv) )
     { if (!RHS.empty())
-        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces(RHS));
+        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces <std::string> (RHS));
     }
 
 // BAND MAP SHOW MARKED FREQUENCIES
@@ -290,7 +297,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"sv)
-      FOR_ALL(clean_split_string(rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
+      FOR_ALL(clean_split_string <string> (rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
 
 // CALL OK NOW MESSAGE
     if (LHS == "CALL OK NOW MESSAGE"sv)
@@ -298,7 +305,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALLSIGN MULTS
     if (LHS == "CALLSIGN MULTS"sv)
-      ranges::move(clean_split_string(RHS), inserter(_callsign_mults, _callsign_mults.begin()));
+      ranges::move(clean_split_string <string> (RHS), inserter(_callsign_mults, _callsign_mults.begin()));
 
 // CALLSIGN MULTS PER BAND
     if (LHS == "CALLSIGN MULTS PER BAND"sv)
@@ -343,7 +350,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // COUNTRY MULT FACTOR
     if (LHS == "COUNTRY MULT FACTOR"sv)  // there may be an "=" in the points definitions
-    { const vector<string> str_vec { split_string(line, '=') };
+    { const vector<string> str_vec { split_string <std::string> (line, '=') };
 
       if (!str_vec.empty())
       { string tmp_str;
@@ -360,15 +367,15 @@ void drlog_context::_process_configuration_file(const string& filename)
               new_str += '=';
           }
 
-          tmp_str = to_upper(remove_peripheral_spaces(new_str));
+          tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
 
           for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
             _per_band_country_mult_factor += { static_cast<BAND>(n), from_string<int>(tmp_str) };
         }
         else    // not all bands
-        { const string         bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
+        { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
 
-          for (const auto& b_str: clean_split_string(bands_str))
+          for (const auto& b_str: clean_split_string <string> (bands_str))
           { const BAND b { BAND_FROM_NAME[b_str] };
 
             string new_str;
@@ -380,7 +387,7 @@ void drlog_context::_process_configuration_file(const string& filename)
                 new_str += '=';
             }
 
-            tmp_str = to_upper(remove_peripheral_spaces(new_str));
+            tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
             _per_band_country_mult_factor += { b, from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
           }
         }
@@ -405,7 +412,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CW BANDWIDTH
     if (LHS == "CW BANDWIDTH"sv)
-    { const vector<string> bw { clean_split_string(RHS, '/') };
+    { const vector<string> bw { clean_split_string <string> (RHS, '/') };
 
       if (bw.size() == 2)
       { _cw_bandwidth_narrow = from_string<decltype(_cw_bandwidth_narrow)>(bw[0]);
@@ -441,7 +448,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // DO NOT SHOW
     if (LHS == "DO NOT SHOW"sv)
-      _do_not_show = clean_split_string(RHS);
+      _do_not_show = clean_split_string <string> (RHS);
 
 // DO NOT SHOW FILE
     if (LHS == "DO NOT SHOW FILE"sv)
@@ -461,9 +468,9 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE[
     if (testline.starts_with("EXCHANGE["sv))
-    { const string country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
+    { const string country_list { delimited_substring <std::string> (LHS, '[', ']', DELIMITERS::DROP) };
 
-      FOR_ALL(clean_split_string(country_list), [RHS, this] (const string& str) { _exchange_per_country += { str, RHS }; } );
+      FOR_ALL(clean_split_string <string> (country_list), [RHS, this] (const string& str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
@@ -493,10 +500,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE"sv) or (LHS == "EXCHANGE PREFILL FILES"sv) )
-    { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']', DELIMITERS::DROP)) };
+    { const vector<string> files { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) };
 
       for (const auto& file : files)
-      { if (const vector<string> fields { clean_split_string(file) }; fields.size() == 2)
+      { if (const vector<string> fields { clean_split_string <std::string> (file) }; fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
       }
     }
@@ -506,16 +513,16 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_sap = RHS;
 
     auto update_sent_exchange = [line, testline] (auto& exchange)
-      { const string         comma_delimited_list { to_upper(clean_split_string(line, '=')[1]) };    // RST:599, CQZONE:4
-        const vector<string> fields               { split_string(comma_delimited_list) };
+      { const string              comma_delimited_list { to_upper(clean_split_string <std::string_view> (line, '=')[1]) };    // RST:599, CQZONE:4
+        const vector<string_view> fields               { split_string <std::string_view> (comma_delimited_list) };
 
         for (const auto& this_field : fields)
-        { const vector<string> field { clean_split_string(this_field, ':') };
+        { const vector<string_view> field { clean_split_string <string_view> (this_field, ':') };
 
           if (field.size() != 2)
             print_error_and_exit(testline);
 
-          exchange += { field[0], field[1] };
+          exchange += { string { field[0] }, string { field[1] } };
         }
       };
 
@@ -570,12 +577,12 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MARK FREQUENCIES [CW|SSB]
     if (testline.starts_with("MARK FREQUENCIES"s) and !rhs.empty())
-    { const vector<string> ranges { clean_split_string(rhs, ',') };
+    { const vector<string_view> ranges { clean_split_string <string_view> (rhs) };
 
       vector<pair<frequency, frequency>> frequencies;
 
-      for (const string& range : ranges)
-      { const vector<string> bounds { clean_split_string(range, '-') };
+      for (auto range : ranges)
+      { const vector<string_view> bounds { clean_split_string <string_view> (range, '-') };
 
         try
         { frequencies += { frequency(bounds.at(0)), frequency(bounds.at(1))};
@@ -619,7 +626,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS"sv)
-    { const vector<string> break_points { clean_split_string(RHS, ',') };
+    { const vector<string> break_points { clean_split_string <string> (RHS) };
 
       for (const auto& break_point : break_points)
       { const frequency f { break_point };
@@ -690,7 +697,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // PATH
     if ( (LHS == "PATH"sv) and (!rhs.empty()) )
-      _path = clean_split_string(rhs, ';');
+      _path = clean_split_string <string> (rhs, ';');
 
 // POINTS
 // don't use LHS here because the command might be something like "POINTS[80] ="
@@ -713,13 +720,13 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // POST MONITOR
     if (LHS == "POST MONITOR"sv)
-      FOR_ALL(clean_split_string(RHS, ','), [this] (const string& callsign) { _post_monitor_calls += callsign; } );
+      FOR_ALL(clean_split_string <string> (RHS), [this] (const string& callsign) { _post_monitor_calls += callsign; } );
 
 // POSTED BY CONTINENTS
     if (LHS == "POSTED BY CONTINENTS"sv)
     { const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
 
-      FOR_ALL(clean_split_string(RHS, ','), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+      FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
     }
 
 // P3
@@ -781,11 +788,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
     if (testline.starts_with("QTHX["s))
-    { const vector<string> fields { clean_split_string(testline, '=') };
+    { const vector<string> fields { clean_split_string <string> (testline, '=') };
 
       if (fields.size() == 2)
-      { const string         canonical_prefix { delimited_substring(fields[0], '[', ']', DELIMITERS::DROP) };
-        const vector<string> values           { clean_split_string(RHS, ',') };
+      { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
+        const vector<string> values           { clean_split_string <string> (RHS) };
         const set<string>    ss               { values.cbegin(), values.cend() };
 
         _qthx += { canonical_prefix, ss };
@@ -796,7 +803,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-      FOR_ALL(clean_split_string(rhs), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+      FOR_ALL(clean_split_string <string> (rhs), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
@@ -864,7 +871,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { const vector<string> bands_str { clean_split_string(rhs) };
+    { const vector<string> bands_str { clean_split_string <string> (rhs) };
 
       for (const auto& band_str : bands_str)
       { try
@@ -929,15 +936,15 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SSB AUDIO
     if (LHS == "SSB AUDIO"sv)
-    { const vector<string> cbw { clean_split_string(RHS, '/') };
+    { const vector<string> cbw { clean_split_string <string> (RHS, '/') };
 
       if (cbw.size() == 2)
-      { const vector<string> cbw_wide { clean_split_string(cbw[0], ':') };
+      { const vector<string> cbw_wide { clean_split_string <string> (cbw[0], ':') };
 
         _ssb_centre_wide = from_string<decltype(_ssb_centre_wide)>(cbw_wide[0]);
         _ssb_bandwidth_wide = from_string<decltype(_ssb_bandwidth_wide)>(cbw_wide[1]);
 
-        const vector<string> cbw_narrow { clean_split_string(cbw[1], ':') };
+        const vector<string> cbw_narrow { clean_split_string <string> (cbw[1], ':') };
 
         _ssb_centre_narrow = from_string<decltype(_ssb_centre_narrow)>(cbw_narrow[0]);
         _ssb_bandwidth_narrow = from_string<decltype(_ssb_bandwidth_narrow)>(cbw_narrow[1]);
@@ -993,7 +1000,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
     { if (rhs.ends_with('%'))       // if percentage
-        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end(rhs, '%')), 0, 100);
+        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end <std::string> (rhs, '%')), 0, 100);
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
     }
@@ -1021,13 +1028,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
-      { const vector<string> tokens { split_string(RHS, ' ') };
+      { const vector<string> tokens { split_string <std::string> (RHS, ' ') };
 
         if (tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string> mults { clean_split_string(RHS) };
+      { const vector<string> mults { clean_split_string <string> (RHS) };
 
         _remaining_callsign_mults_list = set<string> { mults.cbegin(), mults.cend() } ;
       }
@@ -1038,13 +1045,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
 
       if (_auto_remaining_country_mults)
-      { const vector<string> tokens { split_string(RHS, ' ') };
+      { const vector<string> tokens { split_string <std::string> (RHS, ' ') };
 
         if (tokens.size() == 2)
           _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string> countries { clean_split_string(RHS) };
+      { const vector<string> countries { clean_split_string <string> (RHS) };
 
         _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
       }
@@ -1052,13 +1059,13 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
-      FOR_ALL(clean_split_string(RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
+      FOR_ALL(clean_split_string <string> (RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
 // CABRILLO CONTEST
     if (LHS == "CABRILLO CONTEST"sv)
-      _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contest require an illegal value
+      _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contests require an illegal value
 
     if ( (LHS == "CABRILLO CERTIFICATE"sv) and is_legal_value(RHS, "YES,NO"s, ',') )
       _cabrillo_certificate = RHS;
@@ -1197,7 +1204,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
       if (contains(RHS, "TEMPLATE"s))
       { try
-        { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string(RHS, ':')[1] );
+        { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string <string> (RHS, ':')[1] );
         }
 
         catch (...)
@@ -1210,7 +1217,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"sv)
-    { if (vector<string> window_info { clean_split_string(split_string(testline, '=')[1]) }; window_info.size() >= 5)
+    { if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
       { string name { window_info[0] };
 
         window_information winfo { from_string<int>(window_info[1]), from_string<int>(window_info[2]), from_string<int>(window_info[3]), from_string<int>(window_info[4]) };
@@ -1233,7 +1240,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     static map<string /* name */, bool /* whether verbatim */> verbatim;
 
     if (LHS == "STATIC WINDOW"sv)
-    { const vector<string> fields { clean_split_string(rhs, ',') };
+    { const vector<string> fields { clean_split_string <string> (rhs) };
 
       if (fields.size() == 2)  // name, contents
       { const string name { fields[0] };
@@ -1251,7 +1258,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (LHS == "STATIC WINDOW INFO"s)  // must come after the corresponding STATIC WINDOW command
-    { const vector<string> window_info { clean_split_string(split_string(testline, '=')[1], ',') };
+    { const vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1], ',') };
 
       if (!window_info.empty())
       { const string name { window_info[0] };
@@ -1274,13 +1281,13 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { string contents { _static_windows[name].first };
 
               if (contents.size() >= 2)
-                contents = delimited_substring(contents, '"', '"', DELIMITERS::DROP);
+                contents = delimited_substring <std::string> (contents, '"', '"', DELIMITERS::DROP);
 
-              vector<string> lines { to_lines(contents) };
+              vector<string> lines { to_lines <std::string> (contents) };
 
               const string contents_1 { replace(contents, "\\n"s, EOL) };
 
-              lines = to_lines(contents_1);
+              lines = to_lines <std::string> (contents_1);
 
               winfo.w(longest_line(lines).length());
               winfo.h(lines.size());
@@ -1298,7 +1305,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             }                                                       // end verbatim
             else                                                    // read from file
             { const string         contents { _static_windows[name].first };
-              const vector<string> lines    { to_lines(contents) };
+              const vector<string> lines    { to_lines <std::string> (contents) };
 
               winfo.w(longest_line(lines).length());
               winfo.h(lines.size());
@@ -1327,9 +1334,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
     if (testline.starts_with("MESSAGE KEY"sv))
-    { vector<string> message_info { split_string(testline, ' ') };
+    { vector<string> message_info { split_string <std::string> (testline, ' ') };
 
-      if (message_info.size() >= 5 and contains(testline, '='))
+      if ( (message_info.size() >= 5) and contains(testline, '=') )
       {
 // a big switch to convert from text in the configuration file to a KeySym, which is what we use as the key in the message map
 // this could be more efficient by generating a container of all the legal keysym names and then comparing the target to all those.
@@ -1337,8 +1344,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         const string target { to_lower(message_info[2]) };
 
         if (const auto& cit { key_names.find(target) }; cit != key_names.cend())
-        { const vector<string> vec_str { split_string(testline, '=') };
-          const string         str     { remove_leading_spaces(vec_str.at(1)) };
+        { const vector<string> vec_str { split_string <std::string> (testline, '=') };
+          const string         str     { remove_leading_spaces <std::string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
           _messages += { cit->second, str };
@@ -1367,7 +1374,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 
     if (LHS == "MESSAGE CQ 1"sv)
-    { const vector<string> tokens { split_string(testline, '=') };
+    { const vector<string> tokens { split_string <std::string> (testline, '=') };
 
       if (tokens.size() != 2)
         print_error_and_exit(testline);
@@ -1376,7 +1383,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 
     if (LHS == "MESSAGE CQ 2"sv)
-    { const vector<string> tokens { split_string(testline, '=') };
+    { const vector<string> tokens { split_string <std::string> (testline, '=') };
 
       if (tokens.size() == 2)
         _message_cq_2 = tokens[1];
@@ -1403,7 +1410,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { const vector<string> bands_vec { clean_split_string(bands(), ',') };
+  { const vector<string> bands_vec { clean_split_string <std::string> (bands(), ',') };
 
     for (const auto& str : bands_vec)
     { try
@@ -1417,7 +1424,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
-  { const vector<string> actual_modes { clean_split_string(_modes, ',') };
+  { const vector<string> actual_modes { clean_split_string <string> (_modes) };
 
     if (actual_modes.size() == 1)
     { try
@@ -1449,7 +1456,7 @@ drlog_context::drlog_context(const std::string& filename)
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { const vector<string> bands_str { clean_split_string(_bands, ',') };
+  { const vector<string> bands_str { clean_split_string <string> (_bands) };
 
     for (const auto& band_name : bands_str)
     { try

@@ -270,6 +270,9 @@ window& window::move_cursor(const int new_x, const int new_y)
     to the string
 
     Also see the function reformat_for_wprintw().
+
+    There is no point in supplying operator<(string_view s) because we have
+    to create a std::string anayway, because string_view does not supply c_str().
 */
 window& window::operator<(const string& s)
 { if (!_wp)
@@ -657,7 +660,7 @@ window& operator<(window& win, const centre& c)
 */
 string window::read(const int x, const int y)
 { if (!_wp)
-    return string();
+    return string { };
   
   constexpr unsigned int BUF_SIZE { 1024 };
 
@@ -676,15 +679,17 @@ string window::read(const int x, const int y)
   if (n_chars != ERR)
     tmp[n_chars] = '\0';   // in theory not necessary
 
-  return string(tmp);
+  return string { tmp };
 }
 
 /// line by line snapshot of all the contents; lines go from top to bottom
 vector<string> window::snapshot(void)
 { vector<string> rv;
 
-  for (size_t n { static_cast<size_t>(height() - 1) }; n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
-    rv += getline(n);
+  if (_wp)
+  { for (size_t n { static_cast<size_t>(height() - 1) }; n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
+      rv += getline(n);                                                                             // no need to lock, as the height won't change and getline will lock
+  }
 
   return rv;
 }
@@ -843,10 +848,6 @@ bool window::common_processing(const keyboard_event& e)
   if (e.is_unmodified() and e.is_char('/'))
     return (win <= e.str(), true);
 
-// [ and ] (for regex)
-  if (e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
-    return (win <= e.str(), true);
-
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
   { win.delete_character(win.cursor_position().x());
@@ -964,7 +965,7 @@ COLOUR_TYPE string_to_colour(const string& str)
                                                      { "YELLOW"s,  COLOUR_YELLOW }
                                                    };
 
-  const string s { to_upper(remove_peripheral_spaces(str)) };
+  const string s { to_upper(remove_peripheral_spaces <std::string_view> (str)) };
 
   if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
     return cit->second;
@@ -972,10 +973,11 @@ COLOUR_TYPE string_to_colour(const string& str)
 // should change this so it works with a colour name and not just a number
 
   if (const string_view str { "COLOUR_"sv }; s.starts_with(str))
-    return from_string<COLOUR_TYPE>(remove_from_start(s, str));
+//    return from_string<COLOUR_TYPE>(remove_from_start <std::string> (s, str));
+    return from_string<COLOUR_TYPE>(remove_from_start <std::string_view> (s, str));
 
   if (const string_view str { "COLOR_"sv }; s.starts_with(str))
-    return from_string<COLOUR_TYPE>(remove_from_start(s, str));
+    return from_string<COLOUR_TYPE>(remove_from_start <std::string_view> (s, str));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
     return from_string<COLOUR_TYPE>(s);

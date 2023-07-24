@@ -1204,7 +1204,7 @@ auto operator+(const S& s1, E&& element) -> S
 template <typename C>
 inline void operator+=(C& c1, typename C::value_type&& element)
   requires is_deque<C> or is_list<C> or is_vector<C>
-  { c1.push_back(std::forward<typename C::value_type>(element)); }
+{ c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
     \param  c1          destination deque, list or vector
@@ -1213,7 +1213,18 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 template <typename C, typename E>
 inline void operator+=(C& c1, const E& element)
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::convertible_to<E, typename C::value_type>)
-{ c1.push_back(element); }
+{ c1.push_back(element ); }
+
+/*! \brief              Append string_view element to a deque, list or vector of strings
+    \param  c1          destination deque, list or vector
+    \param  element     element to append
+*/
+template <typename C>
+inline void operator+=(C& c1, std::string_view element)
+  requires (is_deque<C> or is_list<C> or is_vector<C>) and (is_string<typename C::value_type>)
+//{ c1.push_back(std::string { element} ); }
+//{ c1 += std::string { element }; }
+{ c1.emplace_back(std::string { element }); }
 
 /*! \brief      Insert an element into a list
     \param  l1  destination list

@@ -157,7 +157,8 @@ public:
     The string is assumed to contain a single record. We don't catch all
     possible errors, but we do test for the most obvious ones.
 */
-  explicit cty_record(const std::string& record);
+//  explicit cty_record(const std::string& record);
+  explicit cty_record(std::string_view record);
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -245,7 +246,8 @@ public:
 */
 //  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
   inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
-    { FOR_ALL(split_string(remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [&] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
+//    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
+    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), CRLF), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const

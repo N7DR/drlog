@@ -68,7 +68,7 @@ public:
 
 /// construct from a QSO
   inline explicit qtc_entry(const QSO& qso) :
-    _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
+    _utc(substring <std::string> (qso.utc(), 0, 2) + substring <std::string> (qso.utc(), 3, 2)),
     _callsign( (qso.continent() == "EU"sv) ? qso.callsign() : std::string()),
     _serno(pad_right(qso.received_exchange("SERNO"s), 4))                    // force width to 4
   { }

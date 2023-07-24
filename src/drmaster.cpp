@@ -131,11 +131,11 @@ const string __extract_value(const string& line, const string& param)
     return string();
 
   const size_t start_position { line.find(param) };
-  const string short_line     { substring(line, start_position + param.length()) };
+  const string short_line     { substring <std::string> (line, start_position + param.length()) };
   const size_t space_posn     { short_line.find(' ') };
   const size_t end_position   { ( (space_posn == string::npos) ? short_line.length() : space_posn ) };
 
-  return substring(short_line, 0, end_position);
+  return substring <std::string> (short_line, 0, end_position);
 }
 
 /* According to Tree, the following are the keys in a TRMASTER file:
@@ -185,7 +185,7 @@ trmaster_line::trmaster_line(const string& line)
 // call
   const size_t length_of_call { (contains(line, ' ') ? line.find(' ') : line.length()) };
 
-  _call = to_upper(substring(line, 0, length_of_call));
+  _call = to_upper(substring <std::string> (line, 0, length_of_call));
 
   _check     = from_string<int>( __extract_value(line, "=K"s) );
   _cq_zone   = from_string<int>( __extract_value(line, "=C"s) );
@@ -557,7 +557,7 @@ trmaster::trmaster(const string& filename)
     }
   }
   else              // not binary
-  { FOR_ALL( to_lines(contents), [this] (const string& line) { const trmaster_line record(line);
+  { FOR_ALL( to_lines <std::string> (contents), [this] (const string& line) { const trmaster_line record(line);
 
                                                                _records += { record.call(), record };
                                                              } );
@@ -618,7 +618,7 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
 drmaster_line::drmaster_line(const string& line_or_call)
-{ const vector<string> fields { split_string(line_or_call, ' ') };
+{ const vector<string> fields { split_string <std::string> (line_or_call, ' ') };
 
   if (fields.empty())
     return;
@@ -786,7 +786,7 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     rv.cw_power(cw_power());
 
   if (rv.date().empty())
-    rv.date(substring(date_time_string(SECONDS::NO_INCLUDE), 0, 8));
+    rv.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 8));
 
   if (rv.iota().empty())
     rv.iota(iota());
@@ -836,7 +836,7 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     Lines without XSCP data are always included
 */
 void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
-{ for (const string& line : to_lines(contents))
+{ for (const string& line : to_lines <std::string> (contents))
   { const drmaster_line record { line };
 
     if ( (record.xscp() == 0) or (record.xscp() >= xscp_limit) )

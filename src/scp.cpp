@@ -41,7 +41,7 @@ scp_database::scp_database(const string& filename)
 void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
-      (_db[substring(call, start_index, 2)]) += call;
+      (_db[substring <std::string> (call, start_index, 2)]) += call;
 }
 
 /*! \brief          Remove a call from the database
@@ -55,7 +55,7 @@ bool scp_database::remove_call(const std::string& call)
   { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
 //    for (const auto start_index : ranges::iota_view { 0u, call.length() - 2 } )
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
-    { SCP_SET& ss { _db[substring(call, start_index, 2)] };
+    { SCP_SET& ss { _db[substring <std::string> (call, start_index, 2)] };
 
       rv = (ss.erase(call) == 1);       // key remains, regardless of whether the set of matches is empty
     }
@@ -70,7 +70,7 @@ bool scp_database::remove_call(const std::string& call)
 void scp_database::operator-=(const std::string& call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
-      _db[substring(call, start_index, 2)].erase(call);       // key remains, regardless of whether the set of matches is empty
+      _db[substring <std::string> (call, start_index, 2)].erase(call);       // key remains, regardless of whether the set of matches is empty
 }
 
 /*! \brief          Return all the matches for a partial call
@@ -104,7 +104,7 @@ SCP_SET scp_database::operator[](const string& key)
   }
   
 // cache miss
-  const SCP_SET& calls { _db[substring(key, 0, 2)] };
+  const SCP_SET& calls { _db[substring <std::string> (key, 0, 2)] };
 
   SCP_SET rv;
 
@@ -196,7 +196,7 @@ SCP_SET scp_databases::operator[](const string& key)
   for (auto& db_p : _vec)
   { scp_database& db { *(db_p) };
 
-    const SCP_SET& calls { db[substring(key, 0, 2)] };
+    const SCP_SET& calls { db[substring <std::string> (key, 0, 2)] };
 
     for (const auto& callsign : calls)
       if (::contains(callsign, key))

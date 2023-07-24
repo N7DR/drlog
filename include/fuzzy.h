@@ -63,7 +63,7 @@ public:
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
   inline explicit fuzzy_database(const std::string& filename)
-    { FOR_ALL(to_lines(to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
+    { FOR_ALL(to_lines <std::string> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
 
 /*! \brief          Construct from a <i>drmaster</i> object
     \param  drm     <i>drmaster</i> object from which to construct

@@ -42,7 +42,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-  _is_mult = contains(clean_split_string(context.exchange_mults() /*, ',' */), _name);  // correct value of is_mult
+  _is_mult = contains(clean_split_string <std::string> (context.exchange_mults()), _name);  // correct value of is_mult
 }
 
 /*! \brief              Get regex expression from file
@@ -57,15 +57,15 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string& 
   bool found_it { false };
 
   try
-  { for (const auto& line : to_lines(read_file(paths, filename)))
+  { for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
     { if (!found_it and !line.empty())
-      { const vector<string> fields { split_string(line, ':') };
+      { const vector<string> fields { split_string <std::string> (line, ':') };
 
 // a bit complex because ":" may appear in the regex
         if (fields.size() >= 2)
-        { const string field_name { remove_peripheral_spaces(fields[0]) };
+        { const string field_name { remove_peripheral_spaces <std::string> (fields[0]) };
           const size_t posn       { line.find(':') };
-          const string regex_str  { remove_peripheral_spaces(substring(line, posn + 1)) };
+          const string regex_str  { remove_peripheral_spaces <std::string> (substring <std::string> (line, posn + 1)) };
 
           if ( (field_name == _name) and !regex_str.empty() )
           { _regex_str = regex_str;
@@ -91,27 +91,27 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string& 
 */
 bool EFT::read_values_file(const vector<string>& path, const string& filename)
 { try
-  { for (const auto& line : to_lines(read_file(path, filename + ".values"s)))
+  { for (const auto& line : to_lines <std::string> (read_file(path, filename + ".values"s)))
     { set<string> equivalent_values;                    // includes the canonical value
 
       if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
       { if (contains(line, '=') )
-        { const vector<string> lhsrhs { split_string(line, '=') };
-          const string         lhs    { remove_peripheral_spaces(lhsrhs[0]) };
+        { const vector<string> lhsrhs { split_string <std::string> (line, '=') };
+          const string         lhs    { remove_peripheral_spaces <std::string> (lhsrhs[0]) };
 
           equivalent_values += lhs;                  // canonical value
 
           if (lhsrhs.size() != 1)
           { const string& rhs { lhsrhs[1] };
 
-            COPY_ALL(clean_split_string(rhs), inserter(equivalent_values, equivalent_values.begin()));
+            COPY_ALL(clean_split_string <string> (rhs), inserter(equivalent_values, equivalent_values.begin()));
 
             _values += { lhs, equivalent_values };
             add_legal_values(lhs, equivalent_values);
           }
         }
         else    // no "="
-        { if (const string str { remove_peripheral_spaces(line) }; !str.empty())
+        { if (const string str { remove_peripheral_spaces <std::string> (line) }; !str.empty())
           { _values += { str, { str } };
             add_canonical_value(str);
           }
@@ -146,7 +146,7 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
   { //const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
     const string canonical_prefix { location_db.canonical_prefix(cp) };
 
-    if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']', DELIMITERS::DROP)))
+    if (canonical_prefix == location_db.canonical_prefix(delimited_substring <std::string> (_name, '[', ']', DELIMITERS::DROP)))
     { //const set<string>& ss { this_qthx.second };
 
 //      for (const auto& this_value : ss)
@@ -154,7 +154,7 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
       { if (!contains(this_value, '|'))
           add_canonical_value(this_value);
         else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
-        { const vector<string> equivalent_values { clean_split_string(this_value, '|') };
+        { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
 
           if (!equivalent_values.empty())
             add_canonical_value(equivalent_values[0]);

@@ -61,7 +61,7 @@ void choice_equivalents::operator+=(const string& ch1_ch2)
 { if (number_of_occurrences(ch1_ch2, '+') != 1)
     throw exception();
 
-  const vector<string> vec { clean_split_string(ch1_ch2, '+') };
+  const vector<string> vec { clean_split_string <string> (ch1_ch2, '+') };
 
   *this += { vec[0], vec[1] };
 }
@@ -233,7 +233,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
     { if (!contains(this_value, '|'))
         qthx.add_canonical_value(this_value);
       else
-      { const vector<string> equivalent_values { clean_split_string(this_value, '|') };
+      { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
 
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
@@ -305,10 +305,10 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     const bool is_opt    { contains(field_name, "OPT:"s) };
 
     if (is_choice)
-    { const vector<string> choice_vec { split_string(field_name, ':') };
+    { const vector<string> choice_vec { split_string <std::string> (field_name, ':') };
 
       if (choice_vec.size() == 2)       // true if legal
-      { vector<string> choice_fields { clean_split_string(choice_vec[1], '/') };
+      { vector<string> choice_fields { clean_split_string <string> (choice_vec[1], '/') };
 
         vector<exchange_field> choices;
 
@@ -321,7 +321,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
         FOR_ALL(choice_fields, [&full_name] (auto& choice_field_name) { full_name += (choice_field_name + '+'); });
 
-        exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
+        exchange_field this_field(substring <std::string> (full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
         this_field.choice(choices);
         rv += this_field;
@@ -330,7 +330,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
     if (is_opt)
     { try
-      { const string name { split_string(field_name, ':').at(1) };
+      { const string name { split_string <std::string> (field_name, ':').at(1) };
 
         rv += exchange_field(name, contains(exchange_mults_vec, name), is_opt);
       }
@@ -362,24 +362,24 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const auto& per_country_exchanges { context.exchange_per_country() };
 
   for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
-    permitted_exchange_fields += { canonical_prefix, clean_split_string(allowed_exchange_values) };   // unexpanded choice
+    permitted_exchange_fields += { canonical_prefix, clean_split_string <string> (allowed_exchange_values) };   // unexpanded choice
 
   for (const auto& pce : per_country_exchanges)
   { set<string> ss;
 
-    for (auto str : clean_split_string(pce.second))
-    { str = remove_from_start(str, "CHOICE:"sv);
+    for (auto str : clean_split_string <string> (pce.second))
+    { str = remove_from_start <std::string> (str, "CHOICE:"sv);
 
-      FOR_ALL(clean_split_string(str, '/'), [&ss] (const string& s) { ss += s; } );
+      FOR_ALL(clean_split_string <string> (str, '/'), [&ss] (const string& s) { ss += s; } );
     }
 
     _per_country_exchange_fields += { pce.first, ss };
   }
 
 // add the ordinary exchange to the permitted exchange fields
-  permitted_exchange_fields += { string(), clean_split_string(context.exchange()) };  // no canonical prefix for the default ordinary exchange
+  permitted_exchange_fields += { string(), clean_split_string <std::string> (context.exchange()) };  // no canonical prefix for the default ordinary exchange
 
-  const vector<string> exchange_mults_vec { clean_split_string(context.exchange_mults()) };
+  const vector<string> exchange_mults_vec { clean_split_string <std::string> (context.exchange_mults()) };
 
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
@@ -451,7 +451,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { if (context.country_mults_filter() == "ALL"sv)
       ranges::copy(_countries, inserter(_country_mults, _country_mults.begin()));
     else
-    { const vector<string> countries { clean_split_string(context.country_mults_filter()) };
+    { const vector<string> countries { clean_split_string <std::string> (context.country_mults_filter()) };
 
       FOR_ALL(countries, [this] (const string& prefix) { _country_mults += prefix; } );
     }
@@ -464,7 +464,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
 // remove any country mults that are explicitly not allowed
-  const vector<string> not_country_mults_vec { clean_split_string(context.not_country_mults()) };  // may not be actual canonical prefixes
+  const vector<string> not_country_mults_vec { clean_split_string <std::string> (context.not_country_mults()) };  // may not be actual canonical prefixes
 
   FOR_ALL(not_country_mults_vec, [this, &location_db] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
 
@@ -501,7 +501,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
 
 // add the permitted bands
-  const vector<string> bands_vec { clean_split_string(context.bands()) };
+  const vector<string> bands_vec { clean_split_string <std::string> (context.bands()) };
 
   for (const auto& str : bands_vec)
   { try
@@ -513,7 +513,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
   _parse_context_exchange(context);                                                              // define the legal receive exchanges, and which fields are mults
-  _exchange_mults = clean_split_string(context.exchange_mults());
+  _exchange_mults = clean_split_string <std::string> (context.exchange_mults());
 
 // DOKs are a single letter; create the complete set if they aren't in auto mode
   if ( contains(_exchange_mults, "DOK"s)  and !context.auto_remaining_exchange_mults("DOK"s) )
@@ -529,7 +529,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"s))            // not a choice
       _expanded_exchange_mults += unexpanded_exchange_mult_name;
     else
-    { const vector<string> expanded_choice { clean_split_string(remove_from_start(unexpanded_exchange_mult_name, "CHOICE:"sv)) };
+    { const vector<string> expanded_choice { clean_split_string <std::string> (remove_from_start <std::string> (unexpanded_exchange_mult_name, "CHOICE:"sv)) };
 
 //      for (const string& this_expanded_name : expanded_choice)
 //        if (!contains(_expanded_exchange_mults, this_expanded_name))
@@ -612,10 +612,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
 
-        const vector<string> points_str_vec { clean_split_string(context_points) };
+        const vector<string> points_str_vec { clean_split_string <string> (context_points) };
 
         for (const string& points_str : points_str_vec)
-        { const vector<string> fields { split_string(points_str, ':') };
+        { const vector<string> fields { split_string <std::string> (points_str, ':') };
 
 // default?
           if (fields.size() != 2 and fields.size() != 3)
@@ -632,12 +632,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // country
               if (!processed and !fields[1].empty())
               { if (contains(fields[1], '['))    // possible multiple countries
-                { const string countries { delimited_substring(fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
+                { const string countries { delimited_substring <std::string> (fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
-                  { const vector<string> country_vec { clean_split_string(remove_peripheral_spaces(squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
+                  { const vector<string> country_vec { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
 
                     FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
+
+ //                   FOR_ALL(clean_split_string <std::string_view> (remove_peripheral_spaces <std::string> (squash(countries)), ' '),
+//                             [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
                   }
                 }
                 else
@@ -659,7 +662,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // [field-name]:points
           if (fields.size() == 2)
           { const string& f0                     { fields[0] };
-            const string  inside_square_brackets { delimited_substring(f0, '[', ']', DELIMITERS::DROP) };
+            const string  inside_square_brackets { delimited_substring <std::string> (f0, '[', ']', DELIMITERS::DROP) };
 
             if (!inside_square_brackets.empty())
             { const set<string> all_exchange_field_names { exchange_field_names() };
@@ -716,7 +719,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // parse file
     if (read_file_ok)
-    { const vector<string> lines { split_string(entire_file, EOL_CHAR) };
+    { const vector<string> lines { split_string <std::string> (entire_file, EOL_CHAR) };
 
       map<string /* canonical value */, set<string> > map_canonical_to_all;
 
@@ -726,14 +729,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
         if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
         { if (contains(line, '=') )
-          { const vector<string> lhsrhs { split_string(line, '=') };
+          { const vector<string> lhsrhs { split_string <std::string> (line, '=') };
 
-            lhs = remove_peripheral_spaces(lhsrhs[0]);
+            lhs = remove_peripheral_spaces <std::string> (lhsrhs[0]);
             equivalent_values += lhs;                  // canonical value
 
             if (lhsrhs.size() != 1)
             { const string&        rhs                         { lhsrhs[1] };
-              const vector<string> remaining_equivalent_values { clean_split_string(rhs) };
+              const vector<string> remaining_equivalent_values { clean_split_string <string> (rhs) };
 
               FOR_ALL(remaining_equivalent_values, [&equivalent_values] (const string& rev) { equivalent_values += rev; });
 
@@ -741,7 +744,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
             }
           }
           else    // no "="
-          { const string str { remove_peripheral_spaces(line) };
+          { const string str { remove_peripheral_spaces <std::string> (line) };
 
             if (!str.empty())
               map_canonical_to_all += { str, set<string>{ str } };
@@ -1010,7 +1013,7 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
     return actual_value;       // we convert to the single letter version elsewhere
 
   if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
-    return (substring(actual_value, 0, 2) + pad_left(substring(actual_value, 2), 3, '0'));  // XXnnn
+    return (substring <std::string> (actual_value, 0, 2) + pad_left(substring <std::string> (actual_value, 2), 3, '0'));  // XXnnn
 
 //  set<string> ss { exch_permitted_values(field_name) };
 
@@ -1430,7 +1433,7 @@ string wpx_prefix(const string& call)
 // /QRP -- deal with this first
 //  if (callsign.ends_with("/QRP"s))
  //   callsign = substring(callsign, 0, callsign.length() - 4);
-  callsign = remove_from_end(callsign, "/QRP"s);
+  callsign = remove_from_end <std::string> (callsign, "/QRP"s);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
@@ -1438,12 +1441,12 @@ string wpx_prefix(const string& call)
 
     if (portables.find(last_char(callsign)) != string::npos)
 //      callsign = substring(callsign, 0, callsign.length() - 2);
-      callsign = remove_from_end(callsign, 2u);
+      callsign = remove_from_end <std::string> (callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
         //callsign = substring(callsign, 0, callsign.length() - 2);
-        callsign = remove_from_end(callsign, 2u);
+        callsign = remove_from_end <std::string> (callsign, 2u);
       }
   }
 
@@ -1451,14 +1454,15 @@ string wpx_prefix(const string& call)
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
 
-    if (mobiles.contains(last(callsign, 2)))
-      callsign = remove_from_end(callsign, 3u);
+    if (mobiles.contains(last <std::string> (callsign, 2)))
+      callsign = remove_from_end <std::string> (callsign, 3u);
   }
 
 // trivial -- and almost unknown -- case first: no digits
 //  if (callsign.find_first_of(DIGITS) == string::npos)
   if (!contains_digit(callsign))
-    return (substring(callsign, 0, 2) + "0"s);
+//    return (substring <std::string> (callsign, 0, 2) + "0"s);
+    return (substring <std::string> (callsign, 0, 2) + '0');
 
   size_t slash_posn { callsign.find('/') };
 
@@ -1468,13 +1472,13 @@ string wpx_prefix(const string& call)
     if (portable_district)
       callsign[last_digit_posn] = portable_district;
 
-    return substring(callsign, 0, min(callsign.length(), last_digit_posn + 1));
+    return substring <std::string> (callsign, 0, min(callsign.length(), last_digit_posn + 1));
   }
 
 // we have a (meaningful) slash in the call
-  const string left       { substring(callsign, 0, slash_posn) };
+  const string left       { substring <std::string> (callsign, 0, slash_posn) };
   const size_t left_size  { left.size() };
-  const string right      { substring(callsign, slash_posn + 1) };
+  const string right      { substring <std::string> (callsign, slash_posn + 1) };
   const size_t right_size { right.size() };
 
   if (left_size == right_size)
@@ -1497,7 +1501,7 @@ string wpx_prefix(const string& call)
 
   if (rv.length() == 1)
   { if (rv[0] == call[0])  // if just the first character, add the next character (to deal with 7QAA)
-      rv = substring(call, 0, 2);
+      rv = substring <std::string> (call, 0, 2);
   }
 
   return rv;
@@ -1536,12 +1540,12 @@ string sac_prefix(const string& call)
 
 // working from the end, find the first non-digit
   const size_t last_letter_posn { wpx.find_last_not_of(DIGITS) };
-  const string digits           { substring(wpx, last_letter_posn + 1) };
+  const string digits           { substring <std::string> (wpx, last_letter_posn + 1) };
 
   if (digits.empty())
     return string { };    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
 
-  return ( ( (canonical_prefix != "OH0"s) and (canonical_prefix != "OJ0"s) ) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
+  return ( ( (canonical_prefix != "OH0"sv) and (canonical_prefix != "OJ0"sv) ) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
 }
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
@@ -1565,7 +1569,7 @@ string MULT_VALUE(const string& field_name, const string& received_value)
   }
 
   if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
-    return (substring(received_value, 0, 2) + pad_left(substring(received_value, 2), 3, '0'));  // XXnnn
+    return (substring <std::string> (received_value, 0, 2) + pad_left(substring <std::string> (received_value, 2), 3, '0'));  // XXnnn
 
   return received_value;
 }

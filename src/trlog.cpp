@@ -60,7 +60,7 @@ int tr_record::month(void) const
 
 //  const string tmps { substring(_record, 10, 3) };
 
-  return MUM_VALUE(month_nr, substring(_record, 10, 3), 0);
+  return MUM_VALUE(month_nr, substring <std::string> (_record, 10, 3), 0);
 }
 
 /// four-digit year
@@ -72,7 +72,7 @@ int tr_record::year(void) const
 
 /// sent RST
 int tr_record::rst(void) const
-{ const string tmp { substring(_record, 44, _record[46] == ' ' ? 2 : 3) };
+{ const string tmp { substring <std::string> (_record, 44, _record[46] == ' ' ? 2 : 3) };
 
   return from_string<int>(tmp);
 }
@@ -86,7 +86,7 @@ int tr_record::rst(void) const
 
 /// band
 BAND tr_record::band(void) const
-{ const string band_string { substring(_record, 0, 3) };
+{ const string band_string { substring <std::string> (_record, 0, 3) };
   const int    b           { atoi(band_string.c_str()) };
 
   switch (b)
@@ -140,7 +140,7 @@ string tr_record::frequency(void) const
    }
 
 // the kHz portion of the frequency might be elsewhere in the record
-  const string qso_number_str { substring(_record, 23, 4) };
+  const string qso_number_str { substring <std::string> (_record, 23, 4) };
 
   if (contains(qso_number_str, "."s))
   { float to_add { from_string<float>(qso_number_str) };
@@ -185,8 +185,8 @@ int _compare_calls(const void* a, const void* b)
 */
 tr_log::tr_log(const std::string& filename)
 { const string         contents { remove_char(read_file(filename), '$') };  // remove any dollar signs as we import file
-  const vector<string> lines    { to_lines(contents) };
-  const string         title    { lines.empty() ? EMPTY_STR : remove_peripheral_spaces(lines[0]) };
+  const vector<string> lines    { to_lines <std::string> (contents) };
+  const string         title    { lines.empty() ? EMPTY_STR : remove_peripheral_spaces <std::string> (lines[0]) };
 
   _fp = tmpfile();
   _number_of_qsos = 0;
@@ -198,7 +198,7 @@ tr_log::tr_log(const std::string& filename)
 // is this line real data?
     bool line_of_log_info { ( (this_line != title) and (this_line.length() > 40) ) };
 
-    const string mode { (line_of_log_info ? substring(this_line, 3, 3) : EMPTY_STR) };
+    const string mode { (line_of_log_info ? substring <std::string> (this_line, 3, 3) : EMPTY_STR) };
 
     line_of_log_info = line_of_log_info and ((mode == "CW "s) or (mode == "SSB"s));
 

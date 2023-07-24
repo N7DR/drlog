@@ -613,7 +613,7 @@ public:
 */
   inline std::vector<std::string> band_names(void) const
   { SAFELOCK(_context);
-    return split_string(_bands);
+    return split_string <std::string> (_bands);
   }
 
 /*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
@@ -621,7 +621,7 @@ public:
 */
   inline std::vector<std::string> mode_names(void) const
   { SAFELOCK(_context);
-    return split_string(_modes);
+    return split_string <std::string> (_modes);
   }
 
 /// how many bands are used in this contest?

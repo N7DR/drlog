@@ -4,6 +4,13 @@
 
 // Principal author: N7DR
 
+/*! \file   adif3.h
+
+    Objects and functions related to ADIF version 3.1.0 at https://adif.org/310/ADIF_310.htm
+    
+    I refrain from comment on the self-evident quality of this soi-disant "specification"
+*/
+
 #ifndef ADIF3_H
 #define ADIF3_H
 
@@ -12,13 +19,6 @@
 
 // Yes, this is an utter mess... it's hard to be clean when what you're trying to model makes
 // a pile of spaghetti look organised
-
-/*! \file   adif3.h
-
-    Objects and functions related to ADIF version 3.1.0 at https://adif.org/310/ADIF_310.htm
-    
-    I refrain from comment on the self-evident quality of this soi-disant "specification"
-*/
 
 #include "macros.h"
 #include "string_functions.h"

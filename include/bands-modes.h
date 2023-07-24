@@ -175,7 +175,8 @@ public:
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
 */
-  explicit frequency(const std::string& str)
+//  explicit frequency(const std::string& str)
+  inline explicit frequency(std::string_view str)
     { *this = frequency(from_string<double>(str)); }
 
 /*! \brief      Construct from a band

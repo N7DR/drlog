@@ -45,18 +45,34 @@ extern ofstream            ost;                   ///< for debugging, info
 /*! \brief      Initialise the name from a string
     \param  nm  tag name
 */
+void cabrillo_tag_template::_init_from_string(string_view str)
+{ if (const auto posn { str.find(':') }; posn == string_view::npos)                             // no values included
+    _name = str;
+  else                                                          // one or more values are included
+  { _name = str.substr(0, posn);
+    
+    string_view values { str.substr(posn + 1) };
+
+    const vector<string_view> vec { remove_peripheral_spaces <std::string_view> (split_string <std::string_view> (values, ',')) };
+
+    FOR_ALL(vec, [this] (auto str) { this->add_legal_value(string { str }); });
+  }
+}
+
+#if 0
 void cabrillo_tag_template::_init_from_string(const string& str)
-{ if (const auto posn { str.find(":"s) }; posn == string::npos)                             // no values included
+{ if (const auto posn { str.find(':') }; posn == string::npos)                             // no values included
     _name = str;
   else                                                          // one or more values are included
   { _name = str.substr(0, posn);
     
     const string         values { str.substr(posn + 1) };
-    const vector<string> vec    { remove_peripheral_spaces(split_string(values, ","s)) };
+    const vector<string> vec    { remove_peripheral_spaces <std::string> (split_string <std::string> (values, ',')) };
 
-    FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
+    FOR_ALL(vec, [this] (const string& str) { this->add_legal_value(str); });
   }
 }
+#endif
 
 // -----------  cabrillo_tag_templatess  ----------------
 
