@@ -1,4 +1,4 @@
-// $Id: qso.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: qso.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,7 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
 bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
-{ const string name_copy { remove_from_start <std::string> (field_name, "received-"s) };
+{ string_view name_copy { remove_from_start <std::string_view> (field_name, "received-"s) };
 
   for (const auto& ef : fields_from_rules)
   { if (ef.name() == name_copy)
@@ -129,14 +129,6 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
   return processed;
 }
 
-/*! \brief      Process a name/value pair from a drlog log line to insert values in the QSO object
-    \param  nv  name and value to be processed
-    \return     whether <i>nv</i> was processed
-
-    Does not process fields whose name begins with "received-"
-*/
-//bool QSO::_process_name_value_pair(const string& nm, const string& val)
-
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
@@ -185,7 +177,8 @@ QSO::QSO(void) :
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
-QSO::QSO(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
+//QSO::QSO(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
+QSO::QSO(const drlog_context& context, string_view str, const contest_rules& rules, running_statistics& statistics)
 { *this = QSO();
 
   populate_from_verbose_format(context, str, rules, statistics);
@@ -210,31 +203,26 @@ void QSO::freq_and_band(const decltype(_frequency_tx)& str)
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
-void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
+//void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
+void QSO::populate_from_verbose_format(const drlog_context& context, string_view str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
   size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
 
   vector<pair<string, string> > name_values;
 
-  while (cur_posn != string::npos)
-    name_values += next_name_value_pair(str, cur_posn);
+//  while (cur_posn != string::npos)
+  while (cur_posn != string_view::npos)
+    name_values += next_name_value_pair( string { str }, cur_posn);
 
   _sent_exchange.clear();
   _received_exchange.clear();
 
-//  for (const auto& nv : name_values)
   for (const auto& [field_name, field_value] : name_values)
-  { //bool processed { _process_name_value_pair(nv) };
-    bool processed { _process_name_value_pair(field_name, field_value) };
-
- //   const string& name  { nv.first };
-//    const string& value { nv.second };
+  { bool processed { _process_name_value_pair(field_name, field_value) };
 
     if (!processed and field_name.starts_with("received-"s))
     { const string name_upper { to_upper(field_name.substr(9)) };
-
-//      ost << "name_upper = " << name_upper << endl;
 
       if (!(rules.all_known_field_names() > name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
@@ -279,13 +267,8 @@ void QSO::populate_from_verbose_format(const string& str)
   _sent_exchange.clear();
   _received_exchange.clear();
 
-//  for (const auto& nv : name_values)
   for (const auto& [field_name, field_value] : name_values)
-  { //bool processed { _process_name_value_pair(nv) };
-    bool processed { _process_name_value_pair(field_name, field_value) };
-
-//    const string& name  { nv.first };
-//    const string& value { nv.second };
+  { bool processed { _process_name_value_pair(field_name, field_value) };
 
     if (!processed and field_name.starts_with("received-"s))
     { const string         name_upper { to_upper(field_name.substr(9)) };
@@ -307,8 +290,6 @@ void QSO::populate_from_log_line(const string& str)
   ost << "string = *" << str << "*" << endl;
 
 // separate the line into fields
-//  const vector<string> vec { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
-//  const vector<string> vec { clean_split_string <string> (squash(str, ' '), SPACE_STR) };
   const vector<string> vec { clean_split_string <string> (squash(str, ' '), ' ') };
 
   if (vec.size() > _log_line_fields.size())                        // output debugging info; this can be triggered if there are mults on the log line
@@ -445,7 +426,7 @@ void QSO::populate_from_log_line(const string& str)
           ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
           ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring <std::string> (field, 9) << endl;
 
-// if the field is a CHOICE and the value isn't legal, for the original choice, see if it's valid for the other
+// if the field is a CHOICE and the value isn't legal for the original choice, see if it's valid for the other
           if (!rules.is_legal_value(substring <std::string> (field, 9), field_value))
           { const string&             original_field_name { _received_exchange[received_index].name() };
             const choice_equivalents& ec                  { rules.equivalents(_mode, _canonical_prefix) };
@@ -470,10 +451,7 @@ void QSO::populate_from_log_line(const string& str)
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
           if (field.starts_with("received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
-          { //ost << "** received-PREC **" << endl;
             _received_exchange[received_index++].value(_callsign);
-            //ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
-          }
         }
       }
 
@@ -874,7 +852,7 @@ string QSO::log_line(void)
   rv += pad_left(freq(), FREQUENCY_FIELD_LENGTH);
   rv += pad_left(pad_right(callsign(), CALL_FIELD_LENGTH), CALL_FIELD_LENGTH + 1);
 
-  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += (SPACE_STR + se.second); });
+  FOR_ALL(_sent_exchange, [&rv] (pair<string, string> se) { rv += (SPACE_STR + se.second); });
 
 // print in same order they are present in the config file
   for (const auto& field : _received_exchange)

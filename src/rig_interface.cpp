@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 211 2022-11-28 21:29:23Z  $
+// $Id: rig_interface.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -93,7 +93,7 @@ extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-void rig_interface::_error_alert(const string& msg)
+void rig_interface::_error_alert(const string& msg) const
 { if (_error_alert_function)
     (*_error_alert_function)(msg);
 }
@@ -123,13 +123,24 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
 
       bool retry { true };
 
-      while (retry)
+      constexpr int MAX_RETRIES { 2 };
+      constexpr int MAX_ERROR { 10 };   // max permitted frequency error, in Hz
+
+      int n_retries { 0 };
+
+ // the brain-dead K3 will sometimes infinitely fail to go to the correct frequency
+      while ( (retry) and (n_retries++ <= MAX_RETRIES) )
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
-        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
+//        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
+        if (const auto rf {_rig_frequency(v)}; (abs(rf - f) > MAX_ERROR) )    // explicitly check the frequency
         { ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
-          sleep_for(RETRY_TIME);
+
+          if (n_retries <= MAX_RETRIES)
+            sleep_for(RETRY_TIME);
+          else
+            ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
         }
         else
           retry = false;
@@ -424,9 +435,6 @@ bool rig_interface::split_enabled(void)
 
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
-
-//    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; transmit_vfo.length() >= 4)
-//      return (transmit_vfo[2] == '1');
 
     if ( const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"s, 0) )
       return (transmit_vfo[2] == '1');

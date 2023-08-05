@@ -1,4 +1,4 @@
-// $Id: screen.h 216 2023-01-31 19:10:32Z  $
+// $Id: screen.h 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -498,6 +498,12 @@ public:
     to create a std::string anayway, because string_view does not supply c_str().
 */
   window& operator<(const std::string& s);
+
+  inline window& operator<(std::string_view sv)
+    { return (*this < std::string { sv }); }
+
+  inline window& operator<(const char* cp)
+    { return (*this < std::string { cp }); }
 
 /*! \brief      Write a vector of strings to a window
     \param  v   the vector of strings to be written

@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 219 2023-03-06 23:02:40Z  $
+// $Id: drmaster.cpp 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -126,14 +126,15 @@ master_dta::master_dta(const string& filename)
 
     Returns empty string if there is no value associated with <i>param</i>
 */
-const string __extract_value(const string& line, const string& param)
+//string __extract_value(const string& line, const string& param)
+string __extract_value(string_view line, const string& param)
 { if (!contains(line, param))
     return string();
 
-  const size_t start_position { line.find(param) };
-  const string short_line     { substring <std::string> (line, start_position + param.length()) };
-  const size_t space_posn     { short_line.find(' ') };
-  const size_t end_position   { ( (space_posn == string::npos) ? short_line.length() : space_posn ) };
+  const size_t start_position  { line.find(param) };
+  const string_view short_line { substring <std::string_view> (line, start_position + param.length()) };
+  const size_t space_posn      { short_line.find(' ') };
+  const size_t end_position    { ( (space_posn == string_view::npos) ? short_line.length() : space_posn ) };
 
   return substring <std::string> (short_line, 0, end_position);
 }
@@ -179,7 +180,8 @@ t = temporary
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
 */
-trmaster_line::trmaster_line(const string& line)
+//trmaster_line::trmaster_line(const string& line)
+trmaster_line::trmaster_line(string_view line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
@@ -557,10 +559,10 @@ trmaster::trmaster(const string& filename)
     }
   }
   else              // not binary
-  { FOR_ALL( to_lines <std::string> (contents), [this] (const string& line) { const trmaster_line record(line);
+  { FOR_ALL( to_lines <std::string_view> (contents), [this] (auto line) { const trmaster_line record(line);
 
-                                                               _records += { record.call(), record };
-                                                             } );
+                                                                          _records += { record.call(), record };
+                                                                        } );
   }
 }
 
@@ -617,7 +619,8 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
-drmaster_line::drmaster_line(const string& line_or_call)
+//drmaster_line::drmaster_line(const string& line_or_call)
+drmaster_line::drmaster_line(string_view line_or_call)
 { const vector<string> fields { split_string <std::string> (line_or_call, ' ') };
 
   if (fields.empty())

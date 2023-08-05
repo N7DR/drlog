@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: drlog_context.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,21 +65,16 @@ void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
     return;
 
-//  ost << "inside _set_points()" << endl;
-
-  const vector<string> str_vec { split_string <std::string> (command, '=') };
+  const vector<string_view> str_vec { split_string <std::string_view> (command, '=') };
 
   if (str_vec.size() != 2)
   { ost << "Invalid command in _set_points(): " << command << endl;
-
     ost << "size = " << str_vec.size() << endl;
-
- //   throw exception();
 
     exit(0);
   }
 
-  const string RHS { to_upper(remove_peripheral_spaces <std::string> (str_vec[1])) };
+  const string RHS { to_upper(remove_peripheral_spaces <std::string_view> (str_vec[1])) };
 
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
@@ -94,9 +89,9 @@ void drlog_context::_set_points(const string& command, const MODE m)
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
+      { string_view bands_str { delimited_substring <std::string_view> (lhs, '[', ']', DELIMITERS::DROP) };
 
-        FOR_ALL(clean_split_string <string> (bands_str), [=, &pbb] (const string& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );
+        FOR_ALL(clean_split_string <std::string> (bands_str), [&pbb, &RHS] (const auto& b_str) { pbb += { BAND_FROM_NAME[b_str ], RHS }; } );   // keep string
       }
     }
   }
@@ -119,10 +114,12 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-  const vector<string> lines { split_string <std::string> (entire_file, LF_STR) };   // split into lines
+//  const vector<string> lines { split_string <std::string> (entire_file, LF_STR) };   // split into lines
+//  const vector<string> lines { to_lines <std::string> (entire_file) };   // split into lines
+  const vector<string_view> lines { to_lines <std::string_view> (entire_file) };   // split into lines
 
-  for (const auto& tmpline : lines)                                   // process each line
-  { const string line { remove_trailing_comment(tmpline) };           // remove any comment
+  for (const auto tmpline : lines)                                    // process each line
+  { const string line { remove_trailing_comment <std::string> (tmpline) };           // remove any comment
 
 // generate a number of useful variables
     const string testline       { remove_leading_spaces <std::string> (to_upper(line)) };
@@ -788,7 +785,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
     if (testline.starts_with("QTHX["s))
-    { const vector<string> fields { clean_split_string <string> (testline, '=') };
+    { const vector<string_view> fields { clean_split_string <string_view> (testline, '=') };
 
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
@@ -803,7 +800,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-      FOR_ALL(clean_split_string <string> (rhs), [&new_rates] (const string& str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+      FOR_ALL(clean_split_string <std::string_view> (rhs), [&new_rates] (auto str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;

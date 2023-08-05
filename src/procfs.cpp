@@ -1,4 +1,4 @@
-// $Id: procfs.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: procfs.cpp 223 2023-07-30 13:37:25Z  $
 
 /*! \file procfs.cpp
 
@@ -21,7 +21,7 @@ using namespace   chrono;
 vector<string> procfs::_statvec(void)
 { const system_clock::time_point now { system_clock::now() };
 
-  if ( /* force or */ ( (now - _last_update_time) >  _minimum_interval) )      // update only if forced or if enough time has passed
+  if ( (now - _last_update_time) >  _minimum_interval )      // update only if forced or if enough time has passed
   { _last_stat_vec = split_string <std::string> (_stat(), ' ');
     _last_update_time = now;
   }

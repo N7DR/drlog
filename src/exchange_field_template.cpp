@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.cpp 215 2023-01-23 19:37:41Z  $
+// $Id: exchange_field_template.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,7 +42,8 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-  _is_mult = contains(clean_split_string <std::string> (context.exchange_mults()), _name);  // correct value of is_mult
+//  _is_mult = contains(clean_split_string <std::string> (context.exchange_mults()), _name);  // correct value of is_mult
+  _is_mult = contains(clean_split_string <std::string_view> (context.exchange_mults()), _name);  // correct value of is_mult
 }
 
 /*! \brief              Get regex expression from file

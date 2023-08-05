@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: cluster.cpp 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,7 +261,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // first non-space sharacter is a digit and last character is ">"
 // parsing failures are trapped
   if (last_char(received_info) == '>')
-  { const string copy { remove_leading_spaces <std::string> (received_info) };
+  { //const string copy { remove_leading_spaces <std::string> (received_info) };
+    string_view copy { remove_leading_spaces <std::string_view> (received_info) };
   
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
@@ -270,7 +271,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
         size_t space_posn;
 
-        if (char_posn != string::npos)
+//        if (char_posn != string::npos)
+        if (char_posn != string_view::npos)
         { _frequency_str = copy.substr(0, char_posn);
           _freq = frequency(_frequency_str);
 
@@ -296,7 +298,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
             const size_t bra_posn { copy.find_last_of('<') };
 
-            if (bra_posn != string::npos)
+//            if (bra_posn != string::npos)
+            if (bra_posn != string_view::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
               _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
               _poster_continent = db.info(_poster).continent();
@@ -325,7 +328,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
 // we treat everything after the call as a comment
   if (!_valid)
-  { if ( (substring <std::string> (received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
+  { if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
     { try
       { if (post_source == POSTING_SOURCE::RBN)
         { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
@@ -353,9 +356,11 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
         }
 
         if (!_valid)
-        { const string copy{ remove_leading_spaces <std::string> (substring <std::string> (received_info, 6)) };
+        { //const string copy{ remove_leading_spaces <std::string> (substring <std::string> (received_info, 6)) };
+          string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
   
-          if (const size_t colon_posn { copy.find(':') }; colon_posn != string::npos)
+//          if (const size_t colon_posn { copy.find(':') }; colon_posn != string::npos)
+          if (const size_t colon_posn { copy.find(':') }; colon_posn != string_view::npos)
           { _poster = copy.substr(0, colon_posn);
             _poster_continent = db.info(_poster).continent();
 

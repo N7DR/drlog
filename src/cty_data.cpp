@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: cty_data.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -147,13 +147,14 @@ cty_record::cty_record(string_view record)
 // now we have to get tricky... start by getting the presumptive alternative prefixes
  // const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[CTY_ALTS], ","s)) };
 //  const vector<string> presumptive_prefixes { clean_split_string <string> (fields[CTY_ALTS]) };
-  const vector<string> presumptive_prefixes { clean_split_string <string> (fields[CTY_ALTS]) };
+//  const vector<string_view> presumptive_prefixes { clean_split_string <string_view> (fields[CTY_ALTS]) };
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;
   vector<string> alt_prefixes;
   
-  for (const auto& candidate : presumptive_prefixes)
+//  for (const auto& candidate : presumptive_prefixes)
+  for (auto candidate : clean_split_string <string_view> (fields[CTY_ALTS]))
   { vector<string>* vsp { ( contains(candidate, '=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
     (*vsp) += candidate;
@@ -190,9 +191,6 @@ cty_record::cty_record(string_view record)
 // map prefix if necessary
   if (map_prefix.contains(_prefix))
     _prefix = map_prefix.at(_prefix);
-
-//  ost << "record: " << record << endl;
-//  ost << "  _prefix: " << _prefix << endl;
 }
 
 /*! \brief          Write a <i>cty_record</i> object to an output stream
@@ -246,14 +244,16 @@ alternative_country_info::alternative_country_info(const string& record, const s
   else
   { _identifier = substring <std::string> (record, 0, end_identifier);      // read up to the first delimiter
   
-    if (const string cq_zone_str { delimited_substring <std::string> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+//    if (const string cq_zone_str { delimited_substring <std::string> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+    if (string_view cq_zone_str { delimited_substring <std::string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
     { auto_from_string(cq_zone_str, _cq_zone);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-    if (const string itu_zone_str { delimited_substring <std::string> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+//    if (const string itu_zone_str { delimited_substring <std::string> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+    if (string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
     { auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
@@ -289,21 +289,8 @@ cty_data::cty_data(const string& filename)
 { //const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ), ';') };                  // read file, remove EOL markers and split into records
   const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
 
-  FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
+  FOR_ALL(records, [this] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
-
-/*! \brief              Construct from a file
-    \param  path        directories in which to search for <i>filename</i>, in order
-    \param  filename    name of file
-*/
-#if 0
-cty_data::cty_data(const vector<string>& path, const string& filename)
-{ //const vector<string> records { split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR } ) , ';') };                  // read file, remove EOL markers and split into records
-
-  //FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );        // applies to base class
-  FOR_ALL(split_string( remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [&] (const string& record) { push_back(static_cast<cty_record>(record)); }); // applies to base class
-}
-#endif
 
 // -----------  location_info  ----------------
 

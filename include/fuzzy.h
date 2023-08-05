@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 215 2023-01-23 19:37:41Z  $
+// $Id: fuzzy.h 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,7 +39,6 @@ class fuzzy_database
 {
 protected:
 
-//  std::array< std::set<std::string>, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
   std::array<FUZZY_SET, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
   
 /*! \brief      Force a value to be within the legal range of sizes
@@ -63,7 +62,8 @@ public:
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
   inline explicit fuzzy_database(const std::string& filename)
-    { FOR_ALL(to_lines <std::string> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
+//    { FOR_ALL(to_lines <std::string> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
+    { FOR_ALL(to_lines <std::string_view> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (auto x) { *this += x; } ); }
 
 /*! \brief          Construct from a <i>drmaster</i> object
     \param  drm     <i>drmaster</i> object from which to construct
@@ -84,7 +84,8 @@ public:
 
     Does nothing if the call is already in the database
 */
-  inline void operator+=(const std::string& call)
+//  inline void operator+=(const std::string& call)
+  inline void operator+=(std::string_view call)
     { _db[ _to_valid_size(call.length()) ] += call; }
 
 /*! \brief          Remove a call from the database

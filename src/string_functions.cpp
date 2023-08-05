@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: string_functions.cpp 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,7 +176,6 @@ string format_time(const string& format, const tm* tmp)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-//string replace_char(const string& s, const char old_char, const char new_char)
 string replace_char(string_view s, const char old_char, const char new_char)
 { string rv { s };
 
@@ -191,7 +190,6 @@ string replace_char(string_view s, const char old_char, const char new_char)
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-//string replace(const string& s, const string& old_str, const string& new_str)
 string replace(string_view s, string_view old_str, string_view new_str)
 { string rv        { };
   size_t posn      { 0 };
@@ -204,7 +202,6 @@ string replace(string_view s, string_view old_str, string_view new_str)
     last_posn = posn + old_str.length();
   }
 
-//  rv += string { s.substr(last_posn) };
   rv += s.substr(last_posn);
 
   return rv;
@@ -221,13 +218,7 @@ string replace(string_view s, string_view old_str, string_view new_str)
 */
 //string pad_string(const string& s, const size_t len, const PAD pad_side, const char pad_char)
 string pad_string(string_view s, const size_t len, const PAD pad_side, const char pad_char)
-{ //if (static_cast<int>(len) <= 0)
-  //  return string { s };
-
-  //if (s.length() >= len)
-  //  return s;
-
-  const string s_str { s }; 
+{ const string s_str { s }; 
 
   if ( (static_cast<int>(len) <= 0) or (s.length() >= len) )
    return s_str;
@@ -246,27 +237,30 @@ string pad_string(string_view s, const size_t len, const PAD pad_side, const cha
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-string read_file(const string& filename)
-{ FILE* fp { fopen(filename.c_str(), "rb") };
+//string read_file(const string& filename)
+string read_file(string_view filename)
+{ const string filename_str { filename };   // because we need c_str()
+
+  FILE* fp { fopen(filename_str.c_str(), "rb") };
 
   if (!fp)
-    throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename);
+    throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename_str);
   else
     fclose(fp);
 
 // check that the file is not a directory  
   struct stat stat_buffer;
 
-  if (const int status { ::stat(filename.c_str(), &stat_buffer) }; status)
-    throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: "s + filename);
+  if (const int status { ::stat(filename_str.c_str(), &stat_buffer) }; status)
+    throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: "s + filename_str);
 
   const bool is_directory { ( (stat_buffer.st_mode bitand S_IFDIR) != 0 ) };
 
   if (is_directory)
-    throw string_function_error(STRING_FILE_IS_DIRECTORY, filename + " is a directory"s);
+    throw string_function_error(STRING_FILE_IS_DIRECTORY, filename_str + " is a directory"s);
 
 // now perform the actual read
-  ifstream file { filename };
+  ifstream file { filename_str };
   string   str  {std::istreambuf_iterator<char>(file), {} };
 
   return str;
@@ -280,7 +274,8 @@ string read_file(const string& filename)
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-string read_file(const vector<string>& path, const string& filename)
+//string read_file(const vector<string>& path, const string& filename)
+string read_file(const vector<string>& path, string_view filename)
 { for (const auto& this_path : path)
   { try
     { return read_file(this_path + "/"s + filename);
@@ -293,35 +288,6 @@ string read_file(const vector<string>& path, const string& filename)
 
   throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
 }
-
-/*! \brief              Split a string into components
-    \param  cs          original string
-    \param  separator   separator string (typically a single character)
-    \return             vector containing the separate components
-*/
-//vector<string> split_string(const string& cs, const string& separator)
-#if 0
-vector<string> split_string(const string& cs, string_view separator)
-{ //ost << "split_string const string&, string_view)" << endl;
-
-  size_t start_posn { 0 };
-
-  vector<string> rv;
-
-  while (start_posn < cs.length())
-  { if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
-    { rv += cs.substr(start_posn);
-      start_posn = cs.length();
-    }
-    else                                            // at least one separator
-    { rv += cs.substr(start_posn, posn - start_posn);
-      start_posn = posn + separator.length();
-    }
-  }
-
-  return rv;
-}
-#endif
 
 /*! \brief              Split a string into components
     \param  cs          original string
@@ -1050,10 +1016,12 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-string remove_trailing_comment(const string& str, const string& comment_str)
+//string remove_trailing_comment(const string& str, const string& comment_str)
+//string remove_trailing_comment(string_view str, const string& comment_str)
+string remove_trailing_comment(string_view str, const string_view comment_str)
 { const size_t posn { str.find(comment_str) };
 
-  return ( (posn == string::npos) ? str : remove_trailing_spaces <std::string> (substring <std::string> (str, 0, posn)) );
+  return ( (posn == string_view::npos) ? string { str } : remove_trailing_spaces <std::string> (substring <std::string> (str, 0, posn)) );
 }
 
 /*! \brief              Perform a case-insensitive search for a substring

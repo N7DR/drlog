@@ -129,8 +129,9 @@ protected:
   std::string                             _port_name                   { };                             ///< name of port
   RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
   bool                                    _rig_connected               { false };                       ///< is a rig connected?
-  pt_mutex                                _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
   pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
+
+  mutable pt_mutex                        _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
 
 // protected pointers to functions
 
@@ -146,7 +147,7 @@ protected:
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-  void _error_alert(const std::string& msg);
+  void _error_alert(const std::string& msg) const;
 
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig
@@ -498,7 +499,7 @@ public:
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user
 */
-  void register_error_alert_function(void (*error_alert_function)(const std::string&) );
+  void register_error_alert_function(void (*error_alert_function)(const std::string&));
 
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting

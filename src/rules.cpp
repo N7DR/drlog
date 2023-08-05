@@ -1,4 +1,4 @@
-// $Id: rules.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: rules.cpp 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -118,22 +118,6 @@ set<string> exchange_field_values::canonical_values(void) const
   return rv;
 }
 
-/*! \brief      Get all the legal values (for all canonical values)
-    \return     all possible legal values for all canonical values
-
-    Returns empty set if there are no canonical values
-*/
-#if 0
-set<string> exchange_field_values::all_values(void) const
-{ set<string> rv;
-
-  for (const auto& cvv : _values)
-    COPY_ALL(cvv.second, inserter(rv, rv.begin()));
-
-  return rv;
-}
-#endif
-
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value
     \param  putative_value  value to test
@@ -238,7 +222,6 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
 
-//        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [equivalent_values, &qthx] (const string& equivalent_value) { qthx += { equivalent_values[0], equivalent_value }; } ); // cbegin() corresponds to the canonical value
         for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qthx] (const string& equivalent_value) { qthx += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
       }
     }
@@ -246,23 +229,6 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
     _exch_values += qthx;
   }
 }
-
-/*! \brief              Private function used to obtain all the understood values for a particular exchange field
-    \param  field_name  name of the field for which the understood values are required
-    \return             set of all the legal values for the field <i>field_name</i>
-
-    Uses the variable <i>_exch_values</i> to obtain the returned value
-*/
-#if 0
-set<string> contest_rules::_all_exchange_values(const string& field_name) const
-{ SAFELOCK(rules);
-
-  const auto cit { FIND_IF(_exch_values, [field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
-
-//  return ( (cit == _exch_values.cend()) ? set<string> { } : cit->all_values() );
-  return ( (cit == _exch_values.cend()) ? set<string> { } : cit->all_values <set<string>> () );
-}
-#endif
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -531,10 +497,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     else
     { const vector<string> expanded_choice { clean_split_string <std::string> (remove_from_start <std::string> (unexpanded_exchange_mult_name, "CHOICE:"sv)) };
 
-//      for (const string& this_expanded_name : expanded_choice)
-//        if (!contains(_expanded_exchange_mults, this_expanded_name))
-//          _expanded_exchange_mults += this_expanded_name;
-
       FOR_ALL(expanded_choice, [this] (const string& ex_name) { if (!contains(_expanded_exchange_mults, ex_name))
                                                                   _expanded_exchange_mults += ex_name;
                                                               } );
@@ -637,7 +599,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
                   if (!countries.empty())
                   { const vector<string> country_vec { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
 
-                    FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
+                    FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) 
+                             { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
 
  //                   FOR_ALL(clean_split_string <std::string_view> (remove_peripheral_spaces <std::string> (squash(countries)), ' '),
 //                             [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );

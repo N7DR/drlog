@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: statistics.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -340,10 +340,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 bool running_statistics::known_callsign_mult_name(const string& putative_callsign_mult_name) const
 { SAFELOCK(statistics);
 
-//  return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
-//  return contains(_callsign_multipliers, putative_callsign_mult_name);
   return _callsign_multipliers.contains(putative_callsign_mult_name);
-//  return (putative_callsign_mult_name < _callsign_multipliers);
 }
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
@@ -414,8 +411,7 @@ bool running_statistics::is_needed_country_mult(const string& callsign, const BA
 bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  return ( (rules.country_mults() > str) ? _country_multipliers.add_known(str) : false );
-//  return ( (rules.country_mults().contains(str)) ? _country_multipliers.add_known(str) : false );
+  return ( (rules.country_mults().contains(str)) ? _country_multipliers.add_known(str) : false );
 }
 
 /*! \brief          Add a QSO to the ongoing statistics
@@ -499,9 +495,10 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
 
-  for (auto& psm : _exchange_multipliers)
-  { if (psm.first == name)
-    { if (psm.second.add_known(MULT_VALUE(name, value)))
+//  for (auto& psm : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
+  for (auto& [ field_name, mult ] : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
+  { if (field_name == name)
+    { if (mult.add_known(MULT_VALUE(name, value)))
         return true;
     }
   }
@@ -723,15 +720,6 @@ map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics
 
   SAFELOCK(statistics);
 
-#if 0
-  for (const auto& psm : _exchange_multipliers)
-  { //const multiplier& mult { psm.second };
-
-    //rv += { psm.first, mult.worked(b, m) };
-    rv += { psm.first, psm.second.worked(b, m) };
-  }
-#endif
-
   FOR_ALL(_exchange_multipliers, [b, m, &rv] (const auto& psm) { rv += { psm.first, psm.second.worked(b, m) }; } );
 
   return rv;
@@ -793,7 +781,7 @@ float running_statistics::mult_to_qso_value(const contest_rules& rules, const BA
   for (const auto& m : score_modes)
   { const auto& qp { _qso_points[m] };
 
-    FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
+    FOR_ALL(score_bands, [&current_qso_points, &qp] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
   }
 
   const float        current_mean_qso_points { static_cast<float>(current_qso_points) / current_qsos };
@@ -837,7 +825,7 @@ unsigned int running_statistics::n_qsos(const contest_rules& rules) const
   for (const auto& m : score_modes)
   { const auto& nq { _n_qsos[m] };
 
-    FOR_ALL(score_bands, [&] (const BAND& b) { rv += nq[static_cast<int>(b)]; } );
+    FOR_ALL(score_bands, [&nq, &rv] (const BAND b) { rv += nq[static_cast<int>(b)]; } );
   }
 
   return rv;
@@ -857,7 +845,7 @@ unsigned int running_statistics::n_qsos(const contest_rules& rules, const MODE m
 
   SAFELOCK(statistics);
 
-  FOR_ALL(score_bands, [&] (const BAND& b) { rv += nq[static_cast<int>(b)]; } );
+  FOR_ALL(score_bands, [&nq, &rv] (const BAND b) { rv += nq[static_cast<int>(b)]; } );
 
   return rv;
 }
@@ -897,7 +885,7 @@ unsigned int running_statistics::n_worked_country_mults(const contest_rules& rul
 
   SAFELOCK(statistics);
 
-  FOR_ALL(score_bands, [&] (const BAND& b) { rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b)); } );
+  FOR_ALL(score_bands, [&per_band_country_mult_factor, &rv, this] (const BAND b) { rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b)); } );
 
   return rv;
 }
@@ -942,13 +930,12 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
     \return     the number of exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
 unsigned int running_statistics::n_worked_exchange_mults(const BAND b, const MODE m) const
-{ const map<string, MULTIPLIER_VALUES> worked { worked_exchange_mults(b, m) };
+{ //const map<string, MULTIPLIER_VALUES> worked { worked_exchange_mults(b, m) };
 
   unsigned int rv { 0 };
 
- // for (const auto& psss : worked)
- //   rv += psss.second.size();
-  FOR_ALL(worked, [&rv] (const auto& psss) { rv += psss.second.size(); } );
+//  FOR_ALL(worked, [&rv] (const auto& psss) { rv += psss.second.size(); } );
+  FOR_ALL(worked_exchange_mults(b, m), [&rv] (const auto& psss) { rv += psss.second.size(); });
 
   return rv;
 }
@@ -964,7 +951,7 @@ void call_history::rebuild(const logbook& logbk)
 
   _history.clear();
 
-  FOR_ALL(logbk.as_vector(), [&] (const QSO& qso) { *this += qso; } );
+  FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { *this += qso; } );
 }
 
 /*! \brief          Add a QSO to the history

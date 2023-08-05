@@ -1,4 +1,4 @@
-// $Id: bandmap.h 222 2023-07-09 12:58:56Z  $
+// $Id: bandmap.h 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -687,7 +687,8 @@ using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 
 class bandmap;
 
-using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+// allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap declared
+using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int nskip);
 
 // -----------  bandmap  ----------------
 
@@ -716,7 +717,7 @@ protected:
   bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string>   _recent_calls           { };                          ///< calls recently added
-  COLOUR_TYPE                       _recent_colour { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
+  COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -748,7 +749,7 @@ protected:
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
-  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
 
 /*!  \brief             Return whether a call is actually a regex
      \param callsign    call to test
@@ -829,13 +830,13 @@ public:
   inline bandmap_entry my_bandmap_entry(void)
     { return (*this)[MY_MARKER]; }
 
-/*! \brief              Return the first entry for a partial call
-    \param  callsign    partial call for which the entry should be returned
-    \return             the first bandmap_entry corresponding to <i>callsign</i>
+/*! \brief          Return the first entry for a partial call
+    \param  pcall   partial call for which the entry should be returned
+    \return         the first bandmap_entry corresponding to <i>callsign</i>
 
-    Returns the null string if <i>callsign</i> matches no entries in the bandmap
+    Returns the null string if <i>pcall</i> matches no entries in the bandmap
 */
-  bandmap_entry substr(const std::string& callsign);
+  bandmap_entry substr(const std::string& pcall);
 
 /*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
@@ -970,7 +971,7 @@ public:
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
 */
-  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn);
+  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip = 0);
 
 /*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -978,8 +979,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_needed, dirn); }
+  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::is_needed, dirn, nskip); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -987,8 +988,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_needed_mult, dirn); }
+  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::is_needed_mult, dirn, nskip); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
     \param dirn    direction in which to search
@@ -1005,8 +1006,8 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::matches_criteria, dirn); }
+  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::matches_criteria, dirn, nskip); }
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1014,8 +1015,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn); }
+  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn, nskip); }
 
 /*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1023,8 +1024,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn); }
+  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn, nskip); }
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
     \param  f       starting frequency
@@ -1139,7 +1140,7 @@ template<typename C>
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
 
-  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
+  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip);
 
 /// serialize using boost
   template<typename Archive>

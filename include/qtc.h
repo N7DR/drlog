@@ -1,4 +1,4 @@
-// $Id: qtc.h 213 2022-12-15 17:11:46Z  $
+// $Id: qtc.h 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -89,8 +89,6 @@ public:
 
 /// qtc_entry == qtc_entry
   inline bool operator==(const qtc_entry& entry) const = default;
-//  inline bool operator==(const qtc_entry& entry) const
-//    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// convert to printable string
   std::string to_string(void) const;
@@ -168,7 +166,7 @@ public:
   inline qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const QTC_STATUS qstatus = QTC_STATUS::UNSENT) :
     _mode(mode_str),
     _source(my_call)
-  { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += { qe, qstatus }; } ); }
+  { FOR_ALL(vec_qe, [qstatus, this] (const qtc_entry& qe) { (*this) += { qe, qstatus }; } ); }
 
   READ_AND_WRITE(target);             ///< to whom is the QTC series to be sent?
   READ_AND_WRITE(id);                 ///< QTC ID (e.g., "1/10")
@@ -252,7 +250,7 @@ public:
 
     Returns an empty <i>qtc_entry</i> if no entries meet the criteria
 */
-  qtc_entry first_not_sent(const unsigned int posn = 0);
+  qtc_entry first_not_sent(const unsigned int posn = 0) const;
 
 /*! \brief      Get a string representing a particular entry
     \param  n   number of the entry (wrt 0)
@@ -299,13 +297,15 @@ window& operator<(window& win, const qtc_series& qs);
     \brief  All QTCs
 */
 
-extern pt_mutex qtc_database_mutex;         ///< the mutex to control access to the database
+//extern pt_mutex qtc_database_mutex;         ///< the mutex to control access to the database
 
 class qtc_database
 {
 protected:
 
   std::vector<qtc_series>    _qtc_db;       ///< the QTCs, assumed to be in sent order
+
+  mutable pt_mutex _qtc_database_mutex { "QTC DATABASE"s };                            ///< mutex to allow correct locking
 
 public:
 
@@ -317,7 +317,7 @@ public:
 */
   explicit qtc_database(const std::string& filename);
 
-  SAFEREAD(qtc_db, qtc_database);           ///< the QTCs
+  SAFEREAD(qtc_db, _qtc_database);           ///< the QTCs
 
 /*! \brief      Add a series of QTCs to the database
     \param  q   the series of QTCs to be added
@@ -328,7 +328,7 @@ public:
     \return     the number of QTCs in the database
 */
   inline size_t n_qtcs(void) const
-    { SAFELOCK(qtc_database);
+    { SAFELOCK(_qtc_database);
 
       return _qtc_db.size();
     }

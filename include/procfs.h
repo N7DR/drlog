@@ -1,4 +1,4 @@
-// $Id: procfs.h 168 2020-10-07 18:34:59Z  $
+// $Id: procfs.h 224 2023-08-03 20:54:02Z  $
 
 /*! \file procfs.h
 
@@ -165,19 +165,24 @@ public:
   using S   = std::string;
   using U   = unsigned int;
 
+ // (1) pid                    %d   The process ID.
   inline D stat_pid(void)
     { return from_string<D>(_statvec()[0]); }
 
+//  (2) comm                   %s   The filename of the executable, in parentheses.  This is visible whether or not the executable is swapped out.
   inline S stat_comm(void)
     { return ( delimited_substring <std::string> (_statvec()[1], '(', ')', DELIMITERS::DROP) ); }
 
+//  (3) state                  %c   One of the following characters, indicating process state: (see above)
   inline C stat_state(void)
     { return (_statvec()[2][0]); }
 
+//  (4) ppid                   %d   The PID of the parent of this process.
   inline D stat_ppid(void)
     { return from_string<D>(_statvec()[3]); }
 
-  inline D stat_pprp(void)
+//  (5) pgrp                   %d   The process group ID of the process.
+  inline D stat_pgrp(void)
     { return from_string<D>(_statvec()[4]); }
 
   inline D stat_session(void)

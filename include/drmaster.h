@@ -1,4 +1,4 @@
-// $Id: drmaster.h 219 2023-03-06 23:02:40Z  $
+// $Id: drmaster.h 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -98,7 +98,8 @@ public:
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
 */
-  explicit trmaster_line(const std::string& line);
+//  explicit trmaster_line(const std::string& line);
+  explicit trmaster_line(std::string_view line);
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -251,12 +252,13 @@ public:
 /// default constructor
   inline drmaster_line(void) = default;
 
-/*! \brief                  Construct fronm a call or from a line from a drmaster file
+/*! \brief                  Construct from a call or from a line from a drmaster file
     \param  line_or_call    line from file, or a call
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
-  explicit drmaster_line(const std::string& line_or_call);
+//  explicit drmaster_line(const std::string& line_or_call);
+  explicit drmaster_line(std::string_view line_or_call);
 
 /// convert to a string
   std::string to_string(void) const;

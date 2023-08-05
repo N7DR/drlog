@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 222 2023-07-09 12:58:56Z  $
+// $Id: drlog.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,7 +176,7 @@ void populate_win_call_history(const string& str);                              
 void populate_win_info(const string& str);                                              ///< Populate the information window
 void possible_mode_change(const frequency& f);                                          ///< possibly change mode in accordance with frequency
 void print_thread_names(void);                                                          ///< output the names of the currently active threads
-bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);    ///< process a bandmap function, to jump to the next frequency returned by the function
+bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                    ///< process backspace
 bool process_keypress_F5(void);                                                         ///< process key F5
@@ -1124,10 +1124,11 @@ int main(int argc, char** argv)
 
 // now the individual bands
         for (BAND b { MIN_BAND }; b <= MAX_BAND; b = (BAND)((int)b + 1))
-        { const set<string> callsigns { calls_from_do_not_show_file(b) };
+        { //const set<string> callsigns { calls_from_do_not_show_file(b) };
 
-          if (!callsigns.empty())
-            FOR_ALL(callsigns, [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
+ //         if (!callsigns.empty())
+//            FOR_ALL(callsigns, [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
+            FOR_ALL(calls_from_do_not_show_file(b), [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
         }
       }
 
@@ -1202,7 +1203,7 @@ int main(int argc, char** argv)
               else
                 batch_messages += { remove_peripheral_spaces <std::string> (messages_line) /* callsign */, current_message };               // associate this message with the callsign on the line
             }
-         }
+          }
 
           ost << "read " << batch_messages.size() << " batch messages" << endl;
         }
@@ -1282,39 +1283,23 @@ int main(int argc, char** argv)
         { SAFELOCK(individual_messages);
 
           for (const auto& messages_line : to_lines <std::string> (read_file(context.path(), context.individual_messages_file())))
-          { const vector<string> fields { clean_split_string <string> (messages_line, ':') };
+          { const vector<string> fields { clean_split_string <std::string> (messages_line, ':') };
 
- //           if (!fields.empty())
-            if (fields.size() >=2)
+            if (fields.size() >= 2)
             { const string& f_0 { fields[0] };
 
 // is it a date or a call?
               const string& callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
 
-              string msg { remove_peripheral_spaces <std::string> (after_first(messages_line, ':')) };
+              string_view msg { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
 
               if (is_digits(f_0))
-                msg = remove_peripheral_spaces <std::string> (after_first(msg, ':'));
+                msg = remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (msg, ':'));
 
               if (!msg.empty())
-                individual_messages += { callsign, msg };
-
-
- //             const string& callsign { fields[0] };
- //             const size_t  posn     { messages_line.find(':') };
-
- //             if (posn != messages_line.length() - 1)    // if the colon isn't the last character
- //               individual_messages += { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ };
+                individual_messages += { callsign, string { msg } };
             }
           }
-
-//          ost << "number of individual messages = " << individual_messages.size() << endl;
-
- //         for (auto it = individual_messages.begin();
- //        auto it = individual_messages.begin();
-//
-//         ost << it->first << " : " << it->second << endl;
-
         }
 
         catch (...)
@@ -1703,7 +1688,8 @@ int main(int argc, char** argv)
 
         win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
 
-        for (const auto& line : to_lines <std::string> (file))
+//        for (const auto& line : to_lines <std::string> (file))
+        for (auto line : to_lines <std::string_view> (file))
         { QSO qso { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
 
 // possibly add the call to the known prefixes
@@ -3901,7 +3887,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
-// and unmodified: // KEYPAD-/, KEYPAD-*: up or down to next stn that matches the N7DR criteria
+// and unmodified ; and ': also up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
@@ -3910,6 +3896,47 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     else
       processed = true;
   }
+
+// CTRL-; and CTRL-' -- up or down to stn that matches the N7DR criteria, in increments of 5 stns
+  if (!processed and (e.is_control(';') or e.is_control('\'')))
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_control(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, 4);  // move by 5 stations
+    }
+    else
+      processed = true;
+  }
+
+// ALT-; and ALT-' -- up or down to stn that matches the N7DR criteria, in increments of a large number of stns
+  if (!processed and (e.is_alt(';') or e.is_alt('\'')))
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+
+ //     int NSKIP = 24;
+
+ //     bandmap& bm { bandmaps[cur_band] };
+
+ //     if (bandmaps[cur_band].cull_function() == 1)
+ //       NSKIP = win_bandmap.height() - 1;
+      const int NSKIP { (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 };
+
+      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, NSKIP);  // move by NSKIP + 1 stations
+    }
+    else
+      processed = true;
+  }
+
+#if 0
+  if (!processed and e.is_control('\''))
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+
+      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_control(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, 4);  // move by 5 stations
+    }
+    else
+      processed = true;
+  }
+#endif
 
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
@@ -8358,16 +8385,17 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 /*! \brief          Process a bandmap function, to jump to the next frequency returned by the function
     \param  fn_p    pointer to function
     \param  dirn    direction in which the function is to be applied
+    \param  nskip   number of stations to skip (default = 0)
     \return         always returns true
 
     This is a friend function to the bandmap class, to allow us to lock the bandmap here
 */
-bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
+bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip)
 { bandmap& bm { bandmaps[current_band] };
 
   safelock bm_lock(bm._bandmap_mutex);
 
-  const bandmap_entry be { (bm.*fn_p)( dirn ) };
+  const bandmap_entry be { (bm.*fn_p)( dirn, nskip ) };
 
   if (debug)
   { ost << "DEBUG process_bandmap_function()"

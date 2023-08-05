@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 214 2022-12-18 15:11:23Z  $
+// $Id: exchange.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -48,7 +48,8 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
 void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
   { const string& field_name { this_pair.first };
-    const string  filename   { truncate_before_first <std::string> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
+    //const string  filename   { truncate_before_first <std::string> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
+    string_view  filename   { truncate_before_first <std::string_view> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
 
     try
     { unordered_map<string /* call */, string /* prefill value */> call_value_map;
@@ -58,7 +59,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
       unsigned int field_column { 1 };
 
       if (contains(this_pair.second, ':'))
-      { const vector<string> fields { split_string <std::string> (this_pair.second, ':') };
+      { //const vector<string> fields { split_string <std::string> (this_pair.second, ':') };
+        const vector<string_view> fields { split_string <std::string_view> (this_pair.second, ':') };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
@@ -478,7 +480,6 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 
 // eliminate matched fields from sets of possible matches
 // remove assigned tuples (changes tuple_deque)
-//    REMOVE_IF_AND_RESIZE(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
     erase_if(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
     for (auto& t : unassigned_tuples)
@@ -613,7 +614,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       const TRIPLET& t { tuple_deque[0] };    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
-      const auto cit { FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+//      const auto cit { FIND_IF(exchange_template, [&t] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+      const auto cit { FIND_IF(exchange_template, [&t] (const exchange_field& ef) { return ( FIELD_NAMES(t).contains(ef.name())); } ) };
 
       if (cit != exchange_template.cend())
       { processed_field_on_last_pass = true;
@@ -646,7 +648,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
 
         const TRIPLET& t   { tuple_deque[0] };
-        const auto     cit { FIND_IF(exchange_template, [t] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+//        const auto     cit { FIND_IF(exchange_template, [t] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
+        const auto     cit { FIND_IF(exchange_template, [t] (const exchange_field& ef) { return ( FIELD_NAMES(t).contains(ef.name())); } ) };
 
         if (cit == exchange_template.cend())
         { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
@@ -862,7 +865,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     \param  get_canonical_value     whether to convert <i>value</i> to its corresponding canonical value
     \return                         <i>value</i> or canonical value corresponding to <i>value</i>, whichever was inserted
 */
-  auto insert_value = [&] (const string& value, const bool get_canonical_value = false)
+  auto insert_value = [&callsign, &field_name, this] (const string& value, const bool get_canonical_value = false)
     { const string rv { get_canonical_value ? rules.canonical_value(field_name, value) : value };     // empty -> empty
 
       _db += { { callsign, field_name }, rv };

@@ -1,4 +1,4 @@
-// $Id: cty_data.h 211 2022-11-28 21:29:23Z  $
+// $Id: cty_data.h 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -198,7 +198,8 @@ public:
 */
   inline bool is_alternative_callsign(const std::string& call) const
 //    { return contains(_alt_callsigns, call); }   
-    { return (_alt_callsigns > call); }
+//    { return (_alt_callsigns > call); }
+    { return _alt_callsigns.contains(call); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
@@ -206,8 +207,8 @@ public:
 */
   inline bool is_alternative_prefix(const std::string& pfx) const
 //    { return contains(_alt_prefixes, pfx); }
-//    { return _alt_prefixes.contains(pfx); }
-    { return (_alt_prefixes > pfx); }
+    { return _alt_prefixes.contains(pfx); }
+//    { return (_alt_prefixes > pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 222 2023-07-09 12:58:56Z  $
+// $Id: string_functions.h 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -192,6 +192,14 @@ template <class T>
 inline std::string to_string(T&& val)
   { return std::forward<T>(val); } 
 
+/*! \brief      Append a string_view to a string
+    \param  s   original string
+    \param  sv  string_view to append
+    \return     concatenation of <i>s</i> and <i>sv</i>
+*/
+inline std::string operator+(const std::string& s, std::string_view sv)
+  { return s + std::string { sv }; }
+
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
@@ -201,9 +209,6 @@ inline std::string to_string(T&& val)
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception.
     Compiler error if one uses str.size() - start_posn as a default length; value may not be calculated from other parameters
 */
-//inline std::string substring(const std::string& str, const size_t start_posn, const size_t length)
-//inline std::string substring(std::string_view str, const size_t start_posn, const size_t length)
-//  { return ( (str.size() > start_posn) ? static_cast<std::string>(str.substr(start_posn, length)) : EMPTY_STR ); }
 template <typename STYPE>
 inline auto substring(std::string_view str, const size_t start_posn, const size_t length) -> STYPE
   { return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } ); }
@@ -215,8 +220,6 @@ inline auto substring(std::string_view str, const size_t start_posn, const size_
 
     Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
-//inline std::string substring(const std::string& str, const size_t start_posn)
-//inline std::string substring(std::string_view str, const size_t start_posn)
 template <typename STYPE>
 inline auto substring(std::string_view str, const size_t start_posn) -> STYPE
   { return substring <STYPE> (str, start_posn, str.size() - start_posn); }
@@ -227,7 +230,6 @@ inline auto substring(std::string_view str, const size_t start_posn) -> STYPE
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-//std::string replace_char(const std::string& s, const char old_char, const char new_char);
 std::string replace_char(std::string_view s, const char old_char, const char new_char);
 
 /*! \brief              Replace every instance of one string with another
@@ -236,7 +238,6 @@ std::string replace_char(std::string_view s, const char old_char, const char new
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-//std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
 std::string replace(std::string_view s, std::string_view old_str, std::string_view new_str);
 
 /*! \brief              Replace part of a string with a byte-for-byte copy of an object
@@ -248,7 +249,6 @@ std::string replace(std::string_view s, std::string_view old_str, std::string_vi
     Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
 */
 template <typename T>
-//std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
 std::string replace_substring(std::string_view s, const size_t start_posn, const T& value)
 { std::string rv { s };
 
@@ -269,9 +269,7 @@ std::string replace_substring(std::string_view s, const size_t start_posn, const
     \param  ss  substring for which to search
     \return     whether <i>s</i> contains the substring <i>ss</i>
 */
-//inline bool contains(const std::string& s, const std::string& ss)
 inline bool contains(std::string_view s, std::string_view ss)
-//  { return s.find(ss) != std::string::npos; }
   { return s.find(ss) != std::string_view::npos; }
 
 /*! \brief          Does a string contain a particular substring at a particular location?
@@ -383,9 +381,13 @@ inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
     \return     left padded version of <i>s</i> rendered as a string and left padded with zeroes
 */
 template <typename T>
-  requires (std::is_integral_v<T> or std::is_same_v<base_type<T>, std::string>)
+//  requires (std::is_integral_v<T> or std::is_same_v<base_type<T>, std::string>)
+  requires (std::is_integral_v<T> or is_string<base_type<T>>)
 inline std::string pad_leftz(const T& s, const size_t len)
   { return pad_left(std::string_view { to_string(s) }, len, '0'); }
+
+inline std::string pad_leftz(std::string_view sv, const size_t len)
+  { return pad_left(sv, len, '0'); }
 
 /*! \brief              Right pad a string to a particular size
     \param  s           original string
@@ -412,7 +414,8 @@ inline std::string pad_right(T s, const size_t len, const char pad_char = ' ')
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-std::string read_file(const std::string& filename);
+//std::string read_file(const std::string& filename);
+std::string read_file(std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  path        the different directories to try, in order
@@ -422,7 +425,8 @@ std::string read_file(const std::string& filename);
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-std::string read_file(const std::vector<std::string>& path, const std::string& filename);
+//std::string read_file(const std::vector<std::string>& path, const std::string& filename);
+std::string read_file(const std::vector<std::string>& path, std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -716,10 +720,10 @@ inline auto clean_split_string(std::string_view cs, std::string_view separator) 
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components, with peripheral spaces removed
 */
-template <typename STYPE>
 //inline std::vector<std::string> clean_split_string(std::string&& cs, const std::string& separator)
-inline auto clean_split_string(std::string&& cs, std::string_view separator) -> std::vector<STYPE>
-  { return remove_peripheral_spaces(split_string <STYPE> (std::forward<std::string>(cs), separator)); }
+//template <typename STYPE>
+//inline auto clean_split_string(std::string&& cs, std::string_view separator) -> std::vector<STYPE>
+//  { return remove_peripheral_spaces(split_string <STYPE> (std::forward<std::string>(cs), separator)); }
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string
@@ -737,9 +741,9 @@ inline auto clean_split_string(std::string_view cs, const char separator = ',') 
 */
 //inline std::vector<std::string> clean_split_string(std::string&& cs, const char separator = ',')
 //  { return remove_peripheral_spaces(split_string <std::string> (std::forward<std::string>(cs), separator)); }
-template <typename STYPE>
-inline auto clean_split_string(std::string&& cs, const char separator = ',') -> std::vector<STYPE>
-  { return remove_peripheral_spaces <std::string> (split_string <STYPE> (std::forward<std::string>(cs), separator)); }
+//template <typename STYPE>
+//inline auto clean_split_string(std::string&& cs, const char separator = ',') -> std::vector<STYPE>
+//  { return remove_peripheral_spaces <std::string> (split_string <STYPE> (std::forward<std::string>(cs), separator)); }
 
 //template <typename STYPE, typename T>
 //  requires (is_string<T> or is_string_view<T>)
@@ -1302,7 +1306,15 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//"s);
+//std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//"s);
+//std::string remove_trailing_comment(std::string_view str, const std::string& comment_str = "//"s);
+//std::string remove_trailing_comment(std::string_view str, std::string_view comment_str = "//"s);
+template <typename STYPE>
+auto remove_trailing_comment(std::string_view str, const std::string_view comment_str = "//"sv) -> STYPE
+{ const size_t posn { str.find(comment_str) };
+
+  return ( (posn == std::string_view::npos) ? STYPE { str } : remove_trailing_spaces <STYPE> (substring <std::string_view> (str, 0, posn)) );
+}
 
 /*! \brief              Add delimiters to a string
     \param  str         string
@@ -1339,8 +1351,11 @@ inline auto truncate_before_first(std::string_view str, const char c) -> STYPE
     \param  c           target character
     \return             <i>str</i> truncated immediately after <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
 */
-inline std::string after_first(const std::string& str, const char c)
-  { return (substring <std::string> (str, str.find(c) + 1)); }
+//inline std::string after_first(const std::string& str, const char c)
+//  { return (substring <std::string> (str, str.find(c) + 1)); }
+template <typename STYPE>
+inline auto after_first(std::string_view str, const char c) -> STYPE
+  { return (substring <STYPE> (str, str.find(c) + 1)); }
 
 /*! \brief          Return position in a string at the end of a target string, if present
     \param  str     string to search

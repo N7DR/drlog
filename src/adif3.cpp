@@ -1,4 +1,4 @@
-// $Id$
+// $Id: adif3.cpp 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -71,19 +71,16 @@ void adif3_field::_verify(void) const
       if (_value.length() != 8)
         throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
 
-//      const string year { substring <string> (_value, 0, 4) };
-      string_view year { substring <string_view> (_value, 0, 4) };
+      const string_view year { substring <string_view> (_value, 0, 4) };
       
       if (year < "1930"s)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid year in "s + _name + ": "s + _value);
         
-//      const int month { from_string<int>(_value.substr(4, 2)) };
       const int month { from_string<int>(substring <string_view> (_value, 4, 2)) };
       
       if ( (month < 1) or (month > 12) )
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid month in "s + _name + ": "s + _value);
 
-//      const int day { from_string<int>(_value.substr(6, 2)) };
       const int day { from_string<int>(substring <string_view> (_value, 6, 2)) };
       
       int days_in_month { 31 };
@@ -188,8 +185,8 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 
 // CQZ : 1..40
       if (const auto cit { _positive_integer_range.find(_name) }; cit != _positive_integer_range.cend())
-      { const int& min_value { cit->second.first };
-        const int& max_value { cit->second.second };   
+      { const int min_value { cit->second.first };
+        const int max_value { cit->second.second };   
         
         if (const int zone { from_string<int>(_value) }; ((zone < min_value) or (zone > max_value)) )
           throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
@@ -213,17 +210,14 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
       if ( (utc.length() != 4) and (utc.length() != 6) )
         throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
  
-//      if (const int hours { from_string<int>(utc.substr(0, 2)) }; hours > 23)
       if (const int hours { from_string<int>(substring <string_view> (utc, 0, 2)) }; hours > 23)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid hours value in "s + _name + ": "s + _value);
 
-//      if (const int minutes { from_string<int>(utc.substr(2, 2)) }; minutes > 59)
       if (const int minutes { from_string<int>(substring <string_view> (utc, 2, 2)) }; minutes > 59)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid minutes value in "s + _name + ": "s + _value);
 
       if (utc.length() == 6)
-      { //if (const int seconds { from_string<int>(utc.substr(4, 2)) }; seconds > 59)
-        if (const int seconds { from_string<int>(substring <string_view> (utc, 4, 2)) }; seconds > 59)
+      { if (const int seconds { from_string<int>(substring <string_view> (utc, 4, 2)) }; seconds > 59)
           throw adif3_error(ADIF3_INVALID_VALUE, "Invalid seconds value in "s + _name + ": "s + _value);   
       }
     }

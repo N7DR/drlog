@@ -45,7 +45,7 @@ string qtc_entry::to_string(void) const
 vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const
 { vector<qtc_entry> rv;
 
-  FOR_ALL(_qtc_entries, [&] (const QTC_AND_STATUS& pqeb) { if (qstatus == pqeb.second) rv += pqeb.first; } );  // should use COPY_IF
+  FOR_ALL(_qtc_entries, [qstatus, &rv] (const QTC_AND_STATUS& pqeb) { if (qstatus == pqeb.second) rv += pqeb.first; } );  // should use COPY_IF
 
   return rv;
 }
@@ -103,14 +103,11 @@ void qtc_series::mark_as_unsent(const unsigned int n)
 
     Returns an empty <i>qtc_entry</i> if no entries meet the criteria
 */
-qtc_entry qtc_series::first_not_sent(const unsigned int posn)
+qtc_entry qtc_series::first_not_sent(const unsigned int posn) const
 { unsigned int index { posn };
 
   while (index < _qtc_entries.size())
   { const auto& [ qe, status ] { _qtc_entries[index] };
-
- //   if (_qtc_entries[index].second == QTC_STATUS::UNSENT)
- //     return _qtc_entries[index].first;
 
     if (status == QTC_STATUS::UNSENT)
       return qe;
@@ -160,8 +157,7 @@ string qtc_series::output_string(const unsigned int n) const
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
   rv += substring <std::string> (pad_right(_target, 13), 0, 13) + SPACE_STR;
 
-//  const vector<string> qtc_ser { split_string(_id, "/"s) };
-  const vector<string> qtc_ser { split_string <std::string> (_id, '/') };
+  const vector<string_view> qtc_ser { split_string <std::string_view> (_id, '/') };
 
   rv += pad_leftz(qtc_ser[0], 3) + "/"s + pad_leftz(qtc_ser[1], 2) + create_string(' ', 5);
   rv += substring <std::string> (pad_right(_source, 13), 0, 13) + SPACE_STR;
@@ -245,7 +241,7 @@ window& operator<(window& win, const qtc_series& qs)
         \brief All QTCs
 */
 
-pt_mutex qtc_database_mutex { "QTC DATABASE"s };                            ///< mutex to allow correct locking
+//pt_mutex qtc_database_mutex { "QTC DATABASE"s };                            ///< mutex to allow correct locking
 
 /*! \brief      Add a series of QTCs to the database
     \param  q   the series of QTCs to be added
@@ -253,7 +249,7 @@ pt_mutex qtc_database_mutex { "QTC DATABASE"s };                            ///<
 void qtc_database::operator+=(const qtc_series& q)
 { qtc_series q_copy { q };
 
-  SAFELOCK(qtc_database);
+  SAFELOCK(_qtc_database);
 
   if (q_copy.id().empty())
     q_copy.id( to_string(_qtc_db.size() + 1) + "/"s + to_string(q.size()) );
@@ -271,7 +267,7 @@ qtc_series qtc_database::operator[](size_t n) const
 { if (n >= size())
     return qtc_series();
 
-  SAFELOCK(qtc_database);
+  SAFELOCK(_qtc_database);
 
   return _qtc_db.at(n);
 }
@@ -283,7 +279,7 @@ qtc_series qtc_database::operator[](size_t n) const
 unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsign) const
 { unsigned int rv { 0 };
 
-  SAFELOCK(qtc_database);
+  SAFELOCK(_qtc_database);
 
   FOR_ALL(_qtc_db, [=, &rv] (const qtc_series& QTC) { if (QTC.target() == destination_callsign) rv += QTC.size(); } );
 
@@ -400,7 +396,7 @@ void qtc_database::read(const string& filename)
 void qtc_buffer::operator+=(const logbook& logbk)
 { const vector<QSO> qsos { logbk.as_vector() };
 
-  FOR_ALL(qsos, [&] (const QSO& qso) { (*this) += qso; } );
+  FOR_ALL(qsos, [this] (const QSO& qso) { (*this) += qso; } );
 }
 
 /*! \brief          Add a QSO to the buffer

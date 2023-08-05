@@ -1,4 +1,4 @@
-// $Id: macros.h 222 2023-07-09 12:58:56Z  $
+// $Id: macros.h 224 2023-08-03 20:54:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -862,6 +862,12 @@ auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
 
 // convenient syntactic sugar for some STL functions
 
+// this does not work: must be a non-static member function
+//template <typename M>
+//  requires (is_map<M> and is_string<typename M::key_type>)
+//inline auto operator[](M& m, std::string_view sv) -> typename M::value_type
+//  { return m[string { sv }]; }
+
 /*! \brief              Add an element to a MUM
     \param  m           destination MUM
     \param  element     element to insert
@@ -1041,6 +1047,8 @@ template <typename C, typename E>
 inline void operator+=(C& sus, E&& element)
   requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
   { sus.insert(std::forward<E>(element)); }
+//  { sus.insert(std::forward<E>( typename C::value_type {element} )); }    // does not work
+
 
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
@@ -1050,6 +1058,15 @@ inline void operator+=(C& sus, E&& element)
 // see also https://www.sandordargo.com/blog/2021/02/17/cpp-concepts-4-ways-to-use-them
 inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_type& element)
   { sus.insert(element); }
+
+/*! \brief              Add a string_view element to a set or unordered set or strings
+    \param  sus         destination set or unordered set
+    \param  element     element to insert
+*/
+template <typename C>
+inline void operator+=(C& sus, std::string_view element)
+  requires is_sus<C> and is_string<typename C::value_type>
+  { sus += (std::string { element }); }
 
 /*! \brief          Add all elements of a vector to a set or unordered set
     \param  sus     destination set or unordered set
@@ -1222,8 +1239,6 @@ inline void operator+=(C& c1, const E& element)
 template <typename C>
 inline void operator+=(C& c1, std::string_view element)
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (is_string<typename C::value_type>)
-//{ c1.push_back(std::string { element} ); }
-//{ c1 += std::string { element }; }
 { c1.emplace_back(std::string { element }); }
 
 /*! \brief      Insert an element into a list
@@ -1356,35 +1371,6 @@ template <typename C>
 inline void operator-=(C& c1, C c2)
   { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
 
-#if 0
-template <typename C>
-typename C::value_type value_line(const C& values, const int pc)
-{ if (values.empty())
-    return std::numeric_limits<typename C::value_type>::max();
-
-  std::vector<typename C::value_type> ordered_vector;
-  ordered_vector.reserve(values.size());
-
-  FOR_ALL(values, [&ordered_vector] (const auto& v) { ordered_vector += v; });
-
-  SORT(ordered_vector);
-
-  const int clamped_pc { std::clamp(pc, 0, 100) };
-
-  ost << "clamped_pc = " << clamped_pc << std::endl;
-
-  if (clamped_pc == 100)
-    return (ordered_vector[0]);     // all match
-
-  if (clamped_pc == 0)
-    return ordered_vector[ordered_vector.size() + 1];   // none match
-
-  const size_t idx { static_cast<size_t>((values.size() * (100 - static_cast<float>(clamped_pc)) / 100) + 0.5) };
-
-  return ordered_vector.at(idx);
-}
-#endif
-
 /*! \brief          Return all the keys in a map or unordered_map
     \param  m       map or unordered_map
     \return         all the keys in <i>m</i>
@@ -1429,7 +1415,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
   for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
   { for (const auto& p : cit->second)
       rv += { p, cit->first };
- //   rv.insert(std::pair { p, cit->first });
   }
 
   return rv;
@@ -1481,5 +1466,16 @@ public:
 // current time (in seconds since the epoch)
 inline time_t NOW(void)
   { return ::time(NULL); }           // get the time from the kernel
+
+/*! \brief        Create a reverse iterator from a bidirectional iterator, pointing to the same element
+    \param  it    bidirectional iterator
+    \return       reverse iterator that points to <i>*fit</i>
+
+    See: Josuttis "The C++ Standard Library", first ed. p. 266f
+*/
+template <typename IT>
+  requires std::bidirectional_iterator<IT>
+inline auto REVERSE_IT(IT it) -> std::reverse_iterator<decltype(it)>
+  { return std::prev(std::reverse_iterator<decltype(it)>(it)); }
 
 #endif    // MACROS_H

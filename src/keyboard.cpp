@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 206 2022-05-22 12:47:37Z  $
+// $Id: keyboard.cpp 224 2023-08-03 20:54:02Z  $
 
 /*! \file 	keyboard.cpp
 
@@ -287,13 +287,6 @@ void keyboard_queue::process_events(void)
     }
   }
 }
-
-/// how many events are in the queue?
-//size_t keyboard_queue::size(void) const
-//{ SAFELOCK(_keyboard);
-//
-//  return _events.size();
-//}
 
 /// is the queue empty?
 bool keyboard_queue::empty(void) const

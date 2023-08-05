@@ -1,4 +1,4 @@
-// $Id: qso.h 210 2022-10-31 17:26:13Z  $
+// $Id: qso.h 223 2023-07-30 13:37:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -113,7 +113,8 @@ public:
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
-  QSO(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
+//  QSO(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
+  QSO(const drlog_context& context, std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE(callsign);             ///< call
@@ -204,7 +205,8 @@ public:
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
-  void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
+//  void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
+  void populate_from_verbose_format(const drlog_context& context, const std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
 /*! \brief              Read fields from a line in the disk log
     \param  str         line from log file
