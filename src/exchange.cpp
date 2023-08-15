@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: exchange.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -863,10 +863,12 @@ string exchange_field_database::guess_value(const string& callsign, const string
 /*! \brief                          Given a value, insert the corresponding canonical or as-is value into the database
     \param  value                   value of a field
     \param  get_canonical_value     whether to convert <i>value</i> to its corresponding canonical value
-    \return                         <i>value</i> or canonical value corresponding to <i>value</i>, whichever was inserted
+    \return                         <i>value</i> or canonical value corresponding to <i>value</i>, whichever was inserted, as a string
 */
-  auto insert_value = [&callsign, &field_name, this] (const string& value, const bool get_canonical_value = false)
-    { const string rv { get_canonical_value ? rules.canonical_value(field_name, value) : value };     // empty -> empty
+//  auto insert_value = [&callsign, &field_name, this] (const string& value, const bool get_canonical_value = false)
+  auto insert_value = [&callsign, &field_name, this] (auto value, const bool get_canonical_value = false)
+    { //const string rv { get_canonical_value ? rules.canonical_value(field_name, value) : value };     // empty -> empty
+      const string rv { get_canonical_value ? rules.canonical_value(field_name, to_string(value)) : to_string(value) };     // empty -> empty
 
       _db += { { callsign, field_name }, rv };
 
@@ -875,9 +877,9 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
   constexpr bool INSERT_CANONICAL_VALUE { true };
 
-  auto ve_area_to_province = [](const char call_area)
+  auto ve_area_to_province = [] (const char call_area)
     { if (!isdigit(call_area))
-        return string();
+        return string { };
 
        static const array<string, 10> abbreviations { { string { }, "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string { }, "NB"s} };
 
@@ -903,12 +905,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     }
 
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
-    { //static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
-      //                                                                            { "VO2"s, "LB"s },
-      //                                                                            { "VY2"s, "PE"s }
-      //                                                                          };
-
-      const string pfx { wpx_prefix(callsign) };
+    { const string pfx { wpx_prefix(callsign) };
 
       rv = MUM_VALUE(province_map, pfx);
 
@@ -932,12 +929,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
     { const string pfx { wpx_prefix(callsign) };
 
-      //if (pfx == "VY2"sv)
-      //  rv = "PE"s;
-
-      //if (rv.empty() and (pfx == "VO1"sv))
-      //  rv = "NF"s;
-
       rv = MUM_VALUE(province_map, pfx);
 
       if (rv.empty())
@@ -957,7 +948,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
       return insert_value(rv, INSERT_CANONICAL_VALUE);
 
 // no entry in drmaster database; try the location database
-    return insert_value(to_string(location_db.cq_zone(callsign)), INSERT_CANONICAL_VALUE);
+//    return insert_value(to_string(location_db.cq_zone(callsign)), INSERT_CANONICAL_VALUE);
+    return insert_value(location_db.cq_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
   if (field_name == "CWPOWER"sv)
@@ -1051,10 +1043,10 @@ string exchange_field_database::guess_value(const string& callsign, const string
       return insert_value(rv, INSERT_CANONICAL_VALUE);
 
 // no entry in drmaster database; try the location database
-    return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
+//    return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
+    return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
-//  if ( (field_name == "JAPREF"sv) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
   if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth());
 
@@ -1065,11 +1057,11 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
+  { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
-      return string();
+      return string { };
     }
 
     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
@@ -1080,11 +1072,10 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
     string rv;
 
-//    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or callsign.starts_with("RI1AN"s)) )
-    if (!drm_line.empty() and ( (countries.contains(location_db.canonical_prefix(callsign))) or callsign.starts_with("RI1AN"s)) )
+    if (!drm_line.empty() and ( (countries.contains(location_db.canonical_prefix(callsign))) or callsign.starts_with("RI1AN"sv)) )
     { rv = drm_line.qth();
 
-      if (field_name == "RD2"sv and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
+      if ( (field_name == "RD2"sv) and (rv.length() > 2) )     // allow for case when full 4-character RDA is in the drmaster file
         rv = substring <std::string> (rv, 0, 2);
 
       return insert_value(rv); 

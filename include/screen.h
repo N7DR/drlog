@@ -1,4 +1,4 @@
-// $Id: screen.h 223 2023-07-30 13:37:25Z  $
+// $Id: screen.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -262,8 +262,8 @@ protected:
   int           _x              { 0 };          ///< x of origin (in proper coordinates)
   int           _y              { 0 };          ///< y of origin (in proper coordinates)
   
-  WINDOW* _wp                   { nullptr };    ///< ncurses handle
-  PANEL*  _pp                   { nullptr };    ///< panel associated with this window
+  WINDOW*       _wp             { nullptr };    ///< ncurses handle
+  PANEL*        _pp             { nullptr };    ///< panel associated with this window (currently not used)
 
   int    _sx;                   ///< system cursor x value
   int    _sy;                   ///< system cursor y value
@@ -499,9 +499,17 @@ public:
 */
   window& operator<(const std::string& s);
 
+/*! \brief      Write a string_view to the window
+    \param  s   string to write
+    \return     the window
+*/
   inline window& operator<(std::string_view sv)
     { return (*this < std::string { sv }); }
 
+/*! \brief      Write a C-style string [!] to the window
+    \param  s   string to write
+    \return     the window
+*/
   inline window& operator<(const char* cp)
     { return (*this < std::string { cp }); }
 

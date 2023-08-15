@@ -1,4 +1,4 @@
-// $Id: bandmap.h 224 2023-08-03 20:54:02Z  $
+// $Id: bandmap.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -966,6 +966,7 @@ public:
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
      The return value can be tested with .empty() to see if a station was found.
@@ -975,6 +976,7 @@ public:
 
 /*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed station for a QSO in the direction <i>dirn</i>
 
      The return value can be tested with .empty() to see if a station was found
@@ -984,6 +986,7 @@ public:
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed multiplier in the direction <i>dirn</i>
 
      The return value can be tested with .empty() to see if a station was found
@@ -993,15 +996,17 @@ public:
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
     \param dirn    direction in which to search
+    \param nskip   number of matches to ignore
     \return        bandmap entry (if any) corresponding to the next needed all-time call+band+mode in the direction <i>dirn</i>
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
-    { return needed(&bandmap_entry::is_all_time_first, dirn); }
+  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+    { return needed(&bandmap_entry::is_all_time_first, dirn, nskip); }
 
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
     \param dirn    direction in which to search
+    \param nskip   number of matches to ignore
     \return        bandmap entry (if any) corresponding to the next entry that matches the N7DR criteria
 
     The return value can be tested with .empty() to see if a station was found
@@ -1011,6 +1016,7 @@ public:
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next station in the direction <i>dirn</i> that is needed and an all-time new call+band+mode
 
      The return value can be tested with .empty() to see if a station was found
@@ -1020,6 +1026,7 @@ public:
 
 /*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next station in the direction <i>dirn</i> that has QSLed and is an all-time new call+band+mode
 
      The return value can be tested with .empty() to see if a station was found
@@ -1060,7 +1067,8 @@ public:
 */
   inline bool is_recent_call(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      return (_recent_calls > callsign);
+ //     return (_recent_calls > callsign);
+      return _recent_calls.contains(callsign);
     }
 
 /*!  \brief             Add a call or regex to the do-not-add list
@@ -1129,8 +1137,8 @@ template<typename C>
 */
   window& write_to_window(window& win);
 
-/*! \brief          Rename the mutex associated with this bandmap
-    \param  new_name    the new name of the mutex
+/*! \brief            Rename the mutex associated with this bandmap
+    \param  new_name  the new name of the mutex
 */
   inline void rename_mutex(const std::string& new_name)
     { _bandmap_mutex.rename(new_name); }

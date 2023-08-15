@@ -1,4 +1,4 @@
-// $Id: qso.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: qso.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -285,7 +285,8 @@ void QSO::populate_from_verbose_format(const string& str)
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-void QSO::populate_from_log_line(const string& str)
+//void QSO::populate_from_log_line(const string& str)
+void QSO::populate_from_log_line(string_view str)
 { ost << "Inside populate_from_log_line(); input string is:" << *this << endl;
   ost << "string = *" << str << "*" << endl;
 
@@ -450,7 +451,7 @@ void QSO::populate_from_log_line(const string& str)
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
-          if (field.starts_with("received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
+          if (field.starts_with("received-PREC"sv))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
             _received_exchange[received_index++].value(_callsign);
         }
       }
@@ -489,10 +490,10 @@ string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   static vector< vector<string> > individual_values;
   
   if (!record_length)                                         // if we don't yet know the record length
-  { const vector<string> template_fields { split_string <std::string> (cabrillo_qso_template, ',') };         // colon-delimited values
+  { const vector<string_view> template_fields { split_string <std::string_view> (cabrillo_qso_template, ',') };         // colon-delimited values
   
     for (const auto& template_field : template_fields)
-      individual_values += split_string <std::string> (remove_peripheral_spaces <std::string> (template_field), ':');
+      individual_values += split_string <std::string> (remove_peripheral_spaces <std::string_view> (template_field), ':');
   
     for (const auto& value : individual_values)
     { const unsigned int last_char_posn { from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1 };
@@ -621,9 +622,10 @@ specification tells us otherwise, that's what we do.
     { const string field_name { name.substr(6) };
     
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { const vector<string> vec { clean_split_string <string> (field_name, '+') };
+      { //const vector<string> vec { clean_split_string <string> (field_name, '+') };
 
-        for (const auto& name : vec)
+ //       for (const auto& name : vec)
+        for (const auto& name : clean_split_string <string> (field_name, '+'))
         { for (const auto& [nm, val] : _sent_exchange)
             if (nm == name)
               value = val;
@@ -640,11 +642,11 @@ specification tells us otherwise, that's what we do.
     if (name.starts_with("REXCH-"sv))
     { const string field_name { substring <std::string> (name, 6) };
 
-//      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { const vector<string> vec { clean_split_string <string> (field_name, '+') };
+      { //const vector<string> vec { clean_split_string <string> (field_name, '+') };
 
-        for (const auto& name : vec)
+        //for (const auto& name : vec)
+        for (const auto& name : clean_split_string <string> (field_name, '+'))
         { if (!received_exchange(name).empty())
             value = received_exchange(name);
         }
@@ -744,32 +746,22 @@ bool QSO::exchange_match(const string& rule_to_match) const
   else                          // three tokens
   { const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
-//    string exchange_field_value;                                   // default is empty field
-
 // is this field present?
     const string exchange_field_value { received_exchange(exchange_field_name) };   // default is empty field
 
 // now try the various legal operations
-#if 0
-    const string op { remove_peripheral_spaces(tokens[1]) };
-
-    string target { remove_peripheral_spaces(tokens[2]) };
-
-    target = remove_trailing(remove_leading(target, '"'), '"');                   // strip any double quotation marks
-#endif
-
 // !=
     if (!remove_leading_spaces <std::string> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
     { const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
 
-      if (op == "!="s)                                                // precise inequality
+      if (op == "!="sv)                                                // precise inequality
       { const string target { remove_trailing <std::string> (remove_leading <std::string> (remove_peripheral_spaces <std::string> (tokens[2]), '"'), '"') };                   // strip any double quotation marks
 
         ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
         ost << "target: *" << target << "* " << endl;
 
-        return exchange_field_value != target;
+        return (exchange_field_value != target);
       }
     }
   }
@@ -789,7 +781,7 @@ string QSO::received_exchange(const string& field_name) const
       return field.value();
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief              Return a single field from the sent exchange
@@ -858,10 +850,10 @@ string QSO::log_line(void)
   for (const auto& field : _received_exchange)
   { unsigned int field_width { QSO_MULT_WIDTH };
 
-    const string& name { field.name() };
+    const string name { field.name() };
 
 // skip the CALL field from SS, since it's already on the line
-    if (name != "CALL"sv and name != "CALLSIGN"sv)
+    if ( (name != "CALL"sv) and (name != "CALLSIGN"sv) )
     { try
       { field_width = field_widths.at(name);
       }
@@ -888,7 +880,7 @@ string QSO::log_line(void)
   for (const auto& field : _received_exchange)
   { unsigned int field_width { QSO_MULT_WIDTH };
 
-    const string& name { field.name() };
+    const string name { field.name() };
 
     try
     { field_width = field_widths.at(name);
@@ -904,15 +896,19 @@ string QSO::log_line(void)
 
   static const vector<string> log_fields { "NUMBER"s, "DATE"s, "UTC"s, "MODE"s, "FREQUENCY"s, "CALLSIGN"s };
 
-  FOR_ALL(log_fields, [=, this](const string& log_field) { _log_line_fields += log_field; } );
+  FOR_ALL(log_fields,         [this] (const string& log_field) { _log_line_fields += log_field; } );
+  FOR_ALL(_sent_exchange,     [this] (const auto& exch_field)  { _log_line_fields += ("sent-"s + exch_field.first); } );
+  FOR_ALL(_received_exchange, [this] (const auto& field)       { if (field.name() != "CALL"sv)
+                                                                   _log_line_fields += ("received-"s + field.name());
+                                                               } );
 
-  for (const auto& exch_field : _sent_exchange)
-    _log_line_fields += ("sent-"s + exch_field.first);
+ // for (const auto& exch_field : _sent_exchange)
+ //   _log_line_fields += ("sent-"s + exch_field.first);
 
-  for (const auto& field : _received_exchange)
-  { if (field.name() != "CALL"s)                               // SS is special
-      _log_line_fields += ("received-"s + field.name());
-  }
+ // for (const auto& field : _received_exchange)
+//  { if (field.name() != "CALL"s)                               // SS is special
+//      _log_line_fields += ("received-"s + field.name());
+//  }
 
   return rv;
 }
@@ -934,22 +930,22 @@ bool QSO::operator==(const QSO& q) const
     return false;
 
   if (_frequency_rx != q._frequency_rx)
-      return false;
+    return false;
 
   if (_mode != q._mode)
-      return false;
+    return false;
 
   if (_my_call != q._my_call)
-      return false;
+    return false;
 
   if (_received_exchange != q._received_exchange)
-      return false;
+    return false;
 
   if (_sent_exchange != q._sent_exchange)
-      return false;
+    return false;
 
   if (_utc != q._utc)
-      return false;
+    return false;
 
   return true;
 }
@@ -969,16 +965,20 @@ ostream& operator<<(ostream& ost, const QSO& q)
       << ", Freq: " << q.freq()
       << ", Sent: ";
       
-  const vector<pair<string, string> > sent_exchange { q.sent_exchange() };
+//  const vector<pair<string, string> > sent_exchange { q.sent_exchange() };
 
-  for (unsigned int n { 0 }; n < sent_exchange.size(); ++n)
-    ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";    
+//  for (unsigned int n { 0 }; n < sent_exchange.size(); ++n)
+//    ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";
+
+  for (const auto& [sent_name, sent_value] : q.sent_exchange())
+    ost << sent_name << " " << sent_value << " ";
 
   ost << ", Rcvd: ";
 
-  const vector<received_field> received_exchange { q.received_exchange() };
+//  const vector<received_field> received_exchange { q.received_exchange() };
 
-  for (const auto& received_exchange_field : received_exchange)
+//  for (const auto& received_exchange_field : received_exchange)
+  for (const auto& received_exchange_field : q.received_exchange())
     ost << received_exchange_field << "  ";
 
   ost << ", Comment: " << q.comment()

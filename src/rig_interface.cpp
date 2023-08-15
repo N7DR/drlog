@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: rig_interface.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,6 +35,8 @@
 using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
+
+using namespace std::literals::chrono_literals;
 
 extern bool rig_is_split;
 
@@ -124,7 +126,7 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       bool retry { true };
 
       constexpr int MAX_RETRIES { 2 };
-      constexpr int MAX_ERROR { 10 };   // max permitted frequency error, in Hz
+ //     constexpr int MAX_ERROR { 10 };   // max permitted frequency error, in Hz
 
       int n_retries { 0 };
 
@@ -133,9 +135,15 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
-//        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
-        if (const auto rf {_rig_frequency(v)}; (abs(rf - f) > MAX_ERROR) )    // explicitly check the frequency
-        { ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
+        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
+// if we use the following line, then sometimes we get trapped and cannot move down in frequency
+// if the band marker is just *above* a bm entry (say, if we have manually moved up slightly in frequency)
+//        if (const auto rf {_rig_frequency(v)}; (abs(rf - f) > MAX_ERROR) )    // explicitly check the frequency
+        { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
+
+          _error_alert(msg);
+          ost << msg << "; retrying" << endl;
+//          ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
 
           if (n_retries <= MAX_RETRIES)
             sleep_for(RETRY_TIME);
@@ -275,7 +283,8 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ constexpr milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
+{ //constexpr milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
+  constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
 
   _last_commanded_mode = m;
 
@@ -470,7 +479,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-unsigned int rig_interface::baud_rate(void)
+unsigned int rig_interface::baud_rate(void) const
 { SAFELOCK(_rig);
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
@@ -493,9 +502,8 @@ void rig_interface::data_bits(const unsigned int bits)
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-unsigned int rig_interface::data_bits(void)
+unsigned int rig_interface::data_bits(void) const
 { SAFELOCK(_rig);
-
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
 }
 
@@ -517,14 +525,13 @@ void rig_interface::stop_bits(const unsigned int bits)
 /*! \brief      Get the number of stop bits
     \return     number of stop bits
 */
-unsigned int rig_interface::stop_bits(void)
+unsigned int rig_interface::stop_bits(void) const
 { SAFELOCK(_rig);
-
   return (_rigp ? _rigp->state.rigport.parm.serial.stop_bits : 0);
 }
 
 /// get the rig's mode
-MODE rig_interface::rig_mode(void)
+MODE rig_interface::rig_mode(void) const
 { if (!_rig_connected)
     return _last_commanded_mode;
   else
@@ -589,15 +596,6 @@ int rig_interface::rit(void)
     { _error_alert("Invalid rig response in rit(): "s + value);
       return 0;
     }
-
-#if 0
-  if (const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; value.length() < 8)
-    { _error_alert("Invalid rig response in rit(): "s + value);
-      return 0;
-    }
-    else
-      return from_string<int>(substring(value, 2, 5));
-#endif
   }
   else
   { SAFELOCK(_rig);
@@ -645,14 +643,6 @@ bool rig_interface::rit_enabled(void)
       { _error_alert("Invalid length in rit_enabled(): "s + response);
         return false;
       }
-
-
-//if (const string response { raw_command("RT;"s, RESPONSE::EXPECTED) }; response.length() < 4)
- //     { _error_alert("Invalid length in rit_enabled(): "s + response);
- //       return false;
- //     }
- //     else
- //       return (response[2] == '1');
     }
     
     case RIG_MODEL_DUMMY :
@@ -694,14 +684,6 @@ bool rig_interface::xit_enabled(void)
       { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
         return false;
       }
-
-
-//if (const string response { raw_command("XT;"s, RESPONSE::EXPECTED) }; response.length() < 4)
-//      { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
-//        return false;
-//      }
-//      else
-//        return (response[2] == '1');
     }
     
     case RIG_MODEL_DUMMY :
@@ -730,9 +712,9 @@ void rig_interface::xit(const int hz)
   else
   { SAFELOCK(_rig);
 
-    const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
+//    const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) }; status != RIG_OK)
       _error_alert("Hamlib error in xit(int)");  // handle this error upstairs
   }
 }
@@ -868,7 +850,7 @@ int rig_interface::keyer_speed(void)
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len)
+string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
 { const bool response_expected { expectation == RESPONSE::EXPECTED };
 
   struct rig_state* rs_p { &(_rigp->state) };
@@ -879,7 +861,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
   static array<char, INBUF_SIZE> c_in;
 
-  unsigned int total_read         { 0 };
+  unsigned int total_read { 0 };
 
   string rcvd;
 
@@ -976,7 +958,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
           else
           { if (status == 0)                // possibly a timeout error
             { if (counter == MAX_ATTEMPTS - 1)
-              { if (cmd == "TQ;"s)
+              { if (cmd == "TQ;"sv)
                 { rig_communication_failures++;
 
                   if (rig_communication_failures == 1)
@@ -987,7 +969,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
               }
             }
             else
-            { if (cmd == "TQ;"s)
+            { if (cmd == "TQ;"sv)
               { if (rig_communication_failures != 0)
                 { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
                   rig_communication_failures = 0;
@@ -1002,7 +984,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
                 rcvd += string(c_in.data());
 
-                if (contains(rcvd, ";"s))
+                if (contains(rcvd, ';'))
                   completed = true;
               }
             }
@@ -1227,7 +1209,7 @@ int rig_interface::bandwidth(void)
     \param  bm  band and mode
     \return     the rig's most recent frequency for bandmode <i>bm</i>
 */
-frequency rig_interface::get_last_frequency(const bandmode bm)
+frequency rig_interface::get_last_frequency(const bandmode bm) const
 { SAFELOCK(_rig);
 
   return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not present in the map
@@ -1402,7 +1384,7 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 
     Works only with K3
 */
-unsigned int rig_interface::centre_frequency(void)
+unsigned int rig_interface::centre_frequency(void) const
 { if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return 0;
 
@@ -1448,7 +1430,7 @@ void rig_interface::centre_frequency(const unsigned int fc)
 
     Works only with K3
 */
-bool rig_interface::rx_ant(void)
+bool rig_interface::rx_ant(void) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
     { const string result { raw_command("AR;", RESPONSE::EXPECTED) };
@@ -1481,7 +1463,7 @@ void rig_interface::rx_ant(const bool torf)
 
     Works only with K3
 */
-bool rig_interface::notch_enabled(const string& ds_result)
+bool rig_interface::notch_enabled(const string& ds_result) const
 { if (!_rig_connected)
     return false;
 
@@ -1526,7 +1508,7 @@ void rig_interface::k3_extended_mode(void)
 */
 void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
 { if (_model == RIG_MODEL_K3)
-  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };
+  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };  // the cast is necessary
     const string press_code { (torh == PRESS::TAP) ? "SWT"s : "SWH"s };
     const string command    { press_code + n_str + ";"s };
 
@@ -1560,7 +1542,6 @@ void rig_interface::base_state(void)
   { rit_disable();
 
     if (_model == RIG_MODEL_K3)
-//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
       sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
@@ -1568,7 +1549,6 @@ void rig_interface::base_state(void)
   { split_disable();
 
     if (_model == RIG_MODEL_K3)
-//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
       sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
@@ -1576,7 +1556,6 @@ void rig_interface::base_state(void)
   { sub_receiver_disable();
 
     if (_model == RIG_MODEL_K3)
-//      sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
       sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 }

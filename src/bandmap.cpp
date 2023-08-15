@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: bandmap.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1048,6 +1048,7 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
+     \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
      The return value can be tested with .empty() to see if a station was found.
@@ -1072,82 +1073,34 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 
   const frequency target_freq { marker_it->freq() };
 
-#if 0
-    auto gnu = [fp, &fe, &target_freq] (auto foit, const int nskip)
-    { auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
-
-      int  nskipped { 0 };
-
-      while ( (nskipped <= nskip) and (cit2 != fe.cend()) )
-      { //ost << "nskipped = " << nskipped << endl;
-
-        if (cit2 != fe.cend())
-        { if (const auto cit3 { find_if(cit2, fe.cend(), [fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) }; cit3 != fe.cend())
- //           return (*cit3);
-          { if (nskipped++ == nskip)   // finished?
-              return (*cit3);
-
-            cit2 = next(cit3); // start at one past the last success
-          }
-          else
-            cit2 = fe.cend();
-        }
-      }
-
- //     ost << "finished while loop" << endl;
-
-// get highest non-marker
-      for (auto it { prev(fe.end()) }; it != fe.begin(); --it)
-        if (!(it->is_marker()))
-          return *it;
-
-  //    ost << "finished search for highest non-marker" << endl;
-
-      if (!fe.front().is_marker())
-        return fe.front();
-
-      return bandmap_entry { };
+  auto get_be = [fp, &fe, &target_freq] (const auto it1, const auto it2, const int nskip)
+    { return SR::subrange(it1, it2) |
+               SRV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
+               SRV::drop(nskip) |
+               SRV::take(1);
     };
-#endif
 
-    auto get_be = [fp, &fe, &target_freq] (const auto it1, const auto it2, const int nskip)
-      { return SR::subrange(it1, it2) |
-                 SRV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
-                 SRV::drop(nskip) |
-                 SRV::take(1);
-      };
+  auto gnd_r = [fp, &fe, &get_be, &target_freq] (auto foit, const int nskip)
+  { auto v = get_be(REVERSE_IT(foit), fe.crend(), nskip);
 
-    auto gnd_r = [fp, &fe, &get_be, &target_freq] (auto foit, const int nskip)
-    { //auto v = R::subrange(REVERSE_IT(foit), fe.crend()) |
-      //           RV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
-      //           RV::drop(nskip) |
-      //           RV::take(1);
-
-      auto v = get_be(REVERSE_IT(foit), fe.crend(), nskip);
-
-      if (v.begin() != v.end())
-        return *(v.begin());
+    if (v.begin() != v.end())
+      return *(v.begin());
 
  // get lowest non-marker
-      for (auto it { fe.begin() }; it != fe.end(); ++it)
-        if (!(it->is_marker()))
-          return *it;
+    for (auto it { fe.begin() }; it != fe.end(); ++it)
+      if (!(it->is_marker()))
+        return *it;
 
-      return bandmap_entry { };
-    };
+    return bandmap_entry { };
+  };
 
-    auto gnu_r = [fp, get_be, &fe, &target_freq] (auto foit, const int nskip)
-    { auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
+  auto gnu_r = [fp, get_be, &fe, &target_freq] (auto foit, const int nskip)
+  { auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
 
- //     auto v = R::subrange(cit2, fe.cend()) |
- //                RV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
- //                RV::drop(nskip) |
- //                RV::take(1);
+    auto v = get_be(cit2, fe.cend(), nskip);
 
-      auto v = get_be(cit2, fe.cend(), nskip);
-
-      if (v.begin() != v.end())
-        return *(v.begin());
+    if (v.begin() != v.end())
+      return *(v.begin());
 
 //      auto b = v.begin();
 //      auto e = v.end();
@@ -1156,17 +1109,17 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
  //       return *b;
 
 // get highest non-marker
-      for (auto it { prev(fe.end()) }; it != fe.begin(); --it)
-        if (!(it->is_marker()))
-          return *it;
+    for (auto it { prev(fe.end()) }; it != fe.begin(); --it)
+      if (!(it->is_marker()))
+        return *it;
 
   //    ost << "finished search for highest non-marker" << endl;
 
-      if (!fe.front().is_marker())
-        return fe.front();
+    if (!fe.front().is_marker())
+      return fe.front();
 
-      return bandmap_entry { };
-    };
+    return bandmap_entry { };
+  };
 
 #if 0
   return bandmap_entry();
@@ -1372,7 +1325,6 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     other threads MUST NOT access biq while this is executing
 */
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-//void bandmap::process_insertion_queue(bandmap_insertion_queue& biq, window& w)
 { process_insertion_queue(biq);
 
   w <= (*this);
@@ -1500,23 +1452,7 @@ void bandmap::remove_from_do_not_add(const std::string& callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))
-  { //regex rgx(callsign);
     _do_not_add_regex -= callsign;      // removes the element with the key = callsign, if one exists
-
-#if 0
-    bool deleted_element { false };
-
-// this is slow, but that shouldn't matter
-    for (auto it { _do_not_add_regex.begin() }; !deleted_element and (it != _do_not_add_regex.end()); ++it)
-    { const string& rgx_str { it->first };
-
-      if (rgx_str == callsign)
-      { _do_not_add_regex.erase(it);
-        deleted_element = true;
-      }
-    }
-#endif
-  }
   else
     _do_not_add -= callsign;
 }
@@ -1540,25 +1476,6 @@ vector<string> bandmap::regex_matches(const string& regex_str)
 
   return rv;
 }
-
-#if 0
-   if (add_it)           // handle regex do-not-match conditions
-    { std::smatch base_match;
-
- //     add_it = NONE_OF(_do_not_add_regex, [callsign, &base_match] (const auto& rgx) { return regex_match(callsign, base_match, rgx); });
-      bool found_match { false };
-
-//      for (auto& [rgx_str, rgx] : _do_not_add_regex)
-      for ( auto it { _do_not_add_regex.begin() }; !found_match and (it != _do_not_add_regex.end()); ++it)
-      { //const string& rgx_str { it->first };
-        const regex& rgx { it->second };
-
-        found_match = regex_match(callsign, base_match, rgx);
-      }
-
-      add_it = !found_match;
-    }
-#endif
 
 /*! \brief          Write a <i>bandmap</i> object to an output stream
     \param  ost     output stream

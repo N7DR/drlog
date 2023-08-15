@@ -1,4 +1,4 @@
-// $Id: qtc.h 224 2023-08-03 20:54:02Z  $
+// $Id: qtc.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -428,10 +428,12 @@ public:
   inline void unsent_to_sent(const std::vector<qtc_entry>& entries)
     { FOR_ALL(entries, [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
 
-/*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
+/*! \brief      Transfer all the (sent) entries in a <i>qtc_series</i> from unsent status to sent status
     \param  qs  QTC entries to transfer
 */
-  void unsent_to_sent(const qtc_series& qs);
+//  void unsent_to_sent(const qtc_series& qs);
+  inline void unsent_to_sent(const qtc_series& qs)
+    { FOR_ALL(qs.sent_qtc_entries(), [this] (const qtc_entry& qe) { unsent_to_sent(qe); } ); }
 
 /*! \brief      How many QTC QSOs have been sent?
     \return     the number of QSOs that have been sent in QTCs

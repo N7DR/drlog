@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 223 2023-07-30 13:37:25Z  $
+// $Id: bands-modes.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,6 +122,14 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                         };
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
+
+/// bandmode == band
+inline bool operator==(const bandmode bm, const BAND b)
+  { return (bm.first == b); }
+
+/// bandmode == mode
+inline bool operator==(const bandmode bm, const MODE m)
+  { return (bm.second == m); }
 
 // forward declaration
 class frequency;

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: cty_data.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -358,7 +358,7 @@ location_info guess_zones(const string& call, const location_info& li)
 { location_info rv { li };
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
-  if (rv.canonical_prefix() == "VE"s)
+  if (rv.canonical_prefix() == "VE"sv)
   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
     { const unsigned call_digit { from_string<unsigned int>(string(1, call[posn])) };
 
@@ -497,7 +497,7 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
 
   const bool country_is_waedc_only { rec.waedc_country_only() };
     
-  auto add_to_database = [&db](const cty_record& rec, const alternative_country_info& aci, const string& prefix_or_callsign)
+  auto add_to_database = [&db] (const cty_record& rec, const alternative_country_info& aci, const string& prefix_or_callsign)
     { location_info info { rec };
 
       info.zones(aci.cq_zone(), aci.itu_zone());
@@ -515,10 +515,8 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
     
       add_to_database(rec, aci, prefix_or_callsign);
     }
-    else                                  // country is in DXCC list; don't add if there's an entry already
-    { //if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
-//      if (!(db > prefix_or_callsign))    // if it's not already in the database
-      if (!(db.contains(prefix_or_callsign)))    // if it's not already in the database
+    else                                    // country is in DXCC list; don't add if there's an entry already
+    { if (!(db.contains(prefix_or_callsign)))    // if it's not already in the database
         add_to_database(rec, aci, prefix_or_callsign);
     }
   }
@@ -572,9 +570,9 @@ location_info location_database::info(const string& callpart) const
     return db_posn->second;  
   }
 
-  auto insert_best_info = [=, this](const location_info& li) { _db_checked += { callsign, li };
-                                                                return li;
-                                                             };
+  auto insert_best_info = [&callsign, this](const location_info& li) { _db_checked += { callsign, li };
+                                                                         return li;
+                                                                     };
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
@@ -662,7 +660,6 @@ location_info location_database::info(const string& callpart) const
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
-//      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
       if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
       { const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
@@ -671,9 +668,9 @@ location_info location_database::info(const string& callpart) const
 
           if (posn_2 != string::npos)
           { const string sub    { create_string(callsign[posn_1]) + create_string(callsign[posn_2]) };
-            const auto   map_it { _russian_db.find(sub) };
+ //           const auto   map_it { _russian_db.find(sub) };
 
-            if (map_it != _russian_db.end())
+            if (const auto map_it { _russian_db.find(sub) }; (map_it != _russian_db.end()))
             { const russian_data_per_substring& data { map_it->second };
 
               best_info.zones(data.cq_zone(), data.itu_zone());
@@ -728,18 +725,14 @@ location_info location_database::info(const string& callpart) const
     }
 
     if (found_0 and found_1)                            // both parts had an exact match (should never happen: KH6/KP2)
-    { //if (parts[0].length() > parts[1].length())        // choose longest match
-      //  return insert_best_info( guess_zones(callsign, db_posn_0->second) );
-      //else
-     //   return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       return insert_best_info( guess_zones(callsign, ((parts[0].length() > parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );    // choose longest match
-    }
 
     if (!found_0 and !found_1)    // neither matched exactly; use one that ends with a digit if there is one
-    { //const bool first_ends_with_digit  { static_cast<bool>(isdigit(parts[0][parts[0].length()-1])) };
-      //const bool second_ends_with_digit { static_cast<bool>(isdigit(parts[1][parts[1].length()-1])) };
-      const bool first_ends_with_digit  { is_digit(parts[0][parts[0].length()-1]) };
-      const bool second_ends_with_digit { is_digit(parts[1][parts[1].length()-1]) };
+    { //const bool first_ends_with_digit  { is_digit(parts[0][parts[0].length()-1]) };
+      //const bool second_ends_with_digit { is_digit(parts[1][parts[1].length()-1]) };
+
+      const bool first_ends_with_digit  { is_digit(last_char(parts[0])) };
+      const bool second_ends_with_digit { is_digit(last_char(parts[1])) };
       
       if (first_ends_with_digit and !second_ends_with_digit)
         return info(parts[0]);
@@ -776,7 +769,6 @@ location_info location_database::info(const string& callpart) const
       const auto [ len_1, db_posn_1 ] = match_info(parts[1]);
       
       if (len_0 != len_1)   // if one has a longer match, use it 
- //       return insert_best_info( guess_zones(callsign, (len_0 > len_1) ? db_posn_0->second : db_posn_1->second) );
         return insert_best_info( guess_zones(callsign, ((len_0 > len_1) ? db_posn_0 : db_posn_1) -> second) );
 
 // they both match equally well; choose shortest
@@ -785,7 +777,6 @@ location_info location_database::info(const string& callpart) const
         return location_info();    // we know nothing about either part of the call
       
       if (parts[0].length() == parts[1].length())
- //       return insert_best_info( guess_zones(callsign, (parts[0].length() < parts[1].length()) ? db_posn_0->second : db_posn_1->second) );
         return insert_best_info( guess_zones(callsign, ((parts[0].length() < parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );
  
 // same length; arbitrarily choose the first
@@ -816,12 +807,15 @@ location_info location_database::info(const string& callpart) const
 auto location_database::countries(void) const -> unordered_set<string>
 { std::lock_guard lg(_location_database_mutex);
 
+ // using RT = std::invoke_result_t<decltype(location_database::countries()), void>;
+
   unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
 
 //  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
 //  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
 
   FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
+// not allowed  FOR_ALL(_db, [&rv] (const auto& [ prefix, li ]) { rv += li.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
 
   return rv;
 }
@@ -914,10 +908,10 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
   { const vector<string> lines { to_lines <std::string> (replace_char(read_file(path, filename), '\t', ' ')) };
 
     for (const auto& line : lines)
-    { if (!line.starts_with("//"s))
+    { if (!line.starts_with("//"s))   // remove comments
       { const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), ',') };
 
-        FOR_ALL(substrings, [line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
+        FOR_ALL(substrings, [&line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
       }
     }
   }

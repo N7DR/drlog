@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 211 2022-11-28 21:29:23Z  $
+// $Id: rig_interface.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -206,7 +206,7 @@ public:
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-  unsigned int baud_rate(void);
+  inline unsigned int baud_rate(void) const;
 
 /*! \brief          Set the number of data bits (7 or 8)
     \param  bits    the number of data bits to which the rig should be set
@@ -218,7 +218,7 @@ public:
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-  unsigned int data_bits(void);
+  unsigned int data_bits(void) const;
 
 /*! \brief          Set the number of stop bits (1 or 2)
     \param  bits    the number of stop bits to which the rig should be set
@@ -230,7 +230,7 @@ public:
 /*! \brief      Get the number of stop bits
     \return     number of stop bits
 */
-  unsigned int stop_bits(void);
+  unsigned int stop_bits(void) const;
 
 /*! \brief      Set frequency of VFO A
     \param  f   new frequency of VFO A
@@ -301,7 +301,7 @@ public:
   bool split_enabled(void);
 
 /// get mode
-  MODE rig_mode(void);
+  MODE rig_mode(void) const;
 
 /*! \brief      Set mode
     \param  m   new mode
@@ -455,7 +455,7 @@ public:
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0);
+  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode
@@ -463,7 +463,7 @@ public:
 
      Returns empty frequency() if the most recent frequency for the band and mode has not been set (should never happen) 
 */
-  frequency get_last_frequency(const bandmode bm);
+  frequency get_last_frequency(const bandmode bm) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  b   band
@@ -472,7 +472,7 @@ public:
 
     Returns empty frequency() if the most recent frequency for the band and mode has not been set (should never happen)  
 */
-  inline frequency get_last_frequency(const BAND b, const MODE m)
+  inline frequency get_last_frequency(const BAND b, const MODE m) const
     { return get_last_frequency( { b, m } ); }
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
@@ -530,7 +530,7 @@ public:
 
     Works only with K3
 */
-  bool rx_ant(void);
+  bool rx_ant(void) const;
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
@@ -552,7 +552,7 @@ public:
 
     Works only with K3
 */
-  unsigned int centre_frequency(void);
+  unsigned int centre_frequency(void) const;
 
 /*! \brief      Set audio centre frequency, in Hz
     \param  fc  the audio centre frequency, in Hz
@@ -567,7 +567,7 @@ public:
 
     Works only with K3
 */
-  bool notch_enabled(const std::string& ds_result = std::string());
+  bool notch_enabled(const std::string& ds_result = std::string()) const;
 
 /*! \brief              Toggle the notch status
 

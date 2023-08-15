@@ -394,9 +394,10 @@ void qtc_database::read(const string& filename)
     Does not add non-EU QSOs.
 */
 void qtc_buffer::operator+=(const logbook& logbk)
-{ const vector<QSO> qsos { logbk.as_vector() };
+{ //const vector<QSO> qsos { logbk.as_vector() };
 
-  FOR_ALL(qsos, [this] (const QSO& qso) { (*this) += qso; } );
+//  FOR_ALL(qsos, [this] (const QSO& qso) { (*this) += qso; } );
+  FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { (*this) += qso; } );
 }
 
 /*! \brief          Add a QSO to the buffer
@@ -406,7 +407,7 @@ void qtc_buffer::operator+=(const logbook& logbk)
     Does nothing if the QSO is not with an EU station.
 */
 void qtc_buffer::operator+=(const QSO& qso)
-{ if (qso.continent() == "EU"s)
+{ if (qso.continent() == "EU"sv)
   { if (const qtc_entry entry { qso }; !contains(_sent_qtcs, entry) and !contains(_unsent_qtcs, entry))
       _unsent_qtcs += entry;
   }
@@ -445,25 +446,20 @@ vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries
     \param  entry   <i>qtc_entry</i> to transfer
 */
 void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
-{ //if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) != _unsent_qtcs.end())
-  //  _unsent_qtcs.remove(entry);
-  //if (contains(_unsent_qtcs, entry))
- //   _unsent_qtcs.remove(entry);
-    _unsent_qtcs -= entry;
-
-//  _sent_qtcs.push_back(entry);
-  _sent_qtcs += entry;
+{ _unsent_qtcs -= entry;
+  _sent_qtcs   += entry;
 }
 
-/*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
+/*! \brief      Transfer all the (sent) entries in a <i>qtc_series</i> from unsent status to sent status
     \param  qs  QTC entries to transfer
 */
+#if 0
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
-{ const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
+{ //const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
 
-//  FOR_ALL(sent_qtc_entries, [&] (const qtc_entry& qe) { unsent_to_sent(qe); } );
-  FOR_ALL(sent_qtc_entries, [this] (const qtc_entry& qe) { unsent_to_sent(qe); } );
+  FOR_ALL(qs.sent_qtc_entries(), [this] (const qtc_entry& qe) { unsent_to_sent(qe); } );
 }
+#endif
 
 /*! \brief      The unsent list in human-readable format
     \return     the unsent list as a string

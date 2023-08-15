@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: statistics.cpp 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -972,16 +972,17 @@ void call_history::operator+=(const QSO& qso)
 bool call_history::worked(const string& s, const BAND b , const MODE m) const
 { SAFELOCK(_history);
 
-  const auto& cit { _history.find(s) };
+  const auto cit { _history.find(s) };
 
   if (cit == _history.cend())
     return false;
 
-  const set<bandmode>&                sbm  { cit->second };
+  const set<bandmode>& sbm  { cit->second };
 //  const set<bandmode>::const_iterator scit { sbm.find( { b, m } ) };
 
 //  return (scit != sbm.cend());
-  return (sbm > bandmode { b, m });
+//  return (sbm > bandmode { b, m });
+  return sbm.contains( bandmode { b, m } );
 }
 
 /*! \brief      Has a call been worked on a particular band?
@@ -1001,11 +1002,21 @@ bool call_history::worked(const string& s, const BAND b) const
 //    }
 //  }
 
-  for (const auto& pssbm : _history)
-  { if (const string& call { pssbm.first }; s == call)
-    { if (ANY_OF(pssbm.second, [b] (const auto& bm) { return (bm.first == b); }))
+//  for (const auto& pssbm : _history)
+//  { if (const string& call { pssbm.first }; s == call)
+//    { if (ANY_OF(pssbm.second, [b] (const auto& bm) { return (bm.first == b); }))
+//        return true;
+//    }
+//  }
+
+
+// it's less clear to use a filtered range here
+   for (const auto& [ call, set_bm ] : _history)
+  { if ( (s == call) and ANY_OF(set_bm, [b] (const auto& this_bm) { return (this_bm == b); }) )
+//  if ( (s == call) and ANY_OF(set_bm, [b] (const auto& this_bm) { return (this_bm.first == b); }) )
+//    { if (ANY_OF(bm, [b] (const auto& this_bm) { return (this_bm.first == b); }))
         return true;
-    }
+ //   }
   }
 
   return false;
@@ -1046,7 +1057,8 @@ bool call_history::worked(const string& s) const
 { SAFELOCK(_history);
 
 //  return (_history.find(s) != _history.end());
-  return (_history > s);
+//  return (_history > s);
+  return _history.contains(s);
 }
 
 /*! \brief      Has a call been worked on any other band?

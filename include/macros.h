@@ -1,4 +1,4 @@
-// $Id: macros.h 224 2023-08-03 20:54:02Z  $
+// $Id: macros.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1047,8 +1047,6 @@ template <typename C, typename E>
 inline void operator+=(C& sus, E&& element)
   requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
   { sus.insert(std::forward<E>(element)); }
-//  { sus.insert(std::forward<E>( typename C::value_type {element} )); }    // does not work
-
 
 /*! \brief              Add an element to a set or unordered set
     \param  sus         destination set or unordered set
@@ -1369,7 +1367,7 @@ typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
 */
 template <typename C>
 inline void operator-=(C& c1, C c2)
-  { FOR_ALL(c2, [&c1] (const C::value_type& v) { c1 -= v; }); }
+  { FOR_ALL(c2, [&c1] (const typename C::value_type& v) { c1 -= v; }); }
 
 /*! \brief          Return all the keys in a map or unordered_map
     \param  m       map or unordered_map

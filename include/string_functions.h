@@ -1,4 +1,4 @@
-// $Id: string_functions.h 224 2023-08-03 20:54:02Z  $
+// $Id: string_functions.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -354,7 +354,6 @@ inline bool is_digits(std::string_view str)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//std::string pad_string(const std::string& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
 std::string pad_string(std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
 
 /*! \brief              Left pad a string to a particular size
@@ -365,12 +364,17 @@ std::string pad_string(std::string_view s, const size_t len, const enum PAD pad_
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//template <typename T>
-//inline std::string pad_left(const T& s, const size_t len, const char pad_char = ' ')
-//  { return pad_string(to_string(s), len, PAD::LEFT, pad_char); }
 inline std::string pad_left(std::string_view s, const size_t len, const char pad_char = ' ')
   { return pad_string(s, len, PAD::LEFT, pad_char); }
 
+  /*! \brief            Left pad a number to a particular size
+    \param  s           original number
+    \param  len         length of returned string
+    \param  pad_char    character with which to pad
+    \return             left padded version of string of <i>s</i>
+
+    If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
+*/
 template <typename T>
   requires (std::is_integral_v<T>)
 inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
@@ -381,11 +385,14 @@ inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
     \return     left padded version of <i>s</i> rendered as a string and left padded with zeroes
 */
 template <typename T>
-//  requires (std::is_integral_v<T> or std::is_same_v<base_type<T>, std::string>)
   requires (std::is_integral_v<T> or is_string<base_type<T>>)
 inline std::string pad_leftz(const T& s, const size_t len)
   { return pad_left(std::string_view { to_string(s) }, len, '0'); }
 
+/*! \brief      Left pad a string with zeroes to a particular size
+    \param  sv  string to be left-padded
+    \return     left padded version of <i>sv</i> rendered as a string and left padded with zeroes
+*/
 inline std::string pad_leftz(std::string_view sv, const size_t len)
   { return pad_left(sv, len, '0'); }
 
@@ -397,11 +404,15 @@ inline std::string pad_leftz(std::string_view sv, const size_t len)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//inline std::string pad_right(const std::string& s, const size_t len, const char pad_char = SPACE_CHAR)
-//  { return pad_string(s, len, PAD::RIGHT, pad_char); }
 inline std::string pad_right(std::string_view s, const size_t len, const char pad_char = ' ')
   { return pad_string(s, len, PAD::RIGHT, pad_char); }
 
+/*! \brief            Right pad an integer type to a particular size
+    \param  s         integer value
+    \param  len       length of returned string
+    \param  pad_char  character with which to pad
+    \return           right-padded version of <i>s</i> rendered as a string
+*/
 template <typename T>
   requires (std::is_integral_v<T>)
 inline std::string pad_right(T s, const size_t len, const char pad_char = ' ')
@@ -414,7 +425,6 @@ inline std::string pad_right(T s, const size_t len, const char pad_char = ' ')
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-//std::string read_file(const std::string& filename);
 std::string read_file(std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
@@ -425,7 +435,6 @@ std::string read_file(std::string_view filename);
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-//std::string read_file(const std::vector<std::string>& path, const std::string& filename);
 std::string read_file(const std::vector<std::string>& path, std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
@@ -461,13 +470,7 @@ inline std::string create_string(const char c, const int n = 1)
     \param  ss  container of substrings (strings or string_views) to look for
     \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
-//template <typename T>
-//inline bool starts_with(const std::string& cs, const T& ss)
-//  requires (is_string<typename T::value_type>)
-//  { return ANY_OF(ss, [cs] (const std::string& str) { return cs.starts_with(str); }); }
-
 template <typename T>
-//inline bool starts_with(const std::string& cs, const T& ss)
 inline bool starts_with(std::string_view cs, const T& ss)
   requires ( (is_string<typename T::value_type>) or (is_string_view<typename T::value_type>) )
   { return ANY_OF(ss, [cs] (std::string_view str) { return cs.starts_with(str); }); }
@@ -477,8 +480,6 @@ inline bool starts_with(std::string_view cs, const T& ss)
     \param  ss  substring to remove
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
-//std::string remove_from_start(const std::string& s, std::string_view ss);
-
 template <typename STYPE>
 auto remove_from_start(std::string_view s, std::string_view ss) -> STYPE
 { if (ss.empty())
@@ -498,8 +499,6 @@ auto remove_from_start(std::string_view s, std::string_view ss) -> STYPE
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
-//inline std::string remove_from_end(const std::string& s, const unsigned int n)
-//  { return ( (n >= s.length()) ? std::string() : s.substr(0, s.length() - n) ); }
 template <typename STYPE>
 inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
   { return ( (n >= s.length()) ? STYPE { EMPTY_STR } : STYPE { s.substr(0, s.length() - n) } ); }
@@ -511,7 +510,6 @@ inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
 
     If <i>e</i> is not present, just returns <i>s</i>
 */
-//inline std::string remove_from_end(const std::string& s, const std::string& e)
 template <typename STYPE>
 inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
   { return ( s.ends_with(e) ? remove_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
@@ -523,8 +521,6 @@ inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
 
     If <i>c</i> is not present, just returns <i>s</i>
 */
-//inline std::string remove_from_end(const std::string& s, const char c)
-//  { return ( s.ends_with(c) ? remove_from_end(s, 1u) : s ); }
 template <typename STYPE>
 inline auto remove_from_end(std::string_view s, const char c) -> STYPE
   { return ( s.ends_with(c) ? remove_from_end <STYPE> (s, 1u) : STYPE { s } ); }
@@ -534,7 +530,6 @@ inline auto remove_from_end(std::string_view s, const char c) -> STYPE
     \param  c   leading character to remove (if present)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
-//std::string remove_leading(const std::string& cs, const char c);
 template <typename STYPE>
 auto remove_leading(std::string_view cs, const char c) -> STYPE
 { if (cs.empty())
@@ -549,8 +544,6 @@ auto remove_leading(std::string_view cs, const char c) -> STYPE
     \param  cs  original string
     \return     <i>cs</i> with any leading spaces removed
 */
-//inline std::string remove_leading_spaces(const std::string& cs)
-//  { return remove_leading <std::string> (cs, ' '); }
 template <typename STYPE>
 inline auto remove_leading_spaces(std::string_view cs) -> STYPE
   { return remove_leading <STYPE> (cs, ' '); }
@@ -560,12 +553,11 @@ inline auto remove_leading_spaces(std::string_view cs) -> STYPE
     \param  c   trailing character to remove (if present)
     \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
-//std::string remove_trailing(const std::string& cs, const char c);
 template <typename STYPE>
 auto remove_trailing(std::string_view cs, const char c) -> STYPE
 { STYPE rv { cs };
 
-  while (rv.length() and (rv[rv.length() - 1] == c))
+  while ( rv.length() and (rv[rv.length() - 1] == c) )
     rv = rv.substr(0, rv.length() - 1);
   
   return rv;
@@ -575,8 +567,6 @@ auto remove_trailing(std::string_view cs, const char c) -> STYPE
     \param  cs  original string
     \return     <i>cs</i> with any trailing spaces removed
 */
-//inline std::string remove_trailing_spaces(const std::string& cs)
-//  { return remove_trailing <std::string> (cs, ' '); }
 template <typename STYPE>
 inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
   { return remove_trailing <STYPE> (cs, ' '); }
@@ -585,8 +575,6 @@ inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
     \param  cs  original string
     \return     <i>cs</i> with any leading or trailing spaces removed
 */
-//inline std::string remove_peripheral_spaces(const std::string& cs)
-//  { return remove_trailing_spaces <std::string> (remove_leading_spaces <std::string> (cs)); }
 template <typename STYPE>
 inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
   { return remove_trailing_spaces <STYPE> (remove_leading_spaces <std::string_view> (cs)); }
@@ -598,7 +586,7 @@ inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
     NB There should be specialisation of this for vectors that uses reserve()
 */
 template <typename STYPE, typename T>
-  requires ( is_vector<T> and (is_string<typename T::value_type>) or (is_string_view<typename T::value_type>) )
+  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
 auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
@@ -607,25 +595,12 @@ auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
   return rv;
 }
 
-#if 0
-template <typename T>
-  requires (is_string<typename T::value_type>) 
-T remove_peripheral_spaces(const T& t)
-{ typename std::remove_const<T>::type rv;
-
-  FOR_ALL(t, [&rv] (const std::string& s) { rv += remove_peripheral_spaces <std::string> (s); } );
-
-  return rv;
-}
-#endif
-
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 
     NB There should be specialisation of this for vectors that uses reserve()
 */
-#if 1
 template <typename STYPE, typename T>
   requires (is_string<typename T::value_type>) and (is_string<STYPE>)
 auto remove_peripheral_spaces(T&& t) -> std::vector<STYPE>
@@ -635,29 +610,13 @@ auto remove_peripheral_spaces(T&& t) -> std::vector<STYPE>
 
   return rv;
 }
-#endif
-
-#if 0
-template <typename T>
-  requires (is_string<typename T::value_type>)
-T remove_peripheral_spaces(T&& t)
-{ T rv;
-
-  FOR_ALL(std::forward<T>(t), [&rv] (const std::string& s) { rv += remove_peripheral_spaces <std::string> (s); } );
-
-  return rv;
-}
-#endif
 
 /*! \brief              Split a string into components
     \param  cs          original string
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components
 */
-//std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
-//std::vector<std::string> split_string(const std::string& cs, std::string_view separator);
 template <typename STYPE>
-//vector<string> split_string(const string& cs, string_view separator)
 auto split_string(std::string_view cs, std::string_view separator) -> std::vector<STYPE>
 { size_t start_posn { 0 };
 
@@ -682,9 +641,6 @@ auto split_string(std::string_view cs, std::string_view separator) -> std::vecto
     \param  separator   separator character
     \return             vector containing the separate components
 */
-//std::vector<std::string> split_string(const std::string& cs, const char separator = ',');
-
-//template <typename T = std::string, typename U>
 template <typename STYPE>
 auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
 { size_t start_posn { 0 };
@@ -711,19 +667,8 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
     \return             vector containing the separate components, with peripheral spaces removed
 */
 template <typename STYPE>
-//inline auto clean_split_string(const std::string& cs, const std::string& separator) -> std::vector<STYPE>
 inline auto clean_split_string(std::string_view cs, std::string_view separator) -> std::vector<STYPE>
   { return remove_peripheral_spaces(split_string <STYPE> (cs, separator)); }
-
-/*! \brief              Split a string into components, and remove peripheral spaces from each component
-    \param  cs          original string
-    \param  separator   separator string (typically a single character)
-    \return             vector containing the separate components, with peripheral spaces removed
-*/
-//inline std::vector<std::string> clean_split_string(std::string&& cs, const std::string& separator)
-//template <typename STYPE>
-//inline auto clean_split_string(std::string&& cs, std::string_view separator) -> std::vector<STYPE>
-//  { return remove_peripheral_spaces(split_string <STYPE> (std::forward<std::string>(cs), separator)); }
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
     \param  cs          original string
@@ -734,26 +679,6 @@ template <typename STYPE>
 inline auto clean_split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
   { return remove_peripheral_spaces <STYPE> (split_string <STYPE> (cs, separator)); }
 
-/*! \brief              Split a string into components, and remove peripheral spaces from each component
-    \param  cs          original string
-    \param  separator   separator character
-    \return             vector containing the separate components, with peripheral spaces removed
-*/
-//inline std::vector<std::string> clean_split_string(std::string&& cs, const char separator = ',')
-//  { return remove_peripheral_spaces(split_string <std::string> (std::forward<std::string>(cs), separator)); }
-//template <typename STYPE>
-//inline auto clean_split_string(std::string&& cs, const char separator = ',') -> std::vector<STYPE>
-//  { return remove_peripheral_spaces <std::string> (split_string <STYPE> (std::forward<std::string>(cs), separator)); }
-
-//template <typename STYPE, typename T>
-//  requires (is_string<T> or is_string_view<T>)
-//inline auto clean_split_string(T&& cs, const char separator = ',') -> std::vector<STYPE>
-//  { return remove_peripheral_spaces(split_string <STYPE> (std::forward<T>(cs), separator)); }
-
-//template <typename STYPE>
-//inline auto clean_split_string(std::string_view&& cs, const char separator = ',') -> std::vector<STYPE>
-//  { return remove_peripheral_spaces(split_string <STYPE> (std::forward<std::string_view>(cs), separator)); }
-
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string
     \param  record_length   length of each record
@@ -763,22 +688,11 @@ inline auto clean_split_string(std::string_view cs, const char separator = ',') 
 */
 std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
 
-/*! \brief                  Split a string into equal-length records
-    \param  cs              original string
-    \param  record_length   length of each record
-    \return                 vector containing the separate components
-
-    Any non-full record at the end is silently discarded
-*/
-//inline std::vector<std::string> split_string(const std::string& cs, const int record_length)
-//  { return split_string(cs, static_cast<unsigned int>(record_length)); }
-
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-//std::string squash(const std::string& cs, const char c = ' ');
 std::string squash(std::string_view cs, const char c = ' ');
 
 /*! \brief          Remove empty lines from a vector of lines
@@ -794,10 +708,6 @@ std::vector<std::string> remove_empty_lines(const std::vector<std::string>& line
     \param  eol_marker  EOL marker
     \return             vector containing the separate lines
 */
-//inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
-//  { return split_string <std::string> (cs, eol_marker); }
-//inline std::vector<std::string> to_lines(std::string_view cs, std::string_view eol_marker = EOL)
-//  { return split_string <std::string> (cs, eol_marker); }
 template <typename STYPE>
 inline auto to_lines(std::string_view cs, std::string_view eol_marker = EOL) -> std::vector<STYPE>
   { return split_string <STYPE> (cs, eol_marker); }
@@ -807,8 +717,6 @@ inline auto to_lines(std::string_view cs, std::string_view eol_marker = EOL) -> 
     \param  c   character to remove
     \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
-//inline std::string remove_peripheral_character(const std::string& cs, const char c)
-//  { return remove_trailing <std::string> (remove_leading <std::string> (cs, c), c); }
 template <typename STYPE>
 inline auto remove_peripheral_character(std::string_view cs, const char c) -> STYPE
   { return remove_trailing <STYPE> (remove_leading <std::string_view> (cs, c), c); }
@@ -819,14 +727,6 @@ inline auto remove_peripheral_character(std::string_view cs, const char c) -> ST
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 std::string remove_char(std::string_view cs, const char char_to_remove);
-
-/*! \brief                  Remove all instances of a particular char from a string
-    \param  s               original string
-    \param  char_to_remove  character to be removed from <i>cs</i>
-    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
-*/
-//inline std::string remove_char(std::string& s, const char char_to_remove)
-//  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
   
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
@@ -863,8 +763,6 @@ C remove_char(C&& t, const char char_to_remove)
     \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
-//std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
-//std::string remove_chars(std::string_view s, const std::string& chars_to_remove);
 std::string remove_chars(std::string_view s, std::string_view chars_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
@@ -874,7 +772,6 @@ std::string remove_chars(std::string_view s, std::string_view chars_to_remove);
     \param  delim_2         closing delimiter
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
 */
-//std::string remove_char_from_delimited_substrings(const std::string& cs, const char char_to_remove, const char delim_1, const char delim_2);
 std::string remove_char_from_delimited_substrings(std::string_view cs, const char char_to_remove, const char delim_1, const char delim_2);
 
 /*! \brief                      Obtain a delimited substring
@@ -1039,7 +936,6 @@ std::string join(const T& ct, const U sep)
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-//std::string create_centred_string(const std::string& str, const unsigned int width);
 std::string create_centred_string(std::string_view str, const unsigned int width);
 
 /*! \brief      Get the last character in a string
@@ -1048,7 +944,6 @@ std::string create_centred_string(std::string_view str, const unsigned int width
 
     Throws exception if <i>cs</i> is empty
 */
-//char last_char(const std::string& cs);
 char last_char(std::string_view cs);
 
 /*! \brief      Get the penultimate character in a string

@@ -1,4 +1,4 @@
-// $Id: qso.h 223 2023-07-30 13:37:25Z  $
+// $Id: qso.h 225 2023-08-14 17:29:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -285,7 +285,8 @@ public:
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-  void populate_from_log_line(const std::string& str);
+//  void populate_from_log_line(const std::string& str);
+  void populate_from_log_line(std::string_view str);
 
 /*! \brief      QSO == QSO
     \param  q   target QSO
