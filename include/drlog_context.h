@@ -170,6 +170,7 @@ protected:
 
   int                                          _inactivity_timer                        { 0 };                          ///< duration in seconds before audio recording ceases in auto mode; 0 = no inactivity timer
   std::string                                  _individual_messages_file                { };                            ///< name of file that contains per-call individual messages
+  bool                                         _instrumented                            { false };                      ///< whether to receord all exchanges with rig
 
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
@@ -458,6 +459,7 @@ public:
 
   CONTEXTREAD(inactivity_timer);             ///< duration in seconds before audio recording ceases in auto mode
   CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
+  CONTEXTREAD(instrumented );                ///< whether to receord all exchanges with rig
 
   CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
 

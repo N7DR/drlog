@@ -38,6 +38,7 @@ using namespace   this_thread;   // std::this_thread
 
 using namespace std::literals::chrono_literals;
 
+extern bool instrumented;
 extern bool rig_is_split;
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
@@ -887,6 +888,10 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
   { SAFELOCK(_rig);
 
     serial_flush(&rs_p->rigport);
+
+    if (instrumented)
+      ost << "sent to rig: " << cmd << endl;
+
     write(fd, cmd.c_str(), cmd.length());
     serial_flush(&rs_p->rigport);
     sleep_for(milliseconds(100));
@@ -894,7 +899,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     fd_set set;
     struct timeval timeout;  // time_t (seconds), long (microseconds)
 
-    auto set_timeout = [=, &set, &timeout](const time_t sec, const long usec)
+    auto set_timeout = [fd, &set, &timeout](const time_t sec, const long usec)
       { FD_ZERO(&set);    // clear the set
         FD_SET(fd, &set); // add the file descriptor to the set
 
@@ -1000,9 +1005,15 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
   }
 
   if (response_expected and completed)
-    return rcvd;
+  { if (is_p3_screenshot)
+      ost << "screenshot received from rig" << endl;
+    else
+      ost << "received from rig: " << rcvd << endl;
 
-  return string();
+    return rcvd;
+  }
+
+  return string { };
 }
 
 #endif

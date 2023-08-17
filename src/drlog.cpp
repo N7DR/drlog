@@ -105,7 +105,7 @@ static const set<string> variable_exchange_fields { "SERNO"s };  ///< mutable ex
 constexpr bool DISPLAY_EXTRACT        { true },                       ///< display log extracts
                DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
-constexpr int  MILLION                { 1'000'000 };                         // syntactic sugar
+constexpr int  MILLION                { 1'000'000 };                  // syntactic sugar
 
 // define class for memory entries
 WRAPPER_3(memory_entry,
@@ -352,7 +352,8 @@ float                   greatest_distance { 0 };                    ///< greates
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
 int                     inactivity_timer;                           ///< how long to record with no activity
-bool                    is_ss { false };                            ///< ss is special
+constinit bool          instrumented { false };                     ///< whether to receord all exchanges with rig
+bool                    is_ss        { false };                     ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
@@ -831,6 +832,7 @@ int main(int argc, char** argv)
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
+    instrumented                    = context.instrumented();
     long_t                          = context.long_t();
     marked_frequency_ranges         = context.mark_frequencies();
     max_qsos_without_qsl            = context.max_qsos_without_qsl();
@@ -3268,6 +3270,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       }
 
+// .INST
+      if (command == "INST"sv)
+      { instrumented = true;
+        alert("rig exchanges now instrumented");
+      }
+
 // .M : insert memory
       if (command == "M"sv)
         insert_memory();
@@ -3412,6 +3420,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         catch (const pthread_error& e)
         { alert("Error creating thread: RESET RBN"s);
         }
+      }
+
+// .UNINST
+      if (command == "UNINST"sv)
+      { instrumented = false;
+        alert("rig exchanges now uninstrumented");
       }
 
 // .UNMONITOR <call> -- remove <call> from those being monitored

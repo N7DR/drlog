@@ -785,7 +785,6 @@ std::string remove_char_from_delimited_substrings(std::string_view cs, const cha
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-//std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 template <typename STYPE>
 auto delimited_substring(std::string_view cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters) -> STYPE
 { const size_t posn_1 { cs.find(delim_1) };
@@ -812,7 +811,6 @@ auto delimited_substring(std::string_view cs, const char delim_1, const char del
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-//std::string delimited_substring(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
 template <typename STYPE>
 auto delimited_substring(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters) -> STYPE
 { const size_t posn_1 { cs.find(delim_1) };
