@@ -596,6 +596,7 @@ s = state for ARRL 160m contest (W, VE, only)
 r = SKCC state/province/country
 q = SKCC number
 p = XSCP value
+o = QTH2 (alternative QTH, as in KCJ prefectures, for example)
 */
 
 /*! \brief                      Extract a single field from the record
@@ -649,6 +650,7 @@ drmaster_line::drmaster_line(string_view line_or_call)
   _date       = _extract_field(fields, "=z"s);
   _iota       = _extract_field(fields, "=w"s);
   _precedence = _extract_field(fields, "=u"s);
+  _qth2       = _extract_field(fields, "=o"s);
   _skcc       = _extract_field(fields, "=q"s);
   _society    = _extract_field(fields, "=v"s);
   _spc        = _extract_field(fields, "=r"s);
@@ -718,6 +720,9 @@ string drmaster_line::to_string(void) const
 
   if (!precedence().empty())
     rv += " =u"s + precedence();
+
+  if (!qth2().empty())
+    rv += " =o"s + qth2();
 
   if (!skcc().empty())
     rv += " =q"s + skcc();
@@ -796,6 +801,9 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   if (rv.precedence().empty())
     rv.precedence(precedence());
+
+  if (rv.qth2().empty())
+    rv.qth2(qth2());
 
   if (rv.skcc().empty())
     rv.skcc(skcc());

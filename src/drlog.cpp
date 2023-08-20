@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: drlog.cpp 226 2023-08-20 13:37:39Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -352,7 +352,7 @@ float                   greatest_distance { 0 };                    ///< greates
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
 int                     inactivity_timer;                           ///< how long to record with no activity
-constinit bool          instrumented { false };                     ///< whether to receord all exchanges with rig
+//constinit bool          instrumented { false };                     ///< whether to receord all exchanges with rig
 bool                    is_ss        { false };                     ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -390,7 +390,7 @@ exchange_field_prefill  prefill_data;                       ///< exchange prefil
 
 unsigned short          qtc_long_t { 0 };                   ///< do not send long Ts at beginning of serno in QTCs
 
-unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearig on a bandmap?
+unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearing on a bandmap?
 int                     REJECT_COLOUR { COLOUR_RED };       ///< colour for calls that are dupes
 bool                    require_dot_in_replacement_call;    ///< whether a dot is required when reading replacement call from EXCHANGE window (used in exchange.cpp)
 bool                    restored_data { false };            ///< did we restore from an archive?
@@ -832,7 +832,7 @@ int main(int argc, char** argv)
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
-    instrumented                    = context.instrumented();
+//    instrumented                    = context.instrumented();
     long_t                          = context.long_t();
     marked_frequency_ranges         = context.mark_frequencies();
     max_qsos_without_qsl            = context.max_qsos_without_qsl();
@@ -3272,7 +3272,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .INST
       if (command == "INST"sv)
-      { instrumented = true;
+      { rig.instrument();
         alert("rig exchanges now instrumented");
       }
 
@@ -3424,7 +3424,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .UNINST
       if (command == "UNINST"sv)
-      { instrumented = false;
+      { rig.uninstrument();
         alert("rig exchanges now uninstrumented");
       }
 

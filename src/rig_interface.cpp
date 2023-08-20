@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: rig_interface.cpp 226 2023-08-20 13:37:39Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,7 @@ using namespace   this_thread;   // std::this_thread
 
 using namespace std::literals::chrono_literals;
 
-extern bool instrumented;
+//extern bool instrumented;
 extern bool rig_is_split;
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
@@ -889,7 +889,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
     serial_flush(&rs_p->rigport);
 
-    if (instrumented)
+    if (_instrumented)
       ost << "sent to rig: " << cmd << endl;
 
     write(fd, cmd.c_str(), cmd.length());
@@ -1569,6 +1569,20 @@ void rig_interface::base_state(void)
     if (_model == RIG_MODEL_K3)
       sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
+}
+
+/*! \brief      Turn on instrumentation
+*/
+void rig_interface::instrument(void)
+{ if (_rig_connected)
+    _instrumented = true;
+}
+
+/*! \brief      Turn off instrumentation
+*/
+void rig_interface::uninstrument(void)
+{ if (_rig_connected)
+    _instrumented = false;
 }
 
 /*! \brief      Convert a hamlib error code to a printable string

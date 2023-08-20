@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 225 2023-08-14 17:29:55Z  $
+// $Id: rig_interface.h 226 2023-08-20 13:37:39Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -120,6 +120,7 @@ class rig_interface
 {
 protected:
 
+  bool                                    _instrumented                { false };                       ///< whether to record all exchanges with rig
   frequency                               _last_commanded_frequency    { };                             ///< last frequency to which the rig was commanded to QSY
   frequency                               _last_commanded_frequency_b  { };                             ///< last frequency to which VFO B was commanded to QSY
   MODE                                    _last_commanded_mode         { MODE_CW };                     ///< last mode into which the rig was commanded
@@ -606,6 +607,20 @@ public:
     \param  af  the characteristics to set 
 */
   void filter(const audio_filter& af);
+
+/*! \brief      Turn on instrumentation
+*/
+  void instrument(void);
+
+/*! \brief      Turn off instrumentation
+*/
+  void uninstrument(void);
+
+/*! \brief      Is instrumentation turned on?
+    \return     whether instrumentation is turned on
+*/
+  inline bool instrumented(void)
+    { return _instrumented ; }
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

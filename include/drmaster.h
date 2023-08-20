@@ -229,6 +229,7 @@ protected:
   std::string _date;                                            ///< most recent date at which the record was updated
   std::string _iota;                                            ///< IOTA designation
   std::string _precedence;                                      ///< Sweepstakes precedence
+  std::string _qth2;                                            ///< alternative QTH information (actual information varies as a function of country)
   std::string _skcc;                                            ///< SKCC number
   std::string _society;                                         ///< HQ designation from IARU contest
   std::string _spc;                                             ///< SKCC state/province/country
@@ -294,6 +295,7 @@ public:
   READ_AND_WRITE(date);                                            ///< most recent date at which the record was updated
   READ_AND_WRITE(iota);                                            ///< IOTA designation
   READ_AND_WRITE(precedence);                                      ///< Sweepstakes precedence
+  READ_AND_WRITE(qth2);                                            ///< alternative QTH information (actual information varies as a function of country)
   READ_AND_WRITE(skcc);                                            ///< SKCC number
   READ_AND_WRITE(society);                                         ///< HQ designation from IARU contest
   READ_AND_WRITE(spc);                                             ///< SKCC state/province/country

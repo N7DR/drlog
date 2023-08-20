@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: drlog_context.cpp 226 2023-08-20 13:37:39Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -559,6 +559,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // INDIVIDUAL MESSAGES FILE
     if (LHS == "INDIVIDUAL MESSAGES FILE"sv)
       _individual_messages_file = rhs;
+
+// INSTRUMENT, INSTRUMENTED
+    if ( (LHS == "INSTRUMENT"sv) or (LHS == "INSTRUMENTED"sv) )
+      _instrumented = is_true;
 
 // KEYER PORT
     if (LHS == "KEYER PORT"sv)

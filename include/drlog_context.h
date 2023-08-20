@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 223 2023-07-30 13:37:25Z  $
+// $Id: drlog_context.h 226 2023-08-20 13:37:39Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -459,7 +459,7 @@ public:
 
   CONTEXTREAD(inactivity_timer);             ///< duration in seconds before audio recording ceases in auto mode
   CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
-  CONTEXTREAD(instrumented );                ///< whether to receord all exchanges with rig
+  CONTEXTREAD(instrumented );                ///< whether to record all exchanges with rig
 
   CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
 
