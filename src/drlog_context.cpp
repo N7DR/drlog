@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 226 2023-08-20 13:37:39Z  $
+// $Id: drlog_context.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -788,7 +788,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
-    if (testline.starts_with("QTHX["s))
+    if (testline.starts_with("QTHX["sv))
     { const vector<string_view> fields { clean_split_string <string_view> (testline, '=') };
 
       if (fields.size() == 2)
@@ -799,6 +799,22 @@ void drlog_context::_process_configuration_file(const string& filename)
         _qthx += { canonical_prefix, ss };
       }
     }
+
+#if 0
+// QTH2X: QTH2X[callsign-or-canonical prefix] = aa, bb, cc...
+// the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
+    if (testline.starts_with("QTH2X["sv))
+    { const vector<string_view> fields { clean_split_string <string_view> (testline, '=') };
+
+      if (fields.size() == 2)
+      { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
+        const vector<string> values           { clean_split_string <string> (RHS) };
+        const set<string>    ss               { values.cbegin(), values.cend() };
+
+        _qth2x += { canonical_prefix, ss };
+      }
+    }
+#endif
 
 // RATE
     if (LHS == "RATE"sv)

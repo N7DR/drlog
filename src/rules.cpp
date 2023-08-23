@@ -1,4 +1,4 @@
-// $Id: rules.cpp 223 2023-07-30 13:37:25Z  $
+// $Id: rules.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -200,34 +200,72 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto context_qthx { context.qthx() };
 
-  if (context_qthx.empty())
-    return;
+  ost << "size of context.qthx() = " << context_qthx.size() << endl;
+
+//  if (context_qthx.empty())
+//    return;
 
   SAFELOCK(rules);
 
-  for (const auto& this_qthx : context_qthx)
-  { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-    const set<string> ss               { this_qthx.second };
+  if (!context_qthx.empty())
+  { for (const auto& this_qthx : context_qthx)
+    { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
+      const set<string> ss               { this_qthx.second };
 
-    exchange_field_values qthx;
+      exchange_field_values qthx;
 
-    qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
+      qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
 
-    for (const auto& this_value : ss)
-    { if (!contains(this_value, '|'))
-        qthx.add_canonical_value(this_value);
-      else
-      { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
+      for (const auto& this_value : ss)
+      { if (!contains(this_value, '|'))
+          qthx.add_canonical_value(this_value);
+        else
+        { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
 
-        if (!equivalent_values.empty())
-          qthx.add_canonical_value(equivalent_values[0]);
+          if (!equivalent_values.empty())
+            qthx.add_canonical_value(equivalent_values[0]);
 
-        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qthx] (const string& equivalent_value) { qthx += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
+          for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qthx] (const string& equivalent_value) { qthx += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
+        }
       }
-    }
 
-    _exch_values += qthx;
+      _exch_values += qthx;
+    }
   }
+
+#if 0
+  const auto context_qth2x { context.qth2x() };
+
+  ost << "size of context.qth2x() = " << context_qth2x.size() << endl;
+
+  if (!context_qth2x.empty())
+  { for (const auto& this_qthx : context_qth2x)
+    { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
+      const set<string> ss               { this_qthx.second };
+
+      exchange_field_values qth2x;
+
+      qth2x.name(string("QTH2X["s) + canonical_prefix + "]"s);
+
+      for (const auto& this_value : ss)
+      { if (!contains(this_value, '|'))
+          qth2x.add_canonical_value(this_value);
+        else
+        { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
+
+          if (!equivalent_values.empty())
+            qth2x.add_canonical_value(equivalent_values[0]);
+
+          for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qth2x] (const string& equivalent_value) { qth2x += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
+        }
+      }
+
+      _exch_values += qth2x;
+    }
+  }
+#endif
+
+  ost << "exiting _parse_context_qth; size of _exch_values = " << _exch_values.size() << endl;
 }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -389,7 +427,9 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{ const vector<string> path { context.path() };
+{ ost << "Inside contest_rules::_init(); size of _exch_values = " << _exch_values.size() << endl;
+
+  const vector<string> path { context.path() };
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -410,6 +450,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (_uba_bonus)
     _bonus_countries += "ON"s;                  // weird UBA scoring adds bonus for QSOs with ON
 
+  ost << "after uba bonus; size of _exch_values = " << _exch_values.size() << endl;
+
 // generate the country mults; the value from context is either "ALL" or "NONE" or a comma-separated list
   if (context.country_mults_filter() == "NONE"sv)
     _countries.clear();                             // remove concept of countries
@@ -422,6 +464,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(countries, [this] (const string& prefix) { _country_mults += prefix; } );
     }
   }
+
+  ost << "after country mults; size of _exch_values = " << _exch_values.size() << endl;
 
   if (CONTINENT_SET.contains(context.country_mults_filter()))
   { const string target_continent { context.country_mults_filter() };
@@ -447,6 +491,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _country_mults_per_mode = context.country_mults_per_mode();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
 
+  ost << "after _per_band_country_mult_factor; size of _exch_values = " << _exch_values.size() << endl;
+
 // add the permitted modes
   const string modes { context.modes() };
 
@@ -465,6 +511,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   if (_permitted_modes > MODE_SSB)
     _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
+
+  ost << "after sent_exchange; size of _exch_values = " << _exch_values.size() << endl;
 
 // add the permitted bands
   const vector<string> bands_vec { clean_split_string <std::string> (context.bands()) };
@@ -490,6 +538,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _exch_values += dok_values;
   }
 
+  ost << "after DOK; size of _exch_values = " << _exch_values.size() << endl;
+
 // create expanded version
   for (const string& unexpanded_exchange_mult_name : _exchange_mults)
   { if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"s))            // not a choice
@@ -506,6 +556,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
+
+  ost << "after _exchange_mults_used; size of _exch_values = " << _exch_values.size() << endl;
 
 // build expanded version of _received_exchange, and _choice_exchange_equivalents
   for (const auto& m : _permitted_modes)
@@ -540,6 +592,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         _exchange_field_eft += { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) };
     }
   }
+
+  ost << "after _permitted_modes; size of _exch_values = " << _exch_values.size() << endl;
 
 // define the points structure; this can be quite complex
   const points_structure EMPTY_PS { };
@@ -648,6 +702,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
   }
 
+  ost << "after points_structure; size of _exch_values = " << _exch_values.size() << endl;
+
 // legal values for the exchange fields
   _parse_context_qthx(context, location_db);  // qth-dependent fields
 
@@ -658,12 +714,25 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(vef, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
   }
 
+  ost << "after _permitted_modes again size of _exch_values = " << _exch_values.size() << endl;
+
+  auto print_exch_field_names = [] (const auto& exch_values)
+    { for (auto& ev : exch_values)
+        ost << "exchange value name: " << ev.name() << endl;
+    };
+
+  print_exch_field_names(_exch_values);
+
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
   for (const auto& ef : leaves)
   { static const set<string> no_canonical_values { "RS"s, "RST"s, "SERNO"s };    // some field values don't have canonical values
 
     const string& field_name { ef.name() };
+
+    ost << "processing field name: " << field_name << endl;
+
+    print_exch_field_names(_exch_values);
 
     string entire_file;
 
@@ -682,7 +751,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // parse file
     if (read_file_ok)
-    { const vector<string> lines { split_string <std::string> (entire_file, EOL_CHAR) };
+    { ost << "inside read_file_ok() for " << field_name << endl;
+      ost << "size of _exch_values = " << _exch_values.size() << endl;
+
+      const vector<string> lines { split_string <std::string> (entire_file, EOL_CHAR) };
 
       map<string /* canonical value */, set<string> > map_canonical_to_all;
 
@@ -716,10 +788,22 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       }
 // processed all lines
       _exch_values += { field_name, map_canonical_to_all };         // pair<string, map<string, set<string> > >
+
+      ost << "after processing all lines; size of _exch_values = " << _exch_values.size() << endl;
     }
     else
-      _exch_values += { field_name, map<string, set<string> >() };  // pair<string, map<string, set<string> > >
+    { ost << "not read file; size of _exch_values = " << _exch_values.size() << endl;
+ //     if (!contains(_exch_values, field_name))
+      if (NONE_OF(_exch_values, [&field_name] (const auto& ev) { return (ev.name() == field_name); }))
+      { _exch_values += { field_name, map<string, set<string> > { } };  // pair<string, map<string, set<string> > >
+        ost << "after adding field name " << field_name << "; size of _exch_values = " << _exch_values.size() << endl;
+      }
+      else
+        ost << "field name " << field_name << " is already in _exch_values; size of _exch_values = " << _exch_values.size() << endl;
+    }
   }
+
+  ost << "after leaves; size of _exch_values = " << _exch_values.size() << endl;
 
 // generate the sets of all acceptable values
 //  const set<string> field_names { all_known_field_names() };
@@ -729,6 +813,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // generate all the mappings from permitted to canonical values
   FOR_ALL(_exch_values, [this] (const exchange_field_values& efv) { _permitted_to_canonical += { efv.name(), INVERT_MAPPING(efv.values()) }; } );
+
+  ost << "Exiting contest_rules::_init(); size of _exch_values = " << _exch_values.size() << endl;
 }
 
 /// default constructor
@@ -835,11 +921,16 @@ vector<string> contest_rules::unexpanded_exchange_field_names(const string& cano
 vector<string> contest_rules::exch_canonical_values(const string& field_name) const
 { vector<string> rv;
 
+  ost << "inside contest_rules::exch_canonical_values for field name: " << field_name << endl;
+  ost << "ssize(_exch_values) = " << ssize(_exch_values) << endl;
+
   { SAFELOCK(rules);
 
  //   for (unsigned int n { 0 }; n < _exch_values.size(); ++n)
     for (int n { 0 }; n < ssize(_exch_values); ++n)
-    { if (_exch_values[n].name() == field_name)
+    { ost << "this _exch_value name = " << _exch_values[n].name() << endl;
+
+      if (_exch_values[n].name() == field_name)
       { const map<string, set<string>>& m { _exch_values[n].values() };
 
         FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv += mss.first; } );  // Josuttis 2nd ed., p. 338

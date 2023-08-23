@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 226 2023-08-20 13:37:39Z  $
+// $Id: rig_interface.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1005,10 +1005,12 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
   }
 
   if (response_expected and completed)
-  { if (is_p3_screenshot)
-      ost << "screenshot received from rig" << endl;
-    else
-      ost << "received from rig: " << rcvd << endl;
+  { if (_instrumented)
+    { if (is_p3_screenshot)
+        ost << "screenshot received from rig" << endl;
+      else
+        ost << "received from rig: " << rcvd << endl;
+    }
 
     return rcvd;
   }

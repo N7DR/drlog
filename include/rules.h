@@ -1,4 +1,4 @@
-// $Id: rules.h 223 2023-07-30 13:37:25Z  $
+// $Id: rules.h 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -415,6 +415,7 @@ protected:
 // structures to hold information about the possible values of exchange fields
 
 /// all the equivalent values for all exchange fields; the enclosed map is empty if there are no canonical values
+// might try this as an unordered map instead, ot make it easier to append to, around line 790 in rules.cpp
   std::vector<exchange_field_values>  _exch_values;
 
 /// all the legal values for each exchange field that has defined legal values

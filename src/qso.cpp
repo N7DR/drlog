@@ -1,4 +1,4 @@
-// $Id: qso.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: qso.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -640,7 +640,8 @@ specification tells us otherwise, that's what we do.
 
 // REXCH-xxx
     if (name.starts_with("REXCH-"sv))
-    { const string field_name { substring <std::string> (name, 6) };
+    { //const string field_name { substring <std::string> (name, 6) };
+      const string field_name { remove_from_start <std::string> (name, "REXCH-"sv) };
 
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
       { //const vector<string> vec { clean_split_string <string> (field_name, '+') };

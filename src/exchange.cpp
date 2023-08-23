@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: exchange.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -847,7 +847,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
   }
 
 // if it's a QTHX, then don't go any further if the country doesn't match
-  if (field_name.starts_with("QTHX["s))
+  if (field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv))
   { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -1050,6 +1050,10 @@ string exchange_field_database::guess_value(const string& callsign, const string
   if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth());
 
+//  if (field_name == "KCJ"sv)
+  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+    return insert_value(drm_line.qth2());    // I think that this should work
+
   if (field_name == "NAME"sv)
     return insert_value(drm_line.name());    // I think that this should work
 
@@ -1060,12 +1064,25 @@ string exchange_field_database::guess_value(const string& callsign, const string
   { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
-    { ost << "Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
+    { ost << "QTHX: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
       return string { };
     }
 
     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
   }
+
+#if 0
+  if (field_name.starts_with("QTH2X["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+  { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
+
+    if (canonical_prefix != location_db.canonical_prefix(callsign))
+    { ost << "QTH2X: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
+      return string { };
+    }
+
+    return insert_value(drm_line.qth2(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain
+  }
+#endif
 
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
   { static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };

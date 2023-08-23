@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 226 2023-08-20 13:37:39Z  $
+// $Id: drlog.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1429,6 +1429,8 @@ int main(int argc, char** argv)
 
         wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
         win_remaining_exch_mults_p += { exchange_mult_name, wp };
+
+        ost << "added exch mult window: " << exchange_mult_name << endl;
 
         (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
       }

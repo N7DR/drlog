@@ -1,4 +1,4 @@
-// $Id: log.cpp 223 2023-07-30 13:37:25Z  $
+// $Id: log.cpp 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -432,7 +432,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
     rv += "CLAIMED-SCORE: "s + to_string(score) + EOL_STRING;
 
 // certificate
-    rv += "CERTIFICATE: "s + context.cabrillo_certificate() + EOL_STRING;
+  rv += "CERTIFICATE: "s + context.cabrillo_certificate() + EOL_STRING;
 
 /* the QSOs. The Cabrillo "specification" provides not even a semblance of a computer-parsable
    grammar for QSOs, so a lot of this is guesswork.

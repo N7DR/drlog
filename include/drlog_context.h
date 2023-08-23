@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 226 2023-08-20 13:37:39Z  $
+// $Id: drlog_context.h 227 2023-08-23 21:07:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -231,7 +231,8 @@ protected:
   std::string                                  _qtc_filename                            { "QTCs"s };                    ///< name of file where QTCs are stored
   unsigned int                                 _qtc_long_t                              { 0 };                          ///< whether and amount to extend length of initial Ts in serial number in QTCs
   unsigned int                                 _qtc_qrs                                 { 0 };                          ///< WPM decrease when sending QTC
-  std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country
+  std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
+//  std::map<std::string, std::set<std::string>> _qth2x                                   { };                            ///< allowed exchange values as a function of country; set with qth2x
 
   std::vector<unsigned int>                    _rate_periods                            { 15, 30, 60 } ;                ///< periods (in minutes) over which rates should be calculated
   bool                                         _rbn_beacons                             { false };                      ///< whether to place RBN posts identified as from beacons on the bandmap
@@ -518,7 +519,8 @@ public:
   CONTEXTREAD(qtc_filename);                 ///< name of file where QTCs are stored
   CONTEXTREAD(qtc_long_t);                   ///< whether and amount to extend length of initial Ts in serial number in QTCs
   CONTEXTREAD(qtc_qrs);                      ///< WPM decrease when sending QTC
-  CONTEXTREAD(qthx);                         ///< allowed exchanges values as a function of country
+  CONTEXTREAD(qthx);                         ///< allowed exchanges values as a function of country; set with QTHX
+//  CONTEXTREAD(qth2x);                        ///< allowed exchanges values as a function of country; set with QTH2X
 
   CONTEXTREAD(rate_periods);                     ///< periods (in minutes) over which rates should be calculated
   CONTEXTREAD(rbn_beacons);                      ///< whether to place RBN posts from beacons on the bandmap
