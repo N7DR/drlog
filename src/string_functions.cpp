@@ -1205,3 +1205,43 @@ bool is_bust_call(const string& call1, const string& call2) noexcept
 
   return false;
 }
+
+/*! \brief        Return a string that contains only normal, printable ASCII characters
+    \param  str   string to convert
+    \return       <i>str</i> but with all non-printable ASCII characters converted to human-readable binary values
+*/
+string to_printable_string(const string_view str)
+{ string rv      { };
+  int    rv_size { 0 };
+
+  auto is_printable = [] (const char c) { const uint8_t ui { static_cast<uint8_t>(c) };
+
+                                          return ( (ui > 31) and (ui < 127) );
+                                        };
+
+  for (const char c : str)
+    rv_size += (is_printable(c) ? 1 : 10);
+
+  rv.reserve(rv_size);
+
+  for (const char c : str)
+  { if (is_printable(c))
+      rv += c;
+    else
+    { rv += '|';
+
+      rv += (c bitand 0b10000000) ? '1' : '0';
+      rv += (c bitand 0b01000000) ? '1' : '0';
+      rv += (c bitand 0b00100000) ? '1' : '0';
+      rv += (c bitand 0b00010000) ? '1' : '0';
+      rv += (c bitand 0b00001000) ? '1' : '0';
+      rv += (c bitand 0b00000100) ? '1' : '0';
+      rv += (c bitand 0b00000010) ? '1' : '0';
+      rv += (c bitand 0b00000001) ? '1' : '0';
+
+      rv += '|';
+    }
+  }
+
+  return rv;
+}

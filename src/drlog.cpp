@@ -1430,7 +1430,7 @@ int main(int argc, char** argv)
         wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
         win_remaining_exch_mults_p += { exchange_mult_name, wp };
 
-        ost << "added exch mult window: " << exchange_mult_name << endl;
+//        ost << "added exch mult window: " << exchange_mult_name << endl;
 
         (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
       }
@@ -1573,9 +1573,9 @@ int main(int argc, char** argv)
     { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
       const COLOUR_TYPE         rc { context.bandmap_recent_colour() };
 
-      FOR_ALL(bandmaps, [fc, rc] (bandmap& bm) { bm.fade_colours(fc);
-                                                 bm.recent_colour(rc);
-                                               } );
+      FOR_ALL(bandmaps, [rc, &fc] (bandmap& bm) { bm.fade_colours(fc);
+                                                  bm.recent_colour(rc);
+                                                } );
     }
 
 // create thread to prune the bandmaps every minute
@@ -1610,8 +1610,6 @@ int main(int argc, char** argv)
 
       bm.filter_enabled(context.bandmap_filter_enabled());
       bm.filter_hide(context.bandmap_filter_hide());
-
-//      const vector<string>& original_filter { context.bandmap_filter() };
 
       FOR_ALL( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 

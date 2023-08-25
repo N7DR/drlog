@@ -38,7 +38,6 @@ using namespace   this_thread;   // std::this_thread
 
 using namespace std::literals::chrono_literals;
 
-//extern bool instrumented;
 extern bool rig_is_split;
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
@@ -1009,7 +1008,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     { if (is_p3_screenshot)
         ost << "screenshot received from rig" << endl;
       else
-        ost << "received from rig: " << rcvd << endl;
+        ost << "received from rig: " << to_printable_string(rcvd) << endl;
     }
 
     return rcvd;

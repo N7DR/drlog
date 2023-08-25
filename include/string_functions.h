@@ -571,13 +571,23 @@ template <typename STYPE>
 inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
   { return remove_trailing <STYPE> (cs, ' '); }
 
+/*! \brief      Remove leading and trailing instances of a particular character
+    \param  cs  original string
+    \param  c   character to remove
+    \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
+*/
+template <typename STYPE>
+inline auto remove_peripheral_chars(std::string_view cs, const char c) -> STYPE
+  { return remove_trailing <STYPE> (remove_leading <std::string_view> (cs, c), c); }
+
 /*! \brief      Remove leading and trailing spaces
     \param  cs  original string
     \return     <i>cs</i> with any leading or trailing spaces removed
 */
 template <typename STYPE>
 inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
-  { return remove_trailing_spaces <STYPE> (remove_leading_spaces <std::string_view> (cs)); }
+  { return remove_peripheral_chars <STYPE> (cs, ' '); }
+//  { return remove_trailing_spaces <STYPE> (remove_leading_spaces <std::string_view> (cs)); }
 
 /*! \brief      Remove leading and trailing spaces from each element in a vector of strings
     \param  t   container of strings
@@ -1335,6 +1345,12 @@ auto bust_map(const C& container) -> RV
 
   return rv;
 }
+
+/*! \brief        Return a string that contains only normal, printable ASCII characters
+    \param  str   string to convert
+    \return       <i>str</i> but with all non-printable ASCII characters converted to human-readable binary values
+*/
+std::string to_printable_string(const std::string_view str);
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                

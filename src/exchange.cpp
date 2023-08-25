@@ -1043,14 +1043,12 @@ string exchange_field_database::guess_value(const string& callsign, const string
       return insert_value(rv, INSERT_CANONICAL_VALUE);
 
 // no entry in drmaster database; try the location database
-//    return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
     return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
   if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth());
 
-//  if (field_name == "KCJ"sv)
   if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth2());    // I think that this should work
 
@@ -1171,10 +1169,12 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
       for (int n { 0 }; n < ssize(lines); ++n)
+ //     for (const string this_line : lines)
       { const string line { squash(replace_char(lines[n], '\t', ' '), ' ') };
+        //const string line { squash(replace_char(this_line, '\t', ' '), ' ') };
 
         if (const vector<string> tokens { clean_split_string <string> (line, ' ') }; tokens.size() == 2)
-        { if ( (n == 0) and (tokens[0] == "CALL"sv) )
+        { if ( (n == 0) and (tokens[0] == "CALL"sv) )   // possibly ignore this line
             continue;
 
           set_value(tokens[0] /* call */, field_name, tokens[1] /* value */);
@@ -1197,7 +1197,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
 string process_cut_digits(const string& input)
 { string rv { input };
 
-  for (char& c : rv)
+  for (char& c : rv)  // must use reference, as we want to be able to change the value
   { switch (c)
     { case 'T' :
       case 't' :

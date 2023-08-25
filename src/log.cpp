@@ -469,11 +469,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
   vector< vector< string> > individual_values;
 
-  const vector<string> template_fields { clean_split_string <string> (cabrillo_qso_template) };         // colon-delimited values
+//  const vector<string> template_fields { clean_split_string <string> (cabrillo_qso_template) };         // colon-delimited values
   
-//  for (int n { 0 }; n < ssize(template_fields); ++n)
-//    individual_values += split_string(template_fields[n], ':');
-  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
+//  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
+  FOR_ALL(clean_split_string <string> (cabrillo_qso_template), [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -483,8 +482,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     { QSO qso;
   
 // go through the fields
-      for (unsigned int n { 0 }; n < individual_values.size(); ++n)
-      { const vector<string>& vec   { individual_values[n] };
+//      for (unsigned int n { 0 }; n < individual_values.size(); ++n)
+      for (const vector<string>& vec : individual_values)
+      { //const vector<string>& vec   { individual_values[n] };
         const string&         name  { vec[0] };
         const unsigned int    posn  { from_string<unsigned int>(vec[1]) - 1 };
         const unsigned int    len   { from_string<unsigned int>(vec[2]) };
@@ -555,7 +555,7 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
       return received_exchange;
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief          Return all the QSOs that contain an exchange field that matches a target
@@ -567,7 +567,7 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
 vector<QSO> logbook::match_exchange(const string& target) const
 { vector<QSO> rv;
 
-  FOR_ALL(_log_vec, [&target, &rv] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
+  FOR_ALL(_log_vec, [&rv, &target] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
 
   return rv;
 }

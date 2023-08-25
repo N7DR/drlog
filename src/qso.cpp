@@ -640,14 +640,10 @@ specification tells us otherwise, that's what we do.
 
 // REXCH-xxx
     if (name.starts_with("REXCH-"sv))
-    { //const string field_name { substring <std::string> (name, 6) };
-      const string field_name { remove_from_start <std::string> (name, "REXCH-"sv) };
+    { const string field_name { remove_from_start <std::string> (name, "REXCH-"sv) };
 
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { //const vector<string> vec { clean_split_string <string> (field_name, '+') };
-
-        //for (const auto& name : vec)
-        for (const auto& name : clean_split_string <string> (field_name, '+'))
+      { for (const auto& name : clean_split_string <string> (field_name, '+'))
         { if (!received_exchange(name).empty())
             value = received_exchange(name);
         }
@@ -742,8 +738,7 @@ bool QSO::exchange_match(const string& rule_to_match) const
   const vector<string> tokens { split_string <std::string> (target, ' ') };
 
   if (tokens.size() != 3)
-  { ost << "Number of tokens = " << tokens.size() << endl;
-  }
+    ost << "Number of tokens = " << tokens.size() << endl;
   else                          // three tokens
   { const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
@@ -752,7 +747,8 @@ bool QSO::exchange_match(const string& rule_to_match) const
 
 // now try the various legal operations
 // !=
-    if (!remove_leading_spaces <std::string> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
+//    if (!remove_leading_spaces <std::string> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
+    if (!remove_leading_spaces <std::string_view> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
     { const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
 
       if (op == "!="sv)                                                // precise inequality

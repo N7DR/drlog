@@ -206,8 +206,6 @@ public:
 
     Returns empty set if there are no canonical values
 */
-//  std::set<std::string> all_values(void) const;
-//template<typename STYPE = std::set<std::string>>
 template<typename STYPE>
   auto all_values(void) const -> STYPE
   { STYPE rv;
