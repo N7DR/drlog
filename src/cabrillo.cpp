@@ -1,4 +1,4 @@
-// $Id: cabrillo.cpp 223 2023-07-30 13:37:25Z  $
+// $Id: cabrillo.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,9 +46,9 @@ extern ofstream            ost;                   ///< for debugging, info
     \param  nm  tag name
 */
 void cabrillo_tag_template::_init_from_string(string_view str)
-{ if (const auto posn { str.find(':') }; posn == string_view::npos)                             // no values included
+{ if (const auto posn { str.find(':') }; posn == string_view::npos)                         // no values included
     _name = str;
-  else                                                          // one or more values are included
+  else                                                              // one or more values are included
   { _name = str.substr(0, posn);
     
     string_view values { str.substr(posn + 1) };
@@ -58,21 +58,6 @@ void cabrillo_tag_template::_init_from_string(string_view str)
     FOR_ALL(vec, [this] (auto str) { this->add_legal_value(string { str }); });
   }
 }
-
-#if 0
-void cabrillo_tag_template::_init_from_string(const string& str)
-{ if (const auto posn { str.find(':') }; posn == string::npos)                             // no values included
-    _name = str;
-  else                                                          // one or more values are included
-  { _name = str.substr(0, posn);
-    
-    const string         values { str.substr(posn + 1) };
-    const vector<string> vec    { remove_peripheral_spaces <std::string> (split_string <std::string> (values, ',')) };
-
-    FOR_ALL(vec, [this] (const string& str) { this->add_legal_value(str); });
-  }
-}
-#endif
 
 // -----------  cabrillo_tag_templatess  ----------------
 

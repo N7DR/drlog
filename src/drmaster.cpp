@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 227 2023-08-23 21:07:41Z  $
+// $Id: drmaster.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -605,14 +605,22 @@ o = QTH2 (alternative QTH, as in KCJ prefectures, for example)
     \return                     Value of the field with the indicator <i>field_indicator</i>
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
-*/
-string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
-{ for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
-  { if (cit->starts_with(field_indicator))
-      return (cit->substr(field_indicator.length()));
-  }
 
-  return string { };
+TODO: make this a template that works on a vector of strings or a vector of string_views
+*/
+//string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
+string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
+{ //for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
+  //{ if (cit->starts_with(field_indicator))
+  //    return (cit->substr(field_indicator.length()));
+  //}
+  const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+
+//  auto it { FIND_IF(fields.cbegin(), fields.cend(), [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+
+  return ( (it == fields.end()) ? string { } : it->substr(field_indicator.length()));
+
+//  return string { };
 }
 
 /*! \brief                  Construct from a call or from a line from a drmaster file
@@ -620,8 +628,7 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
-//drmaster_line::drmaster_line(const string& line_or_call)
-drmaster_line::drmaster_line(string_view line_or_call)
+drmaster_line::drmaster_line(const string_view line_or_call)
 { const vector<string> fields { split_string <std::string> (line_or_call, ' ') };
 
   if (fields.empty())
@@ -629,36 +636,36 @@ drmaster_line::drmaster_line(string_view line_or_call)
 
   _call = to_upper(fields[0]);
 
-  _check     = _extract_field(fields, "=K"s);
-  _cq_zone   = _extract_field(fields, "=C"s);
-  _foc       = _extract_field(fields, "=F"s);
-  _grid      = _extract_field(fields, "=G"s);
-  _hit_count = _extract_field(fields, "=H"s);
-  _itu_zone  = _extract_field(fields, "=I"s);
-  _name      = _extract_field(fields, "=N"s);
-  _qth       = _extract_field(fields, "=Q"s);
-  _section   = _extract_field(fields, "=A"s);
-  _ten_ten   = _extract_field(fields, "=T"s);
-  _user[0]   = _extract_field(fields, "=U"s);
-  _user[1]   = _extract_field(fields, "=V"s);
-  _user[2]   = _extract_field(fields, "=W"s);
-  _user[3]   = _extract_field(fields, "=X"s);
-  _user[4]   = _extract_field(fields, "=Y"s);
+  _check     = _extract_field(fields, "=K"sv);
+  _cq_zone   = _extract_field(fields, "=C"sv);
+  _foc       = _extract_field(fields, "=F"sv);
+  _grid      = _extract_field(fields, "=G"sv);
+  _hit_count = _extract_field(fields, "=H"sv);
+  _itu_zone  = _extract_field(fields, "=I"sv);
+  _name      = _extract_field(fields, "=N"sv);
+  _qth       = _extract_field(fields, "=Q"sv);
+  _section   = _extract_field(fields, "=A"sv);
+  _ten_ten   = _extract_field(fields, "=T"sv);
+  _user[0]   = _extract_field(fields, "=U"sv);
+  _user[1]   = _extract_field(fields, "=V"sv);
+  _user[2]   = _extract_field(fields, "=W"sv);
+  _user[3]   = _extract_field(fields, "=X"sv);
+  _user[4]   = _extract_field(fields, "=Y"sv);
 
 // drmaster extensions
-  _cw_power   = _extract_field(fields, "=y"s);
-  _date       = _extract_field(fields, "=z"s);
-  _iota       = _extract_field(fields, "=w"s);
-  _precedence = _extract_field(fields, "=u"s);
-  _qth2       = _extract_field(fields, "=o"s);
-  _skcc       = _extract_field(fields, "=q"s);
-  _society    = _extract_field(fields, "=v"s);
-  _spc        = _extract_field(fields, "=r"s);
-  _ssb_power  = _extract_field(fields, "=x"s);
-  _state_160  = _extract_field(fields, "=s"s);
-  _state_10   = _extract_field(fields, "=t"s);
+  _cw_power   = _extract_field(fields, "=y"sv);
+  _date       = _extract_field(fields, "=z"sv);
+  _iota       = _extract_field(fields, "=w"sv);
+  _precedence = _extract_field(fields, "=u"sv);
+  _qth2       = _extract_field(fields, "=o"sv);
+  _skcc       = _extract_field(fields, "=q"sv);
+  _society    = _extract_field(fields, "=v"sv);
+  _spc        = _extract_field(fields, "=r"sv);
+  _ssb_power  = _extract_field(fields, "=x"sv);
+  _state_160  = _extract_field(fields, "=s"sv);
+  _state_10   = _extract_field(fields, "=t"sv);
 
-  if (const string xscp_str { _extract_field(fields, "=p"s) }; !xscp_str.empty())
+  if (const string xscp_str { _extract_field(fields, "=p"sv) }; !xscp_str.empty())
     _xscp       = from_string<decltype(_xscp)>(xscp_str);
 }
 
@@ -847,7 +854,7 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     Lines without XSCP data are always included
 */
 void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
-{ for (const string& line : to_lines <std::string> (contents))
+{ for (const string_view line : to_lines <std::string_view> (contents))
   { const drmaster_line record { line };
 
     if ( (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
@@ -917,7 +924,7 @@ void drmaster::prepare(const vector<string>& path, const string& filename, const
     _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
 
-/// all the calls (in alphabetical order)
+/// all the calls (in callsign order)
 vector<string> drmaster::calls(void) const
 { vector<string> rv { unordered_calls() };
 
@@ -931,7 +938,9 @@ vector<string> drmaster::unordered_calls(void) const
 { vector<string> rv;
   rv.reserve(_records.size());
 
-  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; } );
+//  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; } );
+  for (const auto& [ call, drml ] : _records)
+    rv += call;
 
   return rv;
 }
@@ -941,7 +950,10 @@ string drmaster::to_string(void) const
 { vector<string> lines;
   lines.reserve(_records.size());
 
-  FOR_ALL(_records, [&lines] (const auto& rec) { lines += rec.second.to_string() + EOL; });
+//  FOR_ALL(_records, [&lines] (const auto& rec) { lines += rec.second.to_string() + EOL; });
+
+  for (const auto& [ call, drml ] : _records)
+    lines += drml.to_string();
 
   SORT(lines);
 

@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 227 2023-08-23 21:07:41Z  $
+// $Id: exchange.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

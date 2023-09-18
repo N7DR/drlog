@@ -1,4 +1,4 @@
-// $Id: screen.cpp 223 2023-07-30 13:37:25Z  $
+// $Id: screen.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -954,7 +954,7 @@ pair<COLOUR_TYPE, COLOUR_TYPE> cpair::fgbg(const PAIR_NUMBER_TYPE pair_nr) const
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-COLOUR_TYPE string_to_colour(const string& str)
+COLOUR_TYPE string_to_colour(const string_view str)
 { static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
                                                      { "BLUE"s,    COLOUR_BLUE },
                                                      { "CYAN"s,    COLOUR_CYAN },
@@ -973,7 +973,6 @@ COLOUR_TYPE string_to_colour(const string& str)
 // should change this so it works with a colour name and not just a number
 
   if (const string_view str { "COLOUR_"sv }; s.starts_with(str))
-//    return from_string<COLOUR_TYPE>(remove_from_start <std::string> (s, str));
     return from_string<COLOUR_TYPE>(remove_from_start <std::string_view> (s, str));
 
   if (const string_view str { "COLOR_"sv }; s.starts_with(str))

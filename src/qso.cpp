@@ -1,4 +1,4 @@
-// $Id: qso.cpp 227 2023-08-23 21:07:41Z  $
+// $Id: qso.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -747,7 +747,6 @@ bool QSO::exchange_match(const string& rule_to_match) const
 
 // now try the various legal operations
 // !=
-//    if (!remove_leading_spaces <std::string> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
     if (!remove_leading_spaces <std::string_view> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
     { const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
 
@@ -793,7 +792,7 @@ string QSO::sent_exchange(const string& field_name) const
       return field.second;
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
@@ -899,14 +898,6 @@ string QSO::log_line(void)
                                                                    _log_line_fields += ("received-"s + field.name());
                                                                } );
 
- // for (const auto& exch_field : _sent_exchange)
- //   _log_line_fields += ("sent-"s + exch_field.first);
-
- // for (const auto& field : _received_exchange)
-//  { if (field.name() != "CALL"s)                               // SS is special
-//      _log_line_fields += ("received-"s + field.name());
-//  }
-
   return rv;
 }
 
@@ -961,20 +952,12 @@ ostream& operator<<(ostream& ost, const QSO& q)
       << ", Band: " << BAND_NAME[q.band()]
       << ", Freq: " << q.freq()
       << ", Sent: ";
-      
-//  const vector<pair<string, string> > sent_exchange { q.sent_exchange() };
-
-//  for (unsigned int n { 0 }; n < sent_exchange.size(); ++n)
-//    ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";
 
   for (const auto& [sent_name, sent_value] : q.sent_exchange())
     ost << sent_name << " " << sent_value << " ";
 
   ost << ", Rcvd: ";
 
-//  const vector<received_field> received_exchange { q.received_exchange() };
-
-//  for (const auto& received_exchange_field : received_exchange)
   for (const auto& received_exchange_field : q.received_exchange())
     ost << received_exchange_field << "  ";
 
@@ -996,7 +979,7 @@ ostream& operator<<(ostream& ost, const QSO& q)
     The value of <i>posn</i> might be changed by this function.
 */
 pair<string, string> next_name_value_pair(const string& str, size_t& posn)
-{ static const pair<string, string> empty_pair;
+{ static const pair<string, string> empty_pair { };
 
   if (posn >= str.size())
     return (posn = string::npos, empty_pair);

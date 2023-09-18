@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 227 2023-08-23 21:07:41Z  $
+// $Id: drlog_context.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -888,9 +888,9 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { const vector<string> bands_str { clean_split_string <string> (rhs) };
+    { //const vector<string> bands_str { clean_split_string <string> (rhs) };
 
-      for (const auto& band_str : bands_str)
+      for (const auto& band_str : clean_split_string <string> (rhs))
       { try
         { _score_bands += BAND_FROM_NAME.at(band_str);
         }
@@ -901,11 +901,11 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCORE MODES
-    if (testline.starts_with("SCORE MODES"s))
-    { if (contains(testline, "CW"s))
+    if (testline.starts_with("SCORE MODES"sv))
+    { if (contains(testline, "CW"sv))
         _score_modes += MODE_CW;
 
-      if (contains(testline, "SSB"s) or contains(testline, "PH"s))
+      if (contains(testline, "SSB"sv) or contains(testline, "PH"sv))
         _score_modes += MODE_SSB;
     }
 
@@ -1016,7 +1016,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
-    { if (rhs.ends_with('%'))       // if percentage
+    { if (rhs.ends_with('%'))           // if percentage
         _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end <std::string> (rhs, '%')), 0, 100);
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
@@ -1071,12 +1071,14 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> countries { clean_split_string <string> (RHS) };
 
         _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
+//        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
       }
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
       FOR_ALL(clean_split_string <string> (RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
+ //ranges::fold_left(clean_split_string <string> (RHS), _auto_remaining_exchange_mults);  // not yet supported
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
@@ -1084,7 +1086,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CABRILLO CONTEST"sv)
       _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contests require an illegal value
 
-    if ( (LHS == "CABRILLO CERTIFICATE"sv) and is_legal_value(RHS, "YES,NO"s, ',') )
+    if ( (LHS == "CABRILLO CERTIFICATE"sv) and is_legal_value(RHS, "YES,NO"sv /*, ',' */) )
       _cabrillo_certificate = RHS;
 
  // CABRILLO EMAIL (sic)
@@ -1108,54 +1110,54 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"sv) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s) )
+    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"sv) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"sv) )
       _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
     if (LHS == "CABRILLO CATEGORY-BAND"sv)
-    { if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s)) // The spec calls for bizarre capitalization
+    { if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"sv)) // The spec calls for bizarre capitalization
         _cabrillo_category_band = rhs;
     }
 
 // CABRILLO CATEGORY-MODE
     if (LHS == "CABRILLO CATEGORY-MODE"sv)
-    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s))
+    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"sv))
         _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
     if (LHS == "CABRILLO CATEGORY-OPERATOR"sv)
-    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s))
+    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"sv))
         _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
     if (LHS == "CABRILLO CATEGORY-OVERLAY"sv)
-    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s))
+    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"sv))
         _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
     if (LHS == "CABRILLO CATEGORY-POWER"sv)
-    { if (is_legal_value(RHS, "HIGH,LOW,QRP"s))
+    { if (is_legal_value(RHS, "HIGH,LOW,QRP"sv))
         _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
     if (LHS == "CABRILLO CATEGORY-STATION"sv)
-    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s))
+    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"sv))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TIME
     if (LHS == "CABRILLO CATEGORY-TIME"sv)
-    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s))
+    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"sv))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
     if (LHS == "CABRILLO CATEGORY-TRANSMITTER"sv)
-    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s))
+    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"sv))
         _cabrillo_category_transmitter = RHS;
     }
 
@@ -1274,7 +1276,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
-    if (LHS == "STATIC WINDOW INFO"s)  // must come after the corresponding STATIC WINDOW command
+    if (LHS == "STATIC WINDOW INFO"sv)  // must come after the corresponding STATIC WINDOW command
     { const vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1], ',') };
 
       if (!window_info.empty())
@@ -1341,8 +1343,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
             vector<window_information> vec { _static_windows[name].second };
 
-            vec += winfo;
-            _static_windows[name] = { final_contents, vec };
+ //           vec += winfo;
+ //           _static_windows[name] = { final_contents, vec };
+            _static_windows[name] = { final_contents, (vec + winfo) };
           }
         }
       }
@@ -1396,14 +1399,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       if (tokens.size() != 2)
         print_error_and_exit(testline);
 
-      _message_cq_1 = tokens[1];
+      _message_cq_1 = move(tokens[1]);
     }
 
     if (LHS == "MESSAGE CQ 2"sv)
     { const vector<string> tokens { split_string <std::string> (testline, '=') };
 
       if (tokens.size() == 2)
-        _message_cq_2 = tokens[1];
+        _message_cq_2 = move(tokens[1]);
     }
   }
 
@@ -1427,9 +1430,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { const vector<string> bands_vec { clean_split_string <std::string> (bands(), ',') };
+  { //const vector<string> bands_vec { clean_split_string <std::string> (bands() /*, ',' */) };
 
-    for (const auto& str : bands_vec)
+//    for (const auto& str : bands_vec)
+    for ( const auto& str : clean_split_string <std::string> (bands()) )
     { try
       { _call_history_bands += BAND_FROM_NAME.at(str);
       }
@@ -1502,9 +1506,14 @@ drlog_context::drlog_context(const std::string& filename)
 vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
 
-  for (auto cit { _windows.cbegin() }; cit != _windows.cend(); ++cit)
-    if (contains(cit->first, substr))
-      rv += (cit->first);
+//  for (auto cit { _windows.cbegin() }; cit != _windows.cend(); ++cit)
+//    if (contains(cit->first, substr))
+//      rv += (cit->first);
+  for (const auto& [ name, wi ] : _windows)
+    if (contains(name, substr))
+      rv += name;
+
+//  _windows | views::filter([&substr] (const pair<string, window_information>& pr) { return contains(pr.first, substr); } );
 
   return rv;
 }
@@ -1514,34 +1523,15 @@ vector<string> drlog_context::window_name_contains(const string& substr) const
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
+#if 0
 string drlog_context::points_string(const BAND b, const MODE m) const
 { SAFELOCK(_context);
 
-  const auto& pbb { _per_band_points[m] };
+//  const auto& pbb { _per_band_points[m] };
 
-  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
-}
-
-#if 0
-/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
-    \param  exchange_field  exchange field
-    \param  b               band
-    \param  m               mode
-    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
-*/
-
-const string drlog_context::points(const std::string& exchange_field, const BAND b, const MODE m) const
-{ SAFELOCK(_context);
-
-  const auto cit = _per_band_points_with_exchange_field.find(exchange_field);
-
-  if (cit == _per_band_points_with_exchange_field.cend())    // if this exchange field has no points entry
-     return string();
-
-  const auto& points_per_band_per_mode = cit->second;
-  const auto& pbb = points_per_band_per_mode[m];
-
-  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
+//  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string { } );
+//  return MUM_VALUE(pbb, b, string { });
+  return MUM_VALUE(_per_band_points[m], b);
 }
 #endif
 
@@ -1584,14 +1574,24 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
   { rv = _sent_exchange;
 
 // fix RST/RS if using non-mode-specific exchange
-    for (size_t n { 0 }; n < rv.size(); ++n)
-    { pair<string, string>& pss { rv[n] };
+//    for (size_t n { 0 }; n < rv.size(); ++n)
+//    for (auto& name_value : rv)
+    for (auto& [name, value] : rv)
+    { //pair<string, string>& pss { rv[n] };
+//      auto& [ name, value ] = name_value;
 
-      if ( (m == MODE_SSB) and (pss.first == "RST"sv) )
-        pss = { "RS"s, "59"s };       // hardwire report
+      if ( (m == MODE_SSB) and (name == "RST"sv) )
+        tie(name, value) = pair { "RS"s, "59"s };       // hardwire report
 
-      if ( (m == MODE_CW) and (pss.first == "RS"sv) )
-        pss = { "RST"s, "599"s };     // hardwire report
+      if ( (m == MODE_CW) and (name == "RS"sv) )
+        tie(name, value) = pair { "RST"s, "599"s };     // hardwire report
+
+
+ //     if ( (m == MODE_SSB) and (pss.first == "RST"sv) )
+ //       pss = { "RS"s, "59"s };       // hardwire report
+
+ //     if ( (m == MODE_CW) and (pss.first == "RS"sv) )
+ //       pss = { "RST"s, "599"s };     // hardwire report
     }
   }
 

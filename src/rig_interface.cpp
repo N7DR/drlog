@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 227 2023-08-23 21:07:41Z  $
+// $Id: rig_interface.cpp 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,6 +38,7 @@ using namespace   this_thread;   // std::this_thread
 
 using namespace std::literals::chrono_literals;
 
+extern bool                          debug;                             ///< debug frequency changes
 extern bool rig_is_split;
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
@@ -134,6 +135,10 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       while ( (retry) and (n_retries++ <= MAX_RETRIES) )
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+
+        if (debug)
+        { ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
+        }
 
         if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
 // if we use the following line, then sometimes we get trapped and cannot move down in frequency
@@ -937,14 +942,17 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
               }
             }
           }
+
           counter++;
+
           if (!completed)
           { static const string percent_str { "%%"s };
 
             const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
 
             alert("P3 screendump progress: "s + to_string(percent) + percent_str);
-            sleep_for(milliseconds(1000));  // we have the lock for all this time
+ //           sleep_for(milliseconds(1000));      // we have the lock for all this time
+            sleep_for(1s);      // we have the lock for all this time
           }
         }
       }
@@ -955,7 +963,8 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
-            sleep_for(milliseconds(50));
+//            sleep_for(milliseconds(50));
+            sleep_for(50ms);
 
           if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
@@ -993,6 +1002,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
               }
             }
           }
+
           counter++;
         }
       }
@@ -1176,11 +1186,6 @@ bool rig_interface::is_locked(void)
     { _error_alert("Invalid response getting locked status: "s + response);
       return false;  // default is unlocked
     }
-
-//    const string status_str  { raw_command("LK;"s, RESPONSE::EXPECTED, 4) };
-//    const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
-//
-//    return (status_char == '1');
   }
   else
   { SAFELOCK(_rig);
@@ -1205,16 +1210,12 @@ int rig_interface::bandwidth(void)
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"s, 0) )
+  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
       return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting bandwidth: "s + response);
     return 0;
   }
-
-//  const string status_str { raw_command("BW;"s, RESPONSE::EXPECTED, 7) };
-
-//  return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1251,29 +1252,28 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
 */
 bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
-  { //bool rv { true };                                        // default: be paranoid
+  { if (_model == RIG_MODEL_K3)
+    { //const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) };
 
-    if (_model == RIG_MODEL_K3)
-    { if ( const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0) )
+      if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0))
         return  (response[2] == '1');
       else
       { _error_alert("Invalid response getting transmit status: "s + response);
         return true;                // be paranoid
       }
 
-#if 0
-const string response { raw_command("TQ;"s, RESPONSE::EXPECTED, 4) };
+//    { if ( const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0) )
+//        return  (response[2] == '1');
+//      else
+//      { _error_alert("Invalid response getting transmit status: "s + response);
+//        return true;                // be paranoid
+//      }
+ //   }
 
-      if (response.length() < 4)
-      { // because this happens so often, don't report it
-        // _error_alert("Unable to determine whether rig is transmitting");
-      }
-      else
-        rv = (response[2] == '1');
-#endif
+ //   return true;    // compiler doesn't realise that this is unnecessary
     }
-
-    return true;    // keep compiler happy
+    else    // connected but not K3
+      return true;            // be paranoid
   }
   else              // no rig connected
     return false;
@@ -1293,25 +1293,12 @@ bool rig_interface::test(void)
     { if ( const string response { raw_command("IC;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"s, 0) )
       { const char c { response[2] };
 
-        return c bitand (1 << 5);
+        return (c bitand (1 << 5));
       }
       else
       { _error_alert("Invalid response retrieving icons and status: "s + response);
         return true;                // be paranoid
       }
-
-
-#if 0
-      const string response { raw_command("IC;"s, RESPONSE::EXPECTED, 8) };
-
-      if (response.length() < 8)
-        _error_alert("Unable to retrieve K3 icons and status"s);
-      else
-      { const char c { response[2] };
-
-        rv = (c bitand (1 << 5));
-      }
-#endif
     }
   }
 
@@ -1361,7 +1348,8 @@ VFO rig_interface::tx_vfo(void)
     \param  hz  desired bandwidth, in Hz
 */
 void rig_interface::bandwidth_a(const unsigned int hz)
-{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries for the brain-dead K3
+{ //constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries for the brain-dead K3
+  constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
   constexpr int                       PRECISION  { 50 };
 
   if (_rig_connected)

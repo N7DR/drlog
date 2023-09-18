@@ -1,4 +1,4 @@
-// $Id: rules.h 227 2023-08-23 21:07:41Z  $
+// $Id: rules.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -210,8 +210,8 @@ template<typename STYPE>
   auto all_values(void) const -> STYPE
   { STYPE rv;
 
-    for (const auto& cvv : _values)
-      COPY_ALL(cvv.second, inserter(rv, rv.begin()));
+    for (const auto& [ cp, equivalent_values ] : _values)
+      COPY_ALL(equivalent_values, inserter(rv, rv.begin()));
 
     return rv;
   }
@@ -460,7 +460,7 @@ template <typename STYPE>
 auto _all_exchange_values(const std::string& field_name) const -> STYPE
 { SAFELOCK(rules);
 
-  const auto cit { FIND_IF(_exch_values, [field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
+  const auto cit { FIND_IF(_exch_values, [&field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
 
   return ( (cit == _exch_values.cend()) ? STYPE { } : cit->template all_values <STYPE> () );
 }
@@ -752,11 +752,11 @@ public:
   bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
 
 /// number of permitted bands
-  inline unsigned int n_bands(void) const
+  inline size_t n_bands(void) const
     { SAFELOCK(rules); return _permitted_bands.size(); }
 
 /// number of permitted modes
-  inline unsigned int n_modes(void) const
+  inline size_t n_modes(void) const
     { SAFELOCK(rules); return _permitted_modes.size(); }
 
 /// do we allow multiple bands?

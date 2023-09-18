@@ -1,4 +1,4 @@
-// $Id: drmaster.h 227 2023-08-23 21:07:41Z  $
+// $Id: drmaster.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -194,7 +194,7 @@ public:
 */
   explicit trmaster(const std::string& filename = "trmaster.asc"s);
 
-/// all the calls (in alphabetical order)
+/// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;
 };
 
@@ -246,7 +246,8 @@ protected:
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
-  std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
+//  std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
+std::string _extract_field(const std::vector<std::string>& fields, const std::string_view field_indicator);
 
 public:
 
@@ -258,8 +259,7 @@ public:
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
-//  explicit drmaster_line(const std::string& line_or_call);
-  explicit drmaster_line(std::string_view line_or_call);
+  explicit drmaster_line(const std::string_view line_or_call);
 
 /// convert to a string
   std::string to_string(void) const;
@@ -462,9 +462,7 @@ public:
     \return         whether <i>call</i> is present
 */
   inline bool contains(const std::string& call) const
-    { //return (_records > call);
-      return _records.contains(call);
-    }
+    {  return _records.contains(call); }
 
 /*! \brief      Return object with only records with xscp below a given percentage value
     \param  pc  percentage limit

@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 227 2023-08-23 21:07:41Z  $
+// $Id: drlog_context.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -586,24 +586,19 @@ public:
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
-  std::string points_string(const BAND b, const MODE m) const;
-
-#if 0
-/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
-    \param  exchange_field  exchange field
-    \param  b               band
-    \param  m               mode
-    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
-*/
-//  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
-#endif
+  inline std::string points_string(const BAND b, const MODE m) const
+  { SAFELOCK(_context);
+    return MUM_VALUE(_per_band_points[m], b);
+  }
 
 /*! \brief          Get the information pertaining to a particular window
     \param  name    name of window
     \return         location, size and colour information
 */
   inline window_information window_info(const std::string& name) const
-    { return MUM_VALUE(_windows, name); }
+    { SAFELOCK(_context);
+      return MUM_VALUE(_windows, name);
+    }
 
 /*! \brief          Is a particular window defined
     \param  name    name of window

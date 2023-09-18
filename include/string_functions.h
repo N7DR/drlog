@@ -1,4 +1,4 @@
-// $Id: string_functions.h 226 2023-08-20 13:37:39Z  $
+// $Id: string_functions.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -589,6 +589,21 @@ inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
   { return remove_peripheral_chars <STYPE> (cs, ' '); }
 //  { return remove_trailing_spaces <STYPE> (remove_leading_spaces <std::string_view> (cs)); }
 
+/*! \brief      Remove leading and trailing instances of a particular character from each element in a vector of strings
+    \param  t   container of strings
+    \param  c   character to remove
+    \return     <i>t</i> with leading and trailing instances of <i>c</i> removed from the individual elements
+*/
+template <typename STYPE, typename T>
+  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
+{ std::vector<STYPE> rv;
+
+  FOR_ALL(t, [c, &rv] (const auto& s) { rv += remove_peripheral_chars <STYPE> (s, c); } );
+
+  return rv;
+}
+
 /*! \brief      Remove leading and trailing spaces from each element in a vector of strings
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
@@ -597,6 +612,10 @@ inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
 */
 template <typename STYPE, typename T>
   requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+inline auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
+  { return remove_peripheral_chars <STYPE> (t, ' '); }
+
+#if 0
 auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
@@ -604,6 +623,7 @@ auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
 
   return rv;
 }
+#endif
 
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
@@ -1124,8 +1144,9 @@ inline bool is_legal_value(const std::string& value, const std::string& legal_va
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
-  { return (contains(split_string <std::string> (legal_values, separator), value)); }
+//inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
+inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const char separator = ',')
+  { return (contains(split_string <std::string_view> (legal_values, separator), value)); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call
@@ -1183,8 +1204,6 @@ std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& ve
     \param  ss  substring to be removed
     \return     <i>cs</i>, with all instances of <i>ss</i> removed
 */
-//inline std::string remove_substring(const std::string& cs, const std::string& ss)
-//  { return ( contains(cs, ss) ? replace(cs, ss, std::string()) : cs ); }
 inline std::string remove_substring(std::string_view cs, std::string_view ss)
   { return ( contains(cs, ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
 
@@ -1209,9 +1228,6 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-//std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//"s);
-//std::string remove_trailing_comment(std::string_view str, const std::string& comment_str = "//"s);
-//std::string remove_trailing_comment(std::string_view str, std::string_view comment_str = "//"s);
 template <typename STYPE>
 auto remove_trailing_comment(std::string_view str, const std::string_view comment_str = "//"sv) -> STYPE
 { const size_t posn { str.find(comment_str) };
@@ -1243,8 +1259,6 @@ size_t case_insensitive_find(const std::string& str, const std::string& target, 
     \param  c           target character
     \return             <i>str</i> truncated immediately prior to <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
 */
-//inline std::string truncate_before_first(const std::string& str, const char c)
-//  { return (substring <std::string> (str, 0, str.find(c))); }
 template <typename STYPE>
 inline auto truncate_before_first(std::string_view str, const char c) -> STYPE
   { return (substring <STYPE> (str, 0, str.find(c))); }
@@ -1254,8 +1268,6 @@ inline auto truncate_before_first(std::string_view str, const char c) -> STYPE
     \param  c           target character
     \return             <i>str</i> truncated immediately after <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
 */
-//inline std::string after_first(const std::string& str, const char c)
-//  { return (substring <std::string> (str, str.find(c) + 1)); }
 template <typename STYPE>
 inline auto after_first(std::string_view str, const char c) -> STYPE
   { return (substring <STYPE> (str, str.find(c) + 1)); }

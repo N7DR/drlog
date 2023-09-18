@@ -1,4 +1,4 @@
-// $Id: screen.h 225 2023-08-14 17:29:55Z  $
+// $Id: screen.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -745,6 +745,6 @@ inline int FGBG(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-COLOUR_TYPE string_to_colour(const std::string& str);
+COLOUR_TYPE string_to_colour(const std::string_view str);
 
 #endif    // SCREEN_H

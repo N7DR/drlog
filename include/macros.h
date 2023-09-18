@@ -1,4 +1,4 @@
-// $Id: macros.h 225 2023-08-14 17:29:55Z  $
+// $Id: macros.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -883,7 +883,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
     \param  m           destination MUM
     \param  element     element to insert
 */
-/* The perceived "wisdom" is that requires clauses are clearer than SFINAE. In this case, that is clearly untrue.
+/* The received "wisdom" is that requires clauses are clearer than SFINAE. In this case, that is clearly untrue.
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>

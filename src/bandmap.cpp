@@ -30,6 +30,7 @@ extern bool                          bandmap_show_marked_frequencies;   ///< whe
 extern bool                          bandmap_frequency_up;              ///< whether increasing frequency goes upwards in the bandmap
 extern pt_mutex                      batch_messages_mutex;              ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;                    ///< batch messages associated with calls
+//extern bool                          debug;                             ///< debug frequency changes
 extern exchange_field_database       exchange_db;                       ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                       ///< location information
 extern unsigned int                  max_qsos_without_qsl;              ///< limit for the N7DR matches_criteria() algorithm
@@ -1148,7 +1149,13 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 #endif
 
   if (dirn == BANDMAP_DIRECTION::DOWN)
-  { return gnd_r(marker_it, nskip);
+  { //ost << "marker_it is at: " << marker_it -> freq() << endl;
+
+    //auto rv = gnd_r(marker_it, nskip);
+
+    //ost << "gnd_r returning: " << rv.freq() << endl;
+
+    return gnd_r(marker_it, nskip);
     //return gnd(marker_it, nskip);
   }
 

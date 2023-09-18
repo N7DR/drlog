@@ -1,4 +1,4 @@
-// $Id: cabrillo.h 224 2023-08-03 20:54:02Z  $
+// $Id: cabrillo.h 228 2023-09-17 13:41:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,12 +63,10 @@ public:
         
     Any tag value is legal for this tag
 */
-//  inline explicit cabrillo_tag_template(const std::string& nm)
   inline explicit cabrillo_tag_template(std::string_view nm)
     { _init_from_string(nm); }
     
 /// cabrillo_tag_template = string
-//  inline void operator=(const std::string& nm)
   inline void operator=(std::string_view nm)
     { _init_from_string(nm); }
   
@@ -89,7 +87,7 @@ class cabrillo_tag_templates
 {
 protected:
 
-  std::vector<cabrillo_tag_template>    _templates;    ///< container for the templates; there aren't many different kinds of tags, so a vector will suffice
+  std::vector<cabrillo_tag_template> _templates;    ///< container for the templates; there aren't many different kinds of tags, so a vector will suffice
 
 /*! \brief          Add a tag name
     \param  str     name of tag to add
