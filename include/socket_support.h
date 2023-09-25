@@ -27,6 +27,9 @@
 
 #include <deque>
 #include <string>
+#include <string_view>
+
+#include <netinet/ip_icmp.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -52,6 +55,9 @@ constexpr int TCP_SOCKET_UNKNOWN_DESTINATION  { -1 },     ///< Destination not s
               TCP_SOCKET_UNABLE_TO_CLOSE      { -5 },     ///< Error closing socket
               TCP_SOCKET_UNABLE_TO_RESOLVE    { -6 };     ///< Error resolving destination
 
+constexpr int ICMP_SOCKET_UNABLE_TO_CREATE    { -1 },     ///< Unable to create socket
+              ICMP_SOCKET_SEND_ERROR          { -2 };     ///< Error when sending
+
 /// TCP socket error messages
 const std::string tcp_socket_error_string[7] { std::string(),
                                                "Destination not set"s,
@@ -61,6 +67,12 @@ const std::string tcp_socket_error_string[7] { std::string(),
                                                "Error closing socket"s,
                                                "Error resolving destination"s
                                              };
+
+/// ICMP socket error messages
+const std::string icmp_socket_error_string[3] { std::string(),
+                                                "Unable to create"s,
+                                                "Error when sending"s
+                                              };
 
 /// Type that holds a socket -- syntactic sugar
 using SOCKET = int;
@@ -184,7 +196,7 @@ class tcp_socket
 {
 protected:
 
-  sockaddr_storage  _bound_address      { };                        ///< address to which port is bound
+  sockaddr_storage  _bound_address      { };                        ///< address to which socket is bound
   sockaddr_storage  _destination        { };                        ///< destination
   bool              _destination_is_set { false };                  ///< is the destination known?
   bool              _force_closure      { false };                  ///< force closure of socket in destructor, even for a pre-existing socket
@@ -391,6 +403,90 @@ public:
   void enable_reuse(void);
 };
 
+// ------------------------------------  icmp_socket  ----------------------------------
+
+/*! \class  icmp_socket
+    \brief  Encapsulate and manage a Linux kernel ICMP socket
+
+    https://opennms.discourse.group/t/how-to-allow-unprivileged-users-to-use-icmp-ping/1573
+*/
+
+class icmp_socket
+{
+protected:
+
+  sockaddr_storage  _bound_address  { };     ///< address to which socket is bound
+  std::string _destination_str    { };               ///< destination
+  SOCKET _sock;                                      ///< encapsulated socket
+
+  sockaddr_in _dest { };
+  icmphdr _icmp_hdr { };
+
+  int _sequence { 0 };
+
+  struct timeval _socket_timeout { 5, 0 };   // seconds, microseconds; collision with curses timeout macro if just use _timeout
+
+  pt_mutex       _icmp_socket_mutex   { "UNNAMED ICMP SOCKET"s };  ///< mutex to control access
+
+public:
+
+/*! \brief  Default constructor
+*/
+  icmp_socket(void);
+
+/*! \brief                                  Create and associate with a particular destination
+    \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
+*/
+  explicit icmp_socket(const std::string& destination_ip_address_or_fqdn);
+
+/*! \brief                                  Create and associate with a particular destination
+    \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
+*/
+  inline explicit icmp_socket(const std::string_view destination_ip_address_or_fqdn)
+    { icmp_socket( std::string { destination_ip_address_or_fqdn } ); }
+
+/*! \brief                                  Create and associate with a particular destination and local address
+    \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
+    \param  dotted_decimal_address          local IPv4 address
+*/
+  icmp_socket(const std::string& destination_ip_address_or_fqdn, const std::string& dotted_decimal_address);
+
+/// copy constructor
+  icmp_socket(const icmp_socket& obj) = delete;
+
+  READ_AND_WRITE(socket_timeout);   // seconds, microseconds; collision with curses timeout macro if just use _timeout
+
+/*! \brief                  Bind the socket
+    \param  local_address   address/port to which the socket is to be bound
+*/
+  void bind(const sockaddr_storage& local_address);
+
+/*! \brief                          Bind the socket
+    \param  dotted_decimal_address  address to which the socket is to be bound
+    \param  port_nr                 port to which the socket is to be bound
+*/
+//  inline void bind(const std::string& dotted_decimal_address, const short port_nr = 0)
+//    { bind(socket_address(dotted_decimal_address, port_nr)); }
+  inline void bind(const std::string& dotted_decimal_address)
+    { //SAFELOCK(_icmp_socket);
+
+//      safelock lockit(_icmp_socket_mutex);
+
+      bind(socket_address(dotted_decimal_address, 0 /* port nr */)); }
+
+/*! \brief                          Perform a ping
+
+    This is ridiculously C-ish, basically taken from: https://stackoverflow.com/questions/8290046/icmp-sockets-linux
+*/
+  bool ping(void);
+
+/*! \brief              Rename the mutex associated with the socket
+    \param  new_name    the new name for the mutex
+*/
+  inline void rename_mutex(const std::string& new_name)
+    { _icmp_socket_mutex.rename(new_name); }
+};
+
 /*! \brief              Convert a name to a dotted decimal IP address
     \param  fqdn        name to be resolved
     \param  n_tries     maximum number of tries
@@ -407,5 +503,7 @@ std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n
 ERROR_CLASS(socket_support_error);  ///< general socket-related errors
 
 ERROR_CLASS(tcp_socket_error);      ///< errors related to TCP sockets
+
+ERROR_CLASS(icmp_socket_error);     ///< errors related to TCP sockets
 
 #endif    // !SOCKET_SUPPORT_H

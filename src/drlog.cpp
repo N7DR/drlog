@@ -54,6 +54,8 @@
 #include <iostream>
 #include <thread>
 
+#include <future>
+
 #include <cstdlib>
 
 #include <png++/png.hpp>
@@ -65,6 +67,8 @@ using namespace   chrono;        // std::chrono; NB g++10 library does not yet i
 using namespace   this_thread;   // std::this_thread
 
 using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
+using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;
+using PING_TABLE = vector<PING_TABLE_ELEMENT>;
 
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
@@ -91,6 +95,10 @@ ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 
   return ost;
 }
+
+constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
+
+message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
 screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed;
                                             // declare early so it is ready when any of the colour functions are called
@@ -223,6 +231,7 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
 bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);     ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
+void update_pings(window& win, PING_TABLE& table);                                                                      ///< execute pings and update PING window
 void update_query_windows(const string& callsign);                                                                      ///< Update the Q1 and QN windows
 void update_quick_qsy(void);                                                                                            ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
 void update_qsls_window(const string& = EMPTY_STR);                                                                     ///< QSL information from old QSOs
@@ -255,6 +264,7 @@ void* display_date_and_time(void* vp);                                      ///<
 void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
 void* get_indices(void* vp);                                                ///< Get SFI, A, K
 void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
+//void* pings_thread(void* vp);                                               ///< execute pings and update window
 void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
 void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
 void* p3_screenshot_thread(void* vp);                                       ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
@@ -384,6 +394,10 @@ old_log                 olog;                               ///< old (ADIF) log 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
 set<BAND>               permitted_bands_set;                ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
+vector<pair<string /* addr */, string /* label */>>       ping_destinations;                  ///< ping names and labels from config file
+//vector<pair<string /* label */, icmp_socket>>              ping_table;
+//vector<pair<string /* label */, icmp_socket*>>              ping_table_p;
+PING_TABLE              ping_table_p;
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
 exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
@@ -427,9 +441,9 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
 */
 bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 
-constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
+//constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
 
-message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
+//message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
 cpair colours;  // must be declared before windows
 
@@ -462,6 +476,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_log_extract,                 ///< to show earlier QSOs
        win_memories,                    ///< the memory contents
        win_name,                        ///< name of operator
+       win_ping,                        ///< ping information
        win_qtc_hint,                    ///< hint as to whether to send QTC
        win_system_memory,               ///< system memory
        win_message,                     ///< messages from drlog to the user
@@ -832,7 +847,6 @@ int main(int argc, char** argv)
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
-//    instrumented                    = context.instrumented();
     long_t                          = context.long_t();
     marked_frequency_ranges         = context.mark_frequencies();
     max_qsos_without_qsl            = context.max_qsos_without_qsl();
@@ -844,6 +858,26 @@ int main(int argc, char** argv)
     my_longitude                    = context.my_longitude();
     no_default_rst                  = context.no_default_rst();
     n_memories                      = context.n_memories();
+//    ping_destinations               = context.ping_targets();
+
+//    if (const auto targets { context.ping_targets() }; !targets.empty())
+//    { for (const auto& target : targets)
+//        ping_destinations += target;
+//    }
+
+#if 1
+    if (const auto targets { context.ping_targets() }; !targets.empty())
+    { for (const auto& [addr, label] : targets)
+      { //icmp_socket pingsock { addr, context.my_ip() };
+
+        //auto t = pair<string, icmp_socket> { label, pingsock };
+
+        //ping_table_p += pair { label, move(pingsock) };
+        ping_table_p += pair { label, new icmp_socket(addr, context.my_ip()) };
+      }
+    }
+#endif
+
     posted_by_continents            = context.posted_by_continents();
     qtc_long_t                      = context.qtc_long_t();
     rbn_threshold                   = context.rbn_threshold();
@@ -862,6 +896,14 @@ int main(int argc, char** argv)
     n_posters_db_cluster.min_posters(context.cluster_threshold());
     n_posters_db_rbn.min_posters(context.rbn_threshold());
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
+
+#if 1
+// configure ping targets
+    ost << "Number of ping targets = " << ping_destinations.size() << endl;
+
+    for (const auto& [name, label] : ping_destinations)
+      ost << "  ping target: " << name << endl;
+#endif
 
 // set up initial quick qsy information
     for (int n { static_cast<int>(MIN_BAND) }; n <= static_cast<int>(MAX_BAND); ++n)
@@ -1353,6 +1395,27 @@ int main(int argc, char** argv)
 
 // NEARBY window
     win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
+
+// PING window
+#if 1
+    win_ping.init(context.window_info("PING"s), WINDOW_NO_CURSOR);
+
+    if (win_ping.valid() and !ping_table_p.empty())
+//      update_pings(win_ping, ping_table_p);
+    { //ost << "starting jthread" << endl;
+
+ //     jthread initial_ping_thread(update_pings, ref(win_ping), ref(ping_table_p));
+
+//      initial_ping_thread.detach();
+      jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
+
+//      async(update_pings, ref(win_ping), ref(ping_table_p));
+
+      //ost << "destroying jthread" << endl;
+    }
+
+
+#endif
 
 // POST MONITOR window
     win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
@@ -2084,6 +2147,40 @@ void* display_date_and_time(void* vp)
           { ost << e.reason() << endl;
           }
         }
+
+// possibly execute pings and update ping window
+
+    if (win_ping.valid() and !ping_table_p.empty())
+//      update_pings(win_ping, ping_table_p);
+    { //ost << "starting jthread" << endl;
+
+ //     jthread periodic_ping_thread(update_pings, ref(win_ping), ref(ping_table_p));
+
+ //     periodic_ping_thread.detach();
+
+      jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
+
+      //ost << "destroying jthread" << endl;
+    }
+
+#if 0
+if (win_ping.valid() and !ping_table_p.empty())
+        { static tuple<void* /* window */, void* /* ping table */> params;
+          static pthread_t                                         ping_thread_id;
+
+          params = { &win_ping, &ping_table_p };
+
+          try
+          { create_thread(&ping_thread_id, &(attr_detached.attr()), pings_thread, static_cast<void*>(&params), "ping"s);
+          }
+
+          catch (const pthread_error& e)
+          { ost << e.reason() << endl;
+          }
+
+ //         update_pings(win_ping, ping_table_p); // TODO: put this in separate thread
+        }
+#endif
 
 // possibly clear alert window
         { SAFELOCK(alert);
@@ -9404,4 +9501,61 @@ string expected_received_exchange(const string& callsign)
 
   return  string { };
 }
-   
+
+/// execute pings and update PING window
+void update_pings(window& win, PING_TABLE& table)
+{ constexpr int FG_COLOUR     { COLOUR_WHITE };
+  constexpr int NOPING_COLOUR { COLOUR_RED };
+
+  static const int PING_COLOUR { string_to_colour("COLOUR_28") };
+
+  unsigned int y { static_cast<unsigned int>(win.height() - 1) };
+
+//  int counter { 0 };
+
+  for (const auto& [label, socket_p] : ping_table_p)
+  { //sleep_for(2s);
+
+    const string line_string { create_centred_string(label, win.width()) };
+
+    const bool success { socket_p -> ping() };
+
+    win.move_cursor(0, y--);
+
+    win < colour_pair(colours.add(FG_COLOUR, success ? PING_COLOUR : NOPING_COLOUR));
+    win <= line_string;
+ //   win.default_colours(COLOUR_WHITE, success ? string_to_colour("COLOUR_28") : COLOUR_RED);
+
+//    if (++counter == 2)
+//      win.default_colours(COLOUR_WHITE, COLOUR_YELLOW);
+
+//    win <= centre(label, y--);
+  }
+
+  win.refresh();
+}
+
+// tuple<void* /* window */, void* /* ping table */> params;
+void* pings_thread(void* vp)
+{ ost << "in pings thread" << endl;
+
+  { start_of_thread("pings"s);
+
+//    const tuple<window*, vector<pair<string, icmp_socket*>>*> params_p { static_cast<tuple<window*, vector<pair<string, icmp_socket*>>*>>(vp) };
+    tuple<window*, PING_TABLE*>* params_p { static_cast<tuple<window*, PING_TABLE*>*>(vp) };
+    window* win_p { get<0>(*params_p) };
+    PING_TABLE* pt_p { get<1>(*params_p) };
+
+    window& win = *win_p;
+    PING_TABLE& table = *pt_p;
+
+    update_pings(win, table);
+  }  // ensure that all objects call destructors, whatever the implementation
+
+  end_of_thread("pings"s);
+
+  ost << "leaving pings thread" << endl;
+  pthread_exit(nullptr);
+}
+
+

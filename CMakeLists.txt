@@ -7,8 +7,6 @@ endif()
 
 project(drlog)
 
-#set (CXX_COMPILER_LAUNCHER "/usr/bin/ccache g++")
-
 set (CMAKE_CXX_COMPILER "g++")
 
 set ( SOURCE_FILES

@@ -1118,10 +1118,11 @@ std::string nth_word(const std::string& s, const unsigned int n, const unsigned 
 size_t n_chars(const std::string& str);
 
 /*! \brief      Does a string contain a legal dotted-decimal IPv4 address
-    \param  cs  original string
+    \param  cs  string to test
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-bool is_legal_ipv4_address(const std::string& cs);  
+//bool is_legal_ipv4_address(const std::string& cs);
+bool is_legal_ipv4_address(const std::string_view cs);
 
 /*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value

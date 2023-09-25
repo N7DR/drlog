@@ -213,6 +213,7 @@ protected:
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points                     { };                            ///< points structure for each band and mode
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
+  std::vector<std::pair<std::string /* name/addr */, std::string /* label */>> _ping_targets { };                            ///< targets for pings
   std::set<std::string>                        _post_monitor_calls                      { };                            ///< calls to be monitored
   std::set<std::string>                        _posted_by_continents                    { };                            ///< continents for POSTED BY window (empty => all DX continents)
   unsigned int                                 _ptt_delay                               { 25 };                         ///< PTT delay in milliseconds ( 0 => PTT disabled)
@@ -501,6 +502,7 @@ public:
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
+  CONTEXTREAD(ping_targets);                 ///< targets for pings
   CONTEXTREAD(post_monitor_calls);           ///< calls to be monitored
   CONTEXTREAD(posted_by_continents);         ///< continents for POSTED BY window (empty => all DX continents)
   CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)

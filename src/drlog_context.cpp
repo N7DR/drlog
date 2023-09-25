@@ -700,6 +700,20 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "PATH"sv) and (!rhs.empty()) )
       _path = clean_split_string <string> (rhs, ';');
 
+// PING = [ target1, label1 ], [target2, label2] ...
+    if ( (LHS == "PING"sv) and (!rhs.empty()) )
+    { const vector<string> ping_targets { delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP) };
+
+      ost << "in drlog_context, number of ping targets = " << ping_targets.size() << " for input line: " << rhs << endl;
+
+      for (const auto& target : ping_targets)
+      { const vector<string> target_info = clean_split_string <string> (target);
+
+        if (target_info.size() == 2)
+          _ping_targets += { target_info[0], target_info[1] };
+      }
+    }
+
 // POINTS
 // don't use LHS here because the command might be something like "POINTS[80] ="
     if (testline.starts_with("POINTS"sv) and !testline.starts_with("POINTS CW"sv) and !testline.starts_with("POINTS SSB"sv))  // there may be an "=" in the points definitions

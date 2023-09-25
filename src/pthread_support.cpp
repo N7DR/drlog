@@ -888,7 +888,9 @@ void pt_condition_variable::signal(void)
 safelock::safelock(pt_mutex& ptm, const string& name) :
  _name(name.empty() ? ptm.name() : name)
 { try
-  { _ptm_p = &ptm;
+  {//ost << "in safelock for " << name << endl;
+    _ptm_p = &ptm;
+    //ost << "here" << endl;
     _ptm_p->lock();
   }
 

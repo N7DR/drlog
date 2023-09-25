@@ -782,10 +782,11 @@ size_t n_chars(const string& str)
 }
 
 /*! \brief      Does a string contain a legal dotted-decimal IPv4 address
-    \param  cs  original string
+    \param  cs  string to test
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-bool is_legal_ipv4_address(const string& cs)
+//bool is_legal_ipv4_address(const string& cs)
+bool is_legal_ipv4_address(const string_view cs)
 { const vector<string> fields { split_string <std::string> (cs, '.') };
 
   if (fields.size() != 4)

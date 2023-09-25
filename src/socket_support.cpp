@@ -131,7 +131,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
             rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
-          { 
+          {
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
@@ -568,6 +568,141 @@ string tcp_socket::to_string(void) const
   rv += "socket was "s + (_preexisting_socket ? ""s : "NOT "s) + "pre-existing"s  + EOL;
   rv += "encapsulated socket number: "s + ::to_string(_sock) + EOL;
   rv += "timout in tenths of a second: "s + ::to_string(_timeout_in_tenths);
+
+  return rv;
+}
+
+// ---------------------------------  icmp_socket  -------------------------------
+
+// see, for example, https://stackoverflow.com/questions/8290046/icmp-sockets-linux
+
+/// default constructor
+icmp_socket::icmp_socket(void) :
+  _sock(::socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
+{ if (_sock <= 0)
+    throw icmp_socket_error(ICMP_SOCKET_UNABLE_TO_CREATE, strerror(errno));
+}
+
+/*! \brief                                  Create and associate with a particular destination
+    \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
+*/
+icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
+  _sock(::socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
+{ if (_sock <= 0)
+    throw icmp_socket_error(ICMP_SOCKET_UNABLE_TO_CREATE, strerror(errno));
+
+  _dest.sin_family = AF_INET;
+
+  const string dest_str { is_legal_ipv4_address(destination_ip_address_or_fqdn) ? destination_ip_address_or_fqdn : name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };
+
+  inet_aton(dest_str.c_str(), &_dest.sin_addr);   // do I have a function of my own to replace this?
+
+  _icmp_hdr.type = ICMP_ECHO;
+  _icmp_hdr.un.echo.id = 1234;//arbitrary id
+
+  rename_mutex("ICMP: "s + destination_ip_address_or_fqdn + ":"s);
+}
+
+/*! \brief                                  Create and associate with a particular destination and local address
+    \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
+    \param  dotted_decimal_address          local IPv4 address
+*/
+icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn, const string& dotted_decimal_address)
+{ *this = std::move(icmp_socket(destination_ip_address_or_fqdn));
+
+  rename_mutex("ICMP: "s + destination_ip_address_or_fqdn + ":"s);
+
+  bind(dotted_decimal_address);
+}
+
+/*! \brief                  Bind the socket to a local address
+    \param  local_address   address to which the socket is to be bound
+*/
+void icmp_socket::bind(const sockaddr_storage& local_address)
+{ //SAFELOCK(_icmp_socket);
+
+  if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
+  { const string address { dotted_decimal_address(*(sockaddr*)(&local_address)) };
+
+    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + ::to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
+  }
+
+  _bound_address = local_address;
+}
+
+/*! \brief                          Perform a ping
+
+    This is ridiculously C-ish, basically taken from: https://stackoverflow.com/questions/8290046/icmp-sockets-linux
+*/
+bool icmp_socket::ping(void)
+{ SAFELOCK(_icmp_socket);
+
+  bool rv { false };
+
+  try {
+  unsigned char data[2048];
+
+  const char* payload { "drlog" };
+
+  fd_set read_set;
+  struct icmphdr rcv_hdr;
+
+  _icmp_hdr.un.echo.sequence = _sequence++;
+
+  memcpy(data, &_icmp_hdr, sizeof(_icmp_hdr));
+//  memcpy(data + sizeof(_icmp_hdr), "hello", 5); //icmp payload
+  memcpy(data + sizeof(_icmp_hdr), payload, strlen(payload)); //icmp payload
+
+//  rc = sendto(_sock, data, sizeof _icmp_hdr + 5, 0, (struct sockaddr*)&_dest, sizeof(_dest));
+//  int rc = sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest));
+
+  if (const ssize_t status { sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest)) }; (status < 0))
+    throw icmp_socket_error(ICMP_SOCKET_SEND_ERROR, "sendto error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+
+//  ost << "rc from sendto = " << rc << endl;
+
+  FD_SET(_sock, &read_set);
+
+  if (int status { select(_sock + 1, &read_set, NULL, NULL, &_socket_timeout) }; (status < 0))
+    throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR, "select() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+
+ // ost << "rc from select = " << rc << endl;
+
+   socklen_t slen { 0 };
+
+//        int rc = recvfrom(_sock, data, sizeof(data), 0, NULL, &slen);
+  if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
+  { const auto recvfrom_error = errno;
+
+    if ( (recvfrom_error == EAGAIN) or (recvfrom_error == EWOULDBLOCK) )
+      ost << "ICMP timeout" << endl;
+    else
+      throw socket_support_error(SOCKET_SUPPORT_RECVFROM_ERROR, "recvfrom() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+  }
+
+//   ost << "rc from recvfrom = " << rc << endl;
+
+  memcpy(&rcv_hdr, data, sizeof rcv_hdr);
+        if (rcv_hdr.type == ICMP_ECHOREPLY)
+        { ost << "reply, id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
+          rv = true;
+        } else
+        {
+            ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
+        }
+  }
+
+  catch (const socket_support_error& e)
+  { ost << "in ping; socket support error number " << e.code() << ", reason = " << e.reason() << endl;
+
+    return false;
+  }
+
+  catch (const icmp_socket_error& e)
+  { ost << "in ping; ICMP socket error number " << e.code() << ", reason = " << e.reason() << endl;
+
+    return false;
+  }
 
   return rv;
 }
