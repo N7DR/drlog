@@ -415,18 +415,14 @@ class icmp_socket
 {
 protected:
 
-  sockaddr_storage  _bound_address  { };     ///< address to which socket is bound
-  std::string _destination_str    { };               ///< destination
-  SOCKET _sock;                                      ///< encapsulated socket
-
-  sockaddr_in _dest { };
-  icmphdr _icmp_hdr { };
-
-  int _sequence { 0 };
-
-  struct timeval _socket_timeout { 5, 0 };   // seconds, microseconds; collision with curses timeout macro if just use _timeout
-
-  pt_mutex       _icmp_socket_mutex   { "UNNAMED ICMP SOCKET"s };  ///< mutex to control access
+  sockaddr_storage  _bound_address     { };                           ///< address to which socket is bound
+  sockaddr_in       _dest              { };                           ///< destination
+  std::string       _destination_str   { };                           ///< destination as string
+  icmphdr           _icmp_hdr          { };                           ///< header for the ping packet
+  pt_mutex          _icmp_socket_mutex { "UNNAMED ICMP SOCKET"s };    ///< mutex to control access
+  int               _sequence_nr       { 0 };                         ///< sequence number
+  SOCKET            _sock;                                            ///< encapsulated socket
+  struct timeval    _socket_timeout    { 5, 0 };                      ///< seconds, microseconds; collision with curses timeout macro if just use _timeout
 
 public:
 
@@ -465,14 +461,8 @@ public:
     \param  dotted_decimal_address  address to which the socket is to be bound
     \param  port_nr                 port to which the socket is to be bound
 */
-//  inline void bind(const std::string& dotted_decimal_address, const short port_nr = 0)
-//    { bind(socket_address(dotted_decimal_address, port_nr)); }
   inline void bind(const std::string& dotted_decimal_address)
-    { //SAFELOCK(_icmp_socket);
-
-//      safelock lockit(_icmp_socket_mutex);
-
-      bind(socket_address(dotted_decimal_address, 0 /* port nr */)); }
+    { bind(socket_address(dotted_decimal_address, 0 /* port nr */)); }
 
 /*! \brief                          Perform a ping
 

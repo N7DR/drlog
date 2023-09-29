@@ -82,7 +82,7 @@ protected:
     \param  value   the value to convert/round
     \return         <i>value</i> rounded with granularity <i>_granularity</i>
 */
-  inline int _round(const int value)
+  inline int _round(const int value) const
     { return ( ( (value + (_granularity / 2) ) / _granularity ) * _granularity ); }
 
 public:
@@ -178,7 +178,7 @@ protected:
     \param  v   VFO
     \return     frequency of v
 */
-  frequency _rig_frequency(const VFO v);
+  frequency _rig_frequency(const VFO v) const;
 
 public:
 
@@ -252,13 +252,13 @@ public:
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  inline frequency rig_frequency_a(void)
+  inline frequency rig_frequency_a(void) const
     { return _rig_frequency(VFO::A); }
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  inline frequency rig_frequency(void)
+  inline frequency rig_frequency(void) const
     { return rig_frequency_a(); }
 
 /*! \brief      Set frequency of VFO B
@@ -270,7 +270,7 @@ public:
     { _rig_frequency(f, VFO::B); }
 
 /// get frequency of VFO B
-  inline frequency rig_frequency_b(void)
+  inline frequency rig_frequency_b(void) const
     { return _rig_frequency(VFO::B); }
 
 /// set frequency of VFO B to match that of VFO A
@@ -299,7 +299,7 @@ public:
 
     This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-  bool split_enabled(void);
+  bool split_enabled(void) const;
 
 /// get mode
   MODE rig_mode(void) const;
@@ -326,10 +326,10 @@ public:
 /*! \brief      Set rit offset (in Hz)
     \param  hz  offset in Hz
 */
-  void rit(const int hz);
+  void rit(const int hz) const;
 
 /// get rit offset (in Hz)
-  int rit(void);
+  int rit(void) const;
 
 /*! \brief  Turn rit on
 
@@ -355,7 +355,7 @@ public:
     { rit_enable(); }
 
 /// is rit enabled?
-  bool rit_enabled(void);
+  bool rit_enabled(void) const;
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz

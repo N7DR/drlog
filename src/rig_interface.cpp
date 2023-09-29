@@ -127,7 +127,6 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       bool retry { true };
 
       constexpr int MAX_RETRIES { 2 };
- //     constexpr int MAX_ERROR { 10 };   // max permitted frequency error, in Hz
 
       int n_retries { 0 };
 
@@ -168,7 +167,7 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
     \param  v   VFO
     \return     frequency of v
 */
-frequency rig_interface::_rig_frequency(const VFO v)
+frequency rig_interface::_rig_frequency(const VFO v) const
 { if (!_rig_connected)
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
   else
@@ -190,8 +189,6 @@ frequency rig_interface::_rig_frequency(const VFO v)
 /*! \class  rig_interface
     \brief  The interface to a rig
 */
-
-//  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0);
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
@@ -288,8 +285,7 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ //constexpr milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
-  constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
+{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
 
   _last_commanded_mode = m;
 
@@ -443,7 +439,7 @@ void rig_interface::split_disable(void)
 
     This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-bool rig_interface::split_enabled(void)
+bool rig_interface::split_enabled(void) const
 { if (!_rig_connected)
     return false;
 
@@ -567,7 +563,7 @@ MODE rig_interface::rig_mode(void) const
 /*! \brief      Set rit offset (in Hz)
     \param  hz  offset in Hz
 */
-void rig_interface::rit(const int hz)
+void rig_interface::rit(const int hz) const
 { if (!_rig_connected)                          // do nothing if no rig is connected
     return;
 
@@ -593,7 +589,7 @@ void rig_interface::rit(const int hz)
 }
 
 /// get rit offset (in Hz)
-int rig_interface::rit(void)
+int rig_interface::rit(void) const
 { if (_model == RIG_MODEL_K3)
   { if ( const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"s, 0) )
       return from_string<int>(substring <std::string> (value, 2, 5));
@@ -639,7 +635,7 @@ void rig_interface::rit_disable(void)
 }
 
 /// is rit enabled?
-bool rig_interface::rit_enabled(void)
+bool rig_interface::rit_enabled(void) const
 { switch (_model)
   { case RIG_MODEL_K3 :
     { if ( const string response { raw_command("RT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "RT"s, 0) )
@@ -709,15 +705,14 @@ void rig_interface::xit(const int hz)
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_left(to_string(positive_hz), 4, '0') };
+//      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_left(to_string(positive_hz), 4, '0') };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_leftz(positive_hz, 4) };
 
       raw_command("RO"s + hz_str + ";"s);
     }
   }
   else
   { SAFELOCK(_rig);
-
-//    const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
     if (const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) }; status != RIG_OK)
       _error_alert("Hamlib error in xit(int)");  // handle this error upstairs

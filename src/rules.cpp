@@ -1355,9 +1355,6 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
   try
   { const auto& se { _sent_exchange_names.at(m) };
 
- //   return (find(se.cbegin(), se.cend(), str) != se.cend());
- //   return (se > str);
-//    return se.contains(str);
     return contains(se, str);
   }
 
@@ -1375,7 +1372,6 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
 bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 { SAFELOCK(rules);
 
-//  if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
   if (!_exchange_field_eft.contains(field_name))
     return false;    // not a known field name
 
@@ -1390,16 +1386,6 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
       return (exchange_field_names_set.contains(field_name));
   }
 
-#if 0
-  for (const auto& ssets : _per_country_exchange_fields)
-  { if (ssets.second > field_name)
-      is_a_per_country_field = true;
-
-    if (ssets.first == canonical_prefix)
-      return (ssets.second > field_name);
-  }
-#endif
-
   return !is_a_per_country_field;       // a known field, and this is not a special country
 }
 
@@ -1407,9 +1393,7 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
 set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
 
-//std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
-
-  FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );
+  FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );  //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
 
   return rv;
 }
@@ -1434,13 +1418,6 @@ choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) co
     return (cit_cp->second);
 
 // if there's no choice for this particular cp, perhaps there's a choice for all cps
-//  const map<string, choice_equivalents>::const_iterator cit_nocp { choice_equivalents_this_mode.find(string()) };   // empty string signifies all prefixes
-
-//  if (cit_nocp != choice_equivalents_this_mode.cend())
-//    return (cit_nocp->second);
-
-//  return rv;
-
   return MUM_VALUE(choice_equivalents_this_mode, string { }, choice_equivalents { });   // I think that this is the same as the prior four lines
 }
 
@@ -1492,8 +1469,6 @@ string wpx_prefix(const string& call)
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-//  if (callsign.ends_with("/QRP"s))
- //   callsign = substring(callsign, 0, callsign.length() - 4);
   callsign = remove_from_end <std::string> (callsign, "/QRP"s);
 
 // remove portable designators
@@ -1501,12 +1476,10 @@ string wpx_prefix(const string& call)
   { static const string portables { "AEJMP"s };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
-//      callsign = substring(callsign, 0, callsign.length() - 2);
       callsign = remove_from_end <std::string> (callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
-        //callsign = substring(callsign, 0, callsign.length() - 2);
         callsign = remove_from_end <std::string> (callsign, 2u);
       }
   }
@@ -1520,9 +1493,7 @@ string wpx_prefix(const string& call)
   }
 
 // trivial -- and almost unknown -- case first: no digits
-//  if (callsign.find_first_of(DIGITS) == string::npos)
   if (!contains_digit(callsign))
-//    return (substring <std::string> (callsign, 0, 2) + "0"s);
     return (substring <std::string> (callsign, 0, 2) + '0');
 
   size_t slash_posn { callsign.find('/') };
@@ -1556,7 +1527,7 @@ string wpx_prefix(const string& call)
   string designator { (left_size < right_size ? left : right) };
 
   if (!contains_digit(designator))
-    designator += "0"s;
+    designator += '0';
 
   string rv { designator };
 
@@ -1592,7 +1563,6 @@ string sac_prefix(const string& call)
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 
-//  if ( !(scandinavian_countries > canonical_prefix) )
   if ( !(scandinavian_countries.contains(canonical_prefix)) )
     return string { };
 

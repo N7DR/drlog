@@ -702,12 +702,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // PING = [ target1, label1 ], [target2, label2] ...
     if ( (LHS == "PING"sv) and (!rhs.empty()) )
-    { const vector<string> ping_targets { delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP) };
-
-      ost << "in drlog_context, number of ping targets = " << ping_targets.size() << " for input line: " << rhs << endl;
-
-      for (const auto& target : ping_targets)
-      { const vector<string> target_info = clean_split_string <string> (target);
+    { for (const auto& target : delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP))
+      { const vector<string> target_info { clean_split_string <string> (target) };
 
         if (target_info.size() == 2)
           _ping_targets += { target_info[0], target_info[1] };
@@ -814,22 +810,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-#if 0
-// QTH2X: QTH2X[callsign-or-canonical prefix] = aa, bb, cc...
-// the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
-    if (testline.starts_with("QTH2X["sv))
-    { const vector<string_view> fields { clean_split_string <string_view> (testline, '=') };
-
-      if (fields.size() == 2)
-      { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
-        const vector<string> values           { clean_split_string <string> (RHS) };
-        const set<string>    ss               { values.cbegin(), values.cend() };
-
-        _qth2x += { canonical_prefix, ss };
-      }
-    }
-#endif
-
 // RATE
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
@@ -902,9 +882,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { //const vector<string> bands_str { clean_split_string <string> (rhs) };
-
-      for (const auto& band_str : clean_split_string <string> (rhs))
+    { for (const auto& band_str : clean_split_string <string> (rhs))
       { try
         { _score_bands += BAND_FROM_NAME.at(band_str);
         }
@@ -1235,7 +1213,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (LHS == "CABRILLO QSO"sv)
     { _cabrillo_qso_template = RHS;
 
-      if (contains(RHS, "TEMPLATE"s))
+      if (contains(RHS, "TEMPLATE"sv))
       { try
         { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string <string> (RHS, ':')[1] );
         }
@@ -1355,11 +1333,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents;
             }
 
-            vector<window_information> vec { _static_windows[name].second };
+//            vector<window_information> vec { _static_windows[name].second };
 
- //           vec += winfo;
- //           _static_windows[name] = { final_contents, vec };
-            _static_windows[name] = { final_contents, (vec + winfo) };
+//            _static_windows[name] = { final_contents, (vec + winfo) };
+              _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
           }
         }
       }
@@ -1444,10 +1421,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { //const vector<string> bands_vec { clean_split_string <std::string> (bands() /*, ',' */) };
-
-//    for (const auto& str : bands_vec)
-    for ( const auto& str : clean_split_string <std::string> (bands()) )
+  { for ( const auto& str : clean_split_string <std::string> (bands()) )
     { try
       { _call_history_bands += BAND_FROM_NAME.at(str);
       }
@@ -1505,10 +1479,10 @@ drlog_context::drlog_context(const std::string& filename)
 
 // default is to score all permitted modes
   if (_score_modes.empty())
-  { if (contains(_modes, "CW"s))
+  { if (contains(_modes, "CW"sv))
       _score_modes += MODE_CW;
 
-    if (contains(_modes, "SSB"s))
+    if (contains(_modes, "SSB"sv))
       _score_modes += MODE_SSB;
   }
 }
@@ -1520,14 +1494,9 @@ drlog_context::drlog_context(const std::string& filename)
 vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
 
-//  for (auto cit { _windows.cbegin() }; cit != _windows.cend(); ++cit)
-//    if (contains(cit->first, substr))
-//      rv += (cit->first);
   for (const auto& [ name, wi ] : _windows)
     if (contains(name, substr))
       rv += name;
-
-//  _windows | views::filter([&substr] (const pair<string, window_information>& pr) { return contains(pr.first, substr); } );
 
   return rv;
 }
@@ -1588,24 +1557,12 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
   { rv = _sent_exchange;
 
 // fix RST/RS if using non-mode-specific exchange
-//    for (size_t n { 0 }; n < rv.size(); ++n)
-//    for (auto& name_value : rv)
     for (auto& [name, value] : rv)
-    { //pair<string, string>& pss { rv[n] };
-//      auto& [ name, value ] = name_value;
-
-      if ( (m == MODE_SSB) and (name == "RST"sv) )
+    { if ( (m == MODE_SSB) and (name == "RST"sv) )
         tie(name, value) = pair { "RS"s, "59"s };       // hardwire report
 
       if ( (m == MODE_CW) and (name == "RS"sv) )
         tie(name, value) = pair { "RST"s, "599"s };     // hardwire report
-
-
- //     if ( (m == MODE_SSB) and (pss.first == "RST"sv) )
- //       pss = { "RS"s, "59"s };       // hardwire report
-
- //     if ( (m == MODE_CW) and (pss.first == "RS"sv) )
- //       pss = { "RST"s, "599"s };     // hardwire report
     }
   }
 

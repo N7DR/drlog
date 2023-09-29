@@ -569,6 +569,11 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
   var = val;
 }
 
+/*! \brief          Make an explicit safelock from a mutex, then get a value
+    \param  m       the mutex to be locked
+    \param  v       variable to be retrieved
+    \return         value of the variable <i>v</i>
+*/
 template <class T>
 T SAFELOCK_GET(std::recursive_mutex& m, const T& v)
 { std::lock_guard lg(m);

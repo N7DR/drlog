@@ -213,15 +213,15 @@ protected:
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points                     { };                            ///< points structure for each band and mode
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
-  std::vector<std::pair<std::string /* name/addr */, std::string /* label */>> _ping_targets { };                            ///< targets for pings
-  std::set<std::string>                        _post_monitor_calls                      { };                            ///< calls to be monitored
-  std::set<std::string>                        _posted_by_continents                    { };                            ///< continents for POSTED BY window (empty => all DX continents)
-  unsigned int                                 _ptt_delay                               { 25 };                         ///< PTT delay in milliseconds ( 0 => PTT disabled)
-  bool                                         _p3                                      { false };                      ///< is a P3 available?
-  bool                                         _p3_ignore_checksum_error                { false };                      ///< should checksum errors be ignored when acquiring P3 screendumps?
-  std::string                                  _p3_snapshot_file                        { "P3"s };                      ///< base name of file for P3 snapshot
-  unsigned int                                 _p3_span_cq                              { 0 };                          ///< P3 span in CQ mode, in kHz (0 = no default span)
-  unsigned int                                 _p3_span_sap                             { 0 };                          ///< P3 span in SAP mode, in kHz (0 = no default span)
+  std::vector<std::pair<std::string /* name/addr */, std::string /* label */>> _ping_targets { };               ///< targets for pings
+  std::set<std::string>                            _post_monitor_calls       { };               ///< calls to be monitored
+  std::set<std::string>                            _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
+  unsigned int                                     _ptt_delay                { 25 };            ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  bool                                             _p3                       { false };         ///< is a P3 available?
+  bool                                             _p3_ignore_checksum_error { false };         ///< should checksum errors be ignored when acquiring P3 screendumps?
+  std::string                                      _p3_snapshot_file         { "P3"s };         ///< base name of file for P3 snapshot
+  unsigned int                                     _p3_span_cq               { 0 };             ///< P3 span in CQ mode, in kHz (0 = no default span)
+  unsigned int                                     _p3_span_sap              { 0 };             ///< P3 span in SAP mode, in kHz (0 = no default span)
 
   std::string                                  _qsl_message                             { };                            ///< confirmation message at end of QSO
   bool                                         _qso_multiple_bands                      { false };                      ///< whether OK to work station on another band
@@ -598,9 +598,9 @@ public:
     \return         location, size and colour information
 */
   inline window_information window_info(const std::string& name) const
-    { SAFELOCK(_context);
-      return MUM_VALUE(_windows, name);
-    }
+  { SAFELOCK(_context);
+    return MUM_VALUE(_windows, name);
+  }
 
 /*! \brief          Is a particular window defined
     \param  name    name of window

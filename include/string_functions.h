@@ -980,7 +980,6 @@ char last_char(std::string_view cs);
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-//char penultimate_char(const std::string& cs);
 char penultimate_char(std::string_view cs);
 
 /*! \brief      Get the antepenultimate character in a string
@@ -989,7 +988,6 @@ char penultimate_char(std::string_view cs);
 
     Throws exception if <i>cs</i> contains fewer than two characters
 */
-//char antepenultimate_char(const std::string& cs);
 char antepenultimate_char(std::string_view cs);
 
 /*! \brief          Get the terminating part of a string
@@ -997,8 +995,6 @@ char antepenultimate_char(std::string_view cs);
     \param  n       number of characters to return
     \return         the last <i>n</i> characters of <i>cs</i>
 */
-//inline std::string last(const std::string& cs, unsigned int n)
-//  { return (cs.length() < n ? cs : cs.substr(cs.length() - n)); }
 template <typename STYPE>
 inline auto last(std::string_view cs, unsigned int n) -> STYPE
   { return (cs.length() < n ? STYPE { cs } : STYPE { cs.substr(cs.length() - n) }); }
@@ -1016,7 +1012,6 @@ std::string get_environment_variable(const std::string& var_name);
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-//std::string transform_string(const std::string& cs, int(*pf)(int));
 std::string transform_string(std::string_view cs, int(*pf)(int));
 
 /*! \brief      Convert string to upper case

@@ -639,57 +639,45 @@ bool icmp_socket::ping(void)
 
   bool rv { false };
 
-  try {
-  unsigned char data[2048];
+  try
+  { unsigned char data[2048];
 
-  const char* payload { "drlog" };
+    const char* payload { "drlog" };
 
-  fd_set read_set;
-  struct icmphdr rcv_hdr;
+    fd_set read_set;
+    struct icmphdr rcv_hdr;
 
-  _icmp_hdr.un.echo.sequence = _sequence++;
+    _icmp_hdr.un.echo.sequence = _sequence_nr++;
 
-  memcpy(data, &_icmp_hdr, sizeof(_icmp_hdr));
-//  memcpy(data + sizeof(_icmp_hdr), "hello", 5); //icmp payload
-  memcpy(data + sizeof(_icmp_hdr), payload, strlen(payload)); //icmp payload
+    memcpy(data, &_icmp_hdr, sizeof(_icmp_hdr));
+    memcpy(data + sizeof(_icmp_hdr), payload, strlen(payload)); //icmp payload
 
-//  rc = sendto(_sock, data, sizeof _icmp_hdr + 5, 0, (struct sockaddr*)&_dest, sizeof(_dest));
-//  int rc = sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest));
+    if (const ssize_t status { sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest)) }; (status < 0))
+      throw icmp_socket_error(ICMP_SOCKET_SEND_ERROR, "sendto error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
 
-  if (const ssize_t status { sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest)) }; (status < 0))
-    throw icmp_socket_error(ICMP_SOCKET_SEND_ERROR, "sendto error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+    FD_SET(_sock, &read_set);
 
-//  ost << "rc from sendto = " << rc << endl;
+    if (int status { select(_sock + 1, &read_set, NULL, NULL, &_socket_timeout) }; (status < 0))
+      throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR, "select() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
 
-  FD_SET(_sock, &read_set);
+    socklen_t slen { 0 };
 
-  if (int status { select(_sock + 1, &read_set, NULL, NULL, &_socket_timeout) }; (status < 0))
-    throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR, "select() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+    if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
+    { const auto recvfrom_error = errno;
 
- // ost << "rc from select = " << rc << endl;
+      if ( (recvfrom_error == EAGAIN) or (recvfrom_error == EWOULDBLOCK) )
+        ost << "ICMP timeout" << endl;
+      else
+        throw socket_support_error(SOCKET_SUPPORT_RECVFROM_ERROR, "recvfrom() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+    }
 
-   socklen_t slen { 0 };
+    memcpy(&rcv_hdr, data, sizeof rcv_hdr);
 
-//        int rc = recvfrom(_sock, data, sizeof(data), 0, NULL, &slen);
-  if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
-  { const auto recvfrom_error = errno;
-
-    if ( (recvfrom_error == EAGAIN) or (recvfrom_error == EWOULDBLOCK) )
-      ost << "ICMP timeout" << endl;
-    else
-      throw socket_support_error(SOCKET_SUPPORT_RECVFROM_ERROR, "recvfrom() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
-  }
-
-//   ost << "rc from recvfrom = " << rc << endl;
-
-  memcpy(&rcv_hdr, data, sizeof rcv_hdr);
-        if (rcv_hdr.type == ICMP_ECHOREPLY)
-        { ost << "reply, id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
-          rv = true;
-        } else
-        {
-            ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
-        }
+    if (rcv_hdr.type == ICMP_ECHOREPLY)
+    { ost << "reply, id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
+      rv = true;
+    } else
+        ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
   }
 
   catch (const socket_support_error& e)
@@ -868,7 +856,8 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
     success = (status == 0) and (result != nullptr);    // the second test should be redundant
 
     if (!success and n_try != n_tries)
-      sleep_for(seconds(1));
+//      sleep_for(seconds(1));
+      sleep_for(1s);
   }
 
   if (success)

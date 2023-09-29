@@ -785,7 +785,6 @@ size_t n_chars(const string& str)
     \param  cs  string to test
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-//bool is_legal_ipv4_address(const string& cs)
 bool is_legal_ipv4_address(const string_view cs)
 { const vector<string> fields { split_string <std::string> (cs, '.') };
 
@@ -824,13 +823,11 @@ string convert_to_dotted_decimal(const uint32_t val)
   for (int n { 0 }; n < 3; n++)
   { const unsigned char c { cp[n] };
   
-//    rv += to_string((int)c) + '.';
     rv += to_string(static_cast<int>(c)) + '.';
   }
 
   const unsigned char c { cp[3] };
 
-//  rv += to_string((int)c);
   rv += to_string(static_cast<int>(c));
 
   return rv;
@@ -984,9 +981,6 @@ vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int widt
 { vector<string> rv;
   rv.reserve(vecstr.size());
 
-//  for (const auto& s : vecstr)
-//    rv += reformat_for_wprintw(s, width);
-
   FOR_ALL(vecstr, [width, &rv] (const string& s) { rv += reformat_for_wprintw(s, width); });
 
   return rv;
@@ -1017,8 +1011,6 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-//string remove_trailing_comment(const string& str, const string& comment_str)
-//string remove_trailing_comment(string_view str, const string& comment_str)
 string remove_trailing_comment(string_view str, const string_view comment_str)
 { const size_t posn { str.find(comment_str) };
 

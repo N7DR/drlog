@@ -66,9 +66,9 @@ using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
 using namespace   this_thread;   // std::this_thread
 
-using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
+using CALL_SET           = set<string, decltype(&compare_calls)>;     // set in callsign order
 using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;
-using PING_TABLE = vector<PING_TABLE_ELEMENT>;
+using PING_TABLE         = vector<PING_TABLE_ELEMENT>;
 
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
@@ -165,8 +165,6 @@ string expected_received_exchange(const string& callsign);  ///< expected exchan
 
 bool fast_cw_bandwidth(void);                           ///< set CW bandwidth to appropriate value for CQ/SAP mode
 
-void* get_indices(void* vp);                                       ///< Get SFI, A, K
-
 string hhmmss(void);                                    ///< Obtain the current time in HH:MM:SS format
 
 void insert_memory(void);                                                                               ///< insert an entry into the memories
@@ -257,20 +255,23 @@ void process_LOG_input(window* wp, const keyboard_event& e);                ///<
 void process_QTC_input(window* wp, const keyboard_event& e);                ///< Process an event in QTC window
 
 // thread functions
-void* auto_backup(void* vp);                                                ///< Copy a file to a backup directory
-void* auto_screenshot(void* vp);                                            ///< Write a screenshot to a file
+//void* auto_backup(void* vp);                                                ///< Copy a file to a backup directory
+void auto_backup(const string dir, const string log_filename, const string qtc_filename);   ///< Copy a file to a backup directory
+//void* auto_screenshot(void* vp);                                            ///< Write a screenshot to a file
+void auto_screenshot(const string filename);                                            ///< Write a screenshot to a file
 void* display_rig_status(void* vp);                                         ///< Thread function to display status of the rig
 void* display_date_and_time(void* vp);                                      ///< Thread function to display the date and time
 void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
-void* get_indices(void* vp);                                                ///< Get SFI, A, K
+//void* get_indices(void* vp);                                                ///< Get SFI, A, K
+void get_indices(const string cmd);                                       ///< Get SFI, A, K
 void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
-//void* pings_thread(void* vp);                                               ///< execute pings and update window
 void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
 void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
 void* p3_screenshot_thread(void* vp);                                       ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
 void* reset_connection(void* vp);                                           ///< Thread function to reset the RBN or cluster connection
 void* simulator_thread(void* vp);                                           ///< Thread function to simulate a contest from an extant log
 void* spawn_dx_cluster(void*);                                              ///< Thread function to spawn the cluster
+void spawn_dx_cluster_1(void);                                              ///< Thread function to spawn the cluster
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
 // values that are used by multiple threads
@@ -302,7 +303,7 @@ time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
 
 pt_mutex            thread_check_mutex { "THREAD CHECK"s };                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads { 0 };                ///< how many additional threads are running?
-bool                exiting { false };                      ///< is the program exiting?
+atomic<bool>        exiting { false };                      ///< is the program exiting?
 bool                exiting_rig_status { false };           ///< turn off the display-rig_status thread first
 set<string>         thread_names;                           ///< the names of the threads
 
@@ -336,6 +337,7 @@ bool                    allow_audio_recording { false };            ///< may we 
 string                  at_call;                                    ///< call that should replace commat in "call ok now" message
 audio_recorder          audio;                                      ///< provide capability to record audio
 atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
+string                  auto_backup_directory { };                  ///< directory into which backup log and QTC files are to be written
 
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
 bool                    bandmap_show_marked_frequencies { false };  ///< whether to display entries that would be marked
@@ -357,15 +359,16 @@ exchange_field_database exchange_db;                                ///< dynamic
 
 bool                    filter_remaining_country_mults { false };   ///< whether to apply filter to remaining country mults
 
+string                  geomagnetic_indices_command { };            ///< command to issue in order to obtain geomagnetic indices
 float                   greatest_distance { 0 };                    ///< greatest distance in miles
 
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
 int                     inactivity_timer;                           ///< how long to record with no activity
-//constinit bool          instrumented { false };                     ///< whether to receord all exchanges with rig
 bool                    is_ss        { false };                     ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
+string                  logfile_name { };                           ///< the name of the logfile
 unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
 
 unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
@@ -394,9 +397,6 @@ old_log                 olog;                               ///< old (ADIF) log 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
 set<BAND>               permitted_bands_set;                ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
-vector<pair<string /* addr */, string /* label */>>       ping_destinations;                  ///< ping names and labels from config file
-//vector<pair<string /* label */, icmp_socket>>              ping_table;
-//vector<pair<string /* label */, icmp_socket*>>              ping_table_p;
 PING_TABLE              ping_table_p;
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
@@ -428,9 +428,9 @@ size_t                  wicm_calls_size      { 0 };         ///< maximum number 
 bool                    xscp_sort          { false };       ///< whether to enable XSCP ordering in matches
 
 // QTC variables
-qtc_database    qtc_db;                 ///< sent QTCs
-qtc_buffer      qtc_buf;                ///< all sent and unsent QTCs
-bool            send_qtcs { false };    ///< whether QTCs are used; set from rules later
+qtc_database qtc_db;                 ///< sent QTCs
+qtc_buffer   qtc_buf;                ///< all sent and unsent QTCs
+bool         send_qtcs { false };    ///< whether QTCs are used; set from rules later
 
 EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed_exchange (initialised from context during start-up, below)
 
@@ -440,10 +440,6 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
    rig while adjusting RIT (shaking head)
 */
 bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
-
-//constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
-
-//message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
 cpair colours;  // must be declared before windows
 
@@ -691,10 +687,6 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // simple inline functions
 
-// current time (in seconds since the epoch)
-//inline time_t NOW(void)
-//  { return ::time(NULL); }           // get the time from the kernel
-
 // current time (in minutes since the epoch)
 inline MINUTES_TYPE NOW_MINUTES(void)
   { return static_cast<MINUTES_TYPE>(NOW() / 60); }
@@ -835,6 +827,7 @@ int main(int argc, char** argv)
     allow_audio_recording           = context.allow_audio_recording();
     auto_remaining_country_mults    = context.auto_remaining_country_mults();
     autocorrect_rbn                 = context.autocorrect_rbn();
+    auto_backup_directory           = context.auto_backup_directory();
     bandmap_frequency_up            = context.bandmap_frequency_up();
     bandmap_show_marked_frequencies = context.bandmap_show_marked_frequencies();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"sv);
@@ -845,8 +838,10 @@ int main(int argc, char** argv)
     display_grid                    = context.display_grid();
     do_not_show_filename            = context.do_not_show_filename();
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
+    geomagnetic_indices_command     = context.geomagnetic_indices_command();
     home_exchange_window            = context.home_exchange_window();
     inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
+    logfile_name                    = context.logfile();
     long_t                          = context.long_t();
     marked_frequency_ranges         = context.mark_frequencies();
     max_qsos_without_qsl            = context.max_qsos_without_qsl();
@@ -858,25 +853,16 @@ int main(int argc, char** argv)
     my_longitude                    = context.my_longitude();
     no_default_rst                  = context.no_default_rst();
     n_memories                      = context.n_memories();
-//    ping_destinations               = context.ping_targets();
 
-//    if (const auto targets { context.ping_targets() }; !targets.empty())
-//    { for (const auto& target : targets)
-//        ping_destinations += target;
-//    }
+    if (const auto& targets { context.ping_targets() }; !targets.empty())
+    { ost << "Number of ping targets = " << targets.size() << endl;
 
-#if 1
-    if (const auto targets { context.ping_targets() }; !targets.empty())
-    { for (const auto& [addr, label] : targets)
-      { //icmp_socket pingsock { addr, context.my_ip() };
+      for (const auto& [addr, label] : targets)
+      { ost << "  ping target: " << addr << endl;
 
-        //auto t = pair<string, icmp_socket> { label, pingsock };
-
-        //ping_table_p += pair { label, move(pingsock) };
         ping_table_p += pair { label, new icmp_socket(addr, context.my_ip()) };
       }
     }
-#endif
 
     posted_by_continents            = context.posted_by_continents();
     qtc_long_t                      = context.qtc_long_t();
@@ -896,14 +882,6 @@ int main(int argc, char** argv)
     n_posters_db_cluster.min_posters(context.cluster_threshold());
     n_posters_db_rbn.min_posters(context.rbn_threshold());
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
-
-#if 1
-// configure ping targets
-    ost << "Number of ping targets = " << ping_destinations.size() << endl;
-
-    for (const auto& [name, label] : ping_destinations)
-      ost << "  ping target: " << name << endl;
-#endif
 
 // set up initial quick qsy information
     for (int n { static_cast<int>(MIN_BAND) }; n <= static_cast<int>(MAX_BAND); ++n)
@@ -1168,12 +1146,7 @@ int main(int argc, char** argv)
 
 // now the individual bands
         for (BAND b { MIN_BAND }; b <= MAX_BAND; b = (BAND)((int)b + 1))
-        { //const set<string> callsigns { calls_from_do_not_show_file(b) };
-
- //         if (!callsigns.empty())
-//            FOR_ALL(callsigns, [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
-            FOR_ALL(calls_from_do_not_show_file(b), [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
-        }
+          FOR_ALL(calls_from_do_not_show_file(b), [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
       }
 
 // set the RBN threshold for each bandmap
@@ -1181,7 +1154,7 @@ int main(int argc, char** argv)
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-      if (const int cull_function { context.bandmap_cull_function() }; cull_function)   // if not cull function number zero
+      if (const int cull_function { context.bandmap_cull_function() }; cull_function)           // if not cull function number zero
         FOR_ALL(bandmaps, [cull_function] (bandmap& bm) { bm.cull_function(cull_function); } );
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
@@ -1245,7 +1218,7 @@ int main(int argc, char** argv)
             { if (contains(messages_line, '['))
                 current_message = delimited_substring <std::string> (messages_line, '[', ']', DELIMITERS::DROP);       // extract this batch message
               else
-                batch_messages += { remove_peripheral_spaces <std::string> (messages_line) /* callsign */, current_message };               // associate this message with the callsign on the line
+                batch_messages += { remove_peripheral_spaces <std::string> (messages_line) /* callsign */, current_message };           // associate this message with the callsign on the line
             }
           }
 
@@ -1304,20 +1277,9 @@ int main(int argc, char** argv)
 // INDICES window
       win_indices.init(context.window_info("INDICES"s), WINDOW_NO_CURSOR);
 
-// possibly get the indices data
-      if (!context.geomagnetic_indices_command().empty())
-      { static pthread_t get_indices_thread_id;
-
-        static string cmd { context.geomagnetic_indices_command() };
-
-        try
-        { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
-        }
-
-        catch (const pthread_error& e)
-        { ost << e.reason() << endl;
-        }
-      }
+// possibly get the indices data (in a separate thread)
+      if (!geomagnetic_indices_command.empty())
+        jthread(get_indices, geomagnetic_indices_command).detach();
 
 // INDIVIDUAL MESSAGES window; now also handles files that contain an initial (unused) date field; i.e., date: callsign: message
       win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"s), WINDOW_NO_CURSOR);
@@ -1353,334 +1315,317 @@ int main(int argc, char** argv)
       }
 
 // INDIVIDUAL QTC COUNT window
-    if (send_qtcs)                                                                        // only if it's a contest with QTCs
-    { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"s), WINDOW_NO_CURSOR);
-      win_individual_qtc_count <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-    }
+      if (send_qtcs)                                                                        // only if it's a contest with QTCs
+      { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"s), WINDOW_NO_CURSOR);
+        win_individual_qtc_count <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      }
 
 // INFO window
-    win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
-    win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
+      win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
+      win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
 
 // LAST QRG window
-    win_last_qrg.init(context.window_info("LAST QRG"s), WINDOW_NO_CURSOR);
+      win_last_qrg.init(context.window_info("LAST QRG"s), WINDOW_NO_CURSOR);
 
 // LOCAL TIME window
-    win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
+      win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
 
 // LOG window
-    win_log.init(context.window_info("LOG"s), WINDOW_NO_CURSOR);
-    win_log.enable_scrolling();
-    win_log.process_input_function(process_LOG_input);
+      win_log.init(context.window_info("LOG"s), WINDOW_NO_CURSOR);
+      win_log.enable_scrolling();
+      win_log.process_input_function(process_LOG_input);
 
 // LOG EXTRACT window; also used for QTCs
-    win_log_extract.init(context.window_info("LOG EXTRACT"s), WINDOW_NO_CURSOR);
-    log_extract_fg = win_log_extract.fg();
-    log_extract_bg = win_log_extract.bg();
-    editable_log.prepare();                       // now we can size the editable log
-    extract.prepare();
+      win_log_extract.init(context.window_info("LOG EXTRACT"s), WINDOW_NO_CURSOR);
+      log_extract_fg = win_log_extract.fg();
+      log_extract_bg = win_log_extract.bg();
+      editable_log.prepare();                       // now we can size the editable log
+      extract.prepare();
 
-    if (send_qtcs)
-      win_log_extract.process_input_function(process_QTC_input);  // set the input function for the window
+      if (send_qtcs)
+        win_log_extract.process_input_function(process_QTC_input);  // set the input function for the window
 
 // MEMORIES window
-    win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
+      win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
 
 // MULT VALUE window
-    win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
-    update_mult_value();
+      win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
+      update_mult_value();
 
 // NAME window (for names from drmaster file; not the same as when name is in the exchange)
-    win_name.init(context.window_info("NAME"s), WINDOW_NO_CURSOR);
+      win_name.init(context.window_info("NAME"s), WINDOW_NO_CURSOR);
 
 // NEARBY window
-    win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
+      win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
 
 // PING window
-#if 1
-    win_ping.init(context.window_info("PING"s), WINDOW_NO_CURSOR);
+      win_ping.init(context.window_info("PING"s), WINDOW_NO_CURSOR);
 
-    if (win_ping.valid() and !ping_table_p.empty())
-//      update_pings(win_ping, ping_table_p);
-    { //ost << "starting jthread" << endl;
-
- //     jthread initial_ping_thread(update_pings, ref(win_ping), ref(ping_table_p));
-
-//      initial_ping_thread.detach();
-      jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
-
-//      async(update_pings, ref(win_ping), ref(ping_table_p));
-
-      //ost << "destroying jthread" << endl;
-    }
-
-
-#endif
+      if (win_ping.valid() and !ping_table_p.empty())
+        jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
 
 // POST MONITOR window
-    win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
-    mp.max_entries(win_monitored_posts.height());               // set the size of the queue
+      win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
+      mp.max_entries(win_monitored_posts.height());               // set the size of the queue
 
 // POSTED BY window
-    win_posted_by.init(context.window_info("POSTED BY"s), WINDOW_NO_CURSOR);
+      win_posted_by.init(context.window_info("POSTED BY"s), WINDOW_NO_CURSOR);
 
 // PUTATIVE EXCHANGE window
-    win_putative_exchange.init(context.window_info("PUTATIVE EXCHANGE"s), WINDOW_NO_CURSOR);
+      win_putative_exchange.init(context.window_info("PUTATIVE EXCHANGE"s), WINDOW_NO_CURSOR);
 
 // QTC HINT window
-    win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
-    win_qtc_hint_fg = win_qtc_hint.fg();
-    win_qtc_hint_bg = win_qtc_hint.bg();
+      win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
+      win_qtc_hint_fg = win_qtc_hint.fg();
+      win_qtc_hint_bg = win_qtc_hint.bg();
   
 // QUERY 1 window
-    win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
+      win_query_1.init(context.window_info("QUERY 1"s), WINDOW_NO_CURSOR);
 
 // QUERY N window
-    win_query_n.init(context.window_info("QUERY N"s), WINDOW_NO_CURSOR);
+      win_query_n.init(context.window_info("QUERY N"s), WINDOW_NO_CURSOR);
 
 // QUICK QSY window
-    win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
+      win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
     
-    { const pair<frequency, MODE>& quick_qsy_info { quick_qsy_map.at(current_band) };
+      { const pair<frequency, MODE>& quick_qsy_info { quick_qsy_map.at(current_band) };
 
-      win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                    <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
-    }
+        win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                      <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
+      }
   
 // QSLs window
-    win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
-    update_qsls_window();
+      win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
+      update_qsls_window();
 
 // QSO NUMBER window
-    win_qso_number.init(context.window_info("QSO NUMBER"s), WINDOW_NO_CURSOR);
-    win_qso_number <= pad_left(to_string(next_qso_number), win_qso_number.width());
+      win_qso_number.init(context.window_info("QSO NUMBER"s), WINDOW_NO_CURSOR);
+      win_qso_number <= pad_left(to_string(next_qso_number), win_qso_number.width());
 
 // QTC QUEUE window
-    win_qtc_queue.init(context.window_info("QTC QUEUE"s), WINDOW_NO_CURSOR);
+      win_qtc_queue.init(context.window_info("QTC QUEUE"s), WINDOW_NO_CURSOR);
 
 // QTC STATUS window
-    win_qtc_status.init(context.window_info("QTC STATUS"s), WINDOW_NO_CURSOR);
-    win_qtc_status <= "Last QTC: None";
+      win_qtc_status.init(context.window_info("QTC STATUS"s), WINDOW_NO_CURSOR);
+      win_qtc_status <= "Last QTC: None";
 
 // RATE window
-    win_rate.init(context.window_info("RATE"s), WINDOW_NO_CURSOR);
-    update_rate_window();
+      win_rate.init(context.window_info("RATE"s), WINDOW_NO_CURSOR);
+      update_rate_window();
 
 // RECORDING STATUS window
-    win_recording_status.init(context.window_info("RECORDING STATUS"s), WINDOW_NO_CURSOR);
-    update_recording_status_window();
+      win_recording_status.init(context.window_info("RECORDING STATUS"s), WINDOW_NO_CURSOR);
+      update_recording_status_window();
 
 // REMAINING CALLSIGN MULTS window
-    win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-    if (restored_data)
-      update_remaining_callsign_mults_window(statistics, EMPTY_STR, current_band, current_mode);
-    else
-      win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
+      win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+
+      if (restored_data)
+        update_remaining_callsign_mults_window(statistics, EMPTY_STR, current_band, current_mode);
+      else
+        win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
 
 // REMAINING COUNTRY MULTS window
-    win_remaining_country_mults.init(context.window_info("REMAINING COUNTRY MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-    update_remaining_country_mults_window(statistics, current_band, current_mode);
+      win_remaining_country_mults.init(context.window_info("REMAINING COUNTRY MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+      update_remaining_country_mults_window(statistics, current_band, current_mode);
 
 // REMAINING EXCHANGE MULTS window(s)
-    { const string         window_name_start          { "REMAINING EXCHANGE MULTS"s };
-      const vector<string> exchange_mult_window_names { context.window_name_contains(window_name_start) };
+      { const string         window_name_start          { "REMAINING EXCHANGE MULTS"s };
+        const vector<string> exchange_mult_window_names { context.window_name_contains(window_name_start) };
 
-      for (auto& window_name : exchange_mult_window_names)
-      { const string exchange_mult_name { substring <std::string> (window_name, window_name_start.size() + 1 /* 25 */)  }; // skip the first part of the window name
+        for (auto& window_name : exchange_mult_window_names)
+        { const string exchange_mult_name { substring <std::string> (window_name, window_name_start.size() + 1 /* 25 */)  }; // skip the first part of the window name
 
-        window* wp { new window() };
+          window* wp { new window() };
 
-        wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-        win_remaining_exch_mults_p += { exchange_mult_name, wp };
+          wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+          win_remaining_exch_mults_p += { exchange_mult_name, wp };
 
-//        ost << "added exch mult window: " << exchange_mult_name << endl;
-
-        (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
+          (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
+        }
       }
-    }
 
 // RIG window (rig status)
-    win_rig.init(context.window_info("RIG"s), WINDOW_NO_CURSOR);
+      win_rig.init(context.window_info("RIG"s), WINDOW_NO_CURSOR);
 
 // RX ANT window
-    win_rx_ant.init(context.window_info("RX ANT"s), WINDOW_NO_CURSOR);
+      win_rx_ant.init(context.window_info("RX ANT"s), WINDOW_NO_CURSOR);
 
 // SCORE window
-    win_score.init(context.window_info("SCORE"s), WINDOW_NO_CURSOR);
-    update_score_window(statistics.points(rules));
+      win_score.init(context.window_info("SCORE"s), WINDOW_NO_CURSOR);
+      update_score_window(statistics.points(rules));
 
 // SCORE BANDS window
-    win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
-    { string bands_str;
+      win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
+      { string bands_str;
 
-      FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+        FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
-      win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
-    }
+        win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
+      }
 
 // SCORE MODES window
-    win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
-    { string modes_str;
+      win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
+      { string modes_str;
 
-      FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
-      win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
-    }
+        win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
+      }
 
 // SCP window
-    win_scp.init(context.window_info("SCP"s), WINDOW_NO_CURSOR);
+      win_scp.init(context.window_info("SCP"s), WINDOW_NO_CURSOR);
 
 // SCRATCHPAD window
-    win_scratchpad.init(context.window_info("SCRATCHPAD"s), WINDOW_NO_CURSOR);
-    win_scratchpad.enable_scrolling();
+      win_scratchpad.init(context.window_info("SCRATCHPAD"s), WINDOW_NO_CURSOR);
+      win_scratchpad.enable_scrolling();
 
 // SENT RST window
 //  win_sent_rst.init(context.window_info("SENT RST"), WINDOW_NO_CURSOR);
 
 // SERIAL NUMBER window
-    win_serial_number.init(context.window_info("SERIAL NUMBER"s), WINDOW_NO_CURSOR);
-    win_serial_number <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
+      win_serial_number.init(context.window_info("SERIAL NUMBER"s), WINDOW_NO_CURSOR);
+      win_serial_number <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
 
 // SRSS window
-    win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
-    win_srss <= ( "SR/SS: "s + sunrise(my_latitude, my_longitude) + "/"s + sunset(my_latitude, my_longitude) );
+      win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
+      win_srss <= ( "SR/SS: "s + sunrise(my_latitude, my_longitude) + "/"s + sunset(my_latitude, my_longitude) );
 
 // SUMMARY window
-    win_summary.init(context.window_info("SUMMARY"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-    display_statistics(statistics.summary_string(rules));
+      win_summary.init(context.window_info("SUMMARY"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+      display_statistics(statistics.summary_string(rules));
 
 // SYSTEM MEMORY window
-    win_system_memory.init(context.window_info("SYSTEM MEMORY"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
-    update_system_memory();
+      win_system_memory.init(context.window_info("SYSTEM MEMORY"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
+      update_system_memory();
 
 // TITLE window
-    win_title.init(context.window_info("TITLE"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
-    win_title <= centre(context.contest_name(), 0);
+      win_title.init(context.window_info("TITLE"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
+      win_title <= centre(context.contest_name(), 0);
 
 // TIME window
-    win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
+      win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
 
 // WICM window
-    win_wicm.init(context.window_info("WICM"s), WINDOW_NO_CURSOR);
-    if (win_wicm.valid())
-      wicm_calls_size = win_wicm.height();
+      win_wicm.init(context.window_info("WICM"s), WINDOW_NO_CURSOR);
+      if (win_wicm.valid())
+        wicm_calls_size = win_wicm.height();
 
 // WPM window
-    if (rules.permitted_modes().contains(MODE_CW))                                 // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
-    { win_wpm.init(context.window_info("WPM"s), WINDOW_NO_CURSOR);
-      win_wpm <= ( to_string(context.cw_speed()) + " WPM"s );
+      if (rules.permitted_modes().contains(MODE_CW))                                 // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
+      { win_wpm.init(context.window_info("WPM"s), WINDOW_NO_CURSOR);
+        win_wpm <= ( to_string(context.cw_speed()) + " WPM"s );
 
-      if (cw_p)
-        cw_p->speed(context.cw_speed());                    // set computer keyer speed
-    }
+        if (cw_p)
+          cw_p->speed(context.cw_speed());                    // set computer keyer speed
+      }
 
 // possibly set the auto country mults and auto callsign mults thresholds
-    if (context.auto_remaining_callsign_mults())
-    { const auto threshold { context.auto_remaining_callsign_mults_threshold() };
+      if (context.auto_remaining_callsign_mults())
+      { const auto threshold { context.auto_remaining_callsign_mults_threshold() };
 
-      FOR_ALL(rules.callsign_mults(), [threshold] (const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
-    }
+        FOR_ALL(rules.callsign_mults(), [threshold] (const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
+      }
 
-    if (auto_remaining_country_mults)
-      acc_countries.threshold(context.auto_remaining_country_mults_threshold());
+      if (auto_remaining_country_mults)
+        acc_countries.threshold(context.auto_remaining_country_mults_threshold());
 
 // possibly set speed of internal keyer. Direct quote from N2IC: Contesters don't use internal keyers. [Message-ID: <515996A2.9060800@arrl.net>]
-    try
-    { if (context.sync_keyer())
-        rig.keyer_speed(context.cw_speed());
-    }
+      try
+      { if (context.sync_keyer())
+          rig.keyer_speed(context.cw_speed());
+      }
 
-    catch (const rig_interface_error& e)
-    { alert("Error setting CW speed on rig"s);
-    }
+      catch (const rig_interface_error& e)
+      { alert("Error setting CW speed on rig"s);
+      }
 
-    display_band_mode(win_band_mode, current_band, current_mode);
+      display_band_mode(win_band_mode, current_band, current_mode);
 
 // start to display the date and time
-    try
-    { create_thread(&thread_id_display_date_and_time, &(attr_detached.attr()), display_date_and_time, NULL, "date/time"s);
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-
-// start to display the rig status (in the RIG window); also get rig frequency for bandmap
-    rig_status_info rig_status_thread_parameters(1000 /* poll time in milliseconds*/, &rig);         // poll rig once per second
-
-    try
-    { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status"s);
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-
-// CLUSTER MULT window
-    win_cluster_mult.init(context.window_info("CLUSTER MULT"s), WINDOW_NO_CURSOR);
-    win_cluster_mult.enable_scrolling();
-
-// CLUSTER SCREEN window
-    win_cluster_screen.init(context.window_info("CLUSTER SCREEN"s), WINDOW_NO_CURSOR);
-    win_cluster_screen.enable_scrolling();
-
-// RBN LINE window
-    win_rbn_line.init(context.window_info("RBN LINE"s), WINDOW_NO_CURSOR);
-
-// BANDMAP window
-    win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
-
-// set recent and fade colours for each bandmap
-    { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
-      //const COLOUR_TYPE         rc { context.bandmap_recent_colour() };
-
-      FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), &fc] (bandmap& bm) { bm.fade_colours(fc);
-                                                                                    bm.recent_colour(rc);
-                                                                                  } );
-    }
-
-// create thread to prune the bandmaps every minute
-    { static pthread_t thread_id_4;
-
-      static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
-
       try
-      { create_thread(&thread_id_4, &(attr_detached.attr()), prune_bandmap, (void*)(&bandmap_info_for_thread), "prune bandmap"s);
+      { create_thread(&thread_id_display_date_and_time, &(attr_detached.attr()), display_date_and_time, NULL, "date/time"s);
       }
 
       catch (const pthread_error& e)
       { ost << e.reason() << endl;
         exit(-1);
       }
-    }
+
+// start to display the rig status (in the RIG window); also get rig frequency for bandmap
+      rig_status_info rig_status_thread_parameters(1000 /* poll time in milliseconds*/, &rig);         // poll rig once per second
+
+      try
+      { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status"s);
+      }
+
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
+        exit(-1);
+      }
+
+// CLUSTER MULT window
+      win_cluster_mult.init(context.window_info("CLUSTER MULT"s), WINDOW_NO_CURSOR);
+      win_cluster_mult.enable_scrolling();
+
+// CLUSTER SCREEN window
+      win_cluster_screen.init(context.window_info("CLUSTER SCREEN"s), WINDOW_NO_CURSOR);
+      win_cluster_screen.enable_scrolling();
+
+// RBN LINE window
+      win_rbn_line.init(context.window_info("RBN LINE"s), WINDOW_NO_CURSOR);
+
+// BANDMAP window
+     win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
+
+// set recent and fade colours for each bandmap
+      { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
+
+        FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), &fc] (bandmap& bm) { bm.fade_colours(fc);
+                                                                                      bm.recent_colour(rc);
+                                                                                    } );
+      }
+
+// create thread to prune the bandmaps every minute
+      { static pthread_t thread_id_4;
+
+        static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
+
+        try
+        { create_thread(&thread_id_4, &(attr_detached.attr()), prune_bandmap, (void*)(&bandmap_info_for_thread), "prune bandmap"s);
+        }
+
+        catch (const pthread_error& e)
+        { ost << e.reason() << endl;
+          exit(-1);
+        }
+      }
 
 // BANDMAP FILTER window
-    win_bandmap_filter.init(context.window_info("BANDMAP FILTER"s), WINDOW_NO_CURSOR);
+      win_bandmap_filter.init(context.window_info("BANDMAP FILTER"s), WINDOW_NO_CURSOR);
 
 // set up correct colours for bandmap filter window
-    if (!context.bandmap_filter_enabled())
-      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
-    else
-      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
+      if (!context.bandmap_filter_enabled())
+        win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
+      else
+        win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
 
-    BAND cur_band { current_band };
-    MODE cur_mode { current_mode };
+      BAND cur_band { current_band };
+      MODE cur_mode { current_mode };
 
-    if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
-    { bandmap& bm { bandmaps[cur_band] };                   // use map for current band, so column offset is correct
+      if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
+      { bandmap& bm { bandmaps[cur_band] };                   // use map for current band, so column offset is correct
 
-      bm.filter_enabled(context.bandmap_filter_enabled());
-      bm.filter_hide(context.bandmap_filter_hide());
+        bm.filter_enabled(context.bandmap_filter_enabled());
+        bm.filter_hide(context.bandmap_filter_hide());
 
-      FOR_ALL( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+        FOR_ALL( context.bandmap_filter(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
-      display_bandmap_filter(bm);
-    }
+        display_bandmap_filter(bm);
+      }
 
 // BANDMAP SIZE window
-    win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
+      win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
 
   // read a Cabrillo log
   //  logbook cablog;
@@ -1712,17 +1657,17 @@ int main(int argc, char** argv)
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
 // backup the last-used log, if one exists
-    if (const string filename { context.logfile() }; file_exists(filename))
-    { int index { 0 };
+      if (const string filename { context.logfile() }; file_exists(filename))
+      { int index { 0 };
 
-      while (file_exists(filename + "-"s + to_string(index)))
-        index++;
+        while (file_exists(filename + "-"s + to_string(index)))
+          index++;
 
-      file_copy(filename, filename + "-"s + to_string(index));
-    }
+        file_copy(filename, filename + "-"s + to_string(index));
+      }
 
-    const bool clean   { cl.parameter_present("-clean"s) };
-    const bool rebuild { !clean };                            // => rebuild is the default
+      const bool clean   { cl.parameter_present("-clean"s) };
+      const bool rebuild { !clean };                            // => rebuild is the default
 
 // now we can restore data from the last run
 //  if (!cl.parameter_present("-clean"s))
@@ -1735,172 +1680,162 @@ int main(int argc, char** argv)
 //        alert("No archive data present"s);
 //    }
 //    else     // rebuild
-    if (rebuild)
-    { ost << "rebuilding from: " << context.logfile() << endl;
+      if (rebuild)
+      { ost << "rebuilding from: " << context.logfile() << endl;
 
-      string file;
-
-      try
-      { file = read_file(context.logfile());    // in current directory
-      }
-
-      catch (...)
-      { alert("Error reading log file: " + context.logfile());
-      }
-
-      if (!file.empty())
-      { static const string rebuilding_msg { "Rebuilding..."s };
-
-        win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
-
-        for (auto line : to_lines <std::string_view> (file))
-        { QSO qso { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
-
-// possibly add the call to the known prefixes
-          update_known_callsign_mults(qso.callsign());
-
-// country mults
-          update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);
-          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
-
-// add exchange info for this call to the exchange db
-          const vector<received_field>& received_exchange { qso.received_exchange() };
-
-          for (const auto& exchange_field : received_exchange)
-          { if (!variable_exchange_fields.contains(exchange_field.name()))
-              exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
-          }
-
-          statistics.add_qso(qso, logbk, rules);
-          logbk += qso;
-          rate += { qso.epoch_time(), statistics.points(rules) };
-        }
-
-// rebuild the history
-        rebuild_history(logbk, rules, statistics, q_history, rate);
-
-// rescore the log
-        rescore(rules);
-        update_rate_window();
-
-        rebuild_dynamic_call_databases(logbk);
-
-        if (remove_peripheral_spaces <std::string> (win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
-          win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-      }
-
-// octothorpe
-      if (logbk.size() >= 1)
-      { if (const QSO& last_qso { logbk[logbk.size()] }; rules.sent_exchange_includes("SERNO"s, last_qso.mode()))   // logbook is wrt 1
-          octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
-      }
-      else
-        octothorpe = 1;
-
-// display most-recent lines from log
-      editable_log.recent_qsos(logbk, true);
-
-// correct QSO number (and octothorpe)
-      if (!logbk.empty())
-      { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
-        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
-        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
-
-// go to band and mode of last QSO
-        const QSO& last_qso { logbk[logbk.size()] };
-        const BAND b        { last_qso.band() };
-        const MODE m        { last_qso.mode() };
-
-        rig.rig_frequency(frequency(last_qso.freq()));
-        rig.rig_mode(m);
-
-        current_mode = m;
-        current_band = b;
-
-        cur_band = b;
-        cur_mode = m;
-
-        rig.base_state();  // turn off RIT, split, sub-rx
-      }
-
-      update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
-      update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-      update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
-
-// QTCs
-      if (send_qtcs)
-      {
-// number of EU QSOs from logbook
-        const size_t n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"sv); } ).size() };
+        string file;
 
         try
-        { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+        { file = read_file(context.logfile());    // in current directory
         }
 
-        catch (const qtc_error& e)
-        { ost << "Error reading QTC file: " << e.reason() << endl;
-          exit(-1);
+        catch (...)
+        { alert("Error reading log file: " + context.logfile());
         }
 
-        qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+        if (!file.empty())
+        { static const string rebuilding_msg { "Rebuilding..."s };
 
-        if (n_eu_qsos != qtc_buf.size())
-          alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
+          win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
+
+          for (auto line : to_lines <std::string_view> (file))
+          { QSO qso { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
+
+// possibly add the call to the known prefixes
+            update_known_callsign_mults(qso.callsign());
+
+// country mults
+            update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);
+            qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
+
+// add exchange info for this call to the exchange db
+            const vector<received_field>& received_exchange { qso.received_exchange() };
+
+            for (const auto& exchange_field : received_exchange)
+            { if (!variable_exchange_fields.contains(exchange_field.name()))
+                exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
+            }
+
+            statistics.add_qso(qso, logbk, rules);
+            logbk += qso;
+            rate += { qso.epoch_time(), statistics.points(rules) };
+          }
+
+// rebuild the history
+          rebuild_history(logbk, rules, statistics, q_history, rate);
+
+// rescore the log
+          rescore(rules);
+          update_rate_window();
+
+          rebuild_dynamic_call_databases(logbk);
+
+          if (remove_peripheral_spaces <std::string> (win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+            win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+        }
+
+// octothorpe
+        if (logbk.size() >= 1)
+        { if (const QSO& last_qso { logbk[logbk.size()] }; rules.sent_exchange_includes("SERNO"s, last_qso.mode()))   // logbook is wrt 1
+            octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
+        }
+        else
+          octothorpe = 1;
+
+// display most-recent lines from log
+        editable_log.recent_qsos(logbk, true);
+
+// correct QSO number (and octothorpe)
+        if (!logbk.empty())
+        { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
+          win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
+          win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
+
+// go to band and mode of last QSO
+          const QSO& last_qso { logbk[logbk.size()] };
+          const BAND b        { last_qso.band() };
+          const MODE m        { last_qso.mode() };
+
+          rig.rig_frequency(frequency(last_qso.freq()));
+          rig.rig_mode(m);
+
+          current_mode = m;
+          current_band = b;
+
+          cur_band = b;
+          cur_mode = m;
+
+          rig.base_state();  // turn off RIT, split, sub-rx
+        }
+
+        update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+        update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+
+// QTCs
+        if (send_qtcs)
+        {
+// number of EU QSOs from logbook
+          const size_t n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"sv); } ).size() };
+
+          try
+          { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+          }
+
+          catch (const qtc_error& e)
+          { ost << "Error reading QTC file: " << e.reason() << endl;
+            exit(-1);
+          }
+
+          qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+
+          if (n_eu_qsos != qtc_buf.size())
+            alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
 
 // move the sent ones to the sent buffer
-        const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
+          const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
-        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+          FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
-        statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
-        statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+          statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+          statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
 
-        if (!vec_qs.empty())
-        { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
+          if (!vec_qs.empty())
+          { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
 
-          win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
+            win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
+          }
+
+          update_qtc_queue_window();
         }
 
-        update_qtc_queue_window();
-      }
-
 // display the current statistics
-      display_statistics(statistics.summary_string(rules));
-      update_score_window(statistics.points(rules));
-      update_mult_value();
-    }     // end of rebuild
+        display_statistics(statistics.summary_string(rules));
+        update_score_window(statistics.points(rules));
+        update_mult_value();
+      }     // end of rebuild
 
 // now delete the archive file if it exists, regardless of whether we've used it
-    file_delete(context.archive_name());
+      file_delete(context.archive_name());
 
-    if (clean)                                          // start with clean slate
-    { int index { 0 };
+      if (clean)                                          // start with clean slate
+      { int index { 0 };
 
-      const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
+        const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
-      while (file_exists(target))
-        file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
+        while (file_exists(target))
+          file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
 
-      file_truncate(context.logfile());
-      file_truncate(context.archive_name());
+        file_truncate(context.logfile());
+        file_truncate(context.archive_name());
 
-      if (send_qtcs)
-        file_truncate(context.qtc_filename());
-    }
+        if (send_qtcs)
+          file_truncate(context.qtc_filename());
+      }
 
 // now we can start the cluster/RBN threads, since we know what we've worked if this was a rebuild
       if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-      { static pthread_t spawn_thread_id;
-
-        try
-        { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
-        }
-
-        catch (const pthread_error& e)
-        { ost << e.reason() << endl;
-          exit(-1);
-        }
-      }
+        jthread(spawn_dx_cluster_1).detach();
 
 // ditto for the RBN
       if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
@@ -1919,7 +1854,7 @@ int main(int argc, char** argv)
       enter_sap_mode();                                       // explicitly enter SAP mode
       win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
 
-// if necessary, wait for the adif23 old log information to finish building
+// if necessary, wait for the adif3 old log information to finish building
       if (running_old_log_thread)
       { thr.join();
         alert("Completed build of old log"s);
@@ -2054,7 +1989,7 @@ int main(int argc, char** argv)
     \param  m       mode
 */
 void display_band_mode(window& win, const BAND b, const enum MODE m)
-{ static constinit BAND last_band  { BAND_20 };  // start state
+{ static constinit BAND last_band  { BAND_20 };  // start band
   static constinit MODE last_mode  { MODE_CW };  // start mode
   static constinit bool first_time { true };
 
@@ -2133,54 +2068,12 @@ void* display_date_and_time(void* vp)
           dad.prune(10);
 
 // possibly run thread to perform auto backup
-        if (!context.auto_backup_directory().empty())
-        { static tuple<string, string, string> tsss;                    // directory, filename, qtc filename
-          static pthread_t                     auto_backup_thread_id;
-
-          tsss = { context.auto_backup_directory(), context.logfile(), (context.qtcs() ? context.qtc_filename() : string { }) };
-
-          try
-          { create_thread(&auto_backup_thread_id, &(attr_detached.attr()), auto_backup, static_cast<void*>(&tsss), "backup"s);
-          }
-
-          catch (const pthread_error& e)
-          { ost << e.reason() << endl;
-          }
-        }
+        if (!exiting and !context.auto_backup_directory().empty())
+          jthread(auto_backup, auto_backup_directory, logfile_name, (context.qtcs() ? context.qtc_filename() : string { })).detach();
 
 // possibly execute pings and update ping window
-
-    if (win_ping.valid() and !ping_table_p.empty())
-//      update_pings(win_ping, ping_table_p);
-    { //ost << "starting jthread" << endl;
-
- //     jthread periodic_ping_thread(update_pings, ref(win_ping), ref(ping_table_p));
-
- //     periodic_ping_thread.detach();
-
-      jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
-
-      //ost << "destroying jthread" << endl;
-    }
-
-#if 0
-if (win_ping.valid() and !ping_table_p.empty())
-        { static tuple<void* /* window */, void* /* ping table */> params;
-          static pthread_t                                         ping_thread_id;
-
-          params = { &win_ping, &ping_table_p };
-
-          try
-          { create_thread(&ping_thread_id, &(attr_detached.attr()), pings_thread, static_cast<void*>(&params), "ping"s);
-          }
-
-          catch (const pthread_error& e)
-          { ost << e.reason() << endl;
-          }
-
- //         update_pings(win_ping, ping_table_p); // TODO: put this in separate thread
-        }
-#endif
+        if (!exiting and win_ping.valid() and !ping_table_p.empty())
+          jthread(update_pings, ref(win_ping), ref(ping_table_p)).detach();
 
 // possibly clear alert window
         { SAFELOCK(alert);
@@ -2213,39 +2106,15 @@ if (win_ping.valid() and !ping_table_p.empty())
 
       const string dts { date_time_string(SECONDS::NO_INCLUDE) };
 
+
 // if a new hour, then possibly create screenshot
       if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
-      { if (context.auto_screenshot())
-        { static pthread_t auto_screenshot_thread_id;
-          static string    filename;
-
-          filename = "auto-screenshot-"s + dts.substr(0, 13) + "-"s + dts.substr(14);   // replace : with -
-
-          ost << "dumping screenshot at time: " << hhmmss() << endl;
-
-          try
-          { create_thread(&auto_screenshot_thread_id, &(attr_detached.attr()), auto_screenshot, static_cast<void*>(&filename), "screenshot"s);
-          }
-
-          catch (const pthread_error& e)
-          { ost << e.reason() << endl;
-          }
-        }
+      { if (!exiting and context.auto_screenshot())
+          jthread(auto_screenshot, "auto-screenshot-"s + dts.substr(0, 13) + "-"s + dts.substr(14)).detach();
 
 // possibly run thread to get geomagnetic indices
-        if (!context.geomagnetic_indices_command().empty())
-        { static pthread_t get_indices_thread_id;
-
-          static string cmd { context.geomagnetic_indices_command() };  // can't cast const string* to void*
-
-          try
-          { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
-          }
-
-          catch (const pthread_error& e)
-          { ost << e.reason() << endl;
-          }
-        }
+        if (!exiting and !geomagnetic_indices_command.empty())
+          jthread(get_indices, geomagnetic_indices_command).detach();
       }
 
 // if a new day, then update date window
@@ -3753,20 +3622,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
               exchange_str += state_guess;
               processed_field = true;
             }
-
-#if 0
-            if (!processed_field and (exf.name() == "HADXC+QTHX[HA]"sv))
-            { string guess { exchange_db.guess_value(contents, "HADXC"s) };
-
-              if (guess.empty())
-                guess = exchange_db.guess_value(contents, "QTHX[HA]"s);
-
-              if (!guess.empty())
-              { exchange_str += guess;
-                processed_field = true;
-              }
-            }
-#endif
           }
 
           if (!processed_field and (exf.name() == "DOK"sv))
@@ -4481,33 +4336,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         sleep_for(100ms);
 
       rig.sub_receiver_enable();
-
-#if 0
-      if (!(be.callsign().empty()))
-      { const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
-
-        rig.rig_frequency_b(be.freq());
-        win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
-
-        if (old_b_band != to_BAND(be.freq()))  // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
-          sleep_for(100ms);
-
-        rig.sub_receiver_enable();
-      }
-      else      // didn't find an exact match; try a substring search
-      { be = bandmaps[current_band].substr(original_contents);
-
-        const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
-
-        rig.rig_frequency_b(be.freq());
-        win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
-
-        if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
-          sleep_for(100ms);
-
-        rig.sub_receiver_enable();
-      }
-#endif
     }
 
     processed = true;
@@ -4641,19 +4469,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-I -- refresh geomagnetic indices
   if (!processed and (e.is_control('i')))
-  { if (!context.geomagnetic_indices_command().empty())
-    { static pthread_t get_indices_thread_id;
+  { if (!geomagnetic_indices_command.empty())
+      jthread(get_indices, geomagnetic_indices_command).detach();
 
-      static string cmd { context.geomagnetic_indices_command() };
-
-      try
-      { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices-manual"s);
-      }
-
-      catch (const pthread_error& e)
-      { ost << e.reason() << endl;
-      }
-    }
+    processed = true;
   }
 
 // KP- -- toggle 50Hz/200Hz bandwidth if on CW; centre RIT if on SSB and RIT is on
@@ -6683,9 +6502,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 
   logbook l;
 
- // const vector<QSO> q_vec { logbk.as_vector() };
-
-//  for (const auto& qso : q_vec)
   for (const auto& qso : logbk.as_vector())
   { statistics.add_qso(qso, l, rules);
     q_history += qso;
@@ -6698,28 +6514,26 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   }
 }
 
-/*! \brief  Copy a file to a backup directory
+/*! \brief                Copy log and, optionally, QTC files to a backup directory
+    \param  dir           destination directory
+    \param  log_filename  destination filename of log
+    \param  qtc_filename  destination filename of QTC file
 
-    This is intended to be used as a separate thread, so the parameters are passed
-    in the usual void*
+    Does not attempt to copy a QTC file if <i>qtc_filename</i> is empty
 */
-void* auto_backup(void* vp)
+void auto_backup(const string dir, const string log_filename, const string qtc_filename)
 {
-  { start_of_thread("auto backup"s);
+  { start_of_thread("auto backup 1"s);
 
     try
-    { const tuple<string, string, string>* tsss_p        { static_cast<tuple<string, string, string>*>(vp) };
-      const string&                        directory     { get<0>(*tsss_p) };
-      const string&                        filename      { get<1>(*tsss_p) };
-      const string&                        qtc_filename  { get<2>(*tsss_p) };
-      const string                         dts           { date_time_string(SECONDS::NO_INCLUDE) };
-      const string                         suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
-      const string                         complete_name { directory + "/"s + filename + "-"s + suffix };
+    { const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
+      const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
+      const string complete_name { dir + "/"s + log_filename + "-"s + suffix };
 
-      ofstream(complete_name) << ifstream(filename).rdbuf();          // perform the copy
+      ofstream(complete_name) << ifstream(log_filename).rdbuf();          // perform the copy
 
       if (!qtc_filename.empty())
-      { const string qtc_complete_name { directory + "/"s + qtc_filename + "-"s + suffix };
+      { const string qtc_complete_name { dir + "/"s + qtc_filename + "-"s + suffix };
 
         ofstream(qtc_complete_name) << ifstream(qtc_filename).rdbuf();  // perform copy of QTC file
       }
@@ -6730,9 +6544,7 @@ void* auto_backup(void* vp)
     }
   }  // ensure that all objects call destructors, whatever the implementation
 
-
-  end_of_thread("auto backup"s);
-  pthread_exit(nullptr);
+  end_of_thread("auto backup 1"s);
 }
 
 /// write the current local time to <i>win_local_time</i>
@@ -6784,13 +6596,13 @@ void exit_drlog(void)
 
     ost << "have the lock" << endl;
 
-    ost << boolalpha << "first value of exiting = " << exiting << endl;
+    ost << boolalpha << "first value of exiting = " << bool { exiting } << endl;
 
     exiting_rig_status = true;
     ost << "exiting_rig_status now true; number of threads = " << n_running_threads << endl;
   }
 
-  ost << boolalpha << "second value of exiting = " << exiting << endl;
+  ost << boolalpha << "second value of exiting = " << bool { exiting } << endl;
 
   ost << "starting exit tests" << endl;
 
@@ -7283,6 +7095,59 @@ void* spawn_dx_cluster(void* vp)
 
   pthread_exit(nullptr);
 }
+
+/// Thread function to spawn the cluster
+void spawn_dx_cluster_1(void)
+{ win_cluster_line <= "UNCONNECTED"s;
+
+  bool cluster_started   { false };
+  bool signalled_failure { false };
+
+  cluster_p = nullptr;          // should be unnecessary
+
+  while (!cluster_started)
+  { try
+    { cluster_p = new dx_cluster(context, POSTING_SOURCE::CLUSTER);
+
+      ost << "Cluster connection: " << cluster_p->connection_status() << endl;
+      cluster_started = true;
+    }
+
+    catch (...)
+    { ost << "UNABLE TO CREATE CLUSTER" << endl;
+      if (!signalled_failure)
+      { alert("UNABLE TO CREATE CLUSTER; PROCEEDING WITHOUT CLUSTER"s);
+        signalled_failure = true;
+      }
+
+      if (cluster_p)
+      { delete cluster_p;
+        cluster_p = nullptr;
+      }
+
+      sleep_for(1min);
+    }
+  }
+
+  win_cluster_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
+
+  static cluster_info cluster_info_for_thread(&win_cluster_line, &win_cluster_mult, cluster_p, &statistics, &location_db, &win_bandmap, &bandmaps);
+  static pthread_t    thread_id_2;
+  static pthread_t    thread_id_3;
+
+  try
+  { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(cluster_p), "cluster read"s);
+    create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&cluster_info_for_thread), "cluster process"s);
+  }
+
+  catch (const pthread_error& e)
+  { ost << e.reason() << endl;
+    exit(-1);
+  }
+
+//  pthread_exit(nullptr);
+}
+
 
 /// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
@@ -8074,22 +7939,18 @@ void update_mult_value(void)
   }
 }
 
-/*! \brief  Thread function to write a screenshot to a file
-
-    This is intended to be used as a separate thread, so the parameters are passed
-    in the usual void*
+/*! \brief            Thread function to write a screenshot to a file
+    \param  filename  destination filename
 */
-void* auto_screenshot(void* vp)
+void auto_screenshot(const string filename)
 {
   { start_of_thread("auto screenshot"s);
 
     try
-    { const string* filename_p { static_cast<string*>(vp) };
+    { ost << hhmmss() << " calling dump_screen() with filename = " << filename << endl;
 
-      ost << hhmmss() << " calling dump_screen() with filename = " << *filename_p << endl;
-
-      dump_screen(*filename_p);
-      ost << hhmmss() << " finished dump_screen() with filename = " << *filename_p << endl;
+      dump_screen(filename);
+      ost << hhmmss() << " finished dump_screen() with filename = " << filename << endl;
     }
 
     catch (...)
@@ -8098,7 +7959,6 @@ void* auto_screenshot(void* vp)
   }  // ensure that all objects call destructors, whatever the implementation
 
   end_of_thread("auto screenshot"s);
-  pthread_exit(nullptr);
 }
 
 /*! \brief                  Display the current statistics
@@ -8676,7 +8536,8 @@ string run_external_command(const string& cmd)
 { constexpr size_t BUFLEN { 128 };      // reasonable size for read buffer
 
   array<char, BUFLEN> buffer;
-  string result;
+  string              result;
+
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
   if (!pipe)
@@ -8688,18 +8549,15 @@ string run_external_command(const string& cmd)
   return result;
 }
 
-/*! \brief      Thread function to get SFI, A, K indices
-    \param  vp  pointer to command to run
-    \return     nullptr
+/*! \brief        Thread function to get SFI, A, K indices
+    \param  cmd   the command to run
 */
-void* get_indices(void* vp)    ///< Get SFI, A, K
+void get_indices(const string cmd)    ///< Get SFI, A, K
 {
   { start_of_thread("get indices"s);
 
     try
-    { const string* cmd_p   { (string*)vp };
-      const string& cmd     { *cmd_p };
-      const string  indices { run_external_command(cmd) };
+    { const string  indices { run_external_command(cmd) };
 
       win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string> (hhmmss(), 0, 5) < EOL
                   <= indices;
@@ -8711,7 +8569,6 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
   }  // ensure that all objects call destructors, whatever the implementation
 
   end_of_thread("get indices"s);
-  pthread_exit(nullptr);
 }
 
 /*! \brief          Time in seconds since the last QSO
@@ -9502,60 +9359,33 @@ string expected_received_exchange(const string& callsign)
   return  string { };
 }
 
-/// execute pings and update PING window
+/*! \brief          Execute pings and update PING window
+    \param  win     the window to update
+    \param  table   vector of addresses/FQDNs and labels to ping
+
+    Expects to be run as a distinct thread, although nothing bad happens if this
+    expectation is not met.
+*/
 void update_pings(window& win, PING_TABLE& table)
 { constexpr int FG_COLOUR     { COLOUR_WHITE };
   constexpr int NOPING_COLOUR { COLOUR_RED };
 
   static const int PING_COLOUR { string_to_colour("COLOUR_28") };
 
-  unsigned int y { static_cast<unsigned int>(win.height() - 1) };
-
-//  int counter { 0 };
-
-  for (const auto& [label, socket_p] : ping_table_p)
-  { //sleep_for(2s);
-
-    const string line_string { create_centred_string(label, win.width()) };
-
-    const bool success { socket_p -> ping() };
-
-    win.move_cursor(0, y--);
-
-    win < colour_pair(colours.add(FG_COLOUR, success ? PING_COLOUR : NOPING_COLOUR));
-    win <= line_string;
- //   win.default_colours(COLOUR_WHITE, success ? string_to_colour("COLOUR_28") : COLOUR_RED);
-
-//    if (++counter == 2)
-//      win.default_colours(COLOUR_WHITE, COLOUR_YELLOW);
-
-//    win <= centre(label, y--);
-  }
-
-  win.refresh();
-}
-
-// tuple<void* /* window */, void* /* ping table */> params;
-void* pings_thread(void* vp)
-{ ost << "in pings thread" << endl;
-
   { start_of_thread("pings"s);
 
-//    const tuple<window*, vector<pair<string, icmp_socket*>>*> params_p { static_cast<tuple<window*, vector<pair<string, icmp_socket*>>*>>(vp) };
-    tuple<window*, PING_TABLE*>* params_p { static_cast<tuple<window*, PING_TABLE*>*>(vp) };
-    window* win_p { get<0>(*params_p) };
-    PING_TABLE* pt_p { get<1>(*params_p) };
+    unsigned int y { static_cast<unsigned int>(win.height() - 1) };
 
-    window& win = *win_p;
-    PING_TABLE& table = *pt_p;
+    for (const auto& [label, socket_p] : ping_table_p)
+    { const string line_string { create_centred_string(label, win.width()) };
+      const bool   success     { socket_p -> ping() };
 
-    update_pings(win, table);
-  }  // ensure that all objects call destructors, whatever the implementation
+      win.move_cursor(0, y--);
+
+      win < colour_pair(colours.add(FG_COLOUR, success ? PING_COLOUR : NOPING_COLOUR));
+      win <= line_string;
+    }
+  }
 
   end_of_thread("pings"s);
-
-  ost << "leaving pings thread" << endl;
-  pthread_exit(nullptr);
 }
-
-
