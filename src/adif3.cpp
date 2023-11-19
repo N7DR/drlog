@@ -55,7 +55,8 @@ void adif3_field::_normalise(void)
   }
 
 // force some values into upper case
-  if (uc_fields > _name)
+//  if (uc_fields > _name)
+  if (uc_fields.contains(_name))
   { _value = to_upper(_value);
     return;
   }
@@ -73,7 +74,7 @@ void adif3_field::_verify(void) const
 
       const string_view year { substring <string_view> (_value, 0, 4) };
       
-      if (year < "1930"s)
+      if (year < "1930"sv)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid year in "s + _name + ": "s + _value);
         
       const int month { from_string<int>(substring <string_view> (_value, 4, 2)) };
@@ -90,7 +91,7 @@ void adif3_field::_verify(void) const
           
       if (month == 2)
       { days_in_month = 29;
-        if (from_string<int>(year) % 4)
+        if (from_string<int>(year) % 4)   // fails in year 2100
           days_in_month = 28;
       }
         
@@ -162,7 +163,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     }
     break;
 
-    case ADIF3_DATA_TYPE::NUMBER :                               // a sequence of one or more Digits representing a decimal number, optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point  (ASCII  code 46) 
+    case ADIF3_DATA_TYPE::NUMBER :                               // a sequence of one or more Digits representing a decimal number, optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)
     { if (_value.empty())
         throw adif3_error(ADIF3_EMPTY_VALUE, "Empty value in "s + _name + ": "s + _value);   
         
@@ -185,8 +186,9 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 
 // CQZ : 1..40
       if (const auto cit { _positive_integer_range.find(_name) }; cit != _positive_integer_range.cend())
-      { const int min_value { cit->second.first };
-        const int max_value { cit->second.second };   
+      { //const int min_value { cit->second.first };
+        //const int max_value { cit->second.second };
+        const auto [min_value, max_value] = cit->second;
         
         if (const int zone { from_string<int>(_value) }; ((zone < min_value) or (zone > max_value)) )
           throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
@@ -196,7 +198,8 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 
     case ADIF3_DATA_TYPE::STRING :        // amazingly (but nothing about this should amaze me), a "sequence of": ASCII character whose code lies in the range of 32 through 126, inclusive
     { for (const char c : _value)
-        if ( (static_cast<int>(c) < 32) or (static_cast<int>(c)  > 126) )
+//        if ( (static_cast<int>(c) < 32) or (static_cast<int>(c) > 126) )
+        if ( int intval { static_cast<int>(c) }; (intval < 32) or (intval > 126) )
           throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
     }
     break;
@@ -275,8 +278,10 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
     return string::npos;
 
 // if it's the EOR, then jump out
-  const string         descriptor_str { str.substr(posn_1 + 1, posn_2 - posn_1 -1) };
-  const vector<string> fields         { split_string <std::string> (descriptor_str, ':') };
+//  const string         descriptor_str { str.substr(posn_1 + 1, posn_2 - posn_1 -1) };
+  const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
+  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, ':') };
+//  const vector<string> fields         { split_string <std::string> (descriptor_str, ':') };
 
   if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
     return string::npos;
@@ -320,15 +325,16 @@ int adif3_record::_fast_string_to_int(const string& str) const
   int rv { 0 };
 
   for (const char c : str)
-    rv = (rv * 10) + ((int)c - zerochar);
+//    rv = (rv * 10) + ((int)c - zerochar);
+    rv = (rv * 10) + (static_cast<int>(c) - zerochar);
 
   return rv; 
 }
 
-/*! \brief              Import record from string, and return location past the end of the used part of the string
-    \param  str         string from which to read
-    \param  posn        position in <i>str</i> at which to start parsing
-    \return             one past the last location to be used
+/*! \brief          Import record from string, and return location past the end of the used part of the string
+    \param  str     string from which to read
+    \param  posn    position in <i>str</i> at which to start parsing
+    \return         one past the last location to be used
 
     Returns string::npos if reads past the end of <i>str</i>
 */ 
@@ -340,7 +346,7 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
     
-  const auto posn_2 { case_insensitive_find(str, "<EOR>"s, posn)  + 4 };  // 4 = length("<EOR>") - 1; posn_2 points to last char: ">"
+  const auto posn_2 { case_insensitive_find(str, "<EOR>"sv, posn)  + 4 };  // 4 = length("<EOR>") - 1; posn_2 points to last char: ">"
     
   if (posn_2 == string::npos)        // could not find end-of-record marker
     return string::npos;
@@ -453,7 +459,7 @@ adif3_file::adif3_file(const string& filename)
 adif3_file::adif3_file(const vector<string>& path, const string& filename)
 { for (const auto& this_path : path)
   { try
-    { *this = move(adif3_file(this_path + "/"s + filename));
+    { *this = adif3_file { this_path + "/"s + filename };
       return;
     }
 
@@ -474,9 +480,11 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  FOR_ALL(begin_it, end_it, [b, m, &rv](const auto& map_entry) 
-    { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
-        rv += map_entry.second; 
+  FOR_ALL(begin_it, end_it, [b, m, &rv] (const auto& map_entry)
+    { const adif3_record& rec { map_entry.second };
+
+      if ( (rec.band() == b) and (rec.mode() == m) )
+        rv += rec;
     });
   
   return rv;

@@ -588,7 +588,8 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
 //string create_centred_string(const string& str, const unsigned int width)
-string create_centred_string(string_view str, const unsigned int width)
+//string create_centred_string(string_view str, const unsigned int width)
+string centred_string(string_view str, const unsigned int width)
 { const size_t len { str.length() };
 
   if (len > width)
@@ -609,7 +610,6 @@ string create_centred_string(string_view str, const unsigned int width)
 
     Throws exception if <i>cs</i> is empty
 */
-//char last_char(const string& cs)
 char last_char(string_view cs)
 { if (cs.empty())
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character in empty string"s);
@@ -623,7 +623,6 @@ char last_char(string_view cs)
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-//char penultimate_char(const string& cs)
 char penultimate_char(string_view cs)
 { if (cs.length() < 2)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string"s);
@@ -1025,13 +1024,14 @@ string remove_trailing_comment(string_view str, const string_view comment_str)
     
     Returns string::npos if <i>target</i> cannot be found
 */
-size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
+//size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
+size_t case_insensitive_find(const std::string_view str, const std::string_view target, const size_t start_posn)
 { auto it { str.cbegin() };
 
   if (start_posn != 0)
     advance(it, start_posn);
   
-  const auto posn { search(it, str.cend (), target.cbegin(), target.cend(), [](const char ch1, const char ch2) { return toupper(ch1) == toupper(ch2); } ) };
+  const auto posn { search(it, str.cend (), target.cbegin(), target.cend(), [] (const char ch1, const char ch2) { return toupper(ch1) == toupper(ch2); } ) };
 
   return ( (posn == str.cend()) ? string::npos : distance(it, posn) + start_posn);
 }
@@ -1080,46 +1080,6 @@ string remove_substrings(const string& cs, const vector<string>& vs)
       
   return rv; 
 }
-
-/*! \brief                      Obtain all occurrences of a delimited substring
-    \param  cs                  original string
-    \param  delim_1             opening delimiter
-    \param  delim_2             closing delimiter
-    \param  return_delimiters   whether to keep delimiters in the returned value
-    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>
-*/
-//vector<string> delimited_substrings(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
-#if 0
-vector<string> delimited_substrings(string_view cs, string_view delim_1, string_view delim_2, const DELIMITERS return_delimiters)
-{ vector<string> rv;
-
-  size_t cs_start_posn { 0 };
-
-//  while (!substring <std::string> (cs, cs_start_posn).empty())
-  while (!substring <string_view> (cs, cs_start_posn).empty())
-  { string_view sstring { substring <string_view> (cs, cs_start_posn) };
-    
-    const size_t posn_1 { sstring.find(delim_1) };
-
-    if (posn_1 == string_view::npos)             // no more starting delimiters
-      return rv;
-
-    const size_t posn_2 { sstring.find(delim_2, posn_1 + delim_1.length()) };
-
-    if (posn_2 == string_view::npos)
-      return rv;                            // no more ending delimiters
-
-    if (return_delimiters == DELIMITERS::DROP)
-      rv += sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
-    else
-      rv += sstring.substr(posn_1, posn_2 + delim_2.length() - posn_1);
-      
-    cs_start_posn += (posn_2 + delim_2.length());
-  }
-
-  return rv;
-}
-#endif
 
 /*! \brief          Return position in a string at the end of a target string, if present
     \param  str     string to search

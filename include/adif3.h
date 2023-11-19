@@ -207,9 +207,9 @@ public:
 */
   std::string to_string(void) const;
 
-/*! \brief      Return the value of a field
-    \param  str name of the field whose value is to be returned
-    \return     the value of the field <i>str</i>
+/*! \brief        Return the value of a field
+    \param  str   of the field whose value is to be returned
+    \return       the value of the field <i>str</i>
 
     Returns the empty string if the field <i>str</i> does not exist in the record 
 */
@@ -315,7 +315,7 @@ public:
 };
 
 /*! \brief              Return position at which to start processing the body of the file
-    \param      str     string of contents of filae
+    \param      str     string of contents of file
     \return             position of first "<" after the end of the header
 */
 size_t skip_adif3_header(const std::string& str);

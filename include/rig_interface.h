@@ -289,10 +289,10 @@ public:
             (With the caveat that, because there is no proper transactional processing of K3 commands, any or all of
             this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
 */
-  void split_enable(void);
+  void split_enable(void) const;
 
 /// disable split operation; see caveats under split_enable()
-  void split_disable(void);
+  void split_disable(void) const;
 
 /*! \brief      Is split enabled?
     \return     whether split is enabled on the rig
@@ -314,14 +314,14 @@ public:
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
-  bool test(void);
+  bool test(void) const;
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
 
     This works only with the K3.
 */
-  void test(const bool);
+  void test(const bool) const;
 
 /*! \brief      Set rit offset (in Hz)
     \param  hz  offset in Hz
@@ -335,23 +335,23 @@ public:
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  void rit_enable(void);
+  void rit_enable(void) const;
 
 /*! \brief  Turn rit off
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  void rit_disable(void);
+  void rit_disable(void) const;
 
 /*! \brief  Turn rit off
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  inline void disable_rit(void)
+  inline void disable_rit(void) const
     { rit_disable(); }
 
 /// turn rit on
-  inline void enable_rit(void)
+  inline void enable_rit(void) const
     { rit_enable(); }
 
 /// is rit enabled?
@@ -362,32 +362,32 @@ public:
 
     On the K3 this also sets the RIT (!)
 */
-  void xit(const int hz);
+  void xit(const int hz) const;
 
 /// get xit offset (in Hz)
-  int xit(void);
+  int xit(void) const;
 
 /*! \brief  Turn xit on
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  void xit_enable(void);
+  void xit_enable(void) const;
 
 /*! \brief  Turn xit off
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  void xit_disable(void);
+  void xit_disable(void) const;
 
 /*! \brief  Turn xit off
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  inline void disable_xit(void)
+  inline void disable_xit(void) const
     { xit_disable(); }
 
 /// is xit enabled?
-  bool xit_enabled(void);
+  bool xit_enabled(void) const;
 
 /*! \brief  Turn xit on
 
@@ -400,52 +400,52 @@ public:
   rig_status status(void);                              // most recent rig status
 
 /// is the VFO locked?
-  bool is_locked(void);
+  bool is_locked(void) const;
 
 /// lock the VFO
-  void lock(void);
+  void lock(void) const;
 
 /// unlock the VFO
-  void unlock(void);
+  void unlock(void) const;
 
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
-  void sub_receiver(const bool);
+  void sub_receiver(const bool) const;
 
 /// is sub-receiver on?
-  bool sub_receiver(void);
+  bool sub_receiver(void) const;
 
 /// is sub-receiver on?
-  inline bool sub_receiver_enabled(void)
+  inline bool sub_receiver_enabled(void) const
     { return sub_receiver(); }
 
 /// enable the sub-receiver
-  inline void sub_receiver_enable(void)
+  inline void sub_receiver_enable(void) const
     { sub_receiver(true); }
 
 /// disable the sub-receiver
-  inline void sub_receiver_disable(void)
+  inline void sub_receiver_disable(void) const
     { sub_receiver(false); }
 
 /// toggle sub-receiver between on and off
-  inline void sub_receiver_toggle(void)
+  inline void sub_receiver_toggle(void) const
     { sub_receiver_enabled() ? sub_receiver_disable() : sub_receiver_enable(); }
 
 /// toggle sub-receiver between on and off
-  inline void toggle_sub_receiver(void)
+  inline void toggle_sub_receiver(void) const
     { sub_receiver_toggle(); }
 
 /// get the bandwidth in Hz
-  int bandwidth(void);
+  int bandwidth(void) const;
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
-  void keyer_speed(const int wpm);
+  void keyer_speed(const int wpm) const;
 
 /// get the keyer speed in WPM
-  int keyer_speed(void);
+  int keyer_speed(void) const;
 
 // explicit K3 commands
 /*! \brief                  Send a raw command to the rig
@@ -505,26 +505,26 @@ public:
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
 */
-  VFO tx_vfo(void);
+  VFO tx_vfo(void) const;
 
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
 */
-  void bandwidth_a(const unsigned int hz);
+  void bandwidth_a(const unsigned int hz) const;
 
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
 */
-  inline void bandwidth(const unsigned int hz)
+  inline void bandwidth(const unsigned int hz) const
     { bandwidth_a(hz); }
 
 /*! \brief      Set the bandwidth of VFO B
     \param  hz  desired bandwidth, in Hz
 */
-  void bandwidth_b(const unsigned int hz);
+  void bandwidth_b(const unsigned int hz) const;
 
 /// set RIT, split, sub-rx off
-  void base_state(void);
+  void base_state(void) const;
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
@@ -538,14 +538,14 @@ public:
 
     Works only with K3
 */
-  void rx_ant(const bool torf);
+  void rx_ant(const bool torf) const;
 
 /// toggle whether the RX antenna is in use
-  inline void rx_ant_toggle(void)
+  inline void rx_ant_toggle(void) const
     { rx_ant(!rx_ant()); }
 
 /// toggle whether the RX antenna is in use
-  inline void toggle_rx_ant(void)
+  inline void toggle_rx_ant(void) const
     { rx_ant_toggle(); }
 
 /*! \brief      Get audio centre frequency, in Hz
@@ -555,12 +555,12 @@ public:
 */
   unsigned int centre_frequency(void) const;
 
-/*! \brief      Set audio centre frequency, in Hz
+/*! \brief      Set audio centre frequency
     \param  fc  the audio centre frequency, in Hz
 
     Works only with K3
 */
-  void centre_frequency(const unsigned int fc);
+  void centre_frequency(const unsigned int fc) const;
 
 /*! \brief              Is notch enabled?
     \param  ds_result   previously-obtained result of a DS command, or empty string
@@ -574,10 +574,10 @@ public:
 
     Works only with K3
 */
-  void toggle_notch_status(void);
+  void toggle_notch_status(void) const;
 
 /// place K3 into extended mode
-  void k3_extended_mode(void);
+  void k3_extended_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  n       the K3 button to tap or hold
@@ -585,14 +585,14 @@ public:
 
     Works only with K3
 */
-  void k3_press_button(const K3_BUTTON n, const PRESS torh);
+  void k3_press_button(const K3_BUTTON n, const PRESS torh) const;
 
 /*! \brief      Emulate the tapping of a K3 button
     \param  n   the K3 button to tap
 
     Works only with K3
 */
-  inline void k3_tap(const K3_BUTTON n)
+  inline void k3_tap(const K3_BUTTON n) const
     { k3_press_button(n, PRESS::TAP); }
 
 /*! \brief      Emulate the holding of a K3 button
@@ -600,13 +600,13 @@ public:
 
     Works only with K3
 */
-  inline void k3_hold(const K3_BUTTON n)
+  inline void k3_hold(const K3_BUTTON n) const
     { k3_press_button(n, PRESS::HOLD); }
 
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
 */
-  void filter(const audio_filter& af);
+  void filter(const audio_filter& af) const;
 
 /*! \brief      Turn on instrumentation
 */

@@ -964,7 +964,15 @@ std::string join(const T& ct, const U sep)
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-std::string create_centred_string(std::string_view str, const unsigned int width);
+std::string centred_string(std::string_view str, const unsigned int width);
+
+/*! \brief          Centre a string
+    \param  str     string to be centred
+    \param  width   final width of the centred string
+    \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
+*/
+//inline std::string centred_string(std::string_view str, const unsigned int width)
+//  { return create_centred_string(str, width); }
 
 /*! \brief      Get the last character in a string
     \param  cs  source string
@@ -1018,7 +1026,6 @@ std::string transform_string(std::string_view cs, int(*pf)(int));
     \param  cs  original string
     \return     <i>cs</i> converted to upper case
 */
-//inline std::string to_upper(const std::string& cs)
 inline std::string to_upper(std::string_view cs)
   { return transform_string(cs, std::toupper); }
 
@@ -1026,7 +1033,6 @@ inline std::string to_upper(std::string_view cs)
     \param  cs  original string
     \return     <i>cs</i> converted to lower case
 */
-//inline std::string to_lower(const std::string& cs)
 inline std::string to_lower(std::string_view cs)
   { return transform_string(cs, std::tolower); }
 
@@ -1116,7 +1122,6 @@ size_t n_chars(const std::string& str);
     \param  cs  string to test
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-//bool is_legal_ipv4_address(const std::string& cs);
 bool is_legal_ipv4_address(const std::string_view cs);
 
 /*! \brief          Convert a four-byte value to a dotted decimal string
@@ -1140,7 +1145,6 @@ inline bool is_legal_value(const std::string& value, const std::string& legal_va
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-//inline bool is_legal_value(const std::string& value, const std::string& legal_values, const char separator = ',')
 inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const char separator = ',')
   { return (contains(split_string <std::string_view> (legal_values, separator), value)); }
 
@@ -1248,7 +1252,8 @@ inline std::string delimit(const std::string& str, const std::string& delim_1, c
     
     Returns string::npos if <i>target</i> cannot be found
 */
-size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
+//size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
+size_t case_insensitive_find(const std::string_view str, const std::string_view target, const size_t start_posn = 0);
 
 /*! \brief              Truncate a string immediately prior to the first occurrence of a particular character
     \param  str         string to truncate

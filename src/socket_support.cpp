@@ -674,7 +674,7 @@ bool icmp_socket::ping(void)
     memcpy(&rcv_hdr, data, sizeof rcv_hdr);
 
     if (rcv_hdr.type == ICMP_ECHOREPLY)
-    { ost << "reply, id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
+    { ost << "ping reply from " << _destination_str << ", id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
       rv = true;
     } else
         ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;

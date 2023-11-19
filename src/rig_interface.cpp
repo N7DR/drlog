@@ -392,7 +392,7 @@ void rig_interface::rig_mode(const MODE m)
 
     Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
-void rig_interface::split_enable(void)
+void rig_interface::split_enable(void) const
 { if (!_rig_connected)
     return;
 
@@ -412,7 +412,7 @@ void rig_interface::split_enable(void)
 }
 
 /// disable split operation; see caveats under split_enable()
-void rig_interface::split_disable(void)
+void rig_interface::split_disable(void) const
 { if (!_rig_connected)
     return;
 
@@ -616,7 +616,7 @@ int rig_interface::rit(void) const
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-void rig_interface::rit_enable(void)
+void rig_interface::rit_enable(void) const
 { if (_model == RIG_MODEL_K3)
     raw_command("RT1;"s);           // proper enable for the K3
   else
@@ -627,7 +627,7 @@ void rig_interface::rit_enable(void)
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-void rig_interface::rit_disable(void)
+void rig_interface::rit_disable(void) const
 { if (_model == RIG_MODEL_K3)
     raw_command("RT0;"s); // proper disable for the K3
   else
@@ -657,7 +657,7 @@ bool rig_interface::rit_enabled(void) const
 
     This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
-void rig_interface::xit_enable(void)
+void rig_interface::xit_enable(void) const
 { if (_model == RIG_MODEL_K3)
     raw_command("XT1;"s);
   else
@@ -668,7 +668,7 @@ void rig_interface::xit_enable(void)
 
     This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
-void rig_interface::xit_disable(void)
+void rig_interface::xit_disable(void) const
 { if (_model == RIG_MODEL_K3)
     raw_command("XT0;"s);
   else
@@ -676,7 +676,7 @@ void rig_interface::xit_disable(void)
 }
 
 /// is xit enabled?
-bool rig_interface::xit_enabled(void)
+bool rig_interface::xit_enabled(void) const
 { switch (_model)
   { case RIG_MODEL_K3 :
     { if ( const string response { raw_command("XT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "XT"s, 0) )
@@ -699,7 +699,7 @@ bool rig_interface::xit_enabled(void)
 
     On the K3 this also sets the RIT offset
 */
-void rig_interface::xit(const int hz)
+void rig_interface::xit(const int hz) const
 { if (_model == RIG_MODEL_K3)                   // hamlib's behaviour anent the K3 is not what we want, have K3-specific code
   { if (hz == 0)                                // just clear the RIT/XIT
       raw_command("RC;"s);
@@ -720,7 +720,7 @@ void rig_interface::xit(const int hz)
 }
 
 /// get xit offset (in Hz)
-int rig_interface::xit(void)
+int rig_interface::xit(void) const
 { shortfreq_t hz;
 
   SAFELOCK(_rig);
@@ -734,7 +734,7 @@ int rig_interface::xit(void)
 }
 
 /// lock the VFO
-void rig_interface::lock(void)
+void rig_interface::lock(void) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
@@ -748,7 +748,7 @@ void rig_interface::lock(void)
 }
 
 /// unlock the VFO
-void rig_interface::unlock(void)
+void rig_interface::unlock(void) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
@@ -764,18 +764,15 @@ void rig_interface::unlock(void)
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
-void rig_interface::sub_receiver(const bool b)
+void rig_interface::sub_receiver(const bool b) const
 { if (_model == RIG_MODEL_K3)
     raw_command( (b ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED);
 }
 
 /// is sub-receiver on?
-bool rig_interface::sub_receiver(void)
+bool rig_interface::sub_receiver(void) const
 { if (_model == RIG_MODEL_K3)
-  { 
-
-
-if (const string response { raw_command("SB;"s, RESPONSE::EXPECTED) }; response.length() < 3)
+  { if (const string response { raw_command("SB;"s, RESPONSE::EXPECTED) }; response.length() < 3)
     { _error_alert("SUBRX Short response"s);
       return false;
     }
@@ -783,13 +780,13 @@ if (const string response { raw_command("SB;"s, RESPONSE::EXPECTED) }; response.
       return (response[2] == '1');
   }
 
-  return false;
+  return false;   // not K3
 }
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
-void rig_interface::keyer_speed(const int wpm)
+void rig_interface::keyer_speed(const int wpm) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
@@ -808,7 +805,7 @@ void rig_interface::keyer_speed(const int wpm)
 }
 
 /// get the keyer speed in WPM
-int rig_interface::keyer_speed(void)
+int rig_interface::keyer_speed(void) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
@@ -818,14 +815,6 @@ int rig_interface::keyer_speed(void)
     { _error_alert("Invalid response getting keyer_speed: "s + response);
       return false;
     }
-
-
-//f (const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; response.length() < 6)
-//    { _error_alert("Invalid response getting keyer_speed: "s + response);
- //     return false;
-//    }
-//    else
-//      return from_string<int>(substring(response, 2, 3));
   }
   else              // not K3
   { value_t v;
@@ -893,7 +882,8 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
     write(fd, cmd.c_str(), cmd.length());
     serial_flush(&rs_p->rigport);
-    sleep_for(milliseconds(100));
+//    sleep_for(milliseconds(100));
+    sleep_for(100ms);
 
     fd_set set;
     struct timeval timeout;  // time_t (seconds), long (microseconds)
@@ -946,7 +936,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
             const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
 
             alert("P3 screendump progress: "s + to_string(percent) + percent_str);
- //           sleep_for(milliseconds(1000));      // we have the lock for all this time
             sleep_for(1s);      // we have the lock for all this time
           }
         }
@@ -958,7 +947,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
-//            sleep_for(milliseconds(50));
             sleep_for(50ms);
 
           if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
@@ -1062,7 +1050,8 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
     serial_flush(&rs_p->rigport);
     write(fd, cmd.c_str(), cmd.length());
     serial_flush(&rs_p->rigport);
-    sleep_for(milliseconds(100));
+//    sleep_for(milliseconds(100));
+    sleep_for(100ms);
 
     fd_set set;
     struct timeval timeout;
@@ -1093,8 +1082,6 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
              ost << "timeout in select() in raw_command: " << cmd << endl;
             else
             { n_read = read(fd, c_in.data(), 131640 - total_read);
-
-//              ost << "n_read = " << n_read << endl;
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -1127,7 +1114,8 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
           timeout.tv_usec = timeout_microseconds;
 
           if (counter)                          // we've already slept the first time through
-            sleep_for(milliseconds(50));
+ //           sleep_for(milliseconds(50));
+            sleep_for(50ms);
 
           int status = select(fd + 1, &set, NULL, NULL, &timeout);
           int nread = 0;
@@ -1173,7 +1161,7 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 #endif
 
 /// is the VFO locked?
-bool rig_interface::is_locked(void)
+bool rig_interface::is_locked(void) const
 { if (_model == RIG_MODEL_K3)
   { if ( const string response { raw_command("LK;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"s, 0) )
       return (response[2] == '1');
@@ -1199,7 +1187,7 @@ bool rig_interface::is_locked(void)
 /*! \brief      Get the bandwidth in Hz
     \return     the current audio bandwidth, in hertz
 */
-int rig_interface::bandwidth(void)
+int rig_interface::bandwidth(void) const
 { if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return 0;
 
@@ -1248,24 +1236,12 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
 bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { //const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) };
-
-      if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0))
+    { if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0))
         return  (response[2] == '1');
       else
       { _error_alert("Invalid response getting transmit status: "s + response);
         return true;                // be paranoid
       }
-
-//    { if ( const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0) )
-//        return  (response[2] == '1');
-//      else
-//      { _error_alert("Invalid response getting transmit status: "s + response);
-//        return true;                // be paranoid
-//      }
- //   }
-
- //   return true;    // compiler doesn't realise that this is unnecessary
     }
     else    // connected but not K3
       return true;            // be paranoid
@@ -1277,7 +1253,7 @@ bool rig_interface::is_transmitting(void)
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
-bool rig_interface::test(void)
+bool rig_interface::test(void) const
 { if (_model == RIG_MODEL_DUMMY)
     return true;
 
@@ -1305,7 +1281,7 @@ bool rig_interface::test(void)
 
     This works only with the K3.
 */
-void rig_interface::test(const bool b)
+void rig_interface::test(const bool b) const
 { if (test() != b)
   { if (_rig_connected)
     { if (_model == RIG_MODEL_K3)
@@ -1317,7 +1293,7 @@ void rig_interface::test(const bool b)
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
 */
-VFO rig_interface::tx_vfo(void)
+VFO rig_interface::tx_vfo(void) const
 { if (!_rig_connected)
     return VFO::A;
 
@@ -1342,9 +1318,8 @@ VFO rig_interface::tx_vfo(void)
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
 */
-void rig_interface::bandwidth_a(const unsigned int hz)
-{ //constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries for the brain-dead K3
-  constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
+void rig_interface::bandwidth_a(const unsigned int hz) const
+{ constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
   constexpr int                       PRECISION  { 50 };
 
   if (_rig_connected)
@@ -1364,7 +1339,7 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 /*! \brief      Set the bandwidth of VFO B
     \param  hz  desired bandwidth, in Hz
 */
-void rig_interface::bandwidth_b(const unsigned int hz)
+void rig_interface::bandwidth_b(const unsigned int hz) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
     { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
@@ -1393,12 +1368,12 @@ unsigned int rig_interface::centre_frequency(void) const
   }
 }
 
-/*! \brief      Set audio centre frequency, in Hz
+/*! \brief      Set audio centre frequency
     \patam  fc  the audio centre frequency, in Hz
 
     Works only with K3
 */
-void rig_interface::centre_frequency(const unsigned int fc)
+void rig_interface::centre_frequency(const unsigned int fc) const
 { if ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return;
 
@@ -1445,7 +1420,7 @@ bool rig_interface::rx_ant(void) const
 
     Works only with K3
 */
-void rig_interface::rx_ant(const bool torf)
+void rig_interface::rx_ant(const bool torf) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
       raw_command( torf ? "AR1;"s : "AR0;"s );
@@ -1484,13 +1459,13 @@ bool rig_interface::notch_enabled(const string& ds_result) const
 
     Works only with K3
 */
-void rig_interface::toggle_notch_status(void)
+void rig_interface::toggle_notch_status(void) const
 { if (_model == RIG_MODEL_K3)
     k3_tap(K3_BUTTON::NOTCH);
 }
 
 /// place K3 into extended mode
-void rig_interface::k3_extended_mode(void)
+void rig_interface::k3_extended_mode(void) const
 { if (_model == RIG_MODEL_K3)
     raw_command("K31;"s);
 }
@@ -1501,7 +1476,7 @@ void rig_interface::k3_extended_mode(void)
 
     Works only with K3
 */
-void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
+void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh) const
 { if (_model == RIG_MODEL_K3)
   { const string n_str      { pad_leftz(static_cast<int>(n), 2) };  // the cast is necessary
     const string press_code { (torh == PRESS::TAP) ? "SWT"s : "SWH"s };
@@ -1514,7 +1489,7 @@ void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh)
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
 */
-void rig_interface::filter(const audio_filter& af)
+void rig_interface::filter(const audio_filter& af) const
 { const int bw { af.bandwidth() };
   const int cf { af.centre() };
 
@@ -1532,7 +1507,7 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 }
 
 /// set RIT, split, sub-rx off
-void rig_interface::base_state(void)
+void rig_interface::base_state(void) const
 { if (rit_enabled())
   { rit_disable();
 

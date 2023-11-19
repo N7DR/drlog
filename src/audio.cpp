@@ -52,10 +52,10 @@ int64_t audio_recorder::_total_bytes_to_read(void)
 // how many seconds to next time marker?
 // current seconds past midnight
   const string   now_str { hhmmss() };                                        // HH:MM:SS
-  const uint64_t hh     { from_string<uint64_t>(substring <std::string> (now_str, 0, 2)) };
-  const uint64_t mm    { from_string<uint64_t>(substring <std::string> (now_str, 3, 2)) };
-  const uint64_t ss    { from_string<uint64_t>(substring <std::string> (now_str, 6, 2)) };
-  const uint64_t now   { ss + (mm * 60) + (hh * 3600) };
+  const uint64_t hh      { from_string<uint64_t>(substring <std::string> (now_str, 0, 2)) };
+  const uint64_t mm      { from_string<uint64_t>(substring <std::string> (now_str, 3, 2)) };
+  const uint64_t ss      { from_string<uint64_t>(substring <std::string> (now_str, 6, 2)) };
+  const uint64_t now     { ss + (mm * 60) + (hh * 3600) };
 
   int remainder { static_cast<int>( _max_file_time - (now % _max_file_time) ) };
 
@@ -134,14 +134,14 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_RATE_SET_ERROR, "Channel count not available for: "s + _pcm_name);
   }
 
-  if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
+  if ( ((float)rate * 1.05 < _hw_params.rate) or ((float)rate * 0.95 > _hw_params.rate) )
   { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
     throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested "s + to_string(rate) + ", received "s + to_string(_hw_params.rate) + "for device: "s + _pcm_name);
   }
 
   rate = _hw_params.rate;
 
-  if (_buffer_time == 0 and _buffer_frames == 0)
+  if ( (_buffer_time == 0) and (_buffer_frames == 0) )
   { err = snd_pcm_hw_params_get_buffer_time_max(params, &_buffer_time, 0);
 
     if (err < 0)
@@ -275,12 +275,21 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-  _audio_buf = (u_char *)malloc(_period_size_in_bytes);             // !!!
+//  _audio_buf = (u_char *)malloc(_period_size_in_bytes);             // !!!
 
-  if (_audio_buf == NULL)
+  try
+  { _audio_buf = new u_char [_period_size_in_bytes];
+  }
+
+  catch (...)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
     throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
   }
+
+//  if (_audio_buf == NULL)
+//  { ost << "ERROR: out of memory for " << _pcm_name << endl;
+//    throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
+//  }
 
   _buffer_frames = buffer_size;    /* for position test */ // ?????
 }
@@ -500,6 +509,12 @@ create_file:
 goto create_file;
 
   return nullptr;       // should never get here
+}
+
+/// destructor
+audio_recorder::~audio_recorder(void)
+{ if (_audio_buf)
+    delete [] _audio_buf;
 }
 
 /// initialise the object

@@ -280,6 +280,9 @@ public:
 // disallow copy construction
   audio_recorder(const audio_recorder&) = delete;
 
+/// destructor
+  ~audio_recorder(void);
+
   READ_AND_WRITE(base_filename);            ///< base name of output file
   READ(initialised);                        ///< has the hardware been initialised, ready for reading?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds

@@ -5869,7 +5869,8 @@ void populate_win_info(const string& callsign)
 //    for (const auto& this_mode : permitted_modes)
     for (const auto& this_mode : rules.permitted_modes())
     { if (n_modes > 1)
-        win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < create_centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+//        win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < create_centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+        win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
 // QSOs
       string line { pad_right("QSO"s, FIRST_FIELD_WIDTH) };
@@ -5917,7 +5918,8 @@ void populate_win_info(const string& callsign)
 // PUTATIVE EXCHANGE window
       if (win_putative_exchange.valid())
       { if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
-        { const string msg { create_centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
+        { //const string msg { create_centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
+          const string msg { centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
         
           win_putative_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
         }
@@ -6523,7 +6525,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 */
 void auto_backup(const string dir, const string log_filename, const string qtc_filename)
 {
-  { start_of_thread("auto backup 1"s);
+  { start_of_thread("auto backup"s);
 
     try
     { const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
@@ -6544,7 +6546,7 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
     }
   }  // ensure that all objects call destructors, whatever the implementation
 
-  end_of_thread("auto backup 1"s);
+  end_of_thread("auto backup"s);
 }
 
 /// write the current local time to <i>win_local_time</i>
@@ -6663,7 +6665,6 @@ string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE 
 
     string tmp_callsign;
 
-//    for (const auto& match : matches)
     for (const auto& [callsign, pair_number] : matches)
     { if (colours.fg(pair_number) == ACCEPT_COLOUR)
       { n_green++;
@@ -6824,18 +6825,8 @@ void update_individual_messages_window(const string& callsign)
   if (!callsign.empty())
   { SAFELOCK(individual_messages);
 
-//    const auto posn { individual_messages.find(callsign) };
-
     if (const auto posn { individual_messages.find(callsign) }; posn != individual_messages.end())
-    { //ost << "about to write for call: " << callsign << endl;
-      
-      //const string& msg = posn->second;
-
-      //ost << "length of message = " << msg.size() << endl;
-      //ost << "message = ***" << msg << "***" << endl; 
-      //ost << "window width = " << win_individual_messages.width() << endl;
-
-      win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
+    { win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
       message_written = true;
     }
   }
@@ -6855,8 +6846,6 @@ void update_batch_messages_window(const string& callsign)
 
   if (!callsign.empty())
   { SAFELOCK(batch_messages);       // this is really overkill, as it should be immutable once we're up and running
-
- //   const auto posn { batch_messages.find(callsign) };
 
     if (const auto posn { batch_messages.find(callsign) }; posn != batch_messages.end())
     { const string spaces { create_string(' ', win_batch_messages.width()) };
@@ -7394,7 +7383,7 @@ void allow_for_callsign_mults(QSO& qso)
       mult_name = "SACPX"s;
     }
 
-    if ( rules.callsign_mults().contains("UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"s) )  // UBA
+    if ( rules.callsign_mults().contains("UBAPX"s) and (location_db.canonical_prefix(qso.callsign()) == "ON"sv) )  // UBA
     { qso.prefix(wpx_prefix(qso.callsign()));
       mult_name = "UBAPX"s;
     }
@@ -7464,8 +7453,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   const unsigned int qtc_qrs { context.qtc_qrs() };
   const bool         cw      { current_mode == MODE_CW };  // just to keep it easy to determine if we are on CW
 
-//  bool processed { false };
-
   auto send_msg = [cw] (const string& msg)
     { if (cw)
         (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
@@ -7491,14 +7478,14 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     if (destination_callsign.empty())       // we have no destination
     { alert("No valid destination for QTC"s);
       set_active_window(ACTIVE_WINDOW::CALL);
- //     processed = true;
+
       return;
     }
 
     if (/* !processed and */ location_db.continent(destination_callsign) != EU)    // send QTCs only to EU stations
     { alert("No EU destination for QTC"s);
       set_active_window(ACTIVE_WINDOW::CALL);
-//      processed = true;
+
       return;
     }
 
@@ -7510,7 +7497,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     if (/* !processed and */ n_already_sent >= MAX_QTC_ENTRIES_PER_STN)
     { alert(to_string(MAX_QTC_ENTRIES_PER_STN) + " QSOs already sent to "s + destination_callsign);
       set_active_window(ACTIVE_WINDOW::CALL);
-//     processed = true;
+
       return;
     }
 
@@ -7523,11 +7510,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     if (/* !processed and */ qtc_entries_to_send.empty())
     { alert("No QSOs available to send to "s + destination_callsign);
       set_active_window(ACTIVE_WINDOW::CALL);
-//      processed = true;
+
       return;
     }
 
-//    if (!processed)
     { const string mode_str { (current_mode == MODE_CW ? "CW"s : "PH"s) };
 
       series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
@@ -7539,7 +7525,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       if (series.empty())
       { alert("Error: empty QTC object for "s + destination_callsign);
         set_active_window(ACTIVE_WINDOW::CALL);
- //       processed = true;
+
         return;
       }
       else                                      // OK; we're going to send at least one QTC
@@ -7568,14 +7554,13 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         if (cw and qtc_qrs)
           cw_speed(original_cw_speed - qtc_qrs);
 
- //       processed = true;
         return;
       }
     }
   }
 
 // ESCAPE - abort CW
-  if (/* !processed and */e.symbol() == XK_Escape)
+  if (e.symbol() == XK_Escape)
   {
 // abort sending CW if we are currently sending
     if (cw)
@@ -7585,21 +7570,19 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       cw_speed(original_cw_speed);
     }
 
- //   processed = true;
     return;
   }
 
 // R -- repeat introduction (i.e., no QTCs sent)
-  if (/* !processed and */ (qtcs_sent == 0) and (e.is_char('r')))
+  if ( (qtcs_sent == 0) and e.is_char('r') )
   { if (cw)
       send_msg("QTC "s + qtc_id + " QRV?"s);
 
-//    processed = true;
     return;
   }
 
 // ENTER - send next QSO or finish
-  if (/* !processed and */ e.is_unmodified() and (e.symbol() == XK_Return))
+  if (e.is_unmodified() and (e.symbol() == XK_Return))
   { if (qtcs_sent != total_qtcs_to_send)
     { const qtc_entry& qe { series[qtcs_sent].first };
 
@@ -7613,7 +7596,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       series.mark_as_sent(qtcs_sent++);
       win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= series;
 
- //     processed = true;
       return;
     }
     else    // we have sent the last QTC; cleanup
@@ -7648,13 +7630,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       display_statistics(statistics.summary_string(rules));
       update_qtc_queue_window();
 
-//      processed = true;
       return;
     }
   }
 
 // CTRL-X, ALT-X -- Abort and go back to prior window
-  if (/* !processed and */(e.is_control('x') or e.is_alt('x')))
+  if ( e.is_control('x') or e.is_alt('x') )
   { if (series.n_sent() != 0)
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
@@ -7690,18 +7671,16 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       cw_speed(original_cw_speed);    // always set the speed, just to be safe
     }
 
-//    processed = true;
     return;
   }
 
 // ALT-Y -- mark most-recently sent QTC as unsent
-  if (/* !processed and */ e.is_alt('y'))
+  if (e.is_alt('y'))
   { if (qtcs_sent != 0)
     { series.mark_as_unsent(qtcs_sent--);
       win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= series;
     }
 
-//    processed = true;
     return;
   }
 
@@ -7711,29 +7690,27 @@ void process_QTC_input(window* wp, const keyboard_event& e)
                                                         };
 
 // T, U -- repeat time
-  if (/* !processed and */ ( (e.is_char('t')) or (e.is_char('u'))))
+  if ( e.is_char('t') or e.is_char('u') )
   { if (cw)
     { if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
         send_msg(series[vqn.value()].first.utc());
     }
 
-//    processed = true;
     return;
   }
 
 // C -- repeat call
-  if (/* !processed and */( (e.is_char('c'))) )
+  if ( e.is_char('c') )
   { if (cw)
     { if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
         send_msg(series[vqn.value()].first.callsign());
     }
 
-//    processed = true;
     return;
   }
 
 // N, S -- repeat number
-  if (/* !processed and */ ( (e.is_char('n')) or (e.is_char('s'))))
+  if ( e.is_char('n') or e.is_char('s') )
   { if (cw)
     { if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
       { const string serno { pad_left(remove_leading <std::string> (remove_peripheral_spaces <std::string> (series[vqn.value()].first.serno()), '0'), 3, 'T') };
@@ -7742,12 +7719,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       }
     }
 
-//    processed = true;
     return;
   }
 
 // A, R -- repeat all
-  if (/* !processed and */ ( (e.is_char('a')) or (e.is_char('r'))))
+  if ( e.is_char('a') or e.is_char('r') )
   { if (cw)
     { if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
       { const qtc_entry& qe { series[vqn.value()].first };
@@ -7756,25 +7732,20 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       }
     }
 
- //   processed = true;
     return;
   }
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
-  if (/* !processed and */ ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-//    processed = change_cw_speed(e);
+  if ( (e.symbol() == XK_Next) or (e.symbol() == XK_Prior) )
     return static_cast<void>(change_cw_speed(e));
-//    return;
 
 // ALT-K -- toggle CW
-  if (/* !processed and */ cw and e.is_alt('k'))
-//    processed = toggle_cw();
+  if (cw and e.is_alt('k'))
     return static_cast<void>(toggle_cw());
 
 // CTRL-P -- dump screen
-  if (/* !processed and */ e.is_control('p'))
-//    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is always true after this
-    return static_cast<void>(dump_screen());
+  if (e.is_control('p'))
+    return static_cast<void>(dump_screen());  // dump_screen returns a string
 }
 
 /*! \brief              Set speed of computer keyer
@@ -7975,7 +7946,8 @@ void display_statistics(const string& summary_str)
     {
 // we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
       if (const string line { remove_peripheral_spaces <std::string> (win_summary.getline(n)) }; MODE_STRINGS.contains(line))
-        win_summary < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_REVERSE <  create_centred_string(line, win_summary.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+//        win_summary < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_REVERSE <  create_centred_string(line, win_summary.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+        win_summary < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_REVERSE <  centred_string(line, win_summary.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
     }
   }
 
@@ -9370,14 +9342,15 @@ void update_pings(window& win, PING_TABLE& table)
 { constexpr int FG_COLOUR     { COLOUR_WHITE };
   constexpr int NOPING_COLOUR { COLOUR_RED };
 
-  static const int PING_COLOUR { string_to_colour("COLOUR_28") };
+  static const int PING_COLOUR { string_to_colour("COLOUR_28"sv) };
 
   { start_of_thread("pings"s);
 
     unsigned int y { static_cast<unsigned int>(win.height() - 1) };
 
     for (const auto& [label, socket_p] : ping_table_p)
-    { const string line_string { create_centred_string(label, win.width()) };
+    { //const string line_string { create_centred_string(label, win.width()) };
+      const string line_string { centred_string(label, win.width()) };
       const bool   success     { socket_p -> ping() };
 
       win.move_cursor(0, y--);
