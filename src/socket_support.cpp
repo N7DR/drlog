@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 206 2022-05-22 12:47:37Z  $
+// $Id: socket_support.cpp 230 2023-11-27 13:45:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -587,6 +587,7 @@ icmp_socket::icmp_socket(void) :
     \param  destination_ip_address_or_fqdn  IPv4 address or an FQDN
 */
 icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
+  _destination_str(destination_ip_address_or_fqdn),
   _sock(::socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
 { if (_sock <= 0)
     throw icmp_socket_error(ICMP_SOCKET_UNABLE_TO_CREATE, strerror(errno));

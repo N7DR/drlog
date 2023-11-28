@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: drlog.cpp 230 2023-11-27 13:45:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -248,6 +248,8 @@ void update_win_posted_by(const vector<dx_post>&);                              
 
 bool xscp_order_greater(const string& c1, const string& c2);                                                            ///< is <i>c1</i> before <i>c2</i> i XSCP order?
 
+void zoomed_xit(void);                                                                                                  ///< zoom P3 and turn off RIT, turn on XIT
+
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
 void process_EXCHANGE_input(window* wp, const keyboard_event& e);           ///< Process an event in EXCHANGE window
@@ -401,6 +403,8 @@ PING_TABLE              ping_table_p;
 set<string>             posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
 exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
+unsigned int            p3_span_cq { 5 };                   ///< span of P3 when in CQ mode, in kHz
+unsigned int            p3_span_sap { 20 };                 ///< span of P3 when in SAP mode, in kHz
 
 unsigned short          qtc_long_t { 0 };                   ///< do not send long Ts at beginning of serno in QTCs
 
@@ -865,6 +869,9 @@ int main(int argc, char** argv)
     }
 
     posted_by_continents            = context.posted_by_continents();
+    p3_span_cq                      = context.p3_span_cq();
+    p3_span_sap                     = context.p3_span_sap();
+
     qtc_long_t                      = context.qtc_long_t();
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
@@ -2230,7 +2237,7 @@ void* display_rig_status(void* vp)
             }
           }
           else          // we haven't changed band
-            update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+            update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -2838,6 +2845,7 @@ void* prune_bandmap(void* vp)
     ALT-N         -- toggle notch status if on SSB
     ALT-Q         -- send QTC
     ALT-R         -- toggle RX antenna
+    ALT-X         -- enter zoomed XIT mode
     ALT-Y         -- delete last QSO
     ALT-KP_4      -- decrement bandmap column offset
     ALT-KP_6      -- increment bandmap column offset
@@ -2923,6 +2931,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   const string call_contents { remove_peripheral_spaces <std::string> (win.read()) };
   const BAND   cur_band      { current_band };
   const MODE   cur_mode      { current_mode };
+
+// ALT-X -- possibly enter zoomed XIT mode
+  if (!processed and e.is_alt('x') and (drlog_mode == DRLOG_MODE::SAP))
+  { zoomed_xit();
+    processed = true;
+  }
 
 // ALT-F4 -- toggle DEBUG state
   if (!processed and e.is_alt() and (e.symbol() == XK_F4))
@@ -4563,6 +4577,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     ALT-KP_4      -- decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
     ALT-R         -- toggle RX antenna
     ALT-S         -- toggle sub receiver
+    ALT-X         -- enter zoomed XIT mode
 
     CTRL-B -- fast bandwidth
     CTRL-S -- send contents of CALL window to scratchpad
@@ -4622,6 +4637,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { if (current_mode == MODE_SSB)
       rig.toggle_notch_status();
 
+    processed = true;
+  }
+
+// ALT-X -- possibly enter zoomed XIT mode
+  if (!processed and e.is_alt('x') and (drlog_mode == DRLOG_MODE::SAP))
+  { zoomed_xit();
     processed = true;
   }
 
@@ -5612,7 +5633,7 @@ void enter_cq_mode(void)
       rig.rit(0);
     }
 
-    p3_span(context.p3_span_cq());
+    p3_span(p3_span_cq);
   }
 
   catch (const rig_interface_error& e)
@@ -5630,7 +5651,7 @@ void enter_sap_mode(void)
     rig.rit(0);
     rig.disable_xit();
     rig.disable_rit();
-    p3_span(context.p3_span_sap());
+    p3_span(p3_span_sap);
   }
 
   catch (const rig_interface_error& e)
@@ -8249,7 +8270,15 @@ void end_of_thread(const string& name)
     \param  m   mode
 */
 void update_based_on_frequency_change(const frequency& f, const MODE m)
-{ //ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
+{ static frequency last_update_frequency { };
+
+//  ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
+//  ost << "last_update_frequency = " << last_update_frequency << endl;
+
+// trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
+  const bool tmp_changed_frequency { f != last_update_frequency };
+
+ // ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -8261,6 +8290,13 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   { SAFELOCK(my_bandmap_entry);
     
     mbe_copy = my_bandmap_entry;
+
+ //   changed_frequency = (f == last_update_frequency);
+
+    if (tmp_changed_frequency)
+    { //ost << "tmp changed frequency from " << last_update_frequency << " to " << f << endl;
+      last_update_frequency = f;
+    }
 
 //    ost << "frequency of my_bandmap_entry = " << mbe_copy.freq() << endl;
   }
@@ -8274,12 +8310,13 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // we may be able to improve this to auto-jump down to the final destination by editing
 // bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip)
 // so as to return the next-lower entry, but let's make sure that this works first
-  const bool changed_frequency { true };
+//  const bool changed_frequency { true };
   const bool in_call_window    { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
 //  ost << "changed_frequency = " << boolalpha << changed_frequency << endl;
 
-  if (changed_frequency)
+  if (tmp_changed_frequency)
+//  if (changed_frequency)
   { //ost << "inside changed_frequency conditional" << endl;
 
     time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
@@ -8334,7 +8371,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // possibly start audio recording
     if ( allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
     { start_recording(audio, context);
-      alert("audio recording started due to activity"s);
+      alert("audio recording started due to change in frequency"s);
     }
   }                 // end of changed frequency
 }
@@ -9361,4 +9398,11 @@ void update_pings(window& win, PING_TABLE& table)
   }
 
   end_of_thread("pings"s);
+}
+
+/// zoom P3 and turn off RIT, turn on XIT
+void zoomed_xit(void)
+{ p3_span(p3_span_cq);
+  rig.disable_rit();
+  rig.enable_xit();
 }

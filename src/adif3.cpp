@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 224 2023-08-03 20:54:02Z  $
+// $Id: adif3.cpp 229 2023-11-19 16:33:50Z  $
 
 // Released under the GNU Public License, version 2
 

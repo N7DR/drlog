@@ -1,4 +1,4 @@
-// $Id: socket_support.h 206 2022-05-22 12:47:37Z  $
+// $Id: socket_support.h 229 2023-11-19 16:33:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
