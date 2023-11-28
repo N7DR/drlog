@@ -221,7 +221,7 @@ bool toggle_recording_status(audio_recorder& audio);                            
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
 void update_bandmap_window(bandmap& bm);
-void update_based_on_frequency_change(const frequency& f, const MODE m);                                                ///< Update some windows based on a change in my frequency
+void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);         ///< Update some windows based on a change in my frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
 void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
@@ -338,6 +338,7 @@ unordered_set<string>   all_country_mults;                          ///< all the
 bool                    allow_audio_recording { false };            ///< may we record audio?
 string                  at_call;                                    ///< call that should replace commat in "call ok now" message
 audio_recorder          audio;                                      ///< provide capability to record audio
+AUDIO_RECORDING         audio_recording_mode { AUDIO_RECORDING::DO_NOT_START }; // mode of audio recording
 atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
 string                  auto_backup_directory { };                  ///< directory into which backup log and QTC files are to be written
 
@@ -829,6 +830,7 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
 
     allow_audio_recording           = context.allow_audio_recording();
+    audio_recording_mode            = context.start_audio_recording();
     auto_remaining_country_mults    = context.auto_remaining_country_mults();
     autocorrect_rbn                 = context.autocorrect_rbn();
     auto_backup_directory           = context.auto_backup_directory();
@@ -8265,18 +8267,28 @@ void end_of_thread(const string& name)
   print_thread_names();
 }
 
-/*! \brief      Change windows because of a change in my frequency
-    \param  f   my new frequency
-    \param  m   mode
+/*! \brief          Change windows because of a change in my frequency
+    \param  f       my new frequency
+    \param  m       mode
+//    \param  old_f   optional old frequency
 */
-void update_based_on_frequency_change(const frequency& f, const MODE m)
+void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f */)
 { static frequency last_update_frequency { };
 
 //  ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
 //  ost << "last_update_frequency = " << last_update_frequency << endl;
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
-  const bool tmp_changed_frequency { f != last_update_frequency };
+
+// we can enter a state where the rig is on the QRG of a post, and was on the same QRG last time this routine was executed,
+// but the marker is not in the correct position
+//  const bool tmp_changed_frequency { (f != last_update_frequency) or ((old_f.hz() != 0) and (old_f.hz() != my_bandmap_entry.freq())) };
+
+// we move up or down to the next entry, even if we are very close to its frequency. Might want to skip
+// an entry if we are close to it (say, within a couple of hundred Hz); in fact, right now we don't
+// actually look at any entry frequencies, we just go where we are told to go
+
+  bool tmp_changed_frequency { f != last_update_frequency };
 
  // ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
 
@@ -8291,6 +8303,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     
     mbe_copy = my_bandmap_entry;
 
+    tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
+
  //   changed_frequency = (f == last_update_frequency);
 
     if (tmp_changed_frequency)
@@ -8303,15 +8317,11 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 
 //  const bool changed_frequency { (f.display_string() != mbe_copy.freq().display_string()) };
 
-// we need to change even if a small amount, in case we are just above a bm entry (say, 30 Hz) and want to jump to the next
-// stn below that entry; without forcing "true" we end up in a state where we can't go down to that stn without first
-// moving away (e.g., up)
-
 // we may be able to improve this to auto-jump down to the final destination by editing
 // bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip)
 // so as to return the next-lower entry, but let's make sure that this works first
 //  const bool changed_frequency { true };
-  const bool in_call_window    { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
+//  const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
 //  ost << "changed_frequency = " << boolalpha << changed_frequency << endl;
 
@@ -8320,7 +8330,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   { //ost << "inside changed_frequency conditional" << endl;
 
     time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
-    mbe_copy.freq(f);           // also updates the band
+    mbe_copy.freq(f);           // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
     bandmap& bm { bandmaps[mbe_copy.band()] };
@@ -8342,8 +8352,10 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 
     if (!nearby_callsign.empty())
       display_nearby_callsign(nearby_callsign);
-    else                                        // no nearby callsign
-    { if (in_call_window)
+    else                                        // no nearby callsign; possibly clear windows
+    { const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
+
+      if (in_call_window)
 // see if we are within twice the guard band before we clear the call window
       { const string        call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
         const bandmap_entry be            { bm[call_contents] };
@@ -8369,7 +8381,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     }
 
 // possibly start audio recording
-    if ( allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
+    if ( allow_audio_recording and (audio_recording_mode == AUDIO_RECORDING::AUTO) /* (context.start_audio_recording() == AUDIO_RECORDING::AUTO) */ and !audio.recording())
     { start_recording(audio, context);
       alert("audio recording started due to change in frequency"s);
     }
@@ -8403,7 +8415,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
   { if (debug)
       ost << "Setting frequency to: " << be.freq() << endl;
 
-    ok_to_poll_k3 = false;  // since we're goign to be updating things anyway, briefly inhibit polling of a K3
+    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
     rig.rig_frequency(be.freq());
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
@@ -8414,7 +8426,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     possible_mode_change(be.freq());
 
 //    update_based_on_frequency_change(be.freq(), safe_get_mode());   // update win_bandmap, and other windows
-    update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
+    update_based_on_frequency_change(be.freq(), current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
 
     ok_to_poll_k3 = true;
 

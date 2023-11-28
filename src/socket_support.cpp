@@ -283,8 +283,9 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   fd_set r_set, w_set;
   int flags;
 
-  FD_ZERO(&r_set);
-  FD_SET(_sock, &r_set);
+//  FD_ZERO(&r_set);
+//  FD_SET(_sock, &r_set);
+  fd_set_value(r_set, _sock);
   w_set = r_set;
 
 // set socket nonblocking flag
@@ -402,8 +403,9 @@ string tcp_socket::read(const unsigned long timeout_secs)
 
   fd_set ps_set;
 
-  FD_ZERO(&ps_set);
-  FD_SET(_sock, &ps_set);
+//  FD_ZERO(&ps_set);
+//  FD_SET(_sock, &ps_set);
+  fd_set_value(ps_set, _sock);
 
   SAFELOCK(_tcp_socket);
 
@@ -620,9 +622,7 @@ icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn, const str
     \param  local_address   address to which the socket is to be bound
 */
 void icmp_socket::bind(const sockaddr_storage& local_address)
-{ //SAFELOCK(_icmp_socket);
-
-  if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
+{ if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
   { const string address { dotted_decimal_address(*(sockaddr*)(&local_address)) };
 
     throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + ::to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
@@ -713,8 +713,9 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
 
   fd_set ps_set;
 
-  FD_ZERO(&ps_set);
-  FD_SET(in_socket, &ps_set);
+//  FD_ZERO(&ps_set);
+//  FD_SET(in_socket, &ps_set);
+  fd_set_value(ps_set, in_socket);
 
 // check
   if (!FD_ISSET(in_socket, &ps_set))      // unable to set socket for listening
@@ -736,7 +737,8 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
       socklen_t from_length = sizeof(sockaddr_storage);
       sockaddr_storage ps_sockaddr;                    // unused but needed in recvfrom
 
-      socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length); 
+      socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
+
       if (socket_status == SOCKET_ERROR)
       { socket_status = errno;
         switch (socket_status)
@@ -756,6 +758,15 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
   }
 }
 
+/*! \brief        Set an fd_set to contain a particular single value of a file descriptor
+    \param  fds   set of file descriptors
+    \param  fd    the file descriptor to place into fds
+*/
+void fd_set_value(fd_set& fds, int fd)
+{ FD_ZERO(&fds);
+  FD_SET(fd, &fds);
+}
+
 /*! \brief          Flush a readable socket
     \param  sock    socket to flush
 */
@@ -765,8 +776,9 @@ void flush_read_socket(SOCKET& sock)
 
   fd_set ps_set;
 
-  FD_ZERO(&ps_set);
-  FD_SET(sock, &ps_set);
+//  FD_ZERO(&ps_set);
+//  FD_SET(sock, &ps_set);
+  fd_set_value(ps_set, sock);
 
   const int max_socket_number { sock + 1 };               // see p. 292 of Linux socket programming
 
@@ -781,8 +793,9 @@ void flush_read_socket(SOCKET& sock)
     timeout = { 0, 0 };
 
 // and the set
-    FD_ZERO(&ps_set);
-    FD_SET(sock, &ps_set);
+//    FD_ZERO(&ps_set);
+//    FD_SET(sock, &ps_set);
+    fd_set_value(ps_set, sock);
   }
 }
 

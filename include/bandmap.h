@@ -55,6 +55,7 @@ extern const std::string   MY_MARKER;                           ///< the string 
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
+constexpr int          MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
 
 using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // ordinary std::queue is NOT thread safe!!
 
@@ -952,7 +953,7 @@ public:
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
      \param target_frequency_in_khz     target frequency, in kHz
      \param guard_band_in_hz            guard band, in Hz
-     \return                            closest bandmap entry (if any) to the target frequency and within the guard band
+     \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
 
      Applies filtering and the RBN threshold before searching for the station. Returns the
      empty string if no station was found within the guard band.
@@ -960,6 +961,13 @@ public:
   inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
+/*!  \brief                             Find the station in the displayed bandmap that is closest to a target frequency
+     \param target_frequency_in_khz     target frequency, in kHz
+     \param guard_band_in_hz            guard band, in Hz
+     \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
+
+     Returns the empty string if no station was found within the guard band.
+*/
   inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 

@@ -77,13 +77,6 @@ int tr_record::rst(void) const
   return from_string<int>(tmp);
 }
 
-/// received RST
-//const int tr_record::rst_received(void) const
-//{ const string tmp { substring(_record, 49, _record[51] == ' ' ? 2 : 3) };
-//
-//  return from_string<int>(tmp);
-//}
-
 /// band
 BAND tr_record::band(void) const
 { const string band_string { substring <std::string> (_record, 0, 3) };

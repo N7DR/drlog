@@ -77,6 +77,12 @@ const std::string icmp_socket_error_string[3] { std::string(),
 /// Type that holds a socket -- syntactic sugar
 using SOCKET = int;
 
+/*! \brief        Set an fd_set to contain a particular single value of a file descriptor
+    \param  fds   set of file descriptors
+    \param  fd    the file descriptor to place into fds
+*/
+void fd_set_value(fd_set& fds, int fd);
+
 /*! \brief                  Return the name of an error
     \param  error_number    socket error number
     \return                 error string that corresponds to <i>error_number</i>

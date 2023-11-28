@@ -53,7 +53,7 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
 
-constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it 
+//constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
 
 constexpr string MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
