@@ -64,6 +64,10 @@ public:
   inline U time_span(void) const
     { return static_cast<U>(duration_cast<T>(_end - _start).count()); }
 
+  template <class U = double, class T = A>
+  inline U click(void) const
+    { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
+
 /*! \brief  Return the time between the start time and the end time
 
     Performs no sanity checking on the values of the start and end times

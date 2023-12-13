@@ -276,7 +276,8 @@ void rig_interface::prepare(const drlog_context& context)
     _rig_connected = true;
 
 // if it's a K3, enable extended mode
-  k3_extended_mode();
+//  k3_extended_mode();
+  k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 }
 
 /*! \brief      Set mode
@@ -285,7 +286,7 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
+{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
 
   _last_commanded_mode = m;
 
@@ -840,7 +841,9 @@ int rig_interface::keyer_speed(void) const
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
 string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
-{ const bool response_expected { expectation == RESPONSE::EXPECTED };
+{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
+
+  const bool response_expected { expectation == RESPONSE::EXPECTED };
 
   struct rig_state* rs_p { &(_rigp->state) };
 
@@ -852,7 +855,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
   unsigned int total_read { 0 };
 
-  string rcvd;
+  string rcvd { };
 
   const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
@@ -883,12 +886,15 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     write(fd, cmd.c_str(), cmd.length());
     serial_flush(&rs_p->rigport);
 //    sleep_for(milliseconds(100));
-    sleep_for(100ms);
+//    sleep_for(100ms);
+//    sleep_for(10ms);
+//    sleep_for(5ms);
+    sleep_for(RETRY_TIME);
 
     fd_set set;
     struct timeval timeout;  // time_t (seconds), long (microseconds)
 
-    auto set_timeout = [fd, &set, &timeout](const time_t sec, const long usec)
+    auto set_timeout = [fd, &set, &timeout] (const time_t sec, const long usec)
       { FD_ZERO(&set);    // clear the set
         FD_SET(fd, &set); // add the file descriptor to the set
 
@@ -940,21 +946,24 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
           }
         }
       }
-      else                                              // not a P3 screenshot; keep reading until we received at least one ";"
+      else                                              // not a P3 screenshot; keep reading until we receive at least one ";"
       { static int rig_communication_failures { 0 };
 
         while (!completed and (counter < MAX_ATTEMPTS) )
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
-            sleep_for(50ms);
+//            sleep_for(50ms);
+//            sleep_for(10ms);
+//            sleep_for(5ms);
+            sleep_for(RETRY_TIME);
 
           if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)                // possibly a timeout error
             { if (counter == MAX_ATTEMPTS - 1)
-              { if (cmd == "TQ;"sv)
+              { if (cmd == "TQ;"sv)       // transmit query
                 { rig_communication_failures++;
 
                   if (rig_communication_failures == 1)
@@ -965,7 +974,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
               }
             }
             else
-            { if (cmd == "TQ;"sv)
+            { if (cmd == "TQ;"sv)       // transmit query
               { if (rig_communication_failures != 0)
                 { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
                   rig_communication_failures = 0;
@@ -1184,6 +1193,26 @@ bool rig_interface::is_locked(void) const
   }
 }
 
+/// get the bandwidth as a string, in Hz
+string rig_interface::bandwidth_str(void) const
+{ if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
+    return string { };
+
+  SAFELOCK(_rig);
+
+  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+//      return (substring <std::string> (response, 2, 4) + '0');   // returned value is in tens of Hz, so convert to Hz
+//      return remove_leading <std::string> ( (substring <std::string> (response, 2, 4) + '0'), '0');   // returned value is in tens of Hz, so convert to Hz
+  { const string bw_in_tens { remove_leading <std::string> (substring <std::string> (response, 2, 4), '0') };
+
+    return (bw_in_tens + '0');   // returned value is in tens of Hz, so convert to Hz
+  }
+  else
+  { _error_alert("Invalid response getting bandwidth_str: "s + response);
+    return string { };
+  }
+}
+
 /*! \brief      Get the bandwidth in Hz
     \return     the current audio bandwidth, in hertz
 */
@@ -1191,14 +1220,16 @@ int rig_interface::bandwidth(void) const
 { if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return 0;
 
-  SAFELOCK(_rig);
+//  SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
-      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
-  else
-  { _error_alert("Invalid response getting bandwidth: "s + response);
-    return 0;
-  }
+  return from_string<int>(bandwidth_str());
+
+//  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+//      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
+//  else
+//  { _error_alert("Invalid response getting bandwidth: "s + response);
+//    return 0;
+//  }
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1349,6 +1380,29 @@ void rig_interface::bandwidth_b(const unsigned int hz) const
   }
 }
 
+/*! \brief      Get audio centre frequency, in Hz, as a string
+    \return     The audio centre frequency, in Hz
+
+    Works only with K3
+*/
+string rig_interface::centre_frequency_str(void) const
+{ if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
+    return string { };
+
+  SAFELOCK(_rig);
+
+  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
+  {  //return (substring <std::string> (response, 2, 4)) + '0';
+    const string ctr_in_tens { remove_leading <std::string> (substring <std::string> (response, 3, 4), '0') };
+
+    return (ctr_in_tens);
+  }
+  else
+  { _error_alert("Invalid response getting centre frequency: "s + response);
+    return string { };
+  }
+}
+
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
 
@@ -1360,12 +1414,14 @@ unsigned int rig_interface::centre_frequency(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
-    return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
-  else
-  { _error_alert("Invalid response getting centre frequency: "s + response);
-    return 0;
-  }
+  return from_string<unsigned int>(centre_frequency_str());
+
+//  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
+//    return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
+//  else
+//  { _error_alert("Invalid response getting centre frequency: "s + response);
+//    return 0;
+//  }
 }
 
 /*! \brief      Set audio centre frequency
@@ -1465,10 +1521,37 @@ void rig_interface::toggle_notch_status(void) const
 }
 
 /// place K3 into extended mode
-void rig_interface::k3_extended_mode(void) const
+//void rig_interface::k3_extended_mode(void) const
+//{ if (_model == RIG_MODEL_K3)
+//    raw_command("K31;"s);
+//}
+
+void rig_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 { if (_model == RIG_MODEL_K3)
-    raw_command("K31;"s);
+  { switch (cm)
+    { case K3_COMMAND_MODE::EXTENDED :
+        raw_command("K31;"s);
+        break;
+
+      case K3_COMMAND_MODE::NORMAL :
+        raw_command("K30;"s);
+        break;
+    }
+  }
 }
+
+K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
+{ if (_model == RIG_MODEL_K3)
+  { const string result { raw_command("K3;", RESPONSE::EXPECTED) };
+
+//    ost << "k3_command_mode = " << result << endl;
+    if (result == "K31"s)
+      return K3_COMMAND_MODE::EXTENDED;
+  }
+
+  return K3_COMMAND_MODE::NORMAL;
+}
+
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  n       the K3 button to tap or hold

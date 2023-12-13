@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 230 2023-11-27 13:45:18Z  $
+// $Id: drlog.cpp 231 2023-12-10 14:01:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -301,7 +301,7 @@ COLOUR_TYPE log_extract_fg;                 ///< foreground colour of LOG EXTRAC
 COLOUR_TYPE log_extract_bg;                 ///< background colour of LOG EXTRACT window (used to restore colours after QTC)
 
 pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
-time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
+time_t    time_last_qsy          { time_t(NULL) };      ///< time of last QSY
 
 pt_mutex            thread_check_mutex { "THREAD CHECK"s };                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads { 0 };                ///< how many additional threads are running?
@@ -367,7 +367,7 @@ float                   greatest_distance { 0 };                    ///< greates
 
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-int                     inactivity_timer;                           ///< how long to record with no activity
+int                     inactivity_time;                            ///< max time since the last activity (activity = QSY or QSO)
 bool                    is_ss        { false };                     ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -846,7 +846,7 @@ int main(int argc, char** argv)
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
     geomagnetic_indices_command     = context.geomagnetic_indices_command();
     home_exchange_window            = context.home_exchange_window();
-    inactivity_timer                = static_cast<int>(context.inactivity_timer());  // forced positive int
+    inactivity_time                 = context.inactivity_time();
     logfile_name                    = context.logfile();
     long_t                          = context.long_t();
     marked_frequency_ranges         = context.mark_frequencies();
@@ -2098,23 +2098,32 @@ void* display_date_and_time(void* vp)
           update_system_memory();
 
 // possibly turn off audio recording
-        if (allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
-        { const auto qso { time_since_last_qso(logbk) };
-          const auto qsy { time_since_last_qsy() };
+//        if (allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
+        if ((drlog_mode == DRLOG_MODE::SAP) and allow_audio_recording and (audio_recording_mode == AUDIO_RECORDING::AUTO) and audio.recording() )
+        { ost << "testing inactivity time" << endl;
 
-          if (inactivity_timer > 0)
-          { if ( (qso != 0) or (qsy != 0) )
-            { if ( ( (qso == 0) or (qso > inactivity_timer) ) and ( (qsy == 0) or (qsy > inactivity_timer) ) )
-              { stop_recording(audio);
-                alert("audio recording halted due to inactivity"s);
-              }
+          if (inactivity_time > 0)        // only if value has been set
+          { const auto time_since_qso { time_since_last_qso(logbk) };
+            const auto time_since_qsy { time_since_last_qsy() };
+
+ //         if (inactivity_timer > 0)
+ //           if ( (time_since_qso != 0) or (time_since_qsy != 0) )
+//            { if ( ( (time_since_qso == 0) or (time_since_qso > inactivity_timer) ) and ( (time_since_qsy == 0) or (time_since_qsy > inactivity_timer) ) )
+
+            const bool inactive_qso { time_since_qso > inactivity_time };
+            const bool inactive_qsy { time_since_qsy > inactivity_time };
+
+            if ( inactive_qso and inactive_qsy )
+            { stop_recording(audio);
+              alert("audio recording halted due to inactivity: "s);
+              ost << "time_since_qso = " << time_since_qso << endl;
+              ost << "time_since_qsy = " << time_since_qsy << endl;
             }
           }
         }
       }
 
       const string dts { date_time_string(SECONDS::NO_INCLUDE) };
-
 
 // if a new hour, then possibly create screenshot
       if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
@@ -2181,31 +2190,49 @@ void* display_rig_status(void* vp)
 
 // if it's a K3 we can get a lot of info with just one or two queries -- for now just assume it's a K3
       if (ok_to_poll_k3)
-      { constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
+      { //ost << "polling K3 at: " << hhmmss() << endl;
+
+        const bool is_ssb { current_mode == MODE_SSB };
+ //       rig_status_thread_parameters.rigp() -> k3_command_mode();
+
+ //       time_log <std::chrono::milliseconds> tl;
+
+        constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
         constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
       
 // force into extended mode -- it's ridiculous to do this all the time, but there seems to be no way to be sure we haven't turned the rig on/off
 // currently needed in order to obtain notch info, hence only SSB, but force it anyway
-        rig_status_thread_parameters.rigp() -> k3_extended_mode();
+        if ( is_ssb and ( rig_status_thread_parameters.rigp() -> k3_command_mode() == K3_COMMAND_MODE::NORMAL ) )  // NB this is the mode drlog /thinks/ is correct, but it saves time
+          rig_status_thread_parameters.rigp() -> k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 
-        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
-        const string   ds_reply_str  { (rig_status_thread_parameters.rigp())->raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) };           // K3 returns 13 characters; currently needed only in SSB
+ //       time_log <std::chrono::milliseconds> t2;
 
-        if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == DS_REPLY_LENGTH) )              // do something only if it's the correct length
+        const string   status_str    { rig_status_thread_parameters.rigp() -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
+        const string   ds_reply_str  { is_ssb ? (rig_status_thread_parameters.rigp()) -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };           // K3 returns 13 characters; currently needed only in SSB
+
+ //       t2.end_now();
+ //       ost << "actual time taken to poll K3 = " << t2.time_span<int>() << " milliseconds" << endl;
+ //       ost << "click time from tl = " << tl.click<int>() << " milliseconds" << endl;
+
+        if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
           const frequency  target             { cq_mode_frequency };                                                    // frequency in CQ mode
           const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
           const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
-          const bool       notch              { (rig_status_thread_parameters.rigp())->notch_enabled(ds_reply_str) };   // really only needed in SSB
+          const bool       notch              { is_ssb ? (rig_status_thread_parameters.rigp())->notch_enabled(ds_reply_str) : false };   // only needed in SSB
+
+ //         ost << "click time A from tl = " << tl.click<int>() << " milliseconds" << endl;
 
           if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
             enter_sap_mode();                                                                   // switch to SAP if we've moved
 
           last_drlog_mode = current_drlog_mode;                                                 // keep track of drlog mode
 
-          MODE m { current_mode };                                            // mode as determined by drlog, not by rig
+          MODE m { current_mode };                                        // mode as determined by drlog, not by rig
 
-          m = rig_status_thread_parameters.rigp() -> rig_mode();              // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
+          m = rig_status_thread_parameters.rigp() -> rig_mode();      // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
+
+ //         ost << "click time B from tl = " << tl.click<int>() << " milliseconds" << endl;
 
 // have we changed band (perhaps manually)?
           if (const BAND sgb { current_band }; sgb != to_BAND(f))
@@ -2241,6 +2268,8 @@ void* display_rig_status(void* vp)
           else          // we haven't changed band
             update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
 
+//          ost << "click time C from tl = " << tl.click<int>() << " milliseconds" << endl;
+
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
 // it seems like the effort of trying to work around the bug is not worth it
@@ -2270,9 +2299,11 @@ void* display_rig_status(void* vp)
             rit_xit_str += 'R';
 
           if (rit_is_on or xit_is_on)
-          { const int rit_xit_value { from_string<int>(substring <std::string> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH)) };
+          { //const int rit_xit_value { from_string<int>(substring <std::string> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH)) };
+            const string rit_xit_value_str { remove_leading <std::string> (substring <std::string_view> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH), '0') };  // removesleading zeros
 
-            rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + to_string(rit_xit_value));
+ //           rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + to_string(rit_xit_value));
+            rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + rit_xit_value_str);
             rit_xit_str = pad_left(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
           }
 
@@ -2281,9 +2312,18 @@ void* display_rig_status(void* vp)
 
           rig_is_split = (status_str[SPLIT_ENTRY] == '1');
 
-          const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp()->bandwidth()) };
+ //         ost << "click time D from tl = " << tl.click<int>() << " milliseconds" << endl;
+
+ //         const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp() -> bandwidth()) };
+          const string bandwidth_str   { rig_status_thread_parameters.rigp() -> bandwidth_str() };
+
+//          ost << "click time E from tl = " << tl.click<int>() << " milliseconds" << endl;
+
           const string frequency_b_str { f_b.display_string() };
-          const string centre_str      { to_string(rig_status_thread_parameters.rigp()->centre_frequency()) };
+          const string centre_str      { rig_status_thread_parameters.rigp() -> centre_frequency_str() };
+ //         const string centre_str      { to_string(rig_status_thread_parameters.rigp() -> centre_frequency()) };
+
+ //         ost << "click time F from tl = " << tl.click<int>() << " milliseconds" << endl;
 
 // now display the status
           win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if the contest doesn't want us to be on this QRG
@@ -2331,10 +2371,15 @@ void* display_rig_status(void* vp)
           }
 
           win_rig.refresh();
+
+//          ost << "click time G from tl = " << tl.click<int>() << " milliseconds" << endl;
         }
 
 // possibly check the RX ANT status
         update_rx_ant_window();
+
+ //       tl.end_now();
+ //       ost << "time taken to complete K3 poll = " << tl.time_span<int>() << " milliseconds" << endl;
       }
     }
 
@@ -2971,97 +3016,105 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     exit_drlog();
 
 // ALT-B and ALT-V (band up and down)
-  if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner than trying to use a mutex with its attendant nesting problems
+//  if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
+  if (!processed and (e.is_alt('b') or e.is_alt('v')) /* and (rules.n_bands() > 1) */)
+  { if (rules.n_bands() == 1)
+    { alert("SINGLE BAND CONTEST: no band changes allowed"s, SHOW_TIME::NO_SHOW);
+      processed = true;
+    }
+    else
+    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner than trying to use a mutex with its attendant nesting problems
 
-    time_log <std::chrono::milliseconds> tl;
+      time_log <std::chrono::milliseconds> tl;
 
-    try
-    { const frequency set_last_f { rig.rig_frequency() };
+      try
+      { const frequency set_last_f { rig.rig_frequency() };
 
-      rig.set_last_frequency(cur_band, cur_mode, set_last_f);             // save current frequency
+        rig.set_last_frequency(cur_band, cur_mode, set_last_f);             // save current frequency
 
-      { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
-        { alert("ERROR: inconsistency in frequency/band info"s);
+        { if ( BAND(rig.get_last_frequency(cur_band, cur_mode)) != cur_band )
+          { alert("ERROR: inconsistency in frequency/band info"s);
 
-        ost << "  cur_band = " << cur_band << endl;
-        ost << "  current_band = " << static_cast<BAND>(current_band) << endl;
-        ost << "  cur_mode = " << cur_mode << endl;
-        ost << "  get_last_frequency = " << rig.get_last_frequency(cur_band, cur_mode) << endl;
-        ost << "  BAND(get_last_frequency) = " << BAND(rig.get_last_frequency(cur_band, cur_mode)) << endl;
-        ost << "  set_last_f = " << set_last_f << endl;
+            ost << "  cur_band = " << cur_band << endl;
+            ost << "  current_band = " << static_cast<BAND>(current_band) << endl;
+            ost << "  cur_mode = " << cur_mode << endl;
+            ost << "  get_last_frequency = " << rig.get_last_frequency(cur_band, cur_mode) << endl;
+            ost << "  BAND(get_last_frequency) = " << BAND(rig.get_last_frequency(cur_band, cur_mode)) << endl;
+            ost << "  set_last_f = " << set_last_f << endl;
+          }
         }
-      }
 
-      const BAND new_band { ( e.is_alt('b') ? set_last_f.next_band_up(permitted_bands_set) : set_last_f.next_band_down(permitted_bands_set) ) };    // move up or down one band
+        const BAND new_band { ( e.is_alt('b') ? set_last_f.next_band_up(permitted_bands_set) : set_last_f.next_band_down(permitted_bands_set) ) };    // move up or down one band
 
-      current_band = new_band;
+        current_band = new_band;
 
-      const bandmode bmode { new_band, cur_mode };
+        const bandmode bmode { new_band, cur_mode };
 
-      frequency last_frequency { rig.get_last_frequency(bmode) };   // go to saved frequency for this band/mode (if any)
+        frequency last_frequency { rig.get_last_frequency(bmode) };   // go to saved frequency for this band/mode (if any)
 
-      if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
-        last_frequency = DEFAULT_FREQUENCIES.at(bmode);
+        if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
+          last_frequency = DEFAULT_FREQUENCIES.at(bmode);
 
 // check that we're about to go to the correct band
-      { if (BAND(last_frequency) != new_band)
-        { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[new_band] << ", new frequency = " << last_frequency << endl;
-          alert("FREQUENCY ERROR WHEN CHANGING BAND");
+        { if (BAND(last_frequency) != new_band)
+          { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[new_band] << ", new frequency = " << last_frequency << endl;
+            alert("FREQUENCY ERROR WHEN CHANGING BAND");
+          }
         }
-      }
 
-      rig.rig_frequency(last_frequency);
+        rig.rig_frequency(last_frequency);
 
 // confirm that it's really happened
-      { const auto f { rig.rig_frequency() };
+        { const auto f { rig.rig_frequency() };
 
-        ost << "new frequency we have moved to appears to be: " << f << endl;
-        ost << "new band is supposed to be: " << new_band << ", band name = " << BAND_NAME[new_band] << "m" << endl;
-        ost << "new band is actually: " << BAND(f) << ", band name = " << BAND_NAME[BAND(f)] << "m" << endl;
-        ost << "the value of current_band is: " << static_cast<BAND>(current_band) << endl;
-      }
+          ost << "new frequency we have moved to appears to be: " << f << endl;
+          ost << "new band is supposed to be: " << new_band << ", band name = " << BAND_NAME[new_band] << "m" << endl;
+          ost << "new band is actually: " << BAND(f) << ", band name = " << BAND_NAME[BAND(f)] << "m" << endl;
+          ost << "the value of current_band is: " << static_cast<BAND>(current_band) << endl;
+        }
 
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
 // these are the commands that take a lot of time
-      rig.rig_mode(cur_mode);
-      enter_sap_mode();
-      rig.base_state();    // turn off RIT, split and sub-rx
+        rig.rig_mode(cur_mode);
+        enter_sap_mode();
+        rig.base_state();    // turn off RIT, split and sub-rx
 
 // clear the call window (since we're now on a new band)
-      win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
-      display_band_mode(win_band_mode, new_band, cur_mode);
+        win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+        display_band_mode(win_band_mode, new_band, cur_mode);
 
 // update bandmap; note that it will be updated at the next poll anyway (typically within one second)
-      bandmap& bm { bandmaps[new_band] };
+        bandmap& bm { bandmaps[new_band] };
 
-      win_bandmap <= bm;
+        win_bandmap <= bm;
 
 // is there a station close to our frequency?
-      const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
+        const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
 
-      display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
+        display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
 
 // clear the LAST QRG window
-      win_last_qrg < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+        win_last_qrg < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
 // update displays of needed mults
-      update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
-      update_remaining_country_mults_window(statistics, new_band, cur_mode);
-      update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
+        update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
+        update_remaining_country_mults_window(statistics, new_band, cur_mode);
+        update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
 
-      display_bandmap_filter(bm);
+        display_bandmap_filter(bm);
 
-      tl.end_now();
-      ost << "time taken to change bands = " << tl.time_span<int>() << " milliseconds" << endl;
+        tl.end_now();
+        ost << "time taken to change bands = " << tl.time_span<int>() << " milliseconds" << endl;
+      }
+
+      catch (const rig_interface_error& e)
+      { ok_to_poll_k3 = true;
+        alert(e.reason());
+      }
+
+      ok_to_poll_k3 = true;       // this is the only reasonable exit, so OK to do this here
+      processed = true;
     }
-
-    catch (const rig_interface_error& e)
-    { alert(e.reason());
-    }
-
-    ok_to_poll_k3 = true;       // this is the only reasonable exit, so OK to do this here
-    processed = true;
   }
 
 // ALT-M -- change mode
@@ -8290,7 +8343,9 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
   bool tmp_changed_frequency { f != last_update_frequency };
 
- // ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
+  ost << "time = " << hhmmss() << endl;
+  ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
+  ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -8303,7 +8358,16 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
     
     mbe_copy = my_bandmap_entry;
 
-    tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
+    ost << "my_bandmap_entry = " << my_bandmap_entry.freq().hz() << endl;
+    ost << "f = " << f.hz() << endl;
+
+ //   tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
+
+    tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);
+
+    ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
+
+    ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
 
  //   changed_frequency = (f == last_update_frequency);
 
@@ -8327,10 +8391,10 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
   if (tmp_changed_frequency)
 //  if (changed_frequency)
-  { //ost << "inside changed_frequency conditional" << endl;
+  { ost << "inside tmp_changed_frequency conditional" << endl;
 
-    time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
-    mbe_copy.freq(f);           // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
+    time_last_qsy = time(NULL);     // record the time for possible change in state of audio recording
+    mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
     bandmap& bm { bandmaps[mbe_copy.band()] };
@@ -8601,7 +8665,12 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
 int time_since_last_qso(const logbook& logbk)
 { const QSO last_qso { logbk.last_qso() };
 
+  const int rv { static_cast<int> ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) ) };
+
+  ost << "time_since_last_qso() returning: " << rv << endl;
+
   return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
+//  return ( last_qso.empty() ? -1 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
 }
 
 /*! \brief      Time in seconds since the last QSY
@@ -8611,6 +8680,13 @@ int time_since_last_qso(const logbook& logbk)
 */
 int time_since_last_qsy(void)
 { SAFELOCK(my_bandmap_entry);
+
+  ost << "time now = " << time(NULL) << endl;
+  ost << "time_last_qsy = " << time_last_qsy << endl;
+
+  const int rv { static_cast<int> ( time(NULL) - time_last_qsy ) };
+
+  ost << "time_since_last_qsy() returning: " << rv << endl;
 
   return (time(NULL) - time_last_qsy);
 }

@@ -58,6 +58,10 @@ enum class PRESS { TAP,
 enum class K3_BUTTON { NOTCH = 32
                      };
 
+enum class K3_COMMAND_MODE { NORMAL,
+                             EXTENDED
+                           };
+
 using DRLOG_CLOCK = std::chrono::system_clock;
 
 // ---------------------------------------- rig_status -------------------------
@@ -439,6 +443,9 @@ public:
 /// get the bandwidth in Hz
   int bandwidth(void) const;
 
+/// get the bandwidth as a string, in Hz
+  std::string bandwidth_str(void) const;
+
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
@@ -548,6 +555,8 @@ public:
   inline void toggle_rx_ant(void) const
     { rx_ant_toggle(); }
 
+  std::string centre_frequency_str(void) const;
+
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
 
@@ -577,7 +586,11 @@ public:
   void toggle_notch_status(void) const;
 
 /// place K3 into extended mode
-  void k3_extended_mode(void) const;
+//  void k3_extended_mode(void) const;
+
+  void k3_command_mode(const K3_COMMAND_MODE cm);
+
+  K3_COMMAND_MODE k3_command_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  n       the K3 button to tap or hold

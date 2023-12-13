@@ -552,9 +552,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "HOME EXCHANGE WINDOW"sv)
       _home_exchange_window = is_true;
 
-// INACTIVTY TIMER
-    if (LHS == "INACTIVITY TIMER"sv)
-      _inactivity_timer = from_string<decltype(_inactivity_timer)>(rhs);
+// INACTIVTY TIME
+    if ( (LHS == "INACTIVITY TIMER"sv) or (LHS == "INACTIVITY TIME"sv) )
+      _inactivity_time = from_string<decltype(_inactivity_time)>(rhs);
 
 // INDIVIDUAL MESSAGES FILE
     if (LHS == "INDIVIDUAL MESSAGES FILE"sv)

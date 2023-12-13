@@ -168,7 +168,7 @@ protected:
 
   bool                                         _home_exchange_window                    { false };                      ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-  int                                          _inactivity_timer                        { 0 };                          ///< duration in seconds before audio recording ceases in auto mode; 0 = no inactivity timer
+  int                                          _inactivity_time                         { 0 };                          ///< duration in seconds before audio recording ceases in auto mode; 0 = no inactivity timer
   std::string                                  _individual_messages_file                { };                            ///< name of file that contains per-call individual messages
   bool                                         _instrumented                            { false };                      ///< whether to receord all exchanges with rig
 
@@ -459,7 +459,7 @@ public:
 
   CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-  CONTEXTREAD(inactivity_timer);             ///< duration in seconds before audio recording ceases in auto mode
+  CONTEXTREAD(inactivity_time);              ///< duration in seconds before audio recording ceases in auto mode
   CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
   CONTEXTREAD(instrumented );                ///< whether to record all exchanges with rig
 
