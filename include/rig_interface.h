@@ -128,7 +128,7 @@ protected:
   frequency                               _last_commanded_frequency    { };                             ///< last frequency to which the rig was commanded to QSY
   frequency                               _last_commanded_frequency_b  { };                             ///< last frequency to which VFO B was commanded to QSY
   MODE                                    _last_commanded_mode         { MODE_CW };                     ///< last mode into which the rig was commanded
-  std::unordered_map<bandmode, frequency> _last_frequency;                                              ///< last-used frequencies on per-band, per-mode basis
+  std::unordered_map<bandmode, frequency> _last_frequency              { };                             ///< last-used frequencies on per-band, per-mode basis
   rig_model_t                             _model                       { RIG_MODEL_DUMMY };             ///< hamlib model
   hamlib_port_t                           _port;                                                        ///< hamlib port
   std::string                             _port_name                   { };                             ///< name of port
@@ -397,7 +397,7 @@ public:
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  inline void enable_xit(void)
+  inline void enable_xit(void) const
     { xit_enable(); }
 
 /// get the rig's frequency and mode
@@ -555,6 +555,11 @@ public:
   inline void toggle_rx_ant(void) const
     { rx_ant_toggle(); }
 
+/*! \brief      Get audio centre frequency, in Hz, as a printable string
+    \return     The audio centre frequency, in Hz, as a printable string
+
+    Works only with K3
+*/
   std::string centre_frequency_str(void) const;
 
 /*! \brief      Get audio centre frequency, in Hz
@@ -585,11 +590,18 @@ public:
 */
   void toggle_notch_status(void) const;
 
-/// place K3 into extended mode
-//  void k3_extended_mode(void) const;
+/*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
+    \param  cm  command mode
 
+    Works only with K3
+*/
   void k3_command_mode(const K3_COMMAND_MODE cm);
 
+/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
+    \return     the K3 command mode
+
+    Works only with K3
+*/
   K3_COMMAND_MODE k3_command_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button

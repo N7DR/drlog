@@ -342,6 +342,8 @@ AUDIO_RECORDING         audio_recording_mode { AUDIO_RECORDING::DO_NOT_START }; 
 atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
 string                  auto_backup_directory { };                  ///< directory into which backup log and QTC files are to be written
 
+unsigned int            bandmap_decay_time_cluster_secs { };        ///< time in seconds for an entry to age off the bandmap (cluster entries)
+unsigned int            bandmap_decay_time_rbn_secs { };            ///< time in seconds for an entry to age off the bandmap (RBN entries)
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
 bool                    bandmap_show_marked_frequencies { false };  ///< whether to display entries that would be marked
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
@@ -834,6 +836,8 @@ int main(int argc, char** argv)
     auto_remaining_country_mults    = context.auto_remaining_country_mults();
     autocorrect_rbn                 = context.autocorrect_rbn();
     auto_backup_directory           = context.auto_backup_directory();
+    bandmap_decay_time_cluster_secs = context.bandmap_decay_time_cluster() * 60;
+    bandmap_decay_time_rbn_secs     = context.bandmap_decay_time_rbn() * 60;
     bandmap_frequency_up            = context.bandmap_frequency_up();
     bandmap_show_marked_frequencies = context.bandmap_show_marked_frequencies();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"sv);
@@ -2100,7 +2104,7 @@ void* display_date_and_time(void* vp)
 // possibly turn off audio recording
 //        if (allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
         if ((drlog_mode == DRLOG_MODE::SAP) and allow_audio_recording and (audio_recording_mode == AUDIO_RECORDING::AUTO) and audio.recording() )
-        { ost << "testing inactivity time" << endl;
+        { //ost << "testing inactivity time" << endl;
 
           if (inactivity_time > 0)        // only if value has been set
           { const auto time_since_qso { time_since_last_qso(logbk) };
@@ -2110,7 +2114,7 @@ void* display_date_and_time(void* vp)
  //           if ( (time_since_qso != 0) or (time_since_qsy != 0) )
 //            { if ( ( (time_since_qso == 0) or (time_since_qso > inactivity_timer) ) and ( (time_since_qsy == 0) or (time_since_qsy > inactivity_timer) ) )
 
-            const bool inactive_qso { time_since_qso > inactivity_time };
+            const bool inactive_qso { (time_since_qso > inactivity_time) or logbk.empty() };
             const bool inactive_qsy { time_since_qsy > inactivity_time };
 
             if ( inactive_qso and inactive_qsy )
@@ -2590,15 +2594,18 @@ void* process_rbn_info(void* vp)
               qrg_map[dx_callsign] = post.frequency_str();
             }
 
+// generate a bandmap_entry for this post
             bandmap_entry be { post.from_cluster() ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
             be.callsign(dx_callsign);
             be.freq(post.freq());        // also sets band and mode
               
-            if (rules.score_modes() > be.mode())
+//            if (rules.score_modes() > be.mode())
+            if (rules.score_modes().contains(be.mode()))
             { be.frequency_str_decimal_places(1);
-              be.expiration_time(post.time_processed() + ( post.from_cluster() ? (context.bandmap_decay_time_cluster() * 60)
-                                                                               : (context.bandmap_decay_time_rbn() * 60 ) ) );
+//              be.expiration_time(post.time_processed() + ( post.from_cluster() ? (context.bandmap_decay_time_cluster() * 60)
+//                                                                               : (context.bandmap_decay_time_rbn() * 60 ) ) );
+              be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
@@ -2979,7 +2986,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   const BAND   cur_band      { current_band };
   const MODE   cur_mode      { current_mode };
 
-// ALT-X -- possibly enter zoomed XIT mode
+// populate the info and extract windows if we have already processed the input
+  if (processed and !win_call.empty())
+    display_call_info(call_contents);    // display information in the INFO window
+
+    // ALT-X -- possibly enter zoomed XIT mode
   if (!processed and e.is_alt('x') and (drlog_mode == DRLOG_MODE::SAP))
   { zoomed_xit();
     processed = true;
@@ -2991,10 +3002,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     alert( "DEBUG STATE NOW: "s + (debug ? "TRUE"s : "FALSE"s) );
     processed = true;
   }
-
-// populate the info and extract windows if we have already processed the input
-  if (processed and !win_call.empty())
-    display_call_info(call_contents);    // display information in the INFO window
 
 // KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
@@ -8343,9 +8350,9 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
   bool tmp_changed_frequency { f != last_update_frequency };
 
-  ost << "time = " << hhmmss() << endl;
-  ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
-  ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
+//  ost << "time = " << hhmmss() << endl;
+//  ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
+//  ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -8358,16 +8365,16 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
     
     mbe_copy = my_bandmap_entry;
 
-    ost << "my_bandmap_entry = " << my_bandmap_entry.freq().hz() << endl;
-    ost << "f = " << f.hz() << endl;
+ //   ost << "my_bandmap_entry = " << my_bandmap_entry.freq().hz() << endl;
+//    ost << "f = " << f.hz() << endl;
 
  //   tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
 
     tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);
 
-    ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
+ //   ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
 
-    ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
+ //   ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
 
  //   changed_frequency = (f == last_update_frequency);
 
@@ -8391,7 +8398,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
   if (tmp_changed_frequency)
 //  if (changed_frequency)
-  { ost << "inside tmp_changed_frequency conditional" << endl;
+  { //ost << "inside tmp_changed_frequency conditional" << endl;
 
     time_last_qsy = time(NULL);     // record the time for possible change in state of audio recording
     mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)

@@ -41,12 +41,12 @@ public:
  
 /*! \brief  Start the timer
 */ 
-  void start_now(void)
+  inline void start_now(void)
     { _start = std::chrono::system_clock::now(); }
 
 /*! \brief  Stop the timer
 */ 
-  void end_now(void)
+  inline void end_now(void)
     { _end = std::chrono::system_clock::now(); }
 
 /*! \brief  Reset the timer to initial state, except that the timer is started at the current time
@@ -64,6 +64,10 @@ public:
   inline U time_span(void) const
     { return static_cast<U>(duration_cast<T>(_end - _start).count()); }
 
+/*! \brief  Return the time between the start time and now
+
+    Performs no sanity checking on the values of the start time and now
+*/
   template <class U = double, class T = A>
   inline U click(void) const
     { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
@@ -80,19 +84,19 @@ public:
 
     Performs no sanity checking on the value of the start time
 */
-  template <class U = double, class T = A>
-  inline U split(void)
-  { end_now();
-    
-    return time_span<U, T>();
-  }
+//  template <class U = double, class T = A>
+//  inline U split(void)
+//  { end_now();
+//
+//    return time_span<U, T>();
+//  }
 
 /*! \brief  Return the time between the start time and now, and set the start time to now
 
     Performs no sanity checking on the value of the start time before using it
 */
   template <class U = double, class T = A>
-  inline U duration_restart(void)
+  U duration_restart(void)
   { end_now();
 
     const U rv { duration<U, T>() };

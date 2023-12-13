@@ -1380,8 +1380,8 @@ void rig_interface::bandwidth_b(const unsigned int hz) const
   }
 }
 
-/*! \brief      Get audio centre frequency, in Hz, as a string
-    \return     The audio centre frequency, in Hz
+/*! \brief      Get audio centre frequency, in Hz, as a printable string
+    \return     The audio centre frequency, in Hz, as a printable string
 
     Works only with K3
 */
@@ -1393,9 +1393,10 @@ string rig_interface::centre_frequency_str(void) const
 
   if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
   {  //return (substring <std::string> (response, 2, 4)) + '0';
-    const string ctr_in_tens { remove_leading <std::string> (substring <std::string> (response, 3, 4), '0') };
+ //   const string ctr_in_tens { remove_leading <std::string> (substring <std::string> (response, 3, 4), '0') };
 
-    return (ctr_in_tens);
+//    return (ctr_in_tens);
+    return remove_leading <std::string> (substring <std::string_view> (response, 3, 4), '0');
   }
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
