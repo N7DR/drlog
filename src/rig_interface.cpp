@@ -1500,7 +1500,8 @@ bool rig_interface::notch_enabled(const string& ds_result) const
 // it's a K3
   const string result { ds_result.empty() ? raw_command("DS;", RESPONSE::EXPECTED) : ds_result };
 
-  if (!contains(result, ";"s) or (result.size() != 13) )
+//  if (!contains(result, ";"s) or (result.size() != 13) )
+  if ( (result.size() != 13) or (result[12] != ';') )
     ost << "ERROR in notch_enabled(); result = " << result << endl;
   else
   { const char c         { result[11] };    // icon flash data
@@ -1545,14 +1546,12 @@ K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
 { if (_model == RIG_MODEL_K3)
   { const string result { raw_command("K3;", RESPONSE::EXPECTED) };
 
-//    ost << "k3_command_mode = " << result << endl;
     if (result == "K31"s)
       return K3_COMMAND_MODE::EXTENDED;
   }
 
   return K3_COMMAND_MODE::NORMAL;
 }
-
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  n       the K3 button to tap or hold

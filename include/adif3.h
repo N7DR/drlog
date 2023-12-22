@@ -140,7 +140,7 @@ public:
 */
   adif3_field(const std::string& field_name, const std::string& field_value);
   
-  READ_AND_WRITE(name);                        ///< name of the field
+  READ_AND_WRITE_STR(name);                        ///< name of the field
   READ_AND_WRITE(type);                        ///< type of the field
   READ_AND_WRITE(value);                       ///< value of the field
 

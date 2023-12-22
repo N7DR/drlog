@@ -8496,7 +8496,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 // we may require a mode change
     possible_mode_change(be.freq());
 
-//    update_based_on_frequency_change(be.freq(), safe_get_mode());   // update win_bandmap, and other windows
     update_based_on_frequency_change(be.freq(), current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
 
     ok_to_poll_k3 = true;
@@ -8537,8 +8536,7 @@ bool toggle_recording_status(audio_recorder& audio)
     else                                  // not recording
       start_recording(audio, context);
 
-    if (win_recording_status.defined())
-      update_recording_status_window();
+    update_recording_status_window();
   }
   else
     alert("toggling audio not permitted"s);
@@ -8570,8 +8568,7 @@ void start_recording(audio_recorder& audio, const drlog_context& context)
   
   audio.capture();      // turn on the capture
 
-  if (win_recording_status.defined())
-    update_recording_status_window();
+  update_recording_status_window();
 }
 
 /*! \brief              Stop audio recording
@@ -8583,8 +8580,7 @@ void stop_recording(audio_recorder& audio)
 { if (allow_audio_recording)                    // don't do anything if recording is not allowed
   { audio.abort();
 
-    if (win_recording_status.defined())
-      update_recording_status_window();
+    update_recording_status_window();
   }
 }
 
@@ -8628,7 +8624,7 @@ string run_external_command(const string& cmd)
 { constexpr size_t BUFLEN { 128 };      // reasonable size for read buffer
 
   array<char, BUFLEN> buffer;
-  string              result;
+  string              result { };
 
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
@@ -8651,7 +8647,8 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
     try
     { const string  indices { run_external_command(cmd) };
 
-      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string> (hhmmss(), 0, 5) < EOL
+ //     win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string> (hhmmss(), 0, 5) < EOL
+      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string_view> (hhmmss(), 0, 5) < EOL
                   <= indices;
     }
 
@@ -8672,9 +8669,9 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
 int time_since_last_qso(const logbook& logbk)
 { const QSO last_qso { logbk.last_qso() };
 
-  const int rv { static_cast<int> ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) ) };
+ // const int rv { static_cast<int> ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) ) };
 
-  ost << "time_since_last_qso() returning: " << rv << endl;
+ // ost << "time_since_last_qso() returning: " << rv << endl;
 
   return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
 //  return ( last_qso.empty() ? -1 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
@@ -8688,12 +8685,12 @@ int time_since_last_qso(const logbook& logbk)
 int time_since_last_qsy(void)
 { SAFELOCK(my_bandmap_entry);
 
-  ost << "time now = " << time(NULL) << endl;
-  ost << "time_last_qsy = " << time_last_qsy << endl;
+//  ost << "time now = " << time(NULL) << endl;
+//  ost << "time_last_qsy = " << time_last_qsy << endl;
 
-  const int rv { static_cast<int> ( time(NULL) - time_last_qsy ) };
+//  const int rv { static_cast<int> ( time(NULL) - time_last_qsy ) };
 
-  ost << "time_since_last_qsy() returning: " << rv << endl;
+//  ost << "time_since_last_qsy() returning: " << rv << endl;
 
   return (time(NULL) - time_last_qsy);
 }
@@ -8706,7 +8703,7 @@ int time_since_last_qsy(void)
 */
 void update_best_dx(const grid_square& dx_gs, const string& callsign)
 { static const string INVALID_GRID { "AA00"s };                 // the way to mark a bad grid in the log; don't calculate distance to this square
-  
+
   if (win_best_dx.valid())              // check even though it should have been checked before being called
   { if (!dx_gs.designation().empty() and dx_gs.designation() != INVALID_GRID)
     { float distance_in_units { ( my_grid - dx_gs.designation() ) };    // km
@@ -8771,14 +8768,12 @@ void populate_win_call_history(const string& callsign)
 
 // QTC hint
     if (win_qtc_hint.valid())
-    { int window_colour { win_qtc_hint_bg };    // don't send QTC (red)
-
- //     if ( ((n_green + n_red) != 0) and (n_green >= (0.75 * (n_green + n_red))) )
-      bool send_qtc { false };
+    { //bool send_qtc      { false };
+      int  window_colour { win_qtc_hint_bg };    // don't send QTC (red)
 
       const int total { n_green + n_red };
 
-      send_qtc = (total > 0) and (n_red < 2);
+      bool send_qtc = (total > 0) and (n_red < 2);
 
       if (!send_qtc)
         send_qtc = (total > 0) and (n_green >= (0.66 * total));

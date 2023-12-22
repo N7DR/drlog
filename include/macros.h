@@ -64,6 +64,15 @@ enum class SHOW_TIME { SHOW,
 /*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
+#define READ_AND_WRITE_STR(y)                                       \
+/*! Read access to _##y */                                      \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
+  [[nodiscard]] inline decltype(_##y) y(void) && { return std::move(_##y); }    \
+\
+/*! Write access to _##y */                                     \
+  inline void y(const decltype(_##y)& n) { _##y = n; } \
+  inline void y(const std::string_view n_sv) { _##y = n_sv; }
+
 #endif    // !READ_AND_WRITE
 
 /// Syntactic sugar for read/write access with thread locking
@@ -145,6 +154,11 @@ enum class SHOW_TIME { SHOW,
 /*! Write access to _##y */                            \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
+#define WRITE_STR(y)                                       \
+/*! Write access to _##y, where its stype is a std::string */                            \
+  inline void y(const decltype(_##y)& n) { _##y = n; } \
+  inline void y(const std::string_view n) { _##y = n; }
+
 #define WRITE_RET(y)                                       \
 /*! Write access to _##y */                            \
   inline auto y(const decltype(_##y)& n) -> decltype(*this)& { _##y = n; return (*this); }
@@ -204,7 +218,7 @@ inline constexpr bool is_stdarray<std::array<T, I>> = true;
 // basic types + string
 template <class T> concept is_int         = std::is_same_v<T, int>;
 template <class T> concept is_uint        = std::is_same_v<T, unsigned int>;
-template <class T> concept is_string      = std::is_same_v<T, std::string>;
+template <class T> concept is_string      = std::is_same_v<T, std::string>;     // is_same<> includes const and volatile qualifiers
 template <class T> concept is_string_view = std::is_same_v<T, std::string_view>;
 
 // standard containers

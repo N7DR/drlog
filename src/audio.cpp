@@ -52,9 +52,9 @@ int64_t audio_recorder::_total_bytes_to_read(void)
 // how many seconds to next time marker?
 // current seconds past midnight
   const string   now_str { hhmmss() };                                        // HH:MM:SS
-  const uint64_t hh      { from_string<uint64_t>(substring <std::string> (now_str, 0, 2)) };
-  const uint64_t mm      { from_string<uint64_t>(substring <std::string> (now_str, 3, 2)) };
-  const uint64_t ss      { from_string<uint64_t>(substring <std::string> (now_str, 6, 2)) };
+  const uint64_t hh      { from_string<uint64_t>(substring <std::string_view> (now_str, 0, 2)) };
+  const uint64_t mm      { from_string<uint64_t>(substring <std::string_view> (now_str, 3, 2)) };
+  const uint64_t ss      { from_string<uint64_t>(substring <std::string_view> (now_str, 6, 2)) };
   const uint64_t now     { ss + (mm * 60) + (hh * 3600) };
 
   int remainder { static_cast<int>( _max_file_time - (now % _max_file_time) ) };

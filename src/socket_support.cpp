@@ -206,24 +206,7 @@ void tcp_socket::new_socket(void)
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     reuse();    // enable re-use
-
-#if 0
-    const int on { 1 };
-
-    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
-
-    if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
-#endif
-    
-    linger();
-
-//    const struct linger lgr { 1, 0 };
-
-//    int status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
-
-//    if (status)
-//      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+    linger();   // linger turned on, immediate time-out
   }
   
   catch (...)
@@ -440,19 +423,49 @@ string tcp_socket::read(const unsigned long timeout_secs)
 
       char cp[BUFSIZE];
       int status;
+
+      int error_count { 0 };
+      bool retry { false };
   
       do
-      { status = ::recv(_sock, cp, BUFSIZE, 0);
+      { retry = false;
+
+        status = ::recv(_sock, cp, BUFSIZE, 0);
 
         if (status == -1)
-        { const string msg { "errno = "s + ::to_string(errno) + ": "s + strerror(errno) };
+        { switch (errno)
+          { case 11 :         // Resource temporarily unavailable
+            { error_count++;
 
-          ost << "Throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
-          throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
+              if (error_count <= 5)
+              { const string msg { "errno = "s + ::to_string(errno) + ": "s + strerror(errno) + " error count = " + ::to_string(error_count)};
+
+                ost << "ERROR in RECV: " << msg << endl;
+
+                sleep_for(1s);  // insert a pause
+                retry = true;
+              }
+              else
+              { const string msg { "errno = "s + ::to_string(errno) + ": "s + strerror(errno) };
+
+                ost << "Too many errors in read(): throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
+                throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
+              }
+
+              break;
+            }
+
+            default :
+            { const string msg { "errno = "s + ::to_string(errno) + ": "s + strerror(errno) };
+
+              ost << "Throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
+              throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
+            }
+          }
         }
 
-        rv += string(cp, status);
-      } while (status == BUFSIZE);
+        rv += ( (status == -1) ? EMPTY_STR : string(cp, status) );
+      } while ((status == BUFSIZE) or (retry == true));
 
       break;
     }
@@ -464,37 +477,101 @@ string tcp_socket::read(const unsigned long timeout_secs)
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
 */
-void tcp_socket::idle_time(const unsigned int seconds)
+void tcp_socket::keep_alive_idle_time(const unsigned int seconds)
 { const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) }; status)
+  if (const int status { setsockopt(_sock, IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time"s);
 }
+
+/*! \brief          Get the idle time before a keep-alive is sent
+    \param  return  time to wait idly, in seconds, before a keep-alive is sent
+*/
+  unsigned int tcp_socket::keep_alive_idle_time(void) const
+  { int rv;
+
+    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+
+    SAFELOCK(_tcp_socket);
+
+    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPIDLE, &rv, &rv_len) }; status)
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting idle time"s);
+
+    return static_cast<unsigned int>(rv);
+  }
+
+/*! \brief    Get the time between keep-alives
+    \return   time to wait idly between keep-alives, in seconds
+*/
+  unsigned int tcp_socket::keep_alive_retry_time(void) const
+  { int rv;
+
+    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+
+    SAFELOCK(_tcp_socket);
+
+    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPINTVL, &rv, &rv_len) }; status)
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting retry time"s);
+
+    return static_cast<unsigned int>(rv);
+  }
 
 /*! \brief              Set the time between keep-alives
     \param  seconds     time to wait idly before a keep-alive is sent
 */
-void tcp_socket::retry_time(const unsigned int seconds)
+void tcp_socket::keep_alive_retry_time(const unsigned int seconds)
 { const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) }; status)
+  if (const int status { setsockopt(_sock, IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time"s);
 }
 
-/*! \brief      Set the maximum number of retries
-    \param  n   maximum number of retries
+/*! \brief     Get the maximum number of retries
+    \return   maximum number of retries before notifying upwards
 */
-void tcp_socket::max_retries(const unsigned int n)
+  unsigned int tcp_socket::keep_alive_max_retries(void) const
+  { int rv;
+
+    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+
+    SAFELOCK(_tcp_socket);
+
+    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPCNT, &rv, &rv_len) }; status)
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting maximum number of retries"s);
+
+    return static_cast<unsigned int>(rv);
+  }
+
+/*! \brief      Set the maximum number of retries
+    \param  n   maximum number of retries before notifying upwards
+*/
+void tcp_socket::keep_alive_max_retries(const unsigned int n)
 { const int optval { static_cast<int>(n) };
   
   SAFELOCK(_tcp_socket);
 
-  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) }; status)
+  if (const int status { setsockopt(_sock, IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries"s);
+}
+
+/*  \brief    Is a keep-alive in use on this socket?
+    \return   whether a keep-alive is in use
+*/
+bool tcp_socket::keep_alive(void) const
+{ int rv;
+
+  socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+
+  SAFELOCK(_tcp_socket);
+
+  if (const int status { getsockopt(_sock, SOL_SOCKET, SO_KEEPALIVE, &rv, &rv_len) }; status)
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting SO_KEEPALIVE"s);
+
+  return static_cast<unsigned int>(rv);
 }
 
 /*! \brief          Set or unset the use of keep-alives
@@ -517,10 +594,10 @@ void tcp_socket::keep_alive(const bool torf)
     \param  n       maximum number of retries
 */
 void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n)
-{ keep_alive();           // turn on keep-alive
-  idle_time(idle);
-  retry_time(retry);
-  max_retries(n);
+{ keep_alive(true);           // turn on keep-alive
+  keep_alive_idle_time(idle);
+  keep_alive_retry_time(retry);
+  keep_alive_max_retries(n);
 }
 
 /*! \brief          Set or unset the re-use of the socket
@@ -535,6 +612,29 @@ void tcp_socket::reuse(const bool torf)
 
   if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+}
+
+/*! \brief    Get the lingering state of the socket
+    \return   whether linger is enabled and, if so, the value in seconds
+
+    Throws a tcp_socket_error if an error occurs
+*/
+optional<int> tcp_socket::linger(void) const
+{ struct linger ling_val;
+
+  socklen_t ling_len { sizeof(ling_val) };    // can't be const(!)
+
+  SAFELOCK(_tcp_socket);
+
+  if (const int status { getsockopt(_sock, SOL_SOCKET, SO_LINGER, &ling_val, &ling_len) }; status)
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting SO_KEEPALIVE"s);
+
+  optional<int> rv { };
+
+  if (ling_val.l_onoff)
+    rv = ling_val.l_linger;
+
+  return rv;
 }
 
 /*! \brief          Set or unset lingering of the socket
@@ -569,7 +669,23 @@ string tcp_socket::to_string(void) const
   rv += "closure will "s + (_force_closure ? ""s : "NOT "s) + "be forced"s  + EOL;
   rv += "socket was "s + (_preexisting_socket ? ""s : "NOT "s) + "pre-existing"s  + EOL;
   rv += "encapsulated socket number: "s + ::to_string(_sock) + EOL;
-  rv += "timout in tenths of a second: "s + ::to_string(_timeout_in_tenths);
+  rv += "timout in tenths of a second: "s + ::to_string(_timeout_in_tenths) + EOL;
+
+  if (keep_alive())
+  { rv += "Keep-alive is set:"s + EOL;
+    rv += " keep-alive idle time: "s + ::to_string(keep_alive_idle_time()) + " seconds"s + EOL;
+    rv += " keep-alive retry time: "s + ::to_string(keep_alive_retry_time()) + " seconds"s + EOL;
+    rv += " keep-alive max retries: "s + ::to_string(keep_alive_max_retries()) + EOL;
+  }
+  else
+    rv += "Keep-alive is not set"s + EOL;
+
+  const optional<int> ling_state { linger() };
+
+  if (ling_state)
+    rv += "linger is set to "s + ::to_string(ling_state.value()) + " seconds"s;
+  else
+    rv += "linger is not set"s;
 
   return rv;
 }

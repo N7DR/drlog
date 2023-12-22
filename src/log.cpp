@@ -40,6 +40,7 @@ extern string VERSION;          ///< version string
     \param  value   the new value to give to field <i>name</i>
 */
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
+//void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string_view value)
 { 
 // frequency
   if (name == "FREQ"sv)
@@ -135,7 +136,8 @@ void logbook::operator-=(const unsigned int n)
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-vector<QSO> logbook::worked(const string& call) const
+//vector<QSO> logbook::worked(const string& call) const
+vector<QSO> logbook::worked(const string_view call) const
 { vector<QSO> rv;
 
   { SAFELOCK(_log);
@@ -153,7 +155,8 @@ vector<QSO> logbook::worked(const string& call) const
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-unsigned int logbook::n_worked(const string& call) const
+//unsigned int logbook::n_worked(const string& call) const
+unsigned int logbook::n_worked(const string_view call) const
 { SAFELOCK(_log);
 
   const auto range { _log.equal_range(call) };
@@ -166,11 +169,13 @@ unsigned int logbook::n_worked(const string& call) const
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
+#if 0
 bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
   return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
 }
+#endif
 
 /*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign

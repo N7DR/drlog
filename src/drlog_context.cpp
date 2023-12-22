@@ -1037,13 +1037,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
-      { const vector<string> tokens { split_string <std::string> (RHS, ' ') };
+      { const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
 
         if (tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string> mults { clean_split_string <string> (RHS) };
+      { const vector<string_view> mults { clean_split_string <string_view> (RHS) };
 
         _remaining_callsign_mults_list = set<string> { mults.cbegin(), mults.cend() } ;
       }
@@ -1054,13 +1054,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
 
       if (_auto_remaining_country_mults)
-      { const vector<string> tokens { split_string <std::string> (RHS, ' ') };
+      { const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
 
         if (tokens.size() == 2)
           _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string> countries { clean_split_string <string> (RHS) };
+      { const vector<string_view> countries { clean_split_string <string_view> (RHS) };
 
         _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
 //        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
@@ -1069,7 +1069,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
-      FOR_ALL(clean_split_string <string> (RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
+      FOR_ALL(clean_split_string <string_view> (RHS), [this] (const string_view str) { _auto_remaining_exchange_mults += str; });
+//     FOR_ALL(clean_split_string <string> (RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
  //ranges::fold_left(clean_split_string <string> (RHS), _auto_remaining_exchange_mults);  // not yet supported
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
@@ -1250,6 +1251,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     static map<string /* name */, bool /* whether verbatim */> verbatim;
 
+//    static map<string /* name */, bool /* whether verbatim */, std::less<>> verbatim; // transparent comparator for heterogeneous lookup; not before C++26!
+
     if (LHS == "STATIC WINDOW"sv)
     { const vector<string> fields { clean_split_string <string> (rhs) };
 
@@ -1333,10 +1336,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents;
             }
 
-//            vector<window_information> vec { _static_windows[name].second };
-
-//            _static_windows[name] = { final_contents, (vec + winfo) };
-              _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
+            _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
           }
         }
       }
@@ -1479,10 +1479,12 @@ drlog_context::drlog_context(const std::string& filename)
 
 // default is to score all permitted modes
   if (_score_modes.empty())
-  { if (contains(_modes, "CW"sv))
+  { //if (contains(_modes, "CW"sv))
+    if (_modes.contains("CW"sv))
       _score_modes += MODE_CW;
 
-    if (contains(_modes, "SSB"sv))
+//    if (contains(_modes, "SSB"sv))
+    if (_modes.contains("SSB"sv))
       _score_modes += MODE_SSB;
   }
 }

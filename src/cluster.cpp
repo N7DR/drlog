@@ -38,9 +38,9 @@ pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for th
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
 
 // parameters for the TCP connection
-constexpr unsigned int IDLE_SECS   { 300 };
+constexpr unsigned int IDLE_SECS   { 60 };
 constexpr unsigned int RETRY_SECS  { 60 };
-constexpr unsigned int MAX_RETRIES { 2 };
+constexpr unsigned int MAX_RETRIES { 5 };
 
 constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
 
@@ -52,7 +52,7 @@ constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
 
 /// process a read error
 void dx_cluster::_process_error(void)
-{  ost << "Processing error on TCP socket: " << _connection.to_string() << endl;
+{ ost << "Processing error on TCP socket: " << _connection.to_string() << endl;
 
 new_socket:
   try
@@ -124,7 +124,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 // set the keepalive option
   _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);
 
-//  ost << "connection: " << _connection << endl;
+  ost << (src == POSTING_SOURCE::CLUSTER ? "cluster " : "RBN ") << "connection: " << _connection.to_string() << endl;
   
   string buf;
 

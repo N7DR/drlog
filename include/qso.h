@@ -117,8 +117,8 @@ public:
   QSO(const drlog_context& context, std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
   READ_AND_WRITE(band);                 ///< band
-  READ_AND_WRITE(callsign);             ///< call
-  READ_AND_WRITE(canonical_prefix);     ///< canonical prefix for the country
+  READ_AND_WRITE_STR(callsign);         ///< call
+  READ_AND_WRITE_STR(canonical_prefix);     ///< canonical prefix for the country
   READ_AND_WRITE(comment);              ///< comment to be carried with QSO
   READ_AND_WRITE(continent);            ///< continent
   READ_AND_WRITE(date);                 ///< yyyy-mm-dd
@@ -159,7 +159,8 @@ public:
 
     Does nothing if <i>field_name</i> is not a possible mult
 */
-  void set_exchange_mult(const std::string& field_name);
+//  void set_exchange_mult(const std::string& field_name);
+  void set_exchange_mult(const std::string_view field_name);
 
 /// synonym for callsign()
   inline std::string call(void) const

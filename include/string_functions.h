@@ -20,6 +20,7 @@
 #include "x_error.h"
 
 #include <algorithm>
+#include <charconv>
 #include <concepts>
 #include <cstdint>
 #include <deque>
@@ -130,6 +131,17 @@ std::string format_time(const std::string& format, const tm* tmp);
 
     This is a complex no-op if type <i>T</i> is a string
 */
+#if 0
+template <class T>
+T from_string(const std::string& s)
+{ T rv { };
+
+  std::from_chars(s.data(), s.data() + s.size(), rv);
+
+  return rv;
+}
+#endif
+#if 0
 template <class T>
 T from_string(const std::string& s)
 { std::istringstream stream { s };
@@ -138,22 +150,63 @@ T from_string(const std::string& s)
   stream >> t;
   return t;
 }
+#endif
+
+// https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
+// void foo(const std::convertible_to<std::string_view> auto& msg);
 
 /*! \brief      Generic conversion from string_view
     \param  sv  string_view
     \return     <i>sv</i> converted to type <i>T</i>
 */
 template <class T>
-inline T from_string(std::string_view sv)
-{ return from_string<T>(std::string { sv }); }
+T from_string(const std::convertible_to<std::string_view> auto& sv)
+{ T rv { };
+
+  std::from_chars(sv.data(), sv.data() + sv.size(), rv);
+
+  return rv;
+}
+
+//template <class T>
+//inline T from_string(std::string_view sv)
+//{ return from_string<T>(std::string { sv }); }
+#if 0
+template <class T>
+T from_string(std::string_view sv)
+{ T rv { };
+
+  std::from_chars(sv.data(), sv.data() + sv.size(), rv);
+
+  return rv;
+}
+#endif
+
+//template <class T>
+//inline T from_string(const std::string& s)
+//  { return from_string<T>(std::string_view { s }); }
 
 /*! \brief      Generic conversion from C-style char*
-    \param  cp  string_view
+    \param  cp  pointer to start of C string
     \return     <i>cp</i> converted to type <i>T</i>
 */
+//template <class T>
+//inline T from_string(const char* cp)
+//  { return from_string<T>(std::string { cp }); }
 template <class T>
 inline T from_string(const char* cp)
-  { return from_string<T>(std::string { cp }); }
+  { return from_string<T>(std::string_view { cp, strlen(cp) }); }
+
+#if 0
+template <class T>
+T from_string(const char* cp)
+{ T rv { };
+
+  std::from_chars(cp, cp + strlen(cp), rv);
+
+  return rv;
+}
+#endif
 
 /*! \brief          Generic conversion from string, without an explicit type
     \param  s       string
@@ -175,6 +228,30 @@ inline void auto_from_string(std::string_view s, T& var)
     \param  val     value to convert
     \return         <i>val</i>converted to a string
 */
+template <class T>
+std::string to_string(const T val)
+  requires std::is_integral_v<T>
+{ std::array<char, 128> arr;
+
+  if (auto [ptr, err_code] = std::to_chars(arr.data(), arr.data() + arr.size(), val); err_code == std::errc())
+    return std::string { arr.data(), ptr };
+
+  return ""s;
+}
+
+template <class T>
+inline T to_string(const std::convertible_to<std::string> auto& s)
+  { return s; }
+
+//template <class T>
+//inline std::string to_string(const T val)
+//  requires is_string<T> or is_string_view<T>
+//{ return val; }
+
+inline std::string to_string(const char val)
+  { return std::string { val }; }
+
+// catchall
 template <class T>
 std::string to_string(const T val)
 { std::ostringstream stream;

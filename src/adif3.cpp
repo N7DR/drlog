@@ -186,9 +186,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 
 // CQZ : 1..40
       if (const auto cit { _positive_integer_range.find(_name) }; cit != _positive_integer_range.cend())
-      { //const int min_value { cit->second.first };
-        //const int max_value { cit->second.second };
-        const auto [min_value, max_value] = cit->second;
+      { const auto [min_value, max_value] = cit->second;
         
         if (const int zone { from_string<int>(_value) }; ((zone < min_value) or (zone > max_value)) )
           throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);

@@ -425,7 +425,7 @@ void QSO::populate_from_log_line(string_view str)
           const bool is_legal { rules.is_legal_value(substring <std::string> (field, 9), vec[n]) };
 
           ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
-          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring <std::string> (field, 9) << endl;
+          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring <std::string_view> (field, 9) << endl;
 
 // if the field is a CHOICE and the value isn't legal for the original choice, see if it's valid for the other
           if (!rules.is_legal_value(substring <std::string> (field, 9), field_value))
@@ -470,7 +470,8 @@ void QSO::populate_from_log_line(string_view str)
 
     Does nothing if <i>field_name</i> is not a possible mult
 */
-void QSO::set_exchange_mult(const string& field_name)
+//void QSO::set_exchange_mult(const string& field_name)
+void QSO::set_exchange_mult(const string_view field_name)
 { for (auto& field : _received_exchange)
   { if (field.is_possible_mult() and (field.name() == field_name))
       field.is_mult(true);

@@ -788,7 +788,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
     else
     { if (NONE_OF(_exch_values, [&field_name] (const auto& ev) { return (ev.name() == field_name); }))
-        _exch_values += { field_name, map<string, set<string> > { } };  // pair<string, map<string, set<string> > >
+//        _exch_values += { field_name, map<string, set<string>> { } };  // pair<string, map<string, set<string> > >
+        _exch_values += { field_name, MAP_STR_TO_SET { } };  // pair<string, map<string, set<string> > >
     }
   }
 
@@ -842,12 +843,8 @@ set<string> contest_rules::all_known_field_names(void) const
   SAFELOCK(rules);
 
   for (const auto& m : _permitted_modes)
-  { //const map<string, vector<exchange_field>>& expanded_exchange { _expanded_received_exchange.at(m) };
-
-    //for (const auto& [ cp, vef] : expanded_exchange)
-    for (const auto& [ cp, vef] : _expanded_received_exchange.at(m))
+  { for (const auto& [ cp, vef] : _expanded_received_exchange.at(m))
       FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv += ef.name(); } );
-//      FOR_ALL(msvef.second, [&rv] (const exchange_field& ef) { rv += ef.name(); } );
   }
 
   return rv;
@@ -862,7 +859,7 @@ set<string> contest_rules::all_known_field_names(void) const
 EFT contest_rules::exchange_field_eft(const string& field_name) const
 { SAFELOCK(rules);
 
-  return MUM_VALUE(_exchange_field_eft, field_name, EFT("none"));
+  return MUM_VALUE(_exchange_field_eft, field_name, EFT("none"s));
 }
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode

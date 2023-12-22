@@ -51,7 +51,8 @@ protected:
 // not possible to put that in chronological order without including seconds...
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
-  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
+//  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
+  std::multimap<std::string, QSO, std::less<>>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
 /*! \brief          Modify a passed QSO with a new value for a named field
@@ -60,6 +61,7 @@ protected:
     \param  value   the new value to give to field <i>name</i>
 */
   void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);
+//  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string_view value);
 
 /*! \brief          Obtain iterator to the first location of QSOs with a given call
     \param  call    target callsign
@@ -67,7 +69,8 @@ protected:
 
     Returns _log.end() if call <i>call</i> does not appear in the log
 */
-  inline auto _LB(const std::string& call) const
+//  inline auto _LB(const std::string& call) const
+  inline auto _LB(const std::string_view call) const
     { return _log.lower_bound(call); }
 
 /*! \brief          Obtain iterator to the last location of QSOs with a given call
@@ -76,7 +79,8 @@ protected:
 
     Returns _log.end() if call <i>call</i> does not appear in the log
 */
-  inline auto _UB(const std::string& call) const
+//  inline auto _UB(const std::string& call) const
+  inline auto _UB(const std::string_view call) const
     { return _log.upper_bound(call); }  
 
 public:
@@ -129,19 +133,21 @@ public:
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-  std::vector<QSO> worked(const std::string& call) const;
-  
+//  std::vector<QSO> worked(const std::string& call) const;
+  std::vector<QSO> worked(const std::string_view call) const;
+
 /*! \brief          The number of times that a particular call has been worked
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-  unsigned int n_worked(const std::string& call) const;
+//  unsigned int n_worked(const std::string& call) const;
+  unsigned int n_worked(const std::string_view call) const;
 
 /*! \brief          Has a particular call been worked at all?
     \param  call    target callsign
     \return         whether <i>call</i> has been worked
 */
-  inline bool qso_b4(const std::string& call) const
+  inline bool qso_b4(const std::string_view call) const
     { SAFELOCK(_log);
 
       return (_LB(call) != _UB(call)); 
@@ -152,7 +158,12 @@ public:
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
-  bool qso_b4(const std::string& call, const BAND b) const;
+//  bool qso_b4(const std::string& call, const BAND b) const;
+  inline bool qso_b4(const std::string_view call, const BAND b) const
+  { SAFELOCK(_log);
+
+    return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
+  }
 
 /*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign

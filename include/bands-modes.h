@@ -159,7 +159,6 @@ frequency upper_edge(const BAND b);
 
 class frequency
 { using HZ_TYPE = uint32_t;     // type used to hold the value in hertz
-//  using DIFF_TYPE = int32_t;    // type used to hold difference of two frequencies
 
 protected:
 
@@ -195,7 +194,7 @@ public:
 */
   inline explicit frequency(const enum BAND b) :
     _hz { lower_edge(b) }
-    { }
+  { }
 
 /// set frequency in Hz
   inline void hz(const decltype(_hz) n)
@@ -259,9 +258,6 @@ public:
 
 /// difference in two frequencies, always +ve
   frequency difference(const frequency& f2) const;
-
-//  inline DIFF_TYPE operator-(const frequency& f2)
-//    { return static_cast<DIFF_TYPE>( static_cast<int64_t>(_hz) - static_cast<int64_t>(f2._hz) ); }
 
 /*! \brief          Find the next lower band
     \param  bands   set of bands that may be returned

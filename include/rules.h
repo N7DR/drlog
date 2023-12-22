@@ -113,16 +113,19 @@ public:
     \brief  Encapsulates the name and legal values for an exchange field
 */
 
+using MAP_STR_TO_SET =  std::map< std::string, std::set<std::string> >;
+
 class exchange_field_values
 {
 protected:
 
   std::string _name;                           ///< name of the exchange field
 
-  std::map<std::string,                        /* a canonical field value */
-          std::set                             /* each equivalent value is a member of the set, including the canonical value */
-            <std::string                       /* indistinguishable legal values */
-            >> _values;                        ///< associate legal values with a canonical value
+//  std::map<std::string,                        /* a canonical field value */
+//          std::set                             /* each equivalent value is a member of the set, including the canonical value */
+//            <std::string                       /* indistinguishable legal values */
+//            >> _values;                        ///< associate legal values with a canonical value
+  MAP_STR_TO_SET _values;   ///< associate legal values with a canonical value
 
 public:
 
@@ -140,12 +143,13 @@ public:
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
 */
-  inline exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
+//  inline exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
+  inline exchange_field_values(const std::string& nm, const MAP_STR_TO_SET& mss) :
     _name(nm),
     _values(mss)
   { }
 
-  READ_AND_WRITE(name);             ///< name of the exchange field
+  READ_AND_WRITE_STR(name);             ///< name of the exchange field
   READ_AND_WRITE(values);           ///< associate legal values with a canonical value
 
 /*! \brief      Add a canonical value

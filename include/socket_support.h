@@ -53,19 +53,21 @@ constexpr int TCP_SOCKET_UNKNOWN_DESTINATION  { -1 },     ///< Destination not s
               TCP_SOCKET_ERROR_IN_RECV        { -3 },     ///< Error received from recv()
               TCP_SOCKET_UNABLE_TO_SET_OPTION { -4 },     ///< Error setting a socket option
               TCP_SOCKET_UNABLE_TO_CLOSE      { -5 },     ///< Error closing socket
-              TCP_SOCKET_UNABLE_TO_RESOLVE    { -6 };     ///< Error resolving destination
+              TCP_SOCKET_UNABLE_TO_RESOLVE    { -6 },     ///< Error resolving destination
+              TCP_SOCKET_UNABLE_TO_GET_OPTION { -7 };     ///< Error getting a socket option
 
 constexpr int ICMP_SOCKET_UNABLE_TO_CREATE    { -1 },     ///< Unable to create socket
               ICMP_SOCKET_SEND_ERROR          { -2 };     ///< Error when sending
 
 /// TCP socket error messages
-const std::string tcp_socket_error_string[7] { std::string(),
+const std::string tcp_socket_error_string[8] { std::string(),
                                                "Destination not set"s,
                                                "Error return from write()"s,
                                                "Error return from recv()"s,
                                                "Error return from setsockopt()"s,
                                                "Error closing socket"s,
-                                               "Error resolving destination"s
+                                               "Error resolving destination"s,
+                                               "Error return from getsockopt()"s
                                              };
 
 /// ICMP socket error messages
@@ -208,7 +210,7 @@ protected:
   bool              _force_closure      { false };                  ///< force closure of socket in destructor, even for a pre-existing socket
   bool              _preexisting_socket { false };                  ///< whether <i>_sock</i> exists outside the object
   SOCKET            _sock;                                          ///< encapsulated socket
-  pt_mutex          _tcp_socket_mutex   { "UNNAMED TCP SOCKET"s };  ///< mutex to control access
+  mutable pt_mutex  _tcp_socket_mutex   { "UNNAMED TCP SOCKET"s };  ///< mutex to control access
   unsigned int      _timeout_in_tenths  { 600 };                    ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
 /*! \brief close the socket
@@ -352,17 +354,32 @@ public:
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
 */
-  void idle_time(const unsigned int seconds);
+  void keep_alive_idle_time(const unsigned int seconds);
+
+/*! \brief    Get the idle time before a keep-alive is sent
+    \return   time to wait idly, in seconds, before a keep-alive is sent
+*/
+  unsigned int keep_alive_idle_time(void) const;
+
+/*! \brief    Get the time between keep-alives
+    \return   time to wait idly between keep-alives, in seconds
+*/
+  unsigned int keep_alive_retry_time(void) const;
 
 /*! \brief              Set the time between keep-alives
     \param  seconds     time to wait idly before a keep-alive is sent
 */
-  void retry_time(const unsigned int seconds);
+  void keep_alive_retry_time(const unsigned int seconds);
+
+/*! \brief      Get the maximum number of retries
+    \param  n   maximum number of retries before notifying upwards
+*/
+  unsigned int keep_alive_max_retries(void) const;
 
 /*! \brief      Set the maximum number of retries
-    \param  n   maximum number of retries
+    \param  n   maximum number of retries before notifying upwards
 */
-  void max_retries(const unsigned int n); 
+  void keep_alive_max_retries(const unsigned int n);
   
 /*! \brief          Set or unset the use of keep-alives
     \param  torf    whether to use keep-alives
@@ -370,7 +387,12 @@ public:
     Throws a tcp_socket_error if an error occurs
 */
   void keep_alive(const bool torf = true);
-  
+
+/*  \brief    Is a keep-alive in use on this socket?
+    \return   whether a keep-alive is in use
+*/
+  bool keep_alive(void) const;
+
 /*! \brief          Set properties of the keep-alive
     \param  idle    idle time in seconds
     \param  retry   retry time in seconds
@@ -392,6 +414,13 @@ public:
     Throws a tcp_socket_error if an error occurs
 */
   void linger(const bool torf = true, const int secs = 0);
+
+/*! \brief    Get the lingering state of the socket
+    \return   whether linger is enabled and, if so, the value in seconds
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  std::optional<int> linger(void) const;
 
 /*! \brief              Rename the mutex associated with the socket
     \param  new_name    the new name for the mutex
