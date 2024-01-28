@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 229 2023-11-19 16:33:50Z  $
+// $Id: string_functions.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1024,7 +1024,6 @@ string remove_trailing_comment(string_view str, const string_view comment_str)
     
     Returns string::npos if <i>target</i> cannot be found
 */
-//size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
 size_t case_insensitive_find(const std::string_view str, const std::string_view target, const size_t start_posn)
 { auto it { str.cbegin() };
 
@@ -1047,11 +1046,13 @@ string base_call(const string& callsign)
     return callsign;
 
 // it contains at least one slash
-  const vector<string> portions { split_string <std::string> (callsign, '/') };
+//  const vector<string> portions { split_string <std::string> (callsign, '/') };
+
+  const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };
 
   string rv;
 
-  for (const string& str : portions)
+  for (const auto& str : portions)
     if (str.length() > rv.length())
       rv = str;
 
@@ -1069,10 +1070,10 @@ string YYYYMMDD_utc(void)
 
 /*! \brief      Remove all instances of several substrings (sequentially) from a string
     \param  cs  original string
-    \param  vs  vector of substrings to be removed, in that order
+    \param  vs  vector of substrings to be removed, in the order in which they are to be removed
     \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
 */
-string remove_substrings(const string& cs, const vector<string>& vs)
+string remove_substrings(const string_view cs, const vector<string>& vs)
 { string rv { cs };
   
   for (const std::string& ss : vs)

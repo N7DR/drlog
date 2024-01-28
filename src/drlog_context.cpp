@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 229 2023-11-19 16:33:50Z  $
+// $Id: drlog_context.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -535,6 +535,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE SENT SSB
     if (LHS == "EXCHANGE SENT SSB"sv)
       update_sent_exchange(_sent_exchange_ssb);
+
+// EXECUTE AT START
+    if (LHS == "EXECUTE AT START"sv)
+      _execute_at_start = remove_peripheral_spaces <std::string> (rhs);
 
 // FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH"sv)

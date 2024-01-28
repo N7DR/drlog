@@ -1,4 +1,4 @@
-// $Id: adif3.h 229 2023-11-19 16:33:50Z  $
+// $Id: adif3.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -140,7 +140,7 @@ public:
 */
   adif3_field(const std::string& field_name, const std::string& field_value);
   
-  READ_AND_WRITE_STR(name);                        ///< name of the field
+  READ_AND_WRITE_STR(name);                    ///< name of the field
   READ_AND_WRITE(type);                        ///< type of the field
   READ_AND_WRITE(value);                       ///< value of the field
 
@@ -175,7 +175,7 @@ class adif3_record
 protected:
 
   std::map<std::string /* field name */, adif3_field>  _elements;    ///< map field name to the complete field; simplest to keep this ordered so that the fields are in alphabetical order
-  
+
   static std::set<ADIF3_DATA_TYPE> _import_only;                     ///< fields that are not to be output
 
 /*! \brief          Convert a string to an int, assuming that the string contains just digits

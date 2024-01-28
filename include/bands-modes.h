@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 225 2023-08-14 17:29:55Z  $
+// $Id: bands-modes.h 232 2023-12-31 16:46:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

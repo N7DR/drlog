@@ -1,4 +1,4 @@
-// $Id: screen.h 228 2023-09-17 13:41:20Z  $
+// $Id: screen.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -424,7 +424,7 @@ public:
     \param  n_lines     number of lines to by which to scroll
     \return             the window
 
-    Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
+    Can't call it 'scroll' because there's a silly *exposed* ncurses *macro* with the same name
 */
   window& scrollit(const int n_lines);
 
@@ -615,7 +615,7 @@ template <class T>
     Limits <i>line_nr</i> to a valid value for the window before testing the line.
 */
   inline bool line_empty(const int line_nr = 0)
-    { return remove_peripheral_spaces <std::string> (getline(line_nr)).empty(); }
+    { return (remove_peripheral_spaces <std::string_view> (getline(line_nr))).empty(); }
 
 /*! \brief              Clear a line
     \param  line_nr     number of line to clear (0 is bottommost row)
@@ -654,7 +654,7 @@ template <class T>
 
 /// is the window empty?
   inline bool empty(void)
-    { return remove_peripheral_spaces <std::string> (read()).empty(); }
+    { return remove_peripheral_spaces <std::string_view> (read()).empty(); }
 
 /// toggle the hide/show status of the cursor
   inline window& toggle_hidden(void)

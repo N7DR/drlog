@@ -1,4 +1,4 @@
-// $Id: log.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: log.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -164,29 +164,18 @@ unsigned int logbook::n_worked(const string_view call) const
   return distance(range.first, range.second);
 }
 
-/*! \brief          Has a call been worked on a particular band?
-    \param  call    target callsign
-    \param  b       target band
-    \return         whether <i>call</i> has been worked on <i>b</i>
-*/
-#if 0
-bool logbook::qso_b4(const string& call, const BAND b) const
-{ SAFELOCK(_log);
-  
-  return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
-}
-#endif
-
 /*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
+#if 0
 bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
 
   return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
 }
+#endif
 
 /*! \brief          Has a call been worked on a particular band and mode?
     \param  call    target callsign
@@ -208,8 +197,6 @@ bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 string logbook::call_needed(const string& call, const contest_rules& rules) const
 { string rv;
 
-//  for (const auto& b : rules.permitted_bands())
-//    rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]);
   FOR_ALL(rules.permitted_bands(), [this, &call, &rv] (const BAND b) { rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]); } );
   
   return rv;
@@ -474,10 +461,8 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   
   vector< vector< string> > individual_values;
 
-//  const vector<string> template_fields { clean_split_string <string> (cabrillo_qso_template) };         // colon-delimited values
-  
-//  FOR_ALL(template_fields, [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
-  FOR_ALL(clean_split_string <string> (cabrillo_qso_template), [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
+//  FOR_ALL(clean_split_string <string> (cabrillo_qso_template), [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
+  FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -487,10 +472,8 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     { QSO qso;
   
 // go through the fields
-//      for (unsigned int n { 0 }; n < individual_values.size(); ++n)
       for (const vector<string>& vec : individual_values)
-      { //const vector<string>& vec   { individual_values[n] };
-        const string&         name  { vec[0] };
+      { const string&         name  { vec[0] };
         const unsigned int    posn  { from_string<unsigned int>(vec[1]) - 1 };
         const unsigned int    len   { from_string<unsigned int>(vec[2]) };
         const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string()) };
@@ -642,6 +625,15 @@ string logbook::last_worked_eu_call(void) const
     \brief  Support for bits of the log
 */
 
+/*! \brief  constructor
+    \param  w               window to be used by this extract
+*/
+log_extract::log_extract(window& w) :
+  _win(w)
+{ if (_win.height())
+    _win_size = _win.height();
+}
+
 /*! \brief          Add a QSO to the extract
     \param  qso     QSO to add
 
@@ -699,10 +691,10 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
 
 // extract the QSOs
   for (size_t n { 0 }; n < n_to_copy; ++n)
-  	(*this) += vec.at(vec.size() - n_to_copy + n);
+    (*this) += vec.at(vec.size() - n_to_copy + n);
 
   if (to_display)
-  	display();
+    display();
 }
 
 /*! \brief          Get the QSOs that match an exchange from a log, and display them
@@ -739,7 +731,7 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
     The data for <i>call</i> are created if they don't already exist, and the corresponding iterator returned
 */
 auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
-{ auto it { _olog.find(call) };
+{ const auto it { _olog.find(call) };
 
   return ( (it == _olog.end()) ? (_olog[call], _olog.find(call)) : it );    // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
 }
@@ -759,7 +751,7 @@ unsigned int old_log::n_qsls(const string& call) const
     \return         the new number of QSLs from callsign <i>call</i>
 */
 unsigned int old_log::increment_n_qsls(const string& call)
-{ auto it { _olog.find(call) };
+{ const auto it { _olog.find(call) };
 
   if (it == _olog.end())    // never worked before; => current number of QSLs must be zero
   { _olog[call];

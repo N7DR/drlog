@@ -1,4 +1,4 @@
-// $Id: string_functions.h 229 2023-11-19 16:33:50Z  $
+// $Id: string_functions.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -125,39 +125,11 @@ std::string date_time_string(const SECONDS include_seconds);
 */
 std::string format_time(const std::string& format, const tm* tmp);
 
-/*! \brief      Generic conversion from string
-    \param  s   string
-    \return     <i>s</i> converted to type <i>T</i>
-
-    This is a complex no-op if type <i>T</i> is a string
-*/
-#if 0
-template <class T>
-T from_string(const std::string& s)
-{ T rv { };
-
-  std::from_chars(s.data(), s.data() + s.size(), rv);
-
-  return rv;
-}
-#endif
-#if 0
-template <class T>
-T from_string(const std::string& s)
-{ std::istringstream stream { s };
-  T t;
-     
-  stream >> t;
-  return t;
-}
-#endif
-
-// https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
-// void foo(const std::convertible_to<std::string_view> auto& msg);
-
 /*! \brief      Generic conversion from string_view
     \param  sv  string_view
     \return     <i>sv</i> converted to type <i>T</i>
+
+     https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
 */
 template <class T>
 T from_string(const std::convertible_to<std::string_view> auto& sv)
@@ -1375,10 +1347,10 @@ std::string YYYYMMDD_utc(void);
 
 /*! \brief      Remove all instances of several substrings (sequentially) from a string
     \param  cs  original string
-    \param  vs  vector of substrings to be removed, in that order
+    \param  vs  vector of substrings to be removed, in the order in which they are to be removed
     \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
 */
-std::string remove_substrings(const std::string& cs, const std::vector<std::string>& vs);
+std::string remove_substrings(const std::string_view cs, const std::vector<std::string>& vs);
 
 /*! \brief              Return all strings from a container that match a particular regular expression string
     \param  container   container of strings

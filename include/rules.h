@@ -1,4 +1,4 @@
-// $Id: rules.h 228 2023-09-17 13:41:20Z  $
+// $Id: rules.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -150,7 +150,7 @@ public:
   { }
 
   READ_AND_WRITE_STR(name);             ///< name of the exchange field
-  READ_AND_WRITE(values);           ///< associate legal values with a canonical value
+  READ_AND_WRITE(values);               ///< associate legal values with a canonical value
 
 /*! \brief      Add a canonical value
     \param  cv  canonical value to add
@@ -531,7 +531,9 @@ public:
     Does nothing if <i>mode</i> is already permitted
 */
   inline void add_permitted_mode(const MODE mode)
-    { SAFELOCK(rules); _permitted_modes += mode; }
+    { SAFELOCK(rules);
+      _permitted_modes += mode;
+    }
     
 /*! \brief                  Get the next mode in sequence
     \param  current_mode    the current mode
@@ -709,7 +711,9 @@ public:
     Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
   inline bool exch_has_permitted_values(const std::string& field_name) const
-    { SAFELOCK(rules); return (_permitted_exchange_values.contains(field_name)); }
+    { SAFELOCK(rules);
+      return (_permitted_exchange_values.contains(field_name));
+    }
 
 /*! \brief              Is a particular exchange field a regex?
     \param  field_name  name of an exchange field (received)
@@ -757,11 +761,15 @@ public:
 
 /// number of permitted bands
   inline size_t n_bands(void) const
-    { SAFELOCK(rules); return _permitted_bands.size(); }
+    { SAFELOCK(rules);
+      return _permitted_bands.size();
+    }
 
 /// number of permitted modes
   inline size_t n_modes(void) const
-    { SAFELOCK(rules); return _permitted_modes.size(); }
+    { SAFELOCK(rules);
+      return _permitted_modes.size();
+    }
 
 /// do we allow multiple bands?
   inline bool multiple_bands(void) const

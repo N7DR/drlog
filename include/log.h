@@ -1,4 +1,4 @@
-// $Id: log.h 211 2022-11-28 21:29:23Z  $
+// $Id: log.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,7 +61,6 @@ protected:
     \param  value   the new value to give to field <i>name</i>
 */
   void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);
-//  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string_view value);
 
 /*! \brief          Obtain iterator to the first location of QSOs with a given call
     \param  call    target callsign
@@ -133,7 +132,6 @@ public:
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-//  std::vector<QSO> worked(const std::string& call) const;
   std::vector<QSO> worked(const std::string_view call) const;
 
 /*! \brief          The number of times that a particular call has been worked
@@ -158,7 +156,6 @@ public:
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
-//  bool qso_b4(const std::string& call, const BAND b) const;
   inline bool qso_b4(const std::string_view call, const BAND b) const
   { SAFELOCK(_log);
 
@@ -170,7 +167,12 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
-  bool qso_b4(const std::string& call, const MODE m) const;
+//  bool qso_b4(const std::string& call, const MODE m) const;
+  inline bool qso_b4(const std::string& call, const MODE m) const
+  { SAFELOCK(_log);
+
+    return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
+  }
 
 /*! \brief          Has a call been worked on a particular band and mode?
     \param  call    target callsign
@@ -336,29 +338,27 @@ protected:
 
   std::deque<QSO> _qsos;                        ///< QSOs contained in the extract
 
-  pt_mutex _extract_mutex { "LOG EXTRACT"s };   ///< mutex for thread safety
+  mutable pt_mutex _extract_mutex { "LOG EXTRACT"s };   ///< mutex for thread safety
 
 public:
 
 /*! \brief  constructor
     \param  w               window to be used by this extract
 */
-  explicit inline log_extract(window& w) :
-    _win(w)
-  { }                                       // don't set the size yet, since the size of w may not be set
+  explicit log_extract(window& w);
 
-/// prepare for use; this MUST be called before the object is used
+/// prepare for use; this must be called before the object is used if the height was zero when the object was created
   inline void prepare(void)
     { _win_size = _win.height(); }
 
 /// number of QSOs in the extract
-  inline size_t size(void)
+  inline size_t size(void) const
   { SAFELOCK(_extract);
     return _qsos.size();
   }
 
 /// is the extract empty?
-  inline bool empty(void)
+  inline bool empty(void) const
   { SAFELOCK(_extract);
     return _qsos.empty();
   }
@@ -425,6 +425,7 @@ template <typename C>
   void operator=(const C& t)
   requires (std::is_same_v<typename C::value_type, QSO>)
   { SAFELOCK(_extract);
+
     _qsos.clear();
     std::ranges::copy(t, back_inserter(_qsos));
   }

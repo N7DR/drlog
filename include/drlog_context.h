@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 229 2023-11-19 16:33:50Z  $
+// $Id: drlog_context.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -159,6 +159,7 @@ protected:
   std::map<std::string, std::string>           _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::map<std::string, std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
   std::string                                  _exchange_sap                            { };                            ///< exchange in SAP mode
+  std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
 
   unsigned int                                 _fast_cq_bandwidth                       { 400 };                        ///< fast CW bandwidth in CQ mode, in Hz
   unsigned int                                 _fast_sap_bandwidth                      { 400 };                        ///< fast CW bandwidth in SAP mode, in Hz
@@ -439,8 +440,8 @@ public:
   CONTEXTREAD(exchange_mults_per_mode);          ///< are exchange mults per-mode?
   CONTEXTREAD(exchange_per_country);             ///< per-country exchanges; key = prefix-or-call; value = exchange
   CONTEXTREAD(exchange_prefill_files);           ///< external prefill files for exchange fields
-
   CONTEXTREAD(exchange_sap);                     ///< exchange in SAP mode
+  CONTEXTREAD(execute_at_start);                 ///< string to execute as soon as config file is read
 
   CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz
   CONTEXTREAD(fast_sap_bandwidth);               ///< fast CW bandwidth in SAP mode, in Hz

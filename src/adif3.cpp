@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 229 2023-11-19 16:33:50Z  $
+// $Id: adif3.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -374,6 +374,9 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
 string adif3_record::to_string(void) const
 { string rv;
 
+//  SAFELOCK(_adif3_record);
+
+#if 0
   for (const auto& element : _elements)
   { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
     { switch (dt)
@@ -382,8 +385,20 @@ string adif3_record::to_string(void) const
       }
     }
   }
-  
-  rv += "<EOR>\n";
+#endif
+
+//  for (const auto& element : _elements)
+  for (const auto& [name, field] : _elements)
+  { //if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
+    if (const ADIF3_DATA_TYPE dt { field.type() }; !( _import_only.contains(dt) ) )       // don't output if this type is import-only
+    { switch (dt)
+      { default :
+          rv += field.to_string();    // output without any checks
+      }
+    }
+  }
+
+  rv += "<EOR>\n"s;
   
   return rv;
 }
@@ -415,7 +430,7 @@ bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
   if (rec2.date() < rec1.date())
     return false;
     
-// same date
+// same date; check time
   return (rec1.time() < rec2.time());
 }
 
@@ -497,7 +512,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  FOR_ALL(begin_it, end_it, [&rv](const auto& map_entry) { rv += map_entry.second; });
+  FOR_ALL(begin_it, end_it, [&rv] (const auto& map_entry) { rv += map_entry.second; });
   
   return rv;
 }
@@ -507,7 +522,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
     \return             position of first "<" after the end of the header
 */
 size_t skip_adif3_header(const std::string& str)
-{ const auto posn_1 { case_insensitive_find(str, "<EOH>"s) };
+{ const auto posn_1 { case_insensitive_find(str, "<EOH>"sv) };
 
   return ( (posn_1 == string::npos) ? 0 : (str.find('<', posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
 }

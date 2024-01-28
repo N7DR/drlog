@@ -1,4 +1,4 @@
-// $Id: rules.cpp 229 2023-11-19 16:33:50Z  $
+// $Id: rules.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -896,26 +896,11 @@ vector<string> contest_rules::unexpanded_exchange_field_names(const string& cano
 vector<string> contest_rules::exch_canonical_values(const string& field_name) const
 { vector<string> rv;
 
-//  ost << "inside contest_rules::exch_canonical_values for field name: " << field_name << endl;
-//  ost << "ssize(_exch_values) = " << ssize(_exch_values) << endl;
-
   { SAFELOCK(rules);
 
- //   for (unsigned int n { 0 }; n < _exch_values.size(); ++n)
- //   for (int n { 0 }; n < ssize(_exch_values); ++n)
     for (const auto& ev : _exch_values)
-    { //ost << "this _exch_value name = " << _exch_values[n].name() << endl;
-
- //     if (_exch_values[n].name() == field_name)
-      if (ev.name() == field_name)
-      { //const map<string, set<string>>& m { _exch_values[n].values() };
- //       const map<string, set<string>>& m { ev.values() };
-
- //       FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv += mss.first; } );  // Josuttis 2nd ed., p. 338
-
- //       FOR_ALL(ev.values(), [&rv] (const map<string, set<string> >::value_type& mss) { rv += mss.first; } );   // ... value_type is pair< <string>, set<string> >
-
-        for (const auto& [ canonical_value, legal_values ] : ev.values())
+    { if (ev.name() == field_name)
+      { for (const auto& [ canonical_value, legal_values ] : ev.values())
           rv += canonical_value;
 
         SORT(rv);
@@ -936,34 +921,10 @@ vector<string> contest_rules::exch_canonical_values(const string& field_name) co
 void contest_rules::add_exch_canonical_value(const string& field_name, const string& new_canonical_value)
 { SAFELOCK(rules);
 
-//  bool found_it { false };
-
-//  for (unsigned int n = 0; n < _exch_values.size() and !found_it; ++n)
-#if 0
-  for (int n { 0 }; n < ssize(_exch_values) and !found_it; ++n)
-  { if (_exch_values[n].name() == field_name)
-    { found_it = true;
-
-      _exch_values[n].add_canonical_value(new_canonical_value);
-    }
-  }
-#endif
-
-  auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
+  const auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
 
   if (it != _exch_values.end())
     it -> add_canonical_value(new_canonical_value);
-
-#if 0
-  for (auto& ev : _exch_values)   // doesn't stop after first instance
-  { if (ev.name() == field_name)
-    { found_it = true;
-
-      ev.add_canonical_value(new_canonical_value);
-    }
-  }
-#endif
-
 }
 
 #if 0
@@ -987,18 +948,9 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
-  auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
+  const auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
 
   return (it == _exch_values.end()) ? false : it -> is_legal_canonical_value(putative_canonical_value);
-
-#if 0
-  for (const auto& exch_value : _exch_values)
-  { if (exch_value.name() == field_name)
-      return exch_value.is_legal_canonical_value(putative_canonical_value);
-  }
-
-  return false;
-#endif
 }
 
 /*! \brief                  Is a particular string a legal value for a particular exchange field?

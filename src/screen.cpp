@@ -1,4 +1,4 @@
-// $Id: screen.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: screen.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include <cstdlib>
 
@@ -28,6 +29,7 @@
 #include <X11/Xutil.h>
 
 using namespace std;
+using namespace   this_thread;   // std::this_thread
 
 extern cpair colours;
 extern message_stream   ost;                        ///< for debugging, info
@@ -66,35 +68,42 @@ int COLOUR_PAIR(const PAIR_NUMBER_TYPE n)
 
 /// default constructor
 screen::screen(void)
-{ if (setlocale(LC_ALL, "") == nullptr)
+{ constexpr auto SLEEP_TIME { 2s };
+
+  if (setlocale(LC_ALL, "") == nullptr)
   { cerr << "Unable to set locale" << endl;
-    sleep(2);
+//    sleep(2);
+    sleep_for(SLEEP_TIME);
     exit(-1);
   }
 
   if (initscr() == nullptr)
   { cerr << "Unable to initialise curses" << endl;
-    sleep(2);
+//    sleep(2);
+    sleep_for(SLEEP_TIME);
     exit(-1);
   }
 
   if (start_color() == ERR)
   { cerr << "Unable to start colours on screen" << endl;
-    sleep(2);
+//    sleep(2);
+    sleep_for(SLEEP_TIME);
     endwin();
     exit(-1);
   }
 
   if (!has_colors())
   { cerr << "NO COLOURS" << endl;
-    sleep(2);
+ //   sleep(2);
+    sleep_for(SLEEP_TIME);
     endwin();
     exit(-1);
   }
 
   if (refresh() == ERR)
   { cerr << "Error calling refresh()" << endl;
-    sleep(2);
+//    sleep(2);
+    sleep_for(SLEEP_TIME);
     endwin();
     exit(-1);
   }
@@ -153,7 +162,7 @@ void window::_init(const window_information& wi, const unsigned int flags)
     if (!_wp)
     { ost << "Error creating window; aborting" << endl
           << "  requested x, y, w, h = " << _x << ", " << _y << ", " << _width << ", " << _height << endl;
-      sleep(2);
+      sleep_for(2s);
       exit(-1);
     }
 
@@ -187,7 +196,8 @@ window::window(const window_information& wi, const unsigned int flags) :
 
     if (!_wp)
     { ost << "Error creating window; aborting" << endl;
-      sleep(2);
+//      sleep(2);
+      sleep_for(2s);
       exit(-1);
     }
 
@@ -905,9 +915,9 @@ PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgb
     throw exception();
   }
 
-  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
+//  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
-  if (status == ERR)
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
   { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
     throw exception();
   }

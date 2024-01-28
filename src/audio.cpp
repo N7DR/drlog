@@ -1,4 +1,4 @@
-// $Id: audio.cpp 229 2023-11-19 16:33:50Z  $
+// $Id: audio.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -242,7 +242,6 @@ void audio_recorder::_set_params(void)
   snd_pcm_uframes_t start_threshold { static_cast<snd_pcm_uframes_t>( ( (double)rate * _start_delay / 1'000'000 ) + ( (_start_delay <= 0) ? n : 0 ) ) };
 
   start_threshold = LIMIT(start_threshold, 1, n);
-//  start_threshold = clamp(start_threshold, static_cast<snd_pcm_uframes_t>(1), static_cast<snd_pcm_uframes_t>(n));
   err = snd_pcm_sw_params_set_start_threshold(_handle, swparams, start_threshold);
 
   if (err < 0)
@@ -275,8 +274,6 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-//  _audio_buf = (u_char *)malloc(_period_size_in_bytes);             // !!!
-
   try
   { _audio_buf = new u_char [_period_size_in_bytes];
   }
@@ -285,11 +282,6 @@ void audio_recorder::_set_params(void)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
     throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
   }
-
-//  if (_audio_buf == NULL)
-//  { ost << "ERROR: out of memory for " << _pcm_name << endl;
-//    throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
-//  }
 
   _buffer_frames = buffer_size;    /* for position test */ // ?????
 }
@@ -307,9 +299,8 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
   while (count > 0)
   { const ssize_t r { _readi_func(_handle, data, count) };
 
-    if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
-    { snd_pcm_wait(_handle, RETRY_MS);   // wait for 100 ms, then try again
-    }
+    if ( (r == -EAGAIN) or ((r >= 0) and ((size_t)r < count)) )
+      snd_pcm_wait(_handle, RETRY_MS);   // wait for 100 ms, then try again
     else if (r == -EPIPE)           // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
     { if (++_xrun_counter == _xrun_threshhold)
       { _error_alert("audio XRUN error count = "s + to_string(_xrun_threshhold));
@@ -319,8 +310,6 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
 // try this
       snd_pcm_recover(_handle, -EPIPE, 0);
       ost << "WARNING: snd_pcm_recover() CALLED" << endl;
-
-//      ost << "XRUN()!!" << endl;
     }
     else if (r == -ESTRPIPE)
     { ost << "SUSPEND()!!!" << endl;

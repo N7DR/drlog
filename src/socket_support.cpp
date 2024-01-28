@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 231 2023-12-10 14:01:06Z  $
+// $Id: socket_support.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,6 +44,10 @@ constexpr int SOCKET_ERROR { -1 };            ///< error return from various soc
 
 // ---------------------------------  tcp_socket  -------------------------------
 
+//constexpr bool DEFAULT_TCP_LINGER { false };    // the default is not to linger
+
+constexpr struct linger DEFAULT_TCP_LINGER { false, 0 };      // the default is not to linger
+
 /// close the socket
 void tcp_socket::_close_the_socket(void)
 { if (_sock)
@@ -59,7 +63,8 @@ tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
   { reuse();    // enable re-use
-    linger();   // linger turned on, immediate time-out
+ //   linger();   // linger turned on, immediate time-out
+    linger(DEFAULT_TCP_LINGER);
   }
 
   catch (...)
@@ -84,8 +89,8 @@ tcp_socket::tcp_socket(SOCKET* sp) //:
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
       reuse();      // enable re-use
-      linger();     // linger turned on, immediate time-out
-
+//      linger();     // linger turned on, immediate time-out
+    linger(DEFAULT_TCP_LINGER);
 //      _preexisting_socket = false;
     }
 
@@ -115,7 +120,8 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 
   try
   { reuse();    // enable re-use    
-    linger();   // linger turned on, immediate time-out
+//    linger();   // linger turned on, immediate time-out
+    linger(DEFAULT_TCP_LINGER);
 
     bind(source_address);
 
@@ -206,7 +212,8 @@ void tcp_socket::new_socket(void)
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     reuse();    // enable re-use
-    linger();   // linger turned on, immediate time-out
+//    linger();   // linger turned on, immediate time-out
+    linger(DEFAULT_TCP_LINGER);
   }
   
   catch (...)
@@ -638,6 +645,18 @@ optional<int> tcp_socket::linger(void) const
 }
 
 /*! \brief          Set or unset lingering of the socket
+    \param  lng     struct linger object
+
+    Throws a tcp_socket_error if an error occurs
+*/
+void tcp_socket::linger(const struct linger& lngr)
+{ SAFELOCK(_tcp_socket);
+
+  if ( setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lngr, sizeof(lngr) ) )
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
+}
+
+/*! \brief          Set or unset lingering of the socket
     \param  torf    whether to allow lingering
     \param  secs    linger time in seconds
 
@@ -648,9 +667,6 @@ void tcp_socket::linger(const bool torf, const int secs)
 
   SAFELOCK(_tcp_socket);
 
-//  const int status { setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) ) };  // char* cast is needed for Windows
-
-//  if (status)
   if ( setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) ) )
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 }
@@ -717,7 +733,7 @@ icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
   inet_aton(dest_str.c_str(), &_dest.sin_addr);   // do I have a function of my own to replace this?
 
   _icmp_hdr.type = ICMP_ECHO;
-  _icmp_hdr.un.echo.id = 1234;//arbitrary id
+  _icmp_hdr.un.echo.id = 1234;  //arbitrary id
 
   rename_mutex("ICMP: "s + destination_ip_address_or_fqdn + ":"s);
 }
@@ -829,8 +845,6 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
 
   fd_set ps_set;
 
-//  FD_ZERO(&ps_set);
-//  FD_SET(in_socket, &ps_set);
   fd_set_value(ps_set, in_socket);
 
 // check
@@ -850,7 +864,9 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
 
     default:                   // response is waiting to be read
     { char socket_buffer[4096];
-      socklen_t from_length = sizeof(sockaddr_storage);
+
+      socklen_t from_length { sizeof(sockaddr_storage) };
+
       sockaddr_storage ps_sockaddr;                    // unused but needed in recvfrom
 
       socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
@@ -892,8 +908,6 @@ void flush_read_socket(SOCKET& sock)
 
   fd_set ps_set;
 
-//  FD_ZERO(&ps_set);
-//  FD_SET(sock, &ps_set);
   fd_set_value(ps_set, sock);
 
   const int max_socket_number { sock + 1 };               // see p. 292 of Linux socket programming
@@ -909,8 +923,6 @@ void flush_read_socket(SOCKET& sock)
     timeout = { 0, 0 };
 
 // and the set
-//    FD_ZERO(&ps_set);
-//    FD_SET(sock, &ps_set);
     fd_set_value(ps_set, sock);
   }
 }
@@ -927,8 +939,8 @@ void flush_read_socket(SOCKET& sock)
 sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
 { sockaddr_storage rv;
 
-  sockaddr_in* sinp { (sockaddr_in*)(&rv) };
-  
+  sockaddr_in* sinp { (sockaddr_in*)(&rv) };    // static_cast results in compiler error
+
   sinp->sin_family = AF_INET;
   sinp->sin_port = htons(port_nr);
   sinp->sin_addr.s_addr = ip_address;
@@ -949,8 +961,8 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Attempt to convert non-IPv4 sockaddr_storage to sockaddr_in"s);
 
   rv.sin_family = AF_INET;
-  rv.sin_port = ((sockaddr_in*)(&ss))->sin_port;
-  rv.sin_addr = ((sockaddr_in*)(&ss))->sin_addr;
+  rv.sin_port = ((sockaddr_in*)(&ss))->sin_port;    // static_cast results in compiler error
+  rv.sin_addr = ((sockaddr_in*)(&ss))->sin_addr;    // static_cast results in compiler error
 
   return rv;
 }
@@ -983,10 +995,9 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   while (n_try++ < n_tries and !success)
   { const int status { gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop) };
 
-    success = (status == 0) and (result != nullptr);    // the second test should be redundant
+    success = ( (status == 0) and (result != nullptr) );    // the second test should be redundant
 
     if (!success and n_try != n_tries)
-//      sleep_for(seconds(1));
       sleep_for(1s);
   }
 

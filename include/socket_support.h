@@ -1,4 +1,4 @@
-// $Id: socket_support.h 231 2023-12-10 14:01:06Z  $
+// $Id: socket_support.h 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -414,6 +414,13 @@ public:
     Throws a tcp_socket_error if an error occurs
 */
   void linger(const bool torf = true, const int secs = 0);
+
+/*! \brief          Set or unset lingering of the socket
+    \param  lng     struct linger object
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  void linger(const struct linger& lngr);
 
 /*! \brief    Get the lingering state of the socket
     \return   whether linger is enabled and, if so, the value in seconds

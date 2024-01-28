@@ -1,4 +1,4 @@
-// $Id: qso.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: qso.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -623,10 +623,7 @@ specification tells us otherwise, that's what we do.
     { const string field_name { name.substr(6) };
     
       if (contains(field_name, '+'))                        // "+" indicates a CHOICE
-      { //const vector<string> vec { clean_split_string <string> (field_name, '+') };
-
- //       for (const auto& name : vec)
-        for (const auto& name : clean_split_string <string> (field_name, '+'))
+      { for (const auto& name : clean_split_string <string> (field_name, '+'))
         { for (const auto& [nm, val] : _sent_exchange)
             if (nm == name)
               value = val;
@@ -875,7 +872,7 @@ string QSO::log_line(void)
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { unsigned int field_width { QSO_MULT_WIDTH };
+  { unsigned int field_width { QSO_MULT_WIDTH };    // default width
 
     const string name { field.name() };
 

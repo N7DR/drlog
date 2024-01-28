@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 231 2023-12-10 14:01:06Z  $
+// $Id: drlog.cpp 233 2024-01-28 23:58:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -199,6 +199,7 @@ memory_entry recall_memory(const unsigned int n);   ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
+string run_external_command(const string& cmd);     ///< run an external command
 
 void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
@@ -825,6 +826,14 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
+// run any "execute at start" program
+    if (const auto cmd { context.execute_at_start() }; !cmd.empty())
+    { ost << "Executing external command: " << cmd << endl
+          << "output:" << endl;
+
+      ost << run_external_command(cmd) << endl;
+    }
+
 // set some immutable variables from the context
     DP            = context.decimal_point();            // correct decimal point indicator
     TS            = context.thousands_separator();      // correct thousands separator
@@ -908,7 +917,8 @@ int main(int argc, char** argv)
 
     { SAFELOCK(my_bandmap_entry);
 
-      time_last_qsy = time(NULL);  // initialise with a dummy QSY
+//      time_last_qsy = time(NULL);  // initialise with a dummy QSY
+      time_last_qsy = NOW();  // initialise with a dummy QSY
     }
 
 // set up the calls to be monitored
@@ -8400,7 +8410,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 //  if (changed_frequency)
   { //ost << "inside tmp_changed_frequency conditional" << endl;
 
-    time_last_qsy = time(NULL);     // record the time for possible change in state of audio recording
+//    time_last_qsy = time(NULL);     // record the time for possible change in state of audio recording
+    time_last_qsy = NOW();
     mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
@@ -8647,7 +8658,6 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
     try
     { const string  indices { run_external_command(cmd) };
 
- //     win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string> (hhmmss(), 0, 5) < EOL
       win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string_view> (hhmmss(), 0, 5) < EOL
                   <= indices;
     }
@@ -8669,12 +8679,8 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
 int time_since_last_qso(const logbook& logbk)
 { const QSO last_qso { logbk.last_qso() };
 
- // const int rv { static_cast<int> ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) ) };
-
- // ost << "time_since_last_qso() returning: " << rv << endl;
-
-  return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
-//  return ( last_qso.empty() ? -1 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
+//  return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
+  return ( last_qso.empty() ? 0 : (NOW() - last_qso.epoch_time()) );      // get the time from the kernel
 }
 
 /*! \brief      Time in seconds since the last QSY
@@ -8685,14 +8691,8 @@ int time_since_last_qso(const logbook& logbk)
 int time_since_last_qsy(void)
 { SAFELOCK(my_bandmap_entry);
 
-//  ost << "time now = " << time(NULL) << endl;
-//  ost << "time_last_qsy = " << time_last_qsy << endl;
-
-//  const int rv { static_cast<int> ( time(NULL) - time_last_qsy ) };
-
-//  ost << "time_since_last_qsy() returning: " << rv << endl;
-
-  return (time(NULL) - time_last_qsy);
+//  return (time(NULL) - time_last_qsy);
+  return (NOW() - time_last_qsy);
 }
 
 /*! \brief              Possibly update the variable that holds the greatest distance
@@ -9249,9 +9249,6 @@ void rebuild_dynamic_call_databases(const logbook& logbk)
   fuzzy_dynamic_db.clear();
   query_db.clear_dynamic_database();
 
-//  const set<string> calls_in_log { logbk.calls() };
-
-//  for (const string& callsign : calls_in_log)
   for ( const string& callsign : logbk.calls() )
   { if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
       scp_dynamic_db += callsign;
@@ -9289,7 +9286,7 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
   int y { win_height - 1 };
 
-  for (size_t n { 0 }; (n < new_contents.size() and (y >= 0)); ++n)
+  for (size_t n { 0 }; ( (n < new_contents.size()) and (y >= 0) ); ++n)
     win_posted_by < cursor(0, y--) < new_contents.at(n);
 
   win_posted_by.refresh();
@@ -9300,13 +9297,14 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
     \return     the calls in the DO NOT SHOW file for band <i>b</i>
 */
 set<string> calls_from_do_not_show_file(const BAND b)
-{ const string filename_suffix { (b == ALL_BANDS) ? ""s : "-"s + BAND_NAME[b] };
+{ const string filename_suffix { (b == ALL_BANDS) ? EMPTY_STR : "-"s + BAND_NAME[b] };
   const string filename        { context.do_not_show_filename() + filename_suffix };
 
   set<string> rv;
 
   try
-  { FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+  { //FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+    FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
   }
 
   catch (...)     // not an error if a do-not-show file does not exist
@@ -9415,7 +9413,8 @@ string expected_received_exchange(const string& callsign)
       { string iaru_guess { exchange_db.guess_value(callsign, "SOCIETY"s) };      // start with guessing it's a society
 
         if (iaru_guess.empty())
-          iaru_guess = to_upper(exchange_db.guess_value(callsign, "ITUZONE"s));   // try ITU zone if no society
+//          iaru_guess = to_upper(exchange_db.guess_value(callsign, "ITUZONE"s));   // try ITU zone if no society
+          iaru_guess = exchange_db.guess_value(callsign, "ITUZONE"s);   // try ITU zone if no society
 
         return iaru_guess;
       }
@@ -9476,8 +9475,7 @@ void update_pings(window& win, PING_TABLE& table)
     unsigned int y { static_cast<unsigned int>(win.height() - 1) };
 
     for (const auto& [label, socket_p] : ping_table_p)
-    { //const string line_string { create_centred_string(label, win.width()) };
-      const string line_string { centred_string(label, win.width()) };
+    { const string line_string { centred_string(label, win.width()) };
       const bool   success     { socket_p -> ping() };
 
       win.move_cursor(0, y--);
@@ -9490,7 +9488,7 @@ void update_pings(window& win, PING_TABLE& table)
   end_of_thread("pings"s);
 }
 
-/// zoom P3 and turn off RIT, turn on XIT
+/// zoom P3, turn off RIT, turn on XIT
 void zoomed_xit(void)
 { p3_span(p3_span_cq);
   rig.disable_rit();
