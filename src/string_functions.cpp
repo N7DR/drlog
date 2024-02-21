@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: string_functions.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -216,12 +216,11 @@ string replace(string_view s, string_view old_str, string_view new_str)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//string pad_string(const string& s, const size_t len, const PAD pad_side, const char pad_char)
 string pad_string(string_view s, const size_t len, const PAD pad_side, const char pad_char)
 { const string s_str { s }; 
 
   if ( (static_cast<int>(len) <= 0) or (s.length() >= len) )
-   return s_str;
+    return s_str;
 
   const size_t n_pad_chars { len - s.length() };
   
@@ -237,7 +236,6 @@ string pad_string(string_view s, const size_t len, const PAD pad_side, const cha
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-//string read_file(const string& filename)
 string read_file(string_view filename)
 { const string filename_str { filename };   // because we need c_str()
 
@@ -365,22 +363,6 @@ vector<string> remove_empty_lines(const vector<string>& lines)
 
   return rv;
 }
-
-/*! \brief      Remove all instances of a specific leading character
-    \param  cs  original string
-    \param  c   leading character to remove (if present)
-    \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
-*/
-#if 0
-string remove_leading(const string& cs, const char c)
-{ if (cs.empty())
-    return cs;
-
-  const size_t posn { cs.find_first_not_of(create_string(c)) };
-
-  return ( (posn == string::npos) ? cs : substring <std::string> (cs, posn) );
-}
-#endif
 
 /*! \brief      Remove all instances of a specific trailing character
     \param  cs  original string

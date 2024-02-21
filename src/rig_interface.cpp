@@ -829,6 +829,25 @@ int rig_interface::keyer_speed(void) const
   }
 }
 
+void rig_interface::wait_until_not_busy(void) const
+{ while (is_transmitting())
+    sleep_for(100ms);
+}
+
+#if 0
+string raw_command_not_busy(const string& cmd, const RESPONSE expectation, const int expected_len) const
+{ string putative_response { };
+
+  string rc = raw_command(cmd, expectation, expected_len);
+
+  if (rc.starts_with("?;"))
+  { putative_response = substring <string> (raw_command, 2);
+
+
+  }
+}
+#endif
+
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
 
@@ -857,6 +876,8 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
   string rcvd { };
 
+  static string rcvd_buf { };
+
   const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
@@ -883,13 +904,10 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     if (_instrumented)
       ost << "sent to rig: " << cmd << endl;
 
-    write(fd, cmd.c_str(), cmd.length());
+    write(fd, cmd.c_str(), cmd.length());     // send the command
+
     serial_flush(&rs_p->rigport);
-//    sleep_for(milliseconds(100));
-//    sleep_for(100ms);
-//    sleep_for(10ms);
-//    sleep_for(5ms);
-    sleep_for(RETRY_TIME);
+    sleep_for(RETRY_TIME);            // wait for a bit
 
     fd_set set;
     struct timeval timeout;  // time_t (seconds), long (microseconds)
@@ -953,9 +971,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
-//            sleep_for(50ms);
-//            sleep_for(10ms);
-//            sleep_for(5ms);
             sleep_for(RETRY_TIME);
 
           if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
@@ -974,7 +989,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
               }
             }
             else
-            { if (cmd == "TQ;"sv)       // transmit query
+            { if (cmd == "TQ;"sv)       // was this a transmit query?
               { if (rig_communication_failures != 0)
                 { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
                   rig_communication_failures = 0;
@@ -1013,6 +1028,22 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
         ost << "received from rig: " << to_printable_string(rcvd) << endl;
     }
 
+//    rcvd_buf += rcvd;
+
+//    auto semi_colon_posn = rcvd_buf.find(';');
+
+//    if (semi_colon_posn == string::npos)
+//    { ost << "ERROR in raw_command: cannot find semi-colon in response" << endl;
+//      return rcvd;    // temporary return; change this
+//    }
+
+//    const string rv = rcvd_buf.substr(0,semi_colon_posn + 1);  //substring(rcvd_buf, 0, semi_colon_posn + 1);
+
+//    rcvd_buf = substring <string> (rcvd_buf, semi_colon_posn + 1);
+
+//    return rv;
+
+
     return rcvd;
   }
 
@@ -1022,6 +1053,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 #endif
 
 #if defined(NEW_RAW_COMMAND)
+BURBLE
 const string rig_interface::raw_command(const string& cmd, const unsigned int expected_length)
 { struct rig_state* rs_p { &(_rigp->state) };
   struct rig_state& rs   { *rs_p };
@@ -1200,6 +1232,8 @@ string rig_interface::bandwidth_str(void) const
 
   SAFELOCK(_rig);
 
+
+
   if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
 //      return (substring <std::string> (response, 2, 4) + '0');   // returned value is in tens of Hz, so convert to Hz
 //      return remove_leading <std::string> ( (substring <std::string> (response, 2, 4) + '0'), '0');   // returned value is in tens of Hz, so convert to Hz
@@ -1220,16 +1254,16 @@ int rig_interface::bandwidth(void) const
 { if  ( (!_rig_connected) or (_model != RIG_MODEL_K3) )
     return 0;
 
-//  SAFELOCK(_rig);
+  SAFELOCK(_rig);
 
-  return from_string<int>(bandwidth_str());
+//  return from_string<int>(bandwidth_str());
 
-//  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
-//      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
-//  else
-//  { _error_alert("Invalid response getting bandwidth: "s + response);
-//    return 0;
-//  }
+  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
+  else
+  { _error_alert("Invalid response getting bandwidth: "s + response);
+    return 0;
+  }
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1264,7 +1298,7 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
     (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands. I could write a book;
     or at least a paper.)
 */
-bool rig_interface::is_transmitting(void)
+bool rig_interface::is_transmitting(void) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
     { if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0))
@@ -1353,16 +1387,27 @@ void rig_interface::bandwidth_a(const unsigned int hz) const
 { constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
   constexpr int                       PRECISION  { 50 };
 
+//  ost << "setting bandwidth to " << hz << endl;
+
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
+    { wait_until_not_busy();
 
-      raw_command("BW"s + k3_bw_units + ";"s);
+      const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
+
+//      ost << "k3_bw_units = " << k3_bw_units << endl;
+
+      const string bw_command { "BW"s + k3_bw_units + ";"s };
+
+      raw_command(bw_command);
 
       while (abs(bandwidth() - static_cast<int>(hz)) > PRECISION)       // the K3 is brain-dead
       { sleep_for(RETRY_TIME);
-        raw_command("BW"s + k3_bw_units + ";"s);
+        raw_command(bw_command);
       }
+
+//      ost << "exiting bandwidth_a" << endl;
+//      ost << "bandwidth = " << bandwidth() << endl;
     }
   }
 }

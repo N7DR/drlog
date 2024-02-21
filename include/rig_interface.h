@@ -465,6 +465,8 @@ public:
 */
   std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
 
+//  std::string raw_command_not_busy(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
+
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode
     \return     the rig's most recent frequency for bandmode <i>bm</i>
@@ -502,7 +504,9 @@ public:
     With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
     (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
 */
-  bool is_transmitting(void);
+  bool is_transmitting(void) const;
+
+  void wait_until_not_busy(void) const;
 
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user

@@ -1,4 +1,4 @@
-// $Id: adif3.h 233 2024-01-28 23:58:43Z  $
+// $Id: adif3.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -289,7 +289,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  explicit adif3_file(const std::string& filename);
+  explicit adif3_file(const std::string_view filename);
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
@@ -297,7 +297,7 @@ public:
 
     Returns empty object if a problem occurs
 */
-  adif3_file(const std::vector<std::string>& path, const std::string& filename);
+  adif3_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match

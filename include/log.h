@@ -1,4 +1,4 @@
-// $Id: log.h 233 2024-01-28 23:58:43Z  $
+// $Id: log.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,7 +138,6 @@ public:
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-//  unsigned int n_worked(const std::string& call) const;
   unsigned int n_worked(const std::string_view call) const;
 
 /*! \brief          Has a particular call been worked at all?
@@ -167,8 +166,8 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
-//  bool qso_b4(const std::string& call, const MODE m) const;
-  inline bool qso_b4(const std::string& call, const MODE m) const
+//  inline bool qso_b4(const std::string& call, const MODE m) const
+  inline bool qso_b4(const std::string_view call, const MODE m) const
   { SAFELOCK(_log);
 
     return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
@@ -180,8 +179,13 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
-  bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
-  
+//  bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
+  inline bool qso_b4(const std::string& call, const BAND b, const MODE m) const
+  { SAFELOCK(_log);
+
+    return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
+  }
+
 /*! \brief          Get a string list of bands on which a call is needed
     \param  call    target callsign
     \param  rules   rules for the contest
@@ -245,13 +249,14 @@ public:
     \param  filename                name of Cabrillo file
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
-  void read_cabrillo(const std::string& filename, const std::string& cabrillo_qso_template);
+//  void read_cabrillo(const std::string& filename, const std::string& cabrillo_qso_template);
+  void read_cabrillo(const std::string_view filename, const std::string_view cabrillo_qso_template);
 
 /*! \brief                      Read from a Cabrillo file, using space-delimited fields
     \param  filename            name of Cabrillo file
     \param  cabrillo_fields     names of Cabrillo fields
 */
-  void read_cabrillo(const std::string& filename, const std::vector<std::string>& cabrillo_fields);
+  void read_cabrillo(const std::string_view filename, const std::vector<std::string>& cabrillo_fields);
 
 /*! \brief              Read from a TRLOG file
     \param  filename    name of TRLOG file

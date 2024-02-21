@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 213 2022-12-15 17:11:46Z  $
+// $Id: cw_buffer.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -428,7 +428,6 @@ void cw_buffer::key_up(const int n)
 {
   { SAFELOCK(_key_buffer);
 
-//    _key_buffer.push(-n);
     _key_buffer += (-n);
   }
 
@@ -758,14 +757,18 @@ void cw_buffer::add(const char c, const int character_space)
 
     case '-' :                               // slower by 1 WPM (not compatible with TRLOG)
       space = 0;
-      _key_buffer.push(0);                   // command
-      _key_buffer.push(CMD_SLOWER);
+//      _key_buffer.push(0);                   // command
+//      _key_buffer.push(CMD_SLOWER);
+      _key_buffer += 0;                   // command
+      _key_buffer += CMD_SLOWER;
       break;
 
     case '+' :                               // faster by 1 WPM (not compatible with TRLOG)
       space = 0;
-      _key_buffer.push(0);                   // command
-      _key_buffer.push(CMD_FASTER);
+//      _key_buffer.push(0);                   // command
+//      _key_buffer.push(CMD_FASTER);
+      _key_buffer += 0;                   // command
+      _key_buffer += CMD_FASTER;
       break;
 
     case static_cast<char>(23) :                // 125% dah

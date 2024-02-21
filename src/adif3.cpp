@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: adif3.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -110,7 +110,8 @@ void adif3_field::_verify(void) const
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
-      if (!(_ENUMERATION_DXCC_ENTITY_CODE > from_string<int>(_value)))
+//      if (!(_ENUMERATION_DXCC_ENTITY_CODE > from_string<int>(_value)))
+      if (!(_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value))))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
     break;
@@ -446,7 +447,7 @@ bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
 
     Throws exception if something goes wrong when reading the file
 */
-adif3_file::adif3_file(const string& filename)
+adif3_file::adif3_file(const string_view filename)
 { const string contents { read_file(filename) };            // this might throw
   
   size_t start_posn { skip_adif3_header(contents) };
@@ -469,7 +470,8 @@ adif3_file::adif3_file(const string& filename)
 
     Returns empty object if a problem occurs
 */
-adif3_file::adif3_file(const vector<string>& path, const string& filename)
+//adif3_file::adif3_file(const vector<string>& path, const string& filename)
+adif3_file::adif3_file(const vector<string>& path, const string_view filename)
 { for (const auto& this_path : path)
   { try
     { *this = adif3_file { this_path + "/"s + filename };

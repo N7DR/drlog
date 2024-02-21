@@ -1,4 +1,4 @@
-// $Id: macros.h 232 2023-12-31 16:46:23Z  $
+// $Id: macros.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -241,6 +241,7 @@ template <class T> concept is_mum   = is_map<T>      or is_unordered_map<T>;
 template <class T> concept is_mmumm = is_multimap<T> or is_unordered_multimap<T>;
 template <class T> concept is_sus   = is_set<T>      or is_unordered_set<T>;
 template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>;
+template <class T> concept is_ssv   = is_string<T>   or is_string_view<T>;
 
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
@@ -820,7 +821,11 @@ inline bool operator<(const E& v, const S& s)
   requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
 { return (s > v); }
 
-/// union of two sets of the same type
+/*! \brief      Union of two sets of the same type
+    \param  s1  first set
+    \param  s2  second set
+    \return     union of <i>s1</i> and <i>s2</i>
+*/
 template<class T>
 T operator+(const T& s1, const T& s2)
   requires (is_set<T>)
@@ -832,16 +837,16 @@ T operator+(const T& s1, const T& s2)
 }
 
 ///  does a MUM contain a particular key?
-template <class M, class K>
-inline bool operator>(const M& m, const K& k)
-  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
-{ return m.contains(k); }
+//template <class M, class K>
+//inline bool operator>(const M& m, const K& k)
+//  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
+//{ return m.contains(k); }
 
 ///  does a MUM contain a particular key?
-template <class M, class K>
-inline bool operator<(const K& k, const M& m)
-  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
-{ return (m > k); }
+//template <class M, class K>
+//inline bool operator<(const K& k, const M& m)
+//  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
+//{ return (m > k); }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
     \param  m   map or unordered map to be searched
@@ -853,7 +858,9 @@ inline bool operator<(const K& k, const M& m)
 */
 template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-  requires (is_mum<C>) && (std::is_same_v<typename C::key_type, K>)
+//  requires (is_mum<C>) && (std::is_same_v<typename C::key_type, K>)
+//  requires (is_mum<C>) and (std::convertible_to<K, typename C::key_type>)
+  requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
@@ -868,7 +875,9 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
 */
 template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
 auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
-  requires (is_mum<C>) and (std::is_same_v<typename C::key_type, K>)
+//  requires (is_mum<C>) and (std::is_same_v<typename C::key_type, K>)
+//  requires (is_mum<C>) and (std::convertible_to<K, typename C::key_type>)
+  requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );

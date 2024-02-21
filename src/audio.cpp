@@ -1,4 +1,4 @@
-// $Id: audio.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: audio.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -526,7 +526,6 @@ void audio_recorder::initialise(void)
       ost << "error number " << status << endl;
       ost << snd_strerror(status) << endl;
       n_failures++;
-//      sleep_for(seconds(5));
       sleep_for(5s);
     }
   }  while ((status < 0) and (n_failures <= MAX_FAILURES));

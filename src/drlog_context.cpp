@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: drlog_context.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1074,7 +1074,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
       FOR_ALL(clean_split_string <string_view> (RHS), [this] (const string_view str) { _auto_remaining_exchange_mults += str; });
-//     FOR_ALL(clean_split_string <string> (RHS), [this] (const string& str) { _auto_remaining_exchange_mults += str; });
  //ranges::fold_left(clean_split_string <string> (RHS), _auto_remaining_exchange_mults);  // not yet supported
 
 // ---------------------------------------------  CABRILLO  ---------------------------------

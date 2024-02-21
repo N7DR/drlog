@@ -1,4 +1,4 @@
-// $Id: log.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: log.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -183,11 +183,13 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
+#if 0
 bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
 
   return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
 }
+#endif
 
 /*! \brief          Get a string list of bands on which a call is needed
     \param  call    target callsign
@@ -450,7 +452,8 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
     \param  filename                name of Cabrillo file
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
-void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
+//void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
+void logbook::read_cabrillo(const string_view filename, const string_view cabrillo_qso_template)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
   const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };
@@ -493,7 +496,8 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     \param  filename            name of Cabrillo file
     \param  cabrillo_fields     names of Cabrillo fields
 */
-void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
+//void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
+void logbook::read_cabrillo(const string_view filename, const vector<string>& cabrillo_fields)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
   const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };

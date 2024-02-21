@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 214 2022-12-18 15:11:23Z  $
+// $Id: cw_buffer.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,6 @@
 #include "parallel_port.h"
 #include "pthread_support.h"
 #include "rig_interface.h"
-//#include "ts_queue.h"
 
 #include <queue>
 #include <string>
@@ -55,7 +54,6 @@ protected:
 */
   std::queue<int>       _key_buffer;                                ///< the queue of key up/down motions remaining to be executed
   pt_mutex              _key_buffer_mutex { "CW KEY BUFFER"s };     ///< mutex to allow thread-safe access to <i>_key_buffer</i>
-//  ts_queue<int>         _key_buffer;                                ///< the queue of key up/down motions remaining to be executed
   parallel_port         _port;                                      ///< the associated parallel port
   unsigned int          _ptt_delay;                                 ///< delay between asserting PTT and transmitting the start of a character, in milliseconds
   rig_interface*        _rigp             { nullptr };              ///< associated rig

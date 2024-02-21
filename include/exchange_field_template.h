@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.h 205 2022-04-24 16:05:06Z  $
+// $Id: exchange_field_template.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,9 +114,7 @@ public:
     \return         whether <i>str</i> is a canonical value
 */
   inline bool is_canonical_value(const std::string& str) const
-//    { return (_values.find(str) != _values.end()); }
-//    { return _values.contains(str); }
-    { return (_values > str); }
+    { return _values.contains(str); }
 
 /*! \brief                          Add a canonical value
     \param  new_canonical_value     string to add

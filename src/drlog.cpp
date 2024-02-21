@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: drlog.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -607,8 +607,12 @@ WRAPPER_2_NC(bandmap_info,
                window*, win_bandmap_p,
                decltype(bandmaps)*, bandmaps_p);   ///< parameters for bandmap
 
+//WRAPPER_2_NC(rig_status_info,
+//               unsigned int, poll_time,
+//               rig_interface*, rigp);              ///< parameters for rig status
+
 WRAPPER_2_NC(rig_status_info,
-               unsigned int, poll_time,
+               milliseconds, poll_time,
                rig_interface*, rigp);              ///< parameters for rig status
 
 // prepare for terminal I/O
@@ -917,7 +921,6 @@ int main(int argc, char** argv)
 
     { SAFELOCK(my_bandmap_entry);
 
-//      time_last_qsy = time(NULL);  // initialise with a dummy QSY
       time_last_qsy = NOW();  // initialise with a dummy QSY
     }
 
@@ -1576,7 +1579,8 @@ int main(int argc, char** argv)
       }
 
 // start to display the rig status (in the RIG window); also get rig frequency for bandmap
-      rig_status_info rig_status_thread_parameters(1000 /* poll time in milliseconds*/, &rig);         // poll rig once per second
+//      rig_status_info rig_status_thread_parameters(1000 /* poll time in milliseconds*/, &rig);         // poll rig once per second
+      rig_status_info rig_status_thread_parameters(1000ms /* poll time */, &rig);         // poll rig once per second
 
       try
       { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status"s);
@@ -2179,7 +2183,9 @@ void* display_rig_status(void* vp)
   rig_status_info* rig_status_thread_parameters_p { static_cast<rig_status_info*>(vp) };
   rig_status_info& rig_status_thread_parameters   { *rig_status_thread_parameters_p };
 
-  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
+//  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
+//  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time().count() * 1000) }; // convert ms to μs
+  static const long millisecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time().count()) };
 
   DRLOG_MODE last_drlog_mode { DRLOG_MODE::SAP };
 
@@ -2194,22 +2200,19 @@ void* display_rig_status(void* vp)
   { try
     { try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
-          sleep_for(microseconds(microsecond_poll_period / 10));
+//          sleep_for(microseconds(microsecond_poll_period / 10));
+          sleep_for(milliseconds(millisecond_poll_period / 10));
       }
 
       catch (const rig_interface_error& e)
       { alert("Error communicating with rig during poll loop"s);
-        sleep_for(microseconds(microsecond_poll_period * 10));                      // wait a (relatively) long time if there was an error
+//        sleep_for(microseconds(microsecond_poll_period * 10));                      // wait a (relatively) long time if there was an error
+        sleep_for(milliseconds(millisecond_poll_period / 2));                      // wait a (relatively) long time if there was an error
       }
 
 // if it's a K3 we can get a lot of info with just one or two queries -- for now just assume it's a K3
       if (ok_to_poll_k3)
-      { //ost << "polling K3 at: " << hhmmss() << endl;
-
-        const bool is_ssb { current_mode == MODE_SSB };
- //       rig_status_thread_parameters.rigp() -> k3_command_mode();
-
- //       time_log <std::chrono::milliseconds> tl;
+      { const bool is_ssb { current_mode == MODE_SSB };
 
         constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
         constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
@@ -2219,14 +2222,8 @@ void* display_rig_status(void* vp)
         if ( is_ssb and ( rig_status_thread_parameters.rigp() -> k3_command_mode() == K3_COMMAND_MODE::NORMAL ) )  // NB this is the mode drlog /thinks/ is correct, but it saves time
           rig_status_thread_parameters.rigp() -> k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 
- //       time_log <std::chrono::milliseconds> t2;
-
-        const string   status_str    { rig_status_thread_parameters.rigp() -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };       // K3 returns 38 characters
-        const string   ds_reply_str  { is_ssb ? (rig_status_thread_parameters.rigp()) -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };           // K3 returns 13 characters; currently needed only in SSB
-
- //       t2.end_now();
- //       ost << "actual time taken to poll K3 = " << t2.time_span<int>() << " milliseconds" << endl;
- //       ost << "click time from tl = " << tl.click<int>() << " milliseconds" << endl;
+        const string   status_str    { rig_status_thread_parameters.rigp() -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };               // K3 returns 38 characters
+        const string   ds_reply_str  { is_ssb ? (rig_status_thread_parameters.rigp()) -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
@@ -2234,8 +2231,6 @@ void* display_rig_status(void* vp)
           const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
           const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
           const bool       notch              { is_ssb ? (rig_status_thread_parameters.rigp())->notch_enabled(ds_reply_str) : false };   // only needed in SSB
-
- //         ost << "click time A from tl = " << tl.click<int>() << " milliseconds" << endl;
 
           if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
             enter_sap_mode();                                                                   // switch to SAP if we've moved
@@ -2245,8 +2240,6 @@ void* display_rig_status(void* vp)
           MODE m { current_mode };                                        // mode as determined by drlog, not by rig
 
           m = rig_status_thread_parameters.rigp() -> rig_mode();      // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
-
- //         ost << "click time B from tl = " << tl.click<int>() << " milliseconds" << endl;
 
 // have we changed band (perhaps manually)?
           if (const BAND sgb { current_band }; sgb != to_BAND(f))
@@ -2282,11 +2275,9 @@ void* display_rig_status(void* vp)
           else          // we haven't changed band
             update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
 
-//          ost << "click time C from tl = " << tl.click<int>() << " milliseconds" << endl;
-
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
-// it seems like the effort of trying to work around the bug is not worth it
+// it seems like the effort of trying to work around the (Yet Another Elecraft) bug is not worth it
           constexpr unsigned int RIT_XIT_PM_ENTRY  { 18 };      // position of the RIT/XIT +/- indicator; compiler does not allow "±" in variable names
 
           constexpr unsigned int RIT_XIT_OFFSET_ENTRY  { 19 };  // position of the RIT/XIT offset
@@ -2313,10 +2304,17 @@ void* display_rig_status(void* vp)
             rit_xit_str += 'R';
 
           if (rit_is_on or xit_is_on)
-          { //const int rit_xit_value { from_string<int>(substring <std::string> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH)) };
-            const string rit_xit_value_str { remove_leading <std::string> (substring <std::string_view> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH), '0') };  // removesleading zeros
+          { /* const */ string rit_xit_value_str { remove_leading <std::string> (substring <std::string_view> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH), '0') };  // removes leading zeros
 
- //           rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + to_string(rit_xit_value));
+//            if (rit_xit_value_str.find_first_not_of('0') == string::npos)
+//              rit_xit_value_str = '0';
+
+            if (rit_xit_value_str.empty())
+              rit_xit_value_str = '0';
+
+//            ost << "rit_xit_value_str = " << rit_xit_value_str << endl;
+
+//            rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + rit_xit_value_str);
             rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + rit_xit_value_str);
             rit_xit_str = pad_left(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
           }
@@ -2326,18 +2324,9 @@ void* display_rig_status(void* vp)
 
           rig_is_split = (status_str[SPLIT_ENTRY] == '1');
 
- //         ost << "click time D from tl = " << tl.click<int>() << " milliseconds" << endl;
-
- //         const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp() -> bandwidth()) };
           const string bandwidth_str   { rig_status_thread_parameters.rigp() -> bandwidth_str() };
-
-//          ost << "click time E from tl = " << tl.click<int>() << " milliseconds" << endl;
-
           const string frequency_b_str { f_b.display_string() };
           const string centre_str      { rig_status_thread_parameters.rigp() -> centre_frequency_str() };
- //         const string centre_str      { to_string(rig_status_thread_parameters.rigp() -> centre_frequency()) };
-
- //         ost << "click time F from tl = " << tl.click<int>() << " milliseconds" << endl;
 
 // now display the status
           win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if the contest doesn't want us to be on this QRG
@@ -2385,14 +2374,11 @@ void* display_rig_status(void* vp)
           }
 
           win_rig.refresh();
-
-//          ost << "click time G from tl = " << tl.click<int>() << " milliseconds" << endl;
         }
 
 // possibly check the RX ANT status
         update_rx_ant_window();
 
- //       tl.end_now();
  //       ost << "time taken to complete K3 poll = " << tl.time_span<int>() << " milliseconds" << endl;
       }
     }
@@ -2402,7 +2388,8 @@ void* display_rig_status(void* vp)
     {
     }
 
-    sleep_for(microseconds(microsecond_poll_period));
+//    sleep_for(microseconds(microsecond_poll_period));
+    sleep_for(milliseconds(millisecond_poll_period));
 
     { SAFELOCK(thread_check);
 
@@ -4108,7 +4095,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       new_callsign = match_callsign(scp_matches, current_contents);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
-      ost << "new 1 = " << new_callsign << endl;
+//      ost << "new 1 = " << new_callsign << endl;
 
       if (new_callsign.empty())
       { 
@@ -4116,23 +4103,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (new_callsign.empty() and !scp_matches.empty())
         { new_callsign = scp_matches[0].first;
 
-          ost << "new 2a = " << new_callsign << endl;
+//          ost << "new 2a = " << new_callsign << endl;
         }
         else
         { new_callsign = match_callsign(fuzzy_matches);
 
-          ost << "new 2 = " << new_callsign << endl;
+//          ost << "new 2 = " << new_callsign << endl;
         }
 
         if (new_callsign.empty())
         { new_callsign = match_callsign(query_1_matches);
 
-          ost << "new 3 = " << new_callsign << endl;
+//          ost << "new 3 = " << new_callsign << endl;
 
           if (new_callsign.empty())
           { new_callsign = match_callsign(query_n_matches);
             
-            ost << "new 4 = " << new_callsign << endl;
+//            ost << "new 4 = " << new_callsign << endl;
           }
         }
       }
@@ -9164,10 +9151,36 @@ bool is_daylight(const string& sunrise_time, const string& sunset_time, const st
     Sets bandwidth to the wide bandwidth if it's not equal to the narrow bandwidth
 */
 bool cw_toggle_bandwidth(void)
-{ constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
+{ //constexpr int BANDWIDTH_PRECISION  { 50 };        // K3 can set only to 50 Hz boundaries
+
+
+//  ost << "rig bandwidth = " << rig.bandwidth() << ", cw_bandwidth_wide = " << cw_bandwidth_wide << ", abs = " << abs(rig.bandwidth() - cw_bandwidth_wide) << ", BWP = " << BANDWIDTH_PRECISION << endl;
 
   if (current_mode == MODE_CW)
-    rig.bandwidth( (abs(rig.bandwidth() - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
+  { //ost << "inside cw_toggle_bandwidth" << endl;
+
+    rig.bandwidth( (rig.bandwidth() == cw_bandwidth_wide) ? cw_bandwidth_narrow : cw_bandwidth_wide );
+
+//    const int bw = rig.bandwidth();
+
+//    if (bw == cw_bandwidth_wide)
+//      rig.bandwidth(cw_bandwidth_narrow);
+//    else
+//      rig.bandwidth(cw_bandwidth_wide);
+
+#if 0
+    ost << "rig bandwidth = " << bw << ", cw_bandwidth_wide = " << cw_bandwidth_wide << ", abs = " << abs(bw - cw_bandwidth_wide) << ", BWP = " << BANDWIDTH_PRECISION << endl;
+
+    const bool truth_status = (abs(bw - cw_bandwidth_wide) < BANDWIDTH_PRECISION);
+    ost << "truth status = " << boolalpha << truth_status << endl;
+
+//    rig.bandwidth( (abs(rig.bandwidth() - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
+//        rig.bandwidth( (abs(bw - cw_bandwidth_wide) < BANDWIDTH_PRECISION) ? cw_bandwidth_narrow : cw_bandwidth_wide );
+                rig.bandwidth( truth_status ? cw_bandwidth_narrow : cw_bandwidth_wide );
+
+    ost << "new bandwidth = " << rig.bandwidth() << endl;
+#endif
+  }
 
   return true;
 }
@@ -9187,7 +9200,7 @@ bool ssb_toggle_bandwidth(void)
 
   if (current_mode == MODE_SSB)
   { enum SSB_AUDIO { SSB_WIDE,
-                    SSB_NARROW
+                     SSB_NARROW
                    };
 
     const SSB_AUDIO bw { (abs(rig.bandwidth() - ssb_bandwidth_wide) < BANDWIDTH_PRECISION) ? SSB_NARROW : SSB_WIDE };

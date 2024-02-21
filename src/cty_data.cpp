@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: cty_data.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -286,8 +286,7 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ //const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ), ';') };                  // read file, remove EOL markers and split into records
-  const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
+{ const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
 
   FOR_ALL(records, [this] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
@@ -570,9 +569,9 @@ location_info location_database::info(const string& callpart) const
     return db_posn->second;  
   }
 
-  auto insert_best_info = [&callsign, this](const location_info& li) { _db_checked += { callsign, li };
-                                                                         return li;
-                                                                     };
+  auto insert_best_info = [&callsign, this] (const location_info& li) { _db_checked += { callsign, li };
+                                                                        return li;
+                                                                      };
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
@@ -692,11 +691,18 @@ location_info location_database::info(const string& callpart) const
   }  // end no portable indicator
 
 // it looks like maybe it's a reciprocal license
+
+//  if (parts.size() == 1)        // slash is first or last character
+  if (callsign.starts_with('/') or callsign.ends_with('/'))   // slash is first or last character
+    return location_info();
+
 // how many slashes are there?
   const vector<string> parts { split_string <std::string> (callsign, '/') };
 
-  if (parts.size() == 1)        // slash is first or last character
-    return location_info();
+//  ost << "callsign = " << callsign  << ", size = " << parts.size() << endl;
+
+//  for (const auto& p : parts)
+//    ost << "size of part = " << p.size() << ", part = " << p << endl;
 
   if (parts.size() > 3)
     throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: "s + callsign);

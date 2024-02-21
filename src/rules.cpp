@@ -1,4 +1,4 @@
-// $Id: rules.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: rules.cpp 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -89,7 +89,8 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
-{ if (!(_values > cv))
+{ //if (!(_values > cv))
+  if (!(_values.contains(cv)))
     _values += { cv, set<string>( { cv } ) };
 }
 
@@ -113,7 +114,9 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
-  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv += psss.first; } );
+//  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv += psss.first; } );
+  for (const auto& [ cv, set_of_values ] : _values)
+    rv += cv;
 
   return rv;
 }
@@ -200,10 +203,7 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto context_qthx { context.qthx() };
 
-  ost << "size of context.qthx() = " << context_qthx.size() << endl;
-
-//  if (context_qthx.empty())
-//    return;
+//  ost << "size of context.qthx() = " << context_qthx.size() << endl;
 
   SAFELOCK(rules);
 

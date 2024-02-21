@@ -1,4 +1,4 @@
-// $Id: string_functions.h 233 2024-01-28 23:58:43Z  $
+// $Id: string_functions.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -582,11 +582,20 @@ inline auto remove_from_end(std::string_view s, const char c) -> STYPE
 template <typename STYPE>
 auto remove_leading(std::string_view cs, const char c) -> STYPE
 { if (cs.empty())
+    return STYPE { };
+
+  const size_t posn { cs.find_first_not_of(c) };
+
+  return ( (posn == std::string_view::npos) ? STYPE { } : substring <STYPE> (cs, posn) );
+
+#if 0
+  if (cs.empty())
     return STYPE { cs };
 
   const size_t posn { cs.find_first_not_of(create_string(c)) };
 
   return ( (posn == std::string_view::npos) ? STYPE { cs } : substring <STYPE> (cs, posn) );
+#endif
 }
 
 /*! \brief      Remove leading spaces
@@ -636,7 +645,6 @@ inline auto remove_peripheral_chars(std::string_view cs, const char c) -> STYPE
 template <typename STYPE>
 inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
   { return remove_peripheral_chars <STYPE> (cs, ' '); }
-//  { return remove_trailing_spaces <STYPE> (remove_leading_spaces <std::string_view> (cs)); }
 
 /*! \brief      Remove leading and trailing instances of a particular character from each element in a vector of strings
     \param  t   container of strings
@@ -644,7 +652,8 @@ inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
     \return     <i>t</i> with leading and trailing instances of <i>c</i> removed from the individual elements
 */
 template <typename STYPE, typename T>
-  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+  requires is_vector<T> and is_ssv<typename T::value_type>
 auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
@@ -660,19 +669,10 @@ auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
     NB There should be specialisation of this for vectors that uses reserve()
 */
 template <typename STYPE, typename T>
-  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+  requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
   { return remove_peripheral_chars <STYPE> (t, ' '); }
-
-#if 0
-auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
-{ std::vector<STYPE> rv;
-
-  FOR_ALL(t, [&rv] (const auto& s) { rv += remove_peripheral_spaces <STYPE> (s); } );
-
-  return rv;
-}
-#endif
 
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
@@ -726,6 +726,14 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
 
   std::vector<STYPE> rv;
 
+// check whether cs contains a single character, which is a separator
+  if ( (cs.size() == 1) and (cs[0] == separator) )
+  { rv += EMPTY_STR;
+    rv += EMPTY_STR;
+
+    return rv;
+  }
+
   while (start_posn < cs.length())
   { if (size_t posn { cs.find(separator, start_posn) }; posn == std::string_view::npos)                       // no more separators
     { rv += STYPE { cs.substr(start_posn) };
@@ -736,6 +744,9 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
       start_posn = posn + 1;
     }
   }
+
+//  ost << "cs = " << cs << std::endl;
+
 
   return rv;
 }
@@ -765,7 +776,7 @@ inline auto clean_split_string(std::string_view cs, const char separator = ',') 
 
     Any non-full record at the end is silently discarded
 */
-std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
+//std::vector<std::string> split_string(const std::string_view cs, const unsigned int record_length);
 
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string

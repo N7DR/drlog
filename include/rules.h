@@ -1,4 +1,4 @@
-// $Id: rules.h 233 2024-01-28 23:58:43Z  $
+// $Id: rules.h 234 2024-02-19 15:37:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,6 +114,7 @@ public:
 */
 
 using MAP_STR_TO_SET =  std::map< std::string, std::set<std::string> >;
+//using MAP_STR_TO_SET =  std::map< std::string, std::set<std::string, std::less<>>, std::less<> >; // heterogeneous lookup for map and set... this turns out to be far too painful to use
 
 class exchange_field_values
 {
@@ -184,6 +185,7 @@ public:
 */
   inline size_t n_values(const std::string& cv) const
     { return MUMF_VALUE(_values, cv, &std::set<std::string>::size); }
+//    { return MUMF_VALUE(_values, cv, &((decltype(_values)::value_type)::size)); }
 
 /// Get the number of canonical values
   inline size_t n_canonical_values(void) const
@@ -203,6 +205,7 @@ public:
     Returns empty set if the canonical value does not exist
 */
   inline std::set<std::string> values(const std::string& cv) const
+//  inline std::set<std::string, std::less<>> values(const std::string_view cv) const
     { return MUM_VALUE(_values, cv); }
 
 /*! \brief      Get all the legal values (for all canonical values)
