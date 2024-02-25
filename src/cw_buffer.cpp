@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: cw_buffer.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -247,7 +247,8 @@ void* cw_buffer::_play(void*)
         {
 // possibly we should leave PTT asserted for a millisecond
           _port.control(PTT);         // key up but keep PTT asserted
-          sleep_for(microseconds(1000));
+//          sleep_for(microseconds(1000));
+          sleep_for(1000us);
 
           _port.control(0);
           ptt_asserted = false;
@@ -292,8 +293,6 @@ void* cw_buffer::_play(void*)
     \param  cw_priority     priority of the thread that sends CW
 */
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
-//  _aborted(false),
-//  _disabled_cw(false),
   _port(filename),
   _ptt_delay(delay),
   _rigp(nullptr)
@@ -757,16 +756,12 @@ void cw_buffer::add(const char c, const int character_space)
 
     case '-' :                               // slower by 1 WPM (not compatible with TRLOG)
       space = 0;
-//      _key_buffer.push(0);                   // command
-//      _key_buffer.push(CMD_SLOWER);
       _key_buffer += 0;                   // command
       _key_buffer += CMD_SLOWER;
       break;
 
     case '+' :                               // faster by 1 WPM (not compatible with TRLOG)
       space = 0;
-//      _key_buffer.push(0);                   // command
-//      _key_buffer.push(CMD_FASTER);
       _key_buffer += 0;                   // command
       _key_buffer += CMD_FASTER;
       break;

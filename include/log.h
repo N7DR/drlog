@@ -1,4 +1,4 @@
-// $Id: log.h 234 2024-02-19 15:37:47Z  $
+// $Id: log.h 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -369,13 +369,13 @@ public:
   }
 
 /// height of the associated window
-  inline unsigned int win_size(void)
+  inline unsigned int win_size(void) const
   { SAFELOCK(_extract);
     return _win_size;
   }
 
 /// QSOs contained in the extract
-  inline std::deque<QSO> qsos(void)
+  inline std::deque<QSO> qsos(void) const
   { SAFELOCK(_extract);
     return _qsos;
   }

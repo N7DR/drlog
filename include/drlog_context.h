@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 233 2024-01-28 23:58:43Z  $
+// $Id: drlog_context.h 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -259,6 +259,8 @@ protected:
   bool                                         _scoring_enabled                         { true };                           ///< is scoring enabled?
   std::string                                  _screen_snapshot_file                    { "screen"s };                      ///< base name of file for screenshot
   bool                                         _screen_snapshot_on_exit                 { false };                          ///< whether to take a screenshot on exit
+  bool                                         _self_spotting_enabled                   { false };                          ///< whether self-spotting is enabled
+  std::string                                  _self_spotting_text                      { };                                ///< text in comment portion of self-spots
   std::vector<std::pair<std::string, std::string> > _sent_exchange                      { };                                ///< names and values of sent exchange fields
   std::vector<std::pair<std::string, std::string> > _sent_exchange_cw                   { };                                ///< names and values of sent exchange fields, CW
   std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb                  { };                                ///< names and values of sent exchange fields, SSB
@@ -547,6 +549,8 @@ public:
   CONTEXTREAD(scoring_enabled);                  ///< is scoring enabled?
   CONTEXTREAD(screen_snapshot_file);             ///< base name of file for screenshot
   CONTEXTREAD(screen_snapshot_on_exit);          ///< whether to take a screenshot on exit
+  CONTEXTREAD(self_spotting_enabled);            ///< whether self-spotting is enabled
+  CONTEXTREAD(self_spotting_text);               ///< text in comment portion of self-spots
 
 /*! \brief      Get names and values of sent exchange fields for a particular mode
     \param  m   target mode

@@ -1,4 +1,4 @@
-// $Id: cabrillo.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: cabrillo.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@
 
 using namespace std;
 
-extern ofstream            ost;                   ///< for debugging, info
+//extern ofstream            ost;                   ///< for debugging, info
 
 // -----------  cabrillo_tag_template  ----------------
 

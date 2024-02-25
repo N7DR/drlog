@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: cty_data.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -95,7 +95,14 @@ cty_record::cty_record(string_view record)
 //  const vector<string_view> fields { remove_peripheral_spaces <std::string_view> (split_string <std::string_view> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
+  { ost << " Error constructing cty_record; record = " << remove_chars(record, CRLF) << endl
+        << " number of fields = " << fields.size() << endl;
+
+    for (size_t n { 0 }; n < fields.size(); ++n)
+      ost << "field #" << n << ": " << fields[n]<< endl;
+
     throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found "s + to_string(fields.size()) + " fields in record for "s + string { fields[0] });
+  }
   
   _country_name = fields[CTY_NAME];
 

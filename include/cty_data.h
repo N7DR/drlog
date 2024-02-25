@@ -1,4 +1,4 @@
-// $Id: cty_data.h 223 2023-07-30 13:37:25Z  $
+// $Id: cty_data.h 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -248,8 +248,11 @@ public:
 //  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
   inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
 //    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
-    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), CRLF), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
-    
+//    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), CRLF), ';'), [this] (const std::string& rec) { if (contains(rec, ':'))  // check that it looks like a record
+//                                                                                                                                   push_back(static_cast<cty_record>(rec));
+//                                                                                                                               }); }    // applies to base class
+    { FOR_ALL(split_string_into_records <std::string> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
+
 /// how many countries are present?
   inline unsigned int n_countries(void) const
     { return size(); }

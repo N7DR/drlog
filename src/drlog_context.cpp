@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: drlog_context.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -916,6 +916,14 @@ void drlog_context::_process_configuration_file(const string& filename)
 // SCREEN SNAPSHOT ON EXIT
     if ( (LHS == "SCREEN SNAPSHOT ON EXIT"sv) or (LHS == "SCREENSHOT ON EXIT"sv) )
       _screen_snapshot_on_exit = is_true;
+
+// SELF-SPOTTING ENABLE
+    if ( (LHS == "SELF-SPOTTING ENABLE"sv) or (LHS == "SELF-SPOTTING ENABLED"sv) )
+      _self_spotting_enabled = is_true;
+
+// SELF-SPOTTING TEXT
+    if (LHS == "SELF-SPOTTING TEXT"sv)
+      _self_spotting_text = RHS;
 
 // SERIAL NUMBER SPACES
     if (LHS == "SERIAL NUMBER SPACES"sv)

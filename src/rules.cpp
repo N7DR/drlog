@@ -1,4 +1,4 @@
-// $Id: rules.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: rules.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -232,40 +232,6 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
       _exch_values += qthx;
     }
   }
-
-#if 0
-  const auto context_qth2x { context.qth2x() };
-
-  ost << "size of context.qth2x() = " << context_qth2x.size() << endl;
-
-  if (!context_qth2x.empty())
-  { for (const auto& this_qthx : context_qth2x)
-    { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-      const set<string> ss               { this_qthx.second };
-
-      exchange_field_values qth2x;
-
-      qth2x.name(string("QTH2X["s) + canonical_prefix + "]"s);
-
-      for (const auto& this_value : ss)
-      { if (!contains(this_value, '|'))
-          qth2x.add_canonical_value(this_value);
-        else
-        { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
-
-          if (!equivalent_values.empty())
-            qth2x.add_canonical_value(equivalent_values[0]);
-
-          for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qth2x] (const string& equivalent_value) { qth2x += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
-        }
-      }
-
-      _exch_values += qth2x;
-    }
-  }
-#endif
-
-//  ost << "exiting _parse_context_qth; size of _exch_values = " << _exch_values.size() << endl;
 }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -363,33 +329,36 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // generate vector of all permitted exchange fields
   map<string /* canonical prefix */, vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
-  const auto& per_country_exchanges { context.exchange_per_country() };
+  const auto& per_country_exchanges { context.exchange_per_country() };   // map, per-country exchanges; key = prefix-or-call; value = exchange
 
   for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
     permitted_exchange_fields += { canonical_prefix, clean_split_string <string> (allowed_exchange_values) };   // unexpanded choice
 
-  for (const auto& pce : per_country_exchanges)
+//  for (const auto& pce : per_country_exchanges)
+  for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
   { set<string> ss;
 
-    for (auto str : clean_split_string <string> (pce.second))
+    for (auto str : clean_split_string <string> (allowed_exchange_values))
     { str = remove_from_start <std::string> (str, "CHOICE:"sv);
 
       FOR_ALL(clean_split_string <string> (str, '/'), [&ss] (const string& s) { ss += s; } );
     }
 
-    _per_country_exchange_fields += { pce.first, ss };
+    _per_country_exchange_fields += { canonical_prefix, ss };
   }
 
 // add the ordinary exchange to the permitted exchange fields
-  permitted_exchange_fields += { string(), clean_split_string <std::string> (context.exchange()) };  // no canonical prefix for the default ordinary exchange
+  permitted_exchange_fields += { string { }, clean_split_string <std::string> (context.exchange()) };  // no canonical prefix for the default ordinary exchange
 
   const vector<string> exchange_mults_vec { clean_split_string <std::string> (context.exchange_mults()) };
 
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
 
-  for (const auto& mpef : permitted_exchange_fields)
-  { const vector<string>& vs { mpef.second };
+//  for (const auto& mpef : permitted_exchange_fields)
+  for (const auto& [ canonical_prefix, permitted_values ] : permitted_exchange_fields)
+  { //const vector<string>& vs { mpef.second };
+    const vector<string>& vs { permitted_values };
 
     vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
 
@@ -412,8 +381,10 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // g++'s restriction that values of maps cannot be altered in-place
 // makes it easier to do it now
 
-    single_mode_rv_rst += { mpef.first, vef_rs_rst("RS"s, "RST"s) }; // force to RST
-    single_mode_rv_rs += { mpef.first, vef_rs_rst("RST"s, "RS"s) };  // force to RS
+//    single_mode_rv_rst += { mpef.first, vef_rs_rst("RS"s, "RST"s) }; // force to RST
+//    single_mode_rv_rs += { mpef.first, vef_rs_rst("RST"s, "RS"s) };  // force to RS
+    single_mode_rv_rst += { canonical_prefix, vef_rs_rst("RS"s, "RST"s) }; // force to RST
+    single_mode_rv_rs += { canonical_prefix, vef_rs_rst("RST"s, "RS"s) };  // force to RS
   }
 
   for (const auto& m : _permitted_modes)

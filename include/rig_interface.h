@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 232 2023-12-31 16:46:23Z  $
+// $Id: rig_interface.h 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -506,6 +506,7 @@ public:
 */
   bool is_transmitting(void) const;
 
+/// pause until the rig is no longer transmitting
   void wait_until_not_busy(void) const;
 
 /*! \brief                          Register a function for alerting the user

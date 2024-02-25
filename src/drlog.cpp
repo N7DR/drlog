@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: drlog.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -421,6 +421,8 @@ bool                    rig_is_split { false };             ///< is the rig in s
 bool                    scoring_enabled { true };           ///< are we scoring the contest?
 bool                    sending_qtc_series { false };       ///< am I senting a QTC series?
 unsigned int            serno_spaces { 0 };                 ///< number of additional half-spaces in serno
+bool                    self_spotting_enabled { };          ///< whether self-spotting is enabled
+string                  self_spotting_text    { };          ///< text in comment portion of self-spots
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
 int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
 unsigned int            shift_poll           { 0 };         ///< polling interval for SHIFT keys
@@ -802,6 +804,46 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
+#if 0
+  { using TYPE = string;
+
+    auto printit = [] (const TYPE s, const vector<TYPE>& v)
+      { ost << "intial string = " << s << endl;
+
+        ost << "number of elements = " << v.size() << endl;
+
+        for (size_t n = 0; n < v.size(); ++n)
+          ost << "  " << n << ": *" << v[n] << "*" << endl;
+      };
+
+    string s {};
+
+//    const vector<TYPE> v1 = split_string <TYPE> (s);
+
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "/";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "/n3";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "//";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "W4/VP9KF";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "W4/";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    s = "/VP9KF";
+    printit(s, split_string <TYPE> (s, '/'));
+
+    exit(0);
+  }
+#endif
+
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
 
@@ -892,9 +934,13 @@ int main(int argc, char** argv)
     p3_span_sap                     = context.p3_span_sap();
 
     qtc_long_t                      = context.qtc_long_t();
+
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
+
     scoring_enabled                 = context.scoring_enabled();
+    self_spotting_enabled           = context.self_spotting_enabled();
+    self_spotting_text              = context.self_spotting_text();
     serno_spaces                    = context.serno_spaces();
     shift_delta_cw                  = static_cast<int>(context.shift_delta_cw());   // forced positive int
     shift_delta_ssb                 = static_cast<int>(context.shift_delta_ssb());  // forced positive int
@@ -4141,7 +4187,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         for (const auto& these_matches : matches_array)
         { FOR_ALL(these_matches, [] (const pair<string, PAIR_NUMBER_TYPE>& psi) { all_matches += psi.first; } );
-//          FOR_ALL(these_matches, [] (const auto& [call, clrs]) { all_matches += call; } );                        // for non-obvious reasons, this isn't allowed
+//          FOR_ALL(these_matches, [] (const auto& [call, clrs]) { all_matches += call; } );                        // for non-obvious reasons, this isn't allowed in C++ (yet)
         }
 
 // remove any duplicates from all_matches while maintaining ordering
@@ -4186,9 +4232,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
   if (!processed and e.is_ctrl() and e.symbol() == XK_Down)
-  { //const string new_callsign { match_callsign(fuzzy_matches) };
-
-    if (const string new_callsign { match_callsign(fuzzy_matches) }; !new_callsign.empty())
+  { if (const string new_callsign { match_callsign(fuzzy_matches) }; !new_callsign.empty())
     { win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
       display_call_info(new_callsign);
     }

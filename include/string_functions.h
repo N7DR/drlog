@@ -1,4 +1,4 @@
-// $Id: string_functions.h 234 2024-02-19 15:37:47Z  $
+// $Id: string_functions.h 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -260,7 +260,12 @@ inline std::string operator+(const std::string& s, std::string_view sv)
 */
 template <typename STYPE>
 inline auto substring(std::string_view str, const size_t start_posn, const size_t length) -> STYPE
-  { return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } ); }
+//  { return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } ); }
+{ if (length == 0)
+    return STYPE { EMPTY_STR };
+
+  return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } );
+}
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -719,11 +724,69 @@ auto split_string(std::string_view cs, std::string_view separator) -> std::vecto
     \param  cs          original string
     \param  separator   separator character
     \return             vector containing the separate components
+
+    Some of the returned elements may be the null string
 */
+
+//#include "log_message.h"
+
 template <typename STYPE>
 auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-{ size_t start_posn { 0 };
+//auto split_string(std::string_view cs, const char separator) -> std::vector<STYPE>
+{
+#if 1
+//  extern message_stream ost;
 
+//  ost << "splitting: " << cs << std::endl;
+//  ost << "separator = " << separator << std::endl;
+
+//  throw std::exception();
+
+  std::vector<STYPE> rv;
+
+  if (cs.empty())
+  { //ost << "cs is empty; returning empty vector" << std::endl;
+
+    return rv;
+  }
+
+  std::vector<size_t> posns;
+
+  for (size_t n = 0; n < cs.size(); ++n)
+    if (cs[n] == separator)
+      posns += n;
+
+  if (posns.empty())      // no separators; return the string as a single-element vector
+  { //ost << "no separators; returning vector with one element" << std::endl;
+
+    rv += cs;
+
+    return rv;
+  }
+
+  size_t start_posn { 0 };
+
+  for (size_t posn_nr { 0 }; posn_nr < posns.size(); ++posn_nr)
+  { //ost << "start_posn = " << start_posn << ", posn_nr = " << posn_nr << ", posns[posn_nr] = " << posns[posn_nr] << std:: endl;
+
+    rv += substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn);
+
+    //ost << "Adding to rv: " << substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn) << std::endl;
+
+    start_posn = posns[posn_nr] + 1;
+  }
+
+//  ost << "Final adding to rv: " << substring <STYPE> (cs, posns[posns.size() - 1] + 1) << std::endl;
+
+
+  rv += substring <STYPE> (cs, posns[posns.size() - 1] + 1);   // all the text after the last separator
+
+ // ost << "returning vector with " << rv.size() << " components" << std::endl;
+
+  return rv;
+#endif
+
+# if 0
   std::vector<STYPE> rv;
 
 // check whether cs contains a single character, which is a separator
@@ -733,6 +796,8 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
 
     return rv;
   }
+
+  size_t start_posn { 0 };
 
   while (start_posn < cs.length())
   { if (size_t posn { cs.find(separator, start_posn) }; posn == std::string_view::npos)                       // no more separators
@@ -747,6 +812,48 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
 
 //  ost << "cs = " << cs << std::endl;
 
+
+  return rv;
+#endif
+}
+
+#if 0
+template <typename STYPE>
+//auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+inline auto split_string(std::string_view cs) -> std::vector<STYPE>
+{ return split_string <STYPE> (cs, ','); }
+#endif
+
+/*! \brief              Split a string into records
+    \param  cs          original string
+    \param  eor_marker  character that marks the end of a record
+    \param  delim_rule  whether to keep or drop the <i>eor_marker</i> in the returned vector
+    \return             vector containing the separate records
+*/
+template <typename STYPE>
+auto split_string_into_records(std::string_view cs, const char eor_marker = '|', const enum DELIMITERS delim_rule = DELIMITERS::DROP) -> std::vector<STYPE>
+{ std::vector<STYPE> rv;
+
+  if (cs.empty())
+    return rv;
+
+  std::vector<size_t> posns;
+
+// build an array of positions of the eor marker
+  for (size_t n = 0; n < cs.size(); ++n)
+    if (cs[n] == eor_marker)
+      posns += n;
+
+  if (posns.empty())      // no records; return an empty vector
+    return rv;
+
+  size_t start_posn { 0 };
+
+  for (size_t posn_nr { 0 }; posn_nr < posns.size(); ++posn_nr)
+  { rv += substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn + ( (delim_rule == DELIMITERS::KEEP) ? 1 : 0) );
+
+    start_posn = posns[posn_nr] + 1;
+  }
 
   return rv;
 }
@@ -767,7 +874,15 @@ inline auto clean_split_string(std::string_view cs, std::string_view separator) 
 */
 template <typename STYPE>
 inline auto clean_split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+//inline auto clean_split_string(std::string_view cs, const char separator) -> std::vector<STYPE>
   { return remove_peripheral_spaces <STYPE> (split_string <STYPE> (cs, separator)); }
+
+#if 0
+  template <typename STYPE>
+//inline auto clean_split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+inline auto clean_split_string(std::string_view cs) -> std::vector<STYPE>
+  { return clean_split_string <STYPE> (cs, ','); }
+#endif
 
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string

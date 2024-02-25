@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 232 2023-12-31 16:46:23Z  $
+// $Id: rig_interface.cpp 235 2024-02-25 19:55:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -829,24 +829,11 @@ int rig_interface::keyer_speed(void) const
   }
 }
 
+/// pause until the rig is no longer transmitting
 void rig_interface::wait_until_not_busy(void) const
 { while (is_transmitting())
     sleep_for(100ms);
 }
-
-#if 0
-string raw_command_not_busy(const string& cmd, const RESPONSE expectation, const int expected_len) const
-{ string putative_response { };
-
-  string rc = raw_command(cmd, expectation, expected_len);
-
-  if (rc.starts_with("?;"))
-  { putative_response = substring <string> (raw_command, 2);
-
-
-  }
-}
-#endif
 
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
@@ -1437,12 +1424,7 @@ string rig_interface::centre_frequency_str(void) const
   SAFELOCK(_rig);
 
   if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
-  {  //return (substring <std::string> (response, 2, 4)) + '0';
- //   const string ctr_in_tens { remove_leading <std::string> (substring <std::string> (response, 3, 4), '0') };
-
-//    return (ctr_in_tens);
     return remove_leading <std::string> (substring <std::string_view> (response, 3, 4), '0');
-  }
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
     return string { };
@@ -1461,13 +1443,6 @@ unsigned int rig_interface::centre_frequency(void) const
   SAFELOCK(_rig);
 
   return from_string<unsigned int>(centre_frequency_str());
-
-//  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
-//    return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
-//  else
-//  { _error_alert("Invalid response getting centre frequency: "s + response);
-//    return 0;
-//  }
 }
 
 /*! \brief      Set audio centre frequency
