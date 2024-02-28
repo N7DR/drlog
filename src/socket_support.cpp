@@ -337,7 +337,7 @@ void tcp_socket::connected(const sockaddr_storage& adr)
 /*! \brief          Simple send
     \param  msg     message to send
   
-    Does not look for a response
+    Does not look for a response. Throws an exception if there is any problem.
 */
 void tcp_socket::send(const std::string& msg)
 { if (!_destination_is_set)

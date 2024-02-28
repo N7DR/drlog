@@ -313,28 +313,6 @@ vector<string> split_string(const string& cs, const char separator)
 }
 #endif
 
-/*! \brief                  Split a string into equal-length records
-    \param  cs              original string
-    \param  record_length   length of each record
-    \return                 vector containing the separate components
-
-    Any non-full record at the end is silently discarded
-*/
-#if 0
-vector<string> split_string(const string& cs, const unsigned int record_length)
-{ vector<string> rv;
-
-  string cp { cs };
-
-  while (cp.length() >= record_length)
-  { rv += cp.substr(0, record_length);
-    cp = cp.substr(record_length);
-  }
-
-  return rv;
-}
-#endif
-
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
@@ -985,6 +963,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
   return ost;
 }
 
+#if 0
 /*! \brief                  Remove a trailing inline comment
     \param  str             string
     \param  comment_str     string that introduces the comment
@@ -992,11 +971,17 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-string remove_trailing_comment(string_view str, const string_view comment_str)
+//string remove_trailing_comment(string_view str, const string_view comment_str)
+//{ const size_t posn { str.find(comment_str) };
+//
+//  return ( (posn == string_view::npos) ? string { str } : remove_trailing_spaces <std::string> (substring <std::string> (str, 0, posn)) );
+//}
+string_view remove_trailing_comment(const string_view str, const string_view comment_str)
 { const size_t posn { str.find(comment_str) };
 
-  return ( (posn == string_view::npos) ? string { str } : remove_trailing_spaces <std::string> (substring <std::string> (str, 0, posn)) );
+  return ( (posn == string_view::npos) ? str : remove_trailing_spaces <std::string_view> (substring <std::string_view> (str, 0, posn)) );
 }
+#endif
 
 /*! \brief              Perform a case-insensitive search for a substring
     \param  str         string to search
@@ -1028,11 +1013,9 @@ string base_call(const string& callsign)
     return callsign;
 
 // it contains at least one slash
-//  const vector<string> portions { split_string <std::string> (callsign, '/') };
-
   const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };
 
-  string rv;
+  string rv { };
 
   for (const auto& str : portions)
     if (str.length() > rv.length())

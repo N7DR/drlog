@@ -728,27 +728,12 @@ auto split_string(std::string_view cs, std::string_view separator) -> std::vecto
     Some of the returned elements may be the null string
 */
 
-//#include "log_message.h"
-
 template <typename STYPE>
 auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-//auto split_string(std::string_view cs, const char separator) -> std::vector<STYPE>
-{
-#if 1
-//  extern message_stream ost;
-
-//  ost << "splitting: " << cs << std::endl;
-//  ost << "separator = " << separator << std::endl;
-
-//  throw std::exception();
-
-  std::vector<STYPE> rv;
+{ std::vector<STYPE> rv;
 
   if (cs.empty())
-  { //ost << "cs is empty; returning empty vector" << std::endl;
-
     return rv;
-  }
 
   std::vector<size_t> posns;
 
@@ -757,9 +742,7 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
       posns += n;
 
   if (posns.empty())      // no separators; return the string as a single-element vector
-  { //ost << "no separators; returning vector with one element" << std::endl;
-
-    rv += cs;
+  { rv += cs;
 
     return rv;
   }
@@ -767,54 +750,15 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
   size_t start_posn { 0 };
 
   for (size_t posn_nr { 0 }; posn_nr < posns.size(); ++posn_nr)
-  { //ost << "start_posn = " << start_posn << ", posn_nr = " << posn_nr << ", posns[posn_nr] = " << posns[posn_nr] << std:: endl;
-
-    rv += substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn);
-
-    //ost << "Adding to rv: " << substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn) << std::endl;
+  { rv += substring <STYPE> (cs, start_posn, posns[posn_nr] - start_posn);
 
     start_posn = posns[posn_nr] + 1;
   }
 
-//  ost << "Final adding to rv: " << substring <STYPE> (cs, posns[posns.size() - 1] + 1) << std::endl;
-
 
   rv += substring <STYPE> (cs, posns[posns.size() - 1] + 1);   // all the text after the last separator
 
- // ost << "returning vector with " << rv.size() << " components" << std::endl;
-
   return rv;
-#endif
-
-# if 0
-  std::vector<STYPE> rv;
-
-// check whether cs contains a single character, which is a separator
-  if ( (cs.size() == 1) and (cs[0] == separator) )
-  { rv += EMPTY_STR;
-    rv += EMPTY_STR;
-
-    return rv;
-  }
-
-  size_t start_posn { 0 };
-
-  while (start_posn < cs.length())
-  { if (size_t posn { cs.find(separator, start_posn) }; posn == std::string_view::npos)                       // no more separators
-    { rv += STYPE { cs.substr(start_posn) };
-      start_posn = cs.length();
-    }
-    else                                            // at least one separator
-    { rv += STYPE { cs.substr(start_posn, posn - start_posn) };
-      start_posn = posn + 1;
-    }
-  }
-
-//  ost << "cs = " << cs << std::endl;
-
-
-  return rv;
-#endif
 }
 
 #if 0

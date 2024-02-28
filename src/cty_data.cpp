@@ -292,10 +292,16 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-cty_data::cty_data(const string& filename)
-{ const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
+//cty_data::cty_data(const string& filename)
+cty_data::cty_data(const string_view filename)
+{ //const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
 
-  FOR_ALL(records, [this] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
+  //FOR_ALL(records, [this] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
+
+  const vector<string_view> records { split_string <std::string_view> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
+
+//  FOR_ALL(records, [this] (const string_view record_str) { push_back(cty_record { record_str }); } );    // applies to base class
+  FOR_ALL(records, [this] (const string_view record_str) { emplace_back(cty_record { record_str }); } );    // applies to base class
 }
 
 // -----------  location_info  ----------------
@@ -529,9 +535,10 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
 }
 
 // construct from CTY.DAT filename and the definition of which country list to use
-location_database::location_database(const string& filename, const COUNTRY_LIST country_list)
+//location_database::location_database(const string& filename, const COUNTRY_LIST country_list)
+location_database::location_database(const string_view filename, const COUNTRY_LIST country_list)
 { if (!filename.empty())
-    _init(cty_data(filename), country_list);
+    _init(cty_data { filename }, country_list);
 }
 
 /*! \brief              Add Russian information

@@ -239,19 +239,22 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-  explicit cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+//  explicit cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+  explicit cty_data(const std::string_view filename = "cty.dat"sv);   // somewhere along the way the default name changed from CTY.DAT
 
 /*! \brief              Construct from a file
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
 //  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
-  inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
+//  inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
+  inline explicit cty_data(const std::vector<std::string>& path, const std::string_view filename = "cty.dat"sv)  // somewhere along the way the default name changed from CTY.DAT
 //    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
 //    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), CRLF), ';'), [this] (const std::string& rec) { if (contains(rec, ':'))  // check that it looks like a record
 //                                                                                                                                   push_back(static_cast<cty_record>(rec));
 //                                                                                                                               }); }    // applies to base class
-    { FOR_ALL(split_string_into_records <std::string> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
+//    { FOR_ALL(split_string_into_records <std::string> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
+    { FOR_ALL(split_string_into_records <std::string_view> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string_view rec) { emplace_back(cty_record { rec }); }); }    // applies to base class
 
 /// how many countries are present?
   inline unsigned int n_countries(void) const
@@ -475,7 +478,8 @@ public:
     \param  filename        name of cty.dat file
     \param  country_list    type of country list
 */
-  explicit location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
+//  explicit location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
+  explicit location_database(const std::string_view filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Constructor
     \param  cty             cty.dat data

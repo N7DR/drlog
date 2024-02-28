@@ -102,11 +102,12 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
     This routine may be called recursively (by the RULES statement in the processed file)
 */
-void drlog_context::_process_configuration_file(const string& filename)
+//void drlog_context::_process_configuration_file(const string& filename)
+void drlog_context::_process_configuration_file(const string_view filename)
 { string entire_file;
 
   try
-  { entire_file = remove_char(read_file(filename), CR_CHAR);
+  { entire_file = remove_char(read_file(filename), CR_CHAR);    // CR characters are a menace
   }
 
   catch (...)
@@ -114,21 +115,19 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-//  const vector<string> lines { split_string <std::string> (entire_file, LF_STR) };   // split into lines
-//  const vector<string> lines { to_lines <std::string> (entire_file) };   // split into lines
   const vector<string_view> lines { to_lines <std::string_view> (entire_file) };   // split into lines
 
   for (const auto tmpline : lines)                                    // process each line
   { const string line { remove_trailing_comment <std::string> (tmpline) };           // remove any comment
 
 // generate a number of useful variables
-    const string testline       { remove_leading_spaces <std::string> (to_upper(line)) };
-    const vector<string> fields { split_string <std::string> (line, '=') };
-    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
-    const string RHS            { to_upper(rhs) };                                                                              // converted to upper case
-    const bool is_true          { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
-    const string lhs            { squash( (fields.empty()) ? string { } : remove_peripheral_spaces <std::string> (fields[0]) ) };              // the stuff to the left of the "="
-    const string LHS            { to_upper(lhs) };                                                                              // converted to upper case
+    const string         testline { remove_leading_spaces <std::string> (to_upper(line)) };
+    const vector<string> fields   { split_string <std::string> (line, '=') };
+    const string         rhs      { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
+    const string         RHS      { to_upper(rhs) };                                                                              // converted to upper case
+    const bool           is_true  { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
+    const string         lhs      { squash( (fields.empty()) ? string { } : remove_peripheral_spaces <std::string> (fields[0]) ) };              // the stuff to the left of the "="
+    const string         LHS      { to_upper(lhs) };                                                                              // converted to upper case
 
 // ACCEPT COLOUR
     if ( ( (LHS == "ACCEPT COLOUR"sv) or (LHS == "ACCEPT COLOR"sv) ) and !rhs.empty() )
@@ -1468,7 +1467,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 }
 
 /// construct from file
-drlog_context::drlog_context(const std::string& filename)
+drlog_context::drlog_context(const string_view filename)
 { for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
     _per_band_country_mult_factor += { static_cast<BAND>(n), 1 };
 
@@ -1490,11 +1489,9 @@ drlog_context::drlog_context(const std::string& filename)
 
 // default is to score all permitted modes
   if (_score_modes.empty())
-  { //if (contains(_modes, "CW"sv))
-    if (_modes.contains("CW"sv))
+  { if (_modes.contains("CW"sv))
       _score_modes += MODE_CW;
 
-//    if (contains(_modes, "SSB"sv))
     if (_modes.contains("SSB"sv))
       _score_modes += MODE_SSB;
   }

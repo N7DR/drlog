@@ -299,7 +299,8 @@ protected:
 
     This routine may be called recursively (by the RULES statement in the processed file)
 */
-  void _process_configuration_file(const std::string& filename);
+//  void _process_configuration_file(const std::string& filename);
+  void _process_configuration_file(const std::string_view filename);
 
 /*! \brief              Set the value of points, using the POINTS [CW|SSB] command
     \param  command     the complete line from the configuration file
@@ -313,7 +314,8 @@ public:
   inline drlog_context(void) = default;
 
 /// construct from file
-  explicit drlog_context(const std::string& filename);
+//  explicit drlog_context(const std::string& filename);
+  explicit drlog_context(const std::string_view filename);
 
   drlog_context(const drlog_context&) = delete;         ///< disallow copying
 

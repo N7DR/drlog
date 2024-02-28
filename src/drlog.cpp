@@ -804,46 +804,6 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
-#if 0
-  { using TYPE = string;
-
-    auto printit = [] (const TYPE s, const vector<TYPE>& v)
-      { ost << "intial string = " << s << endl;
-
-        ost << "number of elements = " << v.size() << endl;
-
-        for (size_t n = 0; n < v.size(); ++n)
-          ost << "  " << n << ": *" << v[n] << "*" << endl;
-      };
-
-    string s {};
-
-//    const vector<TYPE> v1 = split_string <TYPE> (s);
-
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "/";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "/n3";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "//";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "W4/VP9KF";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "W4/";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    s = "/VP9KF";
-    printit(s, split_string <TYPE> (s, '/'));
-
-    exit(0);
-  }
-#endif
-
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
 
@@ -2935,11 +2895,13 @@ void* prune_bandmap(void* vp)
 */
 /*  KP numbers    -- CW messages
     ALT-KPDel     -- Add call to single-band DO NOT SHOW list
+    ALT-C         -- send post to cluster
     ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
     ALT-G go to the frequency in win_last_qrg
     ALT-K         -- toggle CW
     ALT-M         -- change mode
     ALT-N         -- toggle notch status if on SSB
+    ALT-P         -- Dump P3
     ALT-Q         -- send QTC
     ALT-R         -- toggle RX antenna
     ALT-X         -- enter zoomed XIT mode
@@ -2961,6 +2923,7 @@ void* prune_bandmap(void* vp)
     CTRL-G        -- display QRG of call
     CTRL-I        -- refresh geomagnetic indices
     CTRL-M        -- Monitor call
+    CTRL-P         -- dump screen
     CTRL-Q        -- swap QSL and QUICK QSL messages
     CTRL-R        -- toggle audio recording
     CTRL-S        -- send to scratchpad
@@ -3064,6 +3027,65 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CTRL-C -- EXIT (same as .QUIT)
   if (!processed and (e.is_control('c')))
     exit_drlog();
+
+// ALT-C -- send post to cluster
+  if (!processed and e.is_alt('c') and (cluster_p != nullptr))
+  { ost << "ALT-C pressed" << endl;
+
+    if ( (drlog_mode == DRLOG_MODE::CQ) and self_spotting_enabled )
+    { const string callsign { my_call };
+      const string qrg      { rig.rig_frequency().display_string() };
+      const string comment  { self_spotting_text };
+
+      ost << "about to send self spot" << endl;
+
+      const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
+
+      if (spot_status)
+      { alert("posted self spot: " + callsign + ", " + qrg + ", " + comment);
+      }
+      else
+      { alert("error posting self spot: " + callsign + ", " + qrg + ", " + comment);
+      }
+    }
+
+    if ((drlog_mode == DRLOG_MODE::SAP) and !call_contents.empty())
+    { const bool spot_status { cluster_p -> spot(call_contents) };
+
+      if (spot_status)
+      { alert("posted spot: " + call_contents);
+      }
+      else
+      { alert("error posting spot: " + call_contents);
+      }
+    }
+
+// if call window is empty and we are in SAP mode, spot the last QSO
+    if ( call_contents.empty() and (drlog_mode == DRLOG_MODE::SAP) )
+    { ost << "testing whether to send spot" << endl;
+
+      const QSO last_qso { logbk.last_qso() };
+
+      if (!last_qso.empty())
+      { const string callsign { last_qso.callsign() };
+        const string qrg      { last_qso.freq() };
+        const string comment  { "TEST SPOT"s };
+
+        ost << "about to send spot" << endl;
+
+        const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
+
+        if (spot_status)
+        { alert("posted spot: " + callsign + ", " + qrg + ", " + comment);
+        }
+        else
+        { alert("error posting spot: " + callsign + ", " + qrg + ", " + comment);
+        }
+      }
+    }
+
+    processed = true;
+  }
 
 // ALT-B and ALT-V (band up and down)
 //  if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))

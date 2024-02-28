@@ -1219,12 +1219,8 @@ string rig_interface::bandwidth_str(void) const
 
   SAFELOCK(_rig);
 
-
-
   if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
-//      return (substring <std::string> (response, 2, 4) + '0');   // returned value is in tens of Hz, so convert to Hz
-//      return remove_leading <std::string> ( (substring <std::string> (response, 2, 4) + '0'), '0');   // returned value is in tens of Hz, so convert to Hz
-  { const string bw_in_tens { remove_leading <std::string> (substring <std::string> (response, 2, 4), '0') };
+  { const string bw_in_tens { remove_leading <std::string> (substring <std::string> (response, 2, 4), '0') };   // returned value is in tens of Hz, so convert to Hz
 
     return (bw_in_tens + '0');   // returned value is in tens of Hz, so convert to Hz
   }
@@ -1374,17 +1370,12 @@ void rig_interface::bandwidth_a(const unsigned int hz) const
 { constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
   constexpr int                       PRECISION  { 50 };
 
-//  ost << "setting bandwidth to " << hz << endl;
-
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
     { wait_until_not_busy();
 
       const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
-
-//      ost << "k3_bw_units = " << k3_bw_units << endl;
-
-      const string bw_command { "BW"s + k3_bw_units + ";"s };
+      const string bw_command  { "BW"s + k3_bw_units + ";"s };
 
       raw_command(bw_command);
 
@@ -1392,9 +1383,6 @@ void rig_interface::bandwidth_a(const unsigned int hz) const
       { sleep_for(RETRY_TIME);
         raw_command(bw_command);
       }
-
-//      ost << "exiting bandwidth_a" << endl;
-//      ost << "bandwidth = " << bandwidth() << endl;
     }
   }
 }
@@ -1542,12 +1530,11 @@ void rig_interface::toggle_notch_status(void) const
     k3_tap(K3_BUTTON::NOTCH);
 }
 
-/// place K3 into extended mode
-//void rig_interface::k3_extended_mode(void) const
-//{ if (_model == RIG_MODEL_K3)
-//    raw_command("K31;"s);
-//}
+/*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
+    \param  cm  command mode
 
+    Works only with K3
+*/
 void rig_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 { if (_model == RIG_MODEL_K3)
   { switch (cm)

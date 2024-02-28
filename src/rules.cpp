@@ -234,6 +234,20 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
   }
 }
 
+/*! \brief                      Get the expanded or unexpanded names of the exchange fields for a particular canonical prefix and mode
+    \param  canonical_prefix    canonical prefix
+    \param  m                   mode
+    \param  ch                  whether to expand choices
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
+*/
+vector<string> contest_rules::_exchange_field_names(const string& canonical_prefix, const MODE m, const CHOICES ch) const
+{ vector<string> rv;
+
+  FOR_ALL(_exchange_fields(canonical_prefix, m, ch), [&rv] (const exchange_field& ef) { rv += ef.name(); });
+
+  return rv;
+}
+
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
@@ -398,9 +412,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{ //ost << "Inside contest_rules::_init(); size of _exch_values = " << _exch_values.size() << endl;
-
-  const vector<string> path { context.path() };
+{ const vector<string> path { context.path() };
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -421,8 +433,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (_uba_bonus)
     _bonus_countries += "ON"s;                  // weird UBA scoring adds bonus for QSOs with ON
 
-  //ost << "after uba bonus; size of _exch_values = " << _exch_values.size() << endl;
-
 // generate the country mults; the value from context is either "ALL" or "NONE" or a comma-separated list
   if (context.country_mults_filter() == "NONE"sv)
     _countries.clear();                             // remove concept of countries
@@ -435,8 +445,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(countries, [this] (const string& prefix) { _country_mults += prefix; } );
     }
   }
-
-  //ost << "after country mults; size of _exch_values = " << _exch_values.size() << endl;
 
   if (CONTINENT_SET.contains(context.country_mults_filter()))
   { const string target_continent { context.country_mults_filter() };
@@ -462,8 +470,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _country_mults_per_mode = context.country_mults_per_mode();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
 
-  //ost << "after _per_band_country_mult_factor; size of _exch_values = " << _exch_values.size() << endl;
-
 // add the permitted modes
   const string modes { context.modes() };
 
@@ -482,8 +488,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   if (_permitted_modes > MODE_SSB)
     _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
-
-  //ost << "after sent_exchange; size of _exch_values = " << _exch_values.size() << endl;
 
 // add the permitted bands
   const vector<string> bands_vec { clean_split_string <std::string> (context.bands()) };
@@ -509,8 +513,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _exch_values += dok_values;
   }
 
-  //ost << "after DOK; size of _exch_values = " << _exch_values.size() << endl;
-
 // create expanded version
   for (const string& unexpanded_exchange_mult_name : _exchange_mults)
   { if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"s))            // not a choice
@@ -527,8 +529,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
-
-  //ost << "after _exchange_mults_used; size of _exch_values = " << _exch_values.size() << endl;
 
 // build expanded version of _received_exchange, and _choice_exchange_equivalents
   for (const auto& m : _permitted_modes)
@@ -563,8 +563,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         _exchange_field_eft += { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) };
     }
   }
-
-  //ost << "after _permitted_modes; size of _exch_values = " << _exch_values.size() << endl;
 
 // define the points structure; this can be quite complex
   const points_structure EMPTY_PS { };
@@ -673,8 +671,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
   }
 
-  //ost << "after points_structure; size of _exch_values = " << _exch_values.size() << endl;
-
 // legal values for the exchange fields
   _parse_context_qthx(context, location_db);  // qth-dependent fields
 
@@ -684,8 +680,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { for (const auto& [ cp, vef ] : _received_exchange.at(m))                        // vef is unexpanded
       FOR_ALL(vef, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
   }
-
-  //ost << "after _permitted_modes again size of _exch_values = " << _exch_values.size() << endl;
 
 //  auto print_exch_field_names = [] (const auto& exch_values)
 //    { for (auto& ev : exch_values)
@@ -701,10 +695,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
     const string& field_name { ef.name() };
 
- //   ost << "processing field name: " << field_name << endl;
-
  //   print_exch_field_names(_exch_values);
-//
+
     string entire_file;
 
     bool read_file_ok { false };
@@ -759,7 +751,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
     else
     { if (NONE_OF(_exch_values, [&field_name] (const auto& ev) { return (ev.name() == field_name); }))
-//        _exch_values += { field_name, map<string, set<string>> { } };  // pair<string, map<string, set<string> > >
         _exch_values += { field_name, MAP_STR_TO_SET { } };  // pair<string, map<string, set<string> > >
     }
   }
@@ -838,26 +829,26 @@ EFT contest_rules::exchange_field_eft(const string& field_name) const
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ vector<string> rv;
-
-  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::EXPAND), [&rv] (const exchange_field& ef) { rv += ef.name(); });
-
-  return rv;
-}
+//vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+//{ vector<string> rv;
+//
+//  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::EXPAND), [&rv] (const exchange_field& ef) { rv += ef.name(); });
+//
+//  return rv;
+//}
 
 /*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-{ vector<string> rv;
-
-  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND), [&rv] (const auto& ef) { rv += ef.name(); });
-
-  return rv;
-}
+//vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+//{ vector<string> rv;
+//
+//  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND), [&rv] (const auto& ef) { rv += ef.name(); });
+//
+//  return rv;
+//}
 
 /*! \brief              All the canonical values for a particular exchange field
     \param  field_name  name of an exchange field (received)

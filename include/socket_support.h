@@ -334,7 +334,7 @@ public:
 /*! \brief          Simple send
     \param  msg     message to send
   
-    Does not look for a response
+    Does not look for a response. Throws an exception if there is any problem.
 */
   void send(const std::string& msg);
 

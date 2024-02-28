@@ -480,6 +480,14 @@ auto _all_exchange_values(const std::string& field_name) const -> STYPE
 */
   std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
 
+/*! \brief                      Get the expanded or unexpanded names of the exchange fields for a particular canonical prefix and mode
+    \param  canonical_prefix    canonical prefix
+    \param  m                   mode
+    \param  ch                  whether to expand choices
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
+*/
+std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
+
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         context for this contest
     \param  location_db     location database
@@ -630,14 +638,16 @@ public:
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
+  inline std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const
+    { return _exchange_field_names(canonical_prefix, m, CHOICES::EXPAND); }
 
 /*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
+  inline std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const
+    { return _exchange_field_names(canonical_prefix, m, CHOICES::NO_EXPAND); }
 
 /// Return all the known names of exchange fields
   std::set<std::string> all_known_field_names(void) const;

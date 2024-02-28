@@ -187,6 +187,57 @@ dx_cluster::~dx_cluster(void)
   }
 }
 
+/*! \brief          Send a message to the cluster
+    \param  msg     the message to be sent
+    \return         whether transmission was successful
+*/
+bool dx_cluster::send(const std::string& msg)
+{ try
+  { _connection.send(msg);
+    return true;
+  }
+
+  catch (const tcp_socket_error& e)
+  { ost << "Caught TCP socket error in dx_cluster::send(): " << "error code = " << e.code() << ", reason = " << e.reason() << endl;
+
+    return false;
+  }
+
+  catch (...)
+  { ost << "Caught non TCP socket error in dx_cluster::send()" << endl;
+
+    return false;
+  }
+}
+
+/*! \brief            Send a spot to the cluster
+    \param  dx        callsign of DX station
+    \param  freq      frequency of DX station
+    \param  comment   comment to add to the post
+    \return           whether the attemnpt to post was successful
+
+*/
+bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
+{ const string msg { "DXT "s + dx + " "s + freq + " "s + comment + CRLF };
+
+  ost << "sending spot: " << msg;
+
+  return send(msg);
+}
+
+/*! \brief        Send a spot to the cluster
+    \param  msg   the message to be sent
+    \return       whether the attemnpt to post was successful
+*/
+bool dx_cluster::spot(const std::string& msg)
+{//const string spot_msg { "DXT "s + msg + CRLF };
+  const string spot_msg { "DX "s + msg + CRLF };
+
+  ost << "sending spot: " << spot_msg;
+
+  return send(spot_msg);
+}
+
 /// reset the cluster socket
 void dx_cluster::reset_connection(void)
 { ost << "Attempting to reset connection" << endl;

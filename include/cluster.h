@@ -66,7 +66,9 @@ public:
   ~dx_cluster(void);
 
   dx_cluster(const dx_cluster&) = delete;       /// forbid copying
-  
+
+  READ(source);        ///< source for postings
+
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
 */
@@ -79,11 +81,26 @@ public:
   
 /*! \brief          Send a message to the cluster
     \param  msg     the message to be sent
+    \return         whether transmission was successful
 */
-  inline void send(const std::string& msg = CRLF)
-    { _connection.send(msg); }
+  bool send(const std::string& msg = CRLF);
+ //   { _connection.send(msg); }
+//  inline void send(const std::string& msg = CRLF)
+//    { _connection.send(msg); }
 
-  READ(source);        ///< source for postings
+/*! \brief            Send a spot to the cluster
+    \param  dx        callsign of DX station
+    \param  freq      frequency of DX station
+    \param  comment   comment to add to the post
+    \return           whether the attemnpt to post was successful
+*/
+  bool spot(const std::string& dx, const std::string& freq, const std::string& comment = EMPTY_STR);
+
+/*! \brief        Send a spot to the cluster
+    \param  msg   the message to be sent
+    \return       whether the attemnpt to post was successful
+*/
+  bool spot(const std::string& msg);
 
 /// reset the cluster socket
   void reset_connection(void);
