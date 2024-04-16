@@ -2235,11 +2235,10 @@ void* display_rig_status(void* vp)
   rig_status_info* rig_status_thread_parameters_p { static_cast<rig_status_info*>(vp) };
   rig_status_info& rig_status_thread_parameters   { *rig_status_thread_parameters_p };
 
-//  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
-//  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time().count() * 1000) }; // convert ms to μs
   static const long millisecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time().count()) };
 
   DRLOG_MODE last_drlog_mode { DRLOG_MODE::SAP };
+  bool       locked_warning  { false };            // is a warning about XIT while locked being displayed?
 
   bandmap_entry be;
 
@@ -2252,13 +2251,11 @@ void* display_rig_status(void* vp)
   { try
     { try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
-//          sleep_for(microseconds(microsecond_poll_period / 10));
           sleep_for(milliseconds(millisecond_poll_period / 10));
       }
 
       catch (const rig_interface_error& e)
       { alert("Error communicating with rig during poll loop"s);
-//        sleep_for(microseconds(microsecond_poll_period * 10));                      // wait a (relatively) long time if there was an error
         sleep_for(milliseconds(millisecond_poll_period / 2));                      // wait a (relatively) long time if there was an error
       }
 
@@ -2383,14 +2380,36 @@ void* display_rig_status(void* vp)
 // now display the status
           win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if the contest doesn't want us to be on this QRG
 
-          const bool sub_rx { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
-          const auto fg     { win_rig.fg() };                                          // original foreground colour
+          const bool is_locked {(rig_status_thread_parameters.rigp())->is_locked() };
+
+          if (xit_is_on and is_locked and !locked_warning)
+          { locked_warning = true;
+
+            alert("XIT ENABLED WHILE LOCKED; DISABLING");
+
+            (rig_status_thread_parameters.rigp()) -> xit_disable();
+          }
+
+          if (locked_warning)
+          { if (!xit_is_on or !is_locked)
+            { locked_warning = false;
+
+              win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;       // clear the MESSAGE window
+
+// force RIT to be enabled if we are locked
+              if (is_locked and (! rig_status_thread_parameters.rigp() -> rit_enabled()) )
+                rig_status_thread_parameters.rigp() -> rit_enable();
+            }
+          }
+
+          const bool sub_rx    { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
+          const auto fg        { win_rig.fg() };                                          // original foreground colour
 
           win_rig < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_BOLD)
                   < pad_left(f.display_string(), 7)
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_NORMAL)
-                  < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L "s : "  "s )
+                  < ( is_locked ? "L "s : "  "s )
                   < mode_str
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_BOLD : WINDOW_ATTRIBUTES::WINDOW_NORMAL);
 
