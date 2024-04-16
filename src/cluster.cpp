@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: cluster.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -230,7 +230,7 @@ bool dx_cluster::spot(const string& dx, const string& freq, const string& commen
     \return       whether the attemnpt to post was successful
 */
 bool dx_cluster::spot(const std::string& msg)
-{//const string spot_msg { "DXT "s + msg + CRLF };
+{ //const string spot_msg { "DXT "s + msg + CRLF };    // test spot
   const string spot_msg { "DX "s + msg + CRLF };
 
   ost << "sending spot: " << spot_msg;
@@ -304,7 +304,8 @@ string dx_cluster::get_unprocessed_input(void)
     \param  db              the location database for this contest
     \param  post_source     the origin of the post
 */
-dx_post::dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source) :
+//dx_post::dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source) :
+dx_post::dx_post(const string_view received_info, location_database& db, const enum POSTING_SOURCE post_source) :
   _source(post_source),
   _valid(false)
 {
@@ -514,7 +515,6 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
-//  return (callsign < _callsigns);
   return _callsigns.contains(callsign);
 }
 

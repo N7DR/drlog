@@ -196,7 +196,6 @@ window::window(const window_information& wi, const unsigned int flags) :
 
     if (!_wp)
     { ost << "Error creating window; aborting" << endl;
-//      sleep(2);
       sleep_for(2s);
       exit(-1);
     }
@@ -253,6 +252,13 @@ void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLO
 
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
+
+/*! \brief        Do a pair of windows overlap?
+    \param  win2  other window
+    \return       whether this window and <i>win2</i> overlap
+*/
+//inline bool window::overlap(const window& win2) const
+//  { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
 
 /*! \brief          Move the logical cursor
     \param  new_x   x position
@@ -992,4 +998,86 @@ COLOUR_TYPE string_to_colour(const string_view str)
     return from_string<COLOUR_TYPE>(s);
 
   return COLOUR_BLACK;
+}
+
+/*! \brief        Do a pair of rectangles overlap?
+    \param  x1    minimum x coordinate of rectangle 1
+    \param  y1    minimum y coordinate of rectangle 1
+    \param  w1    width of rectangle 1
+    \param  h1    height of rectangle 1
+    \param  x2    minimum x coordinate of rectangle 2
+    \param  y2    minimum y coordinate of rectangle 2
+    \param  w2    width of rectangle 2
+    \param  h2    height of rectangle 2
+    \return       whether rectangle 1 and rectangle 2 overlap
+*/
+bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
+{ auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };
+
+  const int l1 { x1 };
+  const int r1 { x1 + w1 - 1 };
+  const int l2 { x2 };
+  const int r2 { x2 + w2 - 1 };
+
+  const int b1 { y1 };
+  const int t1 { y1 + h1 - 1 };
+  const int b2 { y2 };
+  const int t2 { y2 + h2 - 1 };
+
+//  ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+
+// are any of the cornews of w2 inside w1?
+  if (in_range(l2, l1, r1) and in_range(b2, b1, t1))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 1" << endl;
+    return true;
+  }
+
+  if (in_range(l2, l1, r1) and in_range(t2, b1, t1))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 2" << endl;
+    return true;
+  }
+
+  if (in_range(r2, l1, r1) and in_range(b2, b1, t1))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 3" << endl;
+    return true;
+  }
+
+  if (in_range(r2, l1, r1) and in_range(t2, b1, t1))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 4" << endl;
+    return true;
+  }
+
+
+// are any of the cornews of w1 inside w2?
+  if (in_range(l1, l2, r2) and in_range(b1, b2, t2))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 5" << endl;
+    return true;
+  }
+
+  if (in_range(l1, l2, r2) and in_range(t1, b2, t2))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 6" << endl;
+    return true;
+  }
+
+  if (in_range(r1, l2, r2) and in_range(b1, b2, t2))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 7" << endl;
+    return true;
+  }
+
+  if (in_range(r1, l2, r2) and in_range(t1, b2, t2))
+  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+    ost << "OVERLAP 8" << endl;
+    return true;
+  }
+
+//  ost << "NO OVERLAP" << endl;
+
+  return false;
 }

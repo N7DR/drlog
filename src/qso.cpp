@@ -1,4 +1,4 @@
-// $Id: qso.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: qso.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,7 +178,7 @@ QSO::QSO(void) :
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
 //QSO::QSO(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
-QSO::QSO(const drlog_context& context, string_view str, const contest_rules& rules, running_statistics& statistics)
+QSO::QSO(const drlog_context& context, const string_view str, const contest_rules& rules, running_statistics& statistics)
 { *this = QSO();
 
   populate_from_verbose_format(context, str, rules, statistics);
@@ -254,6 +254,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, string_view
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
+//void QSO::populate_from_verbose_format(const string& str)
 void QSO::populate_from_verbose_format(const string& str)
 {
 // build a vector of name/value pairs
@@ -285,7 +286,6 @@ void QSO::populate_from_verbose_format(const string& str)
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-//void QSO::populate_from_log_line(const string& str)
 void QSO::populate_from_log_line(string_view str)
 { ost << "Inside populate_from_log_line(); input string is:" << *this << endl;
   ost << "string = *" << str << "*" << endl;
@@ -485,7 +485,8 @@ void QSO::set_exchange_mult(const string_view field_name)
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
-string QSO::cabrillo_format(const string& cabrillo_qso_template) const
+//string QSO::cabrillo_format(const string& cabrillo_qso_template) const
+string QSO::cabrillo_format(const string_view cabrillo_qso_template) const
 { static unsigned int record_length { 0 };
 
   static vector< vector<string> > individual_values;

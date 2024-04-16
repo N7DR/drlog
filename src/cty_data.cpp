@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 235 2024-02-25 19:55:54Z  $
+// $Id: cty_data.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -535,7 +535,6 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
 }
 
 // construct from CTY.DAT filename and the definition of which country list to use
-//location_database::location_database(const string& filename, const COUNTRY_LIST country_list)
 location_database::location_database(const string_view filename, const COUNTRY_LIST country_list)
 { if (!filename.empty())
     _init(cty_data { filename }, country_list);
@@ -545,12 +544,13 @@ location_database::location_database(const string_view filename, const COUNTRY_L
     \param  path        vector of directories to check for file <i>filename</i>
     \param  filename    name of file containing Russian information
 */
-void location_database::add_russian_database(const vector<string>& path, const string& filename)
+//void location_database::add_russian_database(const vector<string>& path, const string& filename)
+void location_database::add_russian_database(const vector<string>& path, const string_view filename)
 { if (filename.empty())
     return;
 
   try
-  { _russian_db = russian_data(path, filename).data();
+  { _russian_db = russian_data(path, string(filename)).data();
   }
 
   catch (...)
@@ -923,7 +923,8 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
     \param  path        the directory path to be searched in order
     \param  filename    the name of the file to be read
 */
-russian_data::russian_data(const vector<string>& path, const string& filename)
+//russian_data::russian_data(const vector<string>& path, const string& filename)
+russian_data::russian_data(const vector<string>& path, const string_view filename)
 { try
   { const vector<string> lines { to_lines <std::string> (replace_char(read_file(path, filename), '\t', ' ')) };
 

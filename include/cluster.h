@@ -1,4 +1,4 @@
-// $Id: cluster.h 206 2022-05-22 12:47:37Z  $
+// $Id: cluster.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -153,7 +153,8 @@ public:
     \param  db              the location database for this contest
     \param  post_source     the origin of the post
 */
-  dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
+//  dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
+  dx_post(const std::string_view received_info, location_database& db, const enum POSTING_SOURCE post_source);
 
   READ(band);                   ///< band of post
   READ_AND_WRITE(callsign);     ///< callsign that was heard

@@ -1,4 +1,4 @@
-// $Id: qso.h 233 2024-01-28 23:58:43Z  $
+// $Id: qso.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,7 +114,7 @@ public:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
 //  QSO(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
-  QSO(const drlog_context& context, std::string_view str, const contest_rules& rules, running_statistics& statistics);
+  QSO(const drlog_context& context, const std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE_STR(callsign);         ///< call
@@ -159,7 +159,6 @@ public:
 
     Does nothing if <i>field_name</i> is not a possible mult
 */
-//  void set_exchange_mult(const std::string& field_name);
   void set_exchange_mult(const std::string_view field_name);
 
 /// synonym for callsign()
@@ -192,7 +191,8 @@ public:
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
-  std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
+//  std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
+  std::string cabrillo_format(const std::string_view cabrillo_qso_template) const;
   
 /// format for writing to disk (in the actual drlog log)
   std::string verbose_format(void) const;  
@@ -216,6 +216,7 @@ public:
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
+//  void populate_from_verbose_format(const std::string& str);
   void populate_from_verbose_format(const std::string& str);
 
 /*! \brief                  Does the QSO match an expression for a received exchange field?
@@ -285,7 +286,6 @@ public:
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-//  void populate_from_log_line(const std::string& str);
   void populate_from_log_line(std::string_view str);
 
 /*! \brief      QSO == QSO

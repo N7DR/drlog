@@ -1,4 +1,4 @@
-// $Id: socket_support.h 233 2024-01-28 23:58:43Z  $
+// $Id: socket_support.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -84,6 +84,13 @@ using SOCKET = int;
     \param  fd    the file descriptor to place into fds
 */
 void fd_set_value(fd_set& fds, int fd);
+
+/*! \brief        Set an fd_set to contain a particular single value of a file descriptor
+    \param  fds   set of file descriptors
+    \param  fd    the file descriptor to place into fds
+*/
+inline void operator+=(fd_set& fds, const int fd)
+  { fd_set_value(fds, fd); }
 
 /*! \brief                  Return the name of an error
     \param  error_number    socket error number

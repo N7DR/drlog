@@ -1,4 +1,4 @@
-// $Id: cty_data.h 235 2024-02-25 19:55:54Z  $
+// $Id: cty_data.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -437,7 +437,7 @@ class location_database
 {
 protected:
 
-  using ACI_DBTYPE = decltype(cty_record::_alt_callsigns);
+  using ACI_DBTYPE      = decltype(cty_record::_alt_callsigns);
   using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
   using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
 
@@ -478,7 +478,6 @@ public:
     \param  filename        name of cty.dat file
     \param  country_list    type of country list
 */
-//  explicit location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
   explicit location_database(const std::string_view filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Constructor
@@ -502,7 +501,8 @@ public:
     \param  path        vector of directories to check for file <i>filename</i>
     \param  filename    name of file containing Russian information
 */
-  void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
+//  void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
+  void add_russian_database(const std::vector<std::string>& path, const std::string_view filename);
 
 /// how large is the main database?
   inline size_t size(void) const
@@ -651,7 +651,8 @@ public:
     \param  path        the directory path to be searched in order
     \param  filename    the name of the file to be read
 */
-  russian_data(const std::vector<std::string>& path, const std::string& filename);
+//  russian_data(const std::vector<std::string>& path, const std::string& filename);
+  russian_data(const std::vector<std::string>& path, const std::string_view filename);
 
   READ(data);  ///< map substring to the matching data
 };

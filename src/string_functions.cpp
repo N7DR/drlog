@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: string_functions.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1008,9 +1008,10 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
-string base_call(const string& callsign)
+//string base_call(const string& callsign)
+string base_call(const string_view callsign)
 { if (!contains(callsign, '/'))
-    return callsign;
+    return string { callsign };
 
 // it contains at least one slash
   const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };

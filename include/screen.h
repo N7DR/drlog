@@ -101,6 +101,19 @@ extern pt_mutex screen_mutex;                   ///< mutex for the screen
 */
 int COLOUR_PAIR(const PAIR_NUMBER_TYPE n);
 
+/*! \brief        Do a pair of rectangles overlap?
+    \param  x1    minimum x coordinate of rectangle 1
+    \param  y1    minimum y coordinate of rectangle 1
+    \param  w1    width of rectangle 1
+    \param  h1    height of rectangle 1
+    \param  x2    minimum x coordinate of rectangle 2
+    \param  y2    minimum y coordinate of rectangle 2
+    \param  w2    width of rectangle 2
+    \param  h2    height of rectangle 2
+    \return       whether rectangle and rectangle 2 overlap
+*/
+bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2);
+
 // -----------  cursor  ----------------
 
 /// class used for moving the cursor; encapsulates x,y coordinates
@@ -345,6 +358,12 @@ public:
   READ_AND_WRITE(fg);               ///< foreground colour
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
+
+/*! \brief        Do a pair of windows overlap?
+    \param  win2  other window
+    \return       whether this window and <i>win2</i> overlap
+*/
+//  bool overlap(const window& win2) const;
 
 /// get the foreground and background colours
   inline PAIR_OF_COLOURS fgbg(void) const
@@ -682,6 +701,13 @@ template <class T>
 /// convert to bool
   inline operator bool(void) const
     { return valid(); }
+
+/*! \brief        Do a pair of windows overlap?
+    \param  win2  other window
+    \return       whether this window and <i>win2</i> overlap
+*/
+  inline bool overlap(const window& win2) const
+    { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
 };
 
 /*! \brief          Move the cursor in a window

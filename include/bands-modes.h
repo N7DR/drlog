@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 232 2023-12-31 16:46:23Z  $
+// $Id: bands-modes.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -354,7 +354,6 @@ template<class T> const BAND to_BAND(T f)
     return to_BAND(static_cast<long>(f) * 1000);
 
 // at this point, f is in Hz
-
   const static std::vector<BAND> non_warc_bands { BAND_160, BAND_80, BAND_60, BAND_40, BAND_20, BAND_15, BAND_10 };
 
 // non-WARC bands

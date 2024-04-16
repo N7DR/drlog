@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 235 2024-02-25 19:55:54Z  $
+// $Id: drlog.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -322,6 +322,9 @@ DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };     ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                                       ///< callsign mults we know about in AUTO mode
 
+pt_mutex            last_polled_frequency_mutex { "LAST POLLED FREQUENCY"s };                       ///< mutex for accessing <i>drlog_mode</i>
+string              last_polled_frequency { };                  ///< frequency string from the most recent poll of the rig
+
 pt_mutex            wicm_mutex {"WICM" };
 deque<string>       wicm_calls;                         ///< calls in the WICM window
 
@@ -364,6 +367,7 @@ bool                         dynamic_autocorrect_rbn { false };     ///< whether
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 bool                    filter_remaining_country_mults { false };   ///< whether to apply filter to remaining country mults
+bool                    windows_overlap { false };                  ///< whether any windows overlap
 
 string                  geomagnetic_indices_command { };            ///< command to issue in order to obtain geomagnetic indices
 float                   greatest_distance { 0 };                    ///< greatest distance in miles
@@ -609,10 +613,6 @@ WRAPPER_2_NC(bandmap_info,
                window*, win_bandmap_p,
                decltype(bandmaps)*, bandmaps_p);   ///< parameters for bandmap
 
-//WRAPPER_2_NC(rig_status_info,
-//               unsigned int, poll_time,
-//               rig_interface*, rigp);              ///< parameters for rig status
-
 WRAPPER_2_NC(rig_status_info,
                milliseconds, poll_time,
                rig_interface*, rigp);              ///< parameters for rig status
@@ -831,6 +831,43 @@ int main(int argc, char** argv)
 // make the context available globally and cleanup the context pointer
     context = *context_p;
     delete context_p;
+
+// do any windows overlap?
+    { const std::map<std::string /* name */, window_information >& windows { context.windows() };
+
+//      bool found_overlap { false };
+
+      for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+      { const window_information& wi1 { it -> second };
+
+        const int x1 { wi1.x() };
+        const int y1 { wi1.y() };
+        const int w1 { wi1.w() };
+        const int h1 { wi1.h() };
+
+        for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+        { const window_information& wi2 { it2 -> second };
+
+          const int x2 { wi2.x() };
+          const int y2 { wi2.y() };
+          const int w2 { wi2.w() };
+          const int h2 { wi2.h() };
+
+//          ost << "checking " << it -> first << " + " << it2 -> first << endl;
+
+          if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+          { windows_overlap = true;
+
+            ost << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+            cerr << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            exit(-1);
+          }
+        }
+      }
+
+//      if (found_overlap)
+//        exit(-1);
+    }
 
 // run any "execute at start" program
     if (const auto cmd { context.execute_at_start() }; !cmd.empty())
@@ -1660,7 +1697,16 @@ int main(int argc, char** argv)
 // BANDMAP SIZE window
       win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
 
-  // read a Cabrillo log
+// if any windows overlap, alert the user and exit
+  if (windows_overlap)
+  { alert("ERROR: WINDOWS OVERLAP; consult log or stderr file for details.");
+
+    sleep_for(5s);
+
+    exit_drlog();
+  }
+
+// read a Cabrillo log
   //  logbook cablog;
 
   /*
@@ -2380,6 +2426,9 @@ void* display_rig_status(void* vp)
           }
 
           win_rig.refresh();
+
+          SAFELOCK(last_polled_frequency);
+          last_polled_frequency = f.display_string();   // store for quick lookup without interrogating the rig
         }
 
 // possibly check the RX ANT status
@@ -3032,31 +3081,55 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_alt('c') and (cluster_p != nullptr))
   { ost << "ALT-C pressed" << endl;
 
+// get the frequency for the post
+    auto get_frequency = [] (void)
+    {
+      { SAFELOCK(last_polled_frequency);        // allow us to spot while transmitting on a K3
+
+        if (!last_polled_frequency.empty())
+          return last_polled_frequency;        // use this value if we're a K3
+      }
+
+      return rig.rig_frequency().display_string();
+    };
+
+// In CQ mode, this is a self-spot
     if ( (drlog_mode == DRLOG_MODE::CQ) and self_spotting_enabled )
     { const string callsign { my_call };
-      const string qrg      { rig.rig_frequency().display_string() };
       const string comment  { self_spotting_text };
+      const string qrg      { get_frequency() };
 
       ost << "about to send self spot" << endl;
 
       const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
 
       if (spot_status)
-      { alert("posted self spot: " + callsign + ", " + qrg + ", " + comment);
-      }
+        alert("posted self spot: " + callsign + ", " + qrg + ", " + comment);
       else
-      { alert("error posting self spot: " + callsign + ", " + qrg + ", " + comment);
-      }
+        alert("error posting self spot: " + callsign + ", " + qrg + ", " + comment);
     }
 
+// if call window is not empty and we are in SAP mode, send the contents of the call window, which is expected to be "call qrg"
     if ((drlog_mode == DRLOG_MODE::SAP) and !call_contents.empty())
-    { const bool spot_status { cluster_p -> spot(call_contents) };
+    { if (contains(call_contents, ' '))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
+      { const bool spot_status { cluster_p -> spot(call_contents) };
 
-      if (spot_status)
-      { alert("posted spot: " + call_contents);
+        if (spot_status)
+          alert("posted spot: " + call_contents);
+        else
+          alert("error posting spot: " + call_contents);
       }
-      else
-      { alert("error posting spot: " + call_contents);
+      else                // call window contains no space; treat it as a call
+      { const string callsign { call_contents };
+        const string comment  { };
+        const string qrg      { get_frequency() };
+
+        const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
+
+        if (spot_status)
+          alert("posted spot: " + callsign + ", " + qrg + ", " + comment);
+        else
+          alert("error posting spot: " + callsign + ", " + qrg + ", " + comment);
       }
     }
 
@@ -3069,18 +3142,16 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (!last_qso.empty())
       { const string callsign { last_qso.callsign() };
         const string qrg      { last_qso.freq() };
-        const string comment  { "TEST SPOT"s };
+        const string comment  { self_spotting_text };
 
         ost << "about to send spot" << endl;
 
         const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
 
         if (spot_status)
-        { alert("posted spot: " + callsign + ", " + qrg + ", " + comment);
-        }
+          alert("posted spot: " + callsign + ", " + qrg + ", " + comment);
         else
-        { alert("error posting spot: " + callsign + ", " + qrg + ", " + comment);
-        }
+          alert("error posting spot: " + callsign + ", " + qrg + ", " + comment);
       }
     }
 
@@ -3313,6 +3384,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ENTER, ALT-ENTER -- a lot of complicated stuff
   if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
   { const string contents { remove_peripheral_spaces <std::string> ( win.read() ) };
+    //const string_view contents { remove_peripheral_spaces <std::string_view> ( win.read() ) };
 
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())

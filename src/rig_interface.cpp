@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 235 2024-02-25 19:55:54Z  $
+// $Id: rig_interface.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1549,6 +1549,11 @@ void rig_interface::k3_command_mode(const K3_COMMAND_MODE cm)
   }
 }
 
+/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
+    \return     the K3 command mode
+
+    Works only with K3
+*/
 K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
 { if (_model == RIG_MODEL_K3)
   { const string result { raw_command("K3;", RESPONSE::EXPECTED) };
@@ -1568,7 +1573,7 @@ K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
 */
 void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh) const
 { if (_model == RIG_MODEL_K3)
-  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };  // the cast is necessary
+  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };    // the cast is necessary
     const string press_code { (torh == PRESS::TAP) ? "SWT"s : "SWH"s };
     const string command    { press_code + n_str + ";"s };
 

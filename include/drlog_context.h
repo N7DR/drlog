@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 235 2024-02-25 19:55:54Z  $
+// $Id: drlog_context.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -287,8 +287,8 @@ protected:
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
-  std::map<std::string, window_information >   _windows                                 { };                                ///< size and position info for each window
-  COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
+  std::map<std::string /* name */, window_information > _windows                        { };                                ///< size and position info for each window
+  COLOUR_TYPE                                           _worked_mults_colour            { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
   std::optional<int>                           _xscp_percent_cutoff                     { };                                ///< an ordered percentage
@@ -583,6 +583,7 @@ public:
 
   CONTEXTREAD(uba_bonus);                        ///< whether to add UBA bonus QSO points
 
+  CONTEXTREAD(windows);                          ///< size and position info for each window
   CONTEXTREAD(worked_mults_colour);              ///< colour of worked mults in the mult windows
 
   CONTEXTREAD(xscp_cutoff);                      ///< use XCSP values >= this value

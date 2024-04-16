@@ -1,4 +1,4 @@
-// $Id: rules.h 234 2024-02-19 15:37:47Z  $
+// $Id: rules.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -684,7 +684,7 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-  bool country_mults_used(const std::string& cp = std::string()) const;
+  bool country_mults_used(const std::string& cp = std::string { }) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
@@ -794,7 +794,9 @@ public:
 
 /// number of country mults
   inline unsigned int n_country_mults(void) const
-    { SAFELOCK(rules); return _country_mults.size(); }
+    { SAFELOCK(rules);
+      return _country_mults.size();
+    }
     
 /*! \brief                  Points for a particular QSO
     \param  qso             QSO for which the points are to be calculated

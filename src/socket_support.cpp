@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: socket_support.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,8 +43,6 @@ extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
 // ---------------------------------  tcp_socket  -------------------------------
-
-//constexpr bool DEFAULT_TCP_LINGER { false };    // the default is not to linger
 
 constexpr struct linger DEFAULT_TCP_LINGER { false, 0 };      // the default is not to linger
 

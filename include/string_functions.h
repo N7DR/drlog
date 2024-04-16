@@ -1,4 +1,4 @@
-// $Id: string_functions.h 235 2024-02-25 19:55:54Z  $
+// $Id: string_functions.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1371,7 +1371,6 @@ inline std::string delimit(const std::string& str, const std::string& delim_1, c
     
     Returns string::npos if <i>target</i> cannot be found
 */
-//size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
 size_t case_insensitive_find(const std::string_view str, const std::string_view target, const size_t start_posn = 0);
 
 /*! \brief              Truncate a string immediately prior to the first occurrence of a particular character
@@ -1408,7 +1407,8 @@ size_t find_and_go_to_end_of(std::string_view str, std::string_view target);
 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
-std::string base_call(const std::string& callsign);
+//std::string base_call(const std::string& callsign);
+std::string base_call(const std::string_view callsign);
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
     \return     current UTC date in the format: YYYYMMDD

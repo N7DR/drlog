@@ -1,4 +1,4 @@
-// $Id: rules.cpp 235 2024-02-25 19:55:54Z  $
+// $Id: rules.cpp 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -824,32 +824,6 @@ EFT contest_rules::exchange_field_eft(const string& field_name) const
   return MUM_VALUE(_exchange_field_eft, field_name, EFT("none"s));
 }
 
-/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
-    \param  canonical_prefix    canonical prefix
-    \param  m                   mode
-    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
-*/
-//vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-//{ vector<string> rv;
-//
-//  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::EXPAND), [&rv] (const exchange_field& ef) { rv += ef.name(); });
-//
-//  return rv;
-//}
-
-/*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
-    \param  canonical_prefix    canonical prefix
-    \param  m                   mode
-    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
-*/
-//vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
-//{ vector<string> rv;
-//
-//  FOR_ALL(_exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND), [&rv] (const auto& ef) { rv += ef.name(); });
-//
-//  return rv;
-//}
-
 /*! \brief              All the canonical values for a particular exchange field
     \param  field_name  name of an exchange field (received)
 
@@ -965,9 +939,7 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
     Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
 set<string> contest_rules::exch_permitted_values(const string& field_name) const
-{ //static const set<string> empty_set { };
-
-  SAFELOCK(rules);
+{ SAFELOCK(rules);
 
   return MUM_VALUE(_permitted_exchange_values, field_name, set<string> { });
 }
@@ -992,12 +964,9 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
 
   const set<string> permitted_values { exch_permitted_values(field_name) };
 
-//  if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
   if (permitted_values.empty())                         // if no permitted values => anything allowed
     return actual_value;
 
-//  if (!(exch_permitted_values(field_name) > actual_value))               // is the actual value a permitted value for this field?
-//   if ( !(exch_permitted_values(field_name).contains(actual_value)) )               // is the actual value a permitted value for this field?
   if ( !(permitted_values.contains(actual_value)) )               // is the actual value a permitted value for this field?
     return string { };
 /*
@@ -1009,8 +978,6 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
            > >                                  _permitted_to_canonical;
 */
   SAFELOCK(rules);
-
-//  const map<string, string>& p_to_c { _permitted_to_canonical.at(field_name) };  // we don't get here if field_name isn't valid
   
   return MUM_VALUE(_permitted_to_canonical.at(field_name), actual_value, actual_value);  // we don't get here if field_name isn't valid
 }
@@ -1049,7 +1016,6 @@ BAND contest_rules::next_band_up(const BAND current_band) const
 { SAFELOCK(rules);
 
   auto cit { find(_permitted_bands.begin(), _permitted_bands.end(), current_band) };
-//  auto cit { find(_permitted_bands, current_band) };
 
   if (cit == _permitted_bands.cend())    // might happen if rig has been manually QSYed to a non-contest band
   { int band_nr { static_cast<int>(current_band) };
@@ -1058,12 +1024,8 @@ BAND contest_rules::next_band_up(const BAND current_band) const
     const set<BAND> pbs { permitted_bands_set() };
 
     for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
-    { //band_nr++;
-
-      if (++band_nr > MAX_BAND)
+    { if (++band_nr > MAX_BAND)
         band_nr = MIN_BAND;
-
-//      const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
 
       if (const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) }; is_permitted)
         return (static_cast<BAND>(band_nr));
@@ -1089,12 +1051,8 @@ BAND contest_rules::next_band_down(const BAND current_band) const
     const set<BAND> pbs { permitted_bands_set()};
 
     for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
-    { //band_nr--;
-
-      if (--band_nr < MIN_BAND)
+    { if (--band_nr < MIN_BAND)
         band_nr = MAX_BAND;
-
- //     const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) };
 
       if (const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) }; is_permitted)
         return (static_cast<BAND>(band_nr));

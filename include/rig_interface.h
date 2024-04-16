@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 235 2024-02-25 19:55:54Z  $
+// $Id: rig_interface.h 236 2024-04-14 18:26:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -587,7 +587,7 @@ public:
 
     Works only with K3
 */
-  bool notch_enabled(const std::string& ds_result = std::string()) const;
+  bool notch_enabled(const std::string& ds_result = std::string { }) const;
 
 /*! \brief              Toggle the notch status
 
