@@ -648,6 +648,9 @@ template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
 { using CALL_AND_COLOURS = pair<string, PAIR_NUMBER_TYPE>;
 
+//  ost << "inside update_matches_window() for callsign = " << callsign << endl;
+//  ost << "matches length = " << matches.size() << endl;
+
   if (callsign.length() >= context.match_minimum())
   { const auto [win_fg, win_bg] { win.fgbg() };
 
@@ -3025,16 +3028,19 @@ void* prune_bandmap(void* vp)
     ' -- up to next stn that matches the N7DR criteria
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
-{
-// syntactic sugar
-  window& win { *wp };
+{ window& win { *wp };                  // syntactic sugar
 
   constexpr char COMMAND_CHAR { '.' };                                 // the character that introduces a command
 
   const string original_contents { remove_peripheral_spaces <std::string> (win.read()) };   // the original contents of the window, before we respond to a keypress
 
+//  ost << "original_contents (prior to processing pressed key) = " << original_contents << endl;
+//  ost << endl;
+
 // keyboard_queue::process_events() has already filtered out uninteresting events
   bool processed { win.common_processing(e) };
+
+//  ost << "after common processing = " << processed << ": " << remove_peripheral_spaces <std::string> (win.read()) << endl;
 
 // [ and ] (for regex)
   if (!processed and e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
@@ -3060,11 +3066,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   const BAND   cur_band      { current_band };
   const MODE   cur_mode      { current_mode };
 
+//  ost << "call_contents = " << call_contents << endl;
+
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
     display_call_info(call_contents);    // display information in the INFO window
 
-    // ALT-X -- possibly enter zoomed XIT mode
+// ALT-X -- possibly enter zoomed XIT mode
   if (!processed and e.is_alt('x') and (drlog_mode == DRLOG_MODE::SAP))
   { zoomed_xit();
     processed = true;
@@ -3178,8 +3186,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // ALT-B and ALT-V (band up and down)
-//  if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  if (!processed and (e.is_alt('b') or e.is_alt('v')) /* and (rules.n_bands() > 1) */)
+  if ( !processed and (e.is_alt('b') or e.is_alt('v')) )
   { if (rules.n_bands() == 1)
     { alert("SINGLE BAND CONTEST: no band changes allowed"s, SHOW_TIME::NO_SHOW);
       processed = true;
@@ -4757,6 +4764,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // finished processing a keypress
+
+//  ost << "FINISHED PROCESSING KEYSTROKE" << endl;
+//  ost << "processed = " << processed << endl;
+//  ost << "call appears to be = " << remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH_CHAR) << endl;
+//  ost << "original_contents before test = " << original_contents << endl;
+
   if (processed and (win_active_p == &win_call))  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
     { win_call.insert(true);                       // force INSERT mode
@@ -4773,10 +4786,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { if (const string current_contents { remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH_CHAR) }; current_contents != original_contents)   // remove any \ characters
       { display_call_info(current_contents);
 
+ //       ost << "in_scp_matching = " << in_scp_matching << endl;
+ //       ost << "current_contents = " << current_contents << endl;
+
         if (!in_scp_matching)
-        { update_scp_window(current_contents);
+        { //ost << "updating windows for " << current_contents << endl;
+
+          //const auto matches { scp_dbs[current_contents] };
+
+          //ost << "length of SCP matches = " << matches.size() << endl;
+
+          update_scp_window(current_contents);
           update_fuzzy_window(current_contents);
           update_query_windows(current_contents);
+        }
+        else
+        { //ost << "NOT UPDATING" << endl;
+          //ost << "in_scp_matching = " << in_scp_matching << endl;
         }
       }
     }

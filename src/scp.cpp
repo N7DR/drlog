@@ -27,20 +27,11 @@ using namespace      placeholders;
 
 extern message_stream ost;
 
-/// constructor from filename
-#if 0
-scp_database::scp_database(const string& filename)
-{ const string file_contents { to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')) };
-//  const vector<string> calls { to_lines(file_contents) };
-
-  init_from_calls(to_lines(file_contents));
-}
-#endif
-
 /// add a call
 void scp_database::operator+=(const string& call)
 { if (call.length() >= 2)
-    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
+//    for (unsigned int start_index = 0u; start_index < (call.length() - 1); ++start_index)
       (_db[substring <std::string> (call, start_index, 2)]) += call;
 }
 
@@ -54,7 +45,8 @@ bool scp_database::remove_call(const std::string& call)
   if (call.length() >= 2)
   { //for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
 //    for (const auto start_index : ranges::iota_view { 0u, call.length() - 2 } )
-    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+//    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
     { SCP_SET& ss { _db[substring <std::string> (call, start_index, 2)] };
 
       rv = (ss.erase(call) == 1);       // key remains, regardless of whether the set of matches is empty
@@ -69,7 +61,8 @@ bool scp_database::remove_call(const std::string& call)
 */
 void scp_database::operator-=(const std::string& call)
 { if (call.length() >= 2)
-    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+//    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 2) )
+    for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
       _db[substring <std::string> (call, start_index, 2)].erase(call);       // key remains, regardless of whether the set of matches is empty
 }
 
@@ -78,7 +71,9 @@ void scp_database::operator-=(const std::string& call)
     \return         whether <i>call</i> was actually removed
 */
 SCP_SET scp_database::operator[](const string& key)
-{ if (key.length() < 2)
+{ //ost << "Inside scp_database::operator[] for key = " << key << endl;
+
+  if (key.length() < 2)
     return SCP_SET { };
   
   if (key.length() == 2)         // trivial lookup
@@ -136,19 +131,6 @@ void scp_database::clear_cache(void)
 
 // -----------  scp_databases  ----------------
 
-/// remove a call ... goes through databases in *reverse* priority order until a removal is successful
-#if 0
-void scp_databases::remove_call(const string& call)
-{ bool removed { false };
-
-  for (size_t n { 0 }; (n < _vec.size() and !removed); ++n)   // in priority order
-  { const size_t rev { _vec.size() - 1 - n };               // reverse the order
-
-    removed = _vec[rev]->remove_call(call);
-  }
-}
-#endif
-
 /// add a database to those that are consulted
 void scp_databases::add_db(scp_database& db)
 { _vec += (&db);
@@ -157,7 +139,9 @@ void scp_databases::add_db(scp_database& db)
 
 /// return matches
 SCP_SET scp_databases::operator[](const string& key)
-{ if (key.length() < 2)
+{ //ost << "Inside scp_databases::operator[] for key = " << key << endl;
+
+  if (key.length() < 2)
     return SCP_SET();
 
   if (key.length() == 2)         // trivial lookup
@@ -167,18 +151,26 @@ SCP_SET scp_databases::operator[](const string& key)
     for (auto& db_p : _vec)
     { scp_database& db { *(db_p) };
 
-//      const SCP_SET ss { db[key] };
-
-//      _last_result += ss;
       _last_result += db[key];
     }
 
     return _last_result;
   }
 
+//  ost << "key length = " << key.length() << endl;
+//  ost << "_last key = " << _last_key << endl;
+
 // key length is > 2; look to the cache first
   if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
-  { SCP_SET rv;
+  { //ost << "CACHE HIT" << endl;
+    //ost << "size of last result set = " << _last_result.size() << endl;
+
+    //set<string> tmp_set;
+
+    //FOR_ALL(_last_result, [&tmp_set] (const string& str) { tmp_set += str; } );
+    //FOR_ALL(tmp_set, [] (const string& str) { ost << "  " << str << endl; } );
+
+    SCP_SET rv;
 
     for (const auto& cache_callsign : _last_result)
       if (::contains(cache_callsign, key))
@@ -191,6 +183,8 @@ SCP_SET scp_databases::operator[](const string& key)
   }
 
 // key length is > 2; cache miss
+  //ost << "CACHE MISS" << endl;
+
   SCP_SET rv;
 
   for (auto& db_p : _vec)
@@ -214,7 +208,6 @@ void scp_databases::clear_cache(void)
 { clear_cache_no_children();
 
   FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
-//  ranges::for_each(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
 }
 
 /// clear the cache without clearing the caches of any children

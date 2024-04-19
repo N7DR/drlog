@@ -57,7 +57,9 @@ public:
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
   inline explicit scp_database(const std::string& filename)
-    { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
+    { //std::cout << "Initialising SCP database from file: " << filename << std::endl;
+      init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '))));
+    }
   
 /// construct from vector of calls
   inline explicit scp_database(const std::vector<std::string>& calls)

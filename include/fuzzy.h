@@ -85,7 +85,7 @@ public:
     Does nothing if the call is already in the database
 */
 //  inline void operator+=(const std::string& call)
-  inline void operator+=(std::string_view call)
+  inline void operator+=(const std::string_view call)
     { _db[ _to_valid_size(call.length()) ] += call; }
 
 /*! \brief          Remove a call from the database
