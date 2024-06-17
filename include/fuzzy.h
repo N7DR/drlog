@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 223 2023-07-30 13:37:25Z  $
+// $Id: fuzzy.h 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -102,7 +102,6 @@ public:
     \return         whether <i>call</i> is present in the database
 */
   inline bool contains(const std::string& call) const
-//    { return (_db[ _to_valid_size(call.length()) ] > call); }
     { return (_db[ _to_valid_size(call.length()) ].contains(call)); }
   
 /*! \brief          Return matches
@@ -133,7 +132,7 @@ public:
 /// default constructor
   fuzzy_databases(void) = default;
 
-/// add a database to those that are consulted
+/// add a database (pointer) to those that are consulted
   inline void operator+=(fuzzy_database& db)
     { _vec += &db; }
 

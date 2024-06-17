@@ -1,4 +1,4 @@
-// $Id: rules.h 236 2024-04-14 18:26:49Z  $
+// $Id: rules.h 239 2024-05-20 13:42:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -310,6 +310,8 @@ public:
 /// exchange_field < exchange_field
   inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to be valid
     { return (_name < ef.name()); }
+
+  std::string to_string(void) const;
 
 /// serialise
   template<typename Archive>
@@ -905,6 +907,7 @@ std::string sac_prefix(const std::string& call);
 
     For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
-std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
+//std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
+std::string MULT_VALUE(const std::string_view field_name, const std::string& received_value);
 
 #endif    // RULES_H

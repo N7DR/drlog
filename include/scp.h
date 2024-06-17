@@ -1,4 +1,4 @@
-// $Id: scp.h 223 2023-07-30 13:37:25Z  $
+// $Id: scp.h 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,6 +27,8 @@
 class scp_databases;
 
 using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
+
+constexpr int SCP_KEY_SIZE = 2;         // we index using pairs of characters
 
 // -----------  scp_database  ----------------
 
@@ -57,9 +59,7 @@ public:
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
   inline explicit scp_database(const std::string& filename)
-    { //std::cout << "Initialising SCP database from file: " << filename << std::endl;
-      init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '))));
-    }
+    { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
   
 /// construct from vector of calls
   inline explicit scp_database(const std::vector<std::string>& calls)
@@ -91,9 +91,15 @@ public:
 */
   void operator-=(const std::string& call);
 
-/// is a call in the database?
+/*! \brief        Is a call in the database?
+    \param  call  call to test
+    \return       Whether <i>call</i> is in the database
+
+    Actually tests only the set of calls for the first pair of characters in <i>call</i>
+*/
   inline bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring <std::string> (call, 0, 2)].contains(call))); }
+//    { return (call.empty() ? false : (_db[substring <std::string> (call, 0, 2)].contains(call))); }
+    { return (call.empty() ? false : (_db[substring <std::string> (call, 0, SCP_KEY_SIZE)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call

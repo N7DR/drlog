@@ -1,4 +1,4 @@
-// $Id: bandmap.h 231 2023-12-10 14:01:06Z  $
+// $Id: bandmap.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -431,7 +431,8 @@ public:
     \param  rules       the rules for this contest
     \param  statistics  the current statistics
 
-    Adjust the mult status in accordance with the passed parameters
+    Adjust the mult status in accordance with the passed parameters;
+    Note that the parameters are NOT constant
 */
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
@@ -502,16 +503,20 @@ public:
 
     Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
 */
-  inline void remove_callsign_mult(const std::string& name, const std::string& value)
-    { _is_needed_callsign_mult.remove( { name, value } ); }
+//  inline void remove_callsign_mult(const std::string& name, const std::string& value)
+//    { _is_needed_callsign_mult.remove( { name, value } ); }
+  inline bool remove_callsign_mult(const std::string& name, const std::string& value)
+    { return _is_needed_callsign_mult.remove( { name, value } ); }
 
 /*! \brief          Remove a particular value of country mult
     \param  value   value of the mult
 
     Does nothing if the value <i>value</i> is unknown
 */
-  inline void remove_country_mult(const std::string& value)
-    { _is_needed_country_mult.remove(value); }
+//  inline void remove_country_mult(const std::string& value)
+//    { _is_needed_country_mult.remove(value); }
+  inline bool remove_country_mult(const std::string& value)
+    { return _is_needed_country_mult.remove(value); }
 
 /*! \brief          Remove a particular value of an exchange mult
     \param  name    name of the exchange mult
@@ -519,8 +524,10 @@ public:
 
     Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
 */
-  inline void remove_exchange_mult(const std::string& name, const std::string& value)
-    { _is_needed_exchange_mult.remove( { name, value } ); }
+//  inline void remove_exchange_mult(const std::string& name, const std::string& value)
+//    { _is_needed_exchange_mult.remove( { name, value } ); }
+  inline bool remove_exchange_mult(const std::string& name, const std::string& value)
+    { return _is_needed_exchange_mult.remove( { name, value } ); }
 
 /// is this a needed mult of any type?
   inline bool is_needed_mult(void) const
@@ -689,7 +696,8 @@ using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 class bandmap;
 
 // allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap declared
-using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int nskip);
+//using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int nskip);
+using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int16_t nskip);
 
 // -----------  bandmap  ----------------
 
@@ -703,7 +711,8 @@ protected:
 
   mutable pt_mutex                  _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
-  int                               _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+//  BAND                              _band                   { BAND::ANY_BAND };           ///< the band associated with this bandmap
+  int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                               _cull_function          { 0 };                        ///< cull function number to apply
   std::unordered_set<std::string>   _do_not_add             { };                          ///< do not add these calls
   std::map<std::string, std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
@@ -713,12 +722,16 @@ protected:
   bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
-  unsigned int                      _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
+//  unsigned int                      _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
+  uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
   bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string>   _recent_calls           { };                          ///< calls recently added
-  COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };                      ///< colour to use for entries < 120 seconds old (if black, then not used)
+  COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };             ///< colour to use for entries < 120 seconds old (if black, then not used)
+
+  int                               _last_displayed_version { -1 };
+  std::atomic<int>                  _version                { 0 };                        ///< used for debugging; strictly monotonically increases with each change
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -756,7 +769,7 @@ protected:
      \param callsign    call to test
      \return            whether <i>callsign</i> is actually a regex
 */ 
-  inline bool _is_regex(const std::string& callsign) const
+  inline bool _is_regex(const std::string_view callsign) const
     { return (callsign.find_first_not_of(CALLSIGN_CHARS) != std::string::npos); }
  
 public:
@@ -767,10 +780,11 @@ public:
 /// no copy constructor  
   bandmap(const bandmap& bm) = delete;
 
-  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
+//  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(band, _bandmap);                        ///< the band associated with the bandmap
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);       ///< the frequency of the mode marker
 
 /// get the current bandmap filter
-  inline bandmap_filter_type bandmap_filter(void)
+  inline bandmap_filter_type bandmap_filter(void) const
   { SAFELOCK (_bandmap);
     return *(_filter_p);
   }
@@ -778,7 +792,8 @@ public:
 /*!  \brief     Set the RBN threshold
      \param n   new value of the threshold
 */
-  inline void rbn_threshold(const unsigned int n)
+//  inline void rbn_threshold(const unsigned int n)
+  inline void rbn_threshold(const decltype(_rbn_threshold) n)
   { SAFELOCK (_bandmap);
     _rbn_threshold = n;
   }
@@ -788,6 +803,10 @@ public:
   { SAFELOCK(_bandmap);
     return _entries.size(); 
   }
+
+/// special getter for version -- don't lock
+  inline int version(void) const
+    { return _version; }
 
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
@@ -823,19 +842,19 @@ public:
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-  bandmap_entry operator[](const std::string& callsign);
+  bandmap_entry operator[](const std::string& callsign) const;
 
 /*! \brief              Return the bandmap_entry corresponding to my current frequency
     \return             the bandmap_entry corresponding to my location in the bandmap
 */
-  inline bandmap_entry my_bandmap_entry(void)
+  inline bandmap_entry my_bandmap_entry(void) const
     { return (*this)[MY_MARKER]; }
 
 /*! \brief          Return the first entry for a partial call
     \param  pcall   partial call for which the entry should be returned
     \return         the first bandmap_entry corresponding to <i>callsign</i>
 
-    Returns the null string if <i>pcall</i> matches no entries in the bandmap
+    Returns the default <i>bandmap_entr</i>> if <i>pcall</i> matches no entries in the bandmap
 */
   bandmap_entry substr(const std::string& pcall);
 
@@ -947,7 +966,8 @@ public:
     }
 
 /// get the number of columns across a window
-  inline unsigned int n_columns(const window& win)
+//  inline unsigned int n_columns(const window& win) const
+  inline uint16_t n_columns(const window& win) const
     { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
@@ -980,7 +1000,7 @@ public:
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
 */
-  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip = 0);
+  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
 
 /*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -989,7 +1009,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_needed, dirn, nskip); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
@@ -999,7 +1019,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_needed_mult, dirn, nskip); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
@@ -1009,7 +1029,7 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_all_time_first, dirn, nskip); }
 
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
@@ -1019,7 +1039,7 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::matches_criteria, dirn, nskip); }
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
@@ -1029,7 +1049,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn, nskip); }
 
 /*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
@@ -1039,7 +1059,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn, const int nskip = 0)
+  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn, nskip); }
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
@@ -1123,11 +1143,13 @@ template<typename C>
 
 /*! \brief         Process an insertion queue, adding the elements to the bandmap
     \param biq     insertion queue to process
+    \return        whether any processing actually took place (i.e., was <i>biq</i> non-empty?)
      
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+  bool process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
@@ -1155,7 +1177,9 @@ template<typename C>
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
 
-  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip);
+//  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip);
+
+  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
 
 /// serialize using boost
   template<typename Archive>

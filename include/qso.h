@@ -1,4 +1,4 @@
-// $Id: qso.h 236 2024-04-14 18:26:49Z  $
+// $Id: qso.h 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -349,6 +349,7 @@ inline bool earlier(const QSO& qso_1, const QSO& qso_2)
 
     The value of <i>posn</i> might be changed by this function.
 */
-std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
+//std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
+std::pair<std::string, std::string> next_name_value_pair(const std::string_view str, size_t& posn);
 
 #endif    // QSO_H

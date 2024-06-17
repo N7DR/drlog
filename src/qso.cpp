@@ -1,4 +1,4 @@
-// $Id: qso.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: qso.cpp 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -356,7 +356,7 @@ void QSO::populate_from_log_line(string_view str)
       processed = true;
     }
 
-    if (!processed and field.starts_with("sent-"s))
+    if (!processed and field.starts_with("sent-"sv))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = field_value;
       processed = true;
@@ -368,18 +368,18 @@ void QSO::populate_from_log_line(string_view str)
 //  present in original and not present in new
 //  present in original and present in new
 
-    if (!processed and field.starts_with("received-"s))
+    if (!processed and field.starts_with("received-"sv))
     { if (_is_received_field_optional(field, exchange_fields))
       { ost << "OPTIONAL received field = " << field << endl;
 
-        bool present_original { !_received_exchange[received_index].value().empty() };
+        const bool present_original { !_received_exchange[received_index].value().empty() };
 
         if (present_original)
           ost << "field is present in original: " << _received_exchange[received_index].value() << endl;
         else
           ost << "field is NOT present in original" << endl;
 
-        bool present_new { !field_value.empty() };
+        const bool present_new { !field_value.empty() };
 
         if (present_new)
           ost << "field is present in new: " << field_value << endl;
@@ -412,7 +412,7 @@ void QSO::populate_from_log_line(string_view str)
        }
        else    // not present in new, but was present in original
        { ost << "field has been removed in new" << endl;
-          _received_exchange[received_index++].value(string());
+        _received_exchange[received_index++].value(string { });
        }
       }
       else
@@ -977,7 +977,8 @@ ostream& operator<<(ostream& ost, const QSO& q)
 
     The value of <i>posn</i> might be changed by this function.
 */
-pair<string, string> next_name_value_pair(const string& str, size_t& posn)
+//pair<string, string> next_name_value_pair(const string& str, size_t& posn)
+pair<string, string> next_name_value_pair(const string_view str, size_t& posn)
 { static const pair<string, string> empty_pair { };
 
   if (posn >= str.size())
@@ -1006,7 +1007,7 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
 // handle "frequency_rx=     mycall=N7DR"
   if (contains(value, '='))
   { posn = value_first_char_posn;
-    return { name, string() };
+    return { name, string { } };
   }
 
   posn = space_posn;

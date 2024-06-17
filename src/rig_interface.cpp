@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: rig_interface.cpp 238 2024-05-05 15:50:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -865,7 +865,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
   static string rcvd_buf { };
 
-  const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
+  const bool is_p3_screenshot { (cmd == "#BMP;"sv) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
     return string();
@@ -891,7 +891,8 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     if (_instrumented)
       ost << "sent to rig: " << cmd << endl;
 
-    write(fd, cmd.c_str(), cmd.length());     // send the command
+//    write(fd, cmd.c_str(), cmd.length());     // send the command
+    write(fd, cmd.data(), cmd.length());     // send the command
 
     serial_flush(&rs_p->rigport);
     sleep_for(RETRY_TIME);            // wait for a bit
@@ -1239,8 +1240,6 @@ int rig_interface::bandwidth(void) const
 
   SAFELOCK(_rig);
 
-//  return from_string<int>(bandwidth_str());
-
   if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
       return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
@@ -1309,7 +1308,7 @@ bool rig_interface::test(void) const
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if ( const string response { raw_command("IC;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"s, 0) )
+    { if ( const string response { raw_command("IC;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"sv, 0) )
       { const char c { response[2] };
 
         return (c bitand (1 << 5));
@@ -1470,10 +1469,10 @@ bool rig_interface::rx_ant(void) const
   { if (_model == RIG_MODEL_K3)
     { const string result { raw_command("AR;", RESPONSE::EXPECTED) };
 
-      if ( (result != "AR0;"s) and (result != "AR1;"s) )
+      if ( (result != "AR0;"sv) and (result != "AR1;"sv) )
         ost << "ERROR in rx_ant(): result = " << result << endl;
 
-      return (result == "AR1;"s);
+      return (result == "AR1;"sv);
     }
   }
 

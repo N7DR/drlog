@@ -25,7 +25,7 @@ using namespace std;
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-message_stream::message_stream(const string& filename, const string& error_name) :
+message_stream::message_stream(const string& filename, const string& error_name) :      // can't use string_view because .c_str() required
   _message_stream_mutex("MESSAGE STREAM"s)
 { if (file_exists(filename))
   { int    index  { 0 };
@@ -41,8 +41,8 @@ message_stream::message_stream(const string& filename, const string& error_name)
   _err.open(error_name);
 
 // we need to redirect stderr so that any messages sent there by libraries (ALSA, I'm looking at you)
-// don't show up on the screen. Direct them error file defined in the message_stream object.
-// there is a function -- int snd_lib_error_set_handler (snd_lib_error_handler_t handler) -- that
+// don't show up on the screen. Direct them to the error file defined in the message_stream object.
+// There is a function -- int snd_lib_error_set_handler (snd_lib_error_handler_t handler) -- that
 // can change the ALSA error handler, but it requires a function with the signature 
 // typedef void(* snd_lib_error_handler_t) (const char *file, int line, const char *function, int err, const char *fmt,...) 
 // and I don't know how easily to do this since it's a variadic C function.	

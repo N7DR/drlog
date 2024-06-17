@@ -1,4 +1,4 @@
-// $Id: screen.h 233 2024-01-28 23:58:43Z  $
+// $Id: screen.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,6 +78,8 @@ using PAIR_NUMBER_TYPE   = short;
 
 using PAIR_OF_COLOURS = std::pair<COLOUR_TYPE, COLOUR_TYPE>;
 
+using WIN_INT_TYPE = uint16_t;
+
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
                       COLOUR_RED     { COLOR_RED },           ///< red
@@ -112,12 +114,14 @@ int COLOUR_PAIR(const PAIR_NUMBER_TYPE n);
     \param  h2    height of rectangle 2
     \return       whether rectangle and rectangle 2 overlap
 */
-bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2);
+//bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2);
+bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2);
 
 // -----------  cursor  ----------------
 
 /// class used for moving the cursor; encapsulates x,y coordinates
-WRAPPER_2(cursor, int, x, int, y);
+//WRAPPER_2(cursor, int, x, int, y);
+WRAPPER_2(cursor, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
 
 // -----------  cpair  ----------------
 
@@ -205,10 +209,10 @@ class window_information
 {
 protected:
 
-  int   _x { 0 };                     ///< x location on the screen
-  int   _y { 0 };                     ///< y location on the screen
-  int   _w { 0 };                     ///< width
-  int   _h { 0 };                     ///< height
+  WIN_INT_TYPE   _x { 0 };                     ///< x location on the screen
+  WIN_INT_TYPE   _y { 0 };                     ///< y location on the screen
+  WIN_INT_TYPE   _w { 0 };                     ///< width
+  WIN_INT_TYPE   _h { 0 };                     ///< height
 
   std::string _fg_colour { "white"s };       ///< name of foreground colour
   std::string _bg_colour { "black"s };       ///< name of background colour
@@ -221,7 +225,8 @@ public:
   window_information(void) = default;
 
 /// construct from x, y, w, h
-  inline window_information(const int X, const int Y, const int W, const int H) :
+//  inline window_information(const int X, const int Y, const int W, const int H) :
+  inline window_information(const WIN_INT_TYPE X, const WIN_INT_TYPE Y, const WIN_INT_TYPE W, const WIN_INT_TYPE H) :
     _x(X),
     _y(Y),
     _w(W),
@@ -262,24 +267,24 @@ protected:
   std::string   _name           { EMPTY_STR };  ///< (optional) name of window
   
   unsigned int  _column_width   { 0 };          ///< width of columns
-  int           _cursor_x       { 0 };          ///< used to hold x cursor
-  int           _cursor_y       { 0 };          ///< used to hold y cursor
+  WIN_INT_TYPE  _cursor_x       { 0 };          ///< used to hold x cursor
+  WIN_INT_TYPE  _cursor_y       { 0 };          ///< used to hold y cursor
   bool          _echoing        { false };      ///< whether echoing characters
-  int           _height         { 0 };          ///< height
+  WIN_INT_TYPE  _height         { 0 };          ///< height
   bool          _hidden_cursor  { false };      ///< whether to hide the cursor
   bool          _insert         { false };      ///< whether in insert mode
   bool          _leaveok        { false };      ///< whether leaveok is set
   bool          _scrolling      { false };      ///< whether scrolling is enabled
   bool          _vertical       { false };      ///< whether containers of strings are to be displayed vertically
-  int           _width          { 0 };          ///< width
-  int           _x              { 0 };          ///< x of origin (in proper coordinates)
-  int           _y              { 0 };          ///< y of origin (in proper coordinates)
+  WIN_INT_TYPE  _width          { 0 };          ///< width
+  WIN_INT_TYPE  _x              { 0 };          ///< x of origin (in proper coordinates)
+  WIN_INT_TYPE  _y              { 0 };          ///< y of origin (in proper coordinates)
   
   WINDOW*       _wp             { nullptr };    ///< ncurses handle
   PANEL*        _pp             { nullptr };    ///< panel associated with this window (currently not used)
 
-  int    _sx;                   ///< system cursor x value
-  int    _sy;                   ///< system cursor y value
+  int    _sx { 0 };                   ///< system cursor x value; has to be int for setsyx()/getsyx()
+  int    _sy { 0 };                   ///< system cursor y value; has to be int for setsyx()/getsyx()
   
   COLOUR_TYPE    _fg { COLOUR_WHITE };                   ///< foreground colour
   COLOUR_TYPE    _bg { COLOUR_BLACK };                   ///< background colour
@@ -308,7 +313,8 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-  inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
+//  inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
+  inline explicit window(const std::string_view win_name = EMPTY_STR, const unsigned int flags = 0) :
     _name(win_name),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
     _insert(flags bitand WINDOW_INSERT)
@@ -359,12 +365,6 @@ public:
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
 
-/*! \brief        Do a pair of windows overlap?
-    \param  win2  other window
-    \return       whether this window and <i>win2</i> overlap
-*/
-//  bool overlap(const window& win2) const;
-
 /// get the foreground and background colours
   inline PAIR_OF_COLOURS fgbg(void) const
     { return { _fg, _bg }; }
@@ -394,8 +394,9 @@ public:
     \param  new_y   y position
     \return         the window
 */
-  window& move_cursor(const int new_x, const int new_y);
- 
+//  window& move_cursor(const int new_x, const int new_y);
+  window& move_cursor(const WIN_INT_TYPE new_x, const WIN_INT_TYPE new_y);
+
 /*! \brief      Move the logical cursor
     \param  c   new cursor (used to derive the new location)
     \return     the window
@@ -408,8 +409,9 @@ public:
     \param  delta_y     change in y position
     \return             the window
 */
-  window& move_cursor_relative(const int delta_x, const int delta_y);  
-  
+//  window& move_cursor_relative(const int delta_x, const int delta_y);
+  window& move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y);
+
 /*! \brief      Get cursor position
     \return     the current position of the cursor
 */
@@ -610,7 +612,8 @@ template <class T>
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
-  std::string read(const int x = 0, const int y = 0);
+//  std::string read(const int x = 0, const int y = 0);
+  std::string read(const WIN_INT_TYPE x = 0, const WIN_INT_TYPE y = 0);
 
 /*! \brief              Read a line
     \param  line_nr     number of line to read (0 is bottommost row)
@@ -618,7 +621,8 @@ template <class T>
 
     Limits <i>line_nr</i> to a valid value for the window before reading the line.
 */
-  inline std::string getline(const int line_nr = 0)
+//  inline std::string getline(const int line_nr = 0)
+  inline std::string getline(const WIN_INT_TYPE line_nr = 0)
     { return read(0, line_nr); }
 
 /*! \brief      Obtain a line-by-line snapshot of all the contents; lines go from top to bottom
@@ -633,7 +637,8 @@ template <class T>
     Removes any blank spaces before testing.
     Limits <i>line_nr</i> to a valid value for the window before testing the line.
 */
-  inline bool line_empty(const int line_nr = 0)
+//  inline bool line_empty(const int line_nr = 0)
+  inline bool line_empty(const WIN_INT_TYPE line_nr = 0)
     { return (remove_peripheral_spaces <std::string_view> (getline(line_nr))).empty(); }
 
 /*! \brief              Clear a line
@@ -642,7 +647,8 @@ template <class T>
 
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
-  window& clear_line(const int line_nr = 0);
+//  window& clear_line(const int line_nr = 0);
+  window& clear_line(const WIN_INT_TYPE line_nr = 0);
 
 /*! \brief      Delete a character in the current line
     \param  n   number of character to delete (wrt 0)
@@ -650,7 +656,8 @@ template <class T>
 
     Does nothing if character number <i>n</i> does not exist
 */
-  window& delete_character(const int n);
+//  window& delete_character(const int n);
+window& delete_character(const WIN_INT_TYPE n);
 
 /*! \brief          Delete a character within a particular line
     \param  n       number of character to delete (wrt 0)
@@ -659,7 +666,8 @@ template <class T>
 
     Line number zero is the bottom line
 */
-  window& delete_character(const int n, const int line_nr);
+//  window& delete_character(const int n, const int line_nr);
+  window& delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr);
 
 /// set function used to process input
   inline void process_input_function(WINDOW_PROCESS_INPUT_TYPE pf)
@@ -696,7 +704,7 @@ template <class T>
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-  std::string properties(const std::string& name = std::string());
+  std::string properties(const std::string& name = std::string { });
 
 /// convert to bool
   inline operator bool(void) const
@@ -710,6 +718,12 @@ template <class T>
     { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
 };
 
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
+
 /*! \brief          Move the cursor in a window
     \param  win     the window to be affected
     \param  c       cursor coordinates to which to move
@@ -719,7 +733,8 @@ inline window& operator<(window& win, const cursor& c)
   { return win.move_cursor(c.x(), c.y()); }
 
 /// trivial class for moving the cursor (relative)
-WRAPPER_2(cursor_relative, int, x, int, y);
+//WRAPPER_2(cursor_relative, int, x, int, y);
+WRAPPER_2(cursor_relative, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
 
 /*! \brief          Move the cursor in a window, using relative movement
     \param  win     the window to be affected

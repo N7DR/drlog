@@ -1,4 +1,4 @@
-// $Id: macros.h 234 2024-02-19 15:37:47Z  $
+// $Id: macros.h 239 2024-05-20 13:42:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -875,8 +875,6 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
 */
 template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
 auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
-//  requires (is_mum<C>) and (std::is_same_v<typename C::key_type, K>)
-//  requires (is_mum<C>) and (std::convertible_to<K, typename C::key_type>)
   requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
@@ -1366,7 +1364,7 @@ inline bool contains(const C& c, const E& element)
     \return       a view of the values from <i>u</i> to <i>v-1</i>
 */
 template <typename T = int, typename U, typename V>
-auto RANGE(const U u, const V v)
+inline auto RANGE(const U u, const V v)
   { return std::ranges::iota_view { static_cast<T>(u), static_cast<T>(v) }; }
 
 /*! \brief          Find the first element in a container that matches a predicate, or return the default-constructed element if none match
@@ -1433,9 +1431,15 @@ template <typename M>  // M = map<T, set<T> >
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
 { std::map<typename M::key_type, typename M::key_type> rv;
 
-  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
-  { for (const auto& p : cit->second)
-      rv += { p, cit->first };
+//  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
+//  { for (const auto& p : cit->second)
+//      rv += { p, cit->first };
+//  }
+
+  for (const auto& [ k1, v1 ] : original_mapping)
+  { //for (const auto& p : v1)
+    //  rv += { p, k1 };
+    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
   }
 
   return rv;
@@ -1498,5 +1502,33 @@ template <typename IT>
   requires std::bidirectional_iterator<IT>
 inline auto REVERSE_IT(IT it) -> std::reverse_iterator<decltype(it)>
   { return std::prev(std::reverse_iterator<decltype(it)>(it)); }
+
+/*! \brief      Return all the values in a MUM (including duplicates) as a vector
+    \param  m   source MUM
+    \return     the values in <i>m</i> as a vector
+*/
+template <typename RTYPE, typename M>
+  requires is_mum<M>
+auto VALUES(const M& m) -> std::vector<typename M::mapped_type>
+{ std::vector<typename M::mapped_type> rv;
+
+  FOR_ALL(m, [&rv] (const typename M::value_type& v) { rv += v.second; });
+
+  return rv;
+}
+
+/*! \brief      Return all the values in a SUS (including duplicates) as a vector
+    \param  s   source SUS
+    \return     the values in <i>s</i> as a vector
+*/
+template <typename RTYPE, typename S>
+  requires is_sus<S>
+auto VALUES(const S& s) -> std::vector<typename S::value_type>
+{ std::vector<typename S::value_type> rv;
+
+  FOR_ALL(s, [&rv] (const typename S::value_type& v) { rv += v; });
+
+  return rv;
+}
 
 #endif    // MACROS_H

@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 223 2023-07-30 13:37:25Z  $
+// $Id: autocorrect.cpp 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,17 +63,34 @@ string autocorrect_database::corrected_call(const string& str) const
 
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
+// long call ends with a bust of "TEST"
+  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TENT"s, "TETT"s };
+
+  for ( const auto& broken_suffix : broken_TEST )
+  { const size_t broken_length { broken_suffix.size() };
+
+    if ( absent and (str.size() >= (broken_length + 3)) and str.ends_with(broken_suffix) )
+    { if (const string call_to_test { substring <std::string> (str, 0, str.size() - broken_length) }; contains(call_to_test))
+        return insert(str, call_to_test);
+    }
+  }
+
+//  if ( (str.size() >= 7) and str.ends_with("TEAT"sv) )
+//  { if (const string call_to_test { substring <std::string> (str, 0, str.size() - 4) }; contains(call_to_test))
+//      return insert(str, call_to_test);
+//  }
+
 // extraneous:
 //   E in front of a US K call
 //   T in front of a US K call
 //   T in front of a US N call
-  if (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv))
+  if (absent and (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv)))
   { if (const string call_to_test { substring <std::string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // PA copied as GA
-  if (str.starts_with("GA"sv))
+  if (absent and str.starts_with("GA"sv))
   { if (absent)
     { if (const string call_to_test { "PA"s + substring <std::string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);

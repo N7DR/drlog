@@ -101,7 +101,8 @@ public:
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-  bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
+//  bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
+  bool read_values_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief              Parse and incorporate QTHX values from context
     \param  context     context for the contest
@@ -140,7 +141,7 @@ public:
     <i>cv</i> that are already known as being equivalent to <i>cv</i>.
 */
   inline void add_legal_values(const std::string& cv, const std::set<std::string>& new_values)
-    { FOR_ALL(new_values, [cv, this] (const std::string& str) { add_legal_value(cv, str); } ); }
+    { FOR_ALL(new_values, [&cv, this] (const std::string& str) { add_legal_value(cv, str); } ); }
 
 /*! \brief          Is a string a legal value?
     \param  str     string to test

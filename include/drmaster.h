@@ -1,4 +1,4 @@
-// $Id: drmaster.h 228 2023-09-17 13:41:20Z  $
+// $Id: drmaster.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -246,7 +246,6 @@ protected:
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
-//  std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
 std::string _extract_field(const std::vector<std::string>& fields, const std::string_view field_indicator);
 
 public:
@@ -347,7 +346,8 @@ protected:
 
     Lines without XSCP data are always included
 */
-  void _prepare_from_file_contents(const std::string& contents, const int xscp_limit = 1);
+//  void _prepare_from_file_contents(const std::string& contents, const int xscp_limit = 1);
+  void _prepare_from_file_contents(const std::string_view contents, const int xscp_limit = 1);
 
 public:
 
@@ -361,7 +361,8 @@ public:
 
     Throws exception if the file does not exist or is incorrectly formatted;
 */
-  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
+//  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
+  explicit drmaster(const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Construct from a file
     \param  path        directories to check
@@ -373,7 +374,8 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+//  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+  drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
@@ -382,7 +384,8 @@ public:
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::string& filename, const int xscp_limit = 1);
+//  void prepare(const std::string& filename, const int xscp_limit = 1);
+  void prepare(const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check

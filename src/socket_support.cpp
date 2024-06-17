@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: socket_support.cpp 239 2024-05-20 13:42:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -131,13 +131,18 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       while (!connected)            // repeat until success
       { try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
-          { destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
+          { //ost << "legal IPv4 address: " << destination_ip_address_or_fqdn << endl;
+
+            destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
             rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
-          {
+          { //ost << "NOT legal IPv4 address: " << destination_ip_address_or_fqdn << endl;
+
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
+
+            //ost << "dotted decimal = " << dotted_decimal << endl;
 
             destination(dotted_decimal, destination_port, TIMEOUT );
             rename_mutex("TCP: "s + dotted_decimal + ":"s + ::to_string(destination_port));
@@ -336,7 +341,20 @@ void tcp_socket::connected(const sockaddr_storage& adr)
     \param  msg     message to send
   
     Does not look for a response. Throws an exception if there is any problem.
+    Cannot pass a string_view, as a C string has to be formed.
 */
+void tcp_socket::send(const std::string_view msg)
+{ if (!_destination_is_set)
+    throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
+
+  SAFELOCK(_tcp_socket);
+
+  const ssize_t status { ::send(_sock, msg.data(), msg.length(), 0) };
+
+  if (status == -1)
+    throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);
+}
+#if 0
 void tcp_socket::send(const std::string& msg)
 { if (!_destination_is_set)
     throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
@@ -348,6 +366,7 @@ void tcp_socket::send(const std::string& msg)
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   
 }
+#endif
 
 /*! \brief      Simple receive
     \return     received string
@@ -383,16 +402,12 @@ string tcp_socket::read(void)
     Throws an exception if the read times out
 */
 string tcp_socket::read(const unsigned long timeout_secs)
-{ //ost << "in read(); timeout_secs = " << timeout_secs << endl;
-
-  string rv;
+{ string rv;
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
   fd_set ps_set;
 
-//  FD_ZERO(&ps_set);
-//  FD_SET(_sock, &ps_set);
   fd_set_value(ps_set, _sock);
 
   SAFELOCK(_tcp_socket);
@@ -403,13 +418,9 @@ string tcp_socket::read(const unsigned long timeout_secs)
     throw socket_support_error(SOCKET_SUPPORT_UNABLE_TO_LISTEN);
   }
 
-//  ost << "HERE" << endl;
-
   const int max_socket_number { _sock + 1 };               // see p. 292 of Linux socket programming
 
   int socket_status { select(max_socket_number, &ps_set, NULL, NULL, &timeout) };  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
-
-//  ost << "socket status = " << socket_status << endl;
 
   switch (socket_status)
   { case 0:                    // timeout
@@ -423,7 +434,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
     }
 
-    default:                   // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
+    default:                      // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
     { constexpr int BUFSIZE { 4096 };   // a reasonable size for a buffer
 
       char cp[BUFSIZE];
@@ -973,19 +984,24 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
     Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
     <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
     lookup before deciding to return with an error.
+
+    Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */
 string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
-{ if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
+{ //ost << "Inside name_to_dotted_decimal for fqdn: " << fqdn << endl;
+
+  if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name"s);
 
   constexpr int BUF_LEN { 2048 };
   
-  const size_t buflen(BUF_LEN);
+  const size_t buflen { BUF_LEN };
 
   struct hostent ret;
-  char buf[BUF_LEN];
-  struct hostent* result;
-  int h_errnop;
+  char           buf[BUF_LEN];
+  int            h_errnop;
+
+  struct hostent* result { nullptr };
 
   remove_const_t<decltype(n_tries)> n_try   { 0 };
   bool                              success { false };
@@ -999,6 +1015,8 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
       sleep_for(1s);
   }
 
+  //ost << "success = " << success << endl;
+
   if (success)
   { char** h_addr_list { result->h_addr_list };
 
@@ -1007,7 +1025,7 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
     return convert_to_dotted_decimal(addr_long);
   }
   else
-  { ost << "Error return" << endl;
+  { ost << "Error trying to resolve name: " << fqdn << endl;
 
     throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: "s + fqdn));
   }

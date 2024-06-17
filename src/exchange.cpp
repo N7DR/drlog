@@ -501,13 +501,18 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
   _replacement_call(),
   _valid(false)
-{ static const string EMPTY_STRING;
+{ static const string EMPTY_STRING { };
 
   extern bool is_ss;                    // Sweepstakes is special; this is set to the correct value by drlog.cpp
 
   vector<string> copy_received_values(received_values);
 
+//  for (auto v : received_values)
+//    ost << "received value: " << v << endl;
+
   const vector<exchange_field> exchange_template { rules.unexpanded_exch(canonical_prefix, m) };
+
+//  ost << " number of exchange fields = " << exchange_template.size() << endl;
 
   if (is_ss)                // SS is oh-so-special
   { const parsed_ss_exchange exch(from_callsign, received_values);
@@ -524,6 +529,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     FOR_ALL(_fields, [rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
     _valid = ( (exch.serno() != 0) and (exch.section() != "AAA"s) and (exch.prec() != DEFAULT_PREC) );
+
+//    ost << "parsed_exchange: " << boolalpha << _valid << endl;
 
     return;
   }
@@ -553,15 +560,25 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // for each received field, which output fields does it match?
     map<int /* received field number */, set<string>> matches;
 
-    const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
+    const map<string /* field name */, EFT> exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
+
+//    ost << "size of exchange_field_eft = " << exchange_field_eft.size() << endl;
+
+//    FOR_ALL(exchange_field_eft, [] (const auto& pr) { const string& field_name { pr.first };
+//                                                                                 ost << "field name = " << field_name << endl;
+//                                                                               } );
 
     int field_nr { 0 };
 
     for (const string& received_value : copy_received_values)
-    { set<string> match;
+    { //ost << "this received value = " << received_value << endl;
+
+      set<string> match;
 
       for (const auto& field : exchange_template)
       { const string& field_name { field.name() };
+
+        //ost << "testing field " << field_name << " for possible match" << endl;
 
         try
         { if (contains(field_name, '+'))                                           // if it's a CHOICE
@@ -579,8 +596,12 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
             }
           }
           else    // not a choice
-          { if (exchange_field_eft.at(field_name).is_legal_value(received_value))
+          { //ost << "not a choice" << endl;
+
+            if (exchange_field_eft.at(field_name).is_legal_value(received_value))
+            { //ost << received_value << " is a legal value for field " << field_name << endl;
               match += field_name;
+            }
           }
         }
 
@@ -706,7 +727,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // normalize exchange fields to use canonical value, so that we don't mistakenly count each legitimate value more than once in statistics
 // this means that we can't use a DOK.values file, because the received DOK will get changed here
     if (_valid)
-      FOR_ALL(_fields, [rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+      FOR_ALL(_fields, [&rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
   }  // end of !truncate received values
 }
@@ -768,7 +789,7 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
 */
 string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
 { if (field_name.empty())
-    return string();
+    return string { };
 
   if (!contains(field_name, '+'))   // if not a CHOICE
     return field_name;
@@ -787,7 +808,7 @@ string parsed_exchange::resolve_choice(const string& field_name, const string& r
     }
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief          Write a <i>parsed_exchange</i> object to an output stream
@@ -1161,7 +1182,8 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
+//void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
+void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string& field_name)
 { try
   { const string contents { read_file(path, filename) };
 
@@ -1169,9 +1191,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
       for (int n { 0 }; n < ssize(lines); ++n)
- //     for (const string this_line : lines)
       { const string line { squash(replace_char(lines[n], '\t', ' '), ' ') };
-        //const string line { squash(replace_char(this_line, '\t', ' '), ' ') };
 
         if (const vector<string> tokens { clean_split_string <string> (line, ' ') }; tokens.size() == 2)
         { if ( (n == 0) and (tokens[0] == "CALL"sv) )   // possibly ignore this line

@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 222 2023-07-09 12:58:56Z  $
+// $Id: autocorrect.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,7 +35,7 @@ class autocorrect_database
 {
 protected:
 
-  std::unordered_set<std::string> _calls;                                               ///< known good calls
+  std::unordered_set<std::string> _calls;                                 ///< known good calls; can't use heterogenous lookup with unordered set
 
   mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
 
@@ -228,19 +228,19 @@ protected:
 
 public:
 
-/// is a pair of calls a known bust pair?
+/// is a pair of calls a known bust pair? <i>index_string</i> is the result of executing pair_index() on the two calls
   inline bool is_known_bust(const std::string& index_string) const
     { return _known_busts.contains(index_string); }
 
-/// is a pair of calls a known non-bust pair?
+/// is a pair of calls a known non-bust pair? <i>index_string</i> is the result of executing pair_index() on the two calls
   inline bool is_known_non_bust(const std::string& index_string) const
     { return _known_non_busts.contains(index_string); }
 
-/// add a pair of calls to the set of known busts
+/// add a pair of calls to the set of known busts <i>index_string</i> is the result of executing pair_index() on the two calls
   inline void known_bust(const std::string& index_string)
     { _known_busts += index_string; }
 
-/// add a pair of calls to the set of known non-busts
+/// add a pair of calls to the set of known non-busts <i>index_string</i> is the result of executing pair_index() on the two calls
   inline void known_non_bust(const std::string& index_string)
     { _known_non_busts += index_string; }
 };

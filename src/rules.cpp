@@ -1,4 +1,4 @@
-// $Id: rules.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: rules.cpp 239 2024-05-20 13:42:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,7 +114,6 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
-//  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv += psss.first; } );
   for (const auto& [ cv, set_of_values ] : _values)
     rv += cv;
 
@@ -153,6 +152,21 @@ vector<exchange_field> exchange_field::expand(void) const
 
 // it's a choice
   FOR_ALL(_choice, [&rv] (const auto& this_choice) { rv += this_choice.expand(); } );
+
+  return rv;
+}
+
+string exchange_field::to_string(void) const
+{ string rv { };
+
+  rv += _name + " is mult: " + (_is_mult ? "true" : "false") + ", is optional: " + (_is_optional ? "true" : "false") + EOL;
+
+  if (_choice.empty())
+    rv += "No equivalents" + EOL;
+  else
+  { for (const auto& this_choice : _choice)
+      rv += "  " + this_choice.name() + EOL;
+  }
 
   return rv;
 }
@@ -203,14 +217,14 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto context_qthx { context.qthx() };
 
-//  ost << "size of context.qthx() = " << context_qthx.size() << endl;
-
   SAFELOCK(rules);
 
   if (!context_qthx.empty())
-  { for (const auto& this_qthx : context_qthx)
-    { const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-      const set<string> ss               { this_qthx.second };
+  { //for (const auto& this_qthx : context_qthx)
+    for (const auto& [str, ss] : context_qthx)
+    { //const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
+//      const set<string> ss               { this_qthx.second };
+      const string canonical_prefix { location_db.canonical_prefix(str) };
 
       exchange_field_values qthx;
 
@@ -960,7 +974,8 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
     return actual_value;       // we convert to the single letter version elsewhere
 
   if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
-    return (substring <std::string> (actual_value, 0, 2) + pad_left(substring <std::string> (actual_value, 2), 3, '0'));  // XXnnn
+//    return (substring <std::string> (actual_value, 0, 2) + pad_left(substring <std::string> (actual_value, 2), 3, '0'));  // XXnnn
+    return (substring <std::string> (actual_value, 0, 2) + pad_leftz(substring <std::string_view> (actual_value, 2), 3));  // XXnnn
 
   const set<string> permitted_values { exch_permitted_values(field_name) };
 
@@ -1097,7 +1112,7 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
 
   SAFELOCK(rules);
 
-  if (pb.find(b) == pb.cend())
+  if (!pb.contains(b))
   { ost << "Unable to find any points entries for band " << BAND_NAME[b] << endl;
     return 0;
   }
@@ -1112,10 +1127,14 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
 
       const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
 
-      if (auto cit { continent_points.find(location_db.continent(call)) }; cit != continent_points.cend())  // if points are defined for this continent
-        return cit->second;
+      return MUM_VALUE(continent_points, location_db.continent(call), points_this_band.default_points());
 
-      return points_this_band.default_points();
+//  return ( (cit == m.cend()) ? d : cit->second );
+
+//      if (auto cit { continent_points.find(location_db.continent(call)) }; cit != continent_points.cend())  // if points are defined for this continent
+//        return cit->second;
+
+//      return points_this_band.default_points();
     }
 
 // IARU
@@ -1262,7 +1281,10 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
 set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
 
-  FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );  //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
+//  FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );  //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
+
+  for (const auto& [ field_name, unused_eft ] : _exchange_field_eft)      //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
+    rv += field_name;
 
   return rv;
 }
@@ -1280,8 +1302,9 @@ choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) co
   if (cit_mode == _choice_exchange_equivalents.cend())     // no choice equivalents for this mode
     return rv;
 
-  const map<string, choice_equivalents>&          choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
-  map<string, choice_equivalents>::const_iterator cit_cp                       { choice_equivalents_this_mode.find(cp) };
+  const map<string, choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
+
+  map<string, choice_equivalents>::const_iterator cit_cp { choice_equivalents_this_mode.find(cp) };
 
   if (cit_cp != choice_equivalents_this_mode.cend())
     return (cit_cp->second);
@@ -1338,11 +1361,11 @@ string wpx_prefix(const string& call)
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-  callsign = remove_from_end <std::string> (callsign, "/QRP"s);
+  callsign = remove_from_end <std::string> (callsign, "/QRP"sv);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
-  { static const string portables { "AEJMP"s };                 // concluding characters that might mean "portable"
+  { static const string portables { "AEJMP"sv };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
       callsign = remove_from_end <std::string> (callsign, 2u);
@@ -1393,7 +1416,7 @@ string wpx_prefix(const string& call)
       return right;
   }
 
-  string designator { (left_size < right_size ? left : right) };
+  string designator { (left_size < right_size) ? left : right };
 
   if (!contains_digit(designator))
     designator += '0';
@@ -1457,19 +1480,21 @@ string sac_prefix(const string& call)
     Currently, the only field name that precipitates special processing is DOK.
     Adding IOTA.
 */
-string MULT_VALUE(const string& field_name, const string& received_value)
+//string MULT_VALUE(const string& field_name, const string& received_value)
+string MULT_VALUE(const string_view field_name, const string& received_value)
 { if (field_name == "DOK"sv)
   { if (!received_value.empty())
     { const auto posn { received_value.find_first_of(UPPER_CASE_LETTERS) };
 
-      return ( (posn == string::npos) ? string() : create_string(received_value[posn]) );
+      return ( (posn == string::npos) ? string { } : create_string(received_value[posn]) );
     }
     else        // should never happen: DOK with no value; might be empty if no value to guess
       return received_value;  // same as string()
   }
 
   if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
-    return (substring <std::string> (received_value, 0, 2) + pad_left(substring <std::string> (received_value, 2), 3, '0'));  // XXnnn
+//    return (substring <std::string> (received_value, 0, 2) + pad_left(substring <std::string> (received_value, 2), 3, '0'));  // XXnnn
+    return (substring <std::string> (received_value, 0, 2) + pad_leftz(substring <std::string> (received_value, 2), 3));  // XXnnn
 
   return received_value;
 }

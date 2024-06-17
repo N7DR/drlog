@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 215 2023-01-23 19:37:41Z  $
+// $Id: fuzzy.cpp 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,13 +45,10 @@ FUZZY_SET fuzzy_database::operator[](const string& key) const
   if (key.find_first_not_of(CALLSIGN_CHARS) != string::npos)
     return rv;
 
-//  const set<string>& ss { _db[ _to_valid_size(key.length()) ] };
   const FUZZY_SET& ss { _db[ _to_valid_size(key.length()) ] };
 
   for (size_t posn { 0 }; posn < key.length(); ++posn)
- //   rv += regex_matches<set<string>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );
-//    rv += regex_matches<unordered_set<string>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );
-    rv += regex_matches<base_type<decltype(ss)>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );
+    rv += regex_matches<base_type<decltype(ss)>>(ss, (key.substr(0, posn) + '.' + key.substr(posn + 1)) );  // allow any character in one position
 
 // 230116 do not include the key in the output set
   rv -= key;
@@ -86,9 +83,10 @@ FUZZY_SET fuzzy_databases::operator[](const string& key) const
     return rv;
 
   for (const auto& db_p : _vec)
-  { const fuzzy_database& db { *db_p };
+  { //const fuzzy_database& db { *db_p };
 
-    rv += db[key];
+    //rv += db[key];
+    rv += (*db_p)[key];
   }
 
   return rv;

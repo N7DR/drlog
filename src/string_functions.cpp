@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: string_functions.cpp 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -216,7 +216,7 @@ string replace(string_view s, string_view old_str, string_view new_str)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-string pad_string(string_view s, const size_t len, const PAD pad_side, const char pad_char)
+string pad_string(const string_view s, const size_t len, const PAD pad_side, const char pad_char)
 { const string s_str { s }; 
 
   if ( (static_cast<int>(len) <= 0) or (s.length() >= len) )
@@ -236,7 +236,7 @@ string pad_string(string_view s, const size_t len, const PAD pad_side, const cha
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-string read_file(string_view filename)
+string read_file(const string_view filename)
 { const string filename_str { filename };   // because we need c_str()
 
   FILE* fp { fopen(filename_str.c_str(), "rb") };
@@ -273,7 +273,7 @@ string read_file(string_view filename)
     of several bad things happen. Assumes that the file is a reasonable length.
 */
 //string read_file(const vector<string>& path, const string& filename)
-string read_file(const vector<string>& path, string_view filename)
+string read_file(const vector<string>& path, const string_view filename)
 { for (const auto& this_path : path)
   { try
     { return read_file(this_path + "/"s + filename);
@@ -287,38 +287,12 @@ string read_file(const vector<string>& path, string_view filename)
   throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
 }
 
-/*! \brief              Split a string into components
-    \param  cs          original string
-    \param  separator   separator character
-    \return             vector containing the separate components
-*/
-#if 0
-vector<string> split_string(const string& cs, const char separator)
-{ size_t start_posn { 0 };
-
-  vector<string> rv;
-
-  while (start_posn < cs.length())
-  { if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
-    { rv += cs.substr(start_posn);
-      start_posn = cs.length();
-    }
-    else                                            // at least one separator
-    { rv += cs.substr(start_posn, posn - start_posn);
-      start_posn = posn + 1;
-    }
-  }
-
-  return rv;
-}
-#endif
-
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-string squash(string_view cs, const char c)
+string squash(const string_view cs, const char c)
 { auto both_match = [c] (const char lhs, const char rhs) { return ( (lhs == rhs) and (lhs == c) ); }; ///< do both match the target character?
 
   string rv { cs };
@@ -342,22 +316,6 @@ vector<string> remove_empty_lines(const vector<string>& lines)
   return rv;
 }
 
-/*! \brief      Remove all instances of a specific trailing character
-    \param  cs  original string
-    \param  c   trailing character to remove (if present)
-    \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
-*/
-#if 0
-string remove_trailing(const string& cs, const char c)
-{ string rv { cs };
-
-  while (rv.length() and (rv[rv.length() - 1] == c))
-    rv = rv.substr(0, rv.length() - 1);
-  
-  return rv;
-}
-#endif
-
 /*! \brief                  Remove all instances of a particular char from a string
     \param  cs              original string
     \param  char_to_remove  character to be removed from <i>cs</i>
@@ -371,23 +329,6 @@ string remove_char(string_view cs, const char char_to_remove)
   return rv;
 } 
 
-/*! \brief      Remove specific string from the start of a string if it is present
-    \param  s   original string
-    \param  ss  substring to remove
-    \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
-*/
-#if 0
-string remove_from_start(const string& s, string_view sv)
-{ if (sv.empty())
-    return s;
-
-  if (s.starts_with(sv))
-    return substring <std::string> (s, sv.size());
-
-  return s;
-}
-#endif
-
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
     \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
@@ -398,30 +339,30 @@ string remove_from_start(const string& s, string_view sv)
     delimiters are kept in the output
 */
 //string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
-string remove_char_from_delimited_substrings(string_view cs, const char char_to_remove, const char delim_1, const char delim_2)
+string remove_char_from_delimited_substrings(const string_view cs, const char char_to_remove, const char delim_1, const char delim_2)
 { string rv         { };
   size_t start_posn { 0 };
 
   while (true)
-  { size_t posn_1 { cs.find(delim_1, start_posn) };
+  { size_t delim_1_posn { cs.find(delim_1, start_posn) };
 
-    if (posn_1 == string_view::npos)
+    if (delim_1_posn == string_view::npos)
       return (rv + string { cs.substr(start_posn) });
 
 // we found the first delimiter
-    size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
+    size_t delim_2_posn { cs.find(delim_2, delim_1_posn + 1) };
 
 // if there is no matching second delimiter, pretend second delimiter is at end
-    if (posn_2 == string_view::npos)
-      return (rv + remove_char(substring <std::string> (cs, posn_1), char_to_remove));
+    if (delim_2_posn == string_view::npos)
+      return (rv + remove_char(substring <std::string> (cs, delim_1_posn), char_to_remove));
 
 // we have matching delimiters
-    const size_t substr_length   { posn_2 - posn_1 + 1 };
-    const string modified_substr { remove_char(substring <std::string> (cs, posn_1, substr_length), char_to_remove) };  // keeps the delimiters in the string
+    const size_t substr_length   { delim_2_posn - delim_1_posn + 1 };
+    const string modified_substr { remove_char(substring <std::string> (cs, delim_1_posn, substr_length), char_to_remove) };  // keeps the delimiters in the string
 
-    rv += ( string { cs.substr(start_posn, posn_1) } + modified_substr );
+    rv += ( string { cs.substr(start_posn, delim_1_posn) } + modified_substr );
 
-    start_posn = posn_2 + 1;
+    start_posn = delim_2_posn + 1;
 
     if (start_posn >= cs.length())
       return rv;
@@ -436,9 +377,7 @@ string remove_char_from_delimited_substrings(string_view cs, const char char_to_
     \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
-//string remove_chars(const string& s, const string& chars_to_remove)
-//string remove_chars(string_view s, const string& chars_to_remove)
-string remove_chars(string_view s, string_view chars_to_remove)
+string remove_chars(const string_view s, const string_view chars_to_remove)
 { string rv { s };
 
   erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
@@ -446,110 +385,12 @@ string remove_chars(string_view s, string_view chars_to_remove)
   return rv;
 }
 
-/*! \brief                      Obtain a delimited substring
-    \param  cs                  original string
-    \param  delim_1             opening delimiter
-    \param  delim_2             closing delimiter
-    \param  return_delimiters   whether to keep delimiters in the returned value
-    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
-  
-    Returns the empty string if the delimiters do not exist, or if
-    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
-    first delimited substring if more than one exists.
-*/
-#if 0
-string delimited_substring(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
-{ const size_t posn_1 { cs.find(delim_1) };
-  
-  if (posn_1 == string::npos)
-    return string();  
-  
-  const size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
-  
-  if (posn_2 == string::npos)
-    return string();
-  
-  return ( (return_delimiters == DELIMITERS::DROP) ? cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) : cs.substr(posn_1, posn_2 - posn_1) ) ;
-}
-#endif
-
-/*! \brief                      Obtain a delimited substring
-    \param  cs                  original string
-    \param  delim_1             opening delimiter
-    \param  delim_2             closing delimiter
-    \param  return_delimiters   whether to keep delimiters in the returned value
-    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
-  
-    Returns the empty string if the delimiters do not exist, or if
-    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
-    first delimited substring if more than one exists.
-*/
-#if 0
-string delimited_substring(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
-{ const size_t posn_1 { cs.find(delim_1) };
-  
-  if (posn_1 == string::npos)
-    return string();  
-  
-  const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
-  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
-  
-  if (posn_2 == string::npos)
-    return string();
-  
-  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
-                                                                          : posn_2 + posn_1 + delim_2.length()
-                                };
-  
-  return cs.substr(posn_1 + length_to_skip, length_to_return);
-}
-#endif
-
-/*! \brief                      Obtain all occurrences of a delimited substring
-    \param  cs                  original string
-    \param  delim_1             opening delimiter
-    \param  delim_2             closing delimiter
-    \param  return_delimiters   whether to keep delimiters in the returned value
-    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
-*/
-#if 0
-vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
-{ vector<string> rv;
-
-  size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
-
-  while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
-  { const string& sstring { substring <std::string> (cs, start_posn) };
-    const size_t  posn_1  { sstring.find(delim_1) };
-
-    if (posn_1 == string::npos)             // no more starting delimiters
-      return rv;
-
-    const size_t posn_2 { sstring.find(delim_2, posn_1 + 1) };
-
-    if (posn_2 == string::npos)
-      return rv;                            // no more ending delimiters
-
-    if (return_delimiters == DELIMITERS::KEEP)
-      rv += sstring.substr(posn_1, posn_2 - posn_1);
-    else
-      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
-
-    start_posn += (posn_2 + 1);   // remember, start_posn is global
-  }
-
-  return rv;
-}
-#endif
-
 /*! \brief          Centre a string
     \param  str     string to be centred
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-//string create_centred_string(const string& str, const unsigned int width)
-//string create_centred_string(string_view str, const unsigned int width)
-string centred_string(string_view str, const unsigned int width)
+string centred_string(const string_view str, const unsigned int width)
 { const size_t len { str.length() };
 
   if (len > width)
@@ -570,7 +411,7 @@ string centred_string(string_view str, const unsigned int width)
 
     Throws exception if <i>cs</i> is empty
 */
-char last_char(string_view cs)
+char last_char(const string_view cs)
 { if (cs.empty())
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character in empty string"s);
     
@@ -583,7 +424,7 @@ char last_char(string_view cs)
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-char penultimate_char(string_view cs)
+char penultimate_char(const string_view cs)
 { if (cs.length() < 2)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string"s);
     
@@ -596,8 +437,7 @@ char penultimate_char(string_view cs)
 
     Throws exception if <i>cs</i> contains fewer than two characters
 */
-//char antepenultimate_char(const string& cs)
-char antepenultimate_char(string_view cs)
+char antepenultimate_char(const string_view cs)
 { if (cs.length() < 3)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string"s);
     
@@ -613,7 +453,7 @@ char antepenultimate_char(string_view cs)
 string get_environment_variable(const string& var_name)
 { const char* cp { getenv(var_name.c_str()) };
 
-  return ( cp ? string(cp) : string() );
+  return ( cp ? string { cp } : string { } );
 }
 
 /*! \brief      Transform a string
@@ -622,7 +462,7 @@ string get_environment_variable(const string& var_name)
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
 //string transform_string(const string& cs, int(*pf)(int))
-string transform_string(string_view cs, int(*pf)(int))
+string transform_string(const string_view cs, int(*pf)(int))
 { string rv { cs };
   
   std::ranges::transform(rv, rv.begin(), pf);
@@ -634,8 +474,9 @@ string transform_string(string_view cs, int(*pf)(int))
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-vector<size_t> starts_of_words(const string& s)
-{ vector<size_t> rv;
+//vector<size_t> starts_of_words(const string& s)
+vector<size_t> starts_of_words(const string_view s)
+{ vector<size_t> rv { };
 
   if (s.empty())
     return rv;
@@ -695,8 +536,9 @@ size_t next_word_posn(const string& str, const size_t current_posn)
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
 */
-string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
-{ string rv;
+//string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
+string nth_word(const string_view s, const unsigned int n, const unsigned int wrt)
+{ string rv { };
 
   if (n < wrt)
     return rv;
@@ -723,8 +565,8 @@ string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
 size_t n_chars(const string& str)
-{ if (string(nl_langinfo(CODESET)) != "UTF-8"sv)
-    throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + string(nl_langinfo(CODESET)));
+{ if (const string encoding { nl_langinfo(CODESET) }; encoding != "UTF-8"sv)
+    throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + encoding);
 
   const size_t n_bytes { str.size() };
 
@@ -771,7 +613,8 @@ bool is_legal_ipv4_address(const string_view cs)
     \return         dotted decimal string corresponding to <i>val</i>
 */
 string convert_to_dotted_decimal(const uint32_t val)
-{ 
+{ constexpr int N_BYTES { sizeof(uint32_t) };
+
 // put into network order (so that we can guarantee the order of the octets in the long)
   const uint32_t network_val { htonl(val) };
 
@@ -779,13 +622,13 @@ string convert_to_dotted_decimal(const uint32_t val)
 
   string rv;
 
-  for (int n { 0 }; n < 3; n++)
+  for (int n { 0 }; n < (N_BYTES - 1); n++)
   { const unsigned char c { cp[n] };
   
     rv += to_string(static_cast<int>(c)) + '.';
   }
 
-  const unsigned char c { cp[3] };
+  const unsigned char c { cp[N_BYTES - 1] };
 
   rv += to_string(static_cast<int>(c));
 
@@ -1077,7 +920,8 @@ size_t find_and_go_to_end_of(string_view str, string_view target)
 
     Testing for busts is a symmetrical function.
 */
-bool is_bust_call(const string& call1, const string& call2) noexcept
+//bool is_bust_call(const string& call1, const string& call2) noexcept
+bool is_bust_call(const string_view call1, const string_view call2) noexcept
 { if (call1 == call2)
     return false;                // not a bust if both calls are the same
 
@@ -1085,8 +929,10 @@ bool is_bust_call(const string& call1, const string& call2) noexcept
     return false;                // not a bust if the lengths differ by 2 or more
 
   if ( abs(static_cast<int>(call1.length()) - static_cast<int>(call2.length())) == 1 )  // lengths differ by unity
-  { const string& longer  { (call1.length() > call2.length() ? call1 : call2) };
-    const string& shorter { (call1.length() > call2.length() ? call2 : call1) };
+  { //const string& longer  { (call1.length() > call2.length() ? call1 : call2) };
+    //const string& shorter { (call1.length() > call2.length() ? call2 : call1) };
+    const string_view longer  { (call1.length() > call2.length() ? call1 : call2) };
+    const string_view shorter { (call1.length() > call2.length() ? call2 : call1) };
 
     if (contains(longer, shorter))
       return true;

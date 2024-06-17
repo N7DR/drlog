@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 236 2024-04-14 18:26:49Z  $
+// $Id: rig_interface.h 237 2024-04-28 17:47:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -464,8 +464,6 @@ public:
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
   std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
-
-//  std::string raw_command_not_busy(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode

@@ -46,7 +46,7 @@ public:
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-  explicit message_stream(const std::string& filename, const std::string& error_name = "drlog-errors"s);
+  explicit message_stream(const std::string& filename, const std::string& error_name = "drlog-errors"s);      // can't use string_view because .c_str() required
 
 /*! \brief          Write a generic object to a <i>message_stream</i> object
     \param  obj     object to write

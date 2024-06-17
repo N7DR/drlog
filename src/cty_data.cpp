@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: cty_data.cpp 240 2024-05-27 12:45:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -366,7 +366,8 @@ ostream& operator<<(ostream& ost, const location_info& info)
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-location_info guess_zones(const string& call, const location_info& li)
+//location_info guess_zones(const string& call, const location_info& li)
+location_info guess_zones(const string_view call, const location_info& li)
 { location_info rv { li };
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
@@ -517,9 +518,10 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
       db += { prefix_or_callsign, info };
     };
     
-  for (auto cit { alts.cbegin() }; cit != alts.cend(); ++cit)
-  { const string&                   prefix_or_callsign { cit->first };
-    const alternative_country_info& aci                { cit->second };
+//  for (auto cit { alts.cbegin() }; cit != alts.cend(); ++cit)
+  for ( const auto& [ prefix_or_callsign, aci /* alternative_country_info */ ] : alts )
+  { //const string&                   prefix_or_callsign { cit->first };
+    //const alternative_country_info& aci                { cit->second };
         
     if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix or call, delete it before inserting
     { if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn != db.cend())
@@ -544,13 +546,13 @@ location_database::location_database(const string_view filename, const COUNTRY_L
     \param  path        vector of directories to check for file <i>filename</i>
     \param  filename    name of file containing Russian information
 */
-//void location_database::add_russian_database(const vector<string>& path, const string& filename)
 void location_database::add_russian_database(const vector<string>& path, const string_view filename)
 { if (filename.empty())
     return;
 
   try
-  { _russian_db = russian_data(path, string(filename)).data();
+  { //_russian_db = russian_data(path, string(filename)).data();
+    _russian_db = russian_data(path, filename).data();
   }
 
   catch (...)
@@ -621,7 +623,7 @@ location_info location_database::info(const string& callpart) const
     unsigned int len { 1 };
 
     if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n; this changes callsign
-    { const size_t last_digit_posn { substring <std::string> (callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
+    { const size_t last_digit_posn { substring <std::string_view> (callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
 
       if (last_digit_posn != string::npos)
       { callsign[last_digit_posn] = last_char(callsign);
@@ -674,14 +676,13 @@ location_info location_database::info(const string& callpart) const
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
       if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
-      { const size_t posn_1 { callsign.find_first_of(DIGITS) };
+      { //const size_t posn_first_digit { callsign.find_first_of(DIGITS) };
 
-        if (posn_1 != string::npos)
-        { const size_t posn_2 { callsign.find_first_not_of(DIGITS, posn_1) };
+        if (const size_t posn_first_digit { callsign.find_first_of(DIGITS) }; posn_first_digit != string::npos)
+        { //const size_t posn_first_suffix_letter { callsign.find_first_not_of(DIGITS, posn_first_digit) };
 
-          if (posn_2 != string::npos)
-          { const string sub    { create_string(callsign[posn_1]) + create_string(callsign[posn_2]) };
- //           const auto   map_it { _russian_db.find(sub) };
+          if (const size_t posn_first_suffix_letter { callsign.find_first_not_of(DIGITS, posn_first_digit) }; posn_first_suffix_letter != string::npos)
+          { const string sub { create_string(callsign[posn_first_digit]) + create_string(callsign[posn_first_suffix_letter]) };
 
             if (const auto map_it { _russian_db.find(sub) }; (map_it != _russian_db.end()))
             { const russian_data_per_substring& data { map_it->second };
@@ -706,17 +707,11 @@ location_info location_database::info(const string& callpart) const
 
 // it looks like maybe it's a reciprocal license
 
-//  if (parts.size() == 1)        // slash is first or last character
   if (callsign.starts_with('/') or callsign.ends_with('/'))   // slash is first or last character
     return location_info();
 
 // how many slashes are there?
   const vector<string> parts { split_string <std::string> (callsign, '/') };
-
-//  ost << "callsign = " << callsign  << ", size = " << parts.size() << endl;
-
-//  for (const auto& p : parts)
-//    ost << "size of part = " << p.size() << ", part = " << p << endl;
 
   if (parts.size() > 3)
     throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: "s + callsign);
@@ -748,10 +743,7 @@ location_info location_database::info(const string& callpart) const
       return insert_best_info( guess_zones(callsign, ((parts[0].length() > parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );    // choose longest match
 
     if (!found_0 and !found_1)    // neither matched exactly; use one that ends with a digit if there is one
-    { //const bool first_ends_with_digit  { is_digit(parts[0][parts[0].length()-1]) };
-      //const bool second_ends_with_digit { is_digit(parts[1][parts[1].length()-1]) };
-
-      const bool first_ends_with_digit  { is_digit(last_char(parts[0])) };
+    { const bool first_ends_with_digit  { is_digit(last_char(parts[0])) };
       const bool second_ends_with_digit { is_digit(last_char(parts[1])) };
       
       if (first_ends_with_digit and !second_ends_with_digit)
@@ -807,11 +799,13 @@ location_info location_database::info(const string& callpart) const
   if (parts.size() == 3)        // two slashes
   {
 // ignore the second slash and everything after it (assume W0/G4AMJ/P or G4AMJ/VP9/M)
-    string target { parts[0] + "/"s + parts[1] };
+//    string target { parts[0] + "/"s + parts[1] };
+//    string target { parts[0] + '/' + parts[1] };
 
-    if (parts[2].length() != 1)                    // SP/DL/SP2SWA
-      target = parts[0];
-    
+//    if (parts[2].length() != 1)                    // SP/DL/SP2SWA
+//      target = parts[0];
+
+    const string        target    { (parts[2].length() == 1) ? (parts[0] + '/' + parts[1]) : parts[0] };
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
     _db_checked -= target;
@@ -859,13 +853,12 @@ unordered_set<string> location_database::countries(const string& cont_target) co
     \param  sbstring    the prefix for the Russian district
     \param  line        line from Russian data file
 */
-russian_data_per_substring::russian_data_per_substring(const string& ss, const string& line) :
+russian_data_per_substring::russian_data_per_substring(const string_view ss, const string_view line) :
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), ',') };
+  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string_view> (line, '[', ']', DELIMITERS::DROP), ',') };
 
-//  if (!substrings.contains(ss))
   if (!contains(substrings, ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
@@ -878,7 +871,6 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _region_name = ::substring <std::string> (line, posn_1 + 1, posn_2 - posn_1 - 1);
 
   const vector<string> fields { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(line.substr(posn_2 + 1), ' ')), ' ') };
-
   try
   { _region_abbreviation = fields.at(0);
     _cq_zone = from_string<unsigned int>(fields.at(1));
@@ -923,7 +915,6 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
     \param  path        the directory path to be searched in order
     \param  filename    the name of the file to be read
 */
-//russian_data::russian_data(const vector<string>& path, const string& filename)
 russian_data::russian_data(const vector<string>& path, const string_view filename)
 { try
   { const vector<string> lines { to_lines <std::string> (replace_char(read_file(path, filename), '\t', ' ')) };

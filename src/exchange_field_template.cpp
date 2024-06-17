@@ -52,15 +52,20 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     \return             whether a regex expression was read
 */
 bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
-{ if (filename.empty())
+{ //ost << "reading regex expression file: " << filename << " for field: " << _name << endl;
+
+  if (filename.empty())
     return false;
 
   bool found_it { false };
 
   try
-  { for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
-    { if (!found_it and !line.empty())
-      { const vector<string> fields { split_string <std::string> (line, ':') };
+  { //for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
+    for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
+    { //ost << "processing line: " << line << endl;
+
+      if (!found_it and !line.empty())
+      { const vector<string_view> fields { split_string <std::string_view> (line, ':') };
 
 // a bit complex because ":" may appear in the regex
         if (fields.size() >= 2)
@@ -90,7 +95,8 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string& 
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-bool EFT::read_values_file(const vector<string>& path, const string& filename)
+//bool EFT::read_values_file(const vector<string>& path, const string& filename)
+bool EFT::read_values_file(const vector<string>& path, const string_view filename)
 { try
   { for (const auto& line : to_lines <std::string> (read_file(path, filename + ".values"s)))
     { set<string> equivalent_values;                    // includes the canonical value
@@ -136,22 +142,16 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 { if (!_name.starts_with("QTHX["sv))
     return;
 
-//  const auto& context_qthx { context.qthx() };  // map; key = canonical prefix; value = set of legal values
   const map<string /* cp */, set<string> /* legal values */>& context_qthx { context.qthx() };
 
   if (context_qthx.empty())
     return;
 
-//  for (const auto& this_qthx : context_qthx)
   for (const auto& [ cp, legal_values ] : context_qthx)
-  { //const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-    const string canonical_prefix { location_db.canonical_prefix(cp) };
+  { const string canonical_prefix { location_db.canonical_prefix(cp) };
 
     if (canonical_prefix == location_db.canonical_prefix(delimited_substring <std::string> (_name, '[', ']', DELIMITERS::DROP)))
-    { //const set<string>& ss { this_qthx.second };
-
-//      for (const auto& this_value : ss)
-      for (const auto& this_value : legal_values)
+    { for (const string& this_value : legal_values)
       { if (!contains(this_value, '|'))
           add_canonical_value(this_value);
         else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
@@ -207,13 +207,34 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
     \return         whether <i>str</i> is a legal value
 */
 bool EFT::is_legal_value(const string& str) const
-{
+{ //ost << "inside EFT::is_legal_value" << endl;
+
+//  if (_values.empty())
+//    ost << "_values is empty" << endl;
+//  else
+//    ost << "_values is not empty" << endl;
+
+//  if (_regex_str.empty())
+//    ost << "regex string is empty" << endl;
+//  else
+//    ost << "regex string is not empty" << endl;
+
 // test regex first
+
+//  if (!_regex_str.empty())
+//  { ost << "testing whether " << str << " is a legal value for " << _regex_str << endl;
+//    ost << "result = " << boolalpha << regex_match(str, regex(_regex_str)) << endl;
+//  }
+
   if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
+  { //ost << "regex comparison is true" << endl;
     return true;
+  }
+//  else
+//    ost << "regex comparison is false" << endl;
 
-  return (_values.empty() ? false : (str < _legal_non_regex_values));
-
+//  return (_values.empty() ? false : (str < _legal_non_regex_values));
+  return (_values.empty() ? false : (_legal_non_regex_values.contains(str)));
 }
 
 /*! \brief          What value should actually be logged for a given received value?
@@ -238,14 +259,16 @@ string EFT::canonical_value(const std::string& str) const
   if (!canonical.empty())
     return canonical;
 
-  return ( regex_match(str, regex(_regex_str)) ? str : string() );  // by defn, a regex match is a canonical value
+  return ( regex_match(str, regex(_regex_str)) ? str : string { } );  // by defn, a regex match is a canonical value
 }
 
 /// all the canonical values
 set<string> EFT::canonical_values(void) const
 { set<string> rv;
 
-  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv += pss.first; } );
+//  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv += pss.first; } );
+  for (const auto& [ cv, equivalents ] : _values)
+    rv += cv;
 
   return rv;
 }
@@ -291,10 +314,10 @@ ostream& operator<<(ostream& ost, const EFT& eft)
   if (!vcv.empty())
   { ost << "  v -> cv : " << endl;
 
-//    for (const auto& pss : vcv)
-//      ost << "    " << pss.first << " -> " << pss.second << endl;
+    for (const auto& [ v, cv ] : vcv)
+      ost << "    " << v << " -> " << cv << endl;
 
-    FOR_ALL(vcv, [&ost] (const auto& pss) { ost << "    " << pss.first << " -> " << pss.second << endl; });
+//    FOR_ALL(vcv, [&ost] (const auto& pss) { ost << "    " << pss.first << " -> " << pss.second << endl; });
   }
 
   return ost;

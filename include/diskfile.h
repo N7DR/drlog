@@ -26,7 +26,7 @@
 
     Creates <i>filename</i> if it does not exist
 */
-inline void append_to_file(const std::string& filename, const std::string& str)
+inline void append_to_file(const std::string& filename, const std::string& str)       // can't use string_view here
   { std::ofstream(filename, std::ofstream::binary | std::ios_base::app) << str; }
 
 /*! \brief              Does a file exist?
@@ -37,7 +37,7 @@ inline void append_to_file(const std::string& filename, const std::string& str)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-bool file_exists(const std::string& filename);
+bool file_exists(const std::string& filename);       // can't use string_view here
 
 /*! \brief              Find the location of a file in a path
     \param  path        directories in which to look (with or without trailing "/"), in order
@@ -84,7 +84,8 @@ void file_copy(const std::string& source_filename, const std::string& destinatio
     \param  source_filename         original name of file
     \param  destination_filename    final name of file
 
-    Does nothing if the source file does not exist
+    Does nothing if the source file does not exist.
+    Throws exception if the renaming fails.
 */
 void file_rename(const std::string& source_filename, const std::string& destination_filename);
 

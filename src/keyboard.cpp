@@ -256,7 +256,7 @@ void keyboard_queue::process_events(void)
     if ((event.type == KeyPress) or (event.type == KeyRelease))    // should always be true
     { keyboard_event ke;
 
-      ke.event(event.type == KeyPress ? KEY_PRESS : KEY_RELEASE);
+      ke.event(event.type == KeyPress ? KEY_EVENT::PRESS : KEY_EVENT::RELEASE);
       ke.code(event.xkey.keycode);
       ke.xkey_state(event.xkey.state);
       ke.xkey_time(event.xkey.time);
@@ -447,8 +447,11 @@ const map<string, string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
                                                  };
 
 /// names of keys on the keypad
-const unordered_set<KeySym> keypad_numbers({ { XK_KP_0 }, { XK_KP_1 }, { XK_KP_2 }, { XK_KP_3 }, { XK_KP_4 },
-                                             { XK_KP_5 }, { XK_KP_6 }, { XK_KP_7 }, { XK_KP_8 }, { XK_KP_9 },
-                                             { XK_KP_Insert }, { XK_KP_End }, { XK_KP_Down }, { XK_KP_Next }, { XK_KP_Left },
-                                             { XK_KP_Begin }, { XK_KP_Right }, { XK_KP_Home }, { XK_KP_Up }, { XK_KP_Prior }
-                                          });
+//const unordered_set<KeySym> keypad_numbers({ { XK_KP_0 }, { XK_KP_1 }, { XK_KP_2 }, { XK_KP_3 }, { XK_KP_4 },
+//                                             { XK_KP_5 }, { XK_KP_6 }, { XK_KP_7 }, { XK_KP_8 }, { XK_KP_9 },
+//                                             { XK_KP_Insert }, { XK_KP_End }, { XK_KP_Down }, { XK_KP_Next }, { XK_KP_Left },
+//                                             { XK_KP_Begin }, { XK_KP_Right }, { XK_KP_Home }, { XK_KP_Up }, { XK_KP_Prior }
+//                                          });
+const unordered_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
+                                             XK_KP_Insert, XK_KP_End, XK_KP_Down, XK_KP_Next, XK_KP_Left, XK_KP_Begin, XK_KP_Right, XK_KP_Home, XK_KP_Up, XK_KP_Prior
+                                           };

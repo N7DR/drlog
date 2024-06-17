@@ -55,6 +55,13 @@ public:
   
     return tmp;
   }
+
+/// is the queue empty?
+  bool empty(void) const
+  { std::lock_guard<std::recursive_mutex> lock(_q_mutex);
+
+    return _q.empty();
+  }
 };
 
 #endif    // TS_QUEUE_H

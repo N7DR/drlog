@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 236 2024-04-14 18:26:49Z  $
+// $Id: drlog_context.cpp 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,7 +61,8 @@ pt_mutex _context_mutex { "DRLOG CONTEXT"s };                    ///< mutex for 
     \param  command     the complete line from the configuration file
     \param  m           mode
 */
-void drlog_context::_set_points(const string& command, const MODE m)
+//void drlog_context::_set_points(const string& command, const MODE m)
+void drlog_context::_set_points(const string_view command, const MODE m)
 { if (command.empty())
     return;
 
@@ -89,7 +90,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { string_view bands_str { delimited_substring <std::string_view> (lhs, '[', ']', DELIMITERS::DROP) };
+      { const string_view bands_str { delimited_substring <std::string_view> (lhs, '[', ']', DELIMITERS::DROP) };
 
         FOR_ALL(clean_split_string <std::string> (bands_str), [&pbb, &RHS] (const auto& b_str) { pbb += { BAND_FROM_NAME[b_str ], RHS }; } );   // keep string
       }
@@ -102,7 +103,6 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
     This routine may be called recursively (by the RULES statement in the processed file)
 */
-//void drlog_context::_process_configuration_file(const string& filename)
 void drlog_context::_process_configuration_file(const string_view filename)
 { string entire_file;
 
@@ -117,12 +117,14 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
   const vector<string_view> lines { to_lines <std::string_view> (entire_file) };   // split into lines
 
-  for (const auto tmpline : lines)                                    // process each line
-  { const string line { remove_trailing_comment <std::string> (tmpline) };           // remove any comment
+  for (const auto tmpline : lines)                                            // process each line; string_view is cheap to copy
+  { //const string line { remove_trailing_comment <std::string> (tmpline) };    // remove any comment
+    const string_view line { remove_trailing_comment <std::string_view> (tmpline) };    // remove any comment
 
 // generate a number of useful variables
     const string         testline { remove_leading_spaces <std::string> (to_upper(line)) };
-    const vector<string> fields   { split_string <std::string> (line, '=') };
+ //   const vector<string> fields   { split_string <std::string> (line, '=') };
+    const vector<string_view> fields   { split_string <std::string_view> (line, '=') };
     const string         rhs      { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
     const string         RHS      { to_upper(rhs) };                                                                              // converted to upper case
     const bool           is_true  { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
@@ -1239,10 +1241,11 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"sv)
-    { if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
+    { //if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
+      if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
       { string name { window_info[0] };
 
-        window_information winfo { from_string<int>(window_info[1]), from_string<int>(window_info[2]), from_string<int>(window_info[3]), from_string<int>(window_info[4]) };
+        window_information winfo { from_string<WIN_INT_TYPE>(window_info[1]), from_string<WIN_INT_TYPE>(window_info[2]), from_string<WIN_INT_TYPE>(window_info[3]), from_string<WIN_INT_TYPE>(window_info[4]) };
 
         if (window_info.size() >= 6)
         { winfo.fg_colour(move(window_info[5]));
@@ -1267,7 +1270,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     { const vector<string> fields { clean_split_string <string> (rhs) };
 
       if (fields.size() == 2)  // name, contents
-      { const string name { fields[0] };
+      { const string& name { fields[0] };
 
         string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
 
@@ -1276,7 +1279,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         if (file_exists(contents))
           contents = read_file(contents);
 
-        _static_windows[name] = { contents, vector<window_information>() };
+        _static_windows[name] = { contents, vector<window_information> { } };
       }
     }
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
@@ -1285,24 +1288,27 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     { const vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1], ',') };
 
       if (!window_info.empty())
-      { const string name { window_info[0] };
+      { const string& name { window_info[0] };
 
         if (_static_windows.count(name) != 0)  // make sure that the window exists
         { if (window_info.size() >= 3)
           { window_information winfo;
 
-            winfo.x(from_string<int>(window_info[1]));
-            winfo.y(from_string<int>(window_info[2]));
+            winfo.x(from_string<WIN_INT_TYPE>(window_info[1]));
+            winfo.y(from_string<WIN_INT_TYPE>(window_info[2]));
 
             if (window_info.size() >= 5)
-            { winfo.w(from_string<int>(window_info[3]));
-              winfo.h(from_string<int>(window_info[4]));
+            { winfo.w(from_string<WIN_INT_TYPE>(window_info[3]));
+              winfo.h(from_string<WIN_INT_TYPE>(window_info[4]));
             }
 
             string final_contents;
 
+            auto& [ swin_contents, vec_winfo ] { _static_windows[name] };
+
             if (verbatim[name])
-            { string contents { _static_windows[name].first };
+            { //string contents { _static_windows[name].first };
+              string contents { swin_contents };
 
               if (contents.size() >= 2)
                 contents = delimited_substring <std::string> (contents, '"', '"', DELIMITERS::DROP);
@@ -1328,7 +1334,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents_1;
             }                                                       // end verbatim
             else                                                    // read from file
-            { const string         contents { _static_windows[name].first };
+            { //const string         contents { _static_windows[name].first };
+              const string&        contents { swin_contents };
               const vector<string> lines    { to_lines <std::string> (contents) };
 
               winfo.w(longest_line(lines).length());
@@ -1346,7 +1353,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents;
             }
 
-            _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
+//            _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
+            _static_windows[name] = { final_contents, (vec_winfo + winfo) };
           }
         }
       }
@@ -1364,29 +1372,38 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // The latter is now what we do. The legal names are in key_names.
         const string target { to_lower(message_info[2]) };
 
-        if (const auto& cit { key_names.find(target) }; cit != key_names.cend())
-        { const vector<string> vec_str { split_string <std::string> (testline, '=') };
+        if (const auto& cit { key_names.find(target) }; cit != key_names.cend())    // key_names, defined in keyboard.cpp, maps names to keysyms
+        { const auto& [ keyname_str, key_symbol ] { *cit };
+          const vector<string> vec_str { split_string <std::string> (testline, '=') };
           const string         str     { remove_leading_spaces <std::string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
-          _messages += { cit->second, str };
+//          _messages += { cit->second, str };
+          _messages += { key_symbol, str };
 
-          ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
+//          ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
+          ost << "message associated with " << target << ", which is keysym " << hex << key_symbol << dec << ", is: " << str << endl;
 
-          const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) };
+//          const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) };
 
-          if (cit2 != equivalent_key_names.cend())
-          { ost << "found equivalent key name: " << cit2->second << endl;
+          if (const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
+          { const auto& [ ori_keyname_str, equiv_keyname_str ] { *cit2 };
+//            ost << "found equivalent key name: " << cit2->second << endl;
+            ost << "found equivalent key name: " << equiv_keyname_str << endl;
 
-            const string alternative { cit2->second };
+//            const string alternative { cit2->second };
+            const string& alternative { equiv_keyname_str };
 
             if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
-            { const int keysym { cit->second };
+            { const auto& [ alt_keyname_str, alt_key_symbol ] { *cit };
+              //const int keysym { cit->second };
 
-              if (!_messages.contains(keysym))  // only if there is no message for this key
+//              if (!_messages.contains(keysym))  // only if there is no message for this key
+              if (!_messages.contains(alt_key_symbol))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
-                _messages += { keysym, str };
+//                _messages += { keysym, str };
+                _messages += { alt_key_symbol, str };
               }
             }
           }
@@ -1412,10 +1429,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   }
 
 // now that we've processed the file, set some new defaults if we haven't explicitly set them
-  if (_cabrillo_contest == string())
+  if (_cabrillo_contest == string { })
     _cabrillo_contest = _contest_name;
 
-  if (_cabrillo_callsign == string())
+  if (_cabrillo_callsign == string { })
     _cabrillo_callsign = _my_call;
 
   if (_qsl_message.empty())
@@ -1501,7 +1518,7 @@ drlog_context::drlog_context(const string_view filename)
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-vector<string> drlog_context::window_name_contains(const string& substr) const
+vector<string> drlog_context::window_name_contains(const string_view substr) const
 { vector<string> rv;
 
   for (const auto& [ name, wi ] : _windows)
@@ -1528,7 +1545,7 @@ string drlog_context::points_string(const BAND b, const MODE m) const
 }
 #endif
 
-/*! \brief      Get all the names in the sent exchange
+/*! \brief      Get the names of all the fields in the sent exchange
     \return     the names of all the fields in the sent exchange
 */
 vector<string> drlog_context::sent_exchange_names(void) const
@@ -1549,7 +1566,9 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
 
   const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
-  FOR_ALL(*ptr_vec_pss, [&rv] (const auto& pss) { rv += pss.first; } );
+//  FOR_ALL(*ptr_vec_pss, [&rv] (const auto& pss) { rv += pss.first; } );
+  for (const auto& [ name, value ] : *ptr_vec_pss)
+    rv += name;
 
   return rv;
 }

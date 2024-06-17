@@ -1,4 +1,4 @@
-// $Id: cty_data.h 236 2024-04-14 18:26:49Z  $
+// $Id: cty_data.h 239 2024-05-20 13:42:00Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -291,7 +291,9 @@ public:
     \param  sbstring    the prefix for the Russian district
     \param  line        line from Russian data file
 */
-  russian_data_per_substring(const std::string& sbstring, const std::string& line);
+//  russian_data_per_substring(const std::string& sbstring, const std::string& line);
+//  russian_data_per_substring(const std::string& sbstring, const std::string_view line);
+  russian_data_per_substring(const std::string_view sbstring, const std::string_view line);
 
   READ(sstring);               ///< substring that matches this district
 
@@ -348,8 +350,8 @@ protected:
   int           _utc_offset       { 0 };            ///< local-time offset from UTC, in minutes
   
 // used only by Russian stations
-  std::string  _region_name;            ///< name of (Russian) region in which station resides
-  std::string  _region_abbreviation;    ///< abbreviation for (Russian) region in which the station resides
+  std::string  _region_name         { };    ///< name of (Russian) region in which station resides
+  std::string  _region_abbreviation { };    ///< abbreviation for (Russian) region in which the station resides
 
 public:
 
@@ -425,7 +427,8 @@ std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-location_info guess_zones(const std::string& call, const location_info& li);
+//location_info guess_zones(const std::string& call, const location_info& li);
+location_info guess_zones(const std::string_view call, const location_info& li);
 
 // -----------  location_database  ----------------
 
@@ -468,7 +471,6 @@ protected:
 */
   void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
 
-
 public:
 
 /// default constructor
@@ -501,7 +503,6 @@ public:
     \param  path        vector of directories to check for file <i>filename</i>
     \param  filename    name of file containing Russian information
 */
-//  void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
   void add_russian_database(const std::vector<std::string>& path, const std::string_view filename);
 
 /// how large is the main database?
@@ -651,7 +652,6 @@ public:
     \param  path        the directory path to be searched in order
     \param  filename    the name of the file to be read
 */
-//  russian_data(const std::vector<std::string>& path, const std::string& filename);
   russian_data(const std::vector<std::string>& path, const std::string_view filename);
 
   READ(data);  ///< map substring to the matching data

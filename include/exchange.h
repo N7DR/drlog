@@ -290,7 +290,7 @@ public:
     Returns empty string if <i>n</i> is out of range
 */
   inline std::string field_name(const size_t n) const
-    { return (n >= _fields.size() ? std::string() : _fields[n].name()); }
+    { return (n >= _fields.size() ? std::string { } : _fields[n].name()); }
 
 /*! \brief      Return the value of a particular field (addressed by number)
     \param  n   number of field for which the value is requested
@@ -390,7 +390,8 @@ public:
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-  void set_values_from_file(const std::vector<std::string>& path, const std::string& filename, const std::string& field_name);
+//  void set_values_from_file(const std::vector<std::string>& path, const std::string& filename, const std::string& field_name);
+  void set_values_from_file(const std::vector<std::string>& path, const std::string_view filename, const std::string& field_name);
 
 /// return number of calls in the database
   inline size_t size(void) const

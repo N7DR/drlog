@@ -1,4 +1,4 @@
-// $Id: screen.cpp 233 2024-01-28 23:58:43Z  $
+// $Id: screen.cpp 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -72,14 +72,12 @@ screen::screen(void)
 
   if (setlocale(LC_ALL, "") == nullptr)
   { cerr << "Unable to set locale" << endl;
-//    sleep(2);
     sleep_for(SLEEP_TIME);
     exit(-1);
   }
 
   if (initscr() == nullptr)
   { cerr << "Unable to initialise curses" << endl;
-//    sleep(2);
     sleep_for(SLEEP_TIME);
     exit(-1);
   }
@@ -265,7 +263,8 @@ void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLO
     \param  new_y   y position
     \return         the window
 */
-window& window::move_cursor(const int new_x, const int new_y)
+//window& window::move_cursor(const int new_x, const int new_y)
+window& window::move_cursor(const WIN_INT_TYPE new_x, const WIN_INT_TYPE new_y)
 { if (_wp)
   { SAFELOCK(screen);
 
@@ -328,19 +327,21 @@ window& window::operator<(const vector<string>& v)
     cursor_position();
     
     const int remaining_space { width() - _cursor_x };
+//    const ssize_t remaining_space { width() - _cursor_x };
+    const int int_len { static_cast<int>(str.length()) };
 
  // stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(str.length()))
+    if (remaining_space < int_len)
       if (!scrolling() and (_cursor_y == 0))
         break;
 
-    if (remaining_space < static_cast<int>(str.length()))
+    if (remaining_space < int_len)
       *this < "\n";
 
     *this < str;
 
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
+    const bool end_of_line { (remaining_space == int_len) };
 
     if ( (idx != (v.size() - 1)) and !end_of_line )
       *this < SPACE_STR;
@@ -416,7 +417,8 @@ cursor window::cursor_position(void)
     \param  delta_y     change in y position
     \return             the window
 */
-window& window::move_cursor_relative(const int delta_x, const int delta_y)
+//window& window::move_cursor_relative(const int delta_x, const int delta_y)
+window& window::move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y)
 { if (_wp)
   { cursor_position();
     move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
@@ -610,10 +612,9 @@ window& window::refresh(void)
 */
 window& window::scrolling(const bool enable_or_disable)
 { if (_wp)
-  { _scrolling = enable_or_disable;
-  
-    SAFELOCK(screen);
+  { SAFELOCK(screen);
 
+    _scrolling = enable_or_disable;
     scrollok(_wp, enable_or_disable);
   }
   
@@ -674,7 +675,8 @@ window& operator<(window& win, const centre& c)
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
     Cannot be const, because because mvwinnstr() silently moves the cursor and we then move it back
 */
-string window::read(const int x, const int y)
+//string window::read(const int x, const int y)
+string window::read(const WIN_INT_TYPE x, const WIN_INT_TYPE y)
 { if (!_wp)
     return string { };
   
@@ -716,7 +718,8 @@ vector<string> window::snapshot(void)
 
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
-window& window::clear_line(const int line_nr)
+//window& window::clear_line(const int line_nr)
+window& window::clear_line(const WIN_INT_TYPE line_nr)
 { if (_wp)
   { SAFELOCK(screen);
 
@@ -736,7 +739,7 @@ window& window::clear_line(const int line_nr)
 
     Does nothing if character number <i>n</i> does not exist
 */
-window& window::delete_character(const int n)
+window& window::delete_character(const WIN_INT_TYPE n)
 { if (!_wp)
     return *this;
 
@@ -752,15 +755,15 @@ window& window::delete_character(const int n)
 
     Line number zero is the bottom line
 */
-window& window::delete_character(const int n, const int line_nr)
+window& window::delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr)
 { if (!_wp)
-    return *this;
-
-  if ( (line_nr < 0) or (line_nr >= height()) )
     return *this;
 
 // make sure nothing changes from this point onwards
   SAFELOCK(screen);
+
+  if ( (line_nr < 0) or (line_nr >= height()) )
+    return *this;
 
   const string old_line { getline(line_nr) };
 
@@ -776,7 +779,7 @@ window& window::delete_character(const int n, const int line_nr)
   move_cursor(0, line_nr);
 
 // ensure we are not in insert mode
-  { SAFELOCK(screen);
+  { //SAFELOCK(screen);
 
     const bool insert_enabled { _insert };
 
@@ -898,6 +901,37 @@ bool window::common_processing(const keyboard_event& e)
   return false;
 }
 
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information >& windows)
+{ vector<pair<string, string>> rv;
+
+  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+  { const window_information& wi1 { it -> second };
+
+    const int x1 { wi1.x() };
+    const int y1 { wi1.y() };
+    const int w1 { wi1.w() };
+    const int h1 { wi1.h() };
+
+    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+    { const window_information& wi2 { it2 -> second };
+
+      const int x2 { wi2.x() };
+      const int y2 { wi2.y() };
+      const int w2 { wi2.w() };
+      const int h2 { wi2.h() };
+
+      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+        rv += { it -> first, it2 -> first };
+    }
+  }
+
+  return rv;
+}
+
 // -----------  colour_pair  ----------------
 
 /*! \class  colour_pair
@@ -920,8 +954,6 @@ PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgb
   { ost << "Attempt to set background to colour " << fgbg.second << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
-
-//  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
   if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
   { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
@@ -987,7 +1019,6 @@ COLOUR_TYPE string_to_colour(const string_view str)
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-
   if (const string_view str { "COLOUR_"sv }; s.starts_with(str))
     return from_string<COLOUR_TYPE>(remove_from_start <std::string_view> (s, str));
 
@@ -1011,73 +1042,73 @@ COLOUR_TYPE string_to_colour(const string_view str)
     \param  h2    height of rectangle 2
     \return       whether rectangle 1 and rectangle 2 overlap
 */
-bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
-{ auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };
+//bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
+bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2)
+{ //auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
+  auto in_range = [] (const WIN_INT_TYPE v, const WIN_INT_TYPE vmin, const WIN_INT_TYPE vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
 
-  const int l1 { x1 };
-  const int r1 { x1 + w1 - 1 };
-  const int l2 { x2 };
-  const int r2 { x2 + w2 - 1 };
+  const WIN_INT_TYPE l1 { x1 };
+  const WIN_INT_TYPE r1 { static_cast<WIN_INT_TYPE>(x1 + w1 - 1) };
+  const WIN_INT_TYPE l2 { x2 };
+  const WIN_INT_TYPE r2 { static_cast<WIN_INT_TYPE>(x2 + w2 - 1) };
 
-  const int b1 { y1 };
-  const int t1 { y1 + h1 - 1 };
-  const int b2 { y2 };
-  const int t2 { y2 + h2 - 1 };
+  const WIN_INT_TYPE b1 { y1 };
+  const WIN_INT_TYPE t1 { static_cast<WIN_INT_TYPE>(y1 + h1 - 1) };
+  const WIN_INT_TYPE b2 { y2 };
+  const WIN_INT_TYPE t2 { static_cast<WIN_INT_TYPE>(y2 + h2 - 1) };
 
-//  ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  auto print_corners = [] (const WIN_INT_TYPE l1, const WIN_INT_TYPE b1, const WIN_INT_TYPE r1, const WIN_INT_TYPE t1, const WIN_INT_TYPE l2, const WIN_INT_TYPE b2, const WIN_INT_TYPE r2, const WIN_INT_TYPE t2)
+    { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl; };
 
-// are any of the cornews of w2 inside w1?
+// are any of the corners of w2 inside w1?
   if (in_range(l2, l1, r1) and in_range(b2, b1, t1))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 1" << endl;
     return true;
   }
 
   if (in_range(l2, l1, r1) and in_range(t2, b1, t1))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 2" << endl;
     return true;
   }
 
   if (in_range(r2, l1, r1) and in_range(b2, b1, t1))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 3" << endl;
     return true;
   }
 
   if (in_range(r2, l1, r1) and in_range(t2, b1, t1))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 4" << endl;
     return true;
   }
 
-
-// are any of the cornews of w1 inside w2?
+// are any of the corners of w1 inside w2?
   if (in_range(l1, l2, r2) and in_range(b1, b2, t2))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 5" << endl;
     return true;
   }
 
   if (in_range(l1, l2, r2) and in_range(t1, b2, t2))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 6" << endl;
     return true;
   }
 
   if (in_range(r1, l2, r2) and in_range(b1, b2, t2))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 7" << endl;
     return true;
   }
 
   if (in_range(r1, l2, r2) and in_range(t1, b2, t2))
-  { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl;
+  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
     ost << "OVERLAP 8" << endl;
     return true;
   }
-
-//  ost << "NO OVERLAP" << endl;
 
   return false;
 }

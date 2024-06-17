@@ -183,8 +183,7 @@ public:
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
 */
-//  explicit frequency(const std::string& str)
-  inline explicit frequency(std::string_view str)
+  inline explicit frequency(const std::string_view str)
     { *this = frequency(from_string<double>(str)); }
 
 /*! \brief      Construct from a band
@@ -305,7 +304,8 @@ std::ostream& operator<<(std::ostream& ost, const frequency& f);
 
      Frequency may be in Hz, kHz or MHz.
 */
-inline BAND to_BAND(const std::string& str)
+//inline BAND to_BAND(const std::string& str)
+inline BAND to_BAND(const std::string_view str)
   { return to_BAND(frequency(str).hz()); }
 
 /*!  \brief     Convert a frequency to a band

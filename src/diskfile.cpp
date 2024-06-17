@@ -59,7 +59,7 @@ string find_file(const vector<string>& path, const string& filename)
       return fullname;
   }
 
-  return string();
+  return string { };
 }
 
 /*! \brief              What is the size of a file?
@@ -103,24 +103,20 @@ void file_copy(const string& source_filename, const string& destination_filename
     \param  source_filename         original name of file
     \param  destination_filename    final name of file
 
-    Does nothing if the source file does not exist
+    Does nothing if the source file does not exist.
+    Throws exception if the renaming fails.
 */
 void file_rename(const string& source_filename, const string& destination_filename)
 { if (file_exists(source_filename))
-  { //const int status { rename(source_filename.c_str(), destination_filename.c_str()) };
-
     if (const int status { rename(source_filename.c_str(), destination_filename.c_str()) }; status)
       throw exception();
-  }
 }
 
 /*! \brief              Create a directory
     \param  dirname     name of the directory to create
 */
 void directory_create(const string& dirname)
-{ //const int status { mkdir(dirname.c_str(), 0xff) };
-
-  if (const int status { mkdir(dirname.c_str(), 0xff) }; status)
+{ if (const int status { mkdir(dirname.c_str(), 0xff) }; status)
     throw exception();
 }
 
@@ -130,8 +126,6 @@ void directory_create(const string& dirname)
 */
 bool directory_exists(const string& dirname) noexcept
 { struct stat stat_buffer;
-
-//  const int status { stat(dirname.c_str(), &stat_buffer) };
 
   if (const int status { stat(dirname.c_str(), &stat_buffer) }; status)
     return false;
@@ -149,7 +143,7 @@ bool directory_exists(const string& dirname) noexcept
     Returns empty vector if the directory <i>dirname</i> does not exist
 */
 vector<string> directory_contents(const string& dirname)
-{ vector<string> rv;
+{ vector<string> rv { };
 
   if (!directory_exists(dirname))
     return rv;

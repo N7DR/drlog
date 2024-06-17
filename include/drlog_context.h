@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 236 2024-04-14 18:26:49Z  $
+// $Id: drlog_context.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -299,14 +299,14 @@ protected:
 
     This routine may be called recursively (by the RULES statement in the processed file)
 */
-//  void _process_configuration_file(const std::string& filename);
   void _process_configuration_file(const std::string_view filename);
 
 /*! \brief              Set the value of points, using the POINTS [CW|SSB] command
     \param  command     the complete line from the configuration file
     \param  m           mode
 */
-  void _set_points(const std::string& command, const MODE m);
+//  void _set_points(const std::string& command, const MODE m);
+  void _set_points(const std::string_view command, const MODE m);
 
 public:
 
@@ -314,7 +314,6 @@ public:
   inline drlog_context(void) = default;
 
 /// construct from file
-//  explicit drlog_context(const std::string& filename);
   explicit drlog_context(const std::string_view filename);
 
   drlog_context(const drlog_context&) = delete;         ///< disallow copying
@@ -346,7 +345,8 @@ public:
   inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
-      return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+ //     return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+      return (_auto_remaining_exchange_mults.contains(mult_name));
     }
 
   CONTEXTREAD(auto_screenshot);                  ///< do we create a screenshot every hour?
@@ -648,7 +648,8 @@ public:
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-  std::vector<std::string> window_name_contains(const std::string& substr) const;
+//  std::vector<std::string> window_name_contains(const std::string& substr) const;
+  std::vector<std::string> window_name_contains(const std::string_view substr) const;
 
 /*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange

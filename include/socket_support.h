@@ -1,4 +1,4 @@
-// $Id: socket_support.h 236 2024-04-14 18:26:49Z  $
+// $Id: socket_support.h 238 2024-05-05 15:50:16Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -342,8 +342,10 @@ public:
     \param  msg     message to send
   
     Does not look for a response. Throws an exception if there is any problem.
+    Cannot pass a string_view, as a C string has to be formed.
 */
-  void send(const std::string& msg);
+//  void send(const std::string& msg);
+  void send(const std::string_view msg);
 
 /*! \brief      Simple receive
     \return     received string
@@ -470,7 +472,7 @@ protected:
   icmphdr           _icmp_hdr          { };                           ///< header for the ping packet
   pt_mutex          _icmp_socket_mutex { "UNNAMED ICMP SOCKET"s };    ///< mutex to control access
   int               _sequence_nr       { 0 };                         ///< sequence number
-  SOCKET            _sock;                                            ///< encapsulated socket
+  SOCKET            _sock              { };                           ///< encapsulated socket
   struct timeval    _socket_timeout    { 5, 0 };                      ///< seconds, microseconds; collision with curses timeout macro if just use _timeout
 
 public:
@@ -534,6 +536,8 @@ public:
     Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
     <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
     lookup before deciding to return with an error.
+
+    Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */   
 std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n_tries = 1);
 

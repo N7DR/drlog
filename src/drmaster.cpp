@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: drmaster.cpp 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -853,7 +853,8 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
     Lines without XSCP data are always included
 */
-void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
+//void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
+void drmaster::_prepare_from_file_contents(const string_view contents, const int xscp_limit)
 { for (const string_view line : to_lines <std::string_view> (contents))
   { const drmaster_line record { line };
 
@@ -873,7 +874,8 @@ void drmaster::_prepare_from_file_contents(const string& contents, const int xsc
     Throws exception if the file does not exist or is incorrectly formatted;
     except creates empty object if called with default filename that does not exist
 */
-drmaster::drmaster(const string& filename, const int xscp_limit)
+//drmaster::drmaster(const string& filename, const int xscp_limit)
+drmaster::drmaster(const string_view filename, const int xscp_limit)
 { if (!filename.empty())
   { try
     { _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
@@ -895,7 +897,8 @@ drmaster::drmaster(const string& filename, const int xscp_limit)
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
+//drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
+drmaster::drmaster(const vector<string>& path, const string_view filename, const int xscp_limit)
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
@@ -907,7 +910,8 @@ drmaster::drmaster(const vector<string>& path, const string& filename, const int
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-void drmaster::prepare(const string& filename, const int xscp_limit)
+//void drmaster::prepare(const string& filename, const int xscp_limit)
+void drmaster::prepare(const string_view filename, const int xscp_limit)
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
 }
@@ -1009,7 +1013,7 @@ drmaster drmaster::prune(const int pc) const
 
   const int breakpoint_value { value_line(xscp_values, pc) };
 
-  ost << "breakpoint value = " << breakpoint_value << endl;
+  ost << "breakpoint value = " << breakpoint_value << "; values >= this value are retained" << endl;
 
   for (const auto& [ call, line ] : _records)
     if (line.xscp() >= breakpoint_value)

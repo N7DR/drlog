@@ -1,4 +1,4 @@
-// $Id: string_functions.h 236 2024-04-14 18:26:49Z  $
+// $Id: string_functions.h 241 2024-06-02 19:59:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -131,6 +131,7 @@ std::string format_time(const std::string& format, const tm* tmp);
 
      https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
 */
+#if 0
 template <class T>
 T from_string(const std::convertible_to<std::string_view> auto& sv)
 { T rv { };
@@ -139,18 +140,36 @@ T from_string(const std::convertible_to<std::string_view> auto& sv)
 
   return rv;
 }
+#endif
 
 //template <class T>
 //inline T from_string(std::string_view sv)
 //{ return from_string<T>(std::string { sv }); }
-#if 0
+#if 1
 template <class T>
-T from_string(std::string_view sv)
+T from_string(const std::string_view sv)
 { T rv { };
 
   std::from_chars(sv.data(), sv.data() + sv.size(), rv);
 
   return rv;
+}
+#endif
+
+/*! \brief      Generic conversion from string
+    \param  s   string
+    \return     <i>s</i> converted to type <i>T</i>
+
+    This is a complex no-op if type <i>T</i> is a string
+*/
+#if 1
+template <class T>
+T from_string(const std::string& s)
+{ std::istringstream stream { s };
+  T t;
+
+  stream >> t;
+  return t;
 }
 #endif
 
@@ -343,8 +362,16 @@ inline bool contains_at(std::string_view s, std::string_view ss, const size_t po
     \return     whether <i>s</i> contains the character <i>c</i>
 */
 //inline bool contains(const std::string& s, const char c)
-inline bool contains(std::string_view s, const char c)
+inline bool contains(const std::string_view s, const char c)
   { return s.find(c) != std::string_view::npos; }
+
+/*! \brief          Does a vector of strings contain an element that is equivalent to a particular string_view?
+    \param  strvec  vector of strings to test
+    \param  sv      string_view for which to search
+    \return         whether <i>strvec</i> contains the string_view <i>sv</i>
+*/
+inline bool contains(const std::vector<std::string>& strvec, const std::string_view sv)
+  { return ANY_OF(strvec, [sv] (const std::string& str) { return (str == sv); }); }
 
 /*! \brief          Does a string contain a particular character at a particular location?
     \param  s       string to test
@@ -352,7 +379,6 @@ inline bool contains(std::string_view s, const char c)
     \param  posn    location to test
     \return         whether <i>s</i> contains the character <i>c</i> at position <i>posn</i>
 */
-//inline bool contains_at(const std::string& s, const char c, const size_t posn)
 inline bool contains_at(std::string_view s, const char c, const size_t posn)
   { return (s.length() > posn) and (s[posn] == c); }
 
@@ -362,7 +388,6 @@ inline bool contains_at(std::string_view s, const char c, const size_t posn)
 
     This should give the correct result in any locale
 */
-//inline bool contains_letter(const std::string& str)
 inline bool contains_letter(std::string_view str)
   { return ANY_OF(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
 
@@ -370,7 +395,6 @@ inline bool contains_letter(std::string_view str)
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
-//inline bool contains_upper_case_letter(const std::string& str)
 inline bool contains_upper_case_letter(std::string_view str)
   { return ANY_OF(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
 
@@ -378,7 +402,6 @@ inline bool contains_upper_case_letter(std::string_view str)
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-//inline bool contains_digit(const std::string& str)
 inline bool contains_digit(std::string_view str)
   { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
 
@@ -386,7 +409,6 @@ inline bool contains_digit(std::string_view str)
     \param  str     string to test
     \return         whether <i>str</i> comprises only digits
 */
-//inline bool is_digits(const std::string& str)
 inline bool is_digits(std::string_view str)
   { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
@@ -396,8 +418,8 @@ inline bool is_digits(std::string_view str)
 
     This is present because C-based isdigit(c) returns an int
 */
-  inline bool is_digit(const char c)
-    { return static_cast<bool>(isdigit(c)); }
+inline bool is_digit(const char c)
+  { return static_cast<bool>(isdigit(c)); }
 
 /*! \brief              Pad a string to a particular size
     \param  s           original string
@@ -408,7 +430,7 @@ inline bool is_digits(std::string_view str)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-std::string pad_string(std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
+std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
 
 /*! \brief              Left pad a string to a particular size
     \param  s           original string
@@ -447,7 +469,7 @@ inline std::string pad_leftz(const T& s, const size_t len)
     \param  sv  string to be left-padded
     \return     left padded version of <i>sv</i> rendered as a string and left padded with zeroes
 */
-inline std::string pad_leftz(std::string_view sv, const size_t len)
+inline std::string pad_leftz(const std::string_view sv, const size_t len)
   { return pad_left(sv, len, '0'); }
 
 /*! \brief              Right pad a string to a particular size
@@ -458,7 +480,7 @@ inline std::string pad_leftz(std::string_view sv, const size_t len)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-inline std::string pad_right(std::string_view s, const size_t len, const char pad_char = ' ')
+inline std::string pad_right(const std::string_view s, const size_t len, const char pad_char = ' ')
   { return pad_string(s, len, PAD::RIGHT, pad_char); }
 
 /*! \brief            Right pad an integer type to a particular size
@@ -479,7 +501,7 @@ inline std::string pad_right(T s, const size_t len, const char pad_char = ' ')
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-std::string read_file(std::string_view filename);
+std::string read_file(const std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  path        the different directories to try, in order
@@ -489,7 +511,7 @@ std::string read_file(std::string_view filename);
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-std::string read_file(const std::vector<std::string>& path, std::string_view filename);
+std::string read_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -499,7 +521,7 @@ std::string read_file(const std::vector<std::string>& path, std::string_view fil
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-inline std::string read_file(const std::string& filename, const std::vector<std::string>& path)
+inline std::string read_file(const std::string_view filename, const std::vector<std::string>& path)
   { return read_file(path, filename); }
 
 /*! \brief              Write a string to a file
@@ -525,9 +547,9 @@ inline std::string create_string(const char c, const int n = 1)
     \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
 template <typename T>
-inline bool starts_with(std::string_view cs, const T& ss)
+inline bool starts_with(const std::string_view cs, const T& ss)
   requires ( (is_string<typename T::value_type>) or (is_string_view<typename T::value_type>) )
-  { return ANY_OF(ss, [cs] (std::string_view str) { return cs.starts_with(str); }); }
+  { return ANY_OF(ss, [cs] (const std::string_view str) { return cs.starts_with(str); }); }
 
 /*! \brief      Remove specific string from the start of a string if it is present
     \param  s   original string
@@ -535,7 +557,7 @@ inline bool starts_with(std::string_view cs, const T& ss)
     \return     <i>s</i> with <i>ss</i> removed if it is present at the start of the string
 */
 template <typename STYPE>
-auto remove_from_start(std::string_view s, std::string_view ss) -> STYPE
+auto remove_from_start(const std::string_view s, const std::string_view ss) -> STYPE
 { if (ss.empty())
     return STYPE { s };
 
@@ -817,32 +839,16 @@ inline auto clean_split_string(std::string_view cs, std::string_view separator) 
     \return             vector containing the separate components, with peripheral spaces removed
 */
 template <typename STYPE>
-inline auto clean_split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+inline auto clean_split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
 //inline auto clean_split_string(std::string_view cs, const char separator) -> std::vector<STYPE>
   { return remove_peripheral_spaces <STYPE> (split_string <STYPE> (cs, separator)); }
-
-#if 0
-  template <typename STYPE>
-//inline auto clean_split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-inline auto clean_split_string(std::string_view cs) -> std::vector<STYPE>
-  { return clean_split_string <STYPE> (cs, ','); }
-#endif
-
-/*! \brief                  Split a string into equal-length records
-    \param  cs              original string
-    \param  record_length   length of each record
-    \return                 vector containing the separate components
-
-    Any non-full record at the end is silently discarded
-*/
-//std::vector<std::string> split_string(const std::string_view cs, const unsigned int record_length);
 
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-std::string squash(std::string_view cs, const char c = ' ');
+std::string squash(const std::string_view cs, const char c = ' ');
 
 /*! \brief          Remove empty lines from a vector of lines
     \param  lines   the original vector of lines
@@ -858,7 +864,7 @@ std::vector<std::string> remove_empty_lines(const std::vector<std::string>& line
     \return             vector containing the separate lines
 */
 template <typename STYPE>
-inline auto to_lines(std::string_view cs, std::string_view eol_marker = EOL) -> std::vector<STYPE>
+inline auto to_lines(const std::string_view cs, const std::string_view eol_marker = EOL) -> std::vector<STYPE>
   { return split_string <STYPE> (cs, eol_marker); }
 
 /*! \brief      Remove peripheral instances of a specific character
@@ -867,7 +873,7 @@ inline auto to_lines(std::string_view cs, std::string_view eol_marker = EOL) -> 
     \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
 template <typename STYPE>
-inline auto remove_peripheral_character(std::string_view cs, const char c) -> STYPE
+inline auto remove_peripheral_character(const std::string_view cs, const char c) -> STYPE
   { return remove_trailing <STYPE> (remove_leading <std::string_view> (cs, c), c); }
 
 /*! \brief                  Remove all instances of a particular char from a string
@@ -912,7 +918,7 @@ C remove_char(C&& t, const char char_to_remove)
     \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
-std::string remove_chars(std::string_view s, std::string_view chars_to_remove);
+std::string remove_chars(const std::string_view s, const std::string_view chars_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
@@ -921,7 +927,7 @@ std::string remove_chars(std::string_view s, std::string_view chars_to_remove);
     \param  delim_2         closing delimiter
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
 */
-std::string remove_char_from_delimited_substrings(std::string_view cs, const char char_to_remove, const char delim_1, const char delim_2);
+std::string remove_char_from_delimited_substrings(const std::string_view cs, const char char_to_remove, const char delim_1, const char delim_2);
 
 /*! \brief                      Obtain a delimited substring
     \param  cs                  original string
@@ -935,18 +941,18 @@ std::string remove_char_from_delimited_substrings(std::string_view cs, const cha
     first delimited substring if more than one exists.
 */
 template <typename STYPE>
-auto delimited_substring(std::string_view cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters) -> STYPE
-{ const size_t posn_1 { cs.find(delim_1) };
+auto delimited_substring(const std::string_view cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters) -> STYPE
+{ const size_t delim_1_posn { cs.find(delim_1) };
   
-  if (posn_1 == std::string_view::npos)
+  if (delim_1_posn == std::string_view::npos)
     return STYPE { EMPTY_STR };
   
-  const size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
+  const size_t delim_2_posn { cs.find(delim_2, delim_1_posn + 1) };
   
-  if (posn_2 == std::string_view::npos)
+  if (delim_2_posn == std::string_view::npos)
     return STYPE { EMPTY_STR };
   
-  return ( (return_delimiters == DELIMITERS::DROP) ? STYPE { cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) } : STYPE { cs.substr(posn_1, posn_2 - posn_1) } ) ;
+  return ( (return_delimiters == DELIMITERS::DROP) ? STYPE { cs.substr(delim_1_posn + 1, delim_2_posn - delim_1_posn - 1) } : STYPE { cs.substr(delim_1_posn, delim_2_posn - delim_1_posn) } ) ;
 }
 
 /*! \brief                      Obtain a delimited substring
@@ -962,22 +968,22 @@ auto delimited_substring(std::string_view cs, const char delim_1, const char del
 */
 template <typename STYPE>
 auto delimited_substring(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters) -> STYPE
-{ const size_t posn_1 { cs.find(delim_1) };
+{ const size_t delim_1_posn { cs.find(delim_1) };
   
-  if (posn_1 == std::string_view::npos)
+  if (delim_1_posn == std::string_view::npos)
     return STYPE { EMPTY_STR };  
   
   const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
-  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
+  const size_t delim_2_posn   { cs.find(delim_2, delim_1_posn + length_to_skip) };
   
-  if (posn_2 == std::string_view::npos)
+  if (delim_2_posn == std::string_view::npos)
     return STYPE { EMPTY_STR };
   
-  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
-                                                                          : posn_2 + posn_1 + delim_2.length()
+  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? delim_2_posn - delim_1_posn - delim_1.length()
+                                                                          : delim_2_posn + delim_1_posn + delim_2.length()
                                 };
   
-  return STYPE { cs.substr(posn_1 + length_to_skip, length_to_return) };
+  return STYPE { cs.substr(delim_1_posn + length_to_skip, length_to_return) };
 }
 
 /*! \brief                      Obtain all occurrences of a delimited substring
@@ -990,7 +996,7 @@ auto delimited_substring(std::string_view cs, std::string_view delim_1, std::str
 //std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
 //std::vector<std::string> delimited_substrings(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters);
 template <typename STYPE>
-auto delimited_substrings(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters) -> std::vector<STYPE>
+auto delimited_substrings(const std::string_view cs, const std::string_view delim_1, const std::string_view delim_2, const DELIMITERS return_delimiters) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   size_t cs_start_posn { 0 };
@@ -999,22 +1005,22 @@ auto delimited_substrings(std::string_view cs, std::string_view delim_1, std::st
   while (!substring <std::string_view> (cs, cs_start_posn).empty())
   { std::string_view sstring { substring <std::string_view> (cs, cs_start_posn) };
     
-    const size_t posn_1 { sstring.find(delim_1) };
+    const size_t delim_1_posn { sstring.find(delim_1) };
 
-    if (posn_1 == std::string_view::npos)             // no more starting delimiters
+    if (delim_1_posn == std::string_view::npos)             // no more starting delimiters
       return rv;
 
-    const size_t posn_2 { sstring.find(delim_2, posn_1 + delim_1.length()) };
+    const size_t delim_2_posn { sstring.find(delim_2, delim_1_posn + delim_1.length()) };
 
-    if (posn_2 == std::string_view::npos)
+    if (delim_2_posn == std::string_view::npos)
       return rv;                            // no more ending delimiters
 
     if (return_delimiters == DELIMITERS::DROP)
-      rv += sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
+      rv += sstring.substr(delim_1_posn + delim_1.length(), delim_2_posn - delim_1_posn - delim_1.length());
     else
-      rv += sstring.substr(posn_1, posn_2 + delim_2.length() - posn_1);
+      rv += sstring.substr(delim_1_posn, delim_2_posn + delim_2.length() - delim_1_posn);
       
-    cs_start_posn += (posn_2 + delim_2.length());
+    cs_start_posn += (delim_2_posn + delim_2.length());
   }
 
   return rv;
@@ -1027,9 +1033,8 @@ auto delimited_substrings(std::string_view cs, std::string_view delim_1, std::st
     \param  return_delimiters   whether to keep delimiters in the returned value
     \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
 */
-//std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 template <typename STYPE>
-auto delimited_substrings(std::string_view cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters) -> std::vector<STYPE>
+auto delimited_substrings(const std::string_view cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
@@ -1037,22 +1042,22 @@ auto delimited_substrings(std::string_view cs, const char delim_1, const char de
   while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
   { std::string_view sstring { substring <std::string_view> (cs, start_posn) };
 
-    const size_t  posn_1  { sstring.find(delim_1) };
+    const size_t delim_1_posn  { sstring.find(delim_1) };
 
-    if (posn_1 == std::string_view::npos)             // no more starting delimiters
+    if (delim_1_posn == std::string_view::npos)             // no more starting delimiters
       return rv;
 
-    const size_t posn_2 { sstring.find(delim_2, posn_1 + 1) };
+    const size_t delim_2_posn { sstring.find(delim_2, delim_1_posn + 1) };
 
-    if (posn_2 == std::string_view::npos)
+    if (delim_2_posn == std::string_view::npos)
       return rv;                            // no more ending delimiters
 
     if (return_delimiters == DELIMITERS::KEEP)
-      rv += sstring.substr(posn_1, posn_2 - posn_1);
+      rv += sstring.substr(delim_1_posn, delim_2_posn - delim_1_posn);
     else
-      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
+      rv += sstring.substr(delim_1_posn + 1, delim_2_posn - delim_1_posn - 1);
 
-    start_posn += (posn_2 + 1);   // remember, start_posn is global
+    start_posn += (delim_2_posn + 1);   // remember, start_posn is global
   }
 
   return rv;
@@ -1083,15 +1088,7 @@ std::string join(const T& ct, const U sep)
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-std::string centred_string(std::string_view str, const unsigned int width);
-
-/*! \brief          Centre a string
-    \param  str     string to be centred
-    \param  width   final width of the centred string
-    \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
-*/
-//inline std::string centred_string(std::string_view str, const unsigned int width)
-//  { return create_centred_string(str, width); }
+std::string centred_string(const std::string_view str, const unsigned int width);
 
 /*! \brief      Get the last character in a string
     \param  cs  source string
@@ -1099,7 +1096,7 @@ std::string centred_string(std::string_view str, const unsigned int width);
 
     Throws exception if <i>cs</i> is empty
 */
-char last_char(std::string_view cs);
+char last_char(const std::string_view cs);
 
 /*! \brief      Get the penultimate character in a string
     \param  cs  source string
@@ -1107,7 +1104,7 @@ char last_char(std::string_view cs);
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-char penultimate_char(std::string_view cs);
+char penultimate_char(const std::string_view cs);
 
 /*! \brief      Get the antepenultimate character in a string
     \param  cs  source string
@@ -1115,7 +1112,7 @@ char penultimate_char(std::string_view cs);
 
     Throws exception if <i>cs</i> contains fewer than two characters
 */
-char antepenultimate_char(std::string_view cs);
+char antepenultimate_char(const std::string_view cs);
 
 /*! \brief          Get the terminating part of a string
     \param  cs      original string
@@ -1139,7 +1136,7 @@ std::string get_environment_variable(const std::string& var_name);
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-std::string transform_string(std::string_view cs, int(*pf)(int));
+std::string transform_string(const std::string_view cs, int(*pf)(int));
 
 /*! \brief      Convert string to upper case
     \param  cs  original string
@@ -1216,7 +1213,8 @@ size_t next_word_posn(const std::string& str, const size_t current_posn);
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-std::vector<size_t> starts_of_words(const std::string& s);
+//std::vector<size_t> starts_of_words(const std::string& s);
+std::vector<size_t> starts_of_words(const std::string_view s);
 
 /*! \brief          Get nth word in a string
     \param  s       string to be analysed
@@ -1226,7 +1224,8 @@ std::vector<size_t> starts_of_words(const std::string& s);
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
 */
-std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
+//std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
+std::string nth_word(const std::string_view s, const unsigned int n, const unsigned int wrt = 0);
 
 /*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
     \param  str     UTF-8 string to be analysed
@@ -1255,8 +1254,10 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
-  { return (contains( split_string <std::string> (legal_values, separator), value )); }
+//inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
+//  { return (contains( split_string <std::string> (legal_values, separator), value )); }
+inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const std::string_view separator)
+  { return (contains( split_string <std::string_view> (legal_values, separator), value )); }
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -1323,7 +1324,7 @@ std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& ve
     \param  ss  substring to be removed
     \return     <i>cs</i>, with all instances of <i>ss</i> removed
 */
-inline std::string remove_substring(std::string_view cs, std::string_view ss)
+inline std::string remove_substring(const std::string_view cs, const std::string_view ss)
   { return ( contains(cs, ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
 
 /*! \brief      Create a string of spaces
@@ -1454,7 +1455,8 @@ inline size_t number_of_occurrences(const std::string& str, const char c)
 
     Testing for busts is a symmetrical function.
 */
-bool is_bust_call(const std::string& call1, const std::string& call2) noexcept;
+//bool is_bust_call(const std::string& call1, const std::string& call2) noexcept;
+bool is_bust_call(const std::string_view call1, const std::string_view call2) noexcept;
 
 /*! \brief              Create a container of bust mappings from a container of calls
     \param  container   a container of calls
@@ -1483,6 +1485,14 @@ auto bust_map(const C& container) -> RV
     \return       <i>str</i> but with all non-printable ASCII characters converted to human-readable binary values
 */
 std::string to_printable_string(const std::string_view str);
+
+/// concatenate two string_views
+//std::string operator+(const std::string_view sv1, const std::string_view sv2);
+inline std::string operator+(const std::string_view sv1, const std::string_view sv2)
+{ return std::string(sv1) + sv2; }
+
+inline std::string operator+(const std::string_view sv1, const std::string& s2)
+{ return std::string(sv1) + s2; }
 
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                
