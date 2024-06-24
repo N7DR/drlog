@@ -345,7 +345,6 @@ public:
   inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
- //     return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
       return (_auto_remaining_exchange_mults.contains(mult_name));
     }
 
@@ -648,7 +647,6 @@ public:
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-//  std::vector<std::string> window_name_contains(const std::string& substr) const;
   std::vector<std::string> window_name_contains(const std::string_view substr) const;
 
 /*! \brief      Get all the field names in the sent exchange

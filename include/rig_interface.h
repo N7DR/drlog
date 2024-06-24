@@ -125,8 +125,8 @@ class rig_interface
 protected:
 
   bool                                    _instrumented                { false };                       ///< whether to record all exchanges with rig
-  frequency                               _last_commanded_frequency    { };                             ///< last frequency to which the rig was commanded to QSY
-  frequency                               _last_commanded_frequency_b  { };                             ///< last frequency to which VFO B was commanded to QSY
+  frequency                               _last_commanded_frequency    { 14_MHz };                      ///< last frequency to which the rig was commanded to QSY
+  frequency                               _last_commanded_frequency_b  { 14_MHz };                      ///< last frequency to which VFO B was commanded to QSY
   MODE                                    _last_commanded_mode         { MODE_CW };                     ///< last mode into which the rig was commanded
   std::unordered_map<bandmode, frequency> _last_frequency              { };                             ///< last-used frequencies on per-band, per-mode basis
   rig_model_t                             _model                       { RIG_MODEL_DUMMY };             ///< hamlib model

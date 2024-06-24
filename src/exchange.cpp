@@ -959,6 +959,28 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
 
+  if (field_name == "AGE"sv)        // AA CW or SSB
+  { if (!drm_line.empty())
+    { // we don't have direct access to the contest mode, so assume CW unless the month is September
+      const string      dts                   { date_time_string(SECONDS::NO_INCLUDE) };
+      const string_view current_month         { substring <string_view> (dts, 5, 2) };
+      const string      encoded_age_from_file { (current_month == "09") ? drm_line.age_aa_ssb() : drm_line.age_aa_cw() };  // YYYYMMDD:nn
+
+      if (!encoded_age_from_file.empty())
+      { const string_view current_year   { substring <string_view> (dts, 0, 4) };
+        const string_view year_from_file { substring <string_view> (encoded_age_from_file, 0, 4) };
+        const string_view age_from_file  { substring <string_view> (encoded_age_from_file, 9) };
+//        const string      current_age    { ::to_string( from_string<int>(age_from_file) + from_string<int>(current_year) - from_string<int>(year_from_file) ) };
+        const string      current_age    { ((age_from_file == "00"sv) or (age_from_file == "01"sv))   // don't change if [old, YL] 00 or [new, anyone] 01
+                                             ? age_from_file
+                                             : ::to_string( from_string<int>(age_from_file) + from_string<int>(current_year) - from_string<int>(year_from_file) )
+                                         };
+
+        return insert_value(current_age);
+      }
+    }
+  }
+
   if (field_name == "CHECK"sv)
     return insert_value(drm_line.check()); 
 
@@ -1090,19 +1112,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
   }
 
-#if 0
-  if (field_name.starts_with("QTH2X["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
-
-    if (canonical_prefix != location_db.canonical_prefix(callsign))
-    { ost << "QTH2X: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
-      return string { };
-    }
-
-    return insert_value(drm_line.qth2(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain
-  }
-#endif
-
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
   { static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
@@ -1182,7 +1191,6 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-//void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
 void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string& field_name)
 { try
   { const string contents { read_file(path, filename) };

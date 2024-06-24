@@ -597,6 +597,8 @@ r = SKCC state/province/country
 q = SKCC number
 p = XSCP value
 o = QTH2 (alternative QTH, as in KCJ prefectures, for example)
+n = encoded age from AA CW YYYYMM:AGE
+m = encoded age from AA SSB YYYYMM:AGE
 */
 
 /*! \brief                      Extract a single field from the record
@@ -608,7 +610,6 @@ o = QTH2 (alternative QTH, as in KCJ prefectures, for example)
 
 TODO: make this a template that works on a vector of strings or a vector of string_views
 */
-//string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
 string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
 { //for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
   //{ if (cit->starts_with(field_indicator))
@@ -653,6 +654,8 @@ drmaster_line::drmaster_line(const string_view line_or_call)
   _user[4]   = _extract_field(fields, "=Y"sv);
 
 // drmaster extensions
+  _age_aa_cw  = _extract_field(fields, "=n"sv);   // encoded as YYYYMMDD:nn
+  _age_aa_ssb = _extract_field(fields, "=m"sv);   // encoded as YYYYMMDD:nn
   _cw_power   = _extract_field(fields, "=y"sv);
   _date       = _extract_field(fields, "=z"sv);
   _iota       = _extract_field(fields, "=w"sv);
@@ -666,7 +669,7 @@ drmaster_line::drmaster_line(const string_view line_or_call)
   _state_10   = _extract_field(fields, "=t"sv);
 
   if (const string xscp_str { _extract_field(fields, "=p"sv) }; !xscp_str.empty())
-    _xscp       = from_string<decltype(_xscp)>(xscp_str);
+    _xscp = from_string<decltype(_xscp)>(xscp_str);
 }
 
 /// convert to string
@@ -675,36 +678,54 @@ string drmaster_line::to_string(void) const
 
   rv += call();
 
-  if (!section().empty())
-    rv += " =A"s + section();
+  using VOID_PARAM = const string& (drmaster_line::*)(void) const&;     // the signature for the getter functions
 
-  if (!cq_zone().empty())
-    rv += " =C"s + cq_zone();
+  auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
+                                                                           rv += ( " ="s + c + value );
+                                                                       };
 
-  if (!foc().empty())
-    rv += " =F"s + foc();
+  insert_if_not_empty(&drmaster_line::section,   'A');
+  insert_if_not_empty(&drmaster_line::cq_zone,   'C');
+  insert_if_not_empty(&drmaster_line::foc,       'F');
+  insert_if_not_empty(&drmaster_line::grid,      'G');
+  insert_if_not_empty(&drmaster_line::hit_count, 'H');
+  insert_if_not_empty(&drmaster_line::itu_zone,  'I');
+  insert_if_not_empty(&drmaster_line::check,     'K');
+  insert_if_not_empty(&drmaster_line::name,      'N');
+  insert_if_not_empty(&drmaster_line::qth,       'Q');
+  insert_if_not_empty(&drmaster_line::ten_ten,   'T');
 
-  if (!grid().empty())
-    rv += " =G"s + grid();
+//  if (!section().empty())
+//    rv += " =A"s + section();
 
-  if (!hit_count().empty())
-    rv += " =H"s + hit_count();
+//  if (!cq_zone().empty())
+//    rv += " =C"s + cq_zone();
 
-  if (!itu_zone().empty())
-    rv += " =I"s + itu_zone();
+//  if (!foc().empty())
+//    rv += " =F"s + foc();
 
-  if (!check().empty())
-    rv += " =K"s + check();
+//  if (!grid().empty())
+//    rv += " =G"s + grid();
 
-  if (!name().empty())
-    rv += " =N"s + name();
+//  if (!hit_count().empty())
+//    rv += " =H"s + hit_count();
 
-  if (!qth().empty())
-    rv += " =Q"s + qth();
+//  if (!itu_zone().empty())
+//    rv += " =I"s + itu_zone();
 
-  if (!ten_ten().empty())
-    rv += " =T"s + ten_ten();
+//  if (!check().empty())
+//    rv += " =K"s + check();
 
+//  if (!name().empty())
+//    rv += " =N"s + name();
+
+//  if (!qth().empty())
+//    rv += " =Q"s + qth();
+
+//  if (!ten_ten().empty())
+//    rv += " =T"s + ten_ten();
+
+// U, V, W, X
   char user_letter { 'U' };
 
   for (unsigned int n { 0 }; n < TRMASTER_N_USER_PARAMETERS; n++)
@@ -716,38 +737,58 @@ string drmaster_line::to_string(void) const
     user_letter++;
   }
 
-  if (!cw_power().empty())
-    rv += " =y"s + cw_power();
+  insert_if_not_empty(&drmaster_line::age_aa_ssb, 'm');
+  insert_if_not_empty(&drmaster_line::age_aa_cw,  'n');
+  insert_if_not_empty(&drmaster_line::cw_power,   'y');
+  insert_if_not_empty(&drmaster_line::date,       'z');
+  insert_if_not_empty(&drmaster_line::iota,       'w');
+  insert_if_not_empty(&drmaster_line::precedence, 'u');
+  insert_if_not_empty(&drmaster_line::qth2,       'o');
+  insert_if_not_empty(&drmaster_line::skcc,       'q');
+  insert_if_not_empty(&drmaster_line::society,    'v');
+  insert_if_not_empty(&drmaster_line::spc,        'r');
+  insert_if_not_empty(&drmaster_line::ssb_power,  'x');
+  insert_if_not_empty(&drmaster_line::state_160,  's');
+  insert_if_not_empty(&drmaster_line::state_10,   't');
 
-  if (!date().empty())
-    rv += " =z"s + date();
+//  if (!age_aa_ssb().empty())
+//    rv += " =m"s + age_aa_ssb();
 
-  if (!iota().empty())
-    rv += " =w"s + iota();
+//  if (!age_aa_cw().empty())
+//    rv += " =n"s + age_aa_cw();
 
-  if (!precedence().empty())
-    rv += " =u"s + precedence();
+//  if (!cw_power().empty())
+//    rv += " =y"s + cw_power();
 
-  if (!qth2().empty())
-    rv += " =o"s + qth2();
+//  if (!date().empty())
+//    rv += " =z"s + date();
 
-  if (!skcc().empty())
-    rv += " =q"s + skcc();
+//  if (!iota().empty())
+//    rv += " =w"s + iota();
 
-  if (!society().empty())
-    rv += " =v"s + society();
+//  if (!precedence().empty())
+//    rv += " =u"s + precedence();
 
-  if (!spc().empty())
-    rv += " =r"s + spc();
+//  if (!qth2().empty())
+//    rv += " =o"s + qth2();
 
-  if (!ssb_power().empty())
-    rv += " =x"s + ssb_power();
+//  if (!skcc().empty())
+//    rv += " =q"s + skcc();
 
-  if (!state_160().empty())
-    rv += " =s"s + state_160();
+//  if (!society().empty())
+//    rv += " =v"s + society();
 
-  if (!state_10().empty())
-    rv += " =t"s + state_10();
+//  if (!spc().empty())
+//    rv += " =r"s + spc();
+
+//  if (!ssb_power().empty())
+//    rv += " =x"s + ssb_power();
+
+//  if (!state_160().empty())
+//    rv += " =s"s + state_160();
+
+//  if (!state_10().empty())
+//    rv += " =t"s + state_10();
 
   if (xscp() != 0)
     rv += " =p"s + ::to_string(xscp());
@@ -762,67 +803,105 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   drmaster_line rv { drml };
 
-  if (rv.section().empty())
-    rv.section(section());
+  using VOID_PARAM = const string& (drmaster_line::*)(void) const&;
+  using STR_PARAM = void (drmaster_line::*)(const string&);
 
-  if (rv.cq_zone().empty())
-    rv.cq_zone(cq_zone());
+  auto insert_if_empty = [&rv, this] (VOID_PARAM fn1, STR_PARAM fn2) { if (std::invoke(fn1, rv).empty())
+                                                                         std::invoke( fn2, rv, std::invoke(fn1, *this) );
+                                                                     };
 
-  if (rv.foc().empty())
-    rv.foc(foc());
+#define INSERT_IF_EMPTY(F) insert_if_empty( &drmaster_line::F, &drmaster_line::F )
 
-  if (rv.grid().empty())
-    rv.grid(grid());
+//  insert_if_empty( &drmaster_line::section, &drmaster_line::section );      // would need only one parameter if we used a macro; but this is probably simpler to understand
+//  insert_if_empty( &drmaster_line::age_aa_cw, &drmaster_line::age_aa_cw );
 
-  if (rv.hit_count().empty())
-    rv.hit_count(hit_count());
+  INSERT_IF_EMPTY(section);
+  INSERT_IF_EMPTY(cq_zone);
+  INSERT_IF_EMPTY(foc);
+  INSERT_IF_EMPTY(grid);
+  INSERT_IF_EMPTY(hit_count);
+  INSERT_IF_EMPTY(itu_zone);
+  INSERT_IF_EMPTY(check);
+  INSERT_IF_EMPTY(name);
+  INSERT_IF_EMPTY(qth);
+  INSERT_IF_EMPTY(ten_ten);
+  INSERT_IF_EMPTY(age_aa_cw);
+  INSERT_IF_EMPTY(age_aa_ssb);
+  INSERT_IF_EMPTY(cw_power);
+  INSERT_IF_EMPTY(iota);
+  INSERT_IF_EMPTY(precedence);
+  INSERT_IF_EMPTY(qth2);
+  INSERT_IF_EMPTY(skcc);
+  INSERT_IF_EMPTY(society);
+  INSERT_IF_EMPTY(spc);
+  INSERT_IF_EMPTY(ssb_power);
 
-  if (rv.itu_zone().empty())
-    rv.itu_zone(itu_zone());
+#undef INSERT_IF_EMPTY
 
-  if (rv.check().empty())
-    rv.check(check());
+//  if (rv.section().empty())
+//    rv.section(section());
 
-  if (rv.name().empty())
-    rv.name(name());
+//  if (rv.cq_zone().empty())
+//    rv.cq_zone(cq_zone());
 
-  if (rv.qth().empty())
-    rv.qth(qth());
+//  if (rv.foc().empty())
+//    rv.foc(foc());
 
-  if (rv.ten_ten().empty())
-    rv.ten_ten(ten_ten());
+//  if (rv.grid().empty())
+//    rv.grid(grid());
+
+//  if (rv.hit_count().empty())
+//    rv.hit_count(hit_count());
+
+//  if (rv.itu_zone().empty())
+//    rv.itu_zone(itu_zone());
+
+//  if (rv.check().empty())
+//    rv.check(check());
+
+//  if (rv.name().empty())
+//    rv.name(name());
+
+//  if (rv.qth().empty())
+//    rv.qth(qth());
+
+//  if (rv.ten_ten().empty())
+//    rv.ten_ten(ten_ten());
 
   for (unsigned int n { 1 }; n <= TRMASTER_N_USER_PARAMETERS; n++)
   { if (rv.user(n).empty())
       rv.user(n, user(n));
   }
 
-  if (rv.cw_power().empty())
-    rv.cw_power(cw_power());
+//  if (rv.age_aa_cw().empty())
+//    rv.age_aa_cw(age_aa_cw());
+
+//  if (rv.cw_power().empty())
+//    rv.cw_power(cw_power());
 
   if (rv.date().empty())
     rv.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 8));
 
-  if (rv.iota().empty())
-    rv.iota(iota());
+//  if (rv.iota().empty())
+//    rv.iota(iota());
 
-  if (rv.precedence().empty())
-    rv.precedence(precedence());
+//  if (rv.precedence().empty())
+//    rv.precedence(precedence());
 
-  if (rv.qth2().empty())
-    rv.qth2(qth2());
+//  if (rv.qth2().empty())
+//    rv.qth2(qth2());
 
-  if (rv.skcc().empty())
-    rv.skcc(skcc());
+//  if (rv.skcc().empty())
+//    rv.skcc(skcc());
 
-  if (rv.society().empty())
-    rv.society(society());
+//  if (rv.society().empty())
+//    rv.society(society());
 
-  if (rv.spc().empty())
-    rv.spc(spc());
+//  if (rv.spc().empty())
+//    rv.spc(spc());
 
-  if (rv.ssb_power().empty())
-    rv.ssb_power(ssb_power());
+//  if (rv.ssb_power().empty())
+//    rv.ssb_power(ssb_power());
 
   if (rv.society().empty())
     rv.society(society());

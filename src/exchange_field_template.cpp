@@ -35,14 +35,15 @@ using namespace std;
 
     Object is fully ready for use after this constructor.
 */
-EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
+//EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
+//    const drlog_context& context, location_database& location_db) :
+EFT::EFT(const string& nm, const vector<string>& path, const string_view regex_filename,
     const drlog_context& context, location_database& location_db) :
   _name(nm)
 { read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-//  _is_mult = contains(clean_split_string <std::string> (context.exchange_mults()), _name);  // correct value of is_mult
   _is_mult = contains(clean_split_string <std::string_view> (context.exchange_mults()), _name);  // correct value of is_mult
 }
 
@@ -51,27 +52,23 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
-{ //ost << "reading regex expression file: " << filename << " for field: " << _name << endl;
-
-  if (filename.empty())
+//bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
+bool EFT::read_regex_expression_file(const vector<string>& paths, const string_view filename)
+{ if (filename.empty())
     return false;
 
   bool found_it { false };
 
   try
-  { //for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
-    for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
-    { //ost << "processing line: " << line << endl;
-
-      if (!found_it and !line.empty())
+  { for (const auto& line : to_lines <std::string> (read_file(paths, filename)))
+    { if (!found_it and !line.empty())
       { const vector<string_view> fields { split_string <std::string_view> (line, ':') };
 
 // a bit complex because ":" may appear in the regex
         if (fields.size() >= 2)
-        { const string field_name { remove_peripheral_spaces <std::string> (fields[0]) };
-          const size_t posn       { line.find(':') };
-          const string regex_str  { remove_peripheral_spaces <std::string> (substring <std::string> (line, posn + 1)) };
+        { const string_view field_name { remove_peripheral_spaces <std::string_view> (fields[0]) };
+          const size_t      posn       { line.find(':') };
+          const string      regex_str  { remove_peripheral_spaces <std::string> (substring <std::string> (line, posn + 1)) };
 
           if ( (field_name == _name) and !regex_str.empty() )
           { _regex_str = regex_str;
@@ -95,7 +92,6 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string& 
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-//bool EFT::read_values_file(const vector<string>& path, const string& filename)
 bool EFT::read_values_file(const vector<string>& path, const string_view filename)
 { try
   { for (const auto& line : to_lines <std::string> (read_file(path, filename + ".values"s)))
@@ -103,13 +99,14 @@ bool EFT::read_values_file(const vector<string>& path, const string_view filenam
 
       if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
       { if (contains(line, '=') )
-        { const vector<string> lhsrhs { split_string <std::string> (line, '=') };
-          const string         lhs    { remove_peripheral_spaces <std::string> (lhsrhs[0]) };
+        { const vector<string_view> lhsrhs { split_string <std::string_view> (line, '=') };
+          const string              lhs    { remove_peripheral_spaces <std::string> (lhsrhs[0]) };  // can't be string_view
 
           equivalent_values += lhs;                  // canonical value
 
           if (lhsrhs.size() != 1)
-          { const string& rhs { lhsrhs[1] };
+          { //const string& rhs { lhsrhs[1] };
+            const string rhs { lhsrhs[1] };
 
             COPY_ALL(clean_split_string <string> (rhs), inserter(equivalent_values, equivalent_values.begin()));
 
@@ -192,9 +189,11 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
 
-  const auto& it { _values.find(cv) };  // this is now guaranteed not to be end()
+//  const auto& it { _values.find(cv) };  // this is now guaranteed not to be end()
 
-  auto& ss { it->second };
+//  auto& ss { it->second };
+
+  auto& [ k, ss ] { *(_values.find(cv)) };
 
   ss += new_value;      // add it to _values
 
@@ -207,33 +206,9 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
     \return         whether <i>str</i> is a legal value
 */
 bool EFT::is_legal_value(const string& str) const
-{ //ost << "inside EFT::is_legal_value" << endl;
-
-//  if (_values.empty())
-//    ost << "_values is empty" << endl;
-//  else
-//    ost << "_values is not empty" << endl;
-
-//  if (_regex_str.empty())
-//    ost << "regex string is empty" << endl;
-//  else
-//    ost << "regex string is not empty" << endl;
-
-// test regex first
-
-//  if (!_regex_str.empty())
-//  { ost << "testing whether " << str << " is a legal value for " << _regex_str << endl;
-//    ost << "result = " << boolalpha << regex_match(str, regex(_regex_str)) << endl;
-//  }
-
-  if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
-  { //ost << "regex comparison is true" << endl;
+{ if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
     return true;
-  }
-//  else
-//    ost << "regex comparison is false" << endl;
 
-//  return (_values.empty() ? false : (str < _legal_non_regex_values));
   return (_values.empty() ? false : (_legal_non_regex_values.contains(str)));
 }
 
@@ -266,8 +241,7 @@ string EFT::canonical_value(const std::string& str) const
 set<string> EFT::canonical_values(void) const
 { set<string> rv;
 
-//  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv += pss.first; } );
-  for (const auto& [ cv, equivalents ] : _values)
+  for (const auto& [ cv, equivalents ] : _values)   // this is clearer than using FOR_ALL
     rv += cv;
 
   return rv;
@@ -279,21 +253,9 @@ ostream& operator<<(ostream& ost, const EFT& eft)
       << "  is_mult: " << eft.is_mult() << endl
       << "  regex_str: " << eft.regex_str() << endl;
 
-//const map<string,                        /* a canonical field value */
-//         set                             /* each equivalent value is a member of the set, including the canonical value */
-//          <string                       /* indistinguishable legal values */
-//          >> values = eft.values();
-//  const auto values { eft.values() };
-
-//  for (const auto& sss : values)
-//  for (const auto& sss : eft.values())
   for (const auto& [ canonical_value, legal_values ] : eft.values())
-  { //ost << "  canonical value = " << sss.first << endl;
-    ost << "  canonical value = " << canonical_value << endl;
+  { ost << "  canonical value = " << canonical_value << endl;
 
-//    const auto& ss { sss.second };
-
-//    for (const auto& s : ss)
     for (const auto& s : legal_values)
       ost << "  value = " << s << endl;
   }
@@ -302,8 +264,7 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 
   if (!v.empty())
   { ost << "  legal_non_regex_values : ";
-//    for (const auto& str : v)
-//      ost << "  " << str;
+
     FOR_ALL(v, [&ost] (const string& str) { ost << "  " << str; });
 
     ost << endl;
@@ -316,8 +277,6 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 
     for (const auto& [ v, cv ] : vcv)
       ost << "    " << v << " -> " << cv << endl;
-
-//    FOR_ALL(vcv, [&ost] (const auto& pss) { ost << "    " << pss.first << " -> " << pss.second << endl; });
   }
 
   return ost;

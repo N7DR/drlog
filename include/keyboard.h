@@ -36,10 +36,6 @@ extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the
 extern message_stream ost;                  ///< for debugging, info
 
 /// key events
-//enum key_event_type { KEY_PRESS,
-//                      KEY_RELEASE
-//                    };
-
 enum class KEY_EVENT { PRESS,
                        RELEASE
                      };
@@ -84,7 +80,6 @@ class keyboard_event
 protected:
 
   key_code       _code;         ///< code for the relevant key
-//  key_event_type _event;        ///< the event
   KEY_EVENT      _event;        ///< the event
   std::string    _str;          ///< string version of the character
   KeySym         _symbol;       ///< symbol that corresponds to the key

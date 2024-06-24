@@ -1097,7 +1097,6 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 
      Should perhaps use guard band instead of MAX_FREQUENCY_SKEW
 */
-//bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip)
 bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int16_t nskip)
 { namespace SRV = std::ranges::views;
   namespace SR  = std::ranges;
@@ -1106,18 +1105,16 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
 
   SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
-//  const int        max_permitted_skew { 95 };                   // 95 Hz
   const BM_ENTRIES fe { displayed_entries() };
 
 // why can't this be const?
   auto marker_it { FIND_IF(fe, [] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
   if (marker_it == fe.cend())             // should never be true
-    return bandmap_entry();
+    return bandmap_entry { };
 
   const frequency target_freq { marker_it->freq() };
 
-//  auto get_be = [fp, &fe, &target_freq] (const auto it1, const auto it2, const int nskip)
   auto get_be = [fp, &fe, &target_freq] (const auto it1, const auto it2, const auto nskip)                  // this returns a range containing one element
     { return SR::subrange(it1, it2) |
                SRV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
@@ -1125,11 +1122,9 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
                SRV::take(1);
     };
 
-//  auto gnd_r = [fp, &fe, &get_be, &target_freq] (auto foit, const int nskip)
   auto gnd_r = [fp, &fe, &get_be, &target_freq] (auto foit, const auto nskip)
   { auto v { get_be(REVERSE_IT(foit), fe.crend(), nskip) };                   // can't be const, because can't use begin() on a constant range, and there is not yet a cbegin()
 
-//    if (v.begin() != v.end())
     if (!v.empty())
       return *(v.begin());
 
@@ -1141,13 +1136,10 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
     return bandmap_entry { };
   };
 
-//  auto gnu_r = [fp, get_be, &fe, &target_freq] (auto foit, const int nskip)
   auto gnu_r = [fp, get_be, &fe, &target_freq] (auto foit, const auto nskip)
-  { //auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + max_permitted_skew) ); }) }; // move away from my frequency, in upwards direction
-    auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + MAX_PERMITTED_SKEW) ); }) }; // move away from my frequency, in upwards direction
+  { auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + MAX_PERMITTED_SKEW) ); }) }; // move away from my frequency, in upwards direction
     auto v    { get_be(cit2, fe.cend(), nskip) };
 
-//    if (v.begin() != v.end())
     if (!v.empty())
       return *(v.begin());
 
@@ -1321,7 +1313,6 @@ bool bandmap::is_present(const string& target_callsign) const
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-//void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 bool bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
@@ -1345,10 +1336,7 @@ bool bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     other threads MUST NOT access biq while this is executing
 */
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-{ //process_insertion_queue(biq);
-//
-  //w <= (*this);
-  if (process_insertion_queue(biq))
+{ if (process_insertion_queue(biq))       // don't need to output if nothing is done
     w <= (*this);
 }
 
@@ -1363,104 +1351,102 @@ window& bandmap::write_to_window(window& win)
   constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
 
-//  static atomic<int> last_displayed_version { 0 };
-
-  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
+//  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  if (_version <= _last_displayed_version)
-  { //const int ldv{ last_displayed_version };
-    //const int v { _version };
-
-    ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
+  if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
+  { ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
+    return win;
   }
-  else
-  { BM_ENTRIES entries { displayed_entries() };    // automatically filter
 
-    const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
+// we are a more recent version, so display it
+  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
 
-    win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
+  BM_ENTRIES entries { displayed_entries() };    // automatically filter
 
-    size_t index { 0 };    // keep track of where we are in the bandmap
+  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
 
-    for (const auto& be : entries)
-    { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-      { const string entry_str { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
+  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
-        string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
-        string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
+  size_t index { 0 };    // keep track of where we are in the bandmap
 
-        const bool   is_marker { be.is_marker() };
+  for (const auto& be : entries)
+  { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
+    { const string entry_str { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
+
+      string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
+      string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
+
+      const bool   is_marker { be.is_marker() };
   
 // change to the correct colour
-        const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
-        const time_t age_since_this_inserted     { be.time_since_inserted() };
-        const time_t start_time                  { be.time() };                  // time it was inserted
-        const time_t expiration_time             { be.expiration_time() };
-        const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
-        const int    n_colours                   { static_cast<int>(fade_colours().size()) };
-        const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
-        const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
+      const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
+      const time_t age_since_this_inserted     { be.time_since_inserted() };
+      const time_t start_time                  { be.time() };                  // time it was inserted
+      const time_t expiration_time             { be.expiration_time() };
+      const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
+      const int    n_colours                   { static_cast<int>(fade_colours().size()) };
+      const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
+      const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
-        PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
+      PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-        if ( (age_since_original_inserted < GREEN_TIME) and !be.is_marker() and (recent_colour() != COLOUR_BLACK) )
-          cpu = colours.add(recent_colour(), win.bg());
+      if ( (age_since_original_inserted < GREEN_TIME) and !be.is_marker() and (recent_colour() != COLOUR_BLACK) )
+        cpu = colours.add(recent_colour(), win.bg());
 
-        if (is_marker)
-          cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
+      if (is_marker)
+        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
 
 // work out where to start the display of this call
-        const unsigned int x { static_cast<unsigned int>( ( (index  - start_entry) / win.height()) * COLUMN_WIDTH ) };
+      const unsigned int x { static_cast<unsigned int>( ( (index  - start_entry) / win.height()) * COLUMN_WIDTH ) };
     
 // check that there's room to display the entire entry
-        if ((win.width() - x) < COLUMN_WIDTH)
-          break;
+      if ((win.width() - x) < COLUMN_WIDTH)
+        break;
 
 // get the right y ordinate
-        const unsigned int y { static_cast<unsigned int>( (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
-                                                                                : (win.height() - 1) - (index - start_entry) % win.height() ) ) };
+      const unsigned int y { static_cast<unsigned int>( (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
+                                                                              : (win.height() - 1) - (index - start_entry) % win.height() ) ) };
 
 // now work out the status colour
-        PAIR_NUMBER_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
+      PAIR_NUMBER_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
 
-        if (!is_marker)
-        { if (be.is_needed())
-          { if (be.mult_status_is_known())
-              status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
-            else
-              status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
-          }
+      if (!is_marker)
+      { if (be.is_needed())
+        { if (be.mult_status_is_known())
+            status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
+          else
+            status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
         }
-
-// reverse the colour of the frequency if there are unseen entries lower or higher in frequency
-        const bool reverse { ( (start_entry != 0) and (start_entry == index) ) or
-                               (index == (start_entry + maximum_number_of_displayable_entries - 1) and (entries.size() > (index + 1))) };
-
-        const bool is_marked_entry { bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()) };
-
-// switch to red if marked frequency and we are showing marked frequencies
-        win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(COLOUR_WHITE, COLOUR_RED) : cpu );
-
-        if (reverse)
-          win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
-
-        win < frequency_str;
-
-        if (reverse)
-          win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
-
-        win < colour_pair(status_colour) < SPACE_STR
-            < colour_pair(cpu) < callsign_str;
       }
 
-      index++;
+// reverse the colour of the frequency if there are unseen entries lower or higher in frequency
+      const bool reverse { ( (start_entry != 0) and (start_entry == index) ) or
+                             (index == (start_entry + maximum_number_of_displayable_entries - 1) and (entries.size() > (index + 1)) ) };
+
+      const bool is_marked_entry { bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()) };
+
+// switch to red if marked frequency and we are showing marked frequencies
+      win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(COLOUR_WHITE, COLOUR_RED) : cpu );
+
+      if (reverse)
+        win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
+
+      win < frequency_str;
+
+      if (reverse)
+        win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+
+      win < colour_pair(status_colour) < SPACE_STR
+          < colour_pair(cpu) < callsign_str;
     }
 
-    _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
+    index++;
   }
+
+  _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
 
   return win;
 }
@@ -1502,7 +1488,8 @@ void bandmap::remove_from_do_not_add(const std::string& callsign)
 */
 vector<string> bandmap::regex_matches(const string& regex_str)
 { const BM_ENTRIES bme { displayed_entries() };
-  const regex      rgx(regex_str);
+//  const regex      rgx(regex_str);
+  const regex      rgx { regex_str };
 
   smatch         base_match;
   vector<string> rv;

@@ -161,7 +161,8 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-  size_t import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
+//  size_t import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
+  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
 };
 
 // ---------------------------------------------------  adif3_record -----------------------------------------
@@ -196,8 +197,9 @@ public:
     \return             one past the last location to be used
 
     Returns string::npos if reads past the end of <i>str</i>
-*/ 
-  size_t import_and_eat(const std::string& str, const size_t posn);
+*/
+//  size_t import_and_eat(const std::string& str, const size_t posn);
+  size_t import_and_eat(const std::string_view str, const size_t posn);
   
 /*! \brief      Convert to printable string
     \return     the canonical textual representation of the record

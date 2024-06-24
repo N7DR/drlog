@@ -48,10 +48,19 @@ protected:
 // whether it is equivalent to ""s]
   std::string                           _regex_str;          ///< regex expression to define field
 
+#if 1
   std::map<std::string,        /* a canonical field value */
           std::set             /* each equivalent value is a member of the set, including the canonical value */
             <std::string       /* indistinguishable legal values */
             >>                          _values;                    ///< the canonical and alternative values for the field
+#endif
+
+#if 0
+  std::map<std::string,        /* a canonical field value */
+          std::set             /* each equivalent value is a member of the set, including the canonical value */
+            <std::string       /* indistinguishable legal values */
+            >, std::less<> >            _values;                    ///< the canonical and alternative values for the field
+#endif
 
   std::map<std::string, std::string>    _value_to_canonical;        ///< key = value; value = corresponding canonical value
 
@@ -78,8 +87,11 @@ public:
 
     Object is fully ready for use after this constructor.
 */
+//  EFT(const std::string& nm, const std::vector<std::string>& path,
+//      const std::string& regex_filename,
+//      const drlog_context& context, location_database& location_db);
   EFT(const std::string& nm, const std::vector<std::string>& path,
-      const std::string& regex_filename,
+      const std::string_view regex_filename,
       const drlog_context& context, location_database& location_db);
 
   READ_AND_WRITE(is_mult);              ///< is this field a mult?
@@ -94,7 +106,8 @@ public:
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-  bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
+//  bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
+  bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string_view filename);
 
 /*! \brief              Get info from .values file
     \param  path        paths to try
@@ -133,7 +146,7 @@ public:
 */
   void add_legal_value(const std::string& cv, const std::string& new_value);
 
-/*! \brief              Add legal values that corresponds to a canonical value
+/*! \brief              Add legal values that correspond to a canonical value
     \param  cv          canonical value
     \param  new_values  values that correspond to <i>cv</i>
 

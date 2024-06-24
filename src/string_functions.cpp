@@ -732,6 +732,7 @@ string decimal_places(const string& str, const int n)
     \param  lines   the lines to search
     \return         the longest line in the vector <i>lines</i>
 */
+#if 0
 string longest_line(const vector<string>& lines)
 { string rv;
 
@@ -741,6 +742,7 @@ string longest_line(const vector<string>& lines)
 
   return rv;
 }
+#endif
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
@@ -806,26 +808,6 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
   return ost;
 }
 
-#if 0
-/*! \brief                  Remove a trailing inline comment
-    \param  str             string
-    \param  comment_str     string that introduces the comment
-    \return                 <i>str</i> with the trailing comment and any additional trailing spaces removed
-
-    Generally it is expected that <i>str</i> is a single line (without the EOL marker)
-*/
-//string remove_trailing_comment(string_view str, const string_view comment_str)
-//{ const size_t posn { str.find(comment_str) };
-//
-//  return ( (posn == string_view::npos) ? string { str } : remove_trailing_spaces <std::string> (substring <std::string> (str, 0, posn)) );
-//}
-string_view remove_trailing_comment(const string_view str, const string_view comment_str)
-{ const size_t posn { str.find(comment_str) };
-
-  return ( (posn == string_view::npos) ? str : remove_trailing_spaces <std::string_view> (substring <std::string_view> (str, 0, posn)) );
-}
-#endif
-
 /*! \brief              Perform a case-insensitive search for a substring
     \param  str         string to search
     \param  target      substring for which to search
@@ -851,12 +833,18 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
-//string base_call(const string& callsign)
 string base_call(const string_view callsign)
 { if (!contains(callsign, '/'))
     return string { callsign };
 
+//  const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };   // I don't know why this doesn't work; gives compilation error
+//  const vector<string> portions { split_string <std::string> (callsign, '/') };
+
+//  return longest( portions );
+  return longest( split_string <std::string_view> (callsign, '/') );
+
 // it contains at least one slash
+#if 0
   const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };
 
   string rv { };
@@ -866,6 +854,7 @@ string base_call(const string_view callsign)
       rv = str;
 
   return rv;
+#endif
 }
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
@@ -899,7 +888,7 @@ string remove_substrings(const string_view cs, const vector<string>& vs)
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-size_t find_and_go_to_end_of(string_view str, string_view target)
+size_t find_and_go_to_end_of(const string_view str, const string_view target)
 { size_t posn { str.find(target) };
 
   if (posn == string::npos)
@@ -920,7 +909,6 @@ size_t find_and_go_to_end_of(string_view str, string_view target)
 
     Testing for busts is a symmetrical function.
 */
-//bool is_bust_call(const string& call1, const string& call2) noexcept
 bool is_bust_call(const string_view call1, const string_view call2) noexcept
 { if (call1 == call2)
     return false;                // not a bust if both calls are the same
@@ -929,9 +917,7 @@ bool is_bust_call(const string_view call1, const string_view call2) noexcept
     return false;                // not a bust if the lengths differ by 2 or more
 
   if ( abs(static_cast<int>(call1.length()) - static_cast<int>(call2.length())) == 1 )  // lengths differ by unity
-  { //const string& longer  { (call1.length() > call2.length() ? call1 : call2) };
-    //const string& shorter { (call1.length() > call2.length() ? call2 : call1) };
-    const string_view longer  { (call1.length() > call2.length() ? call1 : call2) };
+  { const string_view longer  { (call1.length() > call2.length() ? call1 : call2) };
     const string_view shorter { (call1.length() > call2.length() ? call2 : call1) };
 
     if (contains(longer, shorter))
@@ -939,7 +925,7 @@ bool is_bust_call(const string_view call1, const string_view call2) noexcept
 
 // is the bust in the form of an additional character somewhere in the call?
     for (size_t posn { 1 }; posn < longer.length() - 1; ++posn)
-    { const string tmp { longer.substr(0, posn) + longer.substr(posn + 1) };
+    { const string tmp { longer.substr(0, posn) + longer.substr(posn + 1) };    // have to use a string here
 
       if (tmp == shorter)
         return true;
@@ -951,7 +937,7 @@ bool is_bust_call(const string_view call1, const string_view call2) noexcept
 // the calls are the same length; do they differ by exactly one character?
   int differences { 0 };
 
-  for (size_t posn { 0 }; posn < call1.length(); ++posn)
+  for (size_t posn { 0 }; ( (posn < call1.length()) and (differences < 2) ); ++posn)  // can stop looking once we have two differences
   { if (call1[posn] != call2[posn])
       differences++;
   }

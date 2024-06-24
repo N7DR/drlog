@@ -218,7 +218,8 @@ inline constexpr bool is_stdarray<std::array<T, I>> = true;
 // basic types + string
 template <class T> concept is_int         = std::is_same_v<T, int>;
 template <class T> concept is_uint        = std::is_same_v<T, unsigned int>;
-template <class T> concept is_string      = std::is_same_v<T, std::string>;     // is_same<> includes const and volatile qualifiers
+//template <class T> concept is_string      = std::is_same_v<T, std::string>;     // is_same<> includes const and volatile qualifiers
+template <class T> concept is_string      = std::is_same_v<base_type<T>, std::string>;     // is_same<> includes const and volatile qualifiers
 template <class T> concept is_string_view = std::is_same_v<T, std::string_view>;
 
 // standard containers
@@ -245,6 +246,9 @@ template <class T> concept is_ssv   = is_string<T>   or is_string_view<T>;
 
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
+
+//template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_string<typename T::value_type>;
+template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
 // ---------------------------------------------------------------------------
 
@@ -836,18 +840,6 @@ T operator+(const T& s1, const T& s2)
   return rv;
 }
 
-///  does a MUM contain a particular key?
-//template <class M, class K>
-//inline bool operator>(const M& m, const K& k)
-//  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
-//{ return m.contains(k); }
-
-///  does a MUM contain a particular key?
-//template <class M, class K>
-//inline bool operator<(const K& k, const M& m)
-//  requires (is_mum<M>) and (std::is_same_v<typename M::key_type, K>)
-//{ return (m > k); }
-
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
     \param  m   map or unordered map to be searched
     \param  k   target key
@@ -858,8 +850,6 @@ T operator+(const T& s1, const T& s2)
 */
 template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-//  requires (is_mum<C>) && (std::is_same_v<typename C::key_type, K>)
-//  requires (is_mum<C>) and (std::convertible_to<K, typename C::key_type>)
   requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
@@ -881,13 +871,23 @@ auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
 } 
 
-// convenient syntactic sugar for some STL functions
+/*! \brief      Is an object a key of a map or unordered map; if so return the value in an optional, otherwise return an empty optional
+    \param  m   map or unordered map to be searched
+    \param  k   target key
+    \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise an empty optional
+*/
+template <class C, class K>
+std::optional<typename C::mapped_type> OPT_MUM_VALUE(const C& m, const K& k)
+  requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
+{ std::optional<typename C::mapped_type> rv { };
 
-// this does not work: must be a non-static member function
-//template <typename M>
-//  requires (is_map<M> and is_string<typename M::key_type>)
-//inline auto operator[](M& m, std::string_view sv) -> typename M::value_type
-//  { return m[string { sv }]; }
+  if (const auto cit { m.find(k) }; cit != m.cend())
+    rv = cit->second;
+
+  return rv;
+}
+
+// convenient syntactic sugar for some STL functions
 
 /*! \brief              Add an element to a MUM
     \param  m           destination MUM
@@ -1083,7 +1083,7 @@ inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_typ
     \param  element     element to insert
 */
 template <typename C>
-inline void operator+=(C& sus, std::string_view element)
+inline void operator+=(C& sus, const std::string_view element)
   requires is_sus<C> and is_string<typename C::value_type>
   { sus += (std::string { element }); }
 
@@ -1162,7 +1162,8 @@ void operator+=(V& dest, const V& src)
     \param  src   source vector
     \return       <i>dest</i> with <i>src</i> appended
 */
-template <typename V> requires (is_vector<V>)
+template <typename V>
+  requires (is_vector<V>)
 V operator+(const V& v1, V&& v2)
 { V rv(v1.size() + v2.size());
 
@@ -1208,8 +1209,8 @@ void operator+=(V& vec, const SUS& sus)
     \return             <i>dest</i> with <i>element</i> appended
 */
 template <typename V, typename E>
-auto operator+(const V& v1, E&& element) -> V
   requires is_vector<V> and (std::is_same_v<typename V::value_type, base_type<E>>)
+auto operator+(const V& v1, E&& element) -> V
 { V rv(v1.size() + 1);
 
   rv = v1;
@@ -1224,8 +1225,8 @@ auto operator+(const V& v1, E&& element) -> V
     \return            <i>sus</i> with <i>element</i> added
 */
 template <typename S, typename E>
-auto operator+(const S& s1, E&& element) -> S
   requires is_sus<S> and (std::is_same_v<typename S::value_type, base_type<E>>)
+auto operator+(const S& s1, E&& element) -> S
 { S rv { s1 };
 
   rv.insert(std::forward<E>(element));
@@ -1238,8 +1239,8 @@ auto operator+(const S& s1, E&& element) -> S
     \param  element     element to append
 */
 template <typename C>
-inline void operator+=(C& c1, typename C::value_type&& element)
   requires is_deque<C> or is_list<C> or is_vector<C>
+inline void operator+=(C& c1, typename C::value_type&& element)
 { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
@@ -1247,8 +1248,8 @@ inline void operator+=(C& c1, typename C::value_type&& element)
     \param  element     element to append
 */
 template <typename C, typename E>
-inline void operator+=(C& c1, const E& element)
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::convertible_to<E, typename C::value_type>)
+inline void operator+=(C& c1, const E& element)
 { c1.push_back(element ); }
 
 /*! \brief              Append string_view element to a deque, list or vector of strings
@@ -1256,8 +1257,8 @@ inline void operator+=(C& c1, const E& element)
     \param  element     element to append
 */
 template <typename C>
-inline void operator+=(C& c1, std::string_view element)
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (is_string<typename C::value_type>)
+inline void operator+=(C& c1, std::string_view element)
 { c1.emplace_back(std::string { element }); }
 
 /*! \brief      Insert an element into a list
@@ -1265,8 +1266,8 @@ inline void operator+=(C& c1, std::string_view element)
     \param  pr  location and value to insert
 */
 template <typename L>
-inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
   requires is_list<L>
+inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
 { l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
 
 /*! \brief      Insert an element into a list
@@ -1274,8 +1275,8 @@ inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::
     \param  pr  location and value to insert
 */
 template <typename L>
-inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
   requires is_list<L>
+inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
 { l1.insert(pr.first, pr.second); }
 
 /*! \brief              Remove all elements with a particular value from a list
@@ -1283,8 +1284,8 @@ inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typena
     \param  element     value to remove
 */
 template <typename C>
-inline void operator-=(C& c1, typename C::value_type&& element)
   requires is_list<C>
+inline void operator-=(C& c1, typename C::value_type&& element)
 { c1.remove(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Remove all elements with a particular value from a list

@@ -225,6 +225,8 @@ protected:
   std::string _speed;                                           ///< CW speed
 
 // extensions for drlog
+  std::string _age_aa_cw;                                       ///< age received in AA CW
+  std::string _age_aa_ssb;                                      ///< age received in AA SSB
   std::string _cw_power;                                        ///< power received in ARRL DX CW
   std::string _date;                                            ///< most recent date at which the record was updated
   std::string _iota;                                            ///< IOTA designation
@@ -290,6 +292,8 @@ public:
   inline void hit_count(const int n)
     { hit_count(::to_string(n)); }
 
+  READ_AND_WRITE(age_aa_cw);                                       ///< age received in AA CW
+  READ_AND_WRITE(age_aa_ssb);                                      ///< age received in AA SSB
   READ_AND_WRITE(cw_power);                                        ///< power received in ARRL DX CW
   READ_AND_WRITE(date);                                            ///< most recent date at which the record was updated
   READ_AND_WRITE(iota);                                            ///< IOTA designation
@@ -346,7 +350,6 @@ protected:
 
     Lines without XSCP data are always included
 */
-//  void _prepare_from_file_contents(const std::string& contents, const int xscp_limit = 1);
   void _prepare_from_file_contents(const std::string_view contents, const int xscp_limit = 1);
 
 public:
@@ -361,7 +364,6 @@ public:
 
     Throws exception if the file does not exist or is incorrectly formatted;
 */
-//  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
   explicit drmaster(const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Construct from a file
@@ -374,7 +376,6 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
   drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file

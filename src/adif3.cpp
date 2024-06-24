@@ -256,12 +256,13 @@ adif3_field::adif3_field(const string& field_name, const string& field_value)
 /*! \brief              Import name and value from string, and return location past the end of the used part of the string
     \param  str         string from which to read
     \param  start_posn  position in <i>str</i> at which to start parsing
-    \param  end_posn    one past the location at which to force and end to parsing, if necessary
+    \param  end_posn    one past the location at which to force an end to parsing, if necessary
     \return             one past the last location to be used
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-size_t adif3_field::import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
+//size_t adif3_field::import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
+size_t adif3_field::import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
 { const auto posn_1 { str.find('<', start_posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
@@ -277,10 +278,8 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
     return string::npos;
 
 // if it's the EOR, then jump out
-//  const string         descriptor_str { str.substr(posn_1 + 1, posn_2 - posn_1 -1) };
   const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
   const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, ':') };
-//  const vector<string> fields         { split_string <std::string> (descriptor_str, ':') };
 
   if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
     return string::npos;
@@ -296,12 +295,19 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
   const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
     
 // check validity
-  const auto it { _element_type.find(_name) };
+//  const auto it { _element_type.find(_name) };
 
-  if (it == _element_type.end())
-    throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
+//  if (it == _element_type.end())
+//    throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
     
-  _type = it->second;
+//  _type = it->second;
+
+  const auto atype { OPT_MUM_VALUE(_element_type, _name) };
+
+  if (!atype)
+    throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
+
+  _type = atype.value();
   _value = contents;
     
   _verify();
@@ -324,7 +330,6 @@ int adif3_record::_fast_string_to_int(const string& str) const
   int rv { 0 };
 
   for (const char c : str)
-//    rv = (rv * 10) + ((int)c - zerochar);
     rv = (rv * 10) + (static_cast<int>(c) - zerochar);
 
   return rv; 
@@ -337,7 +342,7 @@ int adif3_record::_fast_string_to_int(const string& str) const
 
     Returns string::npos if reads past the end of <i>str</i>
 */ 
-size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
+size_t adif3_record::import_and_eat(const std::string_view str, const size_t posn)
 { 
 // extract the text from the first "<" to the end of the first "eor"
   const auto posn_1 { str.find('<', posn) };
@@ -373,29 +378,14 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
     Does not output import-only fields.
 */
 string adif3_record::to_string(void) const
-{ string rv;
+{ string rv { };
 
-//  SAFELOCK(_adif3_record);
-
-#if 0
-  for (const auto& element : _elements)
-  { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
-    { switch (dt)
-      { default :
-          rv += element.second.to_string();    // output without any checks
-      }
-    }
-  }
-#endif
-
-//  for (const auto& element : _elements)
   for (const auto& [name, field] : _elements)
-  { //if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
-    if (const ADIF3_DATA_TYPE dt { field.type() }; !( _import_only.contains(dt) ) )       // don't output if this type is import-only
-    { switch (dt)
-      { default :
+  { if (const ADIF3_DATA_TYPE dt { field.type() }; !( _import_only.contains(dt) ) )       // don't output if this type is import-only
+    { //switch (dt)
+      //{ default :
           rv += field.to_string();    // output without any checks
-      }
+      //}
     }
   }
 
@@ -470,7 +460,6 @@ adif3_file::adif3_file(const string_view filename)
 
     Returns empty object if a problem occurs
 */
-//adif3_file::adif3_file(const vector<string>& path, const string& filename)
 adif3_file::adif3_file(const vector<string>& path, const string_view filename)
 { for (const auto& this_path : path)
   { try

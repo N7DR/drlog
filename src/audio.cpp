@@ -301,7 +301,7 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
 
     if ( (r == -EAGAIN) or ((r >= 0) and ((size_t)r < count)) )
       snd_pcm_wait(_handle, RETRY_MS);   // wait for 100 ms, then try again
-    else if (r == -EPIPE)           // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
+    else if (r == -EPIPE)                // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
     { if (++_xrun_counter == _xrun_threshhold)
       { _error_alert("audio XRUN error count = "s + to_string(_xrun_threshhold));
         _xrun_threshhold *= 2;
@@ -512,7 +512,7 @@ void audio_recorder::initialise(void)
 
   const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
 
-  constexpr int MAX_FAILURES { 1 };           // maximum number of permitted failures
+  constexpr int MAX_FAILURES { 1 };       // maximum number of permitted failures
 
   int n_failures { 0 };                   // current number of failures
 

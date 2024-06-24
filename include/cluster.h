@@ -84,9 +84,6 @@ public:
     \return         whether transmission was successful
 */
   bool send(const std::string& msg = CRLF);
- //   { _connection.send(msg); }
-//  inline void send(const std::string& msg = CRLF)
-//    { _connection.send(msg); }
 
 /*! \brief            Send a spot to the cluster
     \param  dx        callsign of DX station
@@ -153,7 +150,6 @@ public:
     \param  db              the location database for this contest
     \param  post_source     the origin of the post
 */
-//  dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   dx_post(const std::string_view received_info, location_database& db, const enum POSTING_SOURCE post_source);
 
   READ(band);                   ///< band of post

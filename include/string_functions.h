@@ -212,7 +212,7 @@ inline void auto_from_string(const std::string& s, T& var)
     \param  var     variable into which the converted value is to be placed
 */
 template <class T>
-inline void auto_from_string(std::string_view s, T& var)
+inline void auto_from_string(const std::string_view s, T& var)
   { var = from_string<T>(s); }
 
 /*! \brief          Generic conversion to string
@@ -244,6 +244,7 @@ inline std::string to_string(const char val)
 
 // catchall
 template <class T>
+  requires (!is_string<T> and !std::is_integral_v<T>)
 std::string to_string(const T val)
 { std::ostringstream stream;
                 
@@ -265,7 +266,7 @@ inline std::string to_string(T&& val)
     \param  sv  string_view to append
     \return     concatenation of <i>s</i> and <i>sv</i>
 */
-inline std::string operator+(const std::string& s, std::string_view sv)
+inline std::string operator+(const std::string& s, const std::string_view sv)
   { return s + std::string { sv }; }
 
 /*! \brief              Safe version of the substr() member function
@@ -1167,6 +1168,7 @@ inline bool is_maritime_mobile(const std::string& callsign)
     Uses comma as separator if <i>sep</i> is empty.
 */
 template <typename T>
+  requires std::is_integral_v<T>
 std::string separated_string(const T n, const char sep = ',')
 { std::string tmp { to_string(n) };
   std::string rv  { };
@@ -1189,6 +1191,7 @@ std::string separated_string(const T n, const char sep = ',')
     \return     <i>n</i> with the separator <i>,</i> separating each triplet
 */
 template <typename T>
+  requires std::is_integral_v<T>
 inline std::string comma_separated_string(const T n)
   { return separated_string(n); }
 
@@ -1197,6 +1200,7 @@ inline std::string comma_separated_string(const T n)
     \return     <i>n</i> with the separator <i>,</i> separating each triplet
 */
 template <typename T>
+  requires std::is_integral_v<T>
 inline std::string css(const T n)
   { return comma_separated_string(n); }
 
@@ -1295,11 +1299,38 @@ using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compar
 */
 std::string decimal_places(const std::string& str, const int n);
 
-/*! \brief          Return the longest line from a vector of lines
-    \param  lines   the lines to search
-    \return         the longest line in the vector <i>lines</i>
+/*! \brief        Return the longest string from a container of strings
+    \param  strs  the strings to search
+    \return       the longest string in the container <i>strs</i>
 */
-std::string longest_line(const std::vector<std::string>& lines);
+//std::string longest_line(const std::vector<std::string>& lines);
+template <typename T>
+ requires is_container_of_strings<T>
+//std::string longest_line(const T& lines)
+std::string longest(const T& strs)
+{ std::string rv;
+
+  for (const auto& str : strs)
+    if (str.length() > rv.length())
+      rv = str;
+
+  return rv;
+}
+
+#if 1
+template <typename T>
+ requires is_container_of_strings<T>
+//std::string longest_line(const T& lines)
+std::string longest(T&& strs)
+{ std::string rv;
+
+  for (auto&& str : strs)
+    if (str.length() > rv.length())
+      rv = str;
+
+  return rv;
+}
+#endif
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
@@ -1349,7 +1380,7 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
 template <typename STYPE>
-auto remove_trailing_comment(std::string_view str, const std::string_view comment_str = "//"sv) -> STYPE
+auto remove_trailing_comment(const std::string_view str, const std::string_view comment_str = "//"sv) -> STYPE
 { const size_t posn { str.find(comment_str) };
 
   return ( (posn == std::string_view::npos) ? STYPE { str } : remove_trailing_spaces <STYPE> (substring <std::string_view> (str, 0, posn)) );
@@ -1380,7 +1411,7 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
     \return             <i>str</i> truncated immediately prior to <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
 */
 template <typename STYPE>
-inline auto truncate_before_first(std::string_view str, const char c) -> STYPE
+inline auto truncate_before_first(const std::string_view str, const char c) -> STYPE
   { return (substring <STYPE> (str, 0, str.find(c))); }
 
 /*! \brief              Remove up to after the first occurrence of a particular character
@@ -1389,7 +1420,7 @@ inline auto truncate_before_first(std::string_view str, const char c) -> STYPE
     \return             <i>str</i> truncated immediately after <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
 */
 template <typename STYPE>
-inline auto after_first(std::string_view str, const char c) -> STYPE
+inline auto after_first(const std::string_view str, const char c) -> STYPE
   { return (substring <STYPE> (str, str.find(c) + 1)); }
 
 /*! \brief          Return position in a string at the end of a target string, if present
@@ -1400,7 +1431,7 @@ inline auto after_first(std::string_view str, const char c) -> STYPE
     Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
     is the conclusion of <i>str</i>
 */
-size_t find_and_go_to_end_of(std::string_view str, std::string_view target);
+size_t find_and_go_to_end_of(const std::string_view str, const std::string_view target);
 
 /*! \brief              Get the base portion of a call
     \param  callsign    original callsign
@@ -1445,7 +1476,8 @@ T regex_matches(C&& container, const std::string& s)
     \param  c       the target character
     \return         the number of times that <i>c</i> appears in <i>str</i>
 */
-inline size_t number_of_occurrences(const std::string& str, const char c)
+//inline size_t number_of_occurrences(const std::string& str, const char c)
+inline size_t number_of_occurrences(const std::string_view str, const char c)
   { return static_cast<size_t>(std::count(str.begin(), str.end(), c)); }
 
 /*! \brief          Are two calls busts of each other?
@@ -1455,7 +1487,6 @@ inline size_t number_of_occurrences(const std::string& str, const char c)
 
     Testing for busts is a symmetrical function.
 */
-//bool is_bust_call(const std::string& call1, const std::string& call2) noexcept;
 bool is_bust_call(const std::string_view call1, const std::string_view call2) noexcept;
 
 /*! \brief              Create a container of bust mappings from a container of calls
@@ -1487,13 +1518,14 @@ auto bust_map(const C& container) -> RV
 std::string to_printable_string(const std::string_view str);
 
 /// concatenate two string_views
-//std::string operator+(const std::string_view sv1, const std::string_view sv2);
 inline std::string operator+(const std::string_view sv1, const std::string_view sv2)
 { return std::string(sv1) + sv2; }
 
+// concatenate a string with a string_view
 inline std::string operator+(const std::string_view sv1, const std::string& s2)
 { return std::string(sv1) + s2; }
 
+/// a standard hash function for strings (the DJB function)
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
   { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                
 

@@ -1366,8 +1366,8 @@ VFO rig_interface::tx_vfo(void) const
     \param  hz  desired bandwidth, in Hz
 */
 void rig_interface::bandwidth_a(const unsigned int hz) const
-{ constexpr std::chrono::milliseconds RETRY_TIME { 100ms };      // period between retries for the brain-dead K3
-  constexpr int                       PRECISION  { 50 };
+{ constexpr std::chrono::milliseconds RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
+  constexpr int                       PRECISION  { 50 };          // hertz
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this

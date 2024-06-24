@@ -128,16 +128,10 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   
   string buf;
 
-//  extern string hhmmss(void);
-
-//  ost << "_timeout = " << _timeout << endl;
-
 // send the login information as soon as we receive anything from the server
   while (buf.empty())
   { try
     { buf = _connection.read(_timeout);
-
-//      ost << hhmmss() << ": buf read; size = " << buf.length() << ": ***" << buf << "***" << ((src == POSTING_SOURCE::CLUSTER) ? " CLUSTER" : " RBN") << endl;
 
       if (!buf.empty())
       { SAFELOCK(rbn_buffer);
@@ -218,7 +212,7 @@ bool dx_cluster::send(const std::string& msg)
 
 */
 bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
-{ const string msg { "DXT "s + dx + " "s + freq + " "s + comment + CRLF };
+{ const string msg { "DXT "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
 
   ost << "sending spot: " << msg;
 
@@ -230,8 +224,8 @@ bool dx_cluster::spot(const string& dx, const string& freq, const string& commen
     \return       whether the attemnpt to post was successful
 */
 bool dx_cluster::spot(const std::string& msg)
-{ //const string spot_msg { "DXT "s + msg + CRLF };    // test spot
-  const string spot_msg { "DX "s + msg + CRLF };
+{ //const string spot_msg { "DXT "s + msg + CRLF };     // DXT is a test spot
+  const string spot_msg { "DX "s + msg + CRLF };        // a non-test spot
 
   ost << "sending spot: " << spot_msg;
 
@@ -318,9 +312,8 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
     { try
-      { size_t char_posn { copy.find(' ') };
-
-        size_t space_posn;
+      { size_t char_posn  { copy.find(' ') };
+        size_t space_posn { };
 
         if (char_posn != string_view::npos)
         { _frequency_str = copy.substr(0, char_posn);
@@ -529,7 +522,7 @@ void monitored_posts::operator+=(const dx_post& post)
   SAFELOCK(monitored_posts);
 
   for (deque<monitored_posts_entry>::iterator it { _entries.begin() }; (!stop_search and (it != _entries.end())); ++it)
-  { monitored_posts_entry& old_mpe { *it };
+  { const monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
     { if ( mpe.expiration() > old_mpe.expiration() )

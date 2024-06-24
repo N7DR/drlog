@@ -184,7 +184,6 @@ void populate_win_call_history(const string& str);                              
 void populate_win_info(const string& str);                                              ///< Populate the information window
 void possible_mode_change(const frequency& f);                                          ///< possibly change mode in accordance with frequency
 void print_thread_names(void);                                                          ///< output the names of the currently active threads
-//bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                    ///< process backspace
@@ -225,7 +224,7 @@ bool toggle_recording_status(audio_recorder& audio);                            
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
 void update_bandmap_window(bandmap& bm);
-void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);         ///< Update some windows based on a change in my frequency
+void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);   ///< Update some windows based on a change in my frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
 void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
@@ -261,14 +260,11 @@ void process_LOG_input(window* wp, const keyboard_event& e);                ///<
 void process_QTC_input(window* wp, const keyboard_event& e);                ///< Process an event in QTC window
 
 // thread functions
-//void* auto_backup(void* vp);                                                ///< Copy a file to a backup directory
 void auto_backup(const string dir, const string log_filename, const string qtc_filename);   ///< Copy a file to a backup directory
-//void* auto_screenshot(void* vp);                                            ///< Write a screenshot to a file
-void auto_screenshot(const string filename);                                            ///< Write a screenshot to a file
+void auto_screenshot(const string filename);                                                ///< Write a screenshot to a file
 void* display_rig_status(void* vp);                                         ///< Thread function to display status of the rig
 void* display_date_and_time(void* vp);                                      ///< Thread function to display the date and time
 void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
-//void* get_indices(void* vp);                                                ///< Get SFI, A, K
 void get_indices(const string cmd);                                       ///< Get SFI, A, K
 void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
 void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
@@ -276,8 +272,7 @@ void* prune_bandmap(void* vp);                                              ///<
 void* p3_screenshot_thread(void* vp);                                       ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
 void* reset_connection(void* vp);                                           ///< Thread function to reset the RBN or cluster connection
 void* simulator_thread(void* vp);                                           ///< Thread function to simulate a contest from an extant log
-void* spawn_dx_cluster(void*);                                              ///< Thread function to spawn the cluster
-void spawn_dx_cluster_1(void);                                              ///< Thread function to spawn the cluster
+void spawn_dx_cluster(void);                                              ///< Thread function to spawn the cluster
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
 // values that are used by multiple threads
@@ -1504,6 +1499,11 @@ int main(int argc, char** argv)
 // PUTATIVE EXCHANGE window
       win_putative_exchange.init(context.window_info("PUTATIVE EXCHANGE"s), WINDOW_NO_CURSOR);
 
+//      if (!win_putative_exchange.valid())
+//      { ost << "PUTATIVE EXCHANGE window is not valid" << endl;
+//        ost << context.window_info("PUTATIVE EXCHANGE"s).to_string() << endl;
+//      }
+
 // QTC HINT window
       win_qtc_hint.init(context.window_info("QTC HINT"s), WINDOW_NO_CURSOR);
       win_qtc_hint_fg = win_qtc_hint.fg();
@@ -1683,7 +1683,6 @@ int main(int argc, char** argv)
       }
 
 // start to display the rig status (in the RIG window); also get rig frequency for bandmap
-//      rig_status_info rig_status_thread_parameters(1000 /* poll time in milliseconds*/, &rig);         // poll rig once per second
       rig_status_info rig_status_thread_parameters(1000ms /* poll time */, &rig);         // poll rig once per second
 
       try
@@ -1694,6 +1693,10 @@ int main(int argc, char** argv)
       { ost << e.reason() << endl;
         exit(-1);
       }
+
+// TODO
+//      jthread(display_rig_status, 1000ms /* poll time */, &rig).detach();
+//    void display_rig_status(milliseconds poll_time, rig_interface* rigp);
 
 // CLUSTER MULT window
       win_cluster_mult.init(context.window_info("CLUSTER MULT"s), WINDOW_NO_CURSOR);
@@ -1707,7 +1710,7 @@ int main(int argc, char** argv)
       win_rbn_line.init(context.window_info("RBN LINE"s), WINDOW_NO_CURSOR);
 
 // BANDMAP window
-     win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
+      win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
 
 // set recent and fade colours for each bandmap
       { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
@@ -1759,13 +1762,13 @@ int main(int argc, char** argv)
       win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
 
 // if any windows overlap, alert the user and exit
-  if (windows_overlap)
-  { alert("ERROR: WINDOWS OVERLAP; consult log or stderr file for details.");
+     if (windows_overlap)
+     { alert("ERROR: WINDOWS OVERLAP; consult log or stderr file for details.");
 
-    sleep_for(5s);
+       sleep_for(5s);
 
-    exit_drlog();
-  }
+       exit_drlog();
+     }
 
 // read a Cabrillo log
   //  logbook cablog;
@@ -1975,7 +1978,7 @@ int main(int argc, char** argv)
 
 // now we can start the cluster/RBN threads, since we know what we've worked if this was a rebuild
       if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-        jthread(spawn_dx_cluster_1).detach();
+        jthread(spawn_dx_cluster).detach();
 
 // ditto for the RBN
       if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
@@ -2288,6 +2291,7 @@ void* display_date_and_time(void* vp)
     Also displays bandmap if the frequency changes. The bandmap is actually updated on screen before any change in status
     NB It doesn't matter *how* the rig's frequency came to change; it could be manual
 */
+//void display_rig_status(milliseconds poll_time, rig_interface* rigp); TODO
 void* display_rig_status(void* vp)
 { const string THREAD_NAME { "display rig status"s };
 
@@ -2308,7 +2312,7 @@ void* display_rig_status(void* vp)
   be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
   be.expiration_time(be.time() + MILLION);    // a million seconds in the future
 
-  while (true)
+  while (true)                                // forever
   { try
     { try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
@@ -3943,7 +3947,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field)
           { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field
-            { if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) }; !guess.empty())
+            { //ost << "HERE: exf.name() = " << exf.name() << endl;
+              //ost << "guess: " << exchange_db.guess_value(contents, exf.name()) << endl;
+
+              if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) }; !guess.empty())
               { if ((exf.name() == "RDA"sv) and (guess.length() == 2))                   // RDA guess might just have first two characters
                   exchange_str += guess;
                 else
@@ -6128,7 +6135,13 @@ string sunrise_or_sunset(const string& callsign, const SRSS srss)
       PUTATIVE EXCHANGE
  */
 void populate_win_info(const string& callsign)
-{ if (win_call_history.valid())
+{ //ost << "Inside populate_win_info() for: " << callsign << endl;
+  //if (win_putative_exchange.valid())
+  //  ost << "PUTATIVE EXCHANGE window is valid" << endl;
+  //else
+  //  ost << "PUTATIVE EXCHANGE window is NOT valid" << endl;
+
+  if (win_call_history.valid())
     populate_win_call_history(callsign);
 
   if (send_qtcs)
@@ -6232,7 +6245,9 @@ void populate_win_info(const string& callsign)
 
 // PUTATIVE EXCHANGE window
       if (win_putative_exchange.valid())
-      { if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
+      { //ost << "expected exchange for " << callsign << " is: " << expected_received_exchange(callsign) << endl;
+
+        if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
         { const string msg { centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
         
           win_putative_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
@@ -6867,7 +6882,7 @@ void update_local_time(void)
   { struct tm       structured_local_time;
     array<char, 26> buf_local_time;
 
-    const time_t now { NOW() };                            // get the time from the kernel
+    const time_t now { NOW() };                               // get the time from the kernel
 
     localtime_r(&now, &structured_local_time);                     // convert to local time
     asctime_r(&structured_local_time, buf_local_time.data());      // and now to ASCII
@@ -6967,13 +6982,8 @@ void exit_drlog(void)
     the operator would agree. In the absence of an obvious candidate for "best match", the
     empty string is returned.
 */
-//string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& matches, const string& do_not_return)
 string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& matches, const string_view do_not_return)
 { string new_callsign { };
-
-//  if ((matches.size() == 1) and (colours.fg(matches[0].second) != REJECT_COLOUR))
-//    if (do_not_return != matches[0].first)
-//      new_callsign = matches[0].first;
 
   if (matches.size() == 1)
   { const auto& only_match { matches[0] };
@@ -7150,8 +7160,10 @@ void update_individual_messages_window(const string& callsign)
   if (!callsign.empty())
   { SAFELOCK(individual_messages);
 
-    if (const auto posn { individual_messages.find(callsign) }; posn != individual_messages.end())
-    { win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
+//    if (const auto posn { individual_messages.find(callsign) }; posn != individual_messages.end())
+    if ( const string msg { MUM_VALUE(individual_messages, callsign) }; !msg.empty() )
+    { //win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= posn->second;
+      win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
       message_written = true;
     }
   }
@@ -7172,11 +7184,15 @@ void update_batch_messages_window(const string& callsign)
   if (!callsign.empty())
   { SAFELOCK(batch_messages);       // this is really overkill, as it should be immutable once we're up and running
 
-    if (const auto posn { batch_messages.find(callsign) }; posn != batch_messages.end())
+//    if (const auto posn { batch_messages.find(callsign) }; posn != batch_messages.end())
+    if ( const string msg { MUM_VALUE(batch_messages, callsign) }; !msg.empty() )
     { const string spaces { create_string(' ', win_batch_messages.width()) };
 
+//      win_batch_messages < WINDOW_ATTRIBUTES::WINDOW_REVERSE < WINDOW_ATTRIBUTES::WINDOW_CLEAR < spaces < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+//                         < posn->second <= WINDOW_ATTRIBUTES::WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
       win_batch_messages < WINDOW_ATTRIBUTES::WINDOW_REVERSE < WINDOW_ATTRIBUTES::WINDOW_CLEAR < spaces < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                         < posn->second <= WINDOW_ATTRIBUTES::WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
+                         < msg <= WINDOW_ATTRIBUTES::WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
+
       message_written = true;
     }
   }
@@ -7208,7 +7224,7 @@ string callsign_mult_value(const string& callsign_mult_name, const string& calls
   if (callsign_mult_name == "WPXPX"sv)
     return wpx_prefix(callsign);
 
-  return string();
+  return string { };
 }
 
 /*! \brief                      Update several call-related windows
@@ -7274,7 +7290,8 @@ void* p3_screenshot_thread(void* vp)
 
 //  write_file(image, "complete-response");
 
-  const string checksum_str = image.substr(image.length() - 2, 2);
+//  const string checksum_str { image.substr(image.length() - 2, 2) };
+  const string checksum_str { substring <string> (image, image.length() - 2, 2) };
 
 //  ost << "image length with checksum = " << image.length() << endl;
 //  ost << "image length without checksum = " << image.length() - 2 << endl;
@@ -7346,7 +7363,8 @@ void* p3_screenshot_thread(void* vp)
 
   while (!file_written)
   { if (const string filename { base_filename + "-"s + to_string(index) }; !file_exists(filename))
-    { write_file(image.substr(0, image.length() - 2), filename);
+    { //write_file(image.substr(0, image.length() - 2), filename);
+      write_file(substring <string> (image, 0, image.length() - 2), filename);
       file_written = true;
 
       alert("P3 image file "s + filename + " written"s);
@@ -7358,6 +7376,7 @@ void* p3_screenshot_thread(void* vp)
   pthread_exit(nullptr);
 }
 
+#if 0
 /// Thread function to spawn the cluster
 void* spawn_dx_cluster(void* vp)
 { win_cluster_line <= "UNCONNECTED"s;
@@ -7409,9 +7428,10 @@ void* spawn_dx_cluster(void* vp)
 
   pthread_exit(nullptr);
 }
+#endif
 
 /// Thread function to spawn the cluster
-void spawn_dx_cluster_1(void)
+void spawn_dx_cluster(void)
 { win_cluster_line <= "UNCONNECTED"s;
 
   bool cluster_started   { false };
@@ -7465,7 +7485,6 @@ void spawn_dx_cluster_1(void)
 
 //  pthread_exit(nullptr);
 }
-
 
 /// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
@@ -9293,19 +9312,21 @@ void adif3_build_old_log(void)
   { //const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());       // this is not necessarily in chronological order
     const adif3_file old_adif3_log(context_path,  context.old_adif_log_name());       // this is not necessarily in chronological order
 
-    alert("read "s + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
+//    alert("read "s + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
+    alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
     if (!limit_old_qsos)
-      for (const adif3_record& rec : old_adif3_log)
-        add_record_to_olog(rec);
+//      for (const adif3_record& rec : old_adif3_log)
+//        add_record_to_olog(rec);
+      FOR_ALL(old_adif3_log, [&add_record_to_olog] (const adif3_record& rec) { add_record_to_olog(rec); });
     else                                  // limit old QSOs
     { set<string> processed_calls;
 
       for (const adif3_record& rec : old_adif3_log)
-      { if (const string& callsign { rec.callsign() }; !processed_calls.contains(callsign))        // if not yet processed this call
-        { vector<adif3_record> matching_qsos { old_adif3_log.matching_qsos(callsign) }; // don't make const because it's going to be sorted
+      { if (const string& callsign { rec.callsign() }; !processed_calls.contains(callsign))   // if not yet processed this call
+        { vector<adif3_record> matching_qsos { old_adif3_log.matching_qsos(callsign) };       // don't make const because it's going to be sorted
 
-          if (!matching_qsos.empty())       // should always be true
+          if (!matching_qsos.empty())           // should always be true
           { SORT(matching_qsos, compare_adif3_records);    // in chronological order
 
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
@@ -9331,11 +9352,11 @@ void adif3_build_old_log(void)
 
               do
               { idate_last_marked_qso = last_marked_qso.idate();
-                forward_idate_limit = ( idate_last_marked_qso + (old_qso_limit * 10'000) );                         // forward the required number of years
-                rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso); // rec_index is pair: record and index of the record
+                forward_idate_limit = ( idate_last_marked_qso + (old_qso_limit * 10'000) );                       // forward the required number of years
+                rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso);   // rec_index is pair: record and index of the record
      
                 if (rec_index.second != -1)
-                  tie(last_marked_qso, index_last_marked_qso) = rec_index;  // next marked QSO, index of next marked QSO
+                  tie(last_marked_qso, index_last_marked_qso) = rec_index;          // next marked QSO, index of next marked QSO
               } while ( (forward_idate_limit < itoday) and (rec_index.second != -1) );
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
@@ -9565,9 +9586,7 @@ set<string> calls_from_do_not_show_file(const BAND b)
   set<string> rv;
 
   try
-  { //FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
-   //FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
-    FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+  { FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
   }
 
   catch (...)     // not an error if a do-not-show file does not exist
@@ -9647,11 +9666,7 @@ void update_bandmap_window(bandmap& bm)
 */
 bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f)
 { try
-  { //const vector<pair<frequency, frequency>>& vec { marked_frequency_ranges.at(m) };
-
-//    return ANY_OF(vec, [f] (const auto& pff) { return ( (f >= pff.first) and (f <= pff.second) ); } );
-
-    for ( const auto& [ low_f, high_f ] : marked_frequency_ranges.at(m) )
+  { for ( const auto& [ low_f, high_f ] : marked_frequency_ranges.at(m) )
       if ( (f >= low_f) and (f <= high_f) )
         return true;
 
@@ -9682,7 +9697,6 @@ string expected_received_exchange(const string& callsign)
       { string iaru_guess { exchange_db.guess_value(callsign, "SOCIETY"s) };      // start with guessing it's a society
 
         if (iaru_guess.empty())
-//          iaru_guess = to_upper(exchange_db.guess_value(callsign, "ITUZONE"s));   // try ITU zone if no society
           iaru_guess = exchange_db.guess_value(callsign, "ITUZONE"s);   // try ITU zone if no society
 
         return iaru_guess;
@@ -9692,7 +9706,7 @@ string expected_received_exchange(const string& callsign)
       { static const set<string> state_multiplier_countries { "K"s, "VE"s, "XE"s };
 
         const string canonical_prefix { location_db.canonical_prefix(callsign) };
-        const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(callsign, "10MSTATE"s) : string() };
+        const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(callsign, "10MSTATE"s) : string { } };
 
         return state_guess;
       }

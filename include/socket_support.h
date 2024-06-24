@@ -342,9 +342,7 @@ public:
     \param  msg     message to send
   
     Does not look for a response. Throws an exception if there is any problem.
-    Cannot pass a string_view, as a C string has to be formed.
 */
-//  void send(const std::string& msg);
   void send(const std::string_view msg);
 
 /*! \brief      Simple receive

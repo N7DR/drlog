@@ -191,9 +191,6 @@ tcp_socket::~tcp_socket(void)
 { try
   { if ( (!_preexisting_socket) or (_preexisting_socket and _force_closure) )
       _close_the_socket();        // we have to close the socket if we are finished with it
-
- //   if (_preexisting_socket and _force_closure)
- //     _close_the_socket();
   }
 
   catch (...)
@@ -215,7 +212,6 @@ void tcp_socket::new_socket(void)
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     reuse();    // enable re-use
-//    linger();   // linger turned on, immediate time-out
     linger(DEFAULT_TCP_LINGER);
   }
   
@@ -341,7 +337,6 @@ void tcp_socket::connected(const sockaddr_storage& adr)
     \param  msg     message to send
   
     Does not look for a response. Throws an exception if there is any problem.
-    Cannot pass a string_view, as a C string has to be formed.
 */
 void tcp_socket::send(const std::string_view msg)
 { if (!_destination_is_set)
@@ -354,19 +349,6 @@ void tcp_socket::send(const std::string_view msg)
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);
 }
-#if 0
-void tcp_socket::send(const std::string& msg)
-{ if (!_destination_is_set)
-    throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
-
-  SAFELOCK(_tcp_socket);
-
-  const ssize_t status { ::send(_sock, msg.c_str(), msg.length(), 0) };
-  
-  if (status == -1)
-    throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   
-}
-#endif
 
 /*! \brief      Simple receive
     \return     received string
@@ -434,7 +416,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
     }
 
-    default:                      // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
+    default:                            // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
     { constexpr int BUFSIZE { 4096 };   // a reasonable size for a buffer
 
       char cp[BUFSIZE];
@@ -491,7 +473,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
 }
 
 /*! \brief              Set the idle time before a keep-alive is sent
-    \param  seconds     time to wait idly before a keep-alive is sent
+    \param  seconds     time to wait idly before a keep-alive is sent, in seconds
 */
 void tcp_socket::keep_alive_idle_time(const unsigned int seconds)
 { const int optval { static_cast<int>(seconds) };
@@ -505,34 +487,34 @@ void tcp_socket::keep_alive_idle_time(const unsigned int seconds)
 /*! \brief          Get the idle time before a keep-alive is sent
     \param  return  time to wait idly, in seconds, before a keep-alive is sent
 */
-  unsigned int tcp_socket::keep_alive_idle_time(void) const
-  { int rv;
+unsigned int tcp_socket::keep_alive_idle_time(void) const
+{ int rv;
 
-    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+  socklen_t rv_len { sizeof(rv) };    // can't be const(!)
 
-    SAFELOCK(_tcp_socket);
+  SAFELOCK(_tcp_socket);
 
-    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPIDLE, &rv, &rv_len) }; status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting idle time"s);
+  if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPIDLE, &rv, &rv_len) }; status)
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting idle time"s);
 
-    return static_cast<unsigned int>(rv);
-  }
+  return static_cast<unsigned int>(rv);
+}
 
 /*! \brief    Get the time between keep-alives
     \return   time to wait idly between keep-alives, in seconds
 */
-  unsigned int tcp_socket::keep_alive_retry_time(void) const
-  { int rv;
+unsigned int tcp_socket::keep_alive_retry_time(void) const
+{ int rv;
 
-    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+  socklen_t rv_len { sizeof(rv) };    // can't be const(!)
 
-    SAFELOCK(_tcp_socket);
+  SAFELOCK(_tcp_socket);
 
-    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPINTVL, &rv, &rv_len) }; status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting retry time"s);
+  if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPINTVL, &rv, &rv_len) }; status)
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting retry time"s);
 
-    return static_cast<unsigned int>(rv);
-  }
+  return static_cast<unsigned int>(rv);
+}
 
 /*! \brief              Set the time between keep-alives
     \param  seconds     time to wait idly before a keep-alive is sent
@@ -752,7 +734,7 @@ icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
     \param  dotted_decimal_address          local IPv4 address
 */
 icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn, const string& dotted_decimal_address)
-{ *this = std::move(icmp_socket(destination_ip_address_or_fqdn));
+{ *this = icmp_socket(destination_ip_address_or_fqdn);
 
   rename_mutex("ICMP: "s + destination_ip_address_or_fqdn + ":"s);
 
@@ -913,6 +895,7 @@ void fd_set_value(fd_set& fds, int fd)
 */
 void flush_read_socket(SOCKET& sock)
 { char socket_buffer[1024];                           // read 1024 octets at a time
+
   struct timeval timeout { 0, 0 };
 
   fd_set ps_set;
@@ -988,9 +971,7 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
     Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */
 string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
-{ //ost << "Inside name_to_dotted_decimal for fqdn: " << fqdn << endl;
-
-  if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
+{ if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name"s);
 
   constexpr int BUF_LEN { 2048 };
@@ -1014,8 +995,6 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
     if (!success and n_try != n_tries)
       sleep_for(1s);
   }
-
-  //ost << "success = " << success << endl;
 
   if (success)
   { char** h_addr_list { result->h_addr_list };

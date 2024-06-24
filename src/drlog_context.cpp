@@ -1319,7 +1319,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
               lines = to_lines <std::string> (contents_1);
 
-              winfo.w(longest_line(lines).length());
+//              winfo.w(longest_line(lines).length());
+              winfo.w(longest(lines).length());
               winfo.h(lines.size());
 
               if (window_info.size() >= 4)
@@ -1338,7 +1339,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               const string&        contents { swin_contents };
               const vector<string> lines    { to_lines <std::string> (contents) };
 
-              winfo.w(longest_line(lines).length());
+//              winfo.w(longest_line(lines).length());
+              winfo.w(longest(lines).length());
               winfo.h(lines.size());
 
               if (window_info.size() >= 4)
@@ -1353,7 +1355,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents;
             }
 
-//            _static_windows[name] = { final_contents, (_static_windows[name].second + winfo) };
             _static_windows[name] = { final_contents, (vec_winfo + winfo) };
           }
         }
@@ -1378,31 +1379,24 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           const string         str     { remove_leading_spaces <std::string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
-//          _messages += { cit->second, str };
           _messages += { key_symbol, str };
 
-//          ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
           ost << "message associated with " << target << ", which is keysym " << hex << key_symbol << dec << ", is: " << str << endl;
 
-//          const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) };
-
-          if (const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
+//          if (const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
+          if (const auto& cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
           { const auto& [ ori_keyname_str, equiv_keyname_str ] { *cit2 };
-//            ost << "found equivalent key name: " << cit2->second << endl;
+
             ost << "found equivalent key name: " << equiv_keyname_str << endl;
 
-//            const string alternative { cit2->second };
             const string& alternative { equiv_keyname_str };
 
             if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
             { const auto& [ alt_keyname_str, alt_key_symbol ] { *cit };
-              //const int keysym { cit->second };
 
-//              if (!_messages.contains(keysym))  // only if there is no message for this key
               if (!_messages.contains(alt_key_symbol))  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
-//                _messages += { keysym, str };
                 _messages += { alt_key_symbol, str };
               }
             }
@@ -1566,7 +1560,6 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
 
   const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
-//  FOR_ALL(*ptr_vec_pss, [&rv] (const auto& pss) { rv += pss.first; } );
   for (const auto& [ name, value ] : *ptr_vec_pss)
     rv += name;
 

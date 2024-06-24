@@ -246,6 +246,9 @@ public:
 /// is the information different from the default?
   inline bool defined(void) const
     { return (_w != 0); }
+
+/// convert to readable string
+  std::string to_string(void) const;
 };
 
 // -----------  window  ----------------
@@ -524,7 +527,7 @@ public:
     \param  s   string to write
     \return     the window
 */
-  inline window& operator<(std::string_view sv)
+  inline window& operator<(const std::string_view sv)
     { return (*this < std::string { sv }); }
 
 /*! \brief      Write a C-style string [!] to the window
@@ -612,7 +615,6 @@ template <class T>
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
-//  std::string read(const int x = 0, const int y = 0);
   std::string read(const WIN_INT_TYPE x = 0, const WIN_INT_TYPE y = 0);
 
 /*! \brief              Read a line
@@ -621,7 +623,6 @@ template <class T>
 
     Limits <i>line_nr</i> to a valid value for the window before reading the line.
 */
-//  inline std::string getline(const int line_nr = 0)
   inline std::string getline(const WIN_INT_TYPE line_nr = 0)
     { return read(0, line_nr); }
 
@@ -637,7 +638,6 @@ template <class T>
     Removes any blank spaces before testing.
     Limits <i>line_nr</i> to a valid value for the window before testing the line.
 */
-//  inline bool line_empty(const int line_nr = 0)
   inline bool line_empty(const WIN_INT_TYPE line_nr = 0)
     { return (remove_peripheral_spaces <std::string_view> (getline(line_nr))).empty(); }
 

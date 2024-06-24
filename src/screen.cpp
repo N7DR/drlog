@@ -112,6 +112,29 @@ screen::screen(void)
   curs_set(1);             // a medium cursor
 }
 
+// -----------  window_information ----------------
+
+/*! \class  window_information
+    \brief  encapsulate position and colour information of a window
+*/
+
+/// convert to readable string
+string window_information::to_string(void) const
+{ string rv { };
+
+  rv = "  x: "s + ::to_string(_x) + EOL
+     + "  y: "s + ::to_string(_y) + EOL
+     + "  w: "s + ::to_string(_w) + EOL
+     + "  h: "s + ::to_string(_h) + EOL;
+
+  rv += (" fg: "s + _fg_colour + EOL);
+  rv += (" bg: "s + _bg_colour + EOL);
+
+  rv += "Colours_set: "s + (_colours_set ? string {"true"} : string {"false"} );   // C++ idiotically defaults to char[], so these are of different types
+
+  return rv;
+}
+
 // -----------  window  ----------------
 
 /*! \class  window
@@ -463,7 +486,9 @@ window& window::default_colours(const COLOUR_TYPE foreground_colour, const COLOU
     \return     the window
 */
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
-{ if (!_wp or (wa == WINDOW_ATTRIBUTES::WINDOW_NOP) )
+{ //using WINDOW_ATTRIBUTES;    not yet supported
+
+  if (!_wp or (wa == WINDOW_ATTRIBUTES::WINDOW_NOP) )
     return *this;
     
   switch (wa)
@@ -573,6 +598,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
     case WINDOW_ATTRIBUTES::WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
       break;
   }
+
   return *this;
 }
 
@@ -675,7 +701,6 @@ window& operator<(window& win, const centre& c)
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
     Cannot be const, because because mvwinnstr() silently moves the cursor and we then move it back
 */
-//string window::read(const int x, const int y)
 string window::read(const WIN_INT_TYPE x, const WIN_INT_TYPE y)
 { if (!_wp)
     return string { };
@@ -684,7 +709,7 @@ string window::read(const WIN_INT_TYPE x, const WIN_INT_TYPE y)
 
   char tmp[BUF_SIZE];
 
-  tmp[0] = '\0';
+  tmp[0] = '\0';    // ncurses requires a NULL end-of-string marker
   
   SAFELOCK(screen);
   
@@ -718,7 +743,6 @@ vector<string> window::snapshot(void)
 
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
-//window& window::clear_line(const int line_nr)
 window& window::clear_line(const WIN_INT_TYPE line_nr)
 { if (_wp)
   { SAFELOCK(screen);
@@ -779,17 +803,14 @@ window& window::delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_n
   move_cursor(0, line_nr);
 
 // ensure we are not in insert mode
-  { //SAFELOCK(screen);
+  const bool insert_enabled { _insert };
 
-    const bool insert_enabled { _insert };
+  _insert = false;
+  (*this) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < new_line;
+  _insert = insert_enabled;             // restore old insert mode
 
-    _insert = false;
-    (*this) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < new_line;
-    _insert = insert_enabled;         // restore old insert mode
-  }
-
-  move_cursor(c);                   // restore the logical cursor position
-  move_cursor_relative(-1, 0);      // move cursor to the left
+  move_cursor(c);                       // restore the logical cursor position
+  move_cursor_relative(-1, 0);          // move cursor to the left
 
   return *this;
 }
@@ -909,7 +930,8 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
 { vector<pair<string, string>> rv;
 
   for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
-  { const window_information& wi1 { it -> second };
+  { //const window_information& wi1 { it -> second };
+    const auto& [ name1, wi1 ] { *it };
 
     const int x1 { wi1.x() };
     const int y1 { wi1.y() };
@@ -917,7 +939,8 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
     const int h1 { wi1.h() };
 
     for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
-    { const window_information& wi2 { it2 -> second };
+    { //const window_information& wi2 { it2 -> second };
+      const auto& [ name2, wi2 ] { *it2 };
 
       const int x2 { wi2.x() };
       const int y2 { wi2.y() };
@@ -925,7 +948,8 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
       const int h2 { wi2.h() };
 
       if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
-        rv += { it -> first, it2 -> first };
+//        rv += { it -> first, it2 -> first };
+        rv += { name1, name2 };
     }
   }
 
@@ -945,18 +969,20 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
 PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours += fgbg;
 
+  const auto [fg, bg] { fgbg };
+
   if (fgbg.first >= COLORS)
-  { ost << "Attempt to set foreground to colour " << fgbg.first << " with only " << COLORS << " colours available" << endl;
+  { ost << "Attempt to set foreground to colour " << fg << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
 
   if (fgbg.second >= COLORS)
-  { ost << "Attempt to set background to colour " << fgbg.second << " with only " << COLORS << " colours available" << endl;
+  { ost << "Attempt to set background to colour " << bg << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
 
-  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
-  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fg, bg) }; status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fg << ", " << bg << endl;
     throw exception();
   }
 
@@ -1042,10 +1068,8 @@ COLOUR_TYPE string_to_colour(const string_view str)
     \param  h2    height of rectangle 2
     \return       whether rectangle 1 and rectangle 2 overlap
 */
-//bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
 bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2)
-{ //auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
-  auto in_range = [] (const WIN_INT_TYPE v, const WIN_INT_TYPE vmin, const WIN_INT_TYPE vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
+{ auto in_range = [] (const WIN_INT_TYPE v, const WIN_INT_TYPE vmin, const WIN_INT_TYPE vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
 
   const WIN_INT_TYPE l1 { x1 };
   const WIN_INT_TYPE r1 { static_cast<WIN_INT_TYPE>(x1 + w1 - 1) };

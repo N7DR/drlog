@@ -292,8 +292,16 @@ inline frequency operator""_kHz(const unsigned long long int f)
   { return frequency(f); }                                      // automatically converts from kHz to Hz
 
 /// _MHz (double)
+//template <typename T>
+//inline frequency operator""_MHz(const typename T f)
+//  { return frequency(f); }                                      // automatically converts from MHz to Hz
 inline frequency operator""_MHz(const long double f)
   { return frequency(f); }                                      // automatically converts from MHz to Hz
+
+/// _MHz (int)
+inline frequency operator""_MHz(const unsigned long long int  f)
+  { return frequency(f); }                                      // automatically converts from MHz to Hz
+
 
 /// ostream << frequency
 std::ostream& operator<<(std::ostream& ost, const frequency& f);
@@ -304,7 +312,6 @@ std::ostream& operator<<(std::ostream& ost, const frequency& f);
 
      Frequency may be in Hz, kHz or MHz.
 */
-//inline BAND to_BAND(const std::string& str)
 inline BAND to_BAND(const std::string_view str)
   { return to_BAND(frequency(str).hz()); }
 

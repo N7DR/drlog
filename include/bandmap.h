@@ -966,7 +966,6 @@ public:
     }
 
 /// get the number of columns across a window
-//  inline unsigned int n_columns(const window& win) const
   inline uint16_t n_columns(const window& win) const
     { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
@@ -1148,7 +1147,6 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
   bool process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
@@ -1176,8 +1174,6 @@ template<typename C>
     \param  new_name    the new name of the mutex
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
-
-//  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip);
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
 
