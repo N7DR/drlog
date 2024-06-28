@@ -221,8 +221,23 @@ trmaster_line::trmaster_line(string_view line)
 string trmaster_line::to_string(void) const
 { string rv { call() };
 
-  if (!section().empty())
-    rv += (" =A"s + section());
+  using VOID_PARAM = const string& (trmaster_line::*)(void) const&;     // the signature for the getter functions
+
+  auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
+                                                                           rv += ( " ="s + c + value );
+                                                                       };
+
+  insert_if_not_empty(&trmaster_line::section,   'A');
+//  insert_if_not_empty(&trmaster_line::cq_zone,   'C');
+//  insert_if_not_empty(&trmaster_line::foc,   'F');
+  insert_if_not_empty(&trmaster_line::grid,   'G');
+//  insert_if_not_empty(&trmaster_line::hit_count,   'H');
+  insert_if_not_empty(&trmaster_line::itu_zone,   'I');
+  insert_if_not_empty(&trmaster_line::name,   'N');
+  insert_if_not_empty(&trmaster_line::qth,   'Q');
+
+//  if (!section().empty())
+//    rv += (" =A"s + section());
 
   if (cq_zone())
     rv += (" =C"s + ::to_string(cq_zone()));
@@ -230,23 +245,23 @@ string trmaster_line::to_string(void) const
   if (foc())
     rv += (" =F"s + ::to_string(foc()));
 
-  if (!grid().empty())
-    rv += (" =G"s + grid());
+//  if (!grid().empty())
+//    rv += (" =G"s + grid());
 
   if (hit_count())
     rv += (" =H"s + ::to_string(hit_count()));
 
-  if (!itu_zone().empty())
-    rv += (" =I"s + itu_zone());
+//  if (!itu_zone().empty())
+//    rv += (" =I"s + itu_zone());
 
   if (check())
     rv += (" =K"s + ::to_string(check()));
 
-  if (!name().empty())
-    rv += (" =N"s + name());
+//  if (!name().empty())
+//    rv += (" =N"s + name());
 
-  if (!qth().empty())
-    rv += (" =Q"s + qth());
+//  if (!qth().empty())
+//    rv += (" =Q"s + qth());
 
   if (ten_ten())
     rv += (" =T"s +  ::to_string(ten_ten()));
@@ -695,36 +710,6 @@ string drmaster_line::to_string(void) const
   insert_if_not_empty(&drmaster_line::qth,       'Q');
   insert_if_not_empty(&drmaster_line::ten_ten,   'T');
 
-//  if (!section().empty())
-//    rv += " =A"s + section();
-
-//  if (!cq_zone().empty())
-//    rv += " =C"s + cq_zone();
-
-//  if (!foc().empty())
-//    rv += " =F"s + foc();
-
-//  if (!grid().empty())
-//    rv += " =G"s + grid();
-
-//  if (!hit_count().empty())
-//    rv += " =H"s + hit_count();
-
-//  if (!itu_zone().empty())
-//    rv += " =I"s + itu_zone();
-
-//  if (!check().empty())
-//    rv += " =K"s + check();
-
-//  if (!name().empty())
-//    rv += " =N"s + name();
-
-//  if (!qth().empty())
-//    rv += " =Q"s + qth();
-
-//  if (!ten_ten().empty())
-//    rv += " =T"s + ten_ten();
-
 // U, V, W, X
   char user_letter { 'U' };
 
@@ -751,45 +736,6 @@ string drmaster_line::to_string(void) const
   insert_if_not_empty(&drmaster_line::state_160,  's');
   insert_if_not_empty(&drmaster_line::state_10,   't');
 
-//  if (!age_aa_ssb().empty())
-//    rv += " =m"s + age_aa_ssb();
-
-//  if (!age_aa_cw().empty())
-//    rv += " =n"s + age_aa_cw();
-
-//  if (!cw_power().empty())
-//    rv += " =y"s + cw_power();
-
-//  if (!date().empty())
-//    rv += " =z"s + date();
-
-//  if (!iota().empty())
-//    rv += " =w"s + iota();
-
-//  if (!precedence().empty())
-//    rv += " =u"s + precedence();
-
-//  if (!qth2().empty())
-//    rv += " =o"s + qth2();
-
-//  if (!skcc().empty())
-//    rv += " =q"s + skcc();
-
-//  if (!society().empty())
-//    rv += " =v"s + society();
-
-//  if (!spc().empty())
-//    rv += " =r"s + spc();
-
-//  if (!ssb_power().empty())
-//    rv += " =x"s + ssb_power();
-
-//  if (!state_160().empty())
-//    rv += " =s"s + state_160();
-
-//  if (!state_10().empty())
-//    rv += " =t"s + state_10();
-
   if (xscp() != 0)
     rv += " =p"s + ::to_string(xscp());
 
@@ -812,19 +758,20 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
 #define INSERT_IF_EMPTY(F) insert_if_empty( &drmaster_line::F, &drmaster_line::F )
 
-//  insert_if_empty( &drmaster_line::section, &drmaster_line::section );      // would need only one parameter if we used a macro; but this is probably simpler to understand
-//  insert_if_empty( &drmaster_line::age_aa_cw, &drmaster_line::age_aa_cw );
+// trlog fields
 
-  INSERT_IF_EMPTY(section);
+  INSERT_IF_EMPTY(check);
   INSERT_IF_EMPTY(cq_zone);
   INSERT_IF_EMPTY(foc);
   INSERT_IF_EMPTY(grid);
   INSERT_IF_EMPTY(hit_count);
   INSERT_IF_EMPTY(itu_zone);
-  INSERT_IF_EMPTY(check);
   INSERT_IF_EMPTY(name);
   INSERT_IF_EMPTY(qth);
+  INSERT_IF_EMPTY(section);
   INSERT_IF_EMPTY(ten_ten);
+
+// additional drlog fields
   INSERT_IF_EMPTY(age_aa_cw);
   INSERT_IF_EMPTY(age_aa_ssb);
   INSERT_IF_EMPTY(cw_power);
@@ -835,82 +782,19 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
   INSERT_IF_EMPTY(society);
   INSERT_IF_EMPTY(spc);
   INSERT_IF_EMPTY(ssb_power);
+  INSERT_IF_EMPTY(society);
+  INSERT_IF_EMPTY(state_160);
+  INSERT_IF_EMPTY(state_10);
 
 #undef INSERT_IF_EMPTY
-
-//  if (rv.section().empty())
-//    rv.section(section());
-
-//  if (rv.cq_zone().empty())
-//    rv.cq_zone(cq_zone());
-
-//  if (rv.foc().empty())
-//    rv.foc(foc());
-
-//  if (rv.grid().empty())
-//    rv.grid(grid());
-
-//  if (rv.hit_count().empty())
-//    rv.hit_count(hit_count());
-
-//  if (rv.itu_zone().empty())
-//    rv.itu_zone(itu_zone());
-
-//  if (rv.check().empty())
-//    rv.check(check());
-
-//  if (rv.name().empty())
-//    rv.name(name());
-
-//  if (rv.qth().empty())
-//    rv.qth(qth());
-
-//  if (rv.ten_ten().empty())
-//    rv.ten_ten(ten_ten());
 
   for (unsigned int n { 1 }; n <= TRMASTER_N_USER_PARAMETERS; n++)
   { if (rv.user(n).empty())
       rv.user(n, user(n));
   }
 
-//  if (rv.age_aa_cw().empty())
-//    rv.age_aa_cw(age_aa_cw());
-
-//  if (rv.cw_power().empty())
-//    rv.cw_power(cw_power());
-
   if (rv.date().empty())
     rv.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 8));
-
-//  if (rv.iota().empty())
-//    rv.iota(iota());
-
-//  if (rv.precedence().empty())
-//    rv.precedence(precedence());
-
-//  if (rv.qth2().empty())
-//    rv.qth2(qth2());
-
-//  if (rv.skcc().empty())
-//    rv.skcc(skcc());
-
-//  if (rv.society().empty())
-//    rv.society(society());
-
-//  if (rv.spc().empty())
-//    rv.spc(spc());
-
-//  if (rv.ssb_power().empty())
-//    rv.ssb_power(ssb_power());
-
-  if (rv.society().empty())
-    rv.society(society());
-
-  if (rv.state_160().empty())
-    rv.state_160(state_160());
-
-  if (rv.state_10().empty())
-    rv.state_10(state_10());
 
   if (xscp() != 0)
     rv.xscp(xscp());
@@ -953,7 +837,6 @@ void drmaster::_prepare_from_file_contents(const string_view contents, const int
     Throws exception if the file does not exist or is incorrectly formatted;
     except creates empty object if called with default filename that does not exist
 */
-//drmaster::drmaster(const string& filename, const int xscp_limit)
 drmaster::drmaster(const string_view filename, const int xscp_limit)
 { if (!filename.empty())
   { try

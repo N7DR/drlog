@@ -801,8 +801,8 @@ public:                                                                         
     \return     Whether <i>e</i> is a member of <i>v</i>
 */
 template <class T, class U>
-inline bool operator>(const T& v, const U& e)
   requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
+inline bool operator>(const T& v, const U& e)
 { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
 
 /*! \brief      Does a set or unordered_set contains a particular member?
@@ -811,8 +811,8 @@ inline bool operator>(const T& v, const U& e)
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
 template <class T, class U>
-inline bool operator>(const T& s, const U& v)
   requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
+inline bool operator>(const T& s, const U& v)
 { return s.contains(v); }
 
 /*! \brief      Is an object a member of a set or unordered_set?
@@ -821,8 +821,8 @@ inline bool operator>(const T& s, const U& v)
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
 template <class E, class S>
-inline bool operator<(const E& v, const S& s)
   requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
+inline bool operator<(const E& v, const S& s)
 { return (s > v); }
 
 /*! \brief      Union of two sets of the same type
@@ -831,8 +831,8 @@ inline bool operator<(const E& v, const S& s)
     \return     union of <i>s1</i> and <i>s2</i>
 */
 template<class T>
-T operator+(const T& s1, const T& s2)
   requires (is_set<T>)
+T operator+(const T& s1, const T& s2)
 { T rv;
 
   std::set_union(s1.cbegin(), s1.cend(), s2.cbegin(), s2.cend(), std::inserter(rv, rv.end()));
@@ -849,8 +849,8 @@ T operator+(const T& s1, const T& s2)
     The difference between this and ">" is that this does not tell you whether the key was found
 */
 template <class C, class K>
-typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
   requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
+typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
@@ -864,8 +864,8 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
     \return     if <i>k</i> is a member of <i>m</i>, the result of executing <i>pf</i> in the corresponding value, otherwise the default
 */
 template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
-auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
   requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
+auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
@@ -877,8 +877,8 @@ auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
     \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise an empty optional
 */
 template <class C, class K>
-std::optional<typename C::mapped_type> OPT_MUM_VALUE(const C& m, const K& k)
   requires (is_mum<C>) and (std::is_constructible_v<typename C::key_type, K>)
+std::optional<typename C::mapped_type> OPT_MUM_VALUE(const C& m, const K& k)
 { std::optional<typename C::mapped_type> rv { };
 
   if (const auto cit { m.find(k) }; cit != m.cend())
@@ -894,10 +894,10 @@ std::optional<typename C::mapped_type> OPT_MUM_VALUE(const C& m, const K& k)
     \param  element     element to insert
 */
 template <typename C, typename K, typename V>
-inline void operator+=(C& mum, std::pair<K, V>&& element)
   requires ( (is_mum<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
              (is_mmumm<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
+inline void operator+=(C& mum, std::pair<K, V>&& element)
 { mum.emplace(std::move(element)); }
 
 /*! \brief              Add an element to a MUM
@@ -908,8 +908,8 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
     Compare this to the above function, where I purposefully used requires clauses to achieve the same result
 */
 template <typename C>
-inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
   requires (is_mum<C> or is_mmumm<C>)
+inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
 { mum.emplace(il); }
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
@@ -1065,8 +1065,8 @@ inline void SORT(C& v, F f = F())
     \param  element     element to insert
 */
 template <typename C, typename E>
-inline void operator+=(C& sus, E&& element)
   requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
+inline void operator+=(C& sus, E&& element)
   { sus.insert(std::forward<E>(element)); }
 
 /*! \brief              Add an element to a set or unordered set
@@ -1083,8 +1083,8 @@ inline void operator+=(ANYSET auto& sus, const typename decltype(sus)::value_typ
     \param  element     element to insert
 */
 template <typename C>
-inline void operator+=(C& sus, const std::string_view element)
   requires is_sus<C> and is_string<typename C::value_type>
+inline void operator+=(C& sus, const std::string_view element)
   { sus += (std::string { element }); }
 
 /*! \brief          Add all elements of a vector to a set or unordered set
@@ -1092,8 +1092,8 @@ inline void operator+=(C& sus, const std::string_view element)
     \param  vec     vector to insert
 */
 template <typename C, typename V>
-inline void operator+=(C& sus, const V& vec)
   requires is_sus<C> and is_vector<V> and (std::is_same_v<typename C::value_type, typename V::value_type>)
+inline void operator+=(C& sus, const V& vec)
   { std::copy(vec.cbegin(), vec.cend(), std::inserter(sus, sus.end())); };
 
 /*! \brief              Remove an element from a set, map, unordered set or unordered map
@@ -1101,8 +1101,8 @@ inline void operator+=(C& sus, const V& vec)
     \param  element     element to remove, or an iterator into <i>sus</i>
 */
 template <typename C, typename T>
-inline void operator-=(C& sus, const T& element)
   requires (is_sus<C> or is_mum<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
+inline void operator-=(C& sus, const T& element)
   { sus.erase(element); }
 
 /*! \brief              Add an element to a set
@@ -1293,8 +1293,8 @@ inline void operator-=(C& c1, typename C::value_type&& element)
     \param  element     value to remove
 */
 template <typename C>
-inline void operator-=(C& c1, const typename C::value_type& element)
   requires is_list<C>
+inline void operator-=(C& c1, const typename C::value_type& element)
 { c1.remove(element); }
 
 /*! \brief              Append an element to a queue
@@ -1304,8 +1304,8 @@ inline void operator-=(C& c1, const typename C::value_type& element)
     std::queue is NOT thread safe; so this must be called only when protected by a mutex
 */
 template <typename Q>
-inline void operator+=(Q& q1, typename Q::value_type&& element)
   requires is_queue<Q>
+inline void operator+=(Q& q1, typename Q::value_type&& element)
 { q1.push(std::forward<typename Q::value_type>(element)); }
 
 /*! \brief              Append an element to a queue
@@ -1315,8 +1315,8 @@ inline void operator+=(Q& q1, typename Q::value_type&& element)
     std::queue is NOT thread safe; so this must be called only when protected by a mutex
 */
 template <typename Q, typename E>
-inline void operator+=(Q& q1, const E& element)
   requires is_queue<Q> and (std::convertible_to<E, typename Q::value_type>)
+inline void operator+=(Q& q1, const E& element)
 { q1.push(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 
@@ -1325,8 +1325,8 @@ inline void operator+=(Q& q1, const E& element)
     Does nothing if the deque is empty
 */
 template <typename D>
-void operator--(D& d /*, int*/) // int for post-decrement
   requires is_deque<D>
+void operator--(D& d /*, int*/) // int for post-decrement
 { if (!d.empty())
     d.pop_front();
 }
@@ -1336,8 +1336,8 @@ void operator--(D& d /*, int*/) // int for post-decrement
     \param  it  iterator
 */
 template <typename D>
-inline void operator-=(D& d, typename D::iterator&& it)
   requires is_deque<D>
+inline void operator-=(D& d, typename D::iterator&& it)
 { d.erase(std::forward<typename D::iterator>(it)); }
 
 /*! \brief      Remove an element referenced by an iterator from a deque
@@ -1345,8 +1345,8 @@ inline void operator-=(D& d, typename D::iterator&& it)
     \param  it  iterator
 */
 template <typename D>
-inline void operator-=(D& d, const typename D::iterator& it)
   requires is_deque<D>
+inline void operator-=(D& d, const typename D::iterator& it)
 { d.erase(it); }
 
 /*! \brief              Is an element in a deque, list or vector?
@@ -1432,16 +1432,8 @@ template <typename M>  // M = map<T, set<T> >
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
 { std::map<typename M::key_type, typename M::key_type> rv;
 
-//  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
-//  { for (const auto& p : cit->second)
-//      rv += { p, cit->first };
-//  }
-
   for (const auto& [ k1, v1 ] : original_mapping)
-  { //for (const auto& p : v1)
-    //  rv += { p, k1 };
     FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
-  }
 
   return rv;
 }

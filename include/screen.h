@@ -316,7 +316,6 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-//  inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
   inline explicit window(const std::string_view win_name = EMPTY_STR, const unsigned int flags = 0) :
     _name(win_name),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
@@ -412,7 +411,6 @@ public:
     \param  delta_y     change in y position
     \return             the window
 */
-//  window& move_cursor_relative(const int delta_x, const int delta_y);
   window& move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y);
 
 /*! \brief      Get cursor position
@@ -647,7 +645,6 @@ template <class T>
 
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
-//  window& clear_line(const int line_nr = 0);
   window& clear_line(const WIN_INT_TYPE line_nr = 0);
 
 /*! \brief      Delete a character in the current line
@@ -656,7 +653,6 @@ template <class T>
 
     Does nothing if character number <i>n</i> does not exist
 */
-//  window& delete_character(const int n);
 window& delete_character(const WIN_INT_TYPE n);
 
 /*! \brief          Delete a character within a particular line
@@ -666,7 +662,6 @@ window& delete_character(const WIN_INT_TYPE n);
 
     Line number zero is the bottom line
 */
-//  window& delete_character(const int n, const int line_nr);
   window& delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr);
 
 /// set function used to process input
@@ -733,7 +728,6 @@ inline window& operator<(window& win, const cursor& c)
   { return win.move_cursor(c.x(), c.y()); }
 
 /// trivial class for moving the cursor (relative)
-//WRAPPER_2(cursor_relative, int, x, int, y);
 WRAPPER_2(cursor_relative, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
 
 /*! \brief          Move the cursor in a window, using relative movement

@@ -274,19 +274,11 @@ void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLO
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
-/*! \brief        Do a pair of windows overlap?
-    \param  win2  other window
-    \return       whether this window and <i>win2</i> overlap
-*/
-//inline bool window::overlap(const window& win2) const
-//  { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
-
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position
     \return         the window
 */
-//window& window::move_cursor(const int new_x, const int new_y)
 window& window::move_cursor(const WIN_INT_TYPE new_x, const WIN_INT_TYPE new_y)
 { if (_wp)
   { SAFELOCK(screen);
@@ -350,8 +342,7 @@ window& window::operator<(const vector<string>& v)
     cursor_position();
     
     const int remaining_space { width() - _cursor_x };
-//    const ssize_t remaining_space { width() - _cursor_x };
-    const int int_len { static_cast<int>(str.length()) };
+    const int int_len         { static_cast<int>(str.length()) };
 
  // stop writing if there's insufficient room for the next string
     if (remaining_space < int_len)
@@ -387,9 +378,10 @@ window& window::operator<(const vector<std::pair<string, PAIR_NUMBER_TYPE /* col
 
   unsigned int idx { 0 };
 
-  for (const auto& psi : vec)
-  { const string&           str { psi.first };
-    const PAIR_NUMBER_TYPE& cp  { psi.second };
+//  for (const auto& psi : vec)
+  for (const auto& [ str, cp ] : vec)
+  { //const string&           str { psi.first };
+    //const PAIR_NUMBER_TYPE& cp  { psi.second };
 
 // see if there's enough room on this line
     cursor_position();
@@ -440,7 +432,6 @@ cursor window::cursor_position(void)
     \param  delta_y     change in y position
     \return             the window
 */
-//window& window::move_cursor_relative(const int delta_x, const int delta_y)
 window& window::move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y)
 { if (_wp)
   { cursor_position();
@@ -486,116 +477,116 @@ window& window::default_colours(const COLOUR_TYPE foreground_colour, const COLOU
     \return     the window
 */
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
-{ //using WINDOW_ATTRIBUTES;    not yet supported
+{ using enum WINDOW_ATTRIBUTES;
 
-  if (!_wp or (wa == WINDOW_ATTRIBUTES::WINDOW_NOP) )
+  if (!_wp or (wa == WINDOW_NOP) )
     return *this;
     
   switch (wa)
-  { case WINDOW_ATTRIBUTES::WINDOW_NORMAL :
+  { case WINDOW_NORMAL :
       { SAFELOCK(screen);
         wstandend(_wp);
       }
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_BOLD :
+    case WINDOW_BOLD :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_BOLD, NULL);
       }
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT :
+    case WINDOW_HIGHLIGHT :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_STANDOUT, NULL);
       }
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_DIM :
+    case WINDOW_DIM :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_DIM, NULL);
       }
       break;
-    case WINDOW_ATTRIBUTES::WINDOW_REVERSE :
+    case WINDOW_REVERSE :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_REVERSE, NULL);
       }
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_REFRESH :
-    case WINDOW_ATTRIBUTES::WINDOW_UPDATE :
+    case WINDOW_REFRESH :
+    case WINDOW_UPDATE :
       { SAFELOCK(screen);
         refresh();
       }
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT :
-    case WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT :
+    case CURSOR_TOP_LEFT :
+    case WINDOW_TOP_LEFT :
       move_cursor(0, height() - 1);
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_TOP_RIGHT :
-    case WINDOW_ATTRIBUTES::WINDOW_TOP_RIGHT :
+    case CURSOR_TOP_RIGHT :
+    case WINDOW_TOP_RIGHT :
       move_cursor(width() - 1, height() - 1);
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT :
-    case WINDOW_ATTRIBUTES::WINDOW_BOTTOM_LEFT :
+    case CURSOR_BOTTOM_LEFT :
+    case WINDOW_BOTTOM_LEFT :
       move_cursor(0, 0);
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_BOTTOM_RIGHT :
-    case WINDOW_ATTRIBUTES::WINDOW_BOTTOM_RIGHT :
+    case CURSOR_BOTTOM_RIGHT :
+    case WINDOW_BOTTOM_RIGHT :
       move_cursor(width() - 1, 0);
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_CLEAR :
+    case WINDOW_CLEAR :
       clear();
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL :
+    case WINDOW_CLEAR_TO_EOL :
       { SAFELOCK(screen);
         wclrtoeol(_wp);
       }
       break;
 
-    case WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_END :
+    case WINDOW_CLEAR_TO_END :
       { SAFELOCK(screen);
         wclrtobot(_wp);
       }
       break;  
 
-    case WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE :
+    case CURSOR_START_OF_LINE :
       move_cursor(0, cursor_position().y());
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_UP :
+    case CURSOR_UP :
       move_cursor_relative(0, 1);
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_DOWN :
+    case CURSOR_DOWN :
       move_cursor_relative(0, -1);
       break;  
 
-    case WINDOW_ATTRIBUTES::WINDOW_SCROLL_UP :
+    case WINDOW_SCROLL_UP :
       scrollit(1);
       break; 
 
-    case WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN :
+    case WINDOW_SCROLL_DOWN :
       scrollit(-1);
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_HIDE :
+    case CURSOR_HIDE :
       _hidden_cursor = true;
       break;
 
-    case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
+    case CURSOR_END_OF_LINE :
     { const size_t posn { read().find_last_not_of(' ') };
 
       move_cursor(posn + 1, cursor_position().y());
       break;
     }
 
-    case WINDOW_ATTRIBUTES::WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
+    case WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
       break;
   }
 
@@ -933,22 +924,21 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
   { //const window_information& wi1 { it -> second };
     const auto& [ name1, wi1 ] { *it };
 
-    const int x1 { wi1.x() };
-    const int y1 { wi1.y() };
-    const int w1 { wi1.w() };
-    const int h1 { wi1.h() };
+//    const int x1 { wi1.x() };
+//    const int y1 { wi1.y() };
+//    const int w1 { wi1.w() };
+//    const int h1 { wi1.h() };
 
     for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
-    { //const window_information& wi2 { it2 -> second };
-      const auto& [ name2, wi2 ] { *it2 };
+    { const auto& [ name2, wi2 ] { *it2 };
 
-      const int x2 { wi2.x() };
-      const int y2 { wi2.y() };
-      const int w2 { wi2.w() };
-      const int h2 { wi2.h() };
+//      const int x2 { wi2.x() };
+//      const int y2 { wi2.y() };
+//      const int w2 { wi2.w() };
+//      const int h2 { wi2.h() };
 
-      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
-//        rv += { it -> first, it2 -> first };
+//      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+      if (overlap(wi1.x(), wi1.y(), wi1.w(),  wi1.h(), wi2.x(), wi2.y(), wi2.w(),  wi2.h()))
         rv += { name1, name2 };
     }
   }
