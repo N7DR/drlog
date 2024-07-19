@@ -1,4 +1,4 @@
-// $Id: screen.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: screen.cpp 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -770,7 +770,20 @@ window& window::delete_character(const WIN_INT_TYPE n)
 
     Line number zero is the bottom line
 */
+<<<<<<< .mine
 window& window::delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr)
+||||||| .r241
+window& window::delete_character(const int n, const int line_nr)
+=======
+<<<<<<< .mine
+window& window::delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr)
+||||||| .r241
+window& window::delete_character(const int n, const int line_nr)
+>>>>>>> .r243
+=======
+//window& window::delete_character(const int n, const int line_nr)
+window& window::delete_character(const INT_TYPE n, const INT_TYPE line_nr)
+>>>>>>> .r242
 { if (!_wp)
     return *this;
 
@@ -913,6 +926,7 @@ bool window::common_processing(const keyboard_event& e)
   return false;
 }
 
+<<<<<<< .mine
 /*  \brief  Obtain all the overlapping pairs of windows from a container (map)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
@@ -946,6 +960,77 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
   return rv;
 }
 
+||||||| .r241
+=======
+<<<<<<< .mine
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information >& windows)
+{ vector<pair<string, string>> rv;
+
+  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+  { //const window_information& wi1 { it -> second };
+    const auto& [ name1, wi1 ] { *it };
+
+//    const int x1 { wi1.x() };
+//    const int y1 { wi1.y() };
+//    const int w1 { wi1.w() };
+//    const int h1 { wi1.h() };
+
+    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+    { const auto& [ name2, wi2 ] { *it2 };
+
+//      const int x2 { wi2.x() };
+//      const int y2 { wi2.y() };
+//      const int w2 { wi2.w() };
+//      const int h2 { wi2.h() };
+
+//      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+      if (overlap(wi1.x(), wi1.y(), wi1.w(),  wi1.h(), wi2.x(), wi2.y(), wi2.w(),  wi2.h()))
+        rv += { name1, name2 };
+    }
+  }
+
+  return rv;
+}
+
+||||||| .r241
+=======
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information >& windows)
+{ vector<pair<string, string>> rv;
+
+  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+  { const window_information& wi1 { it -> second };
+
+    const int x1 { wi1.x() };
+    const int y1 { wi1.y() };
+    const int w1 { wi1.w() };
+    const int h1 { wi1.h() };
+
+    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+    { const window_information& wi2 { it2 -> second };
+
+      const int x2 { wi2.x() };
+      const int y2 { wi2.y() };
+      const int w2 { wi2.w() };
+      const int h2 { wi2.h() };
+
+      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+        rv += { it -> first, it2 -> first };
+    }
+  }
+
+  return rv;
+}
+
+>>>>>>> .r242
+>>>>>>> .r243
 // -----------  colour_pair  ----------------
 
 /*! \class  colour_pair
@@ -971,8 +1056,28 @@ PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgb
     throw exception();
   }
 
+<<<<<<< .mine
   if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fg, bg) }; status == ERR)
   { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fg << ", " << bg << endl;
+||||||| .r241
+//  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
+
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
+=======
+<<<<<<< .mine
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fg, bg) }; status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fg << ", " << bg << endl;
+||||||| .r241
+//  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
+
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
+>>>>>>> .r243
+=======
+  if (const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) }; status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
+>>>>>>> .r242
     throw exception();
   }
 
@@ -1058,8 +1163,24 @@ COLOUR_TYPE string_to_colour(const string_view str)
     \param  h2    height of rectangle 2
     \return       whether rectangle 1 and rectangle 2 overlap
 */
+<<<<<<< .mine
 bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2)
 { auto in_range = [] (const WIN_INT_TYPE v, const WIN_INT_TYPE vmin, const WIN_INT_TYPE vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
+||||||| .r241
+bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
+{ auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };
+=======
+<<<<<<< .mine
+bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2)
+{ auto in_range = [] (const WIN_INT_TYPE v, const WIN_INT_TYPE vmin, const WIN_INT_TYPE vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
+||||||| .r241
+bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
+{ auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };
+>>>>>>> .r243
+=======
+bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2)
+{ auto in_range = [] (const int v, const int vmin, const int vmax) { return (v >= vmin) and (v <= vmax); };   // is v in the range [vmin, vmax] ?
+>>>>>>> .r242
 
   const WIN_INT_TYPE l1 { x1 };
   const WIN_INT_TYPE r1 { static_cast<WIN_INT_TYPE>(x1 + w1 - 1) };

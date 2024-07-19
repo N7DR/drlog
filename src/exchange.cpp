@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 228 2023-09-17 13:41:20Z  $
+// $Id: exchange.cpp 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -730,6 +730,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       FOR_ALL(_fields, [&rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
   }  // end of !truncate received values
+
+//  ost << "parsed_exchange: " << boolalpha << _valid << endl;
 }
 
 #undef FIELD_NUMBER

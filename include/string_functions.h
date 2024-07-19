@@ -1,4 +1,4 @@
-// $Id: string_functions.h 241 2024-06-02 19:59:44Z  $
+// $Id: string_functions.h 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -724,7 +724,7 @@ auto remove_peripheral_spaces(T&& t) -> std::vector<STYPE>
     \return             vector containing the separate components
 */
 template <typename STYPE>
-auto split_string(std::string_view cs, std::string_view separator) -> std::vector<STYPE>
+auto split_string(const std::string_view cs, const std::string_view separator) -> std::vector<STYPE>
 { size_t start_posn { 0 };
 
   std::vector<STYPE> rv;
@@ -750,9 +750,8 @@ auto split_string(std::string_view cs, std::string_view separator) -> std::vecto
 
     Some of the returned elements may be the null string
 */
-
 template <typename STYPE>
-auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+auto split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   if (cs.empty())
@@ -784,12 +783,8 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
   return rv;
 }
 
-#if 0
-template <typename STYPE>
-//auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-inline auto split_string(std::string_view cs) -> std::vector<STYPE>
-{ return split_string <STYPE> (cs, ','); }
-#endif
+// return posn_1, posn_2; posn_2 is the location of sep, or string::npos
+//std::pair<size_t, size_t> to_next_separator(const std::string_view cs, const size_t posn, const char sep);
 
 /*! \brief              Split a string into records
     \param  cs          original string

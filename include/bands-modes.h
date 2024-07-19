@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 236 2024-04-14 18:26:49Z  $
+// $Id: bands-modes.h 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -312,7 +312,20 @@ std::ostream& operator<<(std::ostream& ost, const frequency& f);
 
      Frequency may be in Hz, kHz or MHz.
 */
+<<<<<<< .mine
 inline BAND to_BAND(const std::string_view str)
+||||||| .r236
+inline BAND to_BAND(const std::string& str)
+=======
+<<<<<<< .mine
+inline BAND to_BAND(const std::string_view str)
+||||||| .r236
+inline BAND to_BAND(const std::string& str)
+>>>>>>> .r243
+=======
+//inline BAND to_BAND(const std::string& str)
+inline BAND to_BAND(const std::string_view str)
+>>>>>>> .r242
   { return to_BAND(frequency(str).hz()); }
 
 /*!  \brief     Convert a frequency to a band

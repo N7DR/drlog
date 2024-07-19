@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: drlog.cpp 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+//#include <numeric>    // for accumulate()
 #include <thread>
 
 #include <future>
@@ -803,7 +804,21 @@ int main(int argc, char** argv)
 
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
+<<<<<<< .mine
      bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+||||||| .r241
+    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+=======
+<<<<<<< .mine
+     bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+||||||| .r241
+    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+>>>>>>> .r243
+=======
+  { //bandmaps[n].band(static_cast<BAND>(n));
+    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+>>>>>>> .r242
+  }
 
   const command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string       config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
@@ -827,12 +842,140 @@ int main(int argc, char** argv)
     delete context_p;   // we no longer need this
 
 // do any windows overlap?
+<<<<<<< .mine
     for (const auto& [win_name_1, win_name_2] : window_overlaps(context.windows()))
     { windows_overlap = true;   // mark that we have overlapping windows
+||||||| .r241
+    { const std::map<std::string /* name */, window_information >& windows { context.windows() };
+=======
+<<<<<<< .mine
+    for (const auto& [win_name_1, win_name_2] : window_overlaps(context.windows()))
+    { windows_overlap = true;   // mark that we have overlapping windows
+||||||| .r241
+    { const std::map<std::string /* name */, window_information >& windows { context.windows() };
+>>>>>>> .r243
+=======
+//    { //const std::map<std::string /* name */, window_information >& windows { context.windows() };
+>>>>>>> .r242
 
+<<<<<<< .mine
       ost << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
       cerr << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
-    }
+||||||| .r241
+//      bool found_overlap { false };
+
+      for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+      { const window_information& wi1 { it -> second };
+
+        const int x1 { wi1.x() };
+        const int y1 { wi1.y() };
+        const int w1 { wi1.w() };
+        const int h1 { wi1.h() };
+
+        for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+        { const window_information& wi2 { it2 -> second };
+
+          const int x2 { wi2.x() };
+          const int y2 { wi2.y() };
+          const int w2 { wi2.w() };
+          const int h2 { wi2.h() };
+
+//          ost << "checking " << it -> first << " + " << it2 -> first << endl;
+
+          if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+          { windows_overlap = true;
+
+            ost << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+            cerr << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            exit(-1);
+          }
+        }
+      }
+
+//      if (found_overlap)
+//        exit(-1);
+=======
+<<<<<<< .mine
+      ost << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
+      cerr << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
+||||||| .r241
+//      bool found_overlap { false };
+
+      for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+      { const window_information& wi1 { it -> second };
+
+        const int x1 { wi1.x() };
+        const int y1 { wi1.y() };
+        const int w1 { wi1.w() };
+        const int h1 { wi1.h() };
+
+        for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+        { const window_information& wi2 { it2 -> second };
+
+          const int x2 { wi2.x() };
+          const int y2 { wi2.y() };
+          const int w2 { wi2.w() };
+          const int h2 { wi2.h() };
+
+//          ost << "checking " << it -> first << " + " << it2 -> first << endl;
+
+          if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+          { windows_overlap = true;
+
+            ost << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+            cerr << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            exit(-1);
+          }
+        }
+      }
+
+//      if (found_overlap)
+//        exit(-1);
+>>>>>>> .r243
+=======
+//      bool found_overlap { false };
+
+#if 0
+      for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+      { const window_information& wi1 { it -> second };
+
+        const int x1 { wi1.x() };
+        const int y1 { wi1.y() };
+        const int w1 { wi1.w() };
+        const int h1 { wi1.h() };
+
+        for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+        { const window_information& wi2 { it2 -> second };
+
+          const int x2 { wi2.x() };
+          const int y2 { wi2.y() };
+          const int w2 { wi2.w() };
+          const int h2 { wi2.h() };
+
+//          ost << "checking " << it -> first << " + " << it2 -> first << endl;
+
+          if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+          { windows_overlap = true;
+
+            ost << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+            cerr << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            exit(-1);
+          }
+        }
+      }
+#endif
+
+  for (const auto& [win_name_1, win_name_2] : window_overlaps(context.windows()))
+  { windows_overlap = true;   // mark that we have overlapping windows
+
+    ost << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
+    cerr << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
+  }
+
+//      if (found_overlap)
+//        exit(-1);
+>>>>>>> .r242
+//    }
 
 // run any "execute at start" program
     if (const auto cmd { context.execute_at_start() }; !cmd.empty())
@@ -965,7 +1108,20 @@ int main(int argc, char** argv)
     cty_data* country_data_p { nullptr };
 
     try
+<<<<<<< .mine
     { country_data_p = new cty_data(context_path, context.cty_filename());
+||||||| .r241
+    { country_data_p = new cty_data(context.path(), context.cty_filename());
+=======
+<<<<<<< .mine
+    { country_data_p = new cty_data(context_path, context.cty_filename());
+||||||| .r241
+    { country_data_p = new cty_data(context.path(), context.cty_filename());
+>>>>>>> .r243
+=======
+    { //country_data_p = new cty_data(context.path(), context.cty_filename());
+      country_data_p = new cty_data(context_path, context.cty_filename());
+>>>>>>> .r242
     }
 
     catch (...)
@@ -1002,7 +1158,20 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
+<<<<<<< .mine
     location_db.add_russian_database(context_path, context.russian_filename());  // add Russian information
+||||||| .r241
+    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
+=======
+<<<<<<< .mine
+    location_db.add_russian_database(context_path, context.russian_filename());  // add Russian information
+||||||| .r241
+    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
+>>>>>>> .r243
+=======
+//    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
+    location_db.add_russian_database(context_path, context.russian_filename());  // add Russian information
+>>>>>>> .r242
 
 // build super check partial database from the drmaster information
     try
@@ -1074,7 +1243,24 @@ int main(int argc, char** argv)
     if (rules.n_modes() == 1)
     { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
 
+<<<<<<< .mine
       is_ss = ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); });                // if there's a PREC field, it must be SS
+||||||| .r241
+      if (ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); }))                // if there's a field with this name, it must be SS
+        is_ss = true;
+=======
+<<<<<<< .mine
+      is_ss = ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); });                // if there's a PREC field, it must be SS
+||||||| .r241
+      if (ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); }))                // if there's a field with this name, it must be SS
+        is_ss = true;
+>>>>>>> .r243
+=======
+//      if (ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); }))                // if there's a field with this name, it must be SS
+//        is_ss = true;
+
+      is_ss = ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); });                // if there's a PREC field, it must be SS
+>>>>>>> .r242
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
@@ -1094,7 +1280,20 @@ int main(int argc, char** argv)
 
 // make some things available file-wide
 // make callsign parser available now that we can create it
+<<<<<<< .mine
       CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context_path, context.exchange_fields_filename(), context, location_db);
+||||||| .r241
+      CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+=======
+<<<<<<< .mine
+      CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context_path, context.exchange_fields_filename(), context, location_db);
+||||||| .r241
+      CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+>>>>>>> .r243
+=======
+      //CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+      CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context_path, context.exchange_fields_filename(), context, location_db);
+>>>>>>> .r242
 
       send_qtcs = rules.send_qtcs();    // grab it once
       n_modes = rules.n_modes();        // grab this once too
@@ -1107,7 +1306,20 @@ int main(int argc, char** argv)
 
 // possibly get a list of IARU society exchanges; note that we normally do this with a prefill file instead
       if (!context.society_list_filename().empty())
+<<<<<<< .mine
         exchange_db.set_values_from_file(context_path, context.society_list_filename(), "SOCIETY"s);
+||||||| .r241
+        exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
+=======
+<<<<<<< .mine
+        exchange_db.set_values_from_file(context_path, context.society_list_filename(), "SOCIETY"s);
+||||||| .r241
+        exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
+>>>>>>> .r243
+=======
+//        exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
+        exchange_db.set_values_from_file(context_path, context.society_list_filename(), "SOCIETY"s);
+>>>>>>> .r242
 
 // possibly test regex exchanges; this will exit if it executes
       if (cl.value_present("-test-exchanges"s))
@@ -1193,7 +1405,20 @@ int main(int argc, char** argv)
 
 // ditto for other calls in the do-not-show files
       if (!do_not_show_filename.empty())
+<<<<<<< .mine
       { if (find_file(context_path, do_not_show_filename).empty())
+||||||| .r241
+      { if (find_file(context.path(), do_not_show_filename).empty())
+=======
+<<<<<<< .mine
+      { if (find_file(context_path, do_not_show_filename).empty())
+||||||| .r241
+      { if (find_file(context.path(), do_not_show_filename).empty())
+>>>>>>> .r243
+=======
+      { //if (find_file(context.path(), do_not_show_filename).empty())
+        if (find_file(context_path, do_not_show_filename).empty())
+>>>>>>> .r242
         { ost << "Fatal error: unable to read do-not-show file: " << do_not_show_filename << endl;      // the all-band file MUST exist; maybe change this later?
           cerr << "Fatal error: unable to read do-not-show file: " << do_not_show_filename << endl;      // the all-band file MUST exist; maybe change this later?
 
@@ -1210,7 +1435,7 @@ int main(int argc, char** argv)
       }
 
 // set the RBN threshold for each bandmap
-      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so there may be no need to change
+      if (rbn_threshold != 1)               // 1 is the default in a pristine bandmap, so there may be no need to change
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
@@ -1267,7 +1492,20 @@ int main(int argc, char** argv)
 
       if (!context.batch_messages_file().empty())
       { try
+<<<<<<< .mine
         { const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
+||||||| .r241
+        { const vector<string> messages { to_lines <std::string> (read_file(context.path(), context.batch_messages_file())) };
+=======
+<<<<<<< .mine
+        { const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
+||||||| .r241
+        { const vector<string> messages { to_lines <std::string> (read_file(context.path(), context.batch_messages_file())) };
+>>>>>>> .r243
+=======
+        { //const vector<string> messages { to_lines <std::string> (read_file(context.path(), context.batch_messages_file())) };
+          const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
+>>>>>>> .r242
 
           string current_message { };
 
@@ -1348,7 +1586,20 @@ int main(int argc, char** argv)
       { try
         { SAFELOCK(individual_messages);
 
+<<<<<<< .mine
           for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.individual_messages_file())))
+||||||| .r241
+          for (const auto& messages_line : to_lines <std::string> (read_file(context.path(), context.individual_messages_file())))
+=======
+<<<<<<< .mine
+          for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.individual_messages_file())))
+||||||| .r241
+          for (const auto& messages_line : to_lines <std::string> (read_file(context.path(), context.individual_messages_file())))
+>>>>>>> .r243
+=======
+          //for (const auto& messages_line : to_lines <std::string> (read_file(context.path(), context.individual_messages_file())))
+          for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.individual_messages_file())))
+>>>>>>> .r242
           { const vector<string> fields { clean_split_string <std::string> (messages_line, ':') };
 
             if (fields.size() >= 2)
@@ -1582,10 +1833,7 @@ int main(int argc, char** argv)
 
 // possibly set the auto country mults and auto callsign mults thresholds
       if (context.auto_remaining_callsign_mults())
-      { //const auto threshold { context.auto_remaining_callsign_mults_threshold() };
-
         FOR_ALL(rules.callsign_mults(), [threshold = context.auto_remaining_callsign_mults_threshold()] (const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
-      }
 
       if (auto_remaining_country_mults)
         acc_countries.threshold(context.auto_remaining_country_mults_threshold());
@@ -1623,15 +1871,9 @@ int main(int argc, char** argv)
       win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
 
 // set recent and fade colours for each bandmap
-      { //const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
-
-        //FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), &fc] (bandmap& bm) { bm.fade_colours(fc);
-        //                                                                              bm.recent_colour(rc);
-        //                                                                            } );
-        FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), fc = context.bandmap_fade_colours()] (bandmap& bm) { bm.fade_colours(fc);
-                                                                                                                      bm.recent_colour(rc);
-                                                                                                                    } );
-      }
+      FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), fc = context.bandmap_fade_colours()] (bandmap& bm) { bm.fade_colours(fc);
+                                                                                                                    bm.recent_colour(rc);
+                                                                                                                  } );
 
 // create thread to prune the bandmaps every minute
       jthread(prune_bandmap, &win_bandmap, &bandmaps).detach();
@@ -3500,8 +3742,26 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .RESET RBN -- get a new connection
       if (command == "RESET RBN"sv)
+<<<<<<< .mine
+        jthread(reset_connection, rbn_p).detach();
+||||||| .r241
+      { static pthread_t thread_id_reset;
+=======
       { //static pthread_t thread_id_reset;
+>>>>>>> .r243
 
+<<<<<<< .mine
+||||||| .r241
+        try
+        { create_thread(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p, "RESET RBN"s);
+        }
+
+        catch (const pthread_error& e)
+        { alert("Error creating thread: RESET RBN"s);
+        }
+      }
+
+=======
         try
         { //create_thread(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p, "RESET RBN"s);
         }
@@ -3513,6 +3773,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         jthread(reset_connection, rbn_p).detach();
       }
 
+>>>>>>> .r243
 // .UNINST
       if (command == "UNINST"sv)
       { rig.uninstrument();
@@ -9324,7 +9585,23 @@ set<string> calls_from_do_not_show_file(const BAND b)
   set<string> rv;
 
   try
+<<<<<<< .mine
   { FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+||||||| .r241
+  { //FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+    FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+=======
+<<<<<<< .mine
+  { FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+||||||| .r241
+  { //FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+    FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+>>>>>>> .r243
+=======
+  { //FOR_ALL( remove_peripheral_spaces <std::string> (to_lines <std::string> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+   //FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context.path(), filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+    FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+>>>>>>> .r242
   }
 
   catch (...)     // not an error if a do-not-show file does not exist

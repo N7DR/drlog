@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 241 2024-06-02 19:59:44Z  $
+// $Id: drlog_context.h 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -345,7 +345,20 @@ public:
   inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
+<<<<<<< .mine
       return (_auto_remaining_exchange_mults.contains(mult_name));
+||||||| .r241
+      return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+=======
+<<<<<<< .mine
+      return (_auto_remaining_exchange_mults.contains(mult_name));
+||||||| .r241
+      return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+>>>>>>> .r243
+=======
+ //     return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+      return (_auto_remaining_exchange_mults.contains(mult_name));
+>>>>>>> .r242
     }
 
   CONTEXTREAD(auto_screenshot);                  ///< do we create a screenshot every hour?
@@ -647,7 +660,20 @@ public:
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
+<<<<<<< .mine
   std::vector<std::string> window_name_contains(const std::string_view substr) const;
+||||||| .r241
+  std::vector<std::string> window_name_contains(const std::string& substr) const;
+=======
+<<<<<<< .mine
+  std::vector<std::string> window_name_contains(const std::string_view substr) const;
+||||||| .r241
+  std::vector<std::string> window_name_contains(const std::string& substr) const;
+>>>>>>> .r243
+=======
+//  std::vector<std::string> window_name_contains(const std::string& substr) const;
+  std::vector<std::string> window_name_contains(const std::string_view substr) const;
+>>>>>>> .r242
 
 /*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange
