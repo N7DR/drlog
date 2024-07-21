@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: string_functions.cpp 248 2024-07-20 16:31:45Z  $
+=======
+// $Id: string_functions.cpp 243 2024-07-15 19:38:06Z  $
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -385,6 +389,275 @@ string remove_chars(const string_view s, const string_view chars_to_remove)
   return rv;
 }
 
+<<<<<<< .mine
+||||||| .r241
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+#if 0
+string delimited_substring(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  return ( (return_delimiters == DELIMITERS::DROP) ? cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) : cs.substr(posn_1, posn_2 - posn_1) ) ;
+}
+#endif
+
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+#if 0
+string delimited_substring(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
+  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
+                                                                          : posn_2 + posn_1 + delim_2.length()
+                                };
+  
+  return cs.substr(posn_1 + length_to_skip, length_to_return);
+}
+#endif
+
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+*/
+#if 0
+vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
+{ vector<string> rv;
+
+  size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
+
+  while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
+  { const string& sstring { substring <std::string> (cs, start_posn) };
+    const size_t  posn_1  { sstring.find(delim_1) };
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 { sstring.find(delim_2, posn_1 + 1) };
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    if (return_delimiters == DELIMITERS::KEEP)
+      rv += sstring.substr(posn_1, posn_2 - posn_1);
+    else
+      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
+
+    start_posn += (posn_2 + 1);   // remember, start_posn is global
+  }
+
+  return rv;
+}
+#endif
+
+=======
+<<<<<<< .mine
+||||||| .r241
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+#if 0
+string delimited_substring(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  return ( (return_delimiters == DELIMITERS::DROP) ? cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) : cs.substr(posn_1, posn_2 - posn_1) ) ;
+}
+#endif
+
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+#if 0
+string delimited_substring(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
+  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
+                                                                          : posn_2 + posn_1 + delim_2.length()
+                                };
+  
+  return cs.substr(posn_1 + length_to_skip, length_to_return);
+}
+#endif
+
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+*/
+#if 0
+vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
+{ vector<string> rv;
+
+  size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
+
+  while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
+  { const string& sstring { substring <std::string> (cs, start_posn) };
+    const size_t  posn_1  { sstring.find(delim_1) };
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 { sstring.find(delim_2, posn_1 + 1) };
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    if (return_delimiters == DELIMITERS::KEEP)
+      rv += sstring.substr(posn_1, posn_2 - posn_1);
+    else
+      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
+
+    start_posn += (posn_2 + 1);   // remember, start_posn is global
+  }
+
+  return rv;
+}
+#endif
+
+>>>>>>> .r243
+=======
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+#if 0
+string delimited_substring(const string& cs, const string& delim_1, const string& delim_2, const DELIMITERS return_delimiters)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t length_to_skip { ( (return_delimiters == DELIMITERS::DROP) ? delim_1.length() : 0 ) };
+  const size_t posn_2         { cs.find(delim_2, posn_1 + length_to_skip) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  const size_t length_to_return { (return_delimiters == DELIMITERS::DROP) ? posn_2 - posn_1 - delim_1.length()
+                                                                          : posn_2 + posn_1 + delim_2.length()
+                                };
+  
+  return cs.substr(posn_1 + length_to_skip, length_to_return);
+}
+#endif
+
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+*/
+#if 0
+vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
+{ vector<string> rv;
+
+  size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
+
+  while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
+  { const string& sstring { substring <std::string> (cs, start_posn) };
+    const size_t  posn_1  { sstring.find(delim_1) };
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 { sstring.find(delim_2, posn_1 + 1) };
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    if (return_delimiters == DELIMITERS::KEEP)
+      rv += sstring.substr(posn_1, posn_2 - posn_1);
+    else
+      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
+
+    start_posn += (posn_2 + 1);   // remember, start_posn is global
+  }
+
+  return rv;
+}
+#endif
+
+>>>>>>> .r242
 /*! \brief          Centre a string
     \param  str     string to be centred
     \param  width   final width of the centred string

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: textfile.h 248 2024-07-20 16:31:45Z  $
+=======
+// $Id$
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 
@@ -50,11 +54,14 @@ public:
     std::ifstream(filename)
   { }
 
+<<<<<<< HEAD
 
   inline explicit textfile(const std::string_view filename) :
     std::ifstream(std::string { filename })
   { }
 
+=======
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 /// begin() needs access to <i>textfile</i> internals
   friend textfile_iterator begin(textfile& tf);
 };

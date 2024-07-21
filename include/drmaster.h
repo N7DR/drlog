@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: drmaster.h 248 2024-07-20 16:31:45Z  $
+=======
+// $Id: drmaster.h 243 2024-07-15 19:38:06Z  $
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -378,7 +382,20 @@ public:
 
     Throws exception if the file does not exist or is incorrectly formatted;
 */
+<<<<<<< .mine
   explicit drmaster(const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
+=======
+<<<<<<< .mine
+  explicit drmaster(const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
+>>>>>>> .r243
+=======
+//  explicit drmaster(const std::string& filename, const int xscp_limit = 1);
+  explicit drmaster(const std::string_view filename, const int xscp_limit = 1);
+>>>>>>> .r242
 
 /*! \brief              Construct from a file
     \param  path        directories to check
@@ -390,7 +407,20 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
+<<<<<<< .mine
   drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+=======
+<<<<<<< .mine
+  drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+>>>>>>> .r243
+=======
+//  drmaster(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+  drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
+>>>>>>> .r242
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
@@ -399,7 +429,23 @@ public:
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
+<<<<<<< HEAD
+=======
+<<<<<<< .mine
   void prepare(const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  void prepare(const std::string& filename, const int xscp_limit = 1);
+=======
+<<<<<<< .mine
+  void prepare(const std::string_view filename, const int xscp_limit = 1);
+||||||| .r241
+  void prepare(const std::string& filename, const int xscp_limit = 1);
+>>>>>>> .r243
+=======
+//  void prepare(const std::string& filename, const int xscp_limit = 1);
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
+  void prepare(const std::string_view filename, const int xscp_limit = 1);
+>>>>>>> .r242
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check

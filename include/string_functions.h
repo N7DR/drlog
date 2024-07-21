@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: string_functions.h 248 2024-07-20 16:31:45Z  $
+=======
+// $Id: string_functions.h 243 2024-07-15 19:38:06Z  $
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

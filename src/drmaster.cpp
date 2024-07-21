@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: drmaster.cpp 248 2024-07-20 16:31:45Z  $
+=======
+// $Id: drmaster.cpp 243 2024-07-15 19:38:06Z  $
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -226,6 +230,14 @@ string trmaster_line::to_string(void) const
 
   using VOID_PARAM = const string& (trmaster_line::*)(void) const&;     // the signature for the getter functions
 
+<<<<<<< .mine
+  auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
+                                                                           rv += ( " ="s + c + value );
+                                                                       };
+||||||| .r241
+  if (cq_zone())
+    rv += (" =C"s + ::to_string(cq_zone()));
+=======
   auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
                                                                            rv += ( " ="s + c + value );
                                                                        };
@@ -238,6 +250,7 @@ string trmaster_line::to_string(void) const
 
   using VOID_PARAM_INT = const int& (trmaster_line::*)(void) const&;     // the signature for the getter functions
 
+<<<<<<< HEAD
   auto insert_if_not_empty_int = [&rv, this] (VOID_PARAM_INT fn, const char c) { if (const int value { std::invoke(fn, *this) }; (value != 0))
                                                                                    rv += ( " ="s + c + ::to_string(value) );
                                                                                };
@@ -260,6 +273,74 @@ string trmaster_line::to_string(void) const
 //  if (check())
 //    rv += (" =K"s + ::to_string(check()));
 
+=======
+  if (cq_zone())
+    rv += (" =C"s + ::to_string(cq_zone()));
+>>>>>>> .r243
+
+  insert_if_not_empty(&trmaster_line::section,  'A');
+  insert_if_not_empty(&trmaster_line::grid,     'G');
+  insert_if_not_empty(&trmaster_line::itu_zone, 'I');
+  insert_if_not_empty(&trmaster_line::name,     'N');
+  insert_if_not_empty(&trmaster_line::qth,      'Q');
+
+<<<<<<< .mine
+  using VOID_PARAM_INT = const int& (trmaster_line::*)(void) const&;     // the signature for the getter functions
+||||||| .r241
+  if (!grid().empty())
+    rv += (" =G"s + grid());
+=======
+//  if (!grid().empty())
+//    rv += (" =G"s + grid());
+>>>>>>> .r243
+
+  auto insert_if_not_empty_int = [&rv, this] (VOID_PARAM_INT fn, const char c) { if (const int value { std::invoke(fn, *this) }; (value != 0))
+                                                                                   rv += ( " ="s + c + ::to_string(value) );
+                                                                               };
+
+<<<<<<< .mine
+  insert_if_not_empty_int(&trmaster_line::cq_zone,   'C');
+  insert_if_not_empty_int(&trmaster_line::foc,       'F');
+  insert_if_not_empty_int(&trmaster_line::hit_count, 'H');
+  insert_if_not_empty_int(&trmaster_line::check,     'K');
+  insert_if_not_empty_int(&trmaster_line::ten_ten,   'T');
+||||||| .r241
+  if (!itu_zone().empty())
+    rv += (" =I"s + itu_zone());
+=======
+//  if (!itu_zone().empty())
+//    rv += (" =I"s + itu_zone());
+>>>>>>> .r243
+
+//  if (cq_zone())
+//    rv += (" =C"s + ::to_string(cq_zone()));
+
+<<<<<<< .mine
+//  if (foc())
+//    rv += (" =F"s + ::to_string(foc()));
+||||||| .r241
+  if (!name().empty())
+    rv += (" =N"s + name());
+=======
+//  if (!name().empty())
+//    rv += (" =N"s + name());
+>>>>>>> .r243
+
+<<<<<<< .mine
+//  if (hit_count())
+//    rv += (" =H"s + ::to_string(hit_count()));
+||||||| .r241
+  if (!qth().empty())
+    rv += (" =Q"s + qth());
+=======
+//  if (!qth().empty())
+//    rv += (" =Q"s + qth());
+>>>>>>> .r243
+
+//  if (check())
+//    rv += (" =K"s + ::to_string(check()));
+
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 //  if (ten_ten())
 //    rv += (" =T"s +  ::to_string(ten_ten()));
 
@@ -629,8 +710,30 @@ m = encoded age from AA SSB YYYYMM:AGE
 
 TODO: make this a template that works on a vector of strings or a vector of string_views
 */
+<<<<<<< HEAD
 string drmaster_line::_extract_field(const vector<string>& fields, const string_view field_indicator)
 { const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+=======
+<<<<<<< .mine
+string drmaster_line::_extract_field(const vector<string>& fields, const string_view field_indicator)
+{ const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+||||||| .r241
+//string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
+string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
+{ //for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
+  //{ if (cit->starts_with(field_indicator))
+  //    return (cit->substr(field_indicator.length()));
+  //}
+  const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+=======
+string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
+{ //for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
+  //{ if (cit->starts_with(field_indicator))
+  //    return (cit->substr(field_indicator.length()));
+  //}
+  const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+>>>>>>> .r243
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
   return ( (it == fields.end()) ? string { } : it->substr(field_indicator.length()));
 }
@@ -712,7 +815,11 @@ void drmaster_line::_process_field(const std::string_view sv)
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
+<<<<<<< HEAD
 #if 0
+=======
+#if 1
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 drmaster_line::drmaster_line(const string_view line_or_call)
 { const vector<string> fields { split_string <std::string> (line_or_call, ' ') };   // TRY A SET INSTEAD OF A VECTOR
 
@@ -762,6 +869,7 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 }
 #endif
 
+<<<<<<< HEAD
 #if 1
 drmaster_line::drmaster_line(const string_view line_or_call)
 { if (line_or_call.empty())
@@ -803,6 +911,8 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 }
 #endif
 
+=======
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 #if 0
 drmaster_line::drmaster_line(const string_view line_or_call)
 { static const map<char, void (drmaster_line::*) (const string&)> c_to_member { { 'K', &drmaster_line::check },
@@ -841,17 +951,61 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 //                                                { 'n', _age_aa_cw },   // encoded as YYYYMMDD:nn
 //                                              };
 
+<<<<<<< HEAD
   auto process_field = [this] (const string_view sv) { const char        c     { sv[1] };
                                                        const string_view value { sv.substr(2) };
 
+=======
+<<<<<<< .mine
+  auto process_field = [this] (const string_view sv) { const char        c     { sv[1] };
+                                                       const string_view value { sv.substr(2) };
+||||||| .r241
+  if (!section().empty())
+    rv += " =A"s + section();
+=======
+  using VOID_PARAM = const string& (drmaster_line::*)(void) const&;     // the signature for the getter functions
+>>>>>>> .r243
+
+<<<<<<< .mine
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
  //                                                      if (c == 'p')
  //                                                        _xscp = from_string<decltype(_xscp)>(sv);
  //                                                      else
 //                                                         c_to_member.at(c) = value;
  //                                                        this. (* (c_to_member.at(c)))(value);
                                                      };
+<<<<<<< HEAD
 
 
+=======
+||||||| .r241
+  if (!cq_zone().empty())
+    rv += " =C"s + cq_zone();
+=======
+  auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
+                                                                           rv += ( " ="s + c + value );
+                                                                       };
+>>>>>>> .r243
+
+<<<<<<< .mine
+||||||| .r241
+  if (!foc().empty())
+    rv += " =F"s + foc();
+=======
+  insert_if_not_empty(&drmaster_line::section,   'A');
+  insert_if_not_empty(&drmaster_line::cq_zone,   'C');
+  insert_if_not_empty(&drmaster_line::foc,       'F');
+  insert_if_not_empty(&drmaster_line::grid,      'G');
+  insert_if_not_empty(&drmaster_line::hit_count, 'H');
+  insert_if_not_empty(&drmaster_line::itu_zone,  'I');
+  insert_if_not_empty(&drmaster_line::check,     'K');
+  insert_if_not_empty(&drmaster_line::name,      'N');
+  insert_if_not_empty(&drmaster_line::qth,       'Q');
+  insert_if_not_empty(&drmaster_line::ten_ten,   'T');
+>>>>>>> .r243
+
+<<<<<<< .mine
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
   if (line_or_call.empty())
     return;
 
@@ -876,6 +1030,34 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 
       string_view next_field;
 
+<<<<<<< HEAD
+=======
+||||||| .r241
+  if (!grid().empty())
+    rv += " =G"s + grid();
+
+  if (!hit_count().empty())
+    rv += " =H"s + hit_count();
+
+  if (!itu_zone().empty())
+    rv += " =I"s + itu_zone();
+
+  if (!check().empty())
+    rv += " =K"s + check();
+
+  if (!name().empty())
+    rv += " =N"s + name();
+
+  if (!qth().empty())
+    rv += " =Q"s + qth();
+
+  if (!ten_ten().empty())
+    rv += " =T"s + ten_ten();
+
+=======
+// U, V, W, X
+>>>>>>> .r243
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
       if (space_posn == string::npos)
         next_field = substring <string_view> (line_or_call, eq_posn);
       else
@@ -885,7 +1067,31 @@ drmaster_line::drmaster_line(const string_view line_or_call)
     }
   }
 
+<<<<<<< HEAD
 
+=======
+<<<<<<< .mine
+||||||| .r241
+  if (!cw_power().empty())
+    rv += " =y"s + cw_power();
+=======
+  insert_if_not_empty(&drmaster_line::age_aa_ssb, 'm');
+  insert_if_not_empty(&drmaster_line::age_aa_cw,  'n');
+  insert_if_not_empty(&drmaster_line::cw_power,   'y');
+  insert_if_not_empty(&drmaster_line::date,       'z');
+  insert_if_not_empty(&drmaster_line::iota,       'w');
+  insert_if_not_empty(&drmaster_line::precedence, 'u');
+  insert_if_not_empty(&drmaster_line::qth2,       'o');
+  insert_if_not_empty(&drmaster_line::skcc,       'q');
+  insert_if_not_empty(&drmaster_line::society,    'v');
+  insert_if_not_empty(&drmaster_line::spc,        'r');
+  insert_if_not_empty(&drmaster_line::ssb_power,  'x');
+  insert_if_not_empty(&drmaster_line::state_160,  's');
+  insert_if_not_empty(&drmaster_line::state_10,   't');
+>>>>>>> .r243
+
+<<<<<<< .mine
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 #if 0
   const vector<string> fields { split_string <std::string> (line_or_call, ' ') };   // TRY A SET INSTEAD OF A VECTOR
 
@@ -942,6 +1148,39 @@ string drmaster_line::to_string(void) const
 
   rv += call();
 
+||||||| .r241
+  if (!date().empty())
+    rv += " =z"s + date();
+
+  if (!iota().empty())
+    rv += " =w"s + iota();
+
+  if (!precedence().empty())
+    rv += " =u"s + precedence();
+
+  if (!qth2().empty())
+    rv += " =o"s + qth2();
+
+  if (!skcc().empty())
+    rv += " =q"s + skcc();
+
+  if (!society().empty())
+    rv += " =v"s + society();
+
+  if (!spc().empty())
+    rv += " =r"s + spc();
+
+  if (!ssb_power().empty())
+    rv += " =x"s + ssb_power();
+
+  if (!state_160().empty())
+    rv += " =s"s + state_160();
+
+  if (!state_10().empty())
+    rv += " =t"s + state_10();
+
+=======
+>>>>>>> .r243
   using VOID_PARAM = const string& (drmaster_line::*)(void) const&;     // the signature for the getter functions
 
   auto insert_if_not_empty = [&rv, this] (VOID_PARAM fn, const char c) { if (const string value { std::invoke(fn, *this) }; !value.empty())
@@ -1085,7 +1324,20 @@ void drmaster::_prepare_from_file_contents(const string_view contents, const int
     Throws exception if the file does not exist or is incorrectly formatted;
     except creates empty object if called with default filename that does not exist
 */
+<<<<<<< .mine
 drmaster::drmaster(const string_view filename, const int xscp_limit)
+||||||| .r241
+drmaster::drmaster(const string& filename, const int xscp_limit)
+=======
+<<<<<<< .mine
+drmaster::drmaster(const string_view filename, const int xscp_limit)
+||||||| .r241
+drmaster::drmaster(const string& filename, const int xscp_limit)
+>>>>>>> .r243
+=======
+//drmaster::drmaster(const string& filename, const int xscp_limit)
+drmaster::drmaster(const string_view filename, const int xscp_limit)
+>>>>>>> .r242
 { if (!filename.empty())
   { try
     { //_prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
@@ -1115,7 +1367,17 @@ drmaster::drmaster(const string_view filename, const int xscp_limit)
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
+<<<<<<< HEAD
+=======
+<<<<<<< .mine
 drmaster::drmaster(const vector<string>& path, const string_view filename, const int xscp_limit)
+||||||| .r241
+drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
+=======
+//drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
+drmaster::drmaster(const vector<string>& path, const string_view filename, const int xscp_limit)
+>>>>>>> .r243
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
@@ -1127,7 +1389,17 @@ drmaster::drmaster(const vector<string>& path, const string_view filename, const
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
+<<<<<<< HEAD
+=======
+<<<<<<< .mine
 void drmaster::prepare(const string_view filename, const int xscp_limit)
+||||||| .r241
+void drmaster::prepare(const string& filename, const int xscp_limit)
+=======
+//void drmaster::prepare(const string& filename, const int xscp_limit)
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
+void drmaster::prepare(const string_view filename, const int xscp_limit)
+>>>>>>> .r243
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
 }

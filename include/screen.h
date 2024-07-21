@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // $Id: screen.h 247 2024-07-19 01:48:06Z  $
+=======
+// $Id: screen.h 243 2024-07-15 19:38:06Z  $
+>>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -206,13 +210,38 @@ public:
 */
 
 class window_information
-{
+{ using INT_TYPE = int16_t;
+
 protected:
 
+<<<<<<< .mine
   WIN_INT_TYPE   _x { 0 };                     ///< x location on the screen
   WIN_INT_TYPE   _y { 0 };                     ///< y location on the screen
   WIN_INT_TYPE   _w { 0 };                     ///< width
   WIN_INT_TYPE   _h { 0 };                     ///< height
+||||||| .r241
+  int   _x { 0 };                     ///< x location on the screen
+  int   _y { 0 };                     ///< y location on the screen
+  int   _w { 0 };                     ///< width
+  int   _h { 0 };                     ///< height
+=======
+<<<<<<< .mine
+  WIN_INT_TYPE   _x { 0 };                     ///< x location on the screen
+  WIN_INT_TYPE   _y { 0 };                     ///< y location on the screen
+  WIN_INT_TYPE   _w { 0 };                     ///< width
+  WIN_INT_TYPE   _h { 0 };                     ///< height
+||||||| .r241
+  int   _x { 0 };                     ///< x location on the screen
+  int   _y { 0 };                     ///< y location on the screen
+  int   _w { 0 };                     ///< width
+  int   _h { 0 };                     ///< height
+>>>>>>> .r243
+=======
+  INT_TYPE   _x { 0 };                     ///< x location on the screen
+  INT_TYPE   _y { 0 };                     ///< y location on the screen
+  INT_TYPE   _w { 0 };                     ///< width
+  INT_TYPE   _h { 0 };                     ///< height
+>>>>>>> .r242
 
   std::string _fg_colour { "white"s };       ///< name of foreground colour
   std::string _bg_colour { "black"s };       ///< name of background colour
@@ -662,7 +691,20 @@ window& delete_character(const WIN_INT_TYPE n);
 
     Line number zero is the bottom line
 */
+<<<<<<< .mine
   window& delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr);
+||||||| .r241
+  window& delete_character(const int n, const int line_nr);
+=======
+<<<<<<< .mine
+  window& delete_character(const WIN_INT_TYPE n, const WIN_INT_TYPE line_nr);
+||||||| .r241
+  window& delete_character(const int n, const int line_nr);
+>>>>>>> .r243
+=======
+//  window& delete_character(const int n, const int line_nr);
+  window& delete_character(const INT_TYPE n, const INT_TYPE line_nr);
+>>>>>>> .r242
 
 /// set function used to process input
   inline void process_input_function(WINDOW_PROCESS_INPUT_TYPE pf)
@@ -713,12 +755,73 @@ window& delete_character(const WIN_INT_TYPE n);
     { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
 };
 
+<<<<<<< .mine
 /*  \brief  Obtain all the overlapping pairs of windows from a container (map)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
 std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
 
+||||||| .r241
+=======
+<<<<<<< .mine
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
+
+||||||| .r241
+=======
+/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+    \param  windows   map containing all the windows
+    \return           all the pairs of names of overlapping windows
+*/
+std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
+
+#if 0
+template <class T>
+  requires is_same_v<typename T::value_type, window_information>
+std::vector<std::pair<std::string, std::string>> window_overlaps(const T& windows)
+{ std::vector<std::pair<std::string, std::string>> rv;
+
+  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+  { const window_information& wi1 { it -> second };
+
+    const int x1 { wi1.x() };
+    const int y1 { wi1.y() };
+    const int w1 { wi1.w() };
+    const int h1 { wi1.h() };
+
+    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+    { const window_information& wi2 { it2 -> second };
+
+      const int x2 { wi2.x() };
+      const int y2 { wi2.y() };
+      const int w2 { wi2.w() };
+      const int h2 { wi2.h() };
+
+//          ost << "checking " << it -> first << " + " << it2 -> first << endl;
+
+      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
+      { //windows_overlap = true;
+
+        rv += { it -> first, it2 -> first };
+
+//            ost << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            cerr << "ERROR: WINDOW OVERLAP: " << it -> first << " + " << it2 -> first << endl;
+//            exit(-1);
+          }
+        }
+      }
+
+
+  return rv;
+}
+#endif
+
+>>>>>>> .r242
+>>>>>>> .r243
 /*! \brief          Move the cursor in a window
     \param  win     the window to be affected
     \param  c       cursor coordinates to which to move
