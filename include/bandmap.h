@@ -1,4 +1,4 @@
-// $Id: bandmap.h 241 2024-06-02 19:59:44Z  $
+// $Id: bandmap.h 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -500,21 +500,19 @@ public:
 /*! \brief          Remove a particular value of a callsign mult
     \param  name    name of the mult
     \param  value   value of the mult
+    \return         whether a value was actually removed
 
     Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
 */
-//  inline void remove_callsign_mult(const std::string& name, const std::string& value)
-//    { _is_needed_callsign_mult.remove( { name, value } ); }
   inline bool remove_callsign_mult(const std::string& name, const std::string& value)
     { return _is_needed_callsign_mult.remove( { name, value } ); }
 
 /*! \brief          Remove a particular value of country mult
     \param  value   value of the mult
+    \return         whether a value was actually removed
 
     Does nothing if the value <i>value</i> is unknown
 */
-//  inline void remove_country_mult(const std::string& value)
-//    { _is_needed_country_mult.remove(value); }
   inline bool remove_country_mult(const std::string& value)
     { return _is_needed_country_mult.remove(value); }
 

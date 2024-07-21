@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: string_functions.cpp 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -557,6 +557,26 @@ string nth_word(const string_view s, const unsigned int n, const unsigned int wr
   return rv;
 }
 
+#if 0
+// return posn_1, posn_2; posn_2 is the location of sep, or string::npos
+pair<size_t, size_t> to_next_separator(const std::string_view cs, const size_t posn, const char sep)
+{ if (cs.empty())
+    return { cs.size(), cs.size() };    // return { 0, 0 }
+
+  size_t posn_1 { posn };
+
+  while ( (posn_1 < cs.size()) and (cs[posn_1] == sep) )
+    posn_1++;
+
+  if (posn_1 == cs.size())
+    return { cs.size(), cs.size() };    // all chacters are sep
+
+  size_t next_posn { FIND_IF(cs, sep, posn_1) };
+
+  return { posn_1, next_posn };
+}
+#endif
+
 /*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
     \param  str     UTF-8 string to be analysed
     \return         number of bytes occupied by <i>str</i>
@@ -587,12 +607,12 @@ size_t n_chars(const string& str)
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 bool is_legal_ipv4_address(const string_view cs)
-{ const vector<string> fields { split_string <std::string> (cs, '.') };
+{ const vector<string_view> fields { split_string <std::string_view> (cs, '.') };
 
   if (fields.size() != 4)
     return false;
 
-  for (const auto& field : fields)
+  for (const auto field : fields)
   { try
     { const int value { from_string<int>(field) };
 
@@ -997,3 +1017,23 @@ string to_printable_string(const string_view str)
 
   return rv;
 }
+
+// https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
+std::string readuntil(std::istream& in, const std::string_view delimiter)
+{ std::string cr;
+
+  const char   delim { *(delimiter.rbegin()) };
+  const size_t sz    { delimiter.size() };
+
+  size_t tot;
+
+  do { std::string temp;
+       std::getline(in, temp, delim);
+
+       cr += temp + delim;
+       tot = cr.size();
+    } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
+
+  return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
+}
+

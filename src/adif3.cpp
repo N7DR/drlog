@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: adif3.cpp 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -12,11 +12,14 @@
 */
 
 #include "adif3.h"
+#include "log_message.h"
 
 #include <algorithm>
 #include <iostream>
 
 using namespace std;
+
+extern message_stream    ost;       ///< debugging/logging output
 
 /*! \brief  place values into standardised forms as necessary
 
@@ -55,7 +58,6 @@ void adif3_field::_normalise(void)
   }
 
 // force some values into upper case
-//  if (uc_fields > _name)
   if (uc_fields.contains(_name))
   { _value = to_upper(_value);
     return;
@@ -101,7 +103,8 @@ void adif3_field::_verify(void) const
     break;
       
     case ADIF3_DATA_TYPE::ENUMERATION_BAND :
-    { if (!(_ENUMERATION_BAND > to_lower(_value)))
+    { //if (!(_ENUMERATION_BAND > to_lower(_value)))
+      if (!_ENUMERATION_BAND.contains(to_lower(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -110,20 +113,21 @@ void adif3_field::_verify(void) const
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
-//      if (!(_ENUMERATION_DXCC_ENTITY_CODE > from_string<int>(_value)))
       if (!(_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value))))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
     }
     break;
     
     case ADIF3_DATA_TYPE::ENUMERATION_MODE :
-    { if (!(_ENUMERATION_MODE > to_upper(_value)))
+    { //if (!(_ENUMERATION_MODE > to_upper(_value)))
+      if (!(_ENUMERATION_MODE.contains(to_upper(_value))))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
  
     case ADIF3_DATA_TYPE::ENUMERATION_QSL_RECEIVED :
-    { if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
+    { //if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
+      if (!( _ENUMERATION_QSL_RECEIVED.contains(to_upper(_value))))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -197,7 +201,6 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 
     case ADIF3_DATA_TYPE::STRING :        // amazingly (but nothing about this should amaze me), a "sequence of": ASCII character whose code lies in the range of 32 through 126, inclusive
     { for (const char c : _value)
-//        if ( (static_cast<int>(c) < 32) or (static_cast<int>(c) > 126) )
         if ( int intval { static_cast<int>(c) }; (intval < 32) or (intval > 126) )
           throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
     }
@@ -261,7 +264,7 @@ adif3_field::adif3_field(const string& field_name, const string& field_value)
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-//size_t adif3_field::import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
+#if 0
 size_t adif3_field::import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
 { const auto posn_1 { str.find('<', start_posn) };
 
@@ -293,14 +296,6 @@ size_t adif3_field::import_and_eat(const std::string_view str, const size_t star
   const int    n_chars  { from_string<int>(fields[1]) };
   const string contents { str.substr(posn_2 + 1, n_chars) };
   const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
-    
-// check validity
-//  const auto it { _element_type.find(_name) };
-
-//  if (it == _element_type.end())
-//    throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
-    
-//  _type = it->second;
 
   const auto atype { OPT_MUM_VALUE(_element_type, _name) };
 
@@ -315,6 +310,59 @@ size_t adif3_field::import_and_eat(const std::string_view str, const size_t star
   
   return rv;
 }  
+#endif
+
+size_t adif3_field::import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const std::set<std::string>& accept_fields)
+{ const auto posn_1 { str.find('<', start_posn) };
+
+  if (posn_1 == string::npos)        // could not find initial delimiter
+    return string::npos;
+
+  const auto posn_2          { str.find('>', posn_1) };
+  const bool pointing_at_eor { (posn_2 == end_posn) };
+
+  if (pointing_at_eor)
+    return (posn_2 + 1);
+
+  if (posn_2 == string::npos)        // could not find ending delimiter
+    return string::npos;
+
+// if it's the EOR, then jump out
+  const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
+  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, ':') };
+
+  if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
+    return string::npos;
+
+  const int    n_chars { from_string<int>(fields[1]) };
+  const size_t rv      { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
+  const string uc_name { to_upper(fields[0]) };
+
+  if (accept_fields.empty() or accept_fields.contains(uc_name))
+  { if (!_name.empty() and ( to_upper(fields[0]) != to_upper(name()) ))      // name mismatch
+      return string::npos;
+
+    if (_name.empty())
+      _name = to_upper(fields[0]);                                // force name to UC
+
+//    const int    n_chars  { from_string<int>(fields[1]) };
+    const string contents { str.substr(posn_2 + 1, n_chars) };
+//    const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
+
+    const auto atype { OPT_MUM_VALUE(_element_type, _name) };
+
+    if (!atype)
+      throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
+
+    _type = atype.value();
+    _value = contents;
+
+    _verify();
+    _normalise();
+  }
+
+  return rv;
+}
 
 // ---------------------------------------------------  adif3_record -----------------------------------------
 
@@ -342,19 +390,54 @@ int adif3_record::_fast_string_to_int(const string& str) const
 
     Returns string::npos if reads past the end of <i>str</i>
 */ 
-size_t adif3_record::import_and_eat(const std::string_view str, const size_t posn)
+size_t adif3_record::import_and_eat(const std::string_view str, const size_t posn, const std::set<std::string>& accept_fields)
 { 
 // extract the text from the first "<" to the end of the first "eor"
   const auto posn_1 { str.find('<', posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
-    
+
+#if 1
   const auto posn_2 { case_insensitive_find(str, "<EOR>"sv, posn)  + 4 };  // 4 = length("<EOR>") - 1; posn_2 points to last char: ">"
     
   if (posn_2 == string::npos)        // could not find end-of-record marker
     return string::npos;
-  
+#endif
+
+// this is no faster than the above.... perhaps all the time is spent in normalisation and verification later in the routine
+#if 0
+//  static int counter { 0 };
+
+  size_t posn_2 { posn_1 };
+
+  auto posn_3 { str.find('>', posn_1) };
+
+  if (posn_3 == string::npos)        // could not find end-of-record marker
+    return string::npos;
+
+  bool found_it { false };
+
+  while (!found_it)
+  { while ( (posn_3 - posn_2  != 4) )
+    { posn_2 = str.find('<', posn_3 + 1);
+
+      if (posn_2 == string::npos)        // could not find end-of-record marker
+        return string::npos;
+
+      posn_3 = { str.find('>', posn_2 + 1) };
+
+      if (posn_3 == string::npos)        // could not find end-of-record marker
+        return string::npos;
+    }
+
+//    found_it = (to_upper(substring <string_view> (str, posn_3 - 4, 5)) == "<EOR>");
+    found_it = (to_upper(substring <string_view> (str, posn_2, 5)) == "<EOR>");
+  }
+
+  posn_2 = posn_3;  // so that stuff after endif works
+#endif
+
   const size_t rv { ( (posn_2 + 1) >= str.length() ? string::npos : posn_2 + 1) };
   
   size_t start_posn { posn_1 };
@@ -362,10 +445,11 @@ size_t adif3_record::import_and_eat(const std::string_view str, const size_t pos
   while (start_posn <= posn_2)
   { adif3_field element;
 
-    start_posn = element.import_and_eat(str, start_posn, posn_2);             // name is forced to upper case
+    start_posn = element.import_and_eat(str, start_posn, posn_2, accept_fields);             // name is forced to upper case
     
-    if ( auto [it, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
-      throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
+    if (!element.name().empty())
+      if ( auto [it, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
+        throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
   }
   
   return rv;
@@ -437,7 +521,7 @@ bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
 
     Throws exception if something goes wrong when reading the file
 */
-adif3_file::adif3_file(const string_view filename)
+adif3_file::adif3_file(const string_view filename, const std::set<std::string>& accept_fields)
 { const string contents { read_file(filename) };            // this might throw
   
   size_t start_posn { skip_adif3_header(contents) };
@@ -445,7 +529,7 @@ adif3_file::adif3_file(const string_view filename)
   while (start_posn != string::npos)
   { adif3_record rec;
     
-    start_posn = rec.import_and_eat(contents, start_posn);
+    start_posn = rec.import_and_eat(contents, start_posn, accept_fields);
     
     if (start_posn != string::npos)
     { push_back(rec);
@@ -460,10 +544,10 @@ adif3_file::adif3_file(const string_view filename)
 
     Returns empty object if a problem occurs
 */
-adif3_file::adif3_file(const vector<string>& path, const string_view filename)
+adif3_file::adif3_file(const vector<string>& path, const string_view filename, const std::set<std::string>& accept_fields)
 { for (const auto& this_path : path)
   { try
-    { *this = adif3_file { this_path + "/"s + filename };
+    { *this = adif3_file { this_path + "/"s + filename, accept_fields };
       return;
     }
 

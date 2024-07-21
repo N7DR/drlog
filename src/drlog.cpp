@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: drlog.cpp 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+//#include <numeric>    // for accumulate()
 #include <thread>
 
 #include <future>
@@ -976,7 +977,12 @@ int main(int argc, char** argv)
     const cty_data& country_data { *country_data_p };
 
     try
-    { drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+    { time_log <std::chrono::milliseconds> tl;
+
+      drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+
+      tl.end_now();
+      ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
 
       ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
 
@@ -1210,7 +1216,7 @@ int main(int argc, char** argv)
       }
 
 // set the RBN threshold for each bandmap
-      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so there may be no need to change
+      if (rbn_threshold != 1)               // 1 is the default in a pristine bandmap, so there may be no need to change
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
@@ -1582,10 +1588,7 @@ int main(int argc, char** argv)
 
 // possibly set the auto country mults and auto callsign mults thresholds
       if (context.auto_remaining_callsign_mults())
-      { //const auto threshold { context.auto_remaining_callsign_mults_threshold() };
-
         FOR_ALL(rules.callsign_mults(), [threshold = context.auto_remaining_callsign_mults_threshold()] (const string& callsign_mult_name) { acc_callsigns[callsign_mult_name].threshold(threshold); } );
-      }
 
       if (auto_remaining_country_mults)
         acc_countries.threshold(context.auto_remaining_country_mults_threshold());
@@ -1623,15 +1626,9 @@ int main(int argc, char** argv)
       win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
 
 // set recent and fade colours for each bandmap
-      { //const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
-
-        //FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), &fc] (bandmap& bm) { bm.fade_colours(fc);
-        //                                                                              bm.recent_colour(rc);
-        //                                                                            } );
-        FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), fc = context.bandmap_fade_colours()] (bandmap& bm) { bm.fade_colours(fc);
-                                                                                                                      bm.recent_colour(rc);
-                                                                                                                    } );
-      }
+      FOR_ALL(bandmaps, [rc = context.bandmap_recent_colour(), fc = context.bandmap_fade_colours()] (bandmap& bm) { bm.fade_colours(fc);
+                                                                                                                    bm.recent_colour(rc);
+                                                                                                                  } );
 
 // create thread to prune the bandmaps every minute
       jthread(prune_bandmap, &win_bandmap, &bandmaps).detach();
@@ -3500,18 +3497,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .RESET RBN -- get a new connection
       if (command == "RESET RBN"sv)
-      { //static pthread_t thread_id_reset;
-
-        try
-        { //create_thread(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p, "RESET RBN"s);
-        }
-
-        catch (const pthread_error& e)
-        { alert("Error creating thread: RESET RBN"s);
-        }
-
         jthread(reset_connection, rbn_p).detach();
-      }
 
 // .UNINST
       if (command == "UNINST"sv)
@@ -3776,10 +3762,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field)
           { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field
-            { //ost << "HERE: exf.name() = " << exf.name() << endl;
-              //ost << "guess: " << exchange_db.guess_value(contents, exf.name()) << endl;
-
-              if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) }; !guess.empty())
+            { if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) }; !guess.empty())
               { if ((exf.name() == "RDA"sv) and (guess.length() == 2))                   // RDA guess might just have first two characters
                   exchange_str += guess;
                 else
@@ -4028,7 +4011,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
 
-//      const int nskip { (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 };
       const int16_t nskip { static_cast<int16_t>( (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
 
       processed = process_bandmap_function(&bandmap::matches_criteria, e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
@@ -4148,32 +4130,21 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       new_callsign = match_callsign(scp_matches, current_contents);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
-//      ost << "new 1 = " << new_callsign << endl;
-
       if (new_callsign.empty())
       { 
 // if there was no obvious best match, but there were some matches on offer, choose the first
-        if (new_callsign.empty() and !scp_matches.empty())
-        { new_callsign = scp_matches[0].first;
+//        if (new_callsign.empty() and !scp_matches.empty())
+//          new_callsign = scp_matches[0].first;
+//        else
+//          new_callsign = match_callsign(fuzzy_matches);
 
-//          ost << "new 2a = " << new_callsign << endl;
-        }
-        else
-        { new_callsign = match_callsign(fuzzy_matches);
-
-//          ost << "new 2 = " << new_callsign << endl;
-        }
+        new_callsign = (new_callsign.empty() and !scp_matches.empty()) ? scp_matches[0].first : match_callsign(fuzzy_matches);
 
         if (new_callsign.empty())
         { new_callsign = match_callsign(query_1_matches);
 
-//          ost << "new 3 = " << new_callsign << endl;
-
           if (new_callsign.empty())
-          { new_callsign = match_callsign(query_n_matches);
-            
-//            ost << "new 4 = " << new_callsign << endl;
-          }
+            new_callsign = match_callsign(query_n_matches);
         }
       }
       
@@ -9021,14 +8992,15 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
 if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
-{
+{ time_log <std::chrono::milliseconds> tl;
+
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
   const string dts            { date_time_string(SECONDS::NO_INCLUDE) };
   const string today          { substring <std::string> (dts, 0, 4) + substring <std::string> (dts, 5, 2) + substring <std::string> (dts, 8, 2) };
   const int    itoday         { from_string<int>(today) };
-  const auto   old_qso_limit  { context.old_qso_age_limit() };         // number of years
+  const auto   old_qso_limit  { context.old_qso_age_limit() };          // number of years
   const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10'000)) }; // date before which QSOs don't count
-  const bool   limit_old_qsos { old_qso_limit != 0 };  // whether to limit old qsos
+  const bool   limit_old_qsos { old_qso_limit != 0 };                   // whether to limit old qsos
 
   auto add_record_to_olog = [] (const adif3_record& rec)
     { const string callsign { rec.callsign() };
@@ -9047,15 +9019,12 @@ void adif3_build_old_log(void)
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
-  { //const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());       // this is not necessarily in chronological order
-    const adif3_file old_adif3_log(context_path,  context.old_adif_log_name());       // this is not necessarily in chronological order
+  { const set<string> accept_fields { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s };          // the fields we want from the ADIF file
+    const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), accept_fields };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
-//    alert("read "s + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
     if (!limit_old_qsos)
-//      for (const adif3_record& rec : old_adif3_log)
-//        add_record_to_olog(rec);
       FOR_ALL(old_adif3_log, [&add_record_to_olog] (const adif3_record& rec) { add_record_to_olog(rec); });
     else                                  // limit old QSOs
     { set<string> processed_calls;
@@ -9069,14 +9038,7 @@ void adif3_build_old_log(void)
 
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
-            for (const auto& rec : matching_qsos)
-            { const bandmode bmode { BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) };
-
-              if (auto it { bmode_records.find(bmode) }; it == bmode_records.end())
-                bmode_records += { bmode, { rec } };
-              else
-                it->second += rec;
-            }
+            FOR_ALL(matching_qsos, [&bmode_records] (const auto& rec) { bmode_records[{ BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) }] += rec; } );
 
 // now for each different band/mode
             for ( const auto& [bmode, vrec] : bmode_records )
@@ -9122,6 +9084,9 @@ void adif3_build_old_log(void)
   { ost << "Undefined error reading old log file: " << context.old_adif_log_name() << endl;
     exit(-1);
   }
+
+  tl.end_now();
+  ost << "time taken to prepare old log = " << tl.time_span<int>() << " milliseconds" << endl;
 
   win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;       // clear the MESSAGE window
 }

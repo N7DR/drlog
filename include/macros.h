@@ -1,4 +1,4 @@
-// $Id: macros.h 239 2024-05-20 13:42:00Z  $
+// $Id: macros.h 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -803,7 +803,7 @@ public:                                                                         
 template <class T, class U>
   requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
 inline bool operator>(const T& v, const U& e)
-{ return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
+  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
 
 /*! \brief      Does a set or unordered_set contains a particular member?
     \param  s   set or unordered_set  to be tested
@@ -813,7 +813,7 @@ inline bool operator>(const T& v, const U& e)
 template <class T, class U>
   requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
 inline bool operator>(const T& s, const U& v)
-{ return s.contains(v); }
+  { return s.contains(v); }
 
 /*! \brief      Is an object a member of a set or unordered_set?
     \param  v   object to be tested for membership

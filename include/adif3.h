@@ -162,7 +162,9 @@ public:
     Returns string::npos if reads past the end of <i>str</i>
 */
 //  size_t import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
-  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
+//  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
+
+  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const std::set<std::string>& accept_fields = { });
 };
 
 // ---------------------------------------------------  adif3_record -----------------------------------------
@@ -199,8 +201,10 @@ public:
     Returns string::npos if reads past the end of <i>str</i>
 */
 //  size_t import_and_eat(const std::string& str, const size_t posn);
-  size_t import_and_eat(const std::string_view str, const size_t posn);
-  
+//  size_t import_and_eat(const std::string_view str, const size_t posn);
+
+  size_t import_and_eat(const std::string_view str, const size_t posn, const std::set<std::string>& accept_fields = { });
+
 /*! \brief      Convert to printable string
     \return     the canonical textual representation of the record
 
@@ -291,7 +295,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  explicit adif3_file(const std::string_view filename);
+  /* explicit */adif3_file(const std::string_view filename, const std::set<std::string>& accept_fields = { });
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
@@ -299,7 +303,7 @@ public:
 
     Returns empty object if a problem occurs
 */
-  adif3_file(const std::vector<std::string>& path, const std::string_view filename);
+  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const std::set<std::string>& accept_fields = { });
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match

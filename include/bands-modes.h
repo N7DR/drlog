@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 236 2024-04-14 18:26:49Z  $
+// $Id: bands-modes.h 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -213,7 +213,8 @@ public:
 
 /// get frequency in kHz
   inline float khz(void) const
-    { return static_cast<float>(_hz) / 1000; }
+//    { return static_cast<float>(_hz) / 1000; }
+    { return kHz(); }
 
 /// get frequency in MHz
   inline float MHz(void) const
@@ -221,7 +222,8 @@ public:
 
 /// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
   inline float mhz(void) const
-    { return static_cast<float>(_hz) / 1'000'000; }
+//    { return static_cast<float>(_hz) / 1'000'000; }
+    { return MHz(); }
 
 /// get frequency in kHz, rounded to the nearest kHz
   inline int rounded_kHz(void) const
@@ -292,16 +294,12 @@ inline frequency operator""_kHz(const unsigned long long int f)
   { return frequency(f); }                                      // automatically converts from kHz to Hz
 
 /// _MHz (double)
-//template <typename T>
-//inline frequency operator""_MHz(const typename T f)
-//  { return frequency(f); }                                      // automatically converts from MHz to Hz
 inline frequency operator""_MHz(const long double f)
   { return frequency(f); }                                      // automatically converts from MHz to Hz
 
 /// _MHz (int)
 inline frequency operator""_MHz(const unsigned long long int  f)
   { return frequency(f); }                                      // automatically converts from MHz to Hz
-
 
 /// ostream << frequency
 std::ostream& operator<<(std::ostream& ost, const frequency& f);

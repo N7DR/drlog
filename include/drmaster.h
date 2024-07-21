@@ -1,4 +1,4 @@
-// $Id: drmaster.h 241 2024-06-02 19:59:44Z  $
+// $Id: drmaster.h 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,14 +47,16 @@ protected:
 
     <i>posn</i> is updated to point at the start of the next call
 */
-  std::string _get_call(const std::string& contents, uint32_t& posn) const;
+//  std::string _get_call(const std::string& contents, uint32_t& posn) const;
+  std::string _get_call(const std::string_view contents, uint32_t& posn) const;
 
 public:
 
 /*! \brief              Default constructor
     \param  filename    name of file from which to donstruct the object
 */
-  explicit master_dta(const std::string& filename = "master.dta"s);
+//  explicit master_dta(const std::string& filename = "master.dta"s);
+  explicit master_dta(const std::string_view filename = "master.dta"s);
 
 /*! \brief      Get all the calls
     \return     all the calls from the file
@@ -98,8 +100,7 @@ public:
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
 */
-//  explicit trmaster_line(const std::string& line);
-  explicit trmaster_line(std::string_view line);
+  explicit trmaster_line(const std::string_view line);
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -183,7 +184,8 @@ protected:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-  trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
+//  trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
+  trmaster_line _get_binary_record(const std::string_view contents, uint32_t& posn);
 
 public:
 
@@ -242,13 +244,25 @@ protected:
   int _xscp { 0 };                                              ///< extended SCP value
 
 /*! \brief                      Extract a single field from the record
-    \param  fields              all the fields
+    \param  fields              all the fields (e.g., "=Xabc")
     \param  field_indicator     indicator that prefixes the field (for example: "=H")
     \return                     Value of the field with the indicator <i>field_indicator</i>
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
 std::string _extract_field(const std::vector<std::string>& fields, const std::string_view field_indicator);
+
+/*! \brief                      Extract a single field from the record
+    \param  fields              all the fields (e.g., "=Xabc")
+    \param  field_indicator     character that prefixes the field (for example: 'H"')
+    \return                     Value of the field with the indicator <i>field_indicator</i>
+
+    Returns empty string if no field has the indicator <i>field_indicator</i>
+*/
+//inline std::string _extract_field(const std::vector<std::string>& fields, const char field_char)
+//  { return _extract_field(fields, "="s + field_char); }
+
+  void _process_field(const std::string_view sv);
 
 public:
 
@@ -385,7 +399,6 @@ public:
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  void prepare(const std::string& filename, const int xscp_limit = 1);
   void prepare(const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
@@ -398,7 +411,8 @@ public:
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+//  void prepare(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
+  void prepare(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;

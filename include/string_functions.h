@@ -1,4 +1,4 @@
-// $Id: string_functions.h 241 2024-06-02 19:59:44Z  $
+// $Id: string_functions.h 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -724,7 +724,7 @@ auto remove_peripheral_spaces(T&& t) -> std::vector<STYPE>
     \return             vector containing the separate components
 */
 template <typename STYPE>
-auto split_string(std::string_view cs, std::string_view separator) -> std::vector<STYPE>
+auto split_string(const std::string_view cs, const std::string_view separator) -> std::vector<STYPE>
 { size_t start_posn { 0 };
 
   std::vector<STYPE> rv;
@@ -750,9 +750,8 @@ auto split_string(std::string_view cs, std::string_view separator) -> std::vecto
 
     Some of the returned elements may be the null string
 */
-
 template <typename STYPE>
-auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+auto split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   if (cs.empty())
@@ -784,12 +783,8 @@ auto split_string(std::string_view cs, const char separator = ',') -> std::vecto
   return rv;
 }
 
-#if 0
-template <typename STYPE>
-//auto split_string(std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-inline auto split_string(std::string_view cs) -> std::vector<STYPE>
-{ return split_string <STYPE> (cs, ','); }
-#endif
+// return posn_1, posn_2; posn_2 is the location of sep, or string::npos
+//std::pair<size_t, size_t> to_next_separator(const std::string_view cs, const size_t posn, const char sep);
 
 /*! \brief              Split a string into records
     \param  cs          original string
@@ -798,7 +793,7 @@ inline auto split_string(std::string_view cs) -> std::vector<STYPE>
     \return             vector containing the separate records
 */
 template <typename STYPE>
-auto split_string_into_records(std::string_view cs, const char eor_marker = '|', const enum DELIMITERS delim_rule = DELIMITERS::DROP) -> std::vector<STYPE>
+auto split_string_into_records(const std::string_view cs, const char eor_marker = '|', const enum DELIMITERS delim_rule = DELIMITERS::DROP) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   if (cs.empty())
@@ -807,7 +802,7 @@ auto split_string_into_records(std::string_view cs, const char eor_marker = '|',
   std::vector<size_t> posns;
 
 // build an array of positions of the eor marker
-  for (size_t n = 0; n < cs.size(); ++n)
+  for (size_t n { 0 }; n < cs.size(); ++n)
     if (cs[n] == eor_marker)
       posns += n;
 
@@ -831,7 +826,7 @@ auto split_string_into_records(std::string_view cs, const char eor_marker = '|',
     \return             vector containing the separate components, with peripheral spaces removed
 */
 template <typename STYPE>
-inline auto clean_split_string(std::string_view cs, std::string_view separator) -> std::vector<STYPE>
+inline auto clean_split_string(const std::string_view cs,const std::string_view separator) -> std::vector<STYPE>
   { return remove_peripheral_spaces(split_string <STYPE> (cs, separator)); }
 
 /*! \brief              Split a string into components, and remove peripheral spaces from each component
@@ -1524,6 +1519,9 @@ inline std::string operator+(const std::string_view sv1, const std::string_view 
 // concatenate a string with a string_view
 inline std::string operator+(const std::string_view sv1, const std::string& s2)
 { return std::string(sv1) + s2; }
+
+// https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
+std::string readuntil(std::istream& in, const std::string_view delimiter);
 
 /// a standard hash function for strings (the DJB function)
 constexpr long unsigned int STR_HASH(const char* str, int off = 0) 

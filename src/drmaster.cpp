@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: drmaster.cpp 248 2024-07-20 16:31:45Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,6 +17,7 @@
 
 #include "drmaster.h"
 #include "log_message.h"
+#include "textfile.h"
 
 using namespace std;
 
@@ -74,7 +75,8 @@ typename C::value_type value_line(const C& values, const int pc)
 
     <i>posn</i> is updated to point at the start of the next call
 */
-string master_dta::_get_call(const string& contents, uint32_t& posn) const
+//string master_dta::_get_call(const string& contents, uint32_t& posn) const
+string master_dta::_get_call(const string_view contents, uint32_t& posn) const
 { string rv;
 
   while ((posn < contents.length()) and static_cast<int>(contents[posn]) != 0)
@@ -90,7 +92,8 @@ string master_dta::_get_call(const string& contents, uint32_t& posn) const
 
     Also default constructor, with filename "master.dta"
 */
-master_dta::master_dta(const string& filename)
+//master_dta::master_dta(const string& filename)
+master_dta::master_dta(const string_view filename)
 { const string contents { read_file(filename) };                // throws exception if there's a problem
 
   if (contents.length() < sizeof(uint32_t))
@@ -127,7 +130,8 @@ master_dta::master_dta(const string& filename)
     Returns empty string if there is no value associated with <i>param</i>
 */
 //string __extract_value(const string& line, const string& param)
-string __extract_value(string_view line, const string& param)
+//string __extract_value(string_view line, const string& param)
+string __extract_value(const string_view line, const string& param)
 { if (!contains(line, param))
     return string();
 
@@ -180,8 +184,7 @@ t = temporary
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
 */
-//trmaster_line::trmaster_line(const string& line)
-trmaster_line::trmaster_line(string_view line)
+trmaster_line::trmaster_line(const string_view line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
@@ -227,44 +230,38 @@ string trmaster_line::to_string(void) const
                                                                            rv += ( " ="s + c + value );
                                                                        };
 
-  insert_if_not_empty(&trmaster_line::section,   'A');
-//  insert_if_not_empty(&trmaster_line::cq_zone,   'C');
-//  insert_if_not_empty(&trmaster_line::foc,   'F');
-  insert_if_not_empty(&trmaster_line::grid,   'G');
-//  insert_if_not_empty(&trmaster_line::hit_count,   'H');
-  insert_if_not_empty(&trmaster_line::itu_zone,   'I');
-  insert_if_not_empty(&trmaster_line::name,   'N');
-  insert_if_not_empty(&trmaster_line::qth,   'Q');
+  insert_if_not_empty(&trmaster_line::section,  'A');
+  insert_if_not_empty(&trmaster_line::grid,     'G');
+  insert_if_not_empty(&trmaster_line::itu_zone, 'I');
+  insert_if_not_empty(&trmaster_line::name,     'N');
+  insert_if_not_empty(&trmaster_line::qth,      'Q');
 
-//  if (!section().empty())
-//    rv += (" =A"s + section());
+  using VOID_PARAM_INT = const int& (trmaster_line::*)(void) const&;     // the signature for the getter functions
 
-  if (cq_zone())
-    rv += (" =C"s + ::to_string(cq_zone()));
+  auto insert_if_not_empty_int = [&rv, this] (VOID_PARAM_INT fn, const char c) { if (const int value { std::invoke(fn, *this) }; (value != 0))
+                                                                                   rv += ( " ="s + c + ::to_string(value) );
+                                                                               };
 
-  if (foc())
-    rv += (" =F"s + ::to_string(foc()));
+  insert_if_not_empty_int(&trmaster_line::cq_zone,   'C');
+  insert_if_not_empty_int(&trmaster_line::foc,       'F');
+  insert_if_not_empty_int(&trmaster_line::hit_count, 'H');
+  insert_if_not_empty_int(&trmaster_line::check,     'K');
+  insert_if_not_empty_int(&trmaster_line::ten_ten,   'T');
 
-//  if (!grid().empty())
-//    rv += (" =G"s + grid());
+//  if (cq_zone())
+//    rv += (" =C"s + ::to_string(cq_zone()));
 
-  if (hit_count())
-    rv += (" =H"s + ::to_string(hit_count()));
+//  if (foc())
+//    rv += (" =F"s + ::to_string(foc()));
 
-//  if (!itu_zone().empty())
-//    rv += (" =I"s + itu_zone());
+//  if (hit_count())
+//    rv += (" =H"s + ::to_string(hit_count()));
 
-  if (check())
-    rv += (" =K"s + ::to_string(check()));
+//  if (check())
+//    rv += (" =K"s + ::to_string(check()));
 
-//  if (!name().empty())
-//    rv += (" =N"s + name());
-
-//  if (!qth().empty())
-//    rv += (" =Q"s + qth());
-
-  if (ten_ten())
-    rv += (" =T"s +  ::to_string(ten_ten()));
+//  if (ten_ten())
+//    rv += (" =T"s +  ::to_string(ten_ten()));
 
   char user_letter { 'U' };
 
@@ -386,7 +383,8 @@ control characters are:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
+//trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
+trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t& posn)
 { constexpr int CTRL_Y { 25 };
 
   string callsign;
@@ -404,15 +402,21 @@ trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& pos
   string ten_ten;
   string user_1, user_2, user_3, user_4, user_5;
 
+  auto get_field = [&contents, &posn] (string& field) { while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+                                                          { field += contents[posn++]; }
+                                                      };
+
   while (static_cast<int>(contents[posn]) != 0)                                           // marks end of record
-  { while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-      { callsign += contents[posn++]; }
+  { //while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+    //  { callsign += contents[posn++]; }
+    get_field(callsign);
 
     switch (static_cast<int>(contents[posn]))
     { case 1 :              // ctrl-A
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { section += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { section += contents[posn++]; }
+        get_field(section);
         break;
 
       case 3 :             // ctrl-C
@@ -617,7 +621,7 @@ m = encoded age from AA SSB YYYYMM:AGE
 */
 
 /*! \brief                      Extract a single field from the record
-    \param  fields              all the fields
+    \param  fields              all the fields (e.g., "=Xabc")
     \param  field_indicator     indicator that prefixes the field (for example: "=H")
     \return                     Value of the field with the indicator <i>field_indicator</i>
 
@@ -625,18 +629,82 @@ m = encoded age from AA SSB YYYYMM:AGE
 
 TODO: make this a template that works on a vector of strings or a vector of string_views
 */
-string drmaster_line::_extract_field(const vector<string>& fields, const std::string_view field_indicator)
-{ //for (vector<string>::const_iterator cit { fields.cbegin() }; cit != fields.cend(); ++cit)
-  //{ if (cit->starts_with(field_indicator))
-  //    return (cit->substr(field_indicator.length()));
-  //}
-  const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
-
-//  auto it { FIND_IF(fields.cbegin(), fields.cend(), [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
+string drmaster_line::_extract_field(const vector<string>& fields, const string_view field_indicator)
+{ const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
 
   return ( (it == fields.end()) ? string { } : it->substr(field_indicator.length()));
+}
 
-//  return string { };
+void drmaster_line::_process_field(const std::string_view sv)
+{ using SETTER = void (drmaster_line::*) (const string&);
+
+  static const map<char, SETTER> c_to_member { { 'K', &drmaster_line::check },
+                                               { 'C', &drmaster_line::cq_zone },
+                                               { 'F', &drmaster_line::foc },
+                                               { 'G', &drmaster_line::grid },
+                                               { 'H', &drmaster_line::hit_count },
+                                               { 'I', &drmaster_line::itu_zone },
+                                               { 'N', &drmaster_line::name },
+                                               { 'Q', &drmaster_line::qth },
+                                               { 'A', &drmaster_line::section },
+                                               { 'T', &drmaster_line::ten_ten },
+//                                                                       { 'U', &drmaster_line::user[0] },
+//                                                                       { 'V', &drmaster_line::user[1] },
+//                                                                       { 'W', &drmaster_line::user[2] },
+//                                                                       { 'X', &drmaster_line::user[3] },
+//                                                                       { 'Y', &drmaster_line::user[4] },
+                                              { 'n', &drmaster_line::age_aa_cw },
+                                              { 'm', &drmaster_line::age_aa_ssb },
+                                              { 'y', &drmaster_line::cw_power },
+                                              { 'z', &drmaster_line::date },
+                                              { 'w', &drmaster_line::iota },
+                                              { 'u', &drmaster_line::precedence },
+                                              { 'o', &drmaster_line::qth2 },
+                                              { 'q', &drmaster_line::skcc },
+                                              { 'v', &drmaster_line::society },
+                                              { 'r', &drmaster_line::spc },
+                                              { 'x', &drmaster_line::ssb_power },
+                                              { 's', &drmaster_line::state_160 },
+                                              { 't', &drmaster_line::state_10 }
+  };
+
+ // void user(const int n, const std::string& v)
+//  using USETTER = void (drmaster_line::*) (const int, const string&);
+
+//  static const map<char, USETTER> c_to_umember { { 'U', &drmaster_line::check },
+//                                               { 'V', &drmaster_line::cq_zone },
+//                                               { 'W', &drmaster_line::foc },
+//                                               { 'X', &drmaster_line::grid },
+//                                               { 'Y', &drmaster_line::hit_count },
+//                                               { 'I', &drmaster_line::itu_zone },
+
+
+  const char        c     { sv[1] };
+//  const string_view value { sv.substr(2) };
+  const string      svalue { sv.substr(2) };
+
+  if ( (c >= 'U') and (c <= 'Y') )
+  { const int n { int(c) - int('U') };
+
+    user(n, svalue);
+    return;
+  }
+
+  if (c == 'p')
+  { xscp(from_string<decltype(_xscp)>(svalue));
+    return;
+  }
+
+  auto it = c_to_member.find(c);
+
+  if (it == c_to_member.end())
+  { ost << "Error looking up drmaster field " << sv << endl;
+    return;
+  }
+
+  SETTER pf = it -> second;
+
+  std::invoke(pf, this, svalue);
 }
 
 /*! \brief                  Construct from a call or from a line from a drmaster file
@@ -644,16 +712,22 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
+#if 0
 drmaster_line::drmaster_line(const string_view line_or_call)
-{ const vector<string> fields { split_string <std::string> (line_or_call, ' ') };
+{ const vector<string> fields { split_string <std::string> (line_or_call, ' ') };   // TRY A SET INSTEAD OF A VECTOR
 
   if (fields.empty())
     return;
 
   _call = to_upper(fields[0]);
 
-  _check     = _extract_field(fields, "=K"sv);
-  _cq_zone   = _extract_field(fields, "=C"sv);
+  auto get_field = [&fields, this] (const char c) { return _extract_field(fields, "="s + c); };
+
+  _check     = get_field('K');
+  _cq_zone   = get_field('C');
+
+//  _check     = _extract_field(fields, "=K"sv);
+//  _cq_zone   = _extract_field(fields, "=C"sv);
   _foc       = _extract_field(fields, "=F"sv);
   _grid      = _extract_field(fields, "=G"sv);
   _hit_count = _extract_field(fields, "=H"sv);
@@ -686,6 +760,181 @@ drmaster_line::drmaster_line(const string_view line_or_call)
   if (const string xscp_str { _extract_field(fields, "=p"sv) }; !xscp_str.empty())
     _xscp = from_string<decltype(_xscp)>(xscp_str);
 }
+#endif
+
+#if 1
+drmaster_line::drmaster_line(const string_view line_or_call)
+{ if (line_or_call.empty())
+  { //ost << "line or call empty" << endl;
+    return;
+  }
+
+  size_t space_posn { line_or_call.find(' ') };
+
+  if (space_posn == string::npos) // no space
+  { _call = line_or_call;
+
+    //ost << "no space in " << line_or_call << "; returning: " << to_string() << endl;
+
+    return;
+  }
+
+  _call = substring <string> (line_or_call, 0, space_posn);
+
+// all the other fields
+  while (space_posn != string::npos)
+  { size_t eq_posn { line_or_call.find('=', space_posn) };
+
+    if (eq_posn != string::npos) // found an equals
+    { space_posn = line_or_call.find(' ', eq_posn);
+
+      string_view next_field;
+
+      if (space_posn == string::npos)
+        next_field = substring <string_view> (line_or_call, eq_posn);
+      else
+        next_field = substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn);
+
+      _process_field(next_field);
+    }
+  }
+
+  //ost << "line or call: " << line_or_call << ": " << to_string() << endl;
+}
+#endif
+
+#if 0
+drmaster_line::drmaster_line(const string_view line_or_call)
+{ static const map<char, void (drmaster_line::*) (const string&)> c_to_member { { 'K', &drmaster_line::check },
+                                                                       { 'C', &drmaster_line::cq_zone },
+                                                                       { 'F', &drmaster_line::foc },
+                                                                       { 'G', &drmaster_line::grid },
+                                                                       { 'H', &drmaster_line::hit_count },
+                                                                       { 'I', &drmaster_line::itu_zone },
+                                                                       { 'N', &drmaster_line::name },
+                                                                       { 'Q', &drmaster_line::qth },
+                                                                       { 'A', &drmaster_line::section },
+                                                                       { 'T', &drmaster_line::ten_ten },
+//                                                                       { 'U', &drmaster_line::user[0] },
+//                                                                       { 'V', &drmaster_line::user[1] },
+//                                                                       { 'W', &drmaster_line::user[2] },
+//                                                                       { 'X', &drmaster_line::user[3] },
+//                                                                       { 'Y', &drmaster_line::user[4] },
+                                                                       { 'n', &drmaster_line::age_aa_cw },
+                                                                     };
+
+//  static const map<char, string&> c_to_member { { 'K', _check },
+//                                                { 'C', _cq_zone },
+//                                                { 'F', _foc },
+//                                                { 'G', _grid },
+//                                                { 'H', _hit_count },
+//                                                { 'I', _itu_zone },
+//                                                { 'N', _name },
+//                                                { 'Q', _qth },
+ //                                               { 'A', _section },
+//                                                { 'T', _ten_ten },
+//                                                { 'U', _user[0] },
+//                                                { 'V', _user[1] },
+//                                                { 'W', _user[2] },
+//                                                { 'X', _user[3] },
+//                                                { 'Y', _user[4] },
+//                                                { 'n', _age_aa_cw },   // encoded as YYYYMMDD:nn
+//                                              };
+
+  auto process_field = [this] (const string_view sv) { const char        c     { sv[1] };
+                                                       const string_view value { sv.substr(2) };
+
+ //                                                      if (c == 'p')
+ //                                                        _xscp = from_string<decltype(_xscp)>(sv);
+ //                                                      else
+//                                                         c_to_member.at(c) = value;
+ //                                                        this. (* (c_to_member.at(c)))(value);
+                                                     };
+
+
+  if (line_or_call.empty())
+    return;
+
+// get the call
+  size_t start_posn { 0 };
+
+  size_t space_posn { line_or_call.find(' ') };
+
+  if (space_posn == string::npos)       // no space was found
+  { _call = to_upper(line_or_call);
+    return;
+  }
+  else
+    _call = substring <string> (line_or_call, start_posn, space_posn - start_posn);
+
+// all the other fields
+  while (space_posn != string::npos)
+  { size_t eq_posn { line_or_call.find('=', space_posn) };
+
+    if (eq_posn != string::npos) // found an equals
+    { space_posn = line_or_call.find(' ', eq_posn);
+
+      string_view next_field;
+
+      if (space_posn == string::npos)
+        next_field = substring <string_view> (line_or_call, eq_posn);
+      else
+        next_field = substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn);
+
+      process_field(next_field);
+    }
+  }
+
+
+#if 0
+  const vector<string> fields { split_string <std::string> (line_or_call, ' ') };   // TRY A SET INSTEAD OF A VECTOR
+
+  if (fields.empty())
+    return;
+
+  _call = to_upper(fields[0]);
+
+  auto get_field = [&fields, this] (const char c) { return _extract_field(fields, "="s + c); };
+
+  _check     = get_field('K');
+  _cq_zone   = get_field('C');
+
+//  _check     = _extract_field(fields, "=K"sv);
+//  _cq_zone   = _extract_field(fields, "=C"sv);
+  _foc       = _extract_field(fields, "=F"sv);
+  _grid      = _extract_field(fields, "=G"sv);
+  _hit_count = _extract_field(fields, "=H"sv);
+  _itu_zone  = _extract_field(fields, "=I"sv);
+  _name      = _extract_field(fields, "=N"sv);
+  _qth       = _extract_field(fields, "=Q"sv);
+  _section   = _extract_field(fields, "=A"sv);
+  _ten_ten   = _extract_field(fields, "=T"sv);
+  _user[0]   = _extract_field(fields, "=U"sv);
+  _user[1]   = _extract_field(fields, "=V"sv);
+  _user[2]   = _extract_field(fields, "=W"sv);
+  _user[3]   = _extract_field(fields, "=X"sv);
+  _user[4]   = _extract_field(fields, "=Y"sv);
+
+// drmaster extensions
+  _age_aa_cw  = _extract_field(fields, "=n"sv);   // encoded as YYYYMMDD:nn
+  _age_aa_ssb = _extract_field(fields, "=m"sv);   // encoded as YYYYMMDD:nn
+  _cw_power   = _extract_field(fields, "=y"sv);
+  _date       = _extract_field(fields, "=z"sv);
+  _iota       = _extract_field(fields, "=w"sv);
+  _precedence = _extract_field(fields, "=u"sv);
+  _qth2       = _extract_field(fields, "=o"sv);
+  _skcc       = _extract_field(fields, "=q"sv);
+  _society    = _extract_field(fields, "=v"sv);
+  _spc        = _extract_field(fields, "=r"sv);
+  _ssb_power  = _extract_field(fields, "=x"sv);
+  _state_160  = _extract_field(fields, "=s"sv);
+  _state_10   = _extract_field(fields, "=t"sv);
+
+  if (const string xscp_str { _extract_field(fields, "=p"sv) }; !xscp_str.empty())
+    _xscp = from_string<decltype(_xscp)>(xscp_str);
+#endif
+}
+#endif
 
 /// convert to string
 string drmaster_line::to_string(void) const
@@ -816,7 +1065,6 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
     Lines without XSCP data are always included
 */
-//void drmaster::_prepare_from_file_contents(const string& contents, const int xscp_limit)
 void drmaster::_prepare_from_file_contents(const string_view contents, const int xscp_limit)
 { for (const string_view line : to_lines <std::string_view> (contents))
   { const drmaster_line record { line };
@@ -840,7 +1088,15 @@ void drmaster::_prepare_from_file_contents(const string_view contents, const int
 drmaster::drmaster(const string_view filename, const int xscp_limit)
 { if (!filename.empty())
   { try
-    { _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
+    { //_prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
+
+      auto convert_line { [this, xscp_limit] (const auto& line) { const drmaster_line record { line };
+
+                                                                  if ( (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
+                                                                    _records += { record.call(), record } ;
+                                                                } };
+
+      FOR_ALL(textfile(filename), convert_line);
     }
 
     catch (...)
@@ -859,7 +1115,6 @@ drmaster::drmaster(const string_view filename, const int xscp_limit)
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//drmaster::drmaster(const vector<string>& path, const string& filename, const int xscp_limit)
 drmaster::drmaster(const vector<string>& path, const string_view filename, const int xscp_limit)
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
@@ -872,7 +1127,6 @@ drmaster::drmaster(const vector<string>& path, const string_view filename, const
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//void drmaster::prepare(const string& filename, const int xscp_limit)
 void drmaster::prepare(const string_view filename, const int xscp_limit)
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
@@ -885,7 +1139,8 @@ void drmaster::prepare(const string_view filename, const int xscp_limit)
 
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
 */
-void drmaster::prepare(const vector<string>& path, const string& filename, const int xscp_limit)
+//void drmaster::prepare(const vector<string>& path, const string& filename, const int xscp_limit)
+void drmaster::prepare(const vector<string>& path, const string_view filename, const int xscp_limit)
 { if (!filename.empty())
     _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
 }
@@ -904,7 +1159,6 @@ vector<string> drmaster::unordered_calls(void) const
 { vector<string> rv;
   rv.reserve(_records.size());
 
-//  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; } );
   for (const auto& [ call, drml ] : _records)
     rv += call;
 
@@ -919,7 +1173,7 @@ string drmaster::to_string(void) const
 //  FOR_ALL(_records, [&lines] (const auto& rec) { lines += rec.second.to_string() + EOL; });
 
   for (const auto& [ call, drml ] : _records)
-    lines += drml.to_string();
+    lines += (drml.to_string() + EOL);
 
   SORT(lines);
 
