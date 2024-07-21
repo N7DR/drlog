@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: bandmap.h 248 2024-07-20 16:31:45Z  $
-=======
-// $Id: bandmap.h 243 2024-07-15 19:38:06Z  $
->>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -713,22 +709,8 @@ protected:
 
   mutable pt_mutex                  _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
-<<<<<<< .mine
 //  BAND                              _band                   { BAND::ANY_BAND };           ///< the band associated with this bandmap
   int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-||||||| .r241
-  int                               _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-=======
-<<<<<<< .mine
-//  BAND                              _band                   { BAND::ANY_BAND };           ///< the band associated with this bandmap
-  int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-||||||| .r241
-  int                               _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
->>>>>>> .r243
-=======
-//  BAND                              _band                   { BAND::ANY_BAND };           ///< the band associated with this bandmap
-  int                               _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
->>>>>>> .r242
   int                               _cull_function          { 0 };                        ///< cull function number to apply
   std::unordered_set<std::string>   _do_not_add             { };                          ///< do not add these calls
   std::map<std::string, std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
@@ -1163,20 +1145,7 @@ template<typename C>
     <i>biq</i> changes (is emptied) by this routine
     other threads MUST NOT access biq while this is executing
 */
-<<<<<<< .mine
   bool process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-||||||| .r241
-  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-=======
-<<<<<<< .mine
-  bool process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-||||||| .r241
-  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
->>>>>>> .r243
-=======
-//  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
-  bool process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
->>>>>>> .r242
 
 /*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process

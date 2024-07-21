@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: drlog_context.cpp 247 2024-07-19 01:48:06Z  $
-=======
-// $Id: drlog_context.cpp 243 2024-07-15 19:38:06Z  $
->>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1516,20 +1512,7 @@ drlog_context::drlog_context(const string_view filename)
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-<<<<<<< .mine
 vector<string> drlog_context::window_name_contains(const string_view substr) const
-||||||| .r241
-vector<string> drlog_context::window_name_contains(const string& substr) const
-=======
-<<<<<<< .mine
-vector<string> drlog_context::window_name_contains(const string_view substr) const
-||||||| .r241
-vector<string> drlog_context::window_name_contains(const string& substr) const
->>>>>>> .r243
-=======
-//vector<string> drlog_context::window_name_contains(const string& substr) const
-vector<string> drlog_context::window_name_contains(const string_view substr) const
->>>>>>> .r242
 { vector<string> rv;
 
   for (const auto& [ name, wi ] : _windows)

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: macros.h 248 2024-07-20 16:31:45Z  $
-=======
-// $Id: macros.h 243 2024-07-15 19:38:06Z  $
->>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1500,7 +1496,6 @@ template <typename IT>
 inline auto REVERSE_IT(IT it) -> std::reverse_iterator<decltype(it)>
   { return std::prev(std::reverse_iterator<decltype(it)>(it)); }
 
-<<<<<<< .mine
 /*! \brief      Return all the values in a MUM (including duplicates) as a vector
     \param  m   source MUM
     \return     the values in <i>m</i> as a vector
@@ -1529,61 +1524,4 @@ auto VALUES(const S& s) -> std::vector<typename S::value_type>
   return rv;
 }
 
-||||||| .r239
-=======
-<<<<<<< .mine
-/*! \brief      Return all the values in a MUM (including duplicates) as a vector
-    \param  m   source MUM
-    \return     the values in <i>m</i> as a vector
-*/
-template <typename RTYPE, typename M>
-  requires is_mum<M>
-auto VALUES(const M& m) -> std::vector<typename M::mapped_type>
-{ std::vector<typename M::mapped_type> rv;
-
-  FOR_ALL(m, [&rv] (const typename M::value_type& v) { rv += v.second; });
-
-  return rv;
-}
-
-/*! \brief      Return all the values in a SUS (including duplicates) as a vector
-    \param  s   source SUS
-    \return     the values in <i>s</i> as a vector
-*/
-template <typename RTYPE, typename S>
-  requires is_sus<S>
-auto VALUES(const S& s) -> std::vector<typename S::value_type>
-{ std::vector<typename S::value_type> rv;
-
-  FOR_ALL(s, [&rv] (const typename S::value_type& v) { rv += v; });
-
-  return rv;
-}
-
-||||||| .r239
-=======
-// start with input = mum, output = vector -- UNUSED
-template <typename RTYPE, typename M>
-  requires is_mum<M>
-auto VALUES(const M& m) -> std::vector<typename M::mapped_type>
-{ std::vector<typename M::mapped_type> rv;
-
-  FOR_ALL(m, [&rv] (const typename M::value_type& v) { rv += v.second; });
-
-  return rv;
-}
-
-// input = sus, output = vector -- UNUSED
-template <typename RTYPE, typename S>
-  requires is_sus<S>
-auto VALUES(const S& s) -> std::vector<typename S::value_type>
-{ std::vector<typename S::value_type> rv;
-
-  FOR_ALL(s, [&rv] (const typename S::value_type& v) { rv += v; });
-
-  return rv;
-}
-
->>>>>>> .r242
->>>>>>> .r243
 #endif    // MACROS_H

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: exchange_field_template.cpp 247 2024-07-19 01:48:06Z  $
-=======
-// $Id: exchange_field_template.cpp 243 2024-07-15 19:38:06Z  $
->>>>>>> 853d08e7f6cf5de0b9419aad243f13b2229e285f
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -210,57 +206,10 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
     \return         whether <i>str</i> is a legal value
 */
 bool EFT::is_legal_value(const string& str) const
-<<<<<<< .mine
 { if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
-||||||| .r224
-{
-// test regex first
-  if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
-=======
-<<<<<<< .mine
-{ if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
-||||||| .r224
-{
-// test regex first
-  if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
->>>>>>> .r243
-=======
-{ //ost << "inside EFT::is_legal_value" << endl;
-
-//  if (_values.empty())
-//    ost << "_values is empty" << endl;
-//  else
-//    ost << "_values is not empty" << endl;
-
-//  if (_regex_str.empty())
-//    ost << "regex string is empty" << endl;
-//  else
-//    ost << "regex string is not empty" << endl;
-
-// test regex first
-//  if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
-  { //ost << "regex comparison is true" << endl;
->>>>>>> .r242
     return true;
-  }
-//  else
-//    ost << "regex comparison is false" << endl;
 
-<<<<<<< .mine
   return (_values.empty() ? false : (_legal_non_regex_values.contains(str)));
-||||||| .r224
-  return (_values.empty() ? false : (str < _legal_non_regex_values));
-
-=======
-<<<<<<< .mine
-  return (_values.empty() ? false : (_legal_non_regex_values.contains(str)));
-||||||| .r224
-  return (_values.empty() ? false : (str < _legal_non_regex_values));
-
->>>>>>> .r243
-=======
-  return (_values.empty() ? false : (str < _legal_non_regex_values));
->>>>>>> .r242
 }
 
 /*! \brief          What value should actually be logged for a given received value?
