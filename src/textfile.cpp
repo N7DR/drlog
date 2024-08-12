@@ -60,7 +60,6 @@ textfile_iterator begin(textfile& tf)
 
   rv._last_line_nr = 0;
   rv._last_line = move(the_line);
-
   rv._strp = &rv._last_line;
 
   return rv;
@@ -76,33 +75,16 @@ textfile_iterator begin(textfile& tf)
     \return     the iterator, pre-incremented
 */
 textstream_iterator& textstream_iterator::operator++(void)    // pre-incrementable
-{ //const static end_iterator { textstream_iterator() };
-  //cout << "inside pre-increment" << endl;
-
-  //cout << "last line number " << _last_line_nr << ": " << _last_line << endl;
-
-//  if (_streamp -> eof() or (*this == textstream_iterator()) )
-//  { *this = textstream_iterator();
-//    cout << "returning at EOF" << endl;
-//    return *this;
-//  }
-
-//  string the_line;
-
-//  getline((*_streamp), the_line);
-  getline((*_streamp), _last_line);
+{ getline((*_streamp), _last_line);
 
   if (_streamp -> eof())
   { *this = textstream_iterator();
-//    cout << "returning at EOF" << endl;
+
     return *this;
   }
 
-
   _last_line_nr++;
-//  _last_line = std::move(the_line);
 
-//  cout << "returning from pre-increment; _last_line_nr = " << _last_line_nr << "; line = " << _last_line << endl;
   return *this;
 }
 
@@ -126,7 +108,7 @@ textstream_iterator textstream_iterator::operator++(int)  // post-incre
 
 textstream_iterator begin(textstream& tf)
 { textstream_iterator rv;
-  std::string            the_line;
+  string             the_line;
 
   if (tf.eof())
     return rv;
@@ -136,16 +118,11 @@ textstream_iterator begin(textstream& tf)
   std::getline(tf, the_line);
 
   if (rv._streamp -> eof())
-  { return textstream_iterator();
-//    cout << "returning at EOF" << endl;
-  //  return *this;
-  }
+    return textstream_iterator();
 
   rv._last_line_nr = 0;
-  rv._last_line = move(the_line);
-
-  rv._strp = &rv._last_line;
+  rv._last_line    = move(the_line);
+  rv._strp         = &rv._last_line;
 
   return rv;
 }
-

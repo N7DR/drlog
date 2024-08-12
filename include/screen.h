@@ -1,4 +1,4 @@
-// $Id: screen.h 247 2024-07-19 01:48:06Z  $
+// $Id: screen.h 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -411,7 +411,8 @@ public:
     \param  delta_y     change in y position
     \return             the window
 */
-  window& move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y);
+//  window& move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y);
+  window& move_cursor_relative(const int16_t delta_x, const int16_t delta_y);
 
 /*! \brief      Get cursor position
     \return     the current position of the cursor
@@ -551,8 +552,8 @@ public:
     Wraps words to new lines.
     Stops writing if there's insufficient room for the next string.
 */
-template <class T>
-  requires (is_sus<T> and is_string<typename T::value_type>)
+  template <class T>
+    requires (is_sus<T> and is_string<typename T::value_type>)
   window& operator<(const T& sus)
   { if (!_wp)
       return *this;
@@ -576,8 +577,8 @@ template <class T>
     \param  n   value to write
     \return     the window
 */
-template <class T>
-  requires (std::is_integral_v<T>)
+  template <class T>
+    requires (std::is_integral_v<T>)
   inline window& operator<(const T n)
     { return (*this < to_string(n)); }
 
@@ -653,7 +654,7 @@ template <class T>
 
     Does nothing if character number <i>n</i> does not exist
 */
-window& delete_character(const WIN_INT_TYPE n);
+  window& delete_character(const WIN_INT_TYPE n);
 
 /*! \brief          Delete a character within a particular line
     \param  n       number of character to delete (wrt 0)

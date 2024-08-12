@@ -1,4 +1,4 @@
-// $Id: drmaster.h 248 2024-07-20 16:31:45Z  $
+// $Id: drmaster.h 249 2024-07-28 16:44:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -411,7 +411,6 @@ public:
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-//  void prepare(const std::vector<std::string>& path, const std::string& filename, const int xscp_limit = 1);
   void prepare(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)

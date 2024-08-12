@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 248 2024-07-20 16:31:45Z  $
+// $Id: drmaster.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -75,7 +75,6 @@ typename C::value_type value_line(const C& values, const int pc)
 
     <i>posn</i> is updated to point at the start of the next call
 */
-//string master_dta::_get_call(const string& contents, uint32_t& posn) const
 string master_dta::_get_call(const string_view contents, uint32_t& posn) const
 { string rv;
 
@@ -92,7 +91,6 @@ string master_dta::_get_call(const string_view contents, uint32_t& posn) const
 
     Also default constructor, with filename "master.dta"
 */
-//master_dta::master_dta(const string& filename)
 master_dta::master_dta(const string_view filename)
 { const string contents { read_file(filename) };                // throws exception if there's a problem
 
@@ -247,21 +245,6 @@ string trmaster_line::to_string(void) const
   insert_if_not_empty_int(&trmaster_line::hit_count, 'H');
   insert_if_not_empty_int(&trmaster_line::check,     'K');
   insert_if_not_empty_int(&trmaster_line::ten_ten,   'T');
-
-//  if (cq_zone())
-//    rv += (" =C"s + ::to_string(cq_zone()));
-
-//  if (foc())
-//    rv += (" =F"s + ::to_string(foc()));
-
-//  if (hit_count())
-//    rv += (" =H"s + ::to_string(hit_count()));
-
-//  if (check())
-//    rv += (" =K"s + ::to_string(check()));
-
-//  if (ten_ten())
-//    rv += (" =T"s +  ::to_string(ten_ten()));
 
   char user_letter { 'U' };
 
@@ -421,74 +404,86 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 
       case 3 :             // ctrl-C
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { cqzone += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { cqzone += contents[posn++]; }
+        get_field(cqzone);
         break;
 
       case 6 :             // ctrl-F
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { foc += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { foc += contents[posn++]; }
+        get_field(foc);
         break;
 
       case 7 :             // ctrl-G
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { grid += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { grid += contents[posn++]; }
+        get_field(grid);
         break;
 
       case 8 :             // ctrl-H
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { hits += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { hits += contents[posn++]; }
+        get_field(hits);
         break;
 
       case 9 :             // ctrl-I
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { ituzone += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { ituzone += contents[posn++]; }
+        get_field(ituzone);
         break;
 
       case 11 :             // ctrl-K
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { check += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { check += contents[posn++]; }
+        get_field(check);
         break;
 
       case 14 :             // ctrl-N
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { name += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { name += contents[posn++]; }
+        get_field(name);
         break;
 
       case 15 :             // ctrl-O
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { oldcall += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { oldcall += contents[posn++]; }
+        get_field(oldcall);
         break;
 
       case 17 :             // ctrl-Q
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { qth += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { qth += contents[posn++]; }
+        get_field(qth);
         break;
 
       case 19 :             // ctrl-S
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { speed += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { speed += contents[posn++]; }
+        get_field(speed);
         break;
 
       case 20 :             // ctrl-T
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { ten_ten += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { ten_ten += contents[posn++]; }
+        get_field(ten_ten);
         break;
 
       case 21 :             // ctrl-U
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_1 += contents[posn++]; }
+//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+//          { user_1 += contents[posn++]; }
+        get_field(user_1);
         break;
 
       case 22 :             // ctrl-V
@@ -765,16 +760,12 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 #if 1
 drmaster_line::drmaster_line(const string_view line_or_call)
 { if (line_or_call.empty())
-  { //ost << "line or call empty" << endl;
     return;
-  }
 
   size_t space_posn { line_or_call.find(' ') };
 
   if (space_posn == string::npos) // no space
   { _call = line_or_call;
-
-    //ost << "no space in " << line_or_call << "; returning: " << to_string() << endl;
 
     return;
   }
@@ -783,9 +774,9 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 
 // all the other fields
   while (space_posn != string::npos)
-  { size_t eq_posn { line_or_call.find('=', space_posn) };
+  { //size_t eq_posn { line_or_call.find('=', space_posn) };
 
-    if (eq_posn != string::npos) // found an equals
+    if (const size_t eq_posn { line_or_call.find('=', space_posn) }; eq_posn != string::npos)      // found an equals
     { space_posn = line_or_call.find(' ', eq_posn);
 
       string_view next_field;
@@ -798,8 +789,6 @@ drmaster_line::drmaster_line(const string_view line_or_call)
       _process_field(next_field);
     }
   }
-
-  //ost << "line or call: " << line_or_call << ": " << to_string() << endl;
 }
 #endif
 

@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 248 2024-07-20 16:31:45Z  $
+// $Id: adif3.cpp 249 2024-07-28 16:44:41Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -256,62 +256,15 @@ adif3_field::adif3_field(const string& field_name, const string& field_value)
   _normalise();
 }
 
-/*! \brief              Import name and value from string, and return location past the end of the used part of the string
-    \param  str         string from which to read
-    \param  start_posn  position in <i>str</i> at which to start parsing
-    \param  end_posn    one past the location at which to force an end to parsing, if necessary
-    \return             one past the last location to be used
+/*! \brief                  Import name and value from string, and return location past the end of the used part of the string
+    \param  str             string from which to read
+    \param  start_posn      position in <i>str</i> at which to start parsing
+    \param  end_posn        one past the location at which to force an end to parsing, if necessary
+    \param  accept_fields   ADIF fields to accept (all fields accepted if empty)
+    \return                 one past the last location to be used
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-#if 0
-size_t adif3_field::import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
-{ const auto posn_1 { str.find('<', start_posn) };
-
-  if (posn_1 == string::npos)        // could not find initial delimiter
-    return string::npos;
-      
-  const auto posn_2          { str.find('>', posn_1) };
-  const bool pointing_at_eor { (posn_2 == end_posn) };  
-
-  if (pointing_at_eor)
-    return (posn_2 + 1);
-  
-  if (posn_2 == string::npos)        // could not find ending delimiter
-    return string::npos;
-
-// if it's the EOR, then jump out
-  const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
-  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, ':') };
-
-  if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
-    return string::npos;
-    
-  if (!_name.empty() and ( to_upper(fields[0]) != to_upper(name()) ))      // name mismatch
-    return string::npos;
-    
-  if (_name.empty())
-    _name = to_upper(fields[0]);                                // force name to UC
- 
-  const int    n_chars  { from_string<int>(fields[1]) };
-  const string contents { str.substr(posn_2 + 1, n_chars) };
-  const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
-
-  const auto atype { OPT_MUM_VALUE(_element_type, _name) };
-
-  if (!atype)
-    throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
-
-  _type = atype.value();
-  _value = contents;
-    
-  _verify();
-  _normalise();
-  
-  return rv;
-}  
-#endif
-
 size_t adif3_field::import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const std::set<std::string>& accept_fields)
 { const auto posn_1 { str.find('<', start_posn) };
 
@@ -343,13 +296,10 @@ size_t adif3_field::import_and_eat(const std::string_view str, const size_t star
       return string::npos;
 
     if (_name.empty())
-      _name = to_upper(fields[0]);                                // force name to UC
+      _name = uc_name;                                // force name to UC
 
-//    const int    n_chars  { from_string<int>(fields[1]) };
     const string contents { str.substr(posn_2 + 1, n_chars) };
-//    const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
-
-    const auto atype { OPT_MUM_VALUE(_element_type, _name) };
+    const auto   atype    { OPT_MUM_VALUE(_element_type, _name) };
 
     if (!atype)
       throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
@@ -398,15 +348,15 @@ size_t adif3_record::import_and_eat(const std::string_view str, const size_t pos
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
 
-#if 1
+#if 0
   const auto posn_2 { case_insensitive_find(str, "<EOR>"sv, posn)  + 4 };  // 4 = length("<EOR>") - 1; posn_2 points to last char: ">"
     
   if (posn_2 == string::npos)        // could not find end-of-record marker
     return string::npos;
 #endif
 
-// this is no faster than the above.... perhaps all the time is spent in normalisation and verification later in the routine
-#if 0
+// this is a little faster than the above
+#if 1
 //  static int counter { 0 };
 
   size_t posn_2 { posn_1 };
@@ -431,7 +381,6 @@ size_t adif3_record::import_and_eat(const std::string_view str, const size_t pos
         return string::npos;
     }
 
-//    found_it = (to_upper(substring <string_view> (str, posn_3 - 4, 5)) == "<EOR>");
     found_it = (to_upper(substring <string_view> (str, posn_2, 5)) == "<EOR>");
   }
 
@@ -447,7 +396,7 @@ size_t adif3_record::import_and_eat(const std::string_view str, const size_t pos
 
     start_posn = element.import_and_eat(str, start_posn, posn_2, accept_fields);             // name is forced to upper case
     
-    if (!element.name().empty())
+    if (!element.empty())
       if ( auto [it, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
         throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
   }
@@ -466,11 +415,7 @@ string adif3_record::to_string(void) const
 
   for (const auto& [name, field] : _elements)
   { if (const ADIF3_DATA_TYPE dt { field.type() }; !( _import_only.contains(dt) ) )       // don't output if this type is import-only
-    { //switch (dt)
-      //{ default :
-          rv += field.to_string();    // output without any checks
-      //}
-    }
+      rv += field.to_string();    // output without any checks
   }
 
   rv += "<EOR>\n"s;
@@ -531,7 +476,7 @@ adif3_file::adif3_file(const string_view filename, const std::set<std::string>& 
     
     start_posn = rec.import_and_eat(contents, start_posn, accept_fields);
     
-    if (start_posn != string::npos)
+    if ( !rec.empty() and (start_posn != string::npos) )
     { push_back(rec);
       _map_data += { rec.callsign(), rec };
     }

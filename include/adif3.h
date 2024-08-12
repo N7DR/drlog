@@ -1,4 +1,4 @@
-// $Id: adif3.h 234 2024-02-19 15:37:47Z  $
+// $Id: adif3.h 249 2024-07-28 16:44:41Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -153,18 +153,20 @@ public:
   inline std::string to_string(const std::string& append_str = "\n"s) const
     { return ( (_name.empty() or _value.empty()) ? std::string() : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
     
-/*! \brief              Import name and value from string, and return location past the end of the used part of the string
-    \param  str         string from which to read
-    \param  start_posn  position in <i>str</i> at which to start parsing
-    \param  end_posn    one past the location at which to force and end to parsing, if necessary
-    \return             one past the last location to be used
+/*! \brief                  Import name and value from string, and return location past the end of the used part of the string
+    \param  str             string from which to read
+    \param  start_posn      position in <i>str</i> at which to start parsing
+    \param  end_posn        one past the location at which to force an end to parsing, if necessary
+    \param  accept_fields   ADIF fields to accept (all fields accepted if empty)
+    \return                 one past the last location to be used
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-//  size_t import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
-//  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
-
   size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const std::set<std::string>& accept_fields = { });
+
+/// is the field empty?
+  inline bool empty(void) const
+    { return _name.empty(); }
 };
 
 // ---------------------------------------------------  adif3_record -----------------------------------------
@@ -200,9 +202,6 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-//  size_t import_and_eat(const std::string& str, const size_t posn);
-//  size_t import_and_eat(const std::string_view str, const size_t posn);
-
   size_t import_and_eat(const std::string_view str, const size_t posn, const std::set<std::string>& accept_fields = { });
 
 /*! \brief      Convert to printable string
@@ -295,7 +294,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  /* explicit */adif3_file(const std::string_view filename, const std::set<std::string>& accept_fields = { });
+  adif3_file(const std::string_view filename, const std::set<std::string>& accept_fields = { });
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look

@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 248 2024-07-20 16:31:45Z  $
+// $Id: bands-modes.h 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -276,6 +276,12 @@ public:
 */
   BAND next_band_up(const std::set<BAND>& bands) const;
 
+  inline frequency operator+(const frequency& f) const
+    { return frequency(hz() + f.hz(), FREQUENCY_UNIT::HZ); }
+
+  inline frequency operator-(const frequency& f) const      // param must be < value of this object
+    { return frequency( ((hz() > f.hz()) ? (hz() - f.hz()) : 0), FREQUENCY_UNIT::HZ); }
+
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -287,19 +293,19 @@ public:
 
 /// _Hz (int)
 inline frequency operator""_Hz(const unsigned long long int f)
-  { return frequency(f); }
+  { return frequency(f, FREQUENCY_UNIT::HZ); }
 
 /// _kHz (int)
 inline frequency operator""_kHz(const unsigned long long int f)
-  { return frequency(f); }                                      // automatically converts from kHz to Hz
+  { return frequency(f, FREQUENCY_UNIT::KHZ); }                                      // automatically converts from kHz to Hz
 
 /// _MHz (double)
 inline frequency operator""_MHz(const long double f)
-  { return frequency(f); }                                      // automatically converts from MHz to Hz
+  { return frequency(f, FREQUENCY_UNIT::MHZ); }                                      // automatically converts from MHz to Hz
 
 /// _MHz (int)
 inline frequency operator""_MHz(const unsigned long long int  f)
-  { return frequency(f); }                                      // automatically converts from MHz to Hz
+  { return frequency(f, FREQUENCY_UNIT::MHZ); }                                      // automatically converts from MHz to Hz
 
 /// ostream << frequency
 std::ostream& operator<<(std::ostream& ost, const frequency& f);

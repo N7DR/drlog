@@ -1,4 +1,4 @@
-// $Id: string_functions.h 248 2024-07-20 16:31:45Z  $
+// $Id: string_functions.h 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1520,7 +1520,14 @@ inline std::string operator+(const std::string_view sv1, const std::string_view 
 inline std::string operator+(const std::string_view sv1, const std::string& s2)
 { return std::string(sv1) + s2; }
 
-// https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
+/*! \brief              Read an istream until a string delimiter is reached
+    \param  in          istream from which to read
+    \param  delimiter   the delimiter that mars the end of a record
+    \return             the contents if <i>in</i> from the current point to the delimiter
+
+    Drops the delimiter, but see the comment at the end of the routine
+    https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
+*/
 std::string readuntil(std::istream& in, const std::string_view delimiter);
 
 /// a standard hash function for strings (the DJB function)

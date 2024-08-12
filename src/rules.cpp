@@ -1,4 +1,4 @@
-// $Id: rules.cpp 239 2024-05-20 13:42:00Z  $
+// $Id: rules.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -638,9 +638,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
                     FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) 
                              { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
-
- //                   FOR_ALL(clean_split_string <std::string_view> (remove_peripheral_spaces <std::string> (squash(countries)), ' '),
-//                             [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
                   }
                 }
                 else
@@ -760,6 +757,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
           }
         }
       }
+
 // processed all lines
       _exch_values += { field_name, map_canonical_to_all };         // pair<string, map<string, set<string> > >
     }
@@ -974,7 +972,6 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
     return actual_value;       // we convert to the single letter version elsewhere
 
   if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
-//    return (substring <std::string> (actual_value, 0, 2) + pad_left(substring <std::string> (actual_value, 2), 3, '0'));  // XXnnn
     return (substring <std::string> (actual_value, 0, 2) + pad_leftz(substring <std::string_view> (actual_value, 2), 3));  // XXnnn
 
   const set<string> permitted_values { exch_permitted_values(field_name) };
@@ -1128,13 +1125,6 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
       const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
 
       return MUM_VALUE(continent_points, location_db.continent(call), points_this_band.default_points());
-
-//  return ( (cit == m.cend()) ? d : cit->second );
-
-//      if (auto cit { continent_points.find(location_db.continent(call)) }; cit != continent_points.cend())  // if points are defined for this continent
-//        return cit->second;
-
-//      return points_this_band.default_points();
     }
 
 // IARU
@@ -1241,9 +1231,9 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
 { SAFELOCK(rules);
 
   try
-  { const auto& se { _sent_exchange_names.at(m) };
+  { //const auto& se { _sent_exchange_names.at(m) };
 
-    return contains(se, str);
+    return contains(_sent_exchange_names.at(m), str);
   }
 
   catch (...)
@@ -1280,8 +1270,6 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
 /// the names of all the possible exchange fields
 set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
-
-//  FOR_ALL(_exchange_field_eft, [&rv] (const pair<string, EFT>& pse) { rv + pse.first; } );  //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
 
   for (const auto& [ field_name, unused_eft ] : _exchange_field_eft)      //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
     rv += field_name;
@@ -1480,7 +1468,6 @@ string sac_prefix(const string& call)
     Currently, the only field name that precipitates special processing is DOK.
     Adding IOTA.
 */
-//string MULT_VALUE(const string& field_name, const string& received_value)
 string MULT_VALUE(const string_view field_name, const string& received_value)
 { if (field_name == "DOK"sv)
   { if (!received_value.empty())
@@ -1493,7 +1480,6 @@ string MULT_VALUE(const string_view field_name, const string& received_value)
   }
 
   if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
-//    return (substring <std::string> (received_value, 0, 2) + pad_left(substring <std::string> (received_value, 2), 3, '0'));  // XXnnn
     return (substring <std::string> (received_value, 0, 2) + pad_leftz(substring <std::string> (received_value, 2), 3));  // XXnnn
 
   return received_value;

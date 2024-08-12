@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 248 2024-07-20 16:31:45Z  $
+// $Id: drlog.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -183,7 +183,9 @@ void populate_win_call_history(const string& str);                              
 void populate_win_info(const string& str);                                              ///< Populate the information window
 void possible_mode_change(const frequency& f);                                          ///< possibly change mode in accordance with frequency
 void print_thread_names(void);                                                          ///< output the names of the currently active threads
+//bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
+bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                    ///< process backspace
 bool process_keypress_F5(void);                                                         ///< process key F5
@@ -260,17 +262,6 @@ void process_QTC_input(window* wp, const keyboard_event& e);                ///<
 
 //using BMARRAY = array<bandmap, NUMBER_OF_BANDS>;
 using BANDMAPS = array<bandmap, NUMBER_OF_BANDS>;
-
-#if 0
-WRAPPER_7_NC(cluster_info,
-               window*, wclp,
-               window*, wcmp,
-               dx_cluster*, dcp,
-               running_statistics*, statistics_p,
-               location_database*, location_database_p,
-               window*, win_bandmap_p,
-               BMARRAY*, bandmaps_p);   ///< parameters for cluster
-#endif
 
 // thread functions
 void auto_backup(const string dir, const string log_filename, const string qtc_filename);   ///< Copy a file to a backup directory
@@ -2683,7 +2674,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                 }
               }
             }
-           }
+          }
         }
         else
         { // invalid post; do nothing
@@ -2915,7 +2906,9 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     ' -- up to next stn that matches the N7DR criteria
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
-{ window& win { *wp };                  // syntactic sugar
+{ using enum BANDMAP_DIRECTION;
+
+  window& win { *wp };                  // syntactic sugar
 
   constexpr char COMMAND_CHAR { '.' };                                 // the character that introduces a command
 
@@ -3962,35 +3955,55 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { update_quick_qsy();
-    processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? DOWN : UP);
+    }
+    else
+      processed = true;
   }
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { update_quick_qsy();
-    processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? DOWN : UP);
+    }
+    else
+      processed = true;
   }
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                                           or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { update_quick_qsy();
-    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? DOWN : UP);
+    }
+    else
+      processed = true;
   }
 
 // ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
-  { update_quick_qsy();
-    processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
+    { update_quick_qsy();
+      processed = process_bandmap_function(/*&bandmap::matches_criteria, */(e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? DOWN : UP);
+    }
+    else
+      processed = true;
   }
 
 // and unmodified ; and ': also up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
-      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+
+//      ost << "new function 5" << endl;
+
+      processed = process_bandmap_function(e.is_char(';') ? DOWN : UP);
     }
     else
       processed = true;
@@ -4000,7 +4013,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.is_control(';') or e.is_control('\'')))
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
-      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_control(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, 4);  // move by 5 stations
+//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_control(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, 4);  // move by 5 stations
+
+ //     ost << "new function 6" << endl;
+
+      processed = process_bandmap_function(e.is_control(';') ? DOWN : UP, 4);  // move by 5 stations
     }
     else
       processed = true;
@@ -4013,7 +4030,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       const int16_t nskip { static_cast<int16_t>( (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
 
-      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
+//      ost << "new function 7" << endl;
+
+//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
+      processed = process_bandmap_function(/*&bandmap::matches_criteria, */e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
     }
     else
       processed = true;
@@ -4395,7 +4415,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-Q -- swap QSL and QUICK QSL messages
   if (!processed and (e.is_control('q')))
-  { context.swap_qsl_messages();
+  { //context.swap_qsl_messages();
+    swap(alternative_qsl_message, qsl_message);
     alert("QSL messages swapped"s, SHOW_TIME::NO_SHOW);
     processed = true;
   }
@@ -5329,7 +5350,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_control('t'))
   { const cursor         original_posn { win.cursor_position() };
     const string         contents      { win.read(0, original_posn.y()) };
- //   const vector<size_t> word_posn     { starts_of_words(contents) };
 
     if (const vector<size_t> word_posn { starts_of_words(contents) }; !word_posn.empty())
     { const bool is_space { (contents[original_posn.x()] == ' ') };
@@ -5616,10 +5636,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         { FILE* fp { fopen(context.logfile().c_str(), "w") };
 
           if (fp)
-          { //const vector<QSO> vec { logbk.as_vector() };
-
-//            for (const auto& qso : vec)
-            for (const auto& qso : logbk.as_vector())
+          { for (const auto& qso : logbk.as_vector())
             { const string line_to_write { qso.verbose_format() + EOL };
 
               fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
@@ -5679,7 +5696,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
       }
 
       set_active_window(ACTIVE_WINDOW::CALL);
-      win_call < WINDOW_ATTRIBUTES::WINDOW_REFRESH;
+
+      const string call_contents { remove_trailing_spaces <std::string> (win_call.read()) };
+
+      win_call.move_cursor(call_contents.size(), 0);
+      win_call.refresh();
     }
 
     processed = true;
@@ -8309,8 +8330,33 @@ void end_of_thread(const string& name)
 void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f */)
 { static frequency last_update_frequency { };
 
-//  ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
-//  ost << "last_update_frequency = " << last_update_frequency << endl;
+  if (debug)
+  { ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
+    ost << "last_update_frequency = " << last_update_frequency << endl;
+  }
+
+  if (f == last_update_frequency)
+  { //ost << "WARNING! f = last update frequency = " << f << endl;
+    //ost << "ignoring update" << endl;
+
+    return;
+  }
+
+  const frequency mx_f { rig.rig_frequency() };
+
+  if (f != mx_f)
+  { ost << "WARNING! f = " << f.hz() << "; mx = " << mx_f.hz() << "; last update = " << last_update_frequency << endl;
+    ost << "ignoring update" << endl;
+
+    return;
+  }
+
+//  if (f == last_update_frequency)
+ // { ost << "WARNING! f = last update frequency = " << f << endl;
+ //   ost << "ignoring update" << endl;
+//
+ //   return;
+//  }
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
 
@@ -8324,9 +8370,11 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
   bool tmp_changed_frequency { f != last_update_frequency };
 
-//  ost << "time = " << hhmmss() << endl;
-//  ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
-//  ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
+  if (debug)
+  { ost << "time = " << hhmmss() << endl;
+    ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
+    ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
+  }
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -8339,25 +8387,30 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
     
     mbe_copy = my_bandmap_entry;
 
- //   ost << "my_bandmap_entry = " << my_bandmap_entry.freq().hz() << endl;
-//    ost << "f = " << f.hz() << endl;
+    if (debug)
+    { ost << "my_bandmap_entry = " << my_bandmap_entry.freq().hz() << endl;
+      ost << "f = " << f.hz() << endl;
+    }
 
  //   tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
 
     tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);
 
- //   ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
-
- //   ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
+    if (debug)
+    { ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
+      ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
+    }
 
  //   changed_frequency = (f == last_update_frequency);
 
     if (tmp_changed_frequency)
-    { //ost << "tmp changed frequency from " << last_update_frequency << " to " << f << endl;
+    { if (debug)
+        ost << "tmp changed frequency from " << last_update_frequency << " to " << f << endl;
       last_update_frequency = f;
     }
 
-//    ost << "frequency of my_bandmap_entry = " << mbe_copy.freq() << endl;
+    if (debug)
+      ost << "frequency of my_bandmap_entry = " << mbe_copy.freq() << endl;
   }
 
 //  const bool changed_frequency { (f.display_string() != mbe_copy.freq().display_string()) };
@@ -8442,18 +8495,20 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
     This is a friend function to the bandmap class, to allow us to lock the bandmap here
 */
-//bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int nskip)
+#if 1
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip)
 { bandmap& bm { bandmaps[current_band] };
 
   safelock bm_lock(bm._bandmap_mutex);
 
-  const bandmap_entry be { (bm.*fn_p)( dirn, nskip ) };       // get bandmap entry for destination
+  const frequency     f_rig { rig.rig_frequency() };
+  const bandmap_entry be    { (bm.*fn_p)( f_rig, dirn, nskip ) };       // get bandmap entry for destination
 
   if (debug)
-  { ost << "DEBUG process_bandmap_function(): "
-        << "current actual frequency = " << rig.rig_frequency()
-        << "; my bandmap entry: " << bm.my_bandmap_entry() << endl
+  { ost << "DEBUG process_bandmap_function(): " << endl
+        << "current actual frequency from rig = " << rig.rig_frequency()
+        << "; bandmap version: " << bm.version() << endl
+        << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
         << "; next bandmap entry: " << be
         << endl;
   }
@@ -8473,6 +8528,78 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     possible_mode_change(be.freq());
 
     update_based_on_frequency_change(be.freq(), current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
+
+    if (debug)
+      ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
+
+    ok_to_poll_k3 = true;
+
+    SAFELOCK(dupe_check);                                   // nested w/ bm_lock
+    last_call_inserted_with_space = be.callsign();
+  }
+
+// check that we aren't somehow in an inconsistent state:
+// in 2024 CQ WPX CW I noticed a few times that the rig didn't seem to move,
+// although the CALL window had the contents as if it had moved
+#if 1
+  bandmap_entry mbe_copy;
+
+  { SAFELOCK(my_bandmap_entry);
+
+    mbe_copy = my_bandmap_entry;
+  }
+
+  if ( (be.freq() - mbe_copy.freq()) > 100)   // if we're more than 100Hz from where we expect
+  { ost << "INCONSISTENT BANDMAP STATE" << endl
+        << "be: " << be << endl
+        << "mbe = " << mbe_copy << endl
+        << "actual measured frequency of rig = " << rig.rig_frequency() << endl;
+
+    debug = true;     // automatically turn on debugging
+  }
+#endif
+
+  return true;
+}
+#endif
+
+bool process_bandmap_function(/*BANDMAP_MEM_FUN_P fn_p, */const BANDMAP_DIRECTION dirn, const int16_t nskip)
+{ bandmap& bm { bandmaps[current_band] };
+
+  safelock bm_lock(bm._bandmap_mutex);
+
+  const frequency f_rig { rig.rig_frequency() };
+
+//  const bandmap_entry be { (bm.*fn_p)( dirn, nskip ) };       // get bandmap entry for destination
+
+  const bandmap_entry be { bm.next_displayed_be(f_rig, dirn, nskip, 95_Hz) };
+
+  if (debug)
+  { ost << "DEBUG process_bandmap_function(): " << endl
+        << "current actual frequency from rig = " << rig.rig_frequency()
+        << "; bandmap version: " << bm.version() << endl
+        << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
+        << "; next bandmap entry: " << be
+        << endl;
+  }
+
+  if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
+  { if (debug)
+      ost << "Setting frequency to: " << be.freq() << endl;
+
+    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+
+    rig.rig_frequency(be.freq());
+    win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
+
+    enter_sap_mode();
+
+// we may require a mode change
+    possible_mode_change(be.freq());
+    update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
+
+    if (debug)
+      ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
 
     ok_to_poll_k3 = true;
 
@@ -8801,9 +8928,8 @@ void insert_memory(void)
 void display_memories(void)
 { win_memories < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-  //int line_nr { win_memories.height() - 1 };
   WIN_INT_TYPE line_nr { static_cast<WIN_INT_TYPE>(win_memories.height() - 1) };
-  int number  { 0 };
+  int          number  { 0 };
 
   for (const auto& me : memories)
   { const cursor c_posn { 0, line_nr-- };
@@ -8862,7 +8988,7 @@ void update_system_memory(void)
   }
 
   catch (...)
-  { ost << "meminfo threw error non-string error" << endl;
+  { ost << "meminfo threw non-string error" << endl;
     alert("Non-string exception in meminfo!!"s);
   }
 }
@@ -8872,8 +8998,6 @@ void update_quick_qsy(void)
 { const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
   const frequency&            f              { quick_qsy_info.first };
   const MODE                  m              { quick_qsy_info.second };
-
-//  const auto [f, m] = get_frequency_and_mode();
 
   quick_qsy_map[BAND(f)] = quick_qsy_info;
 
@@ -8887,7 +9011,6 @@ void update_bandmap_size_window(void)
   { win_bandmap_size < WINDOW_ATTRIBUTES::WINDOW_CLEAR < centre("BM SIZE"s, win_bandmap_size.height() - 1);
 
 // modelled after populate_win_call_history()
-//    int line_nr { 0 };
     WIN_INT_TYPE line_nr { 0 };
 
     for (const auto b : permitted_bands)
@@ -8909,10 +9032,11 @@ void update_bandmap_size_window(void)
 */
 pair<float, float> latitude_and_longitude(const string& callsign)
 { if (const string grid_name { exchange_db.guess_value(callsign, "GRID"s) }; is_valid_grid_designation(grid_name))
-  { const grid_square grid { grid_name };
+  { //const grid_square grid { grid_name };
   
-//    return pair<float, float> { grid.latitude(), grid.longitude() };
-    return pair { grid.latitude(), grid.longitude() };
+//    return pair { grid.latitude(), grid.longitude() };
+    //return grid.latitude_and_longitude();
+    return grid_square(grid_name).latitude_and_longitude();
   }
   else
   { return (location_db.info(callsign) == location_info { }) ? pair<float, float> { }
@@ -8930,8 +9054,8 @@ pair<float, float> latitude_and_longitude(const string& callsign)
 void do_not_show(const string& callsign, const BAND b)
 { if (b == ALL_BANDS)
   { FOR_ALL(bandmaps, [&callsign] (bandmap& bm) { bm -= callsign;
-                                                 bm.do_not_add(callsign);
-                                               } );
+                                                  bm.do_not_add(callsign);
+                                                } );
   }
   else                          // single band
   { bandmap& bm = bandmaps[b];
@@ -9019,8 +9143,8 @@ void adif3_build_old_log(void)
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
-  { const set<string> accept_fields { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s };          // the fields we want from the ADIF file
-    const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), accept_fields };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
+  { //const set<string> accept_fields { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s };          // the fields we want from the ADIF file
+    const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), set<string> { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
     alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     

@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 248 2024-07-20 16:31:45Z  $
+// $Id: string_functions.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -748,22 +748,6 @@ string decimal_places(const string& str, const int n)
   return str;
 }
 
-/*! \brief          Return the longest line from a vector of lines
-    \param  lines   the lines to search
-    \return         the longest line in the vector <i>lines</i>
-*/
-#if 0
-string longest_line(const vector<string>& lines)
-{ string rv;
-
-  for (const string& line : lines)
-    if (line.length() > rv.length())
-      rv = line;
-
-  return rv;
-}
-#endif
-
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
     \param  width   width of line in destination window
@@ -857,24 +841,7 @@ string base_call(const string_view callsign)
 { if (!contains(callsign, '/'))
     return string { callsign };
 
-//  const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };   // I don't know why this doesn't work; gives compilation error
-//  const vector<string> portions { split_string <std::string> (callsign, '/') };
-
-//  return longest( portions );
   return longest( split_string <std::string_view> (callsign, '/') );
-
-// it contains at least one slash
-#if 0
-  const vector<string_view> portions { split_string <std::string_view> (callsign, '/') };
-
-  string rv { };
-
-  for (const auto& str : portions)
-    if (str.length() > rv.length())
-      rv = str;
-
-  return rv;
-#endif
 }
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
@@ -1018,17 +985,24 @@ string to_printable_string(const string_view str)
   return rv;
 }
 
-// https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
-std::string readuntil(std::istream& in, const std::string_view delimiter)
-{ std::string cr;
+/*! \brief              Read an istream until a string delimiter is reached
+    \param  in          istream from which to read
+    \param  delimiter   the delimiter that mars the end of a record
+    \return             the contents if <i>in</i> from the current point to the delimiter
+
+    Drops the delimiter, but see the comment at the end of the routine
+    https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
+*/
+string readuntil(istream& in, const string_view delimiter)
+{ string cr;
 
   const char   delim { *(delimiter.rbegin()) };
   const size_t sz    { delimiter.size() };
 
   size_t tot;
 
-  do { std::string temp;
-       std::getline(in, temp, delim);
+  do { string temp;
+       getline(in, temp, delim);
 
        cr += temp + delim;
        tot = cr.size();
@@ -1036,4 +1010,3 @@ std::string readuntil(std::istream& in, const std::string_view delimiter)
 
   return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
 }
-

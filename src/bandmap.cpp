@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 247 2024-07-19 01:48:06Z  $
+// $Id: bandmap.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,6 +23,9 @@
 #include <functional>
 
 using namespace std;
+
+namespace SR  = std::ranges;
+namespace SRV = std::ranges::views;
 
 using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
 
@@ -52,8 +55,6 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
-
-//constexpr int MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
 
 constexpr string MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
@@ -488,7 +489,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const
 { if ( (target_frequency_in_khz < 1800) or (target_frequency_in_khz > 29700) )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
-    return string();
+    return string { };
   }
 
   const float guard_band_in_khz { static_cast<float>(guard_band_in_hz) / 1000.0f };
@@ -496,7 +497,7 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
   bool  finish_looking      { false };
   float smallest_difference { 1'000'000};              // start with a big number
 
-  string rv;
+  string rv { };
 
   for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
   { const float difference     { cit->freq().kHz() - target_frequency_in_khz };
@@ -527,8 +528,7 @@ void bandmap::_insert(const bandmap_entry& be)
  
   if (be.is_my_marker())
   { my_marker_copy = be;
-
-    my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - MY_MARKER_BIAS));     // make it 1Hz less than actual value 
+    my_marker_copy.freq(my_marker_copy.freq() - MY_MARKER_BIAS);     // make it 1Hz less than actual value
   }
 
   const bandmap_entry& ber { be.is_my_marker() ? my_marker_copy : be };   // point to the right bandmap_entry object
@@ -668,9 +668,7 @@ void bandmap::operator+=(bandmap_entry& be)
   bool add_it { true };  
 
 // do not add if it's already been done recently, or matches several other conditions
-  { //SAFELOCK(_bandmap);
-
-    add_it = !_do_not_add.contains(callsign);
+  { add_it = !_do_not_add.contains(callsign);
 
     if (add_it)           // handle regex do-not-match conditions
     { smatch base_match;
@@ -704,8 +702,6 @@ void bandmap::operator+=(bandmap_entry& be)
   { const bool mark_as_recent { _mark_as_recent(be) };  // keep track of whether we're going to mark this as a recent call
 
     bandmap_entry old_be;
-
-//    SAFELOCK(_bandmap);   // we already have the lock
 
     if (be.source() == BANDMAP_ENTRY_SOURCE::RBN)
     { old_be = (*this)[callsign];
@@ -777,7 +773,7 @@ void bandmap::prune(void)
 
   const size_t initial_size { _entries.size() };
 
-  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists
+  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could alos use erase_if
 
   if (_entries.size() != initial_size)
   { _dirty_entries();
@@ -820,11 +816,7 @@ void bandmap::operator-=(const string& callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))
-  { //const vector<string> calls = regex_matches(callsign);
-
-    //FOR_ALL(calls, [this] (const string& matched_call) { *this -= matched_call; });   // sets dirty_entries and augments _version (perhaps multiple times) if executed
     FOR_ALL(regex_matches(callsign), [this] (const string& matched_call) { *this -= matched_call; });   // sets dirty_entries and augments _version (perhaps multiple times) if executed
-  }
   else
   { const size_t initial_size { _entries.size() };
 
@@ -868,7 +860,6 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 
   bool changed { false };
 
-//  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
   FOR_ALL(_entries, [&canonical_prefix, &changed] (decltype(*_entries.begin())& be) { changed = ( be.remove_country_mult(canonical_prefix) or changed); } );
 
   if (changed)
@@ -899,10 +890,7 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX
       const string  this_callsign_mult { (*pf)(mult_type, callsign) };
 
       if (this_callsign_mult == callsign_mult_string)
-      { changed = be.remove_callsign_mult(mult_type, callsign_mult_string) or changed;
-//        _dirty_entries();               // may end up being called multiple times
-//        _version++;                     // may end up being called multiple times
-      }
+        changed = be.remove_callsign_mult(mult_type, callsign_mult_string) or changed;
     }
   }
 
@@ -995,58 +983,38 @@ BM_ENTRIES bandmap::filtered_entries(void)
 { if (!filter_enabled())
     return entries();
 
-  { SAFELOCK (_bandmap);
-
-    if (!_filtered_entries_dirty)
-      return _filtered_entries;
-  }
-
   SAFELOCK(_bandmap);
 
-//  const BM_ENTRIES tmp { entries() };
+  if (!_filtered_entries_dirty)
+    return _filtered_entries;
 
-  BM_ENTRIES rv;
+// whether to include a particular bandmap entry
+  auto include_be { [this] (const bandmap_entry& be) { if (be.is_marker())
+                                                         return true;
 
-//  for (const auto& be : tmp)
-  for (const auto& be : entries())
-  { if (be.is_my_marker() or be.is_mode_marker())
-      rv += be;
-    else                                              // start by assuming that we are in show mode
-    { bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
+                                                       const bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
 
-      if (filter_hide())                              // hide is the opposite of show
-        display_this_entry = !display_this_entry;
+                                                       return filter_hide() ? !display_this_entry : display_this_entry;
+                                                     }
+                  };
 
-      if (display_this_entry)
-        rv += be;
-    }
-  }
-
-  _filtered_entries = move(rv);
+  _filtered_entries = move(RANGE_CONTAINER <BM_ENTRIES> (_entries | SRV::filter(include_be)));
   _filtered_entries_dirty = false;
 
-// is it correct that we dn't mark dirty_entries() or _version?
+// is it correct that we don't mark dirty_entries() or _version?
 
   return _filtered_entries;
 }
 
 /// all the entries, after the RBN threshold and filtering have been applied
+// threshold is now applied before an entry is put into _entries, so this is the same as just the filtered entries
 BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 { SAFELOCK(_bandmap);
 
-  if (!_rbn_threshold_and_filtered_entries_dirty)
-      return _rbn_threshold_and_filtered_entries;
-
-// it's dirty
-  BM_ENTRIES filtered { filtered_entries() };  // splice is going to change this
-  BM_ENTRIES rv;
-
-  rv.splice(rv.end(), filtered);
-
-  _rbn_threshold_and_filtered_entries = move(rv);
-  _rbn_threshold_and_filtered_entries_dirty = false;
-
-// is it correct that we don't mark dirty_entries() or _version?
+  if (_rbn_threshold_and_filtered_entries_dirty)
+  { _rbn_threshold_and_filtered_entries = filtered_entries();
+    _rbn_threshold_and_filtered_entries_dirty = false;
+  }
 
   return _rbn_threshold_and_filtered_entries;
 }
@@ -1061,49 +1029,49 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
       return rbn_threshold_and_filtered_entries();
 
     case 1 :                                                        // N7DR criteria
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
-
-      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
-
-      return rv;
-    }
+      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.matches_criteria()); }) );
 
     case 2 :                                                        // new on this band+mode
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
-
-      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.is_all_time_first_and_needed_qso() ) ); });
-
-      return rv;
-    }
+      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
+                                                                                                         { return (be.is_marker() or be.is_all_time_first_and_needed_qso()); }));
 
     case 3 :                                                        // never worked anywhere
-    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };       // only slow if dirty, although does perform copy
-
-      erase_if(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or (olog.n_qsos(be.callsign()) == 0) ) ); });
-
-      return rv;
-    }    
+      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
+                                                                                                         { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
   }
+}
+
+/// the displayed calls, without any markers
+BM_ENTRIES bandmap::displayed_entries_no_markers(void)
+{ SAFELOCK (_bandmap);
+
+  return RANGE_CONTAINER <BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }));
 }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
+     \param  f       starting frequency
      \param dirn    direction in which to search
      \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
+    Assumes that the current location is correctly marked with MY_MARKER in the bandmap
 
      Should perhaps use guard band instead of MAX_FREQUENCY_SKEW
 */
-bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ namespace SRV = std::ranges::views;
-  namespace SR  = std::ranges;
-
-  constexpr int MAX_PERMITTED_SKEW { 95 };                   // 95 Hz
+bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip)
+{ static const frequency MAX_PERMITTED_SKEW { 95_Hz };
 
   SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
+
+  bandmap_entry mbe_copy { my_bandmap_entry() };
+
+  if (mbe_copy.freq() != (f - MY_MARKER_BIAS))
+  {  mbe_copy.freq(f);
+    (*this) += mbe_copy;      // NB this might change the bandmap; bias automatically applied during insertion
+  }
 
   const BM_ENTRIES fe { displayed_entries() };
 
@@ -1113,8 +1081,15 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   if (marker_it == fe.cend())             // should never be true
     return bandmap_entry { };
 
-  const frequency target_freq { marker_it->freq() };
+//  const frequency target_freq { marker_it->freq() };
+  const frequency target_freq { f };
 
+/*! \brief          From a starting iterator, move in a direction and find the first iterator that meets a condition, after skipping <i>nskip</i> iterators
+    \param  it1     starting iterator
+    \param  it2     one-past-the-end iterator
+    \param  nskip   number of iterators to skip
+    \return         iterator
+*/
   auto get_be = [fp, &fe, &target_freq] (const auto it1, const auto it2, const auto nskip)                  // this returns a range containing one element
     { return SR::subrange(it1, it2) |
                SRV::filter([fp] (const bandmap_entry& be) { return (!be.is_marker() and (be.*fp)()); }) |
@@ -1122,6 +1097,11 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
                SRV::take(1);
     };
 
+/*! \brief          From a starting iterator, move down and find the first iterator that meets a condition, after skipping <i>nskip</i> iterators
+    \param  foit    starting forward iterator
+    \param  nskip   number of iterators to skip
+    \return         iterator
+*/
   auto gnd_r = [fp, &fe, &get_be, &target_freq] (auto foit, const auto nskip)
   { auto v { get_be(REVERSE_IT(foit), fe.crend(), nskip) };                   // can't be const, because can't use begin() on a constant range, and there is not yet a cbegin()
 
@@ -1136,9 +1116,15 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
     return bandmap_entry { };
   };
 
+/*! \brief          From a starting iterator, move up and find the first iterator that meets a condition, after skipping <i>nskip</i> iterators
+    \param  foit    starting forward iterator
+    \param  nskip   number of iterators to skip
+    \return         iterator
+*/
   auto gnu_r = [fp, get_be, &fe, &target_freq] (auto foit, const auto nskip)
-  { auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq().hz() > (target_freq.hz() + MAX_PERMITTED_SKEW) ); }) }; // move away from my frequency, in upwards direction
-    auto v    { get_be(cit2, fe.cend(), nskip) };
+  { const auto cit2 { find_if(foit, fe.cend(), [target_freq] (const bandmap_entry& be) { return (be.freq() > (target_freq + MAX_PERMITTED_SKEW) ); }) }; // move away from my frequency, in upwards direction
+
+    auto v { get_be(cit2, fe.cend(), nskip) };
 
     if (!v.empty())
       return *(v.begin());
@@ -1155,10 +1141,10 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
   };
 
   switch (dirn)
-  { case BANDMAP_DIRECTION::DOWN :
+  { case DOWN :
       return gnd_r(marker_it, nskip);
 
-    case BANDMAP_DIRECTION::UP :
+    case UP :
       return gnu_r(marker_it, nskip);
 
     default :                       // needed to keep the compiler happy
@@ -1175,52 +1161,54 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION d
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
-{ bandmap_entry rv { };
+bandmap_entry bandmap::next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
+{ const string dirn_str { (dirn == UP) ? "UP"s : "DOWN"s };
 
-  const BM_ENTRIES fe { displayed_entries() };
+  bandmap_entry rv { };
+
+  const BM_ENTRIES fe { displayed_entries_no_markers() };
 
   if (fe.empty())
     return rv;
 
-  if ( ((dirn == BANDMAP_DIRECTION::DOWN) and (f <= fe.front().freq())) or ((dirn == BANDMAP_DIRECTION::UP) and (f >= fe.back().freq())) )
+// are we at the lowest or highest frequency already?
+  if ( ((dirn == DOWN) and (f <= (fe.front().freq() + max_skew) )) or ((dirn == UP) and (f >= (fe.back().freq() - max_skew))) )
     return rv;
 
-// the logic here (for DOWN; UP is just the inverse) is to mark the highest frequency
-// and then step down through the bandmap; if bm freq is >= the target then mark the
-// frequency and keep going; if bm freq < the target, return the most recently marked
-// frequency
-
   switch (dirn)
-  { case BANDMAP_DIRECTION::DOWN :
-      if (f <= fe.front().freq())         // all frequencies are higher than the target
-        return rv;
+  { case UP :
+    { for (BM_ENTRIES::const_iterator cit { fe.cbegin() }; cit != fe.cend(); ++cit)
+      { if ( (cit->freq() - max_skew) >= f)                 // stn
+        { for (int16_t skip { 0 }; skip < nskip; ++skip)
+          { ++cit;
 
-      rv = fe.front();
+            if (cit == fe.cend())
+              return *(prev(cit));  // return highest-frequency be
+          }
 
-      for (BM_ENTRIES::const_iterator cit { next(fe.cbegin()) }; cit != fe.cend(); ++cit)
-      { if (cit->freq() >= f)
-          return rv;
-
-        rv = *cit;
+          return *cit;
+        }
       }
 
-      return rv;            // get here only if all frequencies are above the target
+      return rv;    // no frequency match, including nskip
+    }
 
-    case BANDMAP_DIRECTION::UP :
-      if (f >= fe.back().freq())         // all frequencies are lower than the target
-        return rv;
+    case DOWN :
+    { for (BM_ENTRIES::const_reverse_iterator crit { fe.crbegin() }; crit != fe.crend(); ++crit)
+      { if ( (crit->freq() + max_skew) <= f)
+        { for (int16_t skip { 0 }; skip < nskip; ++skip)
+          { ++crit;
 
-      rv = fe.back();
+            if (crit == fe.crend())
+              return *(prev(crit));  // return lowest-frequency be
+          }
 
-      for (BM_ENTRIES::const_reverse_iterator crit { next(fe.crbegin()) }; crit != fe.crend(); ++crit)
-      { if (crit->freq() <= f)
-          return rv;
-
-        rv = *crit;
+          return *crit;
+        }
       }
-      
-      return rv;            // get here only if all frequencies are below the target
+
+      return rv;    // no frequency match, including nskip
+    }
   }
 
   return bandmap_entry { };       // keep compiler happy
@@ -1350,8 +1338,6 @@ window& bandmap::write_to_window(window& win)
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
   constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
-
-//  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
@@ -1488,7 +1474,6 @@ void bandmap::remove_from_do_not_add(const std::string& callsign)
 */
 vector<string> bandmap::regex_matches(const string& regex_str)
 { const BM_ENTRIES bme { displayed_entries() };
-//  const regex      rgx(regex_str);
   const regex      rgx { regex_str };
 
   smatch         base_match;

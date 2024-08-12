@@ -432,10 +432,32 @@ cursor window::cursor_position(void)
     \param  delta_y     change in y position
     \return             the window
 */
-window& window::move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y)
+//window& window::move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y)
+window& window::move_cursor_relative(const int16_t delta_x, const int16_t delta_y)
 { if (_wp)
   { cursor_position();
-    move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
+
+    WIN_INT_TYPE new_x { static_cast<WIN_INT_TYPE>(_cursor_x + delta_x) };
+    WIN_INT_TYPE new_y { static_cast<WIN_INT_TYPE>(_cursor_y + delta_y) };
+
+    if (delta_x < 0)
+    { if ((-delta_x) >= _cursor_x)
+        new_x = 0;
+    }
+
+    if (delta_y < 0)
+    { if ((-delta_y) >= _cursor_y)
+        new_y = 0;
+    }
+
+    if (new_x >= width())
+      new_x = width() - 1;
+
+    if (new_y >= height())
+      new_y = height() - 1;
+
+//    move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
+    move_cursor(new_x, new_y);
   }
 
   return *this;

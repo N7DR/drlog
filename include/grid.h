@@ -1,4 +1,4 @@
-// $Id: grid.h 163 2020-08-06 19:46:33Z  $
+// $Id: grid.h 249 2024-07-28 16:44:41Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -64,6 +64,10 @@ public:
 */
   inline float bearing(const grid_square& gs) const
     { return ::bearing(_latitude, _longitude, gs._latitude, gs._longitude); }
+
+/// get lat and long in a single call
+  inline std::pair<float, float> latitude_and_longitude(void) const
+    { return std::pair { latitude(), longitude() }; }
   
 /// serialise
   template<typename Archive>
@@ -78,6 +82,6 @@ public:
     \param  putative_designation    the putative designation
     \return                         whether <i>putative_designation</i> is a valid designation of a Maidenhead square or subsquare
 */
-bool is_valid_grid_designation(const std::string& putative_designation);
+bool is_valid_grid_designation(const std::string_view putative_designation);
 
 #endif // GRID_H

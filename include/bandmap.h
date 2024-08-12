@@ -1,4 +1,4 @@
-// $Id: bandmap.h 248 2024-07-20 16:31:45Z  $
+// $Id: bandmap.h 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -55,7 +55,8 @@ extern const std::string   MY_MARKER;                           ///< the string 
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
-constexpr int          MY_MARKER_BIAS { 1 };                       /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
+//constexpr int          MY_MARKER_BIAS { 1 };          /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
+const frequency MY_MARKER_BIAS { 1_Hz };          ///< shift (downward) that is applied to MY_MARKER before inserting it
 
 using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // ordinary std::queue is NOT thread safe!!
 
@@ -522,8 +523,6 @@ public:
 
     Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
 */
-//  inline void remove_exchange_mult(const std::string& name, const std::string& value)
-//    { _is_needed_exchange_mult.remove( { name, value } ); }
   inline bool remove_exchange_mult(const std::string& name, const std::string& value)
     { return _is_needed_exchange_mult.remove( { name, value } ); }
 
@@ -643,7 +642,7 @@ public:
   inline bool is_new_or_previously_qsled(void) const
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
-/*! \brief          Does this call match the N7DR custom criteria?
+/*! \brief          Does this call match the  custom criteria?
     \return         whether the call matches the N7DR custom criteria
 
     Matches criteria:
@@ -694,8 +693,7 @@ using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 class bandmap;
 
 // allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap declared
-//using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int nskip);
-using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION, const int16_t nskip);
+using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const frequency, const enum BANDMAP_DIRECTION, const int16_t nskip);
 
 // -----------  bandmap  ----------------
 
@@ -704,12 +702,12 @@ using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTIO
 */
 
 class bandmap
-{
+{ using enum BANDMAP_DIRECTION;
+
 protected:
 
   mutable pt_mutex                  _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
-//  BAND                              _band                   { BAND::ANY_BAND };           ///< the band associated with this bandmap
   int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                               _cull_function          { 0 };                        ///< cull function number to apply
   std::unordered_set<std::string>   _do_not_add             { };                          ///< do not add these calls
@@ -720,7 +718,6 @@ protected:
   bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
-//  unsigned int                      _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
   bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
@@ -741,6 +738,13 @@ protected:
     other entries at the same QRG
 */
   void _insert(const bandmap_entry& be);
+
+/*!  \brief             Return whether a call is actually a regex
+     \param callsign    call to test
+     \return            whether <i>callsign</i> is actually a regex
+*/
+  inline bool _is_regex(const std::string_view callsign) const
+    { return (callsign.find_first_not_of(CALLSIGN_CHARS) != std::string::npos); }
 
 /*!  \brief     Mark a bandmap_entry as recent
      \param be  entry to mark
@@ -763,13 +767,6 @@ protected:
 */
   std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
 
-/*!  \brief             Return whether a call is actually a regex
-     \param callsign    call to test
-     \return            whether <i>callsign</i> is actually a regex
-*/ 
-  inline bool _is_regex(const std::string_view callsign) const
-    { return (callsign.find_first_not_of(CALLSIGN_CHARS) != std::string::npos); }
- 
 public:
 
 /// default constructor
@@ -778,7 +775,6 @@ public:
 /// no copy constructor  
   bandmap(const bandmap& bm) = delete;
 
-//  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(band, _bandmap);                        ///< the band associated with the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);       ///< the frequency of the mode marker
 
 /// get the current bandmap filter
@@ -790,7 +786,6 @@ public:
 /*!  \brief     Set the RBN threshold
      \param n   new value of the threshold
 */
-//  inline void rbn_threshold(const unsigned int n)
   inline void rbn_threshold(const decltype(_rbn_threshold) n)
   { SAFELOCK (_bandmap);
     _rbn_threshold = n;
@@ -944,6 +939,7 @@ public:
   BM_ENTRIES filtered_entries(void);
 
 /// all the entries, after the RBN threshold and filtering have been applied
+// threshold is now applied before an entry is put into _entries, so this is the same as just the filtered entries
   BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
 /// all the entries, after the RBN threshold, filtering and culling have been applied
@@ -952,6 +948,9 @@ public:
 /// synonym that creates the displayed calls
   inline BM_ENTRIES displayed_entries(void)
     { return rbn_threshold_filtered_and_culled_entries(); }
+
+/// the displayed calls, without any markers
+  BM_ENTRIES displayed_entries_no_markers(void);
 
 /// get the column offset
   inline int column_offset(void) const
@@ -996,8 +995,10 @@ public:
 
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
+     Assumes that the current location is correctly marked with MY_MARKER in the bandmap
 */
-  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
+  bandmap_entry needed(PREDICATE_FUN_P fp, const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
+
 
 /*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1006,8 +1007,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::is_needed, dirn, nskip); }
+  inline bandmap_entry needed_qso(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+    { return needed(&bandmap_entry::is_needed, f, dirn, nskip); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1016,8 +1017,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::is_needed_mult, dirn, nskip); }
+  inline bandmap_entry needed_mult(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+    { return needed(&bandmap_entry::is_needed_mult, f, dirn, nskip); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
     \param dirn    direction in which to search
@@ -1026,8 +1027,8 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::is_all_time_first, dirn, nskip); }
+//  inline bandmap_entry needed_all_time_new(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+//    { return needed(&bandmap_entry::is_all_time_first, f, dirn, nskip); }
 
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
     \param dirn    direction in which to search
@@ -1036,8 +1037,8 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::matches_criteria, dirn, nskip); }
+  inline bandmap_entry matches_criteria(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+    { return needed(&bandmap_entry::matches_criteria, f, dirn, nskip); }
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1046,8 +1047,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn, nskip); }
+  inline bandmap_entry needed_all_time_new_and_needed_qso(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+    { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, f, dirn, nskip); }
 
 /*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -1056,8 +1057,8 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-    { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn, nskip); }
+  inline bandmap_entry needed_all_time_new_or_qsled(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
+    { return needed(&bandmap_entry::is_new_or_previously_qsled, f, dirn, nskip); }
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
     \param  f       starting frequency
@@ -1068,7 +1069,7 @@ public:
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-  bandmap_entry next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn);
+  bandmap_entry next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
 
 /*! \brief      Get lowest frequency on the bandmap
     \return     lowest frequency on the bandmap
@@ -1107,8 +1108,8 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-template<typename C>
-  requires (is_string<typename C::value_type>)
+  template<typename C>
+    requires (is_string<typename C::value_type>)
   inline void do_not_add(const C& calls)
     { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
 
@@ -1117,8 +1118,8 @@ template<typename C>
 
      Calls in the do-not-add list are never added to the bandmap
 */
-template<typename C>
-  requires (is_string<typename C::value_type>)
+  template<typename C>
+    requires (is_string<typename C::value_type>)
   inline void do_not_add(C&& calls)
     { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
 
@@ -1173,7 +1174,9 @@ template<typename C>
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
 
+//  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
+  friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
 
 /// serialize using boost
   template<typename Archive>

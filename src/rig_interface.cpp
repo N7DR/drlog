@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 238 2024-05-05 15:50:16Z  $
+// $Id: rig_interface.cpp 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -286,7 +286,8 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
+{ constexpr milliseconds RETRY_TIME          { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
+  constexpr milliseconds K3_MODE_CHANGE_TIME { 500ms }; // time for a K3 to change mode
 
   _last_commanded_mode = m;
 
@@ -294,19 +295,24 @@ void rig_interface::rig_mode(const MODE m)
   { if (_model == RIG_MODEL_K3)
     { int counter { 0 };
 
-      while ( (counter++ <= 10) and (rig_mode() != m) ) // don't change mode if we're already in the correct mode
+      MODE last_tested_mode;
+
+//      while ( (counter++ <= 10) and (rig_mode() != m) ) // don't change mode if we're already in the correct mode
+      while ( (counter++ <= 10) and (last_tested_mode = rig_mode(), last_tested_mode != m) ) // don't change mode if we're already in the correct mode
       { if (counter != 1)                               // no pause the first time through
           sleep_for(RETRY_TIME);
         
         switch(m)
         { case MODE_CW :
             raw_command("MD3;"s);
+            sleep_for(K3_MODE_CHANGE_TIME);
             break;
 
           case MODE_SSB :
             { const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"s : "MD2;"s };
 
               raw_command(k3_mode_cmd);
+              sleep_for(K3_MODE_CHANGE_TIME);
               break;
             }
 
@@ -316,7 +322,7 @@ void rig_interface::rig_mode(const MODE m)
       }
 
       if (counter > 10)
-        _error_alert("Error setting mode");
+        _error_alert("Error setting mode: commanded mode = "s + MODE_NAME[m] + "; but rig is in mode: " + MODE_NAME[last_tested_mode]);
     }
     else    // not K3
     { static pbwidth_t last_cw_bandwidth  { 200 };
@@ -706,7 +712,6 @@ void rig_interface::xit(const int hz) const
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-//      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_left(to_string(positive_hz), 4, '0') };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_leftz(positive_hz, 4) };
 
       raw_command("RO"s + hz_str + ";"s);
@@ -891,7 +896,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     if (_instrumented)
       ost << "sent to rig: " << cmd << endl;
 
-//    write(fd, cmd.c_str(), cmd.length());     // send the command
     write(fd, cmd.data(), cmd.length());     // send the command
 
     serial_flush(&rs_p->rigport);
@@ -1015,22 +1019,6 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
       else
         ost << "received from rig: " << to_printable_string(rcvd) << endl;
     }
-
-//    rcvd_buf += rcvd;
-
-//    auto semi_colon_posn = rcvd_buf.find(';');
-
-//    if (semi_colon_posn == string::npos)
-//    { ost << "ERROR in raw_command: cannot find semi-colon in response" << endl;
-//      return rcvd;    // temporary return; change this
-//    }
-
-//    const string rv = rcvd_buf.substr(0,semi_colon_posn + 1);  //substring(rcvd_buf, 0, semi_colon_posn + 1);
-
-//    rcvd_buf = substring <string> (rcvd_buf, semi_colon_posn + 1);
-
-//    return rv;
-
 
     return rcvd;
   }

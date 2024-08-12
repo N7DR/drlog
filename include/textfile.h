@@ -1,4 +1,4 @@
-// $Id: textfile.h 248 2024-07-20 16:31:45Z  $
+// $Id: textfile.h 249 2024-07-28 16:44:41Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -97,10 +97,6 @@ public:
   inline bool operator==(const textfile_iterator& it) const   // equality with iterators
     { return (_last_line_nr == it._last_line_nr); }
 
-/// textfile_iterator != textfile_iterator
-//  inline bool operator!=(const textfile_iterator& it) const   // inequality with iterators
-//    { return !(*this == it); }
-
 /*! \brief      Post-increment the iterator
     \return     the iterator, post-incremented
 */
@@ -181,10 +177,6 @@ public:
   inline bool operator==(const textstream_iterator& it) const   // equality with iterators
     { return (_last_line_nr == it._last_line_nr); }
 
-/// textstream_iterator != textstream_iterator
-//  inline bool operator!=(const textstream_iterator& it) const   // inequality with iterators
-//    { return !(*this == it); }
-
 /*! \brief      Post-increment the iterator
     \return     the iterator, post-incremented
 */
@@ -239,4 +231,3 @@ inline textstream_iterator end(textstream& tf)
   { return textstream_iterator(); }
 
 #endif    // TEXTFILE_H
-

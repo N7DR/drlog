@@ -1,4 +1,4 @@
-// $Id: macros.h 248 2024-07-20 16:31:45Z  $
+// $Id: macros.h 250 2024-08-12 15:16:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1241,7 +1241,7 @@ auto operator+(const S& s1, E&& element) -> S
 template <typename C>
   requires is_deque<C> or is_list<C> or is_vector<C>
 inline void operator+=(C& c1, typename C::value_type&& element)
-{ c1.push_back(std::forward<typename C::value_type>(element)); }
+  { c1.push_back(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Append an element to a deque, list or vector
     \param  c1          destination deque, list or vector
@@ -1250,7 +1250,7 @@ inline void operator+=(C& c1, typename C::value_type&& element)
 template <typename C, typename E>
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (std::convertible_to<E, typename C::value_type>)
 inline void operator+=(C& c1, const E& element)
-{ c1.push_back(element ); }
+  { c1.push_back(element ); }
 
 /*! \brief              Append string_view element to a deque, list or vector of strings
     \param  c1          destination deque, list or vector
@@ -1522,6 +1522,61 @@ auto VALUES(const S& s) -> std::vector<typename S::value_type>
   FOR_ALL(s, [&rv] (const typename S::value_type& v) { rv += v; });
 
   return rv;
+}
+
+/*! \brief      Convert a range to a vector
+    \param  r   range
+    \return     <i>r</i> as a vector
+*/
+template <std::ranges::range R>
+auto RANGE_VECTOR(R&& r)
+{ auto r_common { std::forward<R>(r) | std::views::common };
+
+  return std::vector(r_common.begin(), r_common.end());
+}
+
+/*! \brief      Convert a range to a list
+    \param  r   range
+    \return     <i>r</i> as a list
+*/
+template <std::ranges::range R>
+auto RANGE_LIST(R&& r)
+{ auto r_common { std::forward<R>(r) | std::views::common };
+
+  return std::list(r_common.begin(), r_common.end());
+}
+
+/*! \brief      Convert a range to a set
+    \param  r   range
+    \return     <i>r</i> as a set
+*/
+template <std::ranges::range R>
+auto RANGE_SET(R&& r)
+{ auto r_common { std::forward<R>(r) | std::views::common };
+
+  return std::set(r_common.begin(), r_common.end());
+}
+
+/*! \brief      Convert a range to an unordered set
+    \param  r   range
+    \return     <i>r</i> as an unordered set
+*/
+template <std::ranges::range R>
+auto RANGE_USET(R&& r)
+{ auto r_common { std::forward<R>(r) | std::views::common };
+
+  return std::unordered_set(r_common.begin(), r_common.end());
+}
+
+/*! \brief      Convert a range to a particular container type
+    \param  r   range
+    \return     <i>r</i> as a particular container
+*/
+template <typename RT, std::ranges::range R>
+auto RANGE_CONTAINER(R&& r) -> RT
+{ auto r_common { std::forward<R>(r) | std::views::common };
+
+  return RT(r_common.begin(), r_common.end());
 }
 
 #endif    // MACROS_H
