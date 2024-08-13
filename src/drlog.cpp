@@ -4655,6 +4655,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_batch_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      win_qtc_hint < colour_pair(colours.add(win_qtc_hint_bg, win_qtc_hint_bg)) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
       win_individual_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       update_qsls_window();                     // clears the window, except for the preliminary string
 
@@ -8883,17 +8884,26 @@ void populate_win_call_history(const string& callsign)
 // QTC hint
     if (win_qtc_hint.valid())
     { //bool send_qtc      { false };
-      int  window_colour { win_qtc_hint_bg };    // don't send QTC (red)
+//      int  window_colour { win_qtc_hint_bg };    // don't send QTC (red)
 
+//      if ((n_green + n_red) > 1)    // must have at least two slots confirmed
+//        send_qtc = (n_green > n_red);
+
+      const bool send_qtc { ((n_green + n_red) > 1) and (n_green > n_red) };    // must have at least two slots confirmed
+
+#if 0
       const int total { n_green + n_red };
 
       bool send_qtc = (total > 0) and (n_red < 2);
 
       if (!send_qtc)
         send_qtc = (total > 0) and (n_green >= (0.66 * total));
+#endif
 
-      if (send_qtc)
-        window_colour = win_qtc_hint_fg;    // send QTC (green)
+      const int window_colour { send_qtc ? win_qtc_hint_fg : win_qtc_hint_bg };
+
+//     if (send_qtc)
+//        window_colour = win_qtc_hint_fg;    // send QTC (green)
 
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
