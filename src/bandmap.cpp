@@ -551,12 +551,14 @@ void bandmap::_insert(const bandmap_entry& be)
 
 /*!  \brief     Mark filtered and rbn/filtered entries as dirty
 */
+#if 0
 void bandmap::_dirty_entries(void)
 { SAFELOCK (_bandmap);              // should be unnecessary, since if the entries are dirty we should already have the lock
 
   _filtered_entries_dirty = true;
   _rbn_threshold_and_filtered_entries_dirty = true;
 }
+#endif
 
 // a call will be marked as recent if:
 // its source is LOCAL or CLUSTER
@@ -759,7 +761,7 @@ void bandmap::operator+=(bandmap_entry& be)
       _recent_calls += callsign;
 
 // I think that these have already been marked; probably no need for the next two lines
-    _dirty_entries();
+//    _dirty_entries();
     _version++;
   }
 
@@ -776,11 +778,12 @@ void bandmap::prune(void)
   _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could alos use erase_if
 
   if (_entries.size() != initial_size)
-  { _dirty_entries();
-    _version++;
+  { //_dirty_entries();
+//    _version++;
   }
 
   _recent_calls.clear();                       // empty the container of recent calls
+  _version++;
 }
 
 /*! \brief              Return the entry for a particular call
@@ -823,7 +826,7 @@ void bandmap::operator-=(const string& callsign)
     _entries.remove_if( [callsign] (const bandmap_entry& be) { return (be.callsign() == callsign); } );        // OK for lists
 
     if (_entries.size() != initial_size)  // mark as dirty if we removed any
-    { _dirty_entries();
+    { //_dirty_entries();
       _version++;
     }
   }
@@ -863,7 +866,7 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
   FOR_ALL(_entries, [&canonical_prefix, &changed] (decltype(*_entries.begin())& be) { changed = ( be.remove_country_mult(canonical_prefix) or changed); } );
 
   if (changed)
-  { _dirty_entries();
+  { //_dirty_entries();
     _version++;
   }
 }
@@ -895,7 +898,7 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX
   }
 
   if (changed)
-  { _dirty_entries();
+  { //_dirty_entries();
     _version++;
   }
 }
@@ -915,7 +918,7 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed = (be.remove_exchange_mult(mult_name, mult_value) or changed); } );
 
   if (changed)
-  { _dirty_entries();
+  { //_dirty_entries();
     _version++;
   }
 }
@@ -930,7 +933,7 @@ void bandmap::filter_enabled(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->enabled(torf);
-    _dirty_entries();
+//    _dirty_entries();
     _version++;
   }
 }
@@ -947,7 +950,7 @@ void bandmap::filter_add_or_subtract(const string& str)
   { SAFELOCK(_bandmap);
 
     _filter_p->add_or_subtract(str);
-    _dirty_entries();
+//    _dirty_entries();
     _version++;
   }
 }
@@ -960,7 +963,7 @@ void bandmap::filter_hide(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(torf);
-    _dirty_entries();
+//    _dirty_entries();
     _version++;
   }
 }
@@ -973,7 +976,7 @@ void bandmap::filter_show(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(!torf);
-    _dirty_entries();
+//    _dirty_entries();
     _version++;
   }
 }
@@ -985,8 +988,8 @@ BM_ENTRIES bandmap::filtered_entries(void)
 
   SAFELOCK(_bandmap);
 
-  if (!_filtered_entries_dirty)
-    return _filtered_entries;
+//  if (!_filtered_entries_dirty)
+//    return _filtered_entries;
 
 // whether to include a particular bandmap entry
   auto include_be { [this] (const bandmap_entry& be) { if (be.is_marker())
@@ -999,7 +1002,7 @@ BM_ENTRIES bandmap::filtered_entries(void)
                   };
 
   _filtered_entries = move(RANGE_CONTAINER <BM_ENTRIES> (_entries | SRV::filter(include_be)));
-  _filtered_entries_dirty = false;
+//  _filtered_entries_dirty = false;
 
 // is it correct that we don't mark dirty_entries() or _version?
 
@@ -1011,9 +1014,9 @@ BM_ENTRIES bandmap::filtered_entries(void)
 BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 { SAFELOCK(_bandmap);
 
-  if (_rbn_threshold_and_filtered_entries_dirty)
+//  if (_rbn_threshold_and_filtered_entries_dirty)
   { _rbn_threshold_and_filtered_entries = filtered_entries();
-    _rbn_threshold_and_filtered_entries_dirty = false;
+//    _rbn_threshold_and_filtered_entries_dirty = false;
   }
 
   return _rbn_threshold_and_filtered_entries;
@@ -1325,7 +1328,33 @@ bool bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 */
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
 { if (process_insertion_queue(biq))       // don't need to output if nothing is done
-    w <= (*this);
+  { // could put stuff here to make the following output optional -- if, for example, the bm has been recently written, or the version hasn't been incremented
+    // although if we get here, it means that the version must have been incremented, I think
+//    w <= (*this);
+
+    protected_write_to_window(w);
+  }
+}
+
+/*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
+    \param  win         window to which to write
+    \param  dead_time   time that must have passed for the write to occur
+    \return             the window
+*/
+window& bandmap::protected_write_to_window(window& win, const std::chrono::milliseconds min_delay)
+{ SAFELOCK(_bandmap);
+
+  if (_version <= _last_displayed_version)  // don't display if this isn't newer than the last write
+    return win;
+
+  const std::chrono::time_point<std::chrono::system_clock> current_time { std::chrono::system_clock::now() };
+
+  if ( (current_time - _time_last_displayed) < min_delay )  // don't display if this is too soon after the most recent display
+    return win;
+
+  win <= (*this);
+
+  return win;
 }
 
 /*! \brief          Write a <i>bandmap</i> object to a window
@@ -1345,6 +1374,11 @@ window& bandmap::write_to_window(window& win)
   { ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
     return win;
   }
+
+//  if (!(_filtered_entries_dirty or _rbn_threshold_and_filtered_entries_dirty))    // not an error, but indicate that it happened, and then do nothing
+//  { ost << "Attempt to clean version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; requested to display version " << static_cast<int>(_version) << endl;
+//    return win;
+//  }
 
 // we are a more recent version, so display it
   const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
@@ -1433,6 +1467,9 @@ window& bandmap::write_to_window(window& win)
   }
 
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
+  _time_last_displayed = std::chrono::system_clock::now();
+//  _filtered_entries_dirty = false;
+//  _rbn_threshold_and_filtered_entries_dirty = false;
 
   return win;
 }
@@ -1442,7 +1479,7 @@ window& bandmap::write_to_window(window& win)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-void bandmap::do_not_add(const std::string& callsign)
+void bandmap::do_not_add(const string& callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))
@@ -1458,7 +1495,7 @@ void bandmap::do_not_add(const std::string& callsign)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-void bandmap::remove_from_do_not_add(const std::string& callsign)
+void bandmap::remove_from_do_not_add(const string& callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))

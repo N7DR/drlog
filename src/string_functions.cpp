@@ -13,6 +13,7 @@
     Functions related to the manipulation of strings
 */
 
+#include "diskfile.h"
 #include "log_message.h"
 #include "macros.h"
 #include "string_functions.h"
@@ -274,7 +275,15 @@ string read_file(const string_view filename)
 */
 //string read_file(const vector<string>& path, const string& filename)
 string read_file(const vector<string>& path, const string_view filename)
-{ for (const auto& this_path : path)
+{ const string valid_filename { find_file(path, filename) };
+
+  if (valid_filename.empty())
+    throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
+
+  return read_file(valid_filename);
+
+#if 0
+  for (const auto& this_path : path)
   { try
     { return read_file(this_path + "/"s + filename);
     }
@@ -285,6 +294,7 @@ string read_file(const vector<string>& path, const string_view filename)
   }
 
   throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
+#endif
 }
 
 /*! \brief      Squash repeated occurrences of a character

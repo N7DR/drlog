@@ -42,6 +42,16 @@ bool file_exists(const string& filename)
   return (stat (filename.c_str(), &buffer) == 0);
 }
 
+#if 0
+bool file_exists(const string_view filename)
+{ struct stat buffer;
+
+  const string str { filename };    // create as a proper string, so that we have C-style access
+
+  return (stat (str.c_str(), &buffer) == 0);
+}
+#endif
+
 /*! \brief              Find the location of a file in a path
     \param  path        directories in which to look (with or without trailing "/"), in order
     \param  filename    name of file
@@ -51,7 +61,8 @@ bool file_exists(const string& filename)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-string find_file(const vector<string>& path, const string& filename)
+//string find_file(const vector<string>& path, const string& filename)
+string find_file(const vector<string>& path, const string_view filename)
 { for (const auto& dir : path)
   { const string sep { dir.ends_with('/') ? ""s : "/"s };
 

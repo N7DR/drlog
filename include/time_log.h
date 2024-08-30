@@ -56,7 +56,7 @@ public:
       _end = { };
     }
 
-/*! \brief  Return the time between the start time and the end time
+/*! \brief  Return the time between the start time and the end time, in units of the duration template (default microseconds)
 
     Performs no sanity checking on the values of the start and end times
 */ 
@@ -64,7 +64,7 @@ public:
   inline U time_span(void) const
     { return static_cast<U>(duration_cast<T>(_end - _start).count()); }
 
-/*! \brief  Return the time between the start time and now
+/*! \brief  Return the time between the start time and now, in units of the duration template (default microseconds)
 
     Performs no sanity checking on the values of the start time and now
 */
@@ -72,7 +72,7 @@ public:
   inline U click(void) const
     { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
 
-/*! \brief  Return the time between the start time and the end time
+/*! \brief  Return the time between the start time and the end time, in units of the duration template (default microseconds)
 
     Performs no sanity checking on the values of the start and end times
 */
@@ -80,18 +80,7 @@ public:
   inline U duration(void) const
     { return time_span<U, T>(); }
 
-/*! \brief  Return the time between the start time and now
-
-    Performs no sanity checking on the value of the start time
-*/
-//  template <class U = double, class T = A>
-//  inline U split(void)
-//  { end_now();
-//
-//    return time_span<U, T>();
-//  }
-
-/*! \brief  Return the time between the start time and now, and set the start time to now
+/*! \brief  Return the time between the start time and now, in units of the duration template (default microseconds), and set the start time to now
 
     Performs no sanity checking on the value of the start time before using it
 */

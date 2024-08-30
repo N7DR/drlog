@@ -27,6 +27,7 @@
 #include "ts_queue.h"
 
 #include <array>
+#include <chrono>
 #include <list>
 #include <queue>
 #include <string>
@@ -42,6 +43,8 @@ enum class BANDMAP_ENTRY_SOURCE { LOCAL,
 enum class BANDMAP_DIRECTION { DOWN,
                                UP
                              };
+
+using namespace std::chrono_literals;
 
 using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
 
@@ -715,12 +718,12 @@ protected:
   BM_ENTRIES                        _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
-  bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
+//  bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
   uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
-  bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
+//  bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string>   _recent_calls           { };                          ///< calls recently added
   COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };             ///< colour to use for entries < 120 seconds old (if black, then not used)
@@ -728,8 +731,10 @@ protected:
   int                               _last_displayed_version { -1 };
   std::atomic<int>                  _version                { 0 };                        ///< used for debugging; strictly monotonically increases with each change
 
+  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { std::chrono::system_clock::now() };
+
 ///  Mark filtered and rbn/filtered entries as dirty
-  void _dirty_entries(void);
+//  void _dirty_entries(void);
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
@@ -1163,6 +1168,13 @@ public:
 */
   window& write_to_window(window& win);
 
+/*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
+    \param  win         window to which to write
+    \param  dead_time   time that must have passed for the write to occur
+    \return             the window
+*/
+  window& protected_write_to_window(window& win, const std::chrono::milliseconds min_delay = 1000ms);
+
 /*! \brief            Rename the mutex associated with this bandmap
     \param  new_name  the new name of the mutex
 */
@@ -1174,7 +1186,6 @@ public:
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
 
-//  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
 
@@ -1189,11 +1200,11 @@ public:
          & _entries
          & _fade_colours
          & _filtered_entries
-         & _filtered_entries_dirty    // **** WHAT ABOUT filter_p ???
+//         & _filtered_entries_dirty    // **** WHAT ABOUT filter_p ???
          & _mode_marker_frequency
          & _rbn_threshold
          & _rbn_threshold_and_filtered_entries
-         & _rbn_threshold_and_filtered_entries_dirty
+//         & _rbn_threshold_and_filtered_entries_dirty
          & _rbn_threshold_filtered_and_culled_entries
          & _recent_calls
          & _recent_colour;

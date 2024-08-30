@@ -78,7 +78,8 @@ using PAIR_NUMBER_TYPE   = short;
 
 using PAIR_OF_COLOURS = std::pair<COLOUR_TYPE, COLOUR_TYPE>;
 
-using WIN_INT_TYPE = uint16_t;
+using WIN_INT_TYPE = int16_t;
+//using WIN_INT_TYPE = uint16_t;
 
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
@@ -729,7 +730,8 @@ inline window& operator<(window& win, const cursor& c)
   { return win.move_cursor(c.x(), c.y()); }
 
 /// trivial class for moving the cursor (relative)
-WRAPPER_2(cursor_relative, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
+//WRAPPER_2(cursor_relative, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
+WRAPPER_2(cursor_relative, int16_t, x, int16_t, y);   // has to allow signed parameters
 
 /*! \brief          Move the cursor in a window, using relative movement
     \param  win     the window to be affected

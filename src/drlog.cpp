@@ -224,7 +224,7 @@ bool toggle_cw(void);                                                           
 bool toggle_recording_status(audio_recorder& audio);                                ///< toggle status of audio recording
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
-void update_bandmap_window(bandmap& bm);
+void update_bandmap_window(bandmap& bm, const int bm_version = 0);                                                      ///< update the BANDMAP window
 void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);   ///< Update some windows based on a change in my frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
@@ -970,7 +970,9 @@ int main(int argc, char** argv)
     try
     { time_log <std::chrono::milliseconds> tl;
 
-      drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+ //     drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
+ //     drm_db = drmaster { context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */ };
+      drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */ };
 
       tl.end_now();
       ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
@@ -1031,7 +1033,7 @@ int main(int argc, char** argv)
     try
     { ac_db.init_from_calls(drm_cdb.calls());
 
-      ost << "number of calls in autocorrect database = " << ac_db.n_calls() << endl;
+      ost << "number of calls in autocorrect database = " << css(ac_db.n_calls()) << endl;
       ost << "autocorrect is " << (autocorrect_rbn ? "ON"s : "OFF"s) << endl;
     }
 
@@ -2058,6 +2060,9 @@ void display_date_and_time(void)
 
       last_second = structured_time.tm_sec;
 
+// check for dirty bandmap?
+
+
 // if a new minute, then update rate window, and do other stuff
       if (last_second % 60 == 0)
       { ost << "Time: " << substring <std::string> (string(buf.data(), 26), 11, 8) << endl;
@@ -2141,7 +2146,8 @@ void display_date_and_time(void)
       }
     }
 
-    sleep_for(deciseconds(new_second ? 8 : 1));
+//    sleep_for(deciseconds(new_second ? 8 : 1));
+    sleep_for(new_second ? 800ms : 100ms);
   }
 }
 
@@ -2150,12 +2156,12 @@ void display_date_and_time(void)
     Also displays bandmap if the frequency changes. The bandmap is actually updated on screen before any change in status
     NB It doesn't matter *how* the rig's frequency came to change; it could be manual
 */
-void display_rig_status(const milliseconds poll_time, rig_interface* rigp)
-{ const string THREAD_NAME { "display rig status 1"s };
+void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
+{ const string THREAD_NAME { "display rig status"s };
 
   start_of_thread(THREAD_NAME);
 
-  static const long millisecond_poll_period { static_cast<long>(poll_time.count()) };
+//  static const long millisecond_poll_period { static_cast<long>(poll_time.count()) };
 
   DRLOG_MODE last_drlog_mode { DRLOG_MODE::SAP };
   bool       locked_warning  { false };            // is a warning about XIT while locked being displayed?
@@ -2171,12 +2177,14 @@ void display_rig_status(const milliseconds poll_time, rig_interface* rigp)
   { try
     { try
       { while ( rigp -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
-          sleep_for(milliseconds(millisecond_poll_period / 10));
+          //sleep_for(milliseconds(millisecond_poll_period / 10));
+          sleep_for(poll_period / 10);
       }
 
       catch (const rig_interface_error& e)
       { alert("Error communicating with rig during poll loop"s);
-        sleep_for(milliseconds(millisecond_poll_period / 2));                      // wait a (relatively) long time if there was an error
+        sleep_for(poll_period / 2);
+//        sleep_for(milliseconds(millisecond_poll_period / 2));                      // wait a (relatively) long time if there was an error
       }
 
 // if it's a K3 we can get a lot of info with just one or two queries -- for now just assume it's a K3
@@ -2374,7 +2382,8 @@ void display_rig_status(const milliseconds poll_time, rig_interface* rigp)
     {
     }
 
-    sleep_for(milliseconds(millisecond_poll_period));
+//    sleep_for(milliseconds(millisecond_poll_period));
+    sleep_for(poll_period);
 
     { SAFELOCK(thread_check);
 
@@ -2653,9 +2662,13 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                 }
               }
 
-// add the post to the correct bandmap unless it's a marked frequency  ...  win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
+// add the post to the correct bandmap unless it's a marked frequency
               if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
-              { switch (be.source())
+              { auto insert_be { [&changed_bands] (const BAND dx_band, const bandmap_entry& be) { bandmap_insertion_queues[dx_band] += be;
+                                                                                                  changed_bands += dx_band;      // mark band as changed
+                                                                                                } };
+
+                switch (be.source())
                 { case BANDMAP_ENTRY_SOURCE::CLUSTER :
                   case BANDMAP_ENTRY_SOURCE::RBN :
                   { n_posters_database* dbp { (be.source() == BANDMAP_ENTRY_SOURCE::CLUSTER) ? &n_posters_db_cluster : &n_posters_db_rbn };   // choose correct n_posters database
@@ -2663,22 +2676,26 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                     (*dbp) += { be.callsign(), post.poster() };        // associate poster with the call
 
                     if (dbp -> test_call(be.callsign()))              // if good call
-                    { bandmap_insertion_queues[dx_band] += be;
-                      changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
+                    { //bandmap_insertion_queues[dx_band] += be;
+                      //changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
+                      insert_be(dx_band, be);
                     }
+
+                    break;
                   }
 
                   default :                                       // neither cluster nor RBN
-                    bandmap_insertion_queues[dx_band] += be;
-                    changed_bands += dx_band;         // prepare to display the bandmap if we just made a change for this band
+                    //bandmap_insertion_queues[dx_band] += be;
+                    //changed_bands += dx_band;         // prepare to display the bandmap if we just made a change for this band
+                    insert_be(dx_band, be);
                 }
               }
             }
           }
-        }
-        else
-        { // invalid post; do nothing
-        }
+        }   // no else; if it's an invalid post, do nothing
+//        else
+//        { // invalid post; do nothing
+//        }
       }
     }
 
@@ -2787,7 +2804,7 @@ void get_cluster_info(dx_cluster* cluster_p)
 
   dx_cluster& cluster { *cluster_p };    // make the cluster available
 
-  while(1)                                                  // forever
+  while (1)                                                  // forever
   { cluster.read();                                         // reads the socket and stores the data
 
     for ( [[maybe_unused]] auto _ : RANGE(1, 5) )    // check the socket every 5 seconds
@@ -2817,7 +2834,8 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );
 
-    bandmap_win <= bandmaps[current_band];
+//    bandmap_win <= bandmaps[current_band];
+    bandmaps[current_band].protected_write_to_window(bandmap_win);
 
     for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
     {
@@ -3588,7 +3606,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           const frequency cur_rig_frequency { rig.rig_frequency() };
           const frequency new_frequency     { ( (contains_plus or contains_minus) ? cur_rig_frequency.hz() + (value * 1000) : value ) };
-          const BAND new_band               { to_BAND(new_frequency) };
+          const BAND      new_band          { to_BAND(new_frequency) };
 
           bool valid { permitted_bands_set.contains(new_band) };
 
@@ -3616,7 +3634,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             if (new_band != cur_band)
             { current_band = new_band;
 
-              update_based_on_frequency_change(new_frequency, m);
+//              update_based_on_frequency_change(new_frequency, m);
+              bandmap& bm { bandmaps[new_band] };
+              win_bandmap <= bm;
 
 // update displays of needed mults
               update_remaining_callsign_mults_window(statistics, string(), cur_band, m);
@@ -3999,10 +4019,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
-//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
-
-//      ost << "new function 5" << endl;
-
       processed = process_bandmap_function(e.is_char(';') ? DOWN : UP);
     }
     else
@@ -4013,10 +4029,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.is_control(';') or e.is_control('\'')))
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
-//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_control(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, 4);  // move by 5 stations
-
- //     ost << "new function 6" << endl;
-
       processed = process_bandmap_function(e.is_control(';') ? DOWN : UP, 4);  // move by 5 stations
     }
     else
@@ -4415,8 +4427,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-Q -- swap QSL and QUICK QSL messages
   if (!processed and (e.is_control('q')))
-  { //context.swap_qsl_messages();
-    swap(alternative_qsl_message, qsl_message);
+  { swap(alternative_qsl_message, qsl_message);
     alert("QSL messages swapped"s, SHOW_TIME::NO_SHOW);
     processed = true;
   }
@@ -4578,7 +4589,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
                   <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second]; 
     
-    update_based_on_frequency_change(old_frequency, old_mode);
+//    update_based_on_frequency_change(old_frequency, old_mode);
+    bandmap& bm { bandmaps[current_band] };
+
+    win_bandmap <= bm;
 
     processed = true;
   }
@@ -4637,18 +4651,16 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { const frequency f { remove_peripheral_spaces <std::string> (substring <std::string> (contents, posn + 1)) };
 
       rig.rig_frequency(f);
+
+      bandmap& bm { bandmaps[current_band] };
+
+      win_bandmap <= bm;
     }
 
     processed = true;
   }
 
 // finished processing a keypress
-
-//  ost << "FINISHED PROCESSING KEYSTROKE" << endl;
-//  ost << "processed = " << processed << endl;
-//  ost << "call appears to be = " << remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH_CHAR) << endl;
-//  ost << "original_contents before test = " << original_contents << endl;
-
   if (processed and (win_active_p == &win_call))  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
     { win_call.insert(true);                       // force INSERT mode
@@ -8326,9 +8338,10 @@ void end_of_thread(const string& name)
 /*! \brief          Change windows because of a change in my frequency
     \param  f       my new frequency
     \param  m       mode
-//    \param  old_f   optional old frequency
+
+    If the relevant bandmap has changed, but my frequency hasn't changed since the last time that this was called, THEN DO NOTHING
 */
-void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f */)
+void update_based_on_frequency_change(const frequency& f, const MODE m)
 { static frequency last_update_frequency { };
 
   if (debug)
@@ -8336,12 +8349,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
     ost << "last_update_frequency = " << last_update_frequency << endl;
   }
 
-  if (f == last_update_frequency)
-  { //ost << "WARNING! f = last update frequency = " << f << endl;
-    //ost << "ignoring update" << endl;
-
+  if (f == last_update_frequency)   // don't update if the frequency hasn't changed
     return;
-  }
 
   const frequency mx_f { rig.rig_frequency() };
 
@@ -8351,13 +8360,6 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 
     return;
   }
-
-//  if (f == last_update_frequency)
- // { ost << "WARNING! f = last update frequency = " << f << endl;
- //   ost << "ignoring update" << endl;
-//
- //   return;
-//  }
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
 
@@ -8393,16 +8395,12 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
       ost << "f = " << f.hz() << endl;
     }
 
- //   tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq().hz() != (f.hz() - MY_MARKER_BIAS));  // 1 == MY_MARKER_SKEW
-
     tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);
 
     if (debug)
     { ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
       ost << "tmp_changed_frequency after OR = " << boolalpha << tmp_changed_frequency << endl;
     }
-
- //   changed_frequency = (f == last_update_frequency);
 
     if (tmp_changed_frequency)
     { if (debug)
@@ -8414,35 +8412,23 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
       ost << "frequency of my_bandmap_entry = " << mbe_copy.freq() << endl;
   }
 
-//  const bool changed_frequency { (f.display_string() != mbe_copy.freq().display_string()) };
-
-// we may be able to improve this to auto-jump down to the final destination by editing
-// bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn, const int nskip)
-// so as to return the next-lower entry, but let's make sure that this works first
-//  const bool changed_frequency { true };
-//  const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
-
-//  ost << "changed_frequency = " << boolalpha << changed_frequency << endl;
-
   if (tmp_changed_frequency)
-//  if (changed_frequency)
-  { //ost << "inside tmp_changed_frequency conditional" << endl;
-
-//    time_last_qsy = time(NULL);     // record the time for possible change in state of audio recording
-    time_last_qsy = NOW();
+  { time_last_qsy = NOW();
     mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
     display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
     bandmap& bm { bandmaps[mbe_copy.band()] };
 
-    bm += mbe_copy;
+    bm += mbe_copy;         // changes bm version
+
+    const int bm_version { bm.version() };
 
     { SAFELOCK(my_bandmap_entry);
     
       my_bandmap_entry = mbe_copy;
     }
 
-    update_bandmap_window(bm);
+    update_bandmap_window(bm, bm_version);
     display_bandmap_filter(bm);
 
 // is there a station close to our frequency?
@@ -8500,7 +8486,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m /*, const
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip)
 { bandmap& bm { bandmaps[current_band] };
 
-  safelock bm_lock(bm._bandmap_mutex);
+  safelock bm_lock(bm._bandmap_mutex);    // hold the lock for this entire routine; this essentially forces this update to occur on-screen
 
   const frequency     f_rig { rig.rig_frequency() };
   const bandmap_entry be    { (bm.*fn_p)( f_rig, dirn, nskip ) };       // get bandmap entry for destination
@@ -8564,16 +8550,22 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 }
 #endif
 
-bool process_bandmap_function(/*BANDMAP_MEM_FUN_P fn_p, */const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ bandmap& bm { bandmaps[current_band] };
+/*! \brief          Jump to the next frequency up or down on the displayed bandmap, possibly skipping some entries
+    \param  dirn    direction in which the function is to be applied
+    \param  nskip   number of stations to skip (default = 0)
+    \return         always returns true
+
+    This is a friend function to the bandmap class, to allow us to lock the bandmap here
+*/
+bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
+{ static const frequency MAX_SKEW { 95_Hz };    // I don't know why this can't be constexpr instead of static
+
+  bandmap& bm { bandmaps[current_band] };
 
   safelock bm_lock(bm._bandmap_mutex);
 
-  const frequency f_rig { rig.rig_frequency() };
-
-//  const bandmap_entry be { (bm.*fn_p)( dirn, nskip ) };       // get bandmap entry for destination
-
-  const bandmap_entry be { bm.next_displayed_be(f_rig, dirn, nskip, 95_Hz) };
+  const frequency     f_rig { rig.rig_frequency() };
+  const bandmap_entry be    { bm.next_displayed_be(f_rig, dirn, nskip, MAX_SKEW) };   // get next displayed be
 
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
@@ -8585,8 +8577,8 @@ bool process_bandmap_function(/*BANDMAP_MEM_FUN_P fn_p, */const BANDMAP_DIRECTIO
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
-  { if (debug)
-      ost << "Setting frequency to: " << be.freq() << endl;
+  { //if (debug)
+      ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
@@ -8611,7 +8603,7 @@ bool process_bandmap_function(/*BANDMAP_MEM_FUN_P fn_p, */const BANDMAP_DIRECTIO
 // check that we aren't somehow in an inconsistent state:
 // in 2024 CQ WPX CW I noticed a few times that the rig didn't seem to move,
 // although the CALL window had the contents as if it had moved
-#if 1
+#if 0
   bandmap_entry mbe_copy;
 
   { SAFELOCK(my_bandmap_entry);
@@ -8770,7 +8762,7 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
   { start_of_thread("get indices"s);
 
     try
-    { const string  indices { run_external_command(cmd) };
+    { const string indices { run_external_command(cmd) };
 
       win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string_view> (hhmmss(), 0, 5) < EOL
                   <= indices;
@@ -8793,7 +8785,6 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
 int time_since_last_qso(const logbook& logbk)
 { const QSO last_qso { logbk.last_qso() };
 
-//  return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
   return ( last_qso.empty() ? 0 : (NOW() - last_qso.epoch_time()) );      // get the time from the kernel
 }
 
@@ -8805,7 +8796,6 @@ int time_since_last_qso(const logbook& logbk)
 int time_since_last_qsy(void)
 { SAFELOCK(my_bandmap_entry);
 
-//  return (time(NULL) - time_last_qsy);
   return (NOW() - time_last_qsy);
 }
 
@@ -8852,7 +8842,6 @@ void populate_win_call_history(const string& callsign)
     const int  bg                  { win_call_history.bg() };
     const auto default_colour_pair { colours.add(win_call_history.fg(), bg) };
 
-//    int line_nr { 0 };
     WIN_INT_TYPE line_nr { 0 };
 
 // keep track of which slots have QSOs and QSLs
@@ -8883,28 +8872,8 @@ void populate_win_call_history(const string& callsign)
 
 // QTC hint
     if (win_qtc_hint.valid())
-    { //bool send_qtc      { false };
-//      int  window_colour { win_qtc_hint_bg };    // don't send QTC (red)
-
-//      if ((n_green + n_red) > 1)    // must have at least two slots confirmed
-//        send_qtc = (n_green > n_red);
-
-      const bool send_qtc { ((n_green + n_red) > 1) and (n_green > n_red) };    // must have at least two slots confirmed
-
-#if 0
-      const int total { n_green + n_red };
-
-      bool send_qtc = (total > 0) and (n_red < 2);
-
-      if (!send_qtc)
-        send_qtc = (total > 0) and (n_green >= (0.66 * total));
-#endif
-
-      const int window_colour { send_qtc ? win_qtc_hint_fg : win_qtc_hint_bg };
-
-//     if (send_qtc)
-//        window_colour = win_qtc_hint_fg;    // send QTC (green)
-
+    { const bool send_qtc         { ((n_green + n_red) > 1) and (n_green > n_red) };    // must have at least two slots confirmed
+      const int  window_colour    { send_qtc ? win_qtc_hint_fg : win_qtc_hint_bg };
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
       win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
@@ -9042,16 +9011,10 @@ void update_bandmap_size_window(void)
 */
 pair<float, float> latitude_and_longitude(const string& callsign)
 { if (const string grid_name { exchange_db.guess_value(callsign, "GRID"s) }; is_valid_grid_designation(grid_name))
-  { //const grid_square grid { grid_name };
-  
-//    return pair { grid.latitude(), grid.longitude() };
-    //return grid.latitude_and_longitude();
     return grid_square(grid_name).latitude_and_longitude();
-  }
-  else
-  { return (location_db.info(callsign) == location_info { }) ? pair<float, float> { }
-                                                             : pair { location_db.latitude(callsign), -location_db.longitude(callsign) }; // minus sign to get in the correct direction
-  }
+
+  return (location_db.info(callsign) == location_info { }) ? pair<float, float> { }
+                                                           : pair { location_db.latitude(callsign), -location_db.longitude(callsign) }; // minus sign to get in the correct direction
 }
 
 /*! \brief              Mark a callsign as not to be shown
@@ -9153,8 +9116,7 @@ void adif3_build_old_log(void)
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
-  { //const set<string> accept_fields { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s };          // the fields we want from the ADIF file
-    const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), set<string> { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
+  { const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), set<string> { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
     alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
@@ -9399,7 +9361,6 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
   }
 
   if (static_cast<int>(new_contents.size()) < win_height)
-//  if (new_contents.ssize() < win_height)
     new_contents += win_posted_by.snapshot();
 
   win_posted_by < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -9479,20 +9440,27 @@ char t_char(const unsigned short long_t)
 }
 
 // temporary
-void update_bandmap_window(bandmap& bm)
-{ const int highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
-  const int original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
+void update_bandmap_window(bandmap& bm, const int bm_version)
+{ const bool proceed { ( bm_version == 0) or (bm.version() == bm_version) };
 
-  const string win_contents { win_bandmap_filter.read() };
-  const char   first_char   { (win_contents.empty() ? ' ' : win_contents[0]) };
+  if (proceed)
+  { const int highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
+    const int original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
+
+    const string win_contents { win_bandmap_filter.read() };
+    const char   first_char   { (win_contents.empty() ? ' ' : win_contents[0]) };
 
 // mark that we are processing on the screen
-  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
+    win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
 
-  win_bandmap <= bm;
+    win_bandmap <= bm;
 
 // clear the mark that we are processing
-  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
+    win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
+  }
+  else
+  { ost << "asked to write bm version " << bm_version << " but actual version is: " << bm.version() << endl;
+  }
 }
 
 /*! \brief                              Is a particular frequency within any marked range?

@@ -432,7 +432,6 @@ cursor window::cursor_position(void)
     \param  delta_y     change in y position
     \return             the window
 */
-//window& window::move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y)
 window& window::move_cursor_relative(const int16_t delta_x, const int16_t delta_y)
 { if (_wp)
   { cursor_position();
@@ -456,7 +455,6 @@ window& window::move_cursor_relative(const int16_t delta_x, const int16_t delta_
     if (new_y >= height())
       new_y = height() - 1;
 
-//    move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
     move_cursor(new_x, new_y);
   }
 
@@ -943,23 +941,11 @@ vector<pair<string, string>> window_overlaps(const map<string /* name */, window
 { vector<pair<string, string>> rv;
 
   for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
-  { //const window_information& wi1 { it -> second };
-    const auto& [ name1, wi1 ] { *it };
-
-//    const int x1 { wi1.x() };
-//    const int y1 { wi1.y() };
-//    const int w1 { wi1.w() };
-//    const int h1 { wi1.h() };
+  { const auto& [ name1, wi1 ] { *it };
 
     for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
     { const auto& [ name2, wi2 ] { *it2 };
 
-//      const int x2 { wi2.x() };
-//      const int y2 { wi2.y() };
-//      const int w2 { wi2.w() };
-//      const int h2 { wi2.h() };
-
-//      if (overlap(x1, y1, w1, h1, x2, y2, w2, h2))
       if (overlap(wi1.x(), wi1.y(), wi1.w(),  wi1.h(), wi2.x(), wi2.y(), wi2.w(),  wi2.h()))
         rv += { name1, name2 };
     }

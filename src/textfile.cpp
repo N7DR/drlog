@@ -3,9 +3,12 @@
         Allow one to iterate line-by-line through a text file
 */
 
+#include "log_message.h"
 #include "textfile.h"
 
 using namespace std;
+
+extern message_stream    ost;       ///< debugging/logging output
 
 // -----------  textfile_iterator  ----------------
 
@@ -17,7 +20,9 @@ using namespace std;
     \return     the iterator, pre-incremented
 */
 textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
-{ if (_streamp -> eof())
+{ //ost << "textfile_iterator pre_increment called" << endl;
+
+  if (_streamp -> eof())
   { *this = textfile_iterator();  // default value if at the end of the file
     return *this;
   }
@@ -29,6 +34,8 @@ textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
   _last_line_nr++;
   _last_line = move(the_line);
 
+  //ost << "pre_increment last_line = " << _last_line << endl;
+
   return *this;
 }
 
@@ -36,9 +43,13 @@ textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
     \return     the iterator, post-incremented
 */
 textfile_iterator textfile_iterator::operator++(int)  // post-incrementable, returns prev value
-{ textfile_iterator temp { *this };
+{ //ost << "textfile_iterator post_increment called" << endl;
+
+  textfile_iterator temp { *this };
 
   ++*this;
+
+  //ost << "post_increment (prior) last_line = " << _last_line << endl;
 
   return temp;
 }
@@ -61,6 +72,8 @@ textfile_iterator begin(textfile& tf)
   rv._last_line_nr = 0;
   rv._last_line = move(the_line);
   rv._strp = &rv._last_line;
+
+  //ost << "textfile begin() called; last_line = " << rv._last_line << endl;
 
   return rv;
 }

@@ -39,6 +39,9 @@ inline void append_to_file(const std::string& filename, const std::string& str) 
 */
 bool file_exists(const std::string& filename);       // can't use string_view here
 
+inline bool file_exists(const std::string_view filename)
+  { return file_exists(std::string { filename }); }
+
 /*! \brief              Find the location of a file in a path
     \param  path        directories in which to look (with or without trailing "/"), in order
     \param  filename    name of file
@@ -48,7 +51,8 @@ bool file_exists(const std::string& filename);       // can't use string_view he
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-std::string find_file(const std::vector<std::string>& path, const std::string& filename);
+//std::string find_file(const std::vector<std::string>& path, const std::string& filename);
+std::string find_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief              What is the size of a file?
     \param  filename    name of file

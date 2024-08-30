@@ -50,7 +50,6 @@ public:
     std::ifstream(filename)
   { }
 
-
   inline explicit textfile(const std::string_view filename) :
     std::ifstream(std::string { filename })
   { }
@@ -77,7 +76,7 @@ protected:
 
 public:
 
-  using difference_type = std::ptrdiff_t;       // needed for ranges-compatible iterator (I think)
+  using difference_type = std::ptrdiff_t;       // needed for ranges-compatible iterator (I think) // https://www.reedbeta.com/blog/ranges-compatible-containers/
   using value_type      = std::string;          // needed for ranges-compatible iterator (I think)
 
   textfile_iterator(void) = default;                   ///< default default constructor

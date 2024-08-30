@@ -364,7 +364,9 @@ protected:
 
     Lines without XSCP data are always included
 */
-  void _prepare_from_file_contents(const std::string_view contents, const int xscp_limit = 1);
+//  void _prepare_from_file_contents(const std::string_view contents, const int xscp_limit = 1);
+
+//  void _burble(const std::string_view filename, const int xscp_limit = 1);
 
 public:
 
@@ -399,7 +401,7 @@ public:
     Lines without XSCP data are always included
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::string_view filename, const int xscp_limit = 1);
+//  void prepare(const std::string_view filename, const int xscp_limit = 1);
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check
@@ -411,7 +413,7 @@ public:
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
+//  void prepare(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;
