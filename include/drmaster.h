@@ -1,4 +1,4 @@
-// $Id: drmaster.h 249 2024-07-28 16:44:41Z  $
+// $Id: drmaster.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -358,16 +358,6 @@ protected:
 
   std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
 
-/*! \brief              Prepare an object for use, from a file's contents
-    \param  contents    the contents of a drmaster file
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Lines without XSCP data are always included
-*/
-//  void _prepare_from_file_contents(const std::string_view contents, const int xscp_limit = 1);
-
-//  void _burble(const std::string_view filename, const int xscp_limit = 1);
-
 public:
 
   drmaster(void) = default;
@@ -393,27 +383,6 @@ public:
     Throws exception if the file does not exist or is incorrectly formatted
 */
   drmaster(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
-
-/*! \brief              Prepare the object by reading a file
-    \param  filename    name of file to read
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Lines without XSCP data are always included
-    Throws exception if the file does not exist or is incorrectly formatted
-*/
-//  void prepare(const std::string_view filename, const int xscp_limit = 1);
-
-/*! \brief              Prepare the object by reading a file
-    \param  path        directories to check
-    \param  filename    name of file to read
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Lines without XSCP data are always included
-
-    Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
-    Throws exception if the file does not exist or is incorrectly formatted
-*/
-//  void prepare(const std::vector<std::string>& path, const std::string_view filename, const int xscp_limit = 1);
 
 /// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;

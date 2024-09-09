@@ -1,4 +1,4 @@
-// $Id: time_log.h 232 2023-12-31 16:46:23Z  $
+// $Id: time_log.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -52,9 +52,9 @@ public:
 /*! \brief  Reset the timer to initial state, except that the timer is started at the current time
 */
   void restart(void)
-    { _start = std::chrono::system_clock::now();
-      _end = { };
-    }
+  { _start = std::chrono::system_clock::now();
+    _end = { };
+  }
 
 /*! \brief  Return the time between the start time and the end time, in units of the duration template (default microseconds)
 
@@ -97,11 +97,11 @@ public:
 
 /*! \brief  Perform a basic sanity check that the start and end values reflect actual times
 */
-  bool valid(void) const
-    { const static std::chrono::time_point<std::chrono::system_clock> empty { };
+  inline bool valid(void) const
+  { const static std::chrono::time_point<std::chrono::system_clock> empty { };
     
-      return ( (_start != empty) and (_end != empty) and (_start <= _end) ); 
-    }
+    return ( (_start != empty) and (_end != empty) and (_start <= _end) );
+  }
 };
 
 #endif      // TIME_LOG_H

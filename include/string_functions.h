@@ -1,4 +1,4 @@
-// $Id: string_functions.h 250 2024-08-12 15:16:35Z  $
+// $Id: string_functions.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -615,15 +615,6 @@ auto remove_leading(std::string_view cs, const char c) -> STYPE
   const size_t posn { cs.find_first_not_of(c) };
 
   return ( (posn == std::string_view::npos) ? STYPE { } : substring <STYPE> (cs, posn) );
-
-#if 0
-  if (cs.empty())
-    return STYPE { cs };
-
-  const size_t posn { cs.find_first_not_of(create_string(c)) };
-
-  return ( (posn == std::string_view::npos) ? STYPE { cs } : substring <STYPE> (cs, posn) );
-#endif
 }
 
 /*! \brief      Remove leading spaces
@@ -697,7 +688,6 @@ auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
     NB There should be specialisation of this for vectors that uses reserve()
 */
 template <typename STYPE, typename T>
-//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
   { return remove_peripheral_chars <STYPE> (t, ' '); }
@@ -783,9 +773,6 @@ auto split_string(const std::string_view cs, const char separator = ',') -> std:
   return rv;
 }
 
-// return posn_1, posn_2; posn_2 is the location of sep, or string::npos
-//std::pair<size_t, size_t> to_next_separator(const std::string_view cs, const size_t posn, const char sep);
-
 /*! \brief              Split a string into records
     \param  cs          original string
     \param  eor_marker  character that marks the end of a record
@@ -836,7 +823,6 @@ inline auto clean_split_string(const std::string_view cs,const std::string_view 
 */
 template <typename STYPE>
 inline auto clean_split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
-//inline auto clean_split_string(std::string_view cs, const char separator) -> std::vector<STYPE>
   { return remove_peripheral_spaces <STYPE> (split_string <STYPE> (cs, separator)); }
 
 /*! \brief      Squash repeated occurrences of a character
@@ -963,7 +949,7 @@ auto delimited_substring(const std::string_view cs, const char delim_1, const ch
     first delimited substring if more than one exists.
 */
 template <typename STYPE>
-auto delimited_substring(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters) -> STYPE
+auto delimited_substring(const std::string_view cs, const std::string_view delim_1, const std::string_view delim_2, const DELIMITERS return_delimiters) -> STYPE
 { const size_t delim_1_posn { cs.find(delim_1) };
   
   if (delim_1_posn == std::string_view::npos)
@@ -1132,7 +1118,7 @@ std::string get_environment_variable(const std::string& var_name);
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-std::string transform_string(const std::string_view cs, int(*pf)(int));
+std::string transform_string(const std::string_view cs, int (*pf) (int));
 
 /*! \brief      Convert string to upper case
     \param  cs  original string

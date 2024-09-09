@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: drmaster.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -128,16 +128,14 @@ master_dta::master_dta(const string_view filename)
 
     Returns empty string if there is no value associated with <i>param</i>
 */
-//string __extract_value(const string& line, const string& param)
-//string __extract_value(string_view line, const string& param)
 string __extract_value(const string_view line, const string& param)
 { if (!contains(line, param))
-    return string();
+    return string { };
 
-  const size_t start_position  { line.find(param) };
-  const string_view short_line { substring <std::string_view> (line, start_position + param.length()) };
-  const size_t space_posn      { short_line.find(' ') };
-  const size_t end_position    { ( (space_posn == string_view::npos) ? short_line.length() : space_posn ) };
+  const size_t      start_position { line.find(param) };
+  const string_view short_line     { substring <std::string_view> (line, start_position + param.length()) };
+  const size_t      space_posn     { short_line.find(' ') };
+  const size_t      end_position   { ( (space_posn == string_view::npos) ? short_line.length() : space_posn ) };
 
   return substring <std::string> (short_line, 0, end_position);
 }
@@ -268,17 +266,31 @@ string trmaster_line::to_string(void) const
     New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
 trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
-{ trmaster_line rv(*this);                                  // copy the old line
+{ if (call() != trml.call())
+    return *this;
+
+  trmaster_line rv { *this };                                  // copy the old line
 
 // check that the calls match
-  if (trml.call() != call())
-    return rv;
+//  if (trml.call() != call())
+//    return rv;
+
+  using VOID_PARAM = const string& (trmaster_line::*) (void) const&;
+  using STR_PARAM = void (trmaster_line::*) (const string&);
+
+  auto insert_if_empty = [&rv, this] (VOID_PARAM fn1, STR_PARAM fn2) { if (std::invoke(fn1, rv).empty())
+                                                                         std::invoke( fn2, rv, std::invoke(fn1, *this) );
+                                                                     };
+
+#define INSERT_IF_EMPTY(F) insert_if_empty( &trmaster_line::F, &trmaster_line::F )
 
 // go through the fields seriatim
   rv.hit_count(rv.hit_count() + trml.hit_count() + 1);      // may change this
 
-  if ((!trml.qth().empty()))
-    rv.qth(trml.qth());
+  INSERT_IF_EMPTY(qth);
+
+//  if ((!trml.qth().empty()))
+//    rv.qth(trml.qth());
 
   for (unsigned int n { 1 }; n <= TRMASTER_N_USER_PARAMETERS; n++)
   { if (!trml.user(n).empty())
@@ -308,6 +320,8 @@ trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
 
   if (trml.foc() != 0)
     rv.foc(trml.foc());
+
+#undef INSERT_IF_EMPTY
 
   return rv;
 }
@@ -940,8 +954,8 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   drmaster_line rv { drml };
 
-  using VOID_PARAM = const string& (drmaster_line::*)(void) const&;
-  using STR_PARAM = void (drmaster_line::*)(const string&);
+  using VOID_PARAM = const string& (drmaster_line::*) (void) const&;
+  using STR_PARAM = void (drmaster_line::*) (const string&);
 
   auto insert_if_empty = [&rv, this] (VOID_PARAM fn1, STR_PARAM fn2) { if (std::invoke(fn1, rv).empty())
                                                                          std::invoke( fn2, rv, std::invoke(fn1, *this) );
@@ -1170,27 +1184,8 @@ drmaster::drmaster(const string_view filename, const int xscp_limit)
 */
 drmaster::drmaster(const vector<string>& path, const string_view filename, const int xscp_limit)
 { if (!filename.empty())
-  {
-//   const string fname { find_file(path, filename) };
-
-    if (const string fname { find_file(path, filename) }; !fname.empty())
-    { *this = drmaster { fname, xscp_limit };
-
-      //_burble(fname, xscp_limit);
-
-
-
-//      auto tfile { textfile(fname) };
-
-// I don't know why I can't say "textfile(filename)" instead of just "t"; apparently an lvalue is needed, for reasons that I don't understand
-//      tfile| std::views::transform([this] (const string& str) { return drmaster_line { str }; })
-//           | std::views::filter([this, &xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); })
-//           | std::views::transform([this] (const auto& rec) { _records += { rec.call(), rec }; return true; });    // I don't know why I have to return a value; probably something to do with "transform"
-
-//     ost << "read " << _records.size() << " drmaster records from file [2]" << endl;
-    }
-
-//    _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
+  { if (const string fname { find_file(path, filename) }; !fname.empty())
+      *this = drmaster { fname, xscp_limit };
   }
 }
 
@@ -1324,7 +1319,7 @@ void drmaster::operator+=(const drmaster_line& drml)
   }
 }
 
-/*! \brief      Return object with only records with xscp below a given percentage value
+/*! \brief      Return an object with only records with xscp below a given percentage value
     \param  pc  percentage limit
     \return     <i>drmaster</i> object containing only records with no xscp, and thiose for which the xscp value is >= the <i>pc</i> value 
 */

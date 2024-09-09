@@ -1,4 +1,4 @@
-// $Id: diskfile.h 192 2021-09-19 14:03:15Z  $
+// $Id: diskfile.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,6 +39,14 @@ inline void append_to_file(const std::string& filename, const std::string& str) 
 */
 bool file_exists(const std::string& filename);       // can't use string_view here
 
+/*! \brief              Does a file exist?
+    \param  filename    name of file
+    \return             whether file <i>filename</i> exists
+
+    Actually checks for existence AND readability, which is much simpler
+    than checking for existence. See:
+      https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+*/
 inline bool file_exists(const std::string_view filename)
   { return file_exists(std::string { filename }); }
 
@@ -51,7 +59,6 @@ inline bool file_exists(const std::string_view filename)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-//std::string find_file(const std::vector<std::string>& path, const std::string& filename);
 std::string find_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief              What is the size of a file?
@@ -111,7 +118,8 @@ void directory_create(const std::string& dirname);
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-bool directory_exists(const std::string& dirname) noexcept;
+//bool directory_exists(const std::string& dirname) noexcept;
+bool directory_exists(const std::string_view dirname);
 
 /*! \brief              What files does a directory contain?
     \param  dirname     name of the directory to examine
@@ -119,8 +127,10 @@ bool directory_exists(const std::string& dirname) noexcept;
 
     The returned vector does not include "." or "..".
     Returns empty vector if the directory <i>dirname</i> does not exist
+    <i>dirname</i> may or may not end in "/"
 */
-std::vector<std::string> directory_contents(const std::string& dirname);
+//std::vector<std::string> directory_contents(const std::string& dirname);
+std::vector<std::string> directory_contents(const std::string_view dirname);
 
 /*! \brief              Truncate a file
     \param  filename    name of file to truncate
@@ -131,5 +141,3 @@ inline void file_truncate(const std::string& filename)
   { std::ofstream(filename, std::ios_base::trunc); }
 
 #endif    // DISKFILE_H
-
-

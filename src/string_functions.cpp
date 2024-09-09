@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: string_functions.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -260,7 +260,7 @@ string read_file(const string_view filename)
 
 // now perform the actual read
   ifstream file { filename_str };
-  string   str  {std::istreambuf_iterator<char>(file), {} };
+  string   str  {std::istreambuf_iterator<char>(file), { } };
 
   return str;
 }
@@ -348,7 +348,6 @@ string remove_char(string_view cs, const char char_to_remove)
 
     delimiters are kept in the output
 */
-//string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
 string remove_char_from_delimited_substrings(const string_view cs, const char char_to_remove, const char delim_1, const char delim_2)
 { string rv         { };
   size_t start_posn { 0 };
@@ -471,8 +470,7 @@ string get_environment_variable(const string& var_name)
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-//string transform_string(const string& cs, int(*pf)(int))
-string transform_string(const string_view cs, int(*pf)(int))
+string transform_string(const string_view cs, int (*pf) (int))
 { string rv { cs };
   
   std::ranges::transform(rv, rv.begin(), pf);

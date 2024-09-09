@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 221 2023-06-19 01:57:55Z  $
+// $Id: bands-modes.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -49,26 +49,6 @@ frequency::frequency(const double f)
     _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
   else
     _hz = static_cast<HZ_TYPE>( (f < 100'000) ? (f * 1'000 + 0.5) : (f + 0.5) );
-}
-
-/*! \brief          Construct from a double and an explicit unit
-    \param f        frequency in Hz, kHz or MHz
-    \param unit     frequency unit
-*/
-frequency::frequency(const double f, const FREQUENCY_UNIT unit)
-{ switch (unit)
-  { case FREQUENCY_UNIT::HZ :
-      _hz = static_cast<HZ_TYPE>(f + 0.5);
-      break;
-
-    case FREQUENCY_UNIT::KHZ :
-      _hz = static_cast<HZ_TYPE>(f * 1'000 + 0.5);
-      break;
-
-    case FREQUENCY_UNIT::MHZ :
-      _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
-      break;
-  }
 }
 
 /*! \brief      return string suitable for use in bandmap

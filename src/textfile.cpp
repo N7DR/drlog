@@ -20,9 +20,7 @@ extern message_stream    ost;       ///< debugging/logging output
     \return     the iterator, pre-incremented
 */
 textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
-{ //ost << "textfile_iterator pre_increment called" << endl;
-
-  if (_streamp -> eof())
+{ if (_streamp -> eof())
   { *this = textfile_iterator();  // default value if at the end of the file
     return *this;
   }
@@ -34,8 +32,6 @@ textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
   _last_line_nr++;
   _last_line = move(the_line);
 
-  //ost << "pre_increment last_line = " << _last_line << endl;
-
   return *this;
 }
 
@@ -43,13 +39,9 @@ textfile_iterator& textfile_iterator::operator++(void)    // pre-incrementable
     \return     the iterator, post-incremented
 */
 textfile_iterator textfile_iterator::operator++(int)  // post-incrementable, returns prev value
-{ //ost << "textfile_iterator post_increment called" << endl;
-
-  textfile_iterator temp { *this };
+{ textfile_iterator temp { *this };
 
   ++*this;
-
-  //ost << "post_increment (prior) last_line = " << _last_line << endl;
 
   return temp;
 }
@@ -101,24 +93,10 @@ textstream_iterator& textstream_iterator::operator++(void)    // pre-incrementab
   return *this;
 }
 
-/*! \brief      Post-increment the iterator
-    \return     the iterator, post-incremented
-*/
-#if 0
-textstream_iterator textstream_iterator::operator++(int)  // post-incre
-{ textstream_iterator temp { *this };
-
-  ++*this;
-
-  return temp;
-}
-#endif
-
 /*! \brief      Obtain the first iterator associated with a <i>textstream</i>
     \param  tf  textstream
     \return     the begin() iterator associated with <i>tf</i>
 */
-
 textstream_iterator begin(textstream& tf)
 { textstream_iterator rv;
   string             the_line;

@@ -1,4 +1,4 @@
-// $Id: screen.h 250 2024-08-12 15:16:35Z  $
+// $Id: screen.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -115,13 +115,11 @@ int COLOUR_PAIR(const PAIR_NUMBER_TYPE n);
     \param  h2    height of rectangle 2
     \return       whether rectangle and rectangle 2 overlap
 */
-//bool overlap(const int x1, const int y1, const int w1, const int h1, const int x2, const int y2, const int w2, const int h2);
 bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1, const WIN_INT_TYPE h1, const WIN_INT_TYPE x2, const WIN_INT_TYPE y2, const WIN_INT_TYPE w2, const WIN_INT_TYPE h2);
 
 // -----------  cursor  ----------------
 
 /// class used for moving the cursor; encapsulates x,y coordinates
-//WRAPPER_2(cursor, int, x, int, y);
 WRAPPER_2(cursor, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
 
 // -----------  cpair  ----------------
@@ -226,7 +224,6 @@ public:
   window_information(void) = default;
 
 /// construct from x, y, w, h
-//  inline window_information(const int X, const int Y, const int W, const int H) :
   inline window_information(const WIN_INT_TYPE X, const WIN_INT_TYPE Y, const WIN_INT_TYPE W, const WIN_INT_TYPE H) :
     _x(X),
     _y(Y),
@@ -397,7 +394,6 @@ public:
     \param  new_y   y position
     \return         the window
 */
-//  window& move_cursor(const int new_x, const int new_y);
   window& move_cursor(const WIN_INT_TYPE new_x, const WIN_INT_TYPE new_y);
 
 /*! \brief      Move the logical cursor
@@ -412,7 +408,6 @@ public:
     \param  delta_y     change in y position
     \return             the window
 */
-//  window& move_cursor_relative(const WIN_INT_TYPE delta_x, const WIN_INT_TYPE delta_y);
   window& move_cursor_relative(const int16_t delta_x, const int16_t delta_y);
 
 /*! \brief      Get cursor position
@@ -729,9 +724,8 @@ std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<
 inline window& operator<(window& win, const cursor& c)
   { return win.move_cursor(c.x(), c.y()); }
 
-/// trivial class for moving the cursor (relative)
-//WRAPPER_2(cursor_relative, WIN_INT_TYPE, x, WIN_INT_TYPE, y);
-WRAPPER_2(cursor_relative, int16_t, x, int16_t, y);   // has to allow signed parameters
+/// trivial class for moving the cursor (relative);
+WRAPPER_2(cursor_relative, int16_t, x, int16_t, y);   // has to allow signed parameters, for movement in negative directions
 
 /*! \brief          Move the cursor in a window, using relative movement
     \param  win     the window to be affected

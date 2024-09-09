@@ -1,4 +1,4 @@
-// $Id: textfile.h 249 2024-07-28 16:44:41Z  $
+// $Id: textfile.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -179,48 +179,18 @@ public:
 /*! \brief      Post-increment the iterator
     \return     the iterator, post-incremented
 */
-inline textstream_iterator& operator++(int)
-  { std::cout << "postincrement" << std::endl; return ++(*this); }
-
-//  textstream_iterator operator++(int);
-#if 0
-  { textstream_iterator temp { *this };
-
-    ++*this;
-
-    return temp;
-    //return *this;
-  }
-#endif
+  inline textstream_iterator& operator++(int)
+    { return ++(*this); }
 
 /// begin() needs access to <i>textstream_iterator</i> internals
   friend textstream_iterator begin(textstream& is);
 };
 
-/*! \brief     Obtain the first iterator associated with a <i>textstream</i>
+/*! \brief      Obtain the first iterator associated with a <i>textstream</i>
     \param  tf  textstream
     \return     the begin() iterator associated with <i>tf</i>
 */
 textstream_iterator begin(textstream& tf);
-#if 0
-{ textstream_iterator rv;
-  std::string            the_line;
-
-  if (tf.eof())
-    return rv;
-
-  rv._streamp = &tf;     // attach the stream to the iterator
-
-  std::getline(tf, the_line);
-
-  rv._last_line_nr = 0;
-  rv._last_line = the_line;
-
-  rv._strp = &rv._last_line;
-
-  return rv;
-}
-#endif
 
 /*! \brief      Obtain the end() iterator associated with a <i>textstream</i>
     \param  tf  textstream

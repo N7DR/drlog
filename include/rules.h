@@ -1,4 +1,4 @@
-// $Id: rules.h 239 2024-05-20 13:42:00Z  $
+// $Id: rules.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -471,7 +471,7 @@ auto _all_exchange_values(const std::string& field_name) const -> STYPE
 
   const auto cit { FIND_IF(_exch_values, [&field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
 
-  return ( (cit == _exch_values.cend()) ? STYPE { } : cit->template all_values <STYPE> () );
+  return ( (cit == _exch_values.cend()) ? STYPE { } : cit -> template all_values <STYPE> () );
 }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -907,7 +907,6 @@ std::string sac_prefix(const std::string& call);
 
     For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
-//std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
 std::string MULT_VALUE(const std::string_view field_name, const std::string& received_value);
 
 #endif    // RULES_H

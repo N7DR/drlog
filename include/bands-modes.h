@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 250 2024-08-12 15:16:35Z  $
+// $Id: bands-modes.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,7 +178,25 @@ public:
     \param f        frequency in Hz, kHz or MHz
     \param unit     frequency unit
 */
-  frequency(const double f, const FREQUENCY_UNIT unit);
+//  constexpr frequency(const double f, const FREQUENCY_UNIT unit);
+
+#if 1
+  constexpr frequency(const double f, const FREQUENCY_UNIT unit)
+  { switch (unit)
+    { case FREQUENCY_UNIT::HZ :
+        _hz = static_cast<HZ_TYPE>(f + 0.5);
+        break;
+
+      case FREQUENCY_UNIT::KHZ :
+        _hz = static_cast<HZ_TYPE>(f * 1'000 + 0.5);
+        break;
+
+      case FREQUENCY_UNIT::MHZ :
+        _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
+        break;
+    }
+  }
+#endif
 
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
@@ -292,19 +310,19 @@ public:
 // user-defined literals for frequency
 
 /// _Hz (int)
-inline frequency operator""_Hz(const unsigned long long int f)
+inline constexpr frequency operator""_Hz(const unsigned long long int f)
   { return frequency(f, FREQUENCY_UNIT::HZ); }
 
 /// _kHz (int)
-inline frequency operator""_kHz(const unsigned long long int f)
+inline constexpr frequency operator""_kHz(const unsigned long long int f)
   { return frequency(f, FREQUENCY_UNIT::KHZ); }                                      // automatically converts from kHz to Hz
 
 /// _MHz (double)
-inline frequency operator""_MHz(const long double f)
+inline constexpr frequency operator""_MHz(const long double f)
   { return frequency(f, FREQUENCY_UNIT::MHZ); }                                      // automatically converts from MHz to Hz
 
 /// _MHz (int)
-inline frequency operator""_MHz(const unsigned long long int  f)
+inline constexpr frequency operator""_MHz(const unsigned long long int  f)
   { return frequency(f, FREQUENCY_UNIT::MHZ); }                                      // automatically converts from MHz to Hz
 
 /// ostream << frequency

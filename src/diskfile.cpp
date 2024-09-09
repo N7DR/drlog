@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 205 2022-04-24 16:05:06Z  $
+// $Id: diskfile.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,7 +61,6 @@ bool file_exists(const string_view filename)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-//string find_file(const vector<string>& path, const string& filename)
 string find_file(const vector<string>& path, const string_view filename)
 { for (const auto& dir : path)
   { const string sep { dir.ends_with('/') ? ""s : "/"s };
@@ -135,10 +134,13 @@ void directory_create(const string& dirname)
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-bool directory_exists(const string& dirname) noexcept
+//bool directory_exists(const string& dirname) noexcept
+bool directory_exists(const string_view dirname)
 { struct stat stat_buffer;
 
-  if (const int status { stat(dirname.c_str(), &stat_buffer) }; status)
+  const string name_to_test { dirname.ends_with('/') ? remove_trailing <std::string> (dirname, '/') : dirname };
+
+  if (const int status { stat(name_to_test.c_str(), &stat_buffer) }; status)
     return false;
 
   const bool rv { ((stat_buffer.st_mode & S_IFDIR) != 0) };
@@ -152,14 +154,17 @@ bool directory_exists(const string& dirname) noexcept
 
     The returned vector does not include "." or "..".
     Returns empty vector if the directory <i>dirname</i> does not exist
+    <i>dirname</i> may or may not end in "/"
 */
-vector<string> directory_contents(const string& dirname)
+//vector<string> directory_contents(const string& dirname)
+vector<string> directory_contents(const string_view dirname)
 { vector<string> rv { };
 
   if (!directory_exists(dirname))
     return rv;
 
-  const string dirname_slash { dirname + "/"s };
+//  const string dirname_slash { dirname + "/"s };
+  const string dirname_slash { dirname.ends_with('/') ? dirname : dirname + "/"s };
 
   struct dirent** namelist;
 

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: drlog.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1063,11 +1063,12 @@ int main(int argc, char** argv)
     permitted_bands = rules.permitted_bands();
     permitted_bands_set = rules.permitted_bands_set();
     permitted_modes = rules.permitted_modes();
+    all_country_mults = rules.country_mults();
 
-    { const auto cm_set { rules.country_mults() };
-
-      all_country_mults = unordered_set<string> { begin(cm_set), end(cm_set) };
-    }
+//    { const auto cm_set { rules.country_mults() };
+//
+//      all_country_mults = unordered_set<string> { begin(cm_set), end(cm_set) };
+//    }
 
 // is it SS?
     if (rules.n_modes() == 1)
@@ -3081,7 +3082,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else
-    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner than trying to use a mutex with its attendant nesting problems
+    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems
+
+      ost << "Band change commanded: BAND " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
 
       time_log <std::chrono::milliseconds> tl;
 
@@ -3142,8 +3145,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         display_band_mode(win_band_mode, new_band, cur_mode);
 
 // update bandmap; note that it will be updated at the next poll anyway (typically within one second)
+        FOR_ALL(bandmaps, [] (bandmap& bm) { bm.increment_version(); });  // to handle case of multiple quick band changes
+
         bandmap& bm { bandmaps[new_band] };
 
+        ost << "displaying band map for band: " << BAND_NAME[new_band] << "m" << endl;
         win_bandmap <= bm;
 
 // is there a station close to our frequency?
@@ -8558,7 +8564,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     This is a friend function to the bandmap class, to allow us to lock the bandmap here
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ static const frequency MAX_SKEW { 95_Hz };    // I don't know why this can't be constexpr instead of static
+{ constexpr frequency MAX_SKEW { 95_Hz };
 
   bandmap& bm { bandmaps[current_band] };
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 250 2024-08-12 15:16:35Z  $
+// $Id: bandmap.h 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -57,9 +57,8 @@ extern const std::string   MODE_MARKER;                         ///< the string 
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
-constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
-//constexpr int          MY_MARKER_BIAS { 1 };          /// shift (downward), in Hz, that is applied to MY_MARKER before inserting it
-const frequency MY_MARKER_BIAS { 1_Hz };          ///< shift (downward) that is applied to MY_MARKER before inserting it
+constexpr unsigned int COLUMN_WIDTH   { 19 };         ///< width of a column in the bandmap window
+constexpr frequency    MY_MARKER_BIAS { 1_Hz };       ///< shift (downward) that is applied to MY_MARKER before inserting it
 
 using BANDMAP_INSERTION_QUEUE = ts_queue<bandmap_entry>;      // ordinary std::queue is NOT thread safe!!
 
@@ -695,7 +694,7 @@ using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 
 class bandmap;
 
-// allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap declared
+// allow other files to access some functions in a useful, simple  manner; has to appear after bandmap has been declared
 using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const frequency, const enum BANDMAP_DIRECTION, const int16_t nskip);
 
 // -----------  bandmap  ----------------
@@ -1025,16 +1024,6 @@ public:
   inline bandmap_entry needed_mult(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
     { return needed(&bandmap_entry::is_needed_mult, f, dirn, nskip); }
 
-/*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
-    \param dirn    direction in which to search
-    \param nskip   number of matches to ignore
-    \return        bandmap entry (if any) corresponding to the next needed all-time call+band+mode in the direction <i>dirn</i>
-
-    The return value can be tested with .empty() to see if a station was found
-*/
-//  inline bandmap_entry needed_all_time_new(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip = 0)
-//    { return needed(&bandmap_entry::is_all_time_first, f, dirn, nskip); }
-
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
     \param dirn    direction in which to search
     \param nskip   number of matches to ignore
@@ -1185,6 +1174,10 @@ public:
     \param  new_name    the new name of the mutex
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
+
+/// increment version
+  inline void increment_version(void)
+    { _version++; }
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);

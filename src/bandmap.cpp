@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: bandmap.cpp 251 2024-09-09 16:39:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1375,11 +1375,6 @@ window& bandmap::write_to_window(window& win)
     return win;
   }
 
-//  if (!(_filtered_entries_dirty or _rbn_threshold_and_filtered_entries_dirty))    // not an error, but indicate that it happened, and then do nothing
-//  { ost << "Attempt to clean version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; requested to display version " << static_cast<int>(_version) << endl;
-//    return win;
-//  }
-
 // we are a more recent version, so display it
   const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
 
@@ -1398,7 +1393,7 @@ window& bandmap::write_to_window(window& win)
       string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
       string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
 
-      const bool   is_marker { be.is_marker() };
+      const bool is_marker { be.is_marker() };
   
 // change to the correct colour
       const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
@@ -1468,8 +1463,6 @@ window& bandmap::write_to_window(window& win)
 
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
   _time_last_displayed = std::chrono::system_clock::now();
-//  _filtered_entries_dirty = false;
-//  _rbn_threshold_and_filtered_entries_dirty = false;
 
   return win;
 }
@@ -1516,12 +1509,16 @@ vector<string> bandmap::regex_matches(const string& regex_str)
   smatch         base_match;
   vector<string> rv;
 
-  for (const bandmap_entry& displayed_entry : bme)
-  { const string& callsign { displayed_entry.callsign() };
+//  for (const bandmap_entry& displayed_entry : bme)
+//  { //const string& callsign { displayed_entry.callsign() };
 
-    if (regex_match(callsign, base_match, rgx))
-      rv += callsign;
-  }
+//    if (const string& callsign { displayed_entry.callsign() }; regex_match(callsign, base_match, rgx))
+//      rv += callsign;
+ // }
+
+  FOR_ALL(bme, [&base_match, &rgx, &rv] (const bandmap_entry& displayed_entry) { if (const string& callsign { displayed_entry.callsign() }; regex_match(callsign, base_match, rgx))
+                                                                                   rv += callsign;
+                                                                               } );
 
   return rv;
 }
