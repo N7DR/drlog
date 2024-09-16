@@ -1,4 +1,4 @@
-// $Id: log.cpp 234 2024-02-19 15:37:47Z  $
+// $Id: log.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -246,7 +246,8 @@ bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
     \param  rules   rules for the contest
     \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
-bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const contest_rules& rules) const
+//bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const contest_rules& rules) const
+bool logbook::is_dupe(const string_view call, const BAND b, const enum MODE m, const contest_rules& rules) const
 { QSO qso;
 
 // create a bare-bones QSO
@@ -452,7 +453,6 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
     \param  filename                name of Cabrillo file
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
-//void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
 void logbook::read_cabrillo(const string_view filename, const string_view cabrillo_qso_template)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
@@ -464,7 +464,6 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
   
   vector< vector< string> > individual_values;
 
-//  FOR_ALL(clean_split_string <string> (cabrillo_qso_template), [&individual_values] (const string& tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
   FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
 
   unsigned int last_qso_number { 0 };
@@ -496,7 +495,6 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
     \param  filename            name of Cabrillo file
     \param  cabrillo_fields     names of Cabrillo fields
 */
-//void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
 void logbook::read_cabrillo(const string_view filename, const vector<string>& cabrillo_fields)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
@@ -515,8 +513,8 @@ void logbook::read_cabrillo(const string_view filename, const vector<string>& ca
 
 // go through the fields
       for (unsigned int n { 0 }; n < cabrillo_fields.size(); ++n)
-      { const string name  { cabrillo_fields[n] };
-        const string value { (n < fields.size() ? remove_peripheral_spaces <std::string> (fields[n]) : string { }) };
+      { const string& name  { cabrillo_fields[n] };
+        const string  value { (n < fields.size() ? remove_peripheral_spaces <std::string> (fields[n]) : string { }) };
 
         _modify_qso_with_name_and_value(qso, name, value);
 

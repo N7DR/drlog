@@ -1,4 +1,4 @@
-// $Id: bandmap.h 251 2024-09-09 16:39:37Z  $
+// $Id: bandmap.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -379,7 +379,8 @@ public:
 
     \return         the <i>bandmap_entry</i> object
 */
-  bandmap_entry& callsign(const std::string& call);
+//  bandmap_entry& callsign(const std::string& call);
+  bandmap_entry& callsign(const std::string_view call);
 
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
   READ(continent);                      ///< continent corresponding to the call
@@ -851,9 +852,9 @@ public:
     \param  pcall   partial call for which the entry should be returned
     \return         the first bandmap_entry corresponding to <i>callsign</i>
 
-    Returns the default <i>bandmap_entr</i>> if <i>pcall</i> matches no entries in the bandmap
+    Returns the default <i>bandmap_entry</i>> if <i>pcall</i> matches no entries in the bandmap
 */
-  bandmap_entry substr(const std::string& pcall);
+  bandmap_entry substr(const std::string& pcall) const;
 
 /*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed

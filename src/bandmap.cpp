@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 251 2024-09-09 16:39:37Z  $
+// $Id: bandmap.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -255,7 +255,7 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 /*! \brief          Set the callsign
     \param  call    the callsign to set
 */
-bandmap_entry& bandmap_entry::callsign(const string& call)
+bandmap_entry& bandmap_entry::callsign(const string_view call)
 { _callsign = call;
 
   if (!is_marker())
@@ -802,9 +802,9 @@ bandmap_entry bandmap::operator[](const string& str) const
     \param  pcall   partial call for which the entry should be returned
     \return         the first bandmap_entry corresponding to <i>callsign</i>
 
-    Returns the null string if <i>pcall</i> matches no entries in the bandmap
+    Returns the default <i>bandmap_entry</i>> if <i>pcall</i> matches no entries in the bandmap
 */
-bandmap_entry bandmap::substr(const string& pcall)
+bandmap_entry bandmap::substr(const string& pcall) const
 { SAFELOCK(_bandmap);
 
   return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return contains(be.callsign(), pcall); });
@@ -1249,13 +1249,19 @@ string bandmap::to_str(void)
   BM_ENTRIES threshold_and_filtered;
   BM_ENTRIES threshold_filtered_and_culled;
 
+  int ver;
+
   { SAFELOCK(_bandmap);
 
     raw = entries();
     filtered = filtered_entries();
     threshold_and_filtered = rbn_threshold_and_filtered_entries();
     threshold_filtered_and_culled = rbn_threshold_filtered_and_culled_entries();
+
+    ver = version();
   }
+
+  rv += "bandmap version " + ::to_string(ver) + EOL;
 
   rv += "RAW bandmap:"s + EOL;
   rv += "number of entries = "s + to_string(raw.size());

@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 235 2024-02-25 19:55:54Z  $
+// $Id: cw_buffer.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -794,10 +794,12 @@ void cw_buffer::add(const char c, const int character_space)
     Special characters and commands embedded in <i>str</i> are expanded and/or processed
     prior to transmission
 */
-void cw_buffer::operator<<(const string& str)
+//void cw_buffer::operator<<(const string& str)
+void cw_buffer::operator<<(const string_view str)
 { if (!str.empty())
-    for (const auto& c : str)
-      add(c);
+    FOR_ALL(str, [this] (const char c) { add(c); });
+//    for (const auto& c : str)
+//      add(c);
 }
 
 /// clear the buffer

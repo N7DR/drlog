@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 251 2024-09-09 16:39:37Z  $
+// $Id: drmaster.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -253,6 +253,7 @@ string trmaster_line::to_string(void) const
       rv += user_letter;
       rv += user(n + 1);
     }
+
     user_letter++;
   }
 
@@ -1319,9 +1320,9 @@ void drmaster::operator+=(const drmaster_line& drml)
   }
 }
 
-/*! \brief      Return an object with only records with xscp below a given percentage value
+/*! \brief      Return object with only records with xscp below a given percentage value
     \param  pc  percentage limit
-    \return     <i>drmaster</i> object containing only records with no xscp, and thiose for which the xscp value is >= the <i>pc</i> value 
+    \return     <i>drmaster</i> object containing only records with no xscp, and those for which the xscp value is >= the value of <i>pc</i>
 */
 drmaster drmaster::prune(const int pc) const
 { drmaster    rv;

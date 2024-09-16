@@ -1,4 +1,4 @@
-// $Id: diskfile.h 251 2024-09-09 16:39:37Z  $
+// $Id: diskfile.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -137,7 +137,8 @@ std::vector<std::string> directory_contents(const std::string_view dirname);
 
     Creates <i>filename</i> if it does not exist
 */
-inline void file_truncate(const std::string& filename)
-  { std::ofstream(filename, std::ios_base::trunc); }
+//inline void file_truncate(const std::string& filename)
+inline void file_truncate(const std::string_view filename)
+  { std::ofstream(std::string { filename }, std::ios_base::trunc); }
 
 #endif    // DISKFILE_H

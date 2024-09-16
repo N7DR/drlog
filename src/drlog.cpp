@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 251 2024-09-09 16:39:37Z  $
+// $Id: drlog.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3144,7 +3144,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
         display_band_mode(win_band_mode, new_band, cur_mode);
 
-// update bandmap; note that it will be updated at the next poll anyway (typically within one second)
+// update bandmap
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.increment_version(); });  // to handle case of multiple quick band changes
 
         bandmap& bm { bandmaps[new_band] };
@@ -3671,6 +3671,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // assume it's a call
     if (!processed)
     { const string& callsign { contents };
+      //const string_view& callsign { contents };
       const bool    is_dupe  { logbk.is_dupe(callsign, cur_band, cur_mode, rules) };
 
 // if we're in SAP mode, don't call him if he's a dupe
@@ -3684,7 +3685,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         bandmap_entry be;
 
-        be.is_needed(false).callsign(contents);
+        be.is_needed(false);
+        be.callsign(contents);
         be.freq(rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency());  // the TX frequency
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.calculate_mult_status(rules, statistics);

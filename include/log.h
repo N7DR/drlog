@@ -1,4 +1,4 @@
-// $Id: log.h 235 2024-02-25 19:55:54Z  $
+// $Id: log.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -207,7 +207,8 @@ public:
     \param  rules   rules for the contest
     \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
-  bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
+//  bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
+  bool is_dupe(const std::string_view call, const BAND b, const MODE m, const contest_rules& rules) const;
 
 /// return time-ordered container of QSOs
   std::list<QSO> as_list(void) const;
@@ -249,7 +250,6 @@ public:
     \param  filename                name of Cabrillo file
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
-//  void read_cabrillo(const std::string& filename, const std::string& cabrillo_qso_template);
   void read_cabrillo(const std::string_view filename, const std::string_view cabrillo_qso_template);
 
 /*! \brief                      Read from a Cabrillo file, using space-delimited fields
@@ -261,7 +261,7 @@ public:
 /*! \brief              Read from a TRLOG file
     \param  filename    name of TRLOG file
 */
-  void read_trlog_log(const std::string& filename);
+//  void read_trlog_log(const std::string& filename);
   
 /// clear the logbook
   inline void clear(void)

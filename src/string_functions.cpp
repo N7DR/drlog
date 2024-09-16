@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 251 2024-09-09 16:39:37Z  $
+// $Id: string_functions.cpp 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -520,7 +520,8 @@ vector<size_t> starts_of_words(const string_view s)
 
     Returns <i>string::npos</i> if no word can be found
 */
-size_t next_word_posn(const string& str, const size_t current_posn)
+//size_t next_word_posn(const string& str, const size_t current_posn)
+size_t next_word_posn(const string_view str, const size_t current_posn)
 { if (str.length() <= current_posn)
     return string::npos;
 

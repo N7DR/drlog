@@ -1,4 +1,4 @@
-// $Id: macros.h 250 2024-08-12 15:16:35Z  $
+// $Id: macros.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -898,7 +898,7 @@ template <typename C, typename K, typename V>
              (is_mmumm<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
            )
 inline void operator+=(C& mum, std::pair<K, V>&& element)
-{ mum.emplace(std::move(element)); }
+  { mum.emplace(std::move(element)); }
 
 /*! \brief              Add an element to a MUM
     \param  m           destination MUM
@@ -910,7 +910,7 @@ inline void operator+=(C& mum, std::pair<K, V>&& element)
 template <typename C>
   requires (is_mum<C> or is_mmumm<C>)
 inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
-{ mum.emplace(il); }
+  { mum.emplace(il); }
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
     \param  ost     output stream

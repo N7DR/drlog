@@ -163,7 +163,7 @@ string qtc_series::output_string(const unsigned int n) const
   rv += substring <std::string> (pad_right(_source, 13), 0, 13) + SPACE_STR;
   rv += qe.utc() + SPACE_STR;
   rv += substring <std::string> (pad_right(qe.callsign(), 13), 0, 13) + SPACE_STR;
-  rv += qe.serno();
+  rv += qe.serno();       // this is right-padded with spaces to a width of four
 
   return rv;
 }
@@ -304,7 +304,7 @@ void qtc_database::read(const string& filename)
 { if (!file_exists(filename))
     return;
 
-  const vector<string> lines { to_lines <std::string> (read_file(filename)) };
+  const vector<string> lines { remove_peripheral_spaces <std::string> (to_lines <std::string_view> (read_file(filename))) };
 
   unsigned int line_nr { 0 };
 
@@ -331,7 +331,7 @@ void qtc_database::read(const string& filename)
     const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
 
     if (fields.size() != 10)
-      throw qtc_error(QTC_INVALID_FORMAT, "QTC has "s + to_string(fields.size()) + " fields; "s + line);
+      throw qtc_error(QTC_INVALID_FORMAT, "QTC has "s + to_string(fields.size()) + " fields (should be 10): "s + line);
 
     const string id { fields[ID_FIELD] };
 

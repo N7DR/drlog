@@ -1,4 +1,4 @@
-// $Id: drmaster.h 251 2024-09-09 16:39:37Z  $
+// $Id: drmaster.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,7 +47,6 @@ protected:
 
     <i>posn</i> is updated to point at the start of the next call
 */
-//  std::string _get_call(const std::string& contents, uint32_t& posn) const;
   std::string _get_call(const std::string_view contents, uint32_t& posn) const;
 
 public:
@@ -55,8 +54,7 @@ public:
 /*! \brief              Default constructor
     \param  filename    name of file from which to donstruct the object
 */
-//  explicit master_dta(const std::string& filename = "master.dta"s);
-  explicit master_dta(const std::string_view filename = "master.dta"s);
+  explicit master_dta(const std::string_view filename = "master.dta"sv);
 
 /*! \brief      Get all the calls
     \return     all the calls from the file
@@ -454,7 +452,7 @@ public:
 
 /*! \brief      Return object with only records with xscp below a given percentage value
     \param  pc  percentage limit
-    \return     <i>drmaster</i> object containing only records with no xscp, and thiose for which the xscp value is >= the <i>pc</i> value 
+    \return     <i>drmaster</i> object containing only records with no xscp, and those for which the xscp value is >= the value of <i>pc</i>
 */
   drmaster prune(const int pc) const;
 };

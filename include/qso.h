@@ -1,4 +1,4 @@
-// $Id: qso.h 237 2024-04-28 17:47:36Z  $
+// $Id: qso.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -113,23 +113,22 @@ public:
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
-//  QSO(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
   QSO(const drlog_context& context, const std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
-  READ_AND_WRITE(band);                 ///< band
-  READ_AND_WRITE_STR(callsign);         ///< call
-  READ_AND_WRITE_STR(canonical_prefix);     ///< canonical prefix for the country
-  READ_AND_WRITE(comment);              ///< comment to be carried with QSO
-  READ_AND_WRITE(continent);            ///< continent
-  READ_AND_WRITE(date);                 ///< yyyy-mm-dd
-  READ_AND_WRITE(frequency_rx);         ///< RX frequency in form xxxxx.y (kHz)
-  READ_AND_WRITE(mode);                 ///< mode
-  READ_AND_WRITE(my_call);              ///< my call
-  READ_AND_WRITE(number);               ///< qso number
-  READ_AND_WRITE(points);               ///< points for this QSO
-  READ_AND_WRITE(prefix);               ///< prefix, according to the contest's definition
-  READ_AND_WRITE(sent_exchange);        ///< vector<pair<name, value>>; names do not include the TEXCH-
-  READ_AND_WRITE(utc);                  ///< hh:mm:ss
+  READ_AND_WRITE(band);                   ///< band
+  READ_AND_WRITE_STR(callsign);           ///< call
+  READ_AND_WRITE_STR(canonical_prefix);   ///< canonical prefix for the country
+  READ_AND_WRITE(comment);                ///< comment to be carried with QSO
+  READ_AND_WRITE(continent);              ///< continent
+  READ_AND_WRITE(date);                   ///< yyyy-mm-dd
+  READ_AND_WRITE(frequency_rx);           ///< RX frequency in form xxxxx.y (kHz)
+  READ_AND_WRITE(mode);                   ///< mode
+  READ_AND_WRITE(my_call);                ///< my call
+  READ_AND_WRITE(number);                 ///< qso number
+  READ_AND_WRITE(points);                 ///< points for this QSO
+  READ_AND_WRITE(prefix);                 ///< prefix, according to the contest's definition
+  READ_AND_WRITE(sent_exchange);          ///< vector<pair<name, value>>; names do not include the TEXCH-
+  READ_AND_WRITE(utc);                    ///< hh:mm:ss
 
 /// get TX frequency as a string
   inline decltype(_frequency_tx) freq(void) const
@@ -191,7 +190,6 @@ public:
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
-//  std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
   std::string cabrillo_format(const std::string_view cabrillo_qso_template) const;
   
 /// format for writing to disk (in the actual drlog log)

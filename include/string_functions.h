@@ -1,4 +1,4 @@
-// $Id: string_functions.h 251 2024-09-09 16:39:37Z  $
+// $Id: string_functions.h 252 2024-09-16 17:18:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1124,14 +1124,14 @@ std::string transform_string(const std::string_view cs, int (*pf) (int));
     \param  cs  original string
     \return     <i>cs</i> converted to upper case
 */
-inline std::string to_upper(std::string_view cs)
+inline std::string to_upper(const std::string_view cs)
   { return transform_string(cs, std::toupper); }
 
 /*! \brief      Convert string to lower case
     \param  cs  original string
     \return     <i>cs</i> converted to lower case
 */
-inline std::string to_lower(std::string_view cs)
+inline std::string to_lower(const std::string_view cs)
   { return transform_string(cs, std::tolower); }
 
 /*! \brief              Is a call a maritime mobile?
@@ -1192,7 +1192,8 @@ inline std::string css(const T n)
 
     Returns <i>string::npos</i> if no word can be found
 */
-size_t next_word_posn(const std::string& str, const size_t current_posn);
+//size_t next_word_posn(const std::string& str, const size_t current_posn);
+size_t next_word_posn(const std::string_view str, const size_t current_posn);
 
 /*! \brief      Get location of start all words
     \param  s   string to be analysed
