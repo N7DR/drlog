@@ -40,6 +40,9 @@ class qtc_entry;
 
 using QTC_AND_STATUS = std::pair<qtc_entry, QTC_STATUS>;
 
+//inline qtc_entry& qe(const QTC_AND_STATUS& qes)
+//  { return (qes.first); }
+
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
 //                             -qtc rcvd by - --------------qtc info received-----------------
@@ -124,6 +127,10 @@ inline std::ostream& operator<<(std::ostream& ost, const qtc_entry& qe)
 
   return ost;
 }
+
+// return just the qtc_entry
+//inline const qtc_entry& qe(const QTC_AND_STATUS& qes)
+//  { return (qes.first); }
 
 // -----------------------------------  qtc_series  ----------------------------
 
@@ -229,6 +236,15 @@ public:
     Returns empty pair if <i>n</i> is out of bounds.
 */
   QTC_AND_STATUS operator[](const unsigned int n) const;
+
+/*! \brief      Return a <i>qtc_entry</i> (without status)
+    \param  n   index number to return (wrt 0)
+    \return     <i>n</i>th entry
+
+    the empty <i>qtc_entry</i> if <i>n</i> is out of bounds.
+*/
+  inline qtc_entry entry(const unsigned int n) const
+    { return ((*this)[n]).first; }
 
 /*! \brief      Mark a particular entry as having been sent
     \param  n   index number to mark (wrt 0)

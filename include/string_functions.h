@@ -648,6 +648,28 @@ template <typename STYPE>
 inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
   { return remove_trailing <STYPE> (cs, ' '); }
 
+template <typename STYPE, typename T>
+//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+  requires is_vector<T> and is_ssv<typename T::value_type>
+auto remove_trailing_chars(const T& t, const char c) -> std::vector<STYPE>
+{ std::vector<STYPE> rv;
+
+  FOR_ALL(t, [c, &rv] (const auto& s) { rv += remove_trailing <STYPE> (s, c); } );
+
+  return rv;
+}
+
+template <typename STYPE, typename T>
+//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
+  requires is_vector<T> and is_ssv<typename T::value_type>
+inline auto remove_trailing(const T& t, const char c) -> std::vector<STYPE>
+  { return remove_trailing_chars <STYPE> (t, c); }
+
+template <typename STYPE, typename T>
+  requires is_vector<T> and is_ssv<typename T::value_type>
+inline auto remove_trailing_spaces(const T& t) -> std::vector<STYPE>
+  { return remove_trailing <STYPE> (t, ' '); }
+
 /*! \brief      Remove leading and trailing instances of a particular character
     \param  cs  original string
     \param  c   character to remove

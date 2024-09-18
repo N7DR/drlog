@@ -150,7 +150,8 @@ string qtc_series::output_string(const unsigned int n) const
 { if (n >= size())
     return string();
 
-  const qtc_entry qe { _qtc_entries[n].first };
+//  const qtc_entry qe { _qtc_entries[n].first };
+  const qtc_entry qe { entry(n) };
 
   string rv { pad_left(_frequency, 5) + SPACE_STR };
 
@@ -328,7 +329,8 @@ void qtc_database::read(const string& filename)
 
   while (line_nr < lines.size())
   { const string&        line   { lines[line_nr++] };
-    const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
+//    const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
+    const vector<string> fields { remove_trailing_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
 
     if (fields.size() != 10)
       throw qtc_error(QTC_INVALID_FORMAT, "QTC has "s + to_string(fields.size()) + " fields (should be 10): "s + line);

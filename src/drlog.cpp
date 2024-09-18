@@ -1223,6 +1223,20 @@ int main(int argc, char** argv)
       my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
       my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
+// add my marker to each bandmap
+      for (const auto b : permitted_bands)
+      { bandmap& bm { bandmaps[b] };
+
+        bandmap_entry be { my_bandmap_entry };
+
+        if (b == current_band)
+          be.freq(rig.rig_frequency());
+        else
+          be.freq(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
+
+        bm += be;
+      }
+
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
       if (context.mark_mode_break_points())
       { for (const auto b : permitted_bands)
@@ -5977,20 +5991,15 @@ string sunrise_or_sunset(const string& callsign, const SRSS srss)
       PUTATIVE EXCHANGE
  */
 void populate_win_info(const string& callsign)
-{ //ost << "Inside populate_win_info() for: " << callsign << endl;
-  //if (win_putative_exchange.valid())
-  //  ost << "PUTATIVE EXCHANGE window is valid" << endl;
-  //else
-  //  ost << "PUTATIVE EXCHANGE window is NOT valid" << endl;
-
-  if (win_call_history.valid())
+{ if (win_call_history.valid())
     populate_win_call_history(callsign);
 
   if (send_qtcs)
   { const string qtc_str { "["s + to_string(qtc_db.n_qtcs_sent_to(callsign)) + "]"s };
 
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
-    win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= qtc_str;
+//    win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= qtc_str;
+    win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= pad_left(qtc_str, 4);   // right justify
   }
   else
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
@@ -6087,9 +6096,7 @@ void populate_win_info(const string& callsign)
 
 // PUTATIVE EXCHANGE window
       if (win_putative_exchange.valid())
-      { //ost << "expected exchange for " << callsign << " is: " << expected_received_exchange(callsign) << endl;
-
-        if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
+      { if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
         { const string msg { centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
         
           win_putative_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
@@ -6149,7 +6156,6 @@ void populate_win_info(const string& callsign)
     @ maps to at_call
     * maps to last_exchange
 */
-//string expand_cw_message(const string& msg)
 string expand_cw_message(const string_view msg)
 { string octothorpe_replaced;
 
@@ -6165,7 +6171,7 @@ string expand_cw_message(const string_view msg)
 
       octothorpe_str.clear();
 
-      for_each(tmp.cbegin(), prev(tmp.cend()), [spaces, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );
+      for_each(tmp.cbegin(), prev(tmp.cend()), [spaces, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );  // add spaces after all except last character
 
       octothorpe_str += tmp[tmp.size() - 1];
     }
@@ -7683,14 +7689,21 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // ENTER - send next QSO or finish
   if (e.is_unmodified() and (e.symbol() == XK_Return))
   { if (qtcs_sent != total_qtcs_to_send)
-    { const qtc_entry& qe { series[qtcs_sent].first };
+    { //const auto& get_qe = [] (const QTC_AND_STATUS& qes) { return qes.first; };
+
+//      const qtc_entry& qe { series[qtcs_sent].first };
+//      const qtc_entry& qe { qe(series[qtcs_sent]) };
+//      const auto& [ qe, status ] = series[qtcs_sent];
+      //const qtc_entry& qe { get_qe(series[qtcs_sent]) };
 
       if (cw)
-        send_qtc_entry(qe, true);
+//        send_qtc_entry(qe, true);
+        send_qtc_entry(series.entry(qtcs_sent), true);
 
 // before marking this as sent, record the last acknowledged QTC
       if (qtcs_sent != 0)
-        qtc_buf.unsent_to_sent(series[qtcs_sent - 1].first);
+//        qtc_buf.unsent_to_sent(series[qtcs_sent - 1].first);
+        qtc_buf.unsent_to_sent(series.entry(qtcs_sent - 1));
 
       series.mark_as_sent(qtcs_sent++);
       win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= series;
@@ -7705,7 +7718,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
           (*cw_p) << expand_cw_message( context.qsl_message() );
       }
 
-      qtc_buf.unsent_to_sent(series[series.size() - 1].first);
+//      qtc_buf.unsent_to_sent(series[series.size() - 1].first);
+      qtc_buf.unsent_to_sent(series.entry(series.size() - 1));
 
       win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Sent QTC "s < qtc_id < " to "s <= series.destination();
       ost << "Sent QTC batch " << qtc_id << " to " << series.destination() << endl;
