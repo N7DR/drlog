@@ -1,4 +1,4 @@
-// $Id: log.h 252 2024-09-16 17:18:18Z  $
+// $Id: log.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -257,11 +257,6 @@ public:
     \param  cabrillo_fields     names of Cabrillo fields
 */
   void read_cabrillo(const std::string_view filename, const std::vector<std::string>& cabrillo_fields);
-
-/*! \brief              Read from a TRLOG file
-    \param  filename    name of TRLOG file
-*/
-//  void read_trlog_log(const std::string& filename);
   
 /// clear the logbook
   inline void clear(void)
@@ -428,7 +423,7 @@ public:
 /// log_extract = <i>container of QSOs</i>
 template <typename C>
   void operator=(const C& t)
-  requires (std::is_same_v<typename C::value_type, QSO>)
+requires (std::is_same_v<typename C::value_type, QSO>)
   { SAFELOCK(_extract);
 
     _qsos.clear();

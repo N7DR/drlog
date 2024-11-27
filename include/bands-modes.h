@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 251 2024-09-09 16:39:37Z  $
+// $Id: bands-modes.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -177,10 +177,10 @@ public:
 /*! \brief          Construct from a double and an explicit unit
     \param f        frequency in Hz, kHz or MHz
     \param unit     frequency unit
-*/
-//  constexpr frequency(const double f, const FREQUENCY_UNIT unit);
 
-#if 1
+    Must be in the header file because it's constexpr
+    (and must be constexpr to allow constexpr use of string literals)
+*/
   constexpr frequency(const double f, const FREQUENCY_UNIT unit)
   { switch (unit)
     { case FREQUENCY_UNIT::HZ :
@@ -196,7 +196,6 @@ public:
         break;
     }
   }
-#endif
 
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
@@ -324,6 +323,18 @@ inline constexpr frequency operator""_MHz(const long double f)
 /// _MHz (int)
 inline constexpr frequency operator""_MHz(const unsigned long long int  f)
   { return frequency(f, FREQUENCY_UNIT::MHZ); }                                      // automatically converts from MHz to Hz
+
+/// integer * frequency
+template <typename T>
+  requires std::is_integral_v<T>
+inline frequency operator*(const T factor, const frequency& f)
+  { return frequency(factor * f.hz(), FREQUENCY_UNIT::HZ); }
+
+/// frequency * integer
+template <typename T>
+  requires std::is_integral_v<T>
+inline frequency operator*(const frequency& f, const T factor)
+  { return (factor * f); }
 
 /// ostream << frequency
 std::ostream& operator<<(std::ostream& ost, const frequency& f);

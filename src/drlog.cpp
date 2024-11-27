@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 252 2024-09-16 17:18:18Z  $
+// $Id: drlog.cpp 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2427,7 +2427,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 // get access to the information that's been passed to the thread
   window&                          cluster_line_win { *wclp };                 // the window to which we will write each line from the cluster/RBN
   window&                          cluster_mult_win { *wcmp };                 // the window in which to write mults
-  dx_cluster&                      rbn              { *dcp };                  // the DX cluster or RBN
+  dx_cluster&                      rbn              { *dcp };                  // the DX cluster or RBN; this is a misleading name
   running_statistics&              statistics       { *statistics_p };         // the statistics
   location_database&               location_db      { *location_database_p };  // database of locations
   window&                          bandmap_win      { *win_bandmap_p };        // bandmap window
@@ -2488,7 +2488,25 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         const int    bg_colour { cluster_line_win.bg() };
         const int    fg_colour { cluster_line_win.fg() };
 
+        ost << (is_cluster ? "CLUSTER" : "RBN") << ": " << msg << endl;
+
         cluster_line_win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < COLOURS(COLOUR_RED, COLOUR_BLACK) < centre(msg, 0) <= COLOURS(fg_colour, bg_colour);
+
+// insert connection reset here if time_since_data_last_received.count() is "too large"
+        if (time_since_data_last_received > context.cluster_timeout())
+        { //static bool reset_attempted { false };    // just allow a single attempt to reset
+
+          //if (!reset_attempted)
+          { ost << "WARNING: cluster timeout exceeded; connection status = " << rbn.connection_status() <<  endl;
+
+            rbn.reset_connection();
+
+            ost << "attempted to reset connection; connection_status = " << rbn.connection_status() <<  endl;
+            //reset_attempted = true;
+          }
+        }
+        else
+          ost << "cluster timeout of " << context.cluster_timeout() << " seconds not yet exceeded; reset not attempted" <<  endl;
       }
     }
 
@@ -2501,10 +2519,19 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
-      { const bool is_beacon { contains(line, " BCN "sv) or contains(line, "/B "sv)  or contains(line, "/B2 "sv) or contains(line, "NCDXF "sv) };
+      { static const vector<string_view> beacon_markers { " BCN ",
+                                                          "/B ",
+                                                          "/B2 ",
+                                                          "NCDXF "
+                                                        };
 
-        if (!rbn_beacons and is_beacon)
+//        const bool is_beacon { contains(line, " BCN "sv) or contains(line, "/B "sv)  or contains(line, "/B2 "sv) or contains(line, "NCDXF "sv) };
+
+        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return contains(line, sv); }))
           continue;           // go to end of while loop
+
+//        if (!rbn_beacons and is_beacon)
+//          continue;           // go to end of while loop
 
         last_processed_line = line;
 
@@ -2514,9 +2541,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"s)) };      // don't process if RBN and not CW
 
         if (post.valid() and !wrong_mode)
-        {
-// possibly autocorrect
-          if (is_rbn and autocorrect_rbn)
+        { if (is_rbn and autocorrect_rbn)                   // possibly autocorrect
             post.callsign(ac_db.corrected_call(post.callsign()));
 
 // eliminate some obvious busts
@@ -2555,6 +2580,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             const string&                 poster      { post.poster() };
             const pair<string, frequency> target      { dx_callsign, post.freq() };
             const bool                    is_me       { (dx_callsign == my_call) };
+
+            const auto& [target_call, target_freq ] { target };
 
 // POSTED BY
             if (is_me and is_rbn)
@@ -2631,9 +2658,14 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
               bool is_recent_call { false };
 
-              for (const auto& call_entry : recent_mult_calls)      // look to see if this is already in the deque
+//              for (const auto& call_entry : recent_mult_calls)      // look to see if this is already in the deque
+//                if (!is_recent_call)
+//                  is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+
+              for (const auto& [recent_mult_call, recent_mult_freq] : recent_mult_calls)      // look to see if this is already in the deque
                 if (!is_recent_call)
-                  is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+//                  is_recent_call = (recent_mult_call == target.first) and (target.second.difference(recent_mult_freq).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+                  is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 
               const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };
 
@@ -4064,10 +4096,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       const int16_t nskip { static_cast<int16_t>( (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
 
-//      ost << "new function 7" << endl;
-
-//      processed = process_bandmap_function(&bandmap::matches_criteria, e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
-      processed = process_bandmap_function(/*&bandmap::matches_criteria, */e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
+      processed = process_bandmap_function(e.is_alt(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
     }
     else
       processed = true;
@@ -8372,7 +8401,11 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   }
 
   if (f == last_update_frequency)   // don't update if the frequency hasn't changed
+  { ost << "frequency has not changed: " << f << "; NO UPDATE" << endl;
     return;
+  }
+
+  ost << "updating to: " << f << endl;
 
   const frequency mx_f { rig.rig_frequency() };
 
@@ -8393,7 +8426,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // an entry if we are close to it (say, within a couple of hundred Hz); in fact, right now we don't
 // actually look at any entry frequencies, we just go where we are told to go
 
-  bool tmp_changed_frequency { f != last_update_frequency };
+  bool tmp_changed_frequency { f != last_update_frequency };  // this should always be true (see the above immediate return path)
 
   if (debug)
   { ost << "time = " << hhmmss() << endl;
@@ -8417,7 +8450,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
       ost << "f = " << f.hz() << endl;
     }
 
-    tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);
+    tmp_changed_frequency = tmp_changed_frequency or (my_bandmap_entry.freq() != f);    // this should always be true, and remain true
 
     if (debug)
     { ost << "second term: " << boolalpha << (my_bandmap_entry.freq() != f) << endl;
@@ -8459,7 +8492,9 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
 
     if (!nearby_callsign.empty())
+    { ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
       display_nearby_callsign(nearby_callsign);
+    }
     else                                        // no nearby callsign; possibly clear windows
     { const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
@@ -8515,11 +8550,32 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
-        << "current actual frequency from rig = " << rig.rig_frequency()
+        << "current actual frequency from rig = " << rig.rig_frequency() << endl
         << "; bandmap version: " << bm.version() << endl
         << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
-        << "; next bandmap entry: " << be
-        << endl;
+        << "; next bandmap entry: " << be << endl;
+  }
+
+// 240929
+//  if (be.empty() and (f_rig != bm.my_bandmap_entry().freq()))  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
+//  if (be.empty() and (f_rig.difference(bm.my_bandmap_entry().freq()) > 2_Hz))  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
+  if ( be.empty() and (f_rig.difference(bm.my_bandmap_entry().freq()) > (2 * MY_MARKER_BIAS)) )  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
+  { if (debug)
+      ost << "forcing bm change to frequency: " << f_rig << "; bm says freq is: " << bm.my_bandmap_entry().freq() << endl;
+
+    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+
+    bandmap_entry my_be { bm.my_bandmap_entry() };
+
+    my_be.freq(f_rig);
+    bm += my_be;    // changes version of the bm
+
+    update_based_on_frequency_change(f_rig, current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
+
+    if (debug)
+      ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
+
+    ok_to_poll_k3 = true;
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function

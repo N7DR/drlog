@@ -1,4 +1,4 @@
-// $Id: qso.cpp 237 2024-04-28 17:47:36Z  $
+// $Id: qso.cpp 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -286,7 +286,7 @@ void QSO::populate_from_verbose_format(const string& str)
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-void QSO::populate_from_log_line(string_view str)
+void QSO::populate_from_log_line(const string_view str)
 { ost << "Inside populate_from_log_line(); input string is:" << *this << endl;
   ost << "string = *" << str << "*" << endl;
 
@@ -470,7 +470,6 @@ void QSO::populate_from_log_line(string_view str)
 
     Does nothing if <i>field_name</i> is not a possible mult
 */
-//void QSO::set_exchange_mult(const string& field_name)
 void QSO::set_exchange_mult(const string_view field_name)
 { for (auto& field : _received_exchange)
   { if (field.is_possible_mult() and (field.name() == field_name))
@@ -485,7 +484,6 @@ void QSO::set_exchange_mult(const string_view field_name)
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
-//string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 string QSO::cabrillo_format(const string_view cabrillo_qso_template) const
 { static unsigned int record_length { 0 };
 
@@ -786,10 +784,14 @@ string QSO::received_exchange(const string& field_name) const
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
 string QSO::sent_exchange(const string& field_name) const
-{ for (const auto& field : _sent_exchange)
-  { if (field.first == field_name)
-      return field.second;
-  }
+{ //for (const auto& field : _sent_exchange)
+  //{ if (field.first == field_name)
+  //    return field.second;
+  //}
+
+  for (const auto& [name, value] : _sent_exchange)
+    if (name == field_name)
+      return value;
 
   return string { };
 }
@@ -977,7 +979,6 @@ ostream& operator<<(ostream& ost, const QSO& q)
 
     The value of <i>posn</i> might be changed by this function.
 */
-//pair<string, string> next_name_value_pair(const string& str, size_t& posn)
 pair<string, string> next_name_value_pair(const string_view str, size_t& posn)
 { static const pair<string, string> empty_pair { };
 

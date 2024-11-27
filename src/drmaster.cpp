@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 252 2024-09-16 17:18:18Z  $
+// $Id: drmaster.cpp 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -650,6 +650,11 @@ string drmaster_line::_extract_field(const vector<string>& fields, const string_
   return ( (it == fields.end()) ? string { } : it->substr(field_indicator.length()));
 }
 
+/*! \brief      Process a single field (such as: "=Xabc")
+    \param  sv  the field to processs (e.g., "=Xabc")
+
+    Does nothing if the field does not exist
+*/
 void drmaster_line::_process_field(const std::string_view sv)
 { using SETTER = void (drmaster_line::*) (const string&);
 
@@ -663,40 +668,24 @@ void drmaster_line::_process_field(const std::string_view sv)
                                                { 'Q', &drmaster_line::qth },
                                                { 'A', &drmaster_line::section },
                                                { 'T', &drmaster_line::ten_ten },
-//                                                                       { 'U', &drmaster_line::user[0] },
-//                                                                       { 'V', &drmaster_line::user[1] },
-//                                                                       { 'W', &drmaster_line::user[2] },
-//                                                                       { 'X', &drmaster_line::user[3] },
-//                                                                       { 'Y', &drmaster_line::user[4] },
-                                              { 'n', &drmaster_line::age_aa_cw },
-                                              { 'm', &drmaster_line::age_aa_ssb },
-                                              { 'y', &drmaster_line::cw_power },
-                                              { 'z', &drmaster_line::date },
-                                              { 'w', &drmaster_line::iota },
-                                              { 'u', &drmaster_line::precedence },
-                                              { 'o', &drmaster_line::qth2 },
-                                              { 'q', &drmaster_line::skcc },
-                                              { 'v', &drmaster_line::society },
-                                              { 'r', &drmaster_line::spc },
-                                              { 'x', &drmaster_line::ssb_power },
-                                              { 's', &drmaster_line::state_160 },
-                                              { 't', &drmaster_line::state_10 }
+
+                                               { 'n', &drmaster_line::age_aa_cw },
+                                               { 'm', &drmaster_line::age_aa_ssb },
+                                               { 'y', &drmaster_line::cw_power },
+                                               { 'z', &drmaster_line::date },
+                                               { 'w', &drmaster_line::iota },
+                                               { 'u', &drmaster_line::precedence },
+                                               { 'o', &drmaster_line::qth2 },
+                                               { 'q', &drmaster_line::skcc },
+                                               { 'v', &drmaster_line::society },
+                                               { 'r', &drmaster_line::spc },
+                                               { 'x', &drmaster_line::ssb_power },
+                                               { 's', &drmaster_line::state_160 },
+                                               { 't', &drmaster_line::state_10 }
   };
 
- // void user(const int n, const std::string& v)
-//  using USETTER = void (drmaster_line::*) (const int, const string&);
-
-//  static const map<char, USETTER> c_to_umember { { 'U', &drmaster_line::check },
-//                                               { 'V', &drmaster_line::cq_zone },
-//                                               { 'W', &drmaster_line::foc },
-//                                               { 'X', &drmaster_line::grid },
-//                                               { 'Y', &drmaster_line::hit_count },
-//                                               { 'I', &drmaster_line::itu_zone },
-
-
-  const char        c     { sv[1] };
-//  const string_view value { sv.substr(2) };
-  const string      svalue { sv.substr(2) };
+  const char   c      { sv[1] };
+  const string svalue { sv.substr(2) };
 
   if ( (c >= 'U') and (c <= 'Y') )
   { const int n { int(c) - int('U') };
@@ -710,7 +699,7 @@ void drmaster_line::_process_field(const std::string_view sv)
     return;
   }
 
-  auto it = c_to_member.find(c);
+  const auto it { c_to_member.find(c) };
 
   if (it == c_to_member.end())
   { ost << "Error looking up drmaster field " << sv << endl;
@@ -748,150 +737,11 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 
       const string_view next_field { (space_posn == string::npos) ? substring <string_view> (line_or_call, eq_posn)
                                                                   : substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn) };
-//      };
-
-//      if (space_posn == string::npos)
-//        next_field = substring <string_view> (line_or_call, eq_posn);
-//      else
-//        next_field = substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn);
 
       _process_field(next_field);
     }
   }
 }
-
-#if 0
-drmaster_line::drmaster_line(const string_view line_or_call)
-{ static const map<char, void (drmaster_line::*) (const string&)> c_to_member { { 'K', &drmaster_line::check },
-                                                                       { 'C', &drmaster_line::cq_zone },
-                                                                       { 'F', &drmaster_line::foc },
-                                                                       { 'G', &drmaster_line::grid },
-                                                                       { 'H', &drmaster_line::hit_count },
-                                                                       { 'I', &drmaster_line::itu_zone },
-                                                                       { 'N', &drmaster_line::name },
-                                                                       { 'Q', &drmaster_line::qth },
-                                                                       { 'A', &drmaster_line::section },
-                                                                       { 'T', &drmaster_line::ten_ten },
-//                                                                       { 'U', &drmaster_line::user[0] },
-//                                                                       { 'V', &drmaster_line::user[1] },
-//                                                                       { 'W', &drmaster_line::user[2] },
-//                                                                       { 'X', &drmaster_line::user[3] },
-//                                                                       { 'Y', &drmaster_line::user[4] },
-                                                                       { 'n', &drmaster_line::age_aa_cw },
-                                                                     };
-
-//  static const map<char, string&> c_to_member { { 'K', _check },
-//                                                { 'C', _cq_zone },
-//                                                { 'F', _foc },
-//                                                { 'G', _grid },
-//                                                { 'H', _hit_count },
-//                                                { 'I', _itu_zone },
-//                                                { 'N', _name },
-//                                                { 'Q', _qth },
- //                                               { 'A', _section },
-//                                                { 'T', _ten_ten },
-//                                                { 'U', _user[0] },
-//                                                { 'V', _user[1] },
-//                                                { 'W', _user[2] },
-//                                                { 'X', _user[3] },
-//                                                { 'Y', _user[4] },
-//                                                { 'n', _age_aa_cw },   // encoded as YYYYMMDD:nn
-//                                              };
-
-  auto process_field = [this] (const string_view sv) { const char        c     { sv[1] };
-                                                       const string_view value { sv.substr(2) };
-
- //                                                      if (c == 'p')
- //                                                        _xscp = from_string<decltype(_xscp)>(sv);
- //                                                      else
-//                                                         c_to_member.at(c) = value;
- //                                                        this. (* (c_to_member.at(c)))(value);
-                                                     };
-
-
-  if (line_or_call.empty())
-    return;
-
-// get the call
-  size_t start_posn { 0 };
-
-  size_t space_posn { line_or_call.find(' ') };
-
-  if (space_posn == string::npos)       // no space was found
-  { _call = to_upper(line_or_call);
-    return;
-  }
-  else
-    _call = substring <string> (line_or_call, start_posn, space_posn - start_posn);
-
-// all the other fields
-  while (space_posn != string::npos)
-  { size_t eq_posn { line_or_call.find('=', space_posn) };
-
-    if (eq_posn != string::npos) // found an equals
-    { space_posn = line_or_call.find(' ', eq_posn);
-
-      string_view next_field;
-
-      if (space_posn == string::npos)
-        next_field = substring <string_view> (line_or_call, eq_posn);
-      else
-        next_field = substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn);
-
-      process_field(next_field);
-    }
-  }
-
-
-#if 0
-  const vector<string> fields { split_string <std::string> (line_or_call, ' ') };   // TRY A SET INSTEAD OF A VECTOR
-
-  if (fields.empty())
-    return;
-
-  _call = to_upper(fields[0]);
-
-  auto get_field = [&fields, this] (const char c) { return _extract_field(fields, "="s + c); };
-
-  _check     = get_field('K');
-  _cq_zone   = get_field('C');
-
-//  _check     = _extract_field(fields, "=K"sv);
-//  _cq_zone   = _extract_field(fields, "=C"sv);
-  _foc       = _extract_field(fields, "=F"sv);
-  _grid      = _extract_field(fields, "=G"sv);
-  _hit_count = _extract_field(fields, "=H"sv);
-  _itu_zone  = _extract_field(fields, "=I"sv);
-  _name      = _extract_field(fields, "=N"sv);
-  _qth       = _extract_field(fields, "=Q"sv);
-  _section   = _extract_field(fields, "=A"sv);
-  _ten_ten   = _extract_field(fields, "=T"sv);
-  _user[0]   = _extract_field(fields, "=U"sv);
-  _user[1]   = _extract_field(fields, "=V"sv);
-  _user[2]   = _extract_field(fields, "=W"sv);
-  _user[3]   = _extract_field(fields, "=X"sv);
-  _user[4]   = _extract_field(fields, "=Y"sv);
-
-// drmaster extensions
-  _age_aa_cw  = _extract_field(fields, "=n"sv);   // encoded as YYYYMMDD:nn
-  _age_aa_ssb = _extract_field(fields, "=m"sv);   // encoded as YYYYMMDD:nn
-  _cw_power   = _extract_field(fields, "=y"sv);
-  _date       = _extract_field(fields, "=z"sv);
-  _iota       = _extract_field(fields, "=w"sv);
-  _precedence = _extract_field(fields, "=u"sv);
-  _qth2       = _extract_field(fields, "=o"sv);
-  _skcc       = _extract_field(fields, "=q"sv);
-  _society    = _extract_field(fields, "=v"sv);
-  _spc        = _extract_field(fields, "=r"sv);
-  _ssb_power  = _extract_field(fields, "=x"sv);
-  _state_160  = _extract_field(fields, "=s"sv);
-  _state_10   = _extract_field(fields, "=t"sv);
-
-  if (const string xscp_str { _extract_field(fields, "=p"sv) }; !xscp_str.empty())
-    _xscp = from_string<decltype(_xscp)>(xscp_str);
-#endif
-}
-#endif
 
 /// convert to string
 string drmaster_line::to_string(void) const
@@ -1015,82 +865,6 @@ drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     A drmaster file is a superset of a TRMASTER.ASC file
 */
 
-#if 0
-void drmaster::_burble(const string_view filename, const int xscp_limit)
-{
-// there are lots of quite different ways of doing the following. In theory, the version below with pipes should be perhaps
-// the most optimisable, and is arguably easier to follow than any of the other possibilities. But it doesn't work ...
-// well, it does work, but it somehow processes each line twice, as evidenced by the value of "count". Somehow, introducing
-// the filter causes each line to be processed twice instead of once, which is what happens without the filter
-//  int count { 0 };
-
-  if (!filename.empty() and file_exists(filename))
-  { //auto tfile { textfile(filename) };   // don't know why I have to make this an lvalue
-
-    auto convert_line { [this, xscp_limit/*, &count*/] (const auto& line) { /* ost << ++count << ": " << line << endl; */
-                                                                            if ( const drmaster_line record { line }; (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
-                                                                              _records += { record.call(), record } ;
-                                                                          } };
-
-    FOR_ALL(textfile(filename), convert_line);
-
-// SEE: https://stackoverflow.com/questions/67321666/generator-called-twice-in-c20-views-pipeline     !!!!!
-// AND: https://stackoverflow.com/questions/64199664/why-c-ranges-transform-filter-calls-transform-twice-for-values-that-match
-// AND: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2760r1.html#cache_last
-
-// I am increasingly coming to the conclusion that while ranges look great in theory, there are far too many "gotchas" that
-// cause one's code not to behave the way one would reasonably expect. See any of Nico Josuttis' talks on ranges for some
-// of those problems (although, as far as I have seen, not the one that I've hit here).
-
-// THIS CAUSES EACH LINE TO BE WRITTEN TWICE -- I  DON'T KNOW WHY; the version above, without the pipe, prints each line only once
-//    FOR_ALL( tfile | std::views::transform([&count] (const string& str) { ost << ++count << ": " << str << endl; return drmaster_line { str };})
-//                   | std::views::filter   ([xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); }),
-//                   [] (const drmaster_line& drml) { ost << drml.call() << endl; } ) ;
-
-
-// OK    FOR_ALL( tfile | std::views::filter([] (const string& str) { return true; }), [&count] (const string& str) { ost << ++count << ": " << str << endl; return drmaster_line { str }; } ) ;
-
-
-
-// I don't know why I can't say "textfile(filename)" instead of just "tfile"; apparently an lvalue is needed, for reasons that I don't understand
- //   FOR_ALL( tfile | std::views::transform([&count]           (const string& str)        { ost << ++count << ": " << str << endl; return drmaster_line { str }; })
- //                  | std::views::filter   ([xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); }),
- //                                          [this]       (const drmaster_line& rec) { _records += { rec.call(), rec }; } );
-
-    ost << "read " << css(_records.size()) << " drmaster records from file" << endl;
-  }
-}
-#endif
-
-#if 0
-  void drmaster::_prepare_from_file(const std::string_view filename, const int xscp_limit = 1)
-  { auto tfile { textfile(filename) };
-
-// I don't know why I can't say "textfile(filename)" instead of "tfile"; apparently an lvalue is needed, for reasons that I don't understand
-      tfile| std::views::transform([this] (const string& str) { return drmaster_line { str }; })
-           | std::views::filter([this, &xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); })
-           | std::views::transform([this] (const auto& rec) { _records += { rec.call(), rec }; return true; });    // I don't know why I have to return a value; probably something to do with "transform"
-
-    ost << "read " << _records.size() << " drmaster records from file" << endl;
-  }
-#endif
-
-/*! \brief              Prepare an object for use, from a file's contents
-    \param  contents    the contents of a drmaster file
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Lines without XSCP data are always included
-*/
-#if 0
-void drmaster::_prepare_from_file_contents(const string_view contents, const int xscp_limit)
-{ for (const string_view line : to_lines <std::string_view> (contents))
-    if ( const drmaster_line record { line }; (record.xscp() == 0) or (record.xscp() >= xscp_limit) )
-      _records += { record.call(), record } ;
-
-  ost << "read " << _records.size() << " drmaster records from file" << endl;
-}
-#endif
-
 /*! \brief              Construct from a file
     \param  filename    name of file to read
     \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
@@ -1190,72 +964,6 @@ drmaster::drmaster(const vector<string>& path, const string_view filename, const
   }
 }
 
-/*! \brief              Prepare the object by reading a file
-    \param  filename    name of file to read
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Lines without XSCP data are always included
-    Throws exception if the file does not exist or is incorrectly formatted
-*/
-#if 0
-void drmaster::prepare(const string_view filename, const int xscp_limit)
-{ if (!filename.empty() and file_exists(filename))
-  { _burble(filename, xscp_limit);
-
-#if 0
-    { auto tfile { textfile(filename) };
-
-// I don't know why I can't say "textfile(filename)" instead of just "t"; apparently an lvalue is needed, for reasons that I don't understand
-      tfile| std::views::transform([this] (const string& str) { return drmaster_line { str }; })
-           | std::views::filter([this, &xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); })
-           | std::views::transform([this] (const auto& rec) { _records += { rec.call(), rec }; return true; });    // I don't know why I have to return a value; probably something to do with "transform"
-
-      ost << "read " << _records.size() << " drmaster records from file [3]" << endl;
-    }
-#endif
-
-//    _prepare_from_file_contents(read_file(filename), xscp_limit);      // throws exception if fails
-  }
-}
-#endif
-
-/*! \brief              Prepare the object by reading a file
-    \param  path        directories to check
-    \param  filename    name of file to read
-    \param  xscp_limit  lines with XSCP data are included only if the value is >= this value
-
-    Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
-*/
-// THIS IS THE ONE THAT IS CURRENTLY USED
-#if 0
-void drmaster::prepare(const vector<string>& path, const string_view filename, const int xscp_limit)
-{ if (!filename.empty())
-  { //const string fname { find_file(path, filename) };
-
-    //_burble(fname, xscp_limit);
-
-  _burble(find_file(path, filename), xscp_limit);
-
-#if 0
-    const string fname { find_file(path, filename) };
-
-    if (!fname.empty())
-    { auto tfile { textfile(fname) };   // don't know why I have to make this an lvalue
-
-// I don't know why I can't say "textfile(filename)" instead of just "tfile"; apparently an lvalue is needed, for reasons that I don't understand
-      FOR_ALL( tfile | std::views::transform([this]              (const string& str)        { return drmaster_line { str }; })
-                     | std::views::filter   ([this, &xscp_limit] (const drmaster_line& rec) { return (rec.xscp() == 0) or (rec.xscp() >= xscp_limit); }),
-                                             [this]              (const drmaster_line& rec) { _records += { rec.call(), rec }; } );
-
-      ost << "read " << css(_records.size()) << " drmaster records from file [4]" << endl;
-    }
-#endif
-
-//    _prepare_from_file_contents(read_file(path, filename), xscp_limit);      // throws exception if fails
-  }
-}
-#endif
-
 /// all the calls (in callsign order)
 vector<string> drmaster::calls(void) const
 { vector<string> rv { unordered_calls() };
@@ -1281,8 +989,6 @@ string drmaster::to_string(void) const
 { vector<string> lines;
   lines.reserve(_records.size());
 
-//  FOR_ALL(_records, [&lines] (const auto& rec) { lines += rec.second.to_string() + EOL; });
-
   for (const auto& [ call, drml ] : _records)
     lines += (drml.to_string() + EOL);
 
@@ -1297,7 +1003,7 @@ string drmaster::to_string(void) const
     If there's already an entry for <i>call</i>, then does nothing
 */
 void drmaster::operator+=(const string& call)
-{ if (!::contains(call, ' ') and !_records.contains(call))           // basic sanity check for a call, and whether is already in the database
+{ if (!::contains(call, ' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use
 }
 

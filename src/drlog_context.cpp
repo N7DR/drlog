@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 247 2024-07-19 01:48:06Z  $
+// $Id: drlog_context.cpp 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -325,6 +325,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "CLUSTER THRESHOLD"sv)
       _cluster_threshold = from_string<decltype(_cluster_threshold)>(rhs);
 
+// CLUSTER TIMEOUT
+    if (LHS == "CLUSTER TIMEOUT"sv)
+      _cluster_timeout = static_cast<decltype(_cluster_timeout)>(from_string<unsigned int>(rhs));
+
 // CLUSTER USERNAME
     if (LHS == "CLUSTER USERNAME"sv)
       _cluster_username = rhs;
@@ -374,7 +378,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
         { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
 
           for (const auto& b_str: clean_split_string <string> (bands_str))
-          { const BAND b { BAND_FROM_NAME[b_str] };
+          { //const BAND b { BAND_FROM_NAME[b_str] };
 
             string new_str;
 
@@ -386,7 +390,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
             }
 
             tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
-            _per_band_country_mult_factor += { b, from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
+//            _per_band_country_mult_factor += { b, from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
+            _per_band_country_mult_factor += { BAND_FROM_NAME[b_str], from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
           }
         }
       }
@@ -582,12 +587,13 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _long_t = from_string<decltype(_long_t)>(rhs);
 
 // MARK FREQUENCIES [CW|SSB]
-    if (testline.starts_with("MARK FREQUENCIES"s) and !rhs.empty())
-    { const vector<string_view> ranges { clean_split_string <string_view> (rhs) };
+    if (testline.starts_with("MARK FREQUENCIES"sv) and !rhs.empty())
+    { //const vector<string_view> ranges { clean_split_string <string_view> (rhs) };
 
       vector<pair<frequency, frequency>> frequencies;
 
-      for (auto range : ranges)
+//      for (auto range : ranges)
+      for (auto range : clean_split_string <string_view> (rhs))
       { const vector<string_view> bounds { clean_split_string <string_view> (range, '-') };
 
         try
@@ -738,11 +744,16 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "POST MONITOR"sv)
       FOR_ALL(clean_split_string <string> (RHS), [this] (const string& callsign) { _post_monitor_calls += callsign; } );
 
-// POSTED BY CONTINENTS
-    if (LHS == "POSTED BY CONTINENTS"sv)
+// POSTED BY CONTINENTS (default is anything other than my own continent)
+    if ( (LHS == "POSTED BY CONTINENTS"sv) or (LHS == "POSTED BY CONTINENT"sv) )
     { const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
 
-      FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+      if (LHS == "POSTED BY CONTINENTS"sv)    // multiple continents
+        FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+      else                                    // single continent
+      { if (continent_abbreviations.contains(RHS))
+          _posted_by_continents += RHS;             // _posted_by_continents now contains single value
+      }
     }
 
 // P3
@@ -819,7 +830,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-      FOR_ALL(clean_split_string <std::string_view> (rhs), [&new_rates] (auto str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+      FOR_ALL(clean_split_string <std::string_view> (rhs), [&new_rates] (const auto str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
@@ -1307,8 +1318,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             auto& [ swin_contents, vec_winfo ] { _static_windows[name] };
 
             if (verbatim[name])
-            { //string contents { _static_windows[name].first };
-              string contents { swin_contents };
+            { string contents { swin_contents };
 
               if (contents.size() >= 2)
                 contents = delimited_substring <std::string> (contents, '"', '"', DELIMITERS::DROP);
@@ -1319,7 +1329,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
               lines = to_lines <std::string> (contents_1);
 
-//              winfo.w(longest_line(lines).length());
               winfo.w(longest(lines).length());
               winfo.h(lines.size());
 
@@ -1335,11 +1344,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents_1;
             }                                                       // end verbatim
             else                                                    // read from file
-            { //const string         contents { _static_windows[name].first };
-              const string&        contents { swin_contents };
+            { const string&        contents { swin_contents };
               const vector<string> lines    { to_lines <std::string> (contents) };
 
-//              winfo.w(longest_line(lines).length());
               winfo.w(longest(lines).length());
               winfo.h(lines.size());
 
@@ -1383,7 +1390,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
           ost << "message associated with " << target << ", which is keysym " << hex << key_symbol << dec << ", is: " << str << endl;
 
-//          if (const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
           if (const auto& cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
           { const auto& [ ori_keyname_str, equiv_keyname_str ] { *cit2 };
 
@@ -1486,9 +1492,10 @@ drlog_context::drlog_context(const string_view filename)
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { const vector<string> bands_str { clean_split_string <string> (_bands) };
+  { //const vector<string> bands_str { clean_split_string <string> (_bands) };
 
-    for (const auto& band_name : bands_str)
+//    for (const auto& band_name : bands_str)
+    for (const auto& band_name : clean_split_string <string> (_bands))
     { try
       { _score_bands += BAND_FROM_NAME.at(band_name);
       }
@@ -1558,9 +1565,10 @@ vector<string> drlog_context::sent_exchange_names(void) const
 vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-  const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
+//  const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
-  for (const auto& [ name, value ] : *ptr_vec_pss)
+//  for (const auto& [ name, value ] : *ptr_vec_pss)
+  for ( const auto& [ name, value ] : (m == MODE_CW ? _sent_exchange_cw : _sent_exchange_ssb) )
     rv += name;
 
   return rv;

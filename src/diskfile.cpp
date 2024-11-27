@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 251 2024-09-09 16:39:37Z  $
+// $Id: diskfile.cpp 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,16 +42,6 @@ bool file_exists(const string& filename)
   return (stat (filename.c_str(), &buffer) == 0);
 }
 
-#if 0
-bool file_exists(const string_view filename)
-{ struct stat buffer;
-
-  const string str { filename };    // create as a proper string, so that we have C-style access
-
-  return (stat (str.c_str(), &buffer) == 0);
-}
-#endif
-
 /*! \brief              Find the location of a file in a path
     \param  path        directories in which to look (with or without trailing "/"), in order
     \param  filename    name of file
@@ -63,7 +53,7 @@ bool file_exists(const string_view filename)
 */
 string find_file(const vector<string>& path, const string_view filename)
 { for (const auto& dir : path)
-  { const string sep { dir.ends_with('/') ? ""s : "/"s };
+  { const string sep { dir.ends_with('/') ? ""s : "/"s };     // put a "/" at the end, if necessary
 
     if ( const auto fullname { dir + sep + filename }; file_exists(fullname) )
       return fullname;
@@ -125,8 +115,11 @@ void file_rename(const string& source_filename, const string& destination_filena
 /*! \brief              Create a directory
     \param  dirname     name of the directory to create
 */
-void directory_create(const string& dirname)
-{ if (const int status { mkdir(dirname.c_str(), 0xff) }; status)
+//void directory_create(const string& dirname)
+void directory_create(const string_view dirname)
+{ const string name_to_test { dirname.ends_with('/') ? remove_trailing <std::string> (dirname, '/') : dirname };
+
+  if (const int status { mkdir(name_to_test.c_str(), 0xff) }; status)
     throw exception();
 }
 
@@ -134,7 +127,6 @@ void directory_create(const string& dirname)
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-//bool directory_exists(const string& dirname) noexcept
 bool directory_exists(const string_view dirname)
 { struct stat stat_buffer;
 
@@ -156,15 +148,13 @@ bool directory_exists(const string_view dirname)
     Returns empty vector if the directory <i>dirname</i> does not exist
     <i>dirname</i> may or may not end in "/"
 */
-//vector<string> directory_contents(const string& dirname)
 vector<string> directory_contents(const string_view dirname)
 { vector<string> rv { };
 
   if (!directory_exists(dirname))
     return rv;
 
-//  const string dirname_slash { dirname + "/"s };
-  const string dirname_slash { dirname.ends_with('/') ? dirname : dirname + "/"s };
+  const string dirname_slash { dirname.ends_with('/') ? dirname : dirname + "/"s };   // makse sure we have a trailing slash
 
   struct dirent** namelist;
 
@@ -174,7 +164,7 @@ vector<string> directory_contents(const string_view dirname)
     return rv;                                  // shouldn't happen
 
   for (int n { 0 }; n < status; n++)
-  { if (const string name { namelist[n]->d_name }; (name != "."s) and (name != ".."s))
+  { if (const string name { namelist[n] -> d_name }; ( (name != "."s) and (name != ".."s) ))
       rv += name;
   }
 

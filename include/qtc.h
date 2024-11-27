@@ -1,4 +1,4 @@
-// $Id: qtc.h 225 2023-08-14 17:29:55Z  $
+// $Id: qtc.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -127,10 +127,6 @@ inline std::ostream& operator<<(std::ostream& ost, const qtc_entry& qe)
 
   return ost;
 }
-
-// return just the qtc_entry
-//inline const qtc_entry& qe(const QTC_AND_STATUS& qes)
-//  { return (qes.first); }
 
 // -----------------------------------  qtc_series  ----------------------------
 
@@ -417,7 +413,9 @@ public:
     Does not add QSOs already in the buffer (either as sent or unsent).
     Does not add non-EU QSOs.
 */
-  void operator+=(const logbook&);
+//  void operator+=(const logbook&);
+  inline void operator+=(const logbook& logbk)
+    { FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { (*this) += qso; } ); }
 
 /*! \brief          Add a QSO to the buffer
     \param  qso     QSO to add
@@ -447,7 +445,6 @@ public:
 /*! \brief      Transfer all the (sent) entries in a <i>qtc_series</i> from unsent status to sent status
     \param  qs  QTC entries to transfer
 */
-//  void unsent_to_sent(const qtc_series& qs);
   inline void unsent_to_sent(const qtc_series& qs)
     { FOR_ALL(qs.sent_qtc_entries(), [this] (const qtc_entry& qe) { unsent_to_sent(qe); } ); }
 

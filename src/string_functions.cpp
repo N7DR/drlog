@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 252 2024-09-16 17:18:18Z  $
+// $Id: string_functions.cpp 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -105,12 +105,42 @@ vector<string> from_csv(string_view line)
   return rv;
 }
 
+/*! \brief      Append a string_view to a string
+    \param  s   original string
+    \param  sv  string_view to append
+    \return     concatenation of <i>s</i> and <i>sv</i>
+*/
+string operator+(const std::string& s, const std::string_view sv)
+{ string rv { };
+
+  rv.reserve(s.size() + sv.size());
+
+  rv = s + string { sv };
+
+  return rv;
+}
+
+/*! \brief      Append a character to a string_view
+    \param  sv  original string
+    \param  c   character to append
+    \return     concatenation of <i>sv</i> and <i>c</i>
+*/
+std::string operator+(const std::string_view sv, const char c)
+{ string rv;
+
+  rv.reserve(sv.size() + 1);
+
+  rv = string { sv } + c;
+
+  return rv;
+}
+
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-string duplicate_char(const string& s, const char c)
+string duplicate_char(const string_view s, const char c)
 { size_t start_posn { 0 };
   size_t next_posn  { 0 };
   string rv         { };
@@ -177,7 +207,7 @@ string format_time(const string& format, const tm* tmp)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-string replace_char(string_view s, const char old_char, const char new_char)
+string replace_char(const string_view s, const char old_char, const char new_char)
 { string rv { s };
 
   replace(rv.begin(), rv.end(), old_char, new_char);
@@ -540,12 +570,12 @@ size_t next_word_posn(const string_view str, const size_t current_posn)
 /*! \brief          Get nth word in a string
     \param  s       string to be analysed
     \param  n       word number to be returned
-    \param  wrt     value with respoct to which <i>n</i> is counted
+    \param  wrt     value with respect to which <i>n</i> is counted
     \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
+    Could modify this to be a template and return an STYPE, if that is useful
 */
-//string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
 string nth_word(const string_view s, const unsigned int n, const unsigned int wrt)
 { string rv { };
 
@@ -565,26 +595,6 @@ string nth_word(const string_view s, const unsigned int n, const unsigned int wr
 
   return rv;
 }
-
-#if 0
-// return posn_1, posn_2; posn_2 is the location of sep, or string::npos
-pair<size_t, size_t> to_next_separator(const std::string_view cs, const size_t posn, const char sep)
-{ if (cs.empty())
-    return { cs.size(), cs.size() };    // return { 0, 0 }
-
-  size_t posn_1 { posn };
-
-  while ( (posn_1 < cs.size()) and (cs[posn_1] == sep) )
-    posn_1++;
-
-  if (posn_1 == cs.size())
-    return { cs.size(), cs.size() };    // all chacters are sep
-
-  size_t next_posn { FIND_IF(cs, sep, posn_1) };
-
-  return { posn_1, next_posn };
-}
-#endif
 
 /*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
     \param  str     UTF-8 string to be analysed
@@ -725,7 +735,7 @@ bool compare_calls(const string& call1, const string& call2)
 /*! \brief          Is the value of one mult earlier than another?
     \param  mult1   first mult value
     \param  mult2   second mult value
-    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order  (used for exchange mults)
+    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
 */
 bool compare_mults(const string& mult1, const string& mult2)
 { if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and      // if two 2-digit numeric values (such as zones)
@@ -1010,12 +1020,13 @@ string readuntil(istream& in, const string_view delimiter)
 
   size_t tot;
 
-  do { string temp;
-       getline(in, temp, delim);
+  do
+  { string temp;
+    getline(in, temp, delim);
 
-       cr += temp + delim;
-       tot = cr.size();
-    } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
+    cr += temp + delim;
+    tot = cr.size();
+  } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
 
   return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
 }

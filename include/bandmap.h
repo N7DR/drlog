@@ -1,4 +1,4 @@
-// $Id: bandmap.h 252 2024-09-16 17:18:18Z  $
+// $Id: bandmap.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,8 +258,8 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
 
   std::set<std::pair<S, S>> s { nmd.values() };
 
-  for (const auto& v : s)
-    ost << "  value: " << v.first << ", " << v.second << std::endl;
+  for (const auto& [mult_name, mult_value] : s)
+    ost << "  value: " << mult_name << ", " << mult_value << std::endl;
 
   return ost;
 }
@@ -379,7 +379,6 @@ public:
 
     \return         the <i>bandmap_entry</i> object
 */
-//  bandmap_entry& callsign(const std::string& call);
   bandmap_entry& callsign(const std::string_view call);
 
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
@@ -593,13 +592,6 @@ public:
 */
   inline frequency frequency_difference(const bandmap_entry& be) const
     { return frequency(abs(be._freq.hz() - _freq.hz()), FREQUENCY_UNIT::HZ); }
-
-/*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
-    \param  be  other bandmap entry
-    \return     absolute difference in hertz between frequency of *this and fequency of <i>be</i>
-*/
-  inline unsigned int absolute_frequency_difference(const bandmap_entry& be) const
-    { return static_cast<unsigned int>(abs(frequency_difference(be).hz())); }
 
 /*! \brief      Is this bandmap entry less than another one, using callsign order
     \param  be  other bandmap entry

@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 237 2024-04-28 17:47:36Z  $
+// $Id: cluster.cpp 256 2024-11-25 03:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,6 +54,8 @@ constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
 void dx_cluster::_process_error(void)
 { ost << "Processing error on TCP socket: " << _connection.to_string() << endl;
 
+//  _last_data_received = system_clock::now();  // reset the reception timer; moved to the end because this may take a long time if the server is unreachab;e
+
 new_socket:
   try
   { try
@@ -67,7 +69,7 @@ new_socket:
 
     _connection.new_socket();                                       // get a new socket
     _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);     // set the keepalive option
-    _connection.bind(_my_ip);                                       // bind it to the correct IP address
+    _connection.bind(_my_ip);                                       // bind it to the correct IP address  *** THIS IS FAILING
 
     ost << "New TCP socket: " << _connection.to_string() << endl;
 
@@ -88,9 +90,12 @@ reconnect:
 
     catch (const socket_support_error& E)
     { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
-      sleep_for(1min);    // sleep for one minute before retrying
+//      sleep_for(1min);    // sleep for one minute before retrying
 
-      { SAFELOCK(thread_check);
+      for (int counter { 0 }; counter < 60; ++counter)
+      { sleep_for(1s);
+
+        SAFELOCK(thread_check);
 
         if (exiting)
           return;
@@ -102,8 +107,35 @@ reconnect:
 
   catch (const tcp_socket_error& E)    // complete failure; go back and try again
   { ost << "TCP socket error " << E.code() << " in close/new socket/bind recovery sequence: " << E.reason() << endl;
+
+    for (int counter { 0 }; counter < 60; ++counter)
+    { sleep_for(1s);
+
+      SAFELOCK(thread_check);
+
+      if (exiting)
+        return;
+    }
+
     goto new_socket;
   }
+
+  catch (const socket_support_error& E)    // complete failure; go back and try again
+  { ost << "socket support error " << E.code() << " in close/new socket/bind recovery sequence: " << E.reason() << endl;
+
+    for (int counter { 0 }; counter < 60; ++counter)
+    { sleep_for(1s);
+
+      SAFELOCK(thread_check);
+
+      if (exiting)
+        return;
+    }
+
+    goto new_socket;
+  }
+
+  _last_data_received = system_clock::now();  // reset the reception timer
 }
 
 /*! \brief              Constructor
@@ -319,7 +351,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
         { _frequency_str = copy.substr(0, char_posn);
           _freq = frequency(_frequency_str);
 
-          if (_valid_frequency())
+          if (_valid_hf_frequency())                            // we are interested only in HF posts
           { char_posn = copy.find_first_not_of(' ', char_posn);
             space_posn = copy.find_first_of(' ', char_posn);
 
@@ -383,7 +415,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
-            if (_valid_frequency())
+            if (_valid_hf_frequency())                           // we are interested only in HF posts
             { _callsign = fields[4];
 
               const location_info li { db.info(_callsign) };
@@ -411,7 +443,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
-            if (_valid_frequency())
+            if (_valid_hf_frequency())                            // we are interested only in HF posts
             { char_posn = copy.find_first_not_of(' ', space_posn);
               space_posn = copy.find_first_of(' ', char_posn);
 
@@ -579,13 +611,14 @@ void monitored_posts::operator-=(const string& call_to_remove)
 
 /// prune <i>_entries</i>
 void monitored_posts::prune(void)
-{ const time_t now { ::time(NULL) };
+{ //const time_t now { ::time(NULL) };
 
   SAFELOCK(monitored_posts);
 
   const size_t original_size { _entries.size() };
 
-  erase_if(_entries, [now] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+//  erase_if(_entries, [now] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+  erase_if(_entries, [now = NOW()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());
 }

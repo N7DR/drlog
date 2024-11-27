@@ -1,4 +1,4 @@
-// $Id: screen.h 251 2024-09-09 16:39:37Z  $
+// $Id: screen.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -326,7 +326,7 @@ public:
 
     The window is ready for use after this constructor.
 */
-  window(const window_information& wi, const unsigned int flags = 0);
+  explicit window(const window_information& wi, const unsigned int flags = 0);
 
 /// forbid copying
   window(const window&) = delete;
@@ -710,7 +710,7 @@ public:
     { return ::overlap(_x, _y, _width, _height, win2._x, win2._y, win2._width, win2._height); }
 };
 
-/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+/*  \brief            Obtain all the overlapping pairs of windows from a container (map)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */

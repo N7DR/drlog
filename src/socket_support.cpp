@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 239 2024-05-20 13:42:00Z  $
+// $Id: socket_support.cpp 256 2024-11-25 03:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -131,18 +131,13 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       while (!connected)            // repeat until success
       { try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
-          { //ost << "legal IPv4 address: " << destination_ip_address_or_fqdn << endl;
-
-            destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
+          { destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
             rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + ::to_string(destination_port));
           }
           else                                                                // FQDN was passed instead of dotted decimal
-          { //ost << "NOT legal IPv4 address: " << destination_ip_address_or_fqdn << endl;
-
+          {
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
-
-            //ost << "dotted decimal = " << dotted_decimal << endl;
 
             destination(dotted_decimal, destination_port, TIMEOUT );
             rename_mutex("TCP: "s + dotted_decimal + ":"s + ::to_string(destination_port));
@@ -228,6 +223,8 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
 
   if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
   { const string address { dotted_decimal_address(*(sockaddr*)(&local_address)) };
+
+    ost << "Bind error; errno = " << ::to_string(errno) << "; "s << strerror(errno) << "; address = "s << address << endl;
 
     throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Bind error; errno = "s + ::to_string(errno) + "; "s + strerror(errno) + "; address = "s + address);
   }
@@ -353,7 +350,7 @@ void tcp_socket::send(const std::string_view msg)
 /*! \brief      Simple receive
     \return     received string
 */
-string tcp_socket::read(void)
+string tcp_socket::read(void) const
 { constexpr unsigned int BUFLEN { 4096 };       // a decent size for a read buffer
 
   char cp[BUFLEN];
@@ -383,7 +380,7 @@ string tcp_socket::read(void)
 
     Throws an exception if the read times out
 */
-string tcp_socket::read(const unsigned long timeout_secs)
+string tcp_socket::read(const unsigned long timeout_secs) const
 { string rv;
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };

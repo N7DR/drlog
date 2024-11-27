@@ -395,12 +395,14 @@ void qtc_database::read(const string& filename)
     Does not add QSOs already in the buffer (either as sent or unsent).
     Does not add non-EU QSOs.
 */
+#if 0
 void qtc_buffer::operator+=(const logbook& logbk)
 { //const vector<QSO> qsos { logbk.as_vector() };
 
 //  FOR_ALL(qsos, [this] (const QSO& qso) { (*this) += qso; } );
   FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { (*this) += qso; } );
 }
+#endif
 
 /*! \brief          Add a QSO to the buffer
     \param  qso     QSO to add
@@ -451,17 +453,6 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
 { _unsent_qtcs -= entry;
   _sent_qtcs   += entry;
 }
-
-/*! \brief      Transfer all the (sent) entries in a <i>qtc_series</i> from unsent status to sent status
-    \param  qs  QTC entries to transfer
-*/
-#if 0
-void qtc_buffer::unsent_to_sent(const qtc_series& qs)
-{ //const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
-
-  FOR_ALL(qs.sent_qtc_entries(), [this] (const qtc_entry& qe) { unsent_to_sent(qe); } );
-}
-#endif
 
 /*! \brief      The unsent list in human-readable format
     \return     the unsent list as a string

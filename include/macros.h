@@ -1,4 +1,4 @@
-// $Id: macros.h 252 2024-09-16 17:18:18Z  $
+// $Id: macros.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1259,7 +1259,7 @@ inline void operator+=(C& c1, const E& element)
 template <typename C>
   requires (is_deque<C> or is_list<C> or is_vector<C>) and (is_string<typename C::value_type>)
 inline void operator+=(C& c1, std::string_view element)
-{ c1.emplace_back(std::string { element }); }
+  { c1.emplace_back(std::string { element }); }
 
 /*! \brief      Insert an element into a list
     \param  l1  destination list
@@ -1268,7 +1268,7 @@ inline void operator+=(C& c1, std::string_view element)
 template <typename L>
   requires is_list<L>
 inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
-{ l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
+  { l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
 
 /*! \brief      Insert an element into a list
     \param  l1  destination list
@@ -1277,7 +1277,7 @@ inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::
 template <typename L>
   requires is_list<L>
 inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
-{ l1.insert(pr.first, pr.second); }
+  { l1.insert(pr.first, pr.second); }
 
 /*! \brief              Remove all elements with a particular value from a list
     \param  c1          list
@@ -1286,7 +1286,7 @@ inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typena
 template <typename C>
   requires is_list<C>
 inline void operator-=(C& c1, typename C::value_type&& element)
-{ c1.remove(std::forward<typename C::value_type>(element)); }
+  { c1.remove(std::forward<typename C::value_type>(element)); }
 
 /*! \brief              Remove all elements with a particular value from a list
     \param  c1          list
@@ -1295,7 +1295,7 @@ inline void operator-=(C& c1, typename C::value_type&& element)
 template <typename C>
   requires is_list<C>
 inline void operator-=(C& c1, const typename C::value_type& element)
-{ c1.remove(element); }
+  { c1.remove(element); }
 
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
@@ -1306,7 +1306,7 @@ inline void operator-=(C& c1, const typename C::value_type& element)
 template <typename Q>
   requires is_queue<Q>
 inline void operator+=(Q& q1, typename Q::value_type&& element)
-{ q1.push(std::forward<typename Q::value_type>(element)); }
+  { q1.push(std::forward<typename Q::value_type>(element)); }
 
 /*! \brief              Append an element to a queue
     \param  q1          destination queue
@@ -1317,7 +1317,7 @@ inline void operator+=(Q& q1, typename Q::value_type&& element)
 template <typename Q, typename E>
   requires is_queue<Q> and (std::convertible_to<E, typename Q::value_type>)
 inline void operator+=(Q& q1, const E& element)
-{ q1.push(element); }
+  { q1.push(element); }
 
 /*! \brief              Remove and call destructor on front element of deque 
     \param  D1          destination deque
@@ -1338,7 +1338,7 @@ void operator--(D& d /*, int*/) // int for post-decrement
 template <typename D>
   requires is_deque<D>
 inline void operator-=(D& d, typename D::iterator&& it)
-{ d.erase(std::forward<typename D::iterator>(it)); }
+  { d.erase(std::forward<typename D::iterator>(it)); }
 
 /*! \brief      Remove an element referenced by an iterator from a deque
     \param  c1  destination deque

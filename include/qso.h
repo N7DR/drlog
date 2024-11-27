@@ -1,4 +1,4 @@
-// $Id: qso.h 252 2024-09-16 17:18:18Z  $
+// $Id: qso.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -214,7 +214,6 @@ public:
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
-//  void populate_from_verbose_format(const std::string& str);
   void populate_from_verbose_format(const std::string& str);
 
 /*! \brief                  Does the QSO match an expression for a received exchange field?
@@ -284,7 +283,7 @@ public:
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
 */
-  void populate_from_log_line(std::string_view str);
+  void populate_from_log_line(const std::string_view str);
 
 /*! \brief      QSO == QSO
     \param  q   target QSO
@@ -347,7 +346,6 @@ inline bool earlier(const QSO& qso_1, const QSO& qso_2)
 
     The value of <i>posn</i> might be changed by this function.
 */
-//std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
 std::pair<std::string, std::string> next_name_value_pair(const std::string_view str, size_t& posn);
 
 #endif    // QSO_H

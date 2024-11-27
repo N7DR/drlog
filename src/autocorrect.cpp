@@ -64,7 +64,7 @@ string autocorrect_database::corrected_call(const string& str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TENT"s, "TETT"s };
+  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };
@@ -74,11 +74,6 @@ string autocorrect_database::corrected_call(const string& str) const
         return insert(str, call_to_test);
     }
   }
-
-//  if ( (str.size() >= 7) and str.ends_with("TEAT"sv) )
-//  { if (const string call_to_test { substring <std::string> (str, 0, str.size() - 4) }; contains(call_to_test))
-//      return insert(str, call_to_test);
-//  }
 
 // extraneous:
 //   E in front of a US K call
@@ -111,21 +106,34 @@ string autocorrect_database::corrected_call(const string& str) const
     }
   }
 
-// initial K copied as an initial M
+// initial K or initial W copied as an initial M; note that if both K and W are valid, then we simply choose K
   if (str.starts_with('M'))
   { if (absent)
-    { if (const string call_to_test { "K"s + substring <std::string> (str, 1) }; contains(call_to_test))
+    { const string sub { substring <std::string> (str, 1) };
+
+      if (const string call_to_test { "K"s + sub }; contains(call_to_test))
+        return insert(str, call_to_test);
+
+      if (const string call_to_test { "W"s + sub }; contains(call_to_test))
+        return insert(str, call_to_test);
+    }
+  }
+
+// initial L copied as an initial D
+  if (str.starts_with('D'))
+  { if (absent)
+    { if (const string call_to_test { "L"s + substring <std::string> (str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
 
 // initial W copied as an initial M
-  if (str.starts_with('M'))
-  { if (absent)
-    { if (const string call_to_test { "W"s + substring <std::string> (str, 1) }; contains(call_to_test))
-        return insert(str, call_to_test);
-    }
-  }
+//  if (str.starts_with('M'))
+//  { if (absent)
+//    { if (const string call_to_test { "W"s + substring <std::string> (str, 1) }; contains(call_to_test))
+//        return insert(str, call_to_test);
+//    }
+//  }
 
 // UA copied as MA
   if (str.starts_with("MA"sv))

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 252 2024-09-16 17:18:18Z  $
+// $Id: string_functions.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,7 +108,8 @@ std::vector<std::string> from_csv(std::string_view line);
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-std::string duplicate_char(const std::string& s, const char c = '"');
+//std::string duplicate_char(const std::string& s, const char c = '"');
+std::string duplicate_char(const std::string_view s, const char c = '"');
 
 /*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
@@ -266,8 +267,18 @@ inline std::string to_string(T&& val)
     \param  sv  string_view to append
     \return     concatenation of <i>s</i> and <i>sv</i>
 */
-inline std::string operator+(const std::string& s, const std::string_view sv)
-  { return s + std::string { sv }; }
+//inline std::string operator+(const std::string& s, const std::string_view sv)
+//  { return s + std::string { sv }; }
+  std::string operator+(const std::string& s, const std::string_view sv);
+
+/*! \brief      Append a character to a string_view
+    \param  sv  original string
+    \param  c   character to append
+    \return     concatenation of <i>sv</i> and <i>c</i>
+*/
+//inline std::string operator+(const std::string_view sv, const char c)
+//  { return std::string { sv } + c; }
+  std::string operator+(const std::string_view sv, const char c);
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -279,7 +290,7 @@ inline std::string operator+(const std::string& s, const std::string_view sv)
     Compiler error if one uses str.size() - start_posn as a default length; value may not be calculated from other parameters
 */
 template <typename STYPE>
-inline auto substring(std::string_view str, const size_t start_posn, const size_t length) -> STYPE
+inline auto substring(const std::string_view str, const size_t start_posn, const size_t length) -> STYPE
 //  { return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } ); }
 { if (length == 0)
     return STYPE { EMPTY_STR };
@@ -295,7 +306,7 @@ inline auto substring(std::string_view str, const size_t start_posn, const size_
     Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
 template <typename STYPE>
-inline auto substring(std::string_view str, const size_t start_posn) -> STYPE
+inline auto substring(const std::string_view str, const size_t start_posn) -> STYPE
   { return substring <STYPE> (str, start_posn, str.size() - start_posn); }
 
 /*! \brief              Replace every instance of one character with another
@@ -304,7 +315,7 @@ inline auto substring(std::string_view str, const size_t start_posn) -> STYPE
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-std::string replace_char(std::string_view s, const char old_char, const char new_char);
+std::string replace_char(const std::string_view s, const char old_char, const char new_char);
 
 /*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
@@ -676,7 +687,7 @@ inline auto remove_trailing_spaces(const T& t) -> std::vector<STYPE>
     \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
 template <typename STYPE>
-inline auto remove_peripheral_chars(std::string_view cs, const char c) -> STYPE
+inline auto remove_peripheral_chars(const std::string_view cs, const char c) -> STYPE
   { return remove_trailing <STYPE> (remove_leading <std::string_view> (cs, c), c); }
 
 /*! \brief      Remove leading and trailing spaces
@@ -684,7 +695,7 @@ inline auto remove_peripheral_chars(std::string_view cs, const char c) -> STYPE
     \return     <i>cs</i> with any leading or trailing spaces removed
 */
 template <typename STYPE>
-inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
+inline auto remove_peripheral_spaces(const std::string_view cs) -> STYPE
   { return remove_peripheral_chars <STYPE> (cs, ' '); }
 
 /*! \brief      Remove leading and trailing instances of a particular character from each element in a vector of strings
@@ -693,7 +704,6 @@ inline auto remove_peripheral_spaces(std::string_view cs) -> STYPE
     \return     <i>t</i> with leading and trailing instances of <i>c</i> removed from the individual elements
 */
 template <typename STYPE, typename T>
-//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
   requires is_vector<T> and is_ssv<typename T::value_type>
 auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
@@ -997,8 +1007,6 @@ auto delimited_substring(const std::string_view cs, const std::string_view delim
     \param  return_delimiters   whether to keep delimiters in the returned value
     \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>
 */
-//std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2, const DELIMITERS return_delimiters);
-//std::vector<std::string> delimited_substrings(std::string_view cs, std::string_view delim_1, std::string_view delim_2, const DELIMITERS return_delimiters);
 template <typename STYPE>
 auto delimited_substrings(const std::string_view cs, const std::string_view delim_1, const std::string_view delim_2, const DELIMITERS return_delimiters) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
@@ -1124,7 +1132,7 @@ char antepenultimate_char(const std::string_view cs);
     \return         the last <i>n</i> characters of <i>cs</i>
 */
 template <typename STYPE>
-inline auto last(std::string_view cs, unsigned int n) -> STYPE
+inline auto last(const std::string_view cs, unsigned int n) -> STYPE
   { return (cs.length() < n ? STYPE { cs } : STYPE { cs.substr(cs.length() - n) }); }
 
 /*! \brief              Get an environment variable
@@ -1214,14 +1222,12 @@ inline std::string css(const T n)
 
     Returns <i>string::npos</i> if no word can be found
 */
-//size_t next_word_posn(const std::string& str, const size_t current_posn);
 size_t next_word_posn(const std::string_view str, const size_t current_posn);
 
 /*! \brief      Get location of start all words
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-//std::vector<size_t> starts_of_words(const std::string& s);
 std::vector<size_t> starts_of_words(const std::string_view s);
 
 /*! \brief          Get nth word in a string
@@ -1232,7 +1238,6 @@ std::vector<size_t> starts_of_words(const std::string_view s);
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
 */
-//std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
 std::string nth_word(const std::string_view s, const unsigned int n, const unsigned int wrt = 0);
 
 /*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
@@ -1263,7 +1268,6 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 //inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
-//  { return (contains( split_string <std::string> (legal_values, separator), value )); }
 inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const std::string_view separator)
   { return (contains( split_string <std::string_view> (legal_values, separator), value )); }
 
@@ -1307,10 +1311,9 @@ std::string decimal_places(const std::string& str, const int n);
     \param  strs  the strings to search
     \return       the longest string in the container <i>strs</i>
 */
-//std::string longest_line(const std::vector<std::string>& lines);
+
 template <typename T>
- requires is_container_of_strings<T>
-//std::string longest_line(const T& lines)
+  requires is_container_of_strings<T>
 std::string longest(const T& strs)
 { std::string rv;
 
@@ -1321,10 +1324,8 @@ std::string longest(const T& strs)
   return rv;
 }
 
-#if 1
 template <typename T>
  requires is_container_of_strings<T>
-//std::string longest_line(const T& lines)
 std::string longest(T&& strs)
 { std::string rv;
 
@@ -1334,7 +1335,6 @@ std::string longest(T&& strs)
 
   return rv;
 }
-#endif
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
@@ -1367,7 +1367,7 @@ inline std::string remove_substring(const std::string_view cs, const std::string
     \return     string of <i>n</i> space characters
 */
 inline std::string space_string(const int n)
-  { return (n > 0 ? create_string((char)32, n) : std::string()); }
+  { return (n > 0 ? create_string((char)32, n) : std::string { }); }
 
 /*! \brief          Write a <i>vector<string></i> object to an output stream
     \param  ost     output stream
@@ -1396,7 +1396,8 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
     \param  delim_2     closing delimiter
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
-inline std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
+//inline std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
+inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
   { return (delim_1 + str + delim_2); }
 
 /*! \brief              Perform a case-insensitive search for a substring
@@ -1443,7 +1444,6 @@ size_t find_and_go_to_end_of(const std::string_view str, const std::string_view 
 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
-//std::string base_call(const std::string& callsign);
 std::string base_call(const std::string_view callsign);
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
@@ -1480,7 +1480,6 @@ T regex_matches(C&& container, const std::string& s)
     \param  c       the target character
     \return         the number of times that <i>c</i> appears in <i>str</i>
 */
-//inline size_t number_of_occurrences(const std::string& str, const char c)
 inline size_t number_of_occurrences(const std::string_view str, const char c)
   { return static_cast<size_t>(std::count(str.begin(), str.end(), c)); }
 

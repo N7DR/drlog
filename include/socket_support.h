@@ -1,4 +1,4 @@
-// $Id: socket_support.h 238 2024-05-05 15:50:16Z  $
+// $Id: socket_support.h 256 2024-11-25 03:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,7 @@
 #include "macros.h"
 #include "pthread_support.h"
 
+#include <chrono>
 #include <deque>
 #include <string>
 #include <string_view>
@@ -60,7 +61,7 @@ constexpr int ICMP_SOCKET_UNABLE_TO_CREATE    { -1 },     ///< Unable to create 
               ICMP_SOCKET_SEND_ERROR          { -2 };     ///< Error when sending
 
 /// TCP socket error messages
-const std::string tcp_socket_error_string[8] { std::string(),
+const std::string tcp_socket_error_string[8] { std::string { },
                                                "Destination not set"s,
                                                "Error return from write()"s,
                                                "Error return from recv()"s,
@@ -71,7 +72,7 @@ const std::string tcp_socket_error_string[8] { std::string(),
                                              };
 
 /// ICMP socket error messages
-const std::string icmp_socket_error_string[3] { std::string(),
+const std::string icmp_socket_error_string[3] { std::string { },
                                                 "Unable to create"s,
                                                 "Error when sending"s
                                               };
@@ -216,7 +217,7 @@ protected:
   bool              _destination_is_set { false };                  ///< is the destination known?
   bool              _force_closure      { false };                  ///< force closure of socket in destructor, even for a pre-existing socket
   bool              _preexisting_socket { false };                  ///< whether <i>_sock</i> exists outside the object
-  SOCKET            _sock;                                          ///< encapsulated socket
+  SOCKET            _sock               { 0 };                      ///< encapsulated socket
   mutable pt_mutex  _tcp_socket_mutex   { "UNNAMED TCP SOCKET"s };  ///< mutex to control access
   unsigned int      _timeout_in_tenths  { 600 };                    ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
@@ -251,7 +252,7 @@ public:
 /*! \brief          Encapsulate a pre-existing socket
     \param  sock    socket
 */
-  explicit tcp_socket(SOCKET sock) :
+  inline explicit tcp_socket(SOCKET sock) :
     _preexisting_socket(true),
     _sock(sock)
   { }
@@ -348,7 +349,7 @@ public:
 /*! \brief      Simple receive
     \return     received string
 */
-  std::string read(void);
+  std::string read(void) const;
 
 /*! \brief                  Simple receive
     \param  timeout_secs    timeout in seconds
@@ -356,12 +357,27 @@ public:
         
     Throws an exception if the read times out
 */
-  std::string read(const unsigned long timeout_secs);
+  std::string read(const unsigned long timeout_secs) const;
+
+/*! \brief                  Simple receive
+    \param  timeout_secs    timeout
+    \return                 received string
+
+    Throws an exception if the read times out
+*/
+  inline std::string read(const std::chrono::system_clock::duration t) const
+    { return read(static_cast<unsigned long>(duration_cast<std::chrono::seconds>(t).count())); }
   
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
 */
   void keep_alive_idle_time(const unsigned int seconds);
+
+/*! \brief              Set the idle time before a keep-alive is sent
+    \param  seconds     time to wait idly before a keep-alive is sent
+*/
+  inline void keep_alive_idle_time(const std::chrono::system_clock::duration t)
+    { keep_alive_idle_time(duration_cast<std::chrono::seconds>(t).count()); }
 
 /*! \brief    Get the idle time before a keep-alive is sent
     \return   time to wait idly, in seconds, before a keep-alive is sent

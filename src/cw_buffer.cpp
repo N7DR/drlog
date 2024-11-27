@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 252 2024-09-16 17:18:18Z  $
+// $Id: cw_buffer.cpp 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -798,8 +798,6 @@ void cw_buffer::add(const char c, const int character_space)
 void cw_buffer::operator<<(const string_view str)
 { if (!str.empty())
     FOR_ALL(str, [this] (const char c) { add(c); });
-//    for (const auto& c : str)
-//      add(c);
 }
 
 /// clear the buffer

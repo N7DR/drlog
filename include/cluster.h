@@ -1,4 +1,4 @@
-// $Id: cluster.h 236 2024-04-14 18:26:49Z  $
+// $Id: cluster.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -105,7 +105,7 @@ public:
 /*! \brief      The status of the connection, as a human-readable string
     \return     the status of the connection
 */
-  inline std::string connection_status(void)
+  inline std::string connection_status(void) const
     { return _connection.to_string(); }
 
 /*! \brief      Return the time since the last data were received on the connection
@@ -140,8 +140,9 @@ protected:
   bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
-  inline bool _valid_frequency(void) const
-    { return ( (_freq.khz() >= 1'800) and (_freq.khz() <= 29'700) ); }
+  inline bool _valid_hf_frequency(void) const
+//    { return ( (_freq.khz() >= 1'800) and (_freq.khz() <= 29'700) ); }
+    { return ( (_freq >= 1'800_kHz) and (_freq <= 29'700_kHz) ); }
 
 public:
     

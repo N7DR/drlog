@@ -1,4 +1,4 @@
-// $Id: diskfile.h 252 2024-09-16 17:18:18Z  $
+// $Id: diskfile.h 255 2024-11-10 20:30:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -112,13 +112,13 @@ inline void file_move(const std::string& source_filename, const std::string& des
 /*! \brief              Create a directory
     \param  dirname     name of the directory to create
 */
-void directory_create(const std::string& dirname);
+//void directory_create(const std::string& dirname);
+void directory_create(const std::string_view dirname);
 
 /*! \brief              Does a directory exist?
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-//bool directory_exists(const std::string& dirname) noexcept;
 bool directory_exists(const std::string_view dirname);
 
 /*! \brief              What files does a directory contain?
@@ -129,7 +129,6 @@ bool directory_exists(const std::string_view dirname);
     Returns empty vector if the directory <i>dirname</i> does not exist
     <i>dirname</i> may or may not end in "/"
 */
-//std::vector<std::string> directory_contents(const std::string& dirname);
 std::vector<std::string> directory_contents(const std::string_view dirname);
 
 /*! \brief              Truncate a file
@@ -137,7 +136,6 @@ std::vector<std::string> directory_contents(const std::string_view dirname);
 
     Creates <i>filename</i> if it does not exist
 */
-//inline void file_truncate(const std::string& filename)
 inline void file_truncate(const std::string_view filename)
   { std::ofstream(std::string { filename }, std::ios_base::trunc); }
 

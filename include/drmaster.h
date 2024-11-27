@@ -1,4 +1,4 @@
-// $Id: drmaster.h 252 2024-09-16 17:18:18Z  $
+// $Id: drmaster.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -182,7 +182,6 @@ protected:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-//  trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
   trmaster_line _get_binary_record(const std::string_view contents, uint32_t& posn);
 
 public:
@@ -250,16 +249,11 @@ protected:
 */
 std::string _extract_field(const std::vector<std::string>& fields, const std::string_view field_indicator);
 
-/*! \brief                      Extract a single field from the record
-    \param  fields              all the fields (e.g., "=Xabc")
-    \param  field_indicator     character that prefixes the field (for example: 'H"')
-    \return                     Value of the field with the indicator <i>field_indicator</i>
+/*! \brief      Process a single field (such as: "=Xabc")
+    \param  sv  the field to processs (e.g., "=Xabc")
 
-    Returns empty string if no field has the indicator <i>field_indicator</i>
+    Does nothing if the field does not exist
 */
-//inline std::string _extract_field(const std::vector<std::string>& fields, const char field_char)
-//  { return _extract_field(fields, "="s + field_char); }
-
   void _process_field(const std::string_view sv);
 
 public:

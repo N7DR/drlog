@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 252 2024-09-16 17:18:18Z  $
+// $Id: cw_buffer.h 254 2024-10-20 15:53:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -157,7 +157,6 @@ public:
     Special characters and commands embedded in <i>str</i> are expanded and/or processed
     prior to transmission
 */
-//  inline void operator+=(const std::string& str)
   inline void operator+=(const std::string_view str)
     { (*this) << str; }
 
