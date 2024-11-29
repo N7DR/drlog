@@ -424,6 +424,7 @@ string                  qsl_message { };                    ///< no default QSL 
 unsigned short          qtc_long_t { 0 };                   ///< do not send long Ts at beginning of serno in QTCs
 
 unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearing on a bandmap?
+ofstream                rbn_file { };                       ///< copy of rbn data
 int                     REJECT_COLOUR { COLOUR_RED };       ///< colour for calls that are dupes
 bool                    require_dot_in_replacement_call;    ///< whether a dot is required when reading replacement call from EXCHANGE window (used in exchange.cpp)
 bool                    restored_data { false };            ///< did we restore from an archive?
@@ -2514,21 +2515,31 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     while (contains(unprocessed_input, CRLF))                               // look for EOL markers
     { const size_t posn { unprocessed_input.find(CRLF) };                   // guaranteed to succeed
-      const string line { substring <std::string> (unprocessed_input, 0, posn) };      // store the next unprocessed line
+//      const string line { substring <std::string> (unprocessed_input, 0, posn) };      // store the next unprocessed line, having removed any extraneous line-feeds
+
+      const string line { remove_char(substring <std::string_view> (unprocessed_input, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
 
       unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
       { static const vector<string_view> beacon_markers { " BCN ",
+                                                          " BEACON ",
                                                           "/B ",
                                                           "/B2 ",
-                                                          "NCDXF "
+                                                          " NCDXF "
                                                         };
+
+        if (rbn_file.is_open())
+        { //rbn_file << "line length: " << line.length() << endl;
+          rbn_file << line << endl;
+        }
 
 //        const bool is_beacon { contains(line, " BCN "sv) or contains(line, "/B "sv)  or contains(line, "/B2 "sv) or contains(line, "NCDXF "sv) };
 
         if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return contains(line, sv); }))
-          continue;           // go to end of while loop
+        { rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
+          continue;                       // go to end of while loop; these are not counted as posts
+        }
 
 //        if (!rbn_beacons and is_beacon)
 //          continue;           // go to end of while loop
@@ -2537,6 +2548,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // display if this is a new mult on any band, and if the poster is on our own continent
         dx_post post { line, location_db, rbn.source() };                // no longer const to allow for RBN autocorrection
+
+        rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
 
         const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"s)) };      // don't process if RBN and not CW
 
@@ -2833,7 +2846,12 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread(THREAD_NAME);
+        { if (rbn_file.is_open())
+            rbn_file.close();
+
+          ost << "Number of posts processed by " << ( (rbn.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " = " << css(rbn.n_posts()) << endl;
+
+          end_of_thread(THREAD_NAME);
           return;
         }
       }
@@ -7336,6 +7354,9 @@ void spawn_rbn(void)
 
   win_rbn_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
 
+  if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )
+    rbn_file.open(rbn_filename, std::ofstream::app);
+
   jthread(get_cluster_info, rbn_p).detach();
   jthread(process_rbn_info, &win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps).detach();
 }
@@ -8150,6 +8171,7 @@ bool process_change_in_bandmap_column_offset(const KeySym symbol)
 
     alert("Bandmap column offset set to: "s + to_string(bm.column_offset()));
 
+    bm.increment_version();  // to force immediate on-screen update
     win_bandmap <= bm;
     display_bandmap_filter(bm);
   }

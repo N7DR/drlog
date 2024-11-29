@@ -840,6 +840,13 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "RBN BEACONS"sv)
       _rbn_beacons = is_true;
 
+// RBN FILE
+    if (LHS == "RBN FILE"sv)
+    { _rbn_file = remove_peripheral_spaces <std::string> (rhs);
+
+      ost << "RBN stream will be written to: " << _rbn_file << endl;
+    }
+
 // RBN PORT
     if (LHS == "RBN PORT"sv)
       _rbn_port = from_string<decltype(_rbn_port)>(rhs);

@@ -243,6 +243,7 @@ protected:
 
   std::vector<unsigned int>                    _rate_periods                            { 15, 30, 60 } ;                ///< periods (in minutes) over which rates should be calculated
   bool                                         _rbn_beacons                             { false };                      ///< whether to place RBN posts identified as from beacons on the bandmap
+  std::string                                  _rbn_file                                { };                            ///< name of file to which RBN lines should be copied
   unsigned int                                 _rbn_port                                { 7000 };                       ///< port number on the RBN server
   std::string                                  _rbn_server                              { "telnet.reversebeacon.net"s };///< hostname or IP address of RBN server
   unsigned int                                 _rbn_threshold                           { 1 };                          ///< number of different stations that have to post a station to the RBN before it appears on the bandmap
@@ -535,6 +536,7 @@ public:
 
   CONTEXTREAD(rate_periods);                     ///< periods (in minutes) over which rates should be calculated
   CONTEXTREAD(rbn_beacons);                      ///< whether to place RBN posts from beacons on the bandmap
+  CONTEXTREAD(rbn_file);                         ///< name of file to which RBN lines should be copied
   CONTEXTREAD(rbn_port);                         ///< port number on the RBN server
   CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
   CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap

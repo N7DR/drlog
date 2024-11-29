@@ -206,7 +206,9 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 
 /// destructor
 dx_cluster::~dx_cluster(void)
-{ _connection.send("BYE"s + CRLF);
+{ //ost << "Number of posts processed by " << ( (_source == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " = " << css(_n_posts) << endl;
+
+  _connection.send("BYE"s + CRLF);
   
   { SAFELOCK(rbn_buffer);
     _unprocessed_input = _connection.read(_timeout / 2);  // add a delay before we tear down the connection

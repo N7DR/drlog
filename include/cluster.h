@@ -45,6 +45,7 @@ protected:
   TIME_POINT          _last_data_received { };      ///< time point of last data received
   std::string         _login_id;                    ///< my login identifier
   std::string         _my_ip;                       ///< my IP address
+  int                 _n_posts { 0 };               ///< number of posts that have read from this cluster
   unsigned int        _port;                        ///< server port
   std::string         _server;                      ///< name or IP address of the server
   enum POSTING_SOURCE _source;                      ///< source for postings
@@ -67,7 +68,12 @@ public:
 
   dx_cluster(const dx_cluster&) = delete;       /// forbid copying
 
-  READ(source);        ///< source for postings
+  READ_AND_WRITE(n_posts);    ///< number of posts that have read from this cluster
+  READ(source);               ///< source for postings
+
+/// increment the number of posts that have been processed
+  inline void increment_n_posts(void)
+    { _n_posts++; }
 
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
