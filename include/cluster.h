@@ -28,7 +28,11 @@ enum class POSTING_SOURCE { CLUSTER,                  ///< traditional cluster
                             RBN                       ///< Reverse Beacon Network
                           };
 
-constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour
+using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+
+constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour; remove this at some point
+
+constexpr std::chrono::seconds MONITORED_POSTS_DURATION_1 { 3600 };     ///< monitored posts are valid for one hour
 
 // -----------  dx_cluster  ----------------
 
@@ -37,7 +41,7 @@ constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored pos
 */
 
 class dx_cluster
-{ using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+{ //using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
 
 protected:
 
@@ -78,7 +82,8 @@ public:
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
 */
-  std::string read(void);
+//  std::string read(void);
+  void read(void);
   
 /*! \brief      Read from the cluster socket
     \return     the information that has been read from the socket but has not yet been processed
@@ -114,8 +119,8 @@ public:
   inline std::string connection_status(void) const
     { return _connection.to_string(); }
 
-/*! \brief      Return the time since the last data were received on the connection
-    \return     the time since the last data were received on the connection, in seconds
+/*! \brief      Return time in seconds since the last data were received on the connection
+    \return     the time, in seconds, since the last data were received on the connection, in seconds
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
     { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
@@ -143,11 +148,11 @@ protected:
   std::string           _poster_continent;  ///< continent of <i>_poster</i>
   enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
+  TIME_POINT            _time_processed_1;  ///< time at which we processed the post
   bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
   inline bool _valid_hf_frequency(void) const
-//    { return ( (_freq.khz() >= 1'800) and (_freq.khz() <= 29'700) ); }
     { return ( (_freq >= 1'800_kHz) and (_freq <= 29'700_kHz) ); }
 
 public:
@@ -171,6 +176,7 @@ public:
   READ(poster_continent);       ///< continent of <i>_poster</i>
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(time_processed_1);       ///< time at which we processed the post
   READ(valid);                  ///< is it a valid post?
 
 // syntactic sugar
@@ -198,12 +204,14 @@ std::ostream& operator<<(std::ostream& ost, const dx_post& dxp);
 */
 
 class monitored_posts_entry
-{
+{ //using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+
 protected:
 
   enum BAND     _band;              ///< band
   std::string   _callsign;          ///< callsign
   time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
+  TIME_POINT    _expiration_1;      ///< time at which entry will expire
   std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
 
 public:
@@ -215,6 +223,7 @@ public:
     _callsign(post.callsign()),
     _frequency_str(post.frequency_str()),
     _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+    _expiration_1(post.time_processed_1() + MONITORED_POSTS_DURATION_1),
     _band(post.band())
   { }
 

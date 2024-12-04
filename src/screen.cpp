@@ -937,7 +937,26 @@ bool window::common_processing(const keyboard_event& e)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
+#if 0
 vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information >& windows)
+{ vector<pair<string, string>> rv;
+
+  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
+  { const auto& [ name1, wi1 ] { *it };
+
+    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
+    { const auto& [ name2, wi2 ] { *it2 };
+
+      if (overlap(wi1.x(), wi1.y(), wi1.w(),  wi1.h(), wi2.x(), wi2.y(), wi2.w(),  wi2.h()))
+        rv += { name1, name2 };
+    }
+  }
+
+  return rv;
+}
+#endif
+
+vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information, std::less<> >& windows)
 { vector<pair<string, string>> rv;
 
   for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)

@@ -276,7 +276,8 @@ void dx_cluster::reset_connection(void)
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
 */
-string dx_cluster::read(void)
+//string dx_cluster::read(void)
+void dx_cluster::read(void)
 { string buf;
     
   try
@@ -304,7 +305,7 @@ string dx_cluster::read(void)
     _last_data_received = system_clock::now();
   }
   
-  return _unprocessed_input;
+ // return _unprocessed_input;
 }
 
 /*! \brief      Read from the cluster socket
@@ -314,6 +315,7 @@ string dx_cluster::get_unprocessed_input(void)
 { string rv;
 
   { SAFELOCK(rbn_buffer);
+
     rv = move(_unprocessed_input);
     _unprocessed_input.clear();
   }

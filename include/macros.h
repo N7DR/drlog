@@ -992,6 +992,31 @@ template <class Input>
 inline void REVERSE(Input& v)
   { std::ranges::reverse(v); }
 
+/*! \brief          Append from one container to another if a predicate is met
+    \param  s       source container
+    \param  d       destination container
+    \param  pred    predicate
+*/
+template <class Input, class Output, typename PredicateT>
+inline void APPEND_IF(const Input& s, Output& d, const PredicateT& pred)
+  { std::copy_if(s.cbegin(), s.cend(), std::back_inserter(d), pred); }
+
+/*! \brief          Create a container and append from another if a predicate is met
+    \param  s       source container
+    \param  pred    predicate
+    \return         the new container
+
+    Called as, for example, CREATE_AND_FILL<vector<string>>(in_vec, [](const string& s) { return (s == "BURBLE"s); } );
+*/
+template <typename Output, typename Input, typename PredicateT>
+auto CREATE_AND_FILL(Input&& s, const PredicateT& pred) -> const Output
+{ Output rv;
+
+  std::ranges::copy_if(s, std::back_inserter(rv), pred);
+
+  return rv;
+}
+
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container (const)
     \param  pred    (boolean) predicate to apply

@@ -2452,9 +2452,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
   { set<BAND> changed_bands                { };             // the bands that have been changed by this ten-second pass
     bool      cluster_mult_win_was_changed { false };       // has cluster_mult_win been changed by this pass?
 
-    string last_processed_line;                             // the last line processed during this pass
+    string last_processed_line { };                             // the last line processed during this pass
 
-    const string new_input { rbn.get_unprocessed_input() }; // add any unprocessed info from the cluster; deletes the data from the cluster
+    const string new_input { rbn.get_unprocessed_input() }; // get any unprocessed info from the cluster; deletes the data from the cluster
 
     posted_by_vector.clear();                               // prepare the posted_by vector
 
@@ -2466,7 +2466,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     if (is_cluster and !new_input.empty())
     { const string         no_cr { remove_char(new_input, CR_CHAR) };
-      const vector<string> lines { to_lines <std::string> (no_cr) };
+//      const vector<string> lines { to_lines <std::string> (no_cr) };
+      const vector<string_view> lines { to_lines <std::string_view> (no_cr) };
 
 // I don't understand why the scrolling occurs automatically... in particular, I don't know what causes it to scroll
       for (size_t n { 0 }; n < lines.size(); ++n)
@@ -2511,15 +2512,16 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       }
     }
 
-    unprocessed_input += new_input;
+    unprocessed_input += new_input;         // append the new unprocessed data
 
     while (contains(unprocessed_input, CRLF))                               // look for EOL markers
+//    while ( const size_t posn { unprocessed_input.find(CRLF) }; posn != string::npos )                               // look for EOL markers; this does not work in C++20
     { const size_t posn { unprocessed_input.find(CRLF) };                   // guaranteed to succeed
 //      const string line { substring <std::string> (unprocessed_input, 0, posn) };      // store the next unprocessed line, having removed any extraneous line-feeds
 
       const string line { remove_char(substring <std::string_view> (unprocessed_input, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
 
-      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
+      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
 
       if (!line.empty())
       { static const vector<string_view> beacon_markers { " BCN ",
@@ -2551,9 +2553,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
         rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
 
-        const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"s)) };      // don't process if RBN and not CW
+        const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"sv)) };      // don't process if RBN and not CW
 
-        if (post.valid() and !wrong_mode)
+        if (post.valid() and !wrong_mode)                   // a valid post in the correct mode
         { if (is_rbn and autocorrect_rbn)                   // possibly autocorrect
             post.callsign(ac_db.corrected_call(post.callsign()));
 
@@ -2849,7 +2851,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         { if (rbn_file.is_open())
             rbn_file.close();
 
-          ost << "Number of posts processed by " << ( (rbn.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " = " << css(rbn.n_posts()) << endl;
+          ost << "Number of posts processed by " << ( (rbn.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " in processing pass = " << css(rbn.n_posts()) << endl;
 
           end_of_thread(THREAD_NAME);
           return;
@@ -2863,16 +2865,18 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 /// thread function to obtain data from the cluster
 void get_cluster_info(dx_cluster* cluster_p)
-{ const string THREAD_NAME { "get cluster info 1"s };
+{ constexpr int READ_INTERVAL_SEC { 5 };                  // number of seconds to pause between reads from the socket
+
+  const string THREAD_NAME { "get cluster info"s };
 
   start_of_thread(THREAD_NAME);
 
   dx_cluster& cluster { *cluster_p };    // make the cluster available
 
-  while (1)                                                  // forever
-  { cluster.read();                                         // reads the socket and stores the data
+  while (1)                                                 // forever
+  { cluster.read();                                         // reads the socket and stores the data inside the cluster object
 
-    for ( [[maybe_unused]] auto _ : RANGE(1, 5) )    // check the socket every 5 seconds
+    for ( [[maybe_unused]] auto _ : RANGE(1, READ_INTERVAL_SEC) )    // check the socket every READ_INTERVAL_SEC seconds
     {
       { SAFELOCK(thread_check);
 

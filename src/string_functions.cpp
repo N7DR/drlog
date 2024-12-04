@@ -201,6 +201,17 @@ string format_time(const string& format, const tm* tmp)
   return string(buf);
 }
 
+/*! \brief          Return the first digit in a string
+    \param  sv      string to test
+    \param  c       character to return if no digit is present in <i>sv</i>
+    \return         the first digit in <i>sv</i>, or <i>c</i>
+*/
+char first_digit(const std::string_view sv, const char c)
+{ const auto posn { sv.find_first_of(DIGITS) };
+
+  return ( (posn == string::npos) ? c : sv[posn] );
+}
+
 /*! \brief              Replace every instance of one character with another
     \param  s           string on which to operate
     \param  old_char    character to be replaced

@@ -293,8 +293,8 @@ protected:
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
-  std::map<std::string /* name */, window_information > _windows                        { };                                ///< size and position info for each window
-  COLOUR_TYPE                                           _worked_mults_colour            { COLOUR_RED };                     ///< colour of worked mults in the mult windows
+  std::map<std::string /* name */, window_information, std::less<> > _windows           { };                                ///< size and position info for each window
+  COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
   std::optional<int>                           _xscp_percent_cutoff                     { };                                ///< an ordered percentage
@@ -311,7 +311,6 @@ protected:
     \param  command     the complete line from the configuration file
     \param  m           mode
 */
-//  void _set_points(const std::string& command, const MODE m);
   void _set_points(const std::string_view command, const MODE m);
 
 public:
@@ -611,7 +610,8 @@ public:
     \param  name    name of window
     \return         location, size and colour information
 */
-  inline window_information window_info(const std::string& name) const
+//  inline window_information window_info(const std::string& name) const    // currently have to use string reference because of heterogeneous lookup
+  inline window_information window_info(const std::string_view name) const
   { SAFELOCK(_context);
     return MUM_VALUE(_windows, name);
   }

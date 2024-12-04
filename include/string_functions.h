@@ -391,7 +391,7 @@ inline bool contains(const std::vector<std::string>& strvec, const std::string_v
     \param  posn    location to test
     \return         whether <i>s</i> contains the character <i>c</i> at position <i>posn</i>
 */
-inline bool contains_at(std::string_view s, const char c, const size_t posn)
+inline bool contains_at(const std::string_view s, const char c, const size_t posn)
   { return (s.length() > posn) and (s[posn] == c); }
 
 /*! \brief          Does a string contain any letters?
@@ -400,7 +400,7 @@ inline bool contains_at(std::string_view s, const char c, const size_t posn)
 
     This should give the correct result in any locale
 */
-inline bool contains_letter(std::string_view str)
+inline bool contains_letter(const std::string_view str)
   { return ANY_OF(str, [] (const char c) { return ((c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z')); } ); }
 
 /*! \brief          Does a string contain any upper case letters?
@@ -417,6 +417,13 @@ inline bool contains_upper_case_letter(std::string_view str)
 inline bool contains_digit(std::string_view str)
   { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
 
+/*! \brief          Return the first digit in a string
+    \param  sv      string to test
+    \param  c       character to return if no digit is present in <i>sv</i>
+    \return         the first digit in <i>sv</i>, or <i>c</i>
+*/
+char first_digit(const std::string_view sv, const char c = ' ');
+
 /*! \brief          Does a string contain only digits?
     \param  str     string to test
     \return         whether <i>str</i> comprises only digits
@@ -424,7 +431,7 @@ inline bool contains_digit(std::string_view str)
 inline bool is_digits(std::string_view str)
   { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
-/*! \brief          Is a character a digit?
+/*! \brief      Is a character a digit?
     \param  c   character to test
     \return     whether <i>c</i> is a digit
 

@@ -351,16 +351,18 @@ void tcp_socket::send(const std::string_view msg)
     \return     received string
 */
 string tcp_socket::read(void) const
-{ constexpr unsigned int BUFLEN { 4096 };       // a decent size for a read buffer
+{ constexpr unsigned int BUFSIZE { 4096 };       // a decent size for a read buffer
+  //constexpr unsigned int BUFSIZE { 8192 };       // a decent size for a read buffer
 
-  char cp[BUFLEN];
+  char cp[BUFSIZE];
+
   string rv;
-  int status;
+  int    status;
   
   SAFELOCK(_tcp_socket);
 
   do
-  { status = ::recv(_sock, cp, BUFLEN, 0);
+  { status = ::recv(_sock, cp, BUFSIZE, 0);      // status is the number of bytes received; waits for at least some data to be present
 
     if (status == -1)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
@@ -368,8 +370,12 @@ string tcp_socket::read(void) const
     if (status == 0)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);    
     
-    rv += string(cp, status);
-  } while (status == BUFLEN);
+    if (status == BUFSIZE)
+      ost << "Informative: TCP buffer filled in read without timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
+
+//    rv += string(cp, status);
+    rv += string { cp, static_cast<size_t>(status) };
+  } while (status == BUFSIZE);
 
   return rv;
 }
@@ -427,6 +433,9 @@ string tcp_socket::read(const unsigned long timeout_secs) const
 
         status = ::recv(_sock, cp, BUFSIZE, 0);
 
+        if (status == BUFSIZE)
+          ost << "Informative: TCP buffer filled in read with timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
+
         if (status == -1)
         { switch (errno)
           { case 11 :         // Resource temporarily unavailable
@@ -459,7 +468,8 @@ string tcp_socket::read(const unsigned long timeout_secs) const
           }
         }
 
-        rv += ( (status == -1) ? EMPTY_STR : string(cp, status) );
+//        rv += ( (status == -1) ? EMPTY_STR : string(cp, status) );
+        rv += ( (status == -1) ? EMPTY_STR : string { cp, static_cast<size_t>(status)} );
       } while ((status == BUFSIZE) or (retry == true));
 
       break;

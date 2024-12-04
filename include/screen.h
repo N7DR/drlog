@@ -714,7 +714,9 @@ public:
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
-std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
+//std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
+
+std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information, std::less<> >& windows);
 
 /*! \brief          Move the cursor in a window
     \param  win     the window to be affected

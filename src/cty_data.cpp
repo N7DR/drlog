@@ -370,16 +370,98 @@ ostream& operator<<(ostream& ost, const location_info& info)
 location_info guess_zones(const string_view call, const location_info& li)
 { location_info rv { li };
 
+//  ost << "guessing zone for: " << call << endl;
+//  ost << "canonical prefix = " << rv.canonical_prefix() << endl;
+
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"sv)
-  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
-    { const unsigned call_digit { from_string<unsigned int>(string(1, call[posn])) };
+  { const auto n_slashes { std::ranges::count(call, '/') };
+
+//    ost << "n_slashes = " << n_slashes << endl;
+
+    unsigned int call_digit { 0 };    // default
+
+    switch (n_slashes)
+    { case 0 :
+      { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true, unless it's a partial call
+          call_digit = from_string<unsigned int>(string(1, call[posn]));
+
+        break;
+      }
+
+//      case 1 :  // find the shortest one with a digit
+      default :  // find the shortest one with a digit
+      { //const vector<string_view> parts { split_string <string_view> (call, '/') };
+
+        //vector<string_view> contains_digit { };
+
+        //FOR_ALL(parts, [&contains_digit] (const string_view sv) { if (::contains_digit(sv))
+        //                                                            contains_digit += sv;
+         //                                                       } );
+
+// all the parts that contains a digit
+       const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
+
+//       ost << "size of contains_digit = " << parts_with_digit.size() << endl;
+
+        switch (parts_with_digit.size())
+        { case 0 :                              // should never happen
+          default :
+            break;
+
+          case 1 :
+            call_digit = first_digit(parts_with_digit[0]) - '0';
+            break;
+
+          case 2 :
+            call_digit = first_digit(parts_with_digit[ ((parts_with_digit[0].size() < parts_with_digit[1].size()) ? 0 : 1) ]) - '0';
+            break;
+        }
+      }
+    }
+
+    ost << "call digit: " << call_digit << endl;
+
+    rv.zones(VE_CQ[call_digit], VE_ITU[call_digit]);
+
+// lat/long for VEs; for now, assume VE, not VY or VO
+      switch (call_digit)
+      { case 2 :
+          rv.latitude_longitude(45.57, 73.62);              // Montreal
+          break;
+
+        case 3 :
+          rv.latitude_longitude(46.52, 80.97);              // Sudbury
+          break;
+
+        case 4 :
+          rv.latitude_longitude(49.88, 97.15);              // Winnipeg
+          break;
+
+        case 5 :
+          rv.latitude_longitude(52.15, 106.67);             // Saskatoon
+          break;
+
+        case 6 :
+          rv.latitude_longitude(51.03, 114.09);             // Calgary
+          break;
+
+        case 7 :
+          rv.latitude_longitude(49.31, 123.04);             // Vancouver
+          break;
+      }
+
+#if 0
+    if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
+    { const unsigned int call_digit { from_string<unsigned int>(string(1, call[posn])) };
+
+      ost << "call digit: " << call_digit << endl;
 
       rv.zones(VE_CQ[call_digit], VE_ITU[call_digit]);
 
 // lat/long for VEs; for now, assume VE, not VY or VO
       switch (call_digit)
-      { case 2 : 
+      { case 2 :
           rv.latitude_longitude(45.57, 73.62);              // Montreal
           break;
 
@@ -404,6 +486,7 @@ location_info guess_zones(const string_view call, const location_info& li)
           break;
       }
     }
+#endif
   }
 
 // if it's a W, then make a guess as to the CQ and ITU zones
