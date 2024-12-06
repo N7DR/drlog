@@ -971,8 +971,6 @@ int main(int argc, char** argv)
     try
     { time_log <std::chrono::milliseconds> tl;
 
- //     drm_db.prepare(context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */);
- //     drm_db = drmaster { context.path(), context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */ };
       drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */ };
 
       tl.end_now();
@@ -1065,11 +1063,6 @@ int main(int argc, char** argv)
     permitted_bands_set = rules.permitted_bands_set();
     permitted_modes = rules.permitted_modes();
     all_country_mults = rules.country_mults();
-
-//    { const auto cm_set { rules.country_mults() };
-//
-//      all_country_mults = unordered_set<string> { begin(cm_set), end(cm_set) };
-//    }
 
 // is it SS?
     if (rules.n_modes() == 1)
@@ -1370,9 +1363,9 @@ int main(int argc, char** argv)
             { const string& f_0 { fields[0] };
 
 // is it a date or a call?
-              const string& callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
+              const string&     callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
 
-              string_view msg { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
+              string_view msg      { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
 
               if (is_digits(f_0))
                 msg = remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (msg, ':'));
@@ -1463,10 +1456,14 @@ int main(int argc, char** argv)
 // QUICK QSY window
       win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
     
-      { const pair<frequency, MODE>& quick_qsy_info { quick_qsy_map.at(current_band) };
+      { //const pair<frequency, MODE>& quick_qsy_info { quick_qsy_map.at(current_band) };
+        const auto& [ freq, m ] { quick_qsy_map.at(current_band) };
 
         win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                      <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
+                      <= pad_left(freq.display_string(), 7) + SPACE_STR + MODE_NAME[m];
+
+//        win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+//                      <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
       }
   
 // QSLs window
@@ -2803,7 +2800,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       const time_t              now             { NOW() };
       const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
       const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
-      const float               interval        { 1.0f / n_colours };
+      const float               interval        { 1.0f / n_colours };                       // fraction covered by a single colour
       const PAIR_NUMBER_TYPE    default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
@@ -2812,15 +2809,21 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
 // minutes to expiration
-        const unsigned int seconds_to_expiration { static_cast<unsigned int>(entry.expiration() - now) };
-        const float        fraction              { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
+        const unsigned int seconds_to_expiration  { static_cast<unsigned int>(entry.expiration() - now) };
+        const float        fraction_to_expiration { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
+        const float        fraction_from_start    { 1.0f - fraction_to_expiration };
 
-        unsigned int n_intervals { static_cast<unsigned int>(fraction / interval) };
+        unsigned int clr_element_nr = (fraction_from_start / interval);
+        clr_element_nr = min(clr_element_nr, n_colours - 1);
 
-        n_intervals = min(n_intervals, n_colours - 1);
-        n_intervals = (n_colours - 1) - n_intervals;
+        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(clr_element_nr), win_monitored_posts.bg()) };
 
-        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
+ //       unsigned int n_intervals { static_cast<unsigned int>(fraction_to_expiration / interval) };
+
+ //       n_intervals = min(n_intervals, n_colours - 1);
+ //       n_intervals = (n_colours - 1) - n_intervals;
+
+//        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
 
         win_monitored_posts < colour_pair(cpu)
                             < entry.to_string() < colour_pair(default_colours);

@@ -468,7 +468,6 @@ string tcp_socket::read(const unsigned long timeout_secs) const
           }
         }
 
-//        rv += ( (status == -1) ? EMPTY_STR : string(cp, status) );
         rv += ( (status == -1) ? EMPTY_STR : string { cp, static_cast<size_t>(status)} );
       } while ((status == BUFSIZE) or (retry == true));
 
@@ -538,18 +537,18 @@ void tcp_socket::keep_alive_retry_time(const unsigned int seconds)
 /*! \brief     Get the maximum number of retries
     \return   maximum number of retries before notifying upwards
 */
-  unsigned int tcp_socket::keep_alive_max_retries(void) const
-  { int rv;
+unsigned int tcp_socket::keep_alive_max_retries(void) const
+{ int rv;
 
-    socklen_t rv_len { sizeof(rv) };    // can't be const(!)
+  socklen_t rv_len { sizeof(rv) };    // can't be const(!)
 
-    SAFELOCK(_tcp_socket);
+  SAFELOCK(_tcp_socket);
 
-    if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPCNT, &rv, &rv_len) }; status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting maximum number of retries"s);
+  if (const int status { getsockopt(_sock, IPPROTO_TCP, TCP_KEEPCNT, &rv, &rv_len) }; status)
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_GET_OPTION, "Error getting maximum number of retries"s);
 
-    return static_cast<unsigned int>(rv);
-  }
+  return static_cast<unsigned int>(rv);
+}
 
 /*! \brief      Set the maximum number of retries
     \param  n   maximum number of retries before notifying upwards
@@ -726,7 +725,9 @@ icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
 
   _dest.sin_family = AF_INET;
 
-  const string dest_str { is_legal_ipv4_address(destination_ip_address_or_fqdn) ? destination_ip_address_or_fqdn : name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };
+  constexpr unsigned int N_RESOLUTION_TRIES { 10 };
+
+  const string dest_str { is_legal_ipv4_address(destination_ip_address_or_fqdn) ? destination_ip_address_or_fqdn : name_to_dotted_decimal(destination_ip_address_or_fqdn, N_RESOLUTION_TRIES) };
 
   inet_aton(dest_str.c_str(), &_dest.sin_addr);   // do I have a function of my own to replace this?
 

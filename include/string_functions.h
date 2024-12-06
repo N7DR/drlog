@@ -323,7 +323,7 @@ std::string replace_char(const std::string_view s, const char old_char, const ch
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-std::string replace(std::string_view s, std::string_view old_str, std::string_view new_str);
+std::string replace(const std::string_view s, const std::string_view old_str, const std::string_view new_str);
 
 /*! \brief              Replace part of a string with a byte-for-byte copy of an object
     \param  s           string on which to operate
@@ -334,7 +334,7 @@ std::string replace(std::string_view s, std::string_view old_str, std::string_vi
     Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
 */
 template <typename T>
-std::string replace_substring(std::string_view s, const size_t start_posn, const T& value)
+std::string replace_substring(const std::string_view s, const size_t start_posn, const T& value)
 { std::string rv { s };
 
   constexpr size_t value_size { sizeof(value) };
@@ -354,7 +354,7 @@ std::string replace_substring(std::string_view s, const size_t start_posn, const
     \param  ss  substring for which to search
     \return     whether <i>s</i> contains the substring <i>ss</i>
 */
-inline bool contains(std::string_view s, std::string_view ss)
+inline bool contains(const std::string_view s, const std::string_view ss)
   { return s.find(ss) != std::string_view::npos; }
 
 /*! \brief          Does a string contain a particular substring at a particular location?
@@ -407,14 +407,14 @@ inline bool contains_letter(const std::string_view str)
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
-inline bool contains_upper_case_letter(std::string_view str)
+inline bool contains_upper_case_letter(const std::string_view str)
   { return ANY_OF(str, [] (const char c) { return (c >= 'A' and c <= 'Z'); } ); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-inline bool contains_digit(std::string_view str)
+inline bool contains_digit(const std::string_view str)
   { return ANY_OF(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief          Return the first digit in a string

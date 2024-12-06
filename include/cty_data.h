@@ -83,7 +83,8 @@ public:
     <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
     is optional
 */
-  alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
+//  alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
+  alternative_country_info(const std::string_view record, const std::string& canonical_prefix = std::string { });
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -197,8 +198,6 @@ public:
     \return         whether <i>call</i> is an alternative callsign
 */
   inline bool is_alternative_callsign(const std::string& call) const
-//    { return contains(_alt_callsigns, call); }   
-//    { return (_alt_callsigns > call); }
     { return _alt_callsigns.contains(call); }
 
 /*! \brief  is a string an alternative prefix?
@@ -206,9 +205,7 @@ public:
     \return        whether <i>pfx</i> is an alternative prefix
 */
   inline bool is_alternative_prefix(const std::string& pfx) const
-//    { return contains(_alt_prefixes, pfx); }
     { return _alt_prefixes.contains(pfx); }
-//    { return (_alt_prefixes > pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };

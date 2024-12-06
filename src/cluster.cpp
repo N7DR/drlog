@@ -219,7 +219,8 @@ dx_cluster::~dx_cluster(void)
     \param  msg     the message to be sent
     \return         whether transmission was successful
 */
-bool dx_cluster::send(const std::string& msg)
+//bool dx_cluster::send(const std::string& msg)
+bool dx_cluster::send(const std::string_view msg)
 { try
   { _connection.send(msg);
     return true;
@@ -246,7 +247,8 @@ bool dx_cluster::send(const std::string& msg)
 
 */
 bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
-{ const string msg { "DXT "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
+{ const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
+  const string msg    { dx_cmd + " "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
 
   ost << "sending spot: " << msg;
 
@@ -255,11 +257,14 @@ bool dx_cluster::spot(const string& dx, const string& freq, const string& commen
 
 /*! \brief        Send a spot to the cluster
     \param  msg   the message to be sent
-    \return       whether the attemnpt to post was successful
+    \return       whether the attempt to post was successful
 */
-bool dx_cluster::spot(const std::string& msg)
-{ //const string spot_msg { "DXT "s + msg + CRLF };     // DXT is a test spot
-  const string spot_msg { "DX "s + msg + CRLF };        // a non-test spot
+//bool dx_cluster::spot(const std::string& msg)
+bool dx_cluster::spot(const std::string_view msg)
+{ const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
+
+//const string spot_msg { "DXT "s + msg + CRLF };       // DXT is a test spot
+  const string spot_msg { dx_cmd + " "s + msg + CRLF };
 
   ost << "sending spot: " << spot_msg;
 
@@ -406,7 +411,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
 // we treat everything after the call as a comment
   if (!_valid)
-  { if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
+  { if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
     { try
       { if (post_source == POSTING_SOURCE::RBN)
         { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
@@ -434,7 +439,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
         }
 
         if (!_valid)
-        { string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
+        { const string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
   
           if (const size_t colon_posn { copy.find(':') }; colon_posn != string_view::npos)
           { _poster = copy.substr(0, colon_posn);

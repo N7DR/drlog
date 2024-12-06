@@ -232,7 +232,7 @@ string replace_char(const string_view s, const char old_char, const char new_cha
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-string replace(string_view s, string_view old_str, string_view new_str)
+string replace(const string_view s, const string_view old_str, const string_view new_str)
 { string rv        { };
   size_t posn      { 0 };
   size_t last_posn { 0 };
@@ -314,7 +314,6 @@ string read_file(const string_view filename)
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-//string read_file(const vector<string>& path, const string& filename)
 string read_file(const vector<string>& path, const string_view filename)
 { const string valid_filename { find_file(path, filename) };
 
@@ -322,20 +321,6 @@ string read_file(const vector<string>& path, const string_view filename)
     throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
 
   return read_file(valid_filename);
-
-#if 0
-  for (const auto& this_path : path)
-  { try
-    { return read_file(this_path + "/"s + filename);
-    }
-
-    catch (...)
-    {
-    }
-  }
-
-  throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
-#endif
 }
 
 /*! \brief      Squash repeated occurrences of a character

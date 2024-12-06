@@ -217,9 +217,13 @@ void band_dynamic_autocorrect_database::prune(const int n_minutes)
 
   lock_guard<recursive_mutex> lg(_mtx);
 
-  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)      // remove old keys (which are times in minutes)
-    if (it->first <= target_min)
-      keys_to_remove += it->first;
+//  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)      // remove old keys (which are times in minutes)
+//    if (it->first <= target_min)
+//      keys_to_remove += it->first;
+//  for (const auto& [ time_in_minutes, map_element ] : _data_map_map_map)
+  for (const auto& [ time_in_minutes, _ ] : _data_map_map_map)
+    if (time_in_minutes <= target_min)
+      keys_to_remove += time_in_minutes;
 
   FOR_ALL(keys_to_remove, [this] (const time_t key_to_remove) { _data_map_map_map -= key_to_remove; });
 }

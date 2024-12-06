@@ -53,6 +53,7 @@ protected:
   unsigned int        _port;                        ///< server port
   std::string         _server;                      ///< name or IP address of the server
   enum POSTING_SOURCE _source;                      ///< source for postings
+  bool                _test_spots { false };        ///< whether sent spots are sent in test (DXT) mode
   unsigned int        _timeout;                     ///< timeout in seconds (defaults to 1)
   std::string         _unprocessed_input;           ///< buffer for messages from the network
 
@@ -72,20 +73,19 @@ public:
 
   dx_cluster(const dx_cluster&) = delete;       /// forbid copying
 
-  READ_AND_WRITE(n_posts);    ///< number of posts that have read from this cluster
-  READ(source);               ///< source for postings
+  READ_AND_WRITE(n_posts);      ///< number of posts that have read from this cluster
+  READ(source);                 ///< source for postings
+  READ_AND_WRITE(test_spots);   ///< whether sent spots are sent in test (DXT) mode
 
 /// increment the number of posts that have been processed
   inline void increment_n_posts(void)
     { _n_posts++; }
 
-/*! \brief      Read from the cluster socket
-    \return     the current bytes waiting on the cluster socket
+/*! \brief      Read from the cluster socket, and append any data to <i>_unprocessed_input</i>
 */
-//  std::string read(void);
   void read(void);
   
-/*! \brief      Read from the cluster socket
+/*! \brief      Return the unprocessed input, and clear it within the object
     \return     the information that has been read from the socket but has not yet been processed
 */
   std::string get_unprocessed_input(void);
@@ -94,7 +94,8 @@ public:
     \param  msg     the message to be sent
     \return         whether transmission was successful
 */
-  bool send(const std::string& msg = CRLF);
+//  bool send(const std::string& msg = CRLF);
+  bool send(const std::string_view msg = CRLF);
 
 /*! \brief            Send a spot to the cluster
     \param  dx        callsign of DX station
@@ -108,7 +109,8 @@ public:
     \param  msg   the message to be sent
     \return       whether the attemnpt to post was successful
 */
-  bool spot(const std::string& msg);
+//  bool spot(const std::string& msg);
+  bool spot(const std::string_view msg);
 
 /// reset the cluster socket
   void reset_connection(void);

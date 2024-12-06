@@ -244,23 +244,22 @@ ostream& operator<<(ostream& ost, const cty_record& rec)
     <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
     is optional
 */
-alternative_country_info::alternative_country_info(const string& record, const string& canonical_prefix) :
+//alternative_country_info::alternative_country_info(const string& record, const string& canonical_prefix) :
+alternative_country_info::alternative_country_info(const string_view record, const string& canonical_prefix) :
   _country(canonical_prefix)
 { if (const size_t end_identifier { record.find_first_of("(["s) }; end_identifier == string::npos)
     _identifier = record;                                // no change
   else
   { _identifier = substring <std::string> (record, 0, end_identifier);      // read up to the first delimiter
   
-//    if (const string cq_zone_str { delimited_substring <std::string> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
-    if (string_view cq_zone_str { delimited_substring <std::string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+    if (const string_view cq_zone_str { delimited_substring <std::string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
     { auto_from_string(cq_zone_str, _cq_zone);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-//    if (const string itu_zone_str { delimited_substring <std::string> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
-    if (string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+    if (const string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
     { auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
@@ -292,15 +291,9 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-//cty_data::cty_data(const string& filename)
 cty_data::cty_data(const string_view filename)
-{ //const vector<string> records { split_string <std::string> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
+{ const vector<string_view> records { split_string <std::string_view> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
 
-  //FOR_ALL(records, [this] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
-
-  const vector<string_view> records { split_string <std::string_view> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
-
-//  FOR_ALL(records, [this] (const string_view record_str) { push_back(cty_record { record_str }); } );    // applies to base class
   FOR_ALL(records, [this] (const string_view record_str) { emplace_back(cty_record { record_str }); } );    // applies to base class
 }
 
@@ -359,6 +352,46 @@ ostream& operator<<(ostream& ost, const location_info& info)
   return ost;
 }
 
+/*! \brief          Get the call area of a VE/W/VK call
+    \param  call    callsign
+    \return         best guess for the call area of <i>call</i>
+
+    NB This does not appear in the header file
+*/
+unsigned int get_call_area(const string_view call)
+{ auto to_uint = [] (const char c) { return static_cast<unsigned int>(c - '0'); };
+
+  constexpr unsigned int rv { 0 };    // default
+
+  const auto n_slashes { std::ranges::count(call, '/') };
+
+  switch (n_slashes)
+  { case 0 :
+    { const size_t posn { call.find_last_of(DIGITS) };
+
+      return ( (posn != string::npos) ? to_uint(call[posn]) : rv );  // should always be true, unless it's a partial call
+    }
+
+    default :  // find the shortest one with a digit
+    {
+// all the parts that contains a digit
+      const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
+
+      switch (parts_with_digit.size())
+      { case 0 :                              // should never happen
+        default :
+          return rv;
+
+        case 1 :
+          return to_uint(first_digit(parts_with_digit[0]));
+
+        case 2 :
+          return to_uint(first_digit(parts_with_digit[ ((parts_with_digit[0].size() < parts_with_digit[1].size()) ? 0 : 1) ]));
+      }
+    }
+  }
+}
+
 /*! \brief          Guess the CQ and ITU zones if the canonical prefix indicates a country with multiple zones
     \param  call    callsign
     \param  li      location_info to use for the guess
@@ -368,14 +401,55 @@ ostream& operator<<(ostream& ost, const location_info& info)
  */
 //location_info guess_zones(const string& call, const location_info& li)
 location_info guess_zones(const string_view call, const location_info& li)
-{ location_info rv { li };
+{ //const unsigned int call_area { get_call_area(call) };
+#if 0
+  auto to_uint = [] (const char c) { return static_cast<unsigned int>(c - '0'); };
+
+// get the call area number, returned as an unsigned int
+  auto call_area = [&to_uint] (const string_view call)
+  { constexpr unsigned int rv { 0 };    // default
+
+    const auto n_slashes { std::ranges::count(call, '/') };
+
+    switch (n_slashes)
+    { case 0 :
+      { const size_t posn { call.find_last_of(DIGITS) };
+
+        return ( (posn != string::npos) ? to_uint(call[posn]) : rv );  // should always be true, unless it's a partial call
+      }
+
+      default :  // find the shortest one with a digit
+      {
+// all the parts that contains a digit
+       const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
+
+        switch (parts_with_digit.size())
+        { case 0 :                              // should never happen
+          default :
+            return rv;
+
+          case 1 :
+            return to_uint(first_digit(parts_with_digit[0]));
+
+          case 2 :
+            return to_uint(first_digit(parts_with_digit[ ((parts_with_digit[0].size() < parts_with_digit[1].size()) ? 0 : 1) ]));
+        }
+      }
+    }
+  };
+#endif
+
+  location_info rv { li };
 
 //  ost << "guessing zone for: " << call << endl;
 //  ost << "canonical prefix = " << rv.canonical_prefix() << endl;
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"sv)
-  { const auto n_slashes { std::ranges::count(call, '/') };
+  {
+
+#if 0
+    const auto n_slashes { std::ranges::count(call, '/') };
 
 //    ost << "n_slashes = " << n_slashes << endl;
 
@@ -421,75 +495,65 @@ location_info guess_zones(const string_view call, const location_info& li)
     }
 
     ost << "call digit: " << call_digit << endl;
+#endif
+
+ //   const unsigned int call_digit { call_area(call) };
+    const unsigned int call_digit { get_call_area(call) };
 
     rv.zones(VE_CQ[call_digit], VE_ITU[call_digit]);
 
 // lat/long for VEs; for now, assume VE, not VY or VO
-      switch (call_digit)
-      { case 2 :
-          rv.latitude_longitude(45.57, 73.62);              // Montreal
-          break;
+    switch (call_digit)
+    { case 2 :
+        rv.latitude_longitude(45.57, 73.62);              // Montreal
+        break;
 
-        case 3 :
-          rv.latitude_longitude(46.52, 80.97);              // Sudbury
-          break;
+      case 3 :
+        rv.latitude_longitude(46.52, 80.97);              // Sudbury
+        break;
 
-        case 4 :
-          rv.latitude_longitude(49.88, 97.15);              // Winnipeg
-          break;
+      case 4 :
+        rv.latitude_longitude(49.88, 97.15);              // Winnipeg
+        break;
 
-        case 5 :
-          rv.latitude_longitude(52.15, 106.67);             // Saskatoon
-          break;
+      case 5 :
+        rv.latitude_longitude(52.15, 106.67);             // Saskatoon
+        break;
 
-        case 6 :
-          rv.latitude_longitude(51.03, 114.09);             // Calgary
-          break;
+      case 6 :
+        rv.latitude_longitude(51.03, 114.09);             // Calgary
+        break;
 
-        case 7 :
-          rv.latitude_longitude(49.31, 123.04);             // Vancouver
-          break;
-      }
-
-#if 0
-    if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
-    { const unsigned int call_digit { from_string<unsigned int>(string(1, call[posn])) };
-
-      ost << "call digit: " << call_digit << endl;
-
-      rv.zones(VE_CQ[call_digit], VE_ITU[call_digit]);
-
-// lat/long for VEs; for now, assume VE, not VY or VO
-      switch (call_digit)
-      { case 2 :
-          rv.latitude_longitude(45.57, 73.62);              // Montreal
-          break;
-
-        case 3 : 
-          rv.latitude_longitude(46.52, 80.97);              // Sudbury
-          break;
-
-        case 4 : 
-          rv.latitude_longitude(49.88, 97.15);              // Winnipeg
-          break;
-
-        case 5 : 
-          rv.latitude_longitude(52.15, 106.67);             // Saskatoon
-          break;
-
-        case 6 : 
-          rv.latitude_longitude(51.03, 114.09);             // Calgary
-          break;
-
-        case 7 : 
-          rv.latitude_longitude(49.31, 123.04);             // Vancouver
-          break;
-      }
+      case 7 :
+        rv.latitude_longitude(49.31, 123.04);             // Vancouver
+        break;
     }
-#endif
   }
 
 // if it's a W, then make a guess as to the CQ and ITU zones
+  if (rv.canonical_prefix() == "K"sv)
+  { const unsigned int call_digit { get_call_area(call) };
+
+//    if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
+    rv.zones( W_CQ[call_digit], W_ITU[call_digit] );
+
+// lat/long for W zones
+    switch (rv.cq_zone())
+    { case 3 :
+        rv.latitude_longitude(40.79, 115.54);
+        break;
+
+      case 4 :
+        rv.latitude_longitude(39.12, 101.98);
+        break;
+
+      case 5 :
+        rv.latitude_longitude(36.55, 79.65);
+        break;
+    }
+  }
+
+#if 0
   if (rv.canonical_prefix() == "K"sv)
   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
     { rv.zones( W_CQ[from_string<unsigned int>(string(1, call[posn]))], W_ITU[from_string<unsigned int>(string(1, call[posn]))] );
@@ -510,10 +574,12 @@ location_info guess_zones(const string_view call, const location_info& li)
       }
     }
   }
+#endif
 
   if (rv.canonical_prefix() == "VK"sv)
-  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
-    { unsigned int call_area { from_string<unsigned int>(string(1, call[posn])) };
+  { //if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
+    { //unsigned int call_area { from_string<unsigned int>(string(1, call[posn])) };
+      const unsigned int call_area { get_call_area(call) };
 
       if ( (call_area == 6) or (call_area == 8) )
         rv.cq_zone(29);                             // I don't know why this isn't in the cty.dat file

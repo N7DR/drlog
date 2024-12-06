@@ -620,7 +620,8 @@ public:
     \param  name    name of window
     \return         whether the window <i>name</i> is defined in the configuration file
 */
-  inline bool window_defined(const std::string& name) const
+//  inline bool window_defined(const std::string& name) const
+  inline bool window_defined(const std::string_view name) const
     { return window_info(name).defined(); } 
 
 /*! \brief          Get a vector of the names of the legal bands for the contest (e.g., "160", "80", etc.)

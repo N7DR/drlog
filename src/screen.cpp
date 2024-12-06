@@ -933,29 +933,10 @@ bool window::common_processing(const keyboard_event& e)
   return false;
 }
 
-/*  \brief  Obtain all the overlapping pairs of windows from a container (map)
+/*  \brief            Obtain all the overlapping pairs of windows from a container (map)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
-#if 0
-vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information >& windows)
-{ vector<pair<string, string>> rv;
-
-  for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
-  { const auto& [ name1, wi1 ] { *it };
-
-    for (auto it2 { next(it) }; it2 != windows.cend(); ++it2)
-    { const auto& [ name2, wi2 ] { *it2 };
-
-      if (overlap(wi1.x(), wi1.y(), wi1.w(),  wi1.h(), wi2.x(), wi2.y(), wi2.w(),  wi2.h()))
-        rv += { name1, name2 };
-    }
-  }
-
-  return rv;
-}
-#endif
-
 vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information, std::less<> >& windows)
 { vector<pair<string, string>> rv;
 
@@ -988,12 +969,14 @@ PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgb
 
   const auto [fg, bg] { fgbg };
 
-  if (fgbg.first >= COLORS)
+//  if (fgbg.first >= COLORS)
+  if (fg >= COLORS)
   { ost << "Attempt to set foreground to colour " << fg << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
 
-  if (fgbg.second >= COLORS)
+//  if (fgbg.second >= COLORS)
+  if (bg >= COLORS)
   { ost << "Attempt to set background to colour " << bg << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
@@ -1058,8 +1041,10 @@ COLOUR_TYPE string_to_colour(const string_view str)
 
   const string s { to_upper(remove_peripheral_spaces <std::string_view> (str)) };
 
-  if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
-    return cit->second;
+//  if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
+//    return cit->second;
+  if (const optional<COLOUR_TYPE> opt_clr { OPT_MUM_VALUE(colour_map, s) }; opt_clr)
+    return opt_clr.value();
 
 // should change this so it works with a colour name and not just a number
   if (const string_view str { "COLOUR_"sv }; s.starts_with(str))

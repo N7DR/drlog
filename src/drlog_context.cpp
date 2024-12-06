@@ -976,15 +976,15 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SSB AUDIO
     if (LHS == "SSB AUDIO"sv)
-    { const vector<string> cbw { clean_split_string <string> (RHS, '/') };
+    { const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') };
 
       if (cbw.size() == 2)
-      { const vector<string> cbw_wide { clean_split_string <string> (cbw[0], ':') };
+      { const vector<string_view> cbw_wide { clean_split_string <string_view> (cbw[0], ':') };
 
         _ssb_centre_wide = from_string<decltype(_ssb_centre_wide)>(cbw_wide[0]);
         _ssb_bandwidth_wide = from_string<decltype(_ssb_bandwidth_wide)>(cbw_wide[1]);
 
-        const vector<string> cbw_narrow { clean_split_string <string> (cbw[1], ':') };
+        const vector<string_view> cbw_narrow { clean_split_string <string_view> (cbw[1], ':') };
 
         _ssb_centre_narrow = from_string<decltype(_ssb_centre_narrow)>(cbw_narrow[0]);
         _ssb_bandwidth_narrow = from_string<decltype(_ssb_bandwidth_narrow)>(cbw_narrow[1]);
@@ -1005,10 +1005,12 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // START BAND
     if (LHS == "START BAND"sv)
-    { const auto cit { BAND_FROM_NAME.find(RHS) };
+    { //const auto cit { BAND_FROM_NAME.find(RHS) };
 
-      if (cit != BAND_FROM_NAME.cend())
-        _start_band = cit->second;
+      //if (cit != BAND_FROM_NAME.cend())
+      //  _start_band = cit->second;
+      if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
+        _start_band = opt.value();
     }
 
 // START MODE
