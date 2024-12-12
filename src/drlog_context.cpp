@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 255 2024-11-10 20:30:33Z  $
+// $Id: drlog_context.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1261,8 +1261,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"sv)
-    { //if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
-      if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
+    { if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
       { string name { window_info[0] };
 
         window_information winfo { from_string<WIN_INT_TYPE>(window_info[1]), from_string<WIN_INT_TYPE>(window_info[2]), from_string<WIN_INT_TYPE>(window_info[3]), from_string<WIN_INT_TYPE>(window_info[4]) };
@@ -1390,9 +1389,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         const string target { to_lower(message_info[2]) };
 
         if (const auto& cit { key_names.find(target) }; cit != key_names.cend())    // key_names, defined in keyboard.cpp, maps names to keysyms
-        { const auto& [ keyname_str, key_symbol ] { *cit };
-          const vector<string> vec_str { split_string <std::string> (testline, '=') };
-          const string         str     { remove_leading_spaces <std::string> (vec_str.at(1)) };
+        { const auto&          [ keyname_str, key_symbol ] { *cit };
+          const vector<string> vec_str                     { split_string <std::string> (testline, '=') };
+          const string         str                         { remove_leading_spaces <std::string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
           _messages += { key_symbol, str };
@@ -1501,10 +1500,8 @@ drlog_context::drlog_context(const string_view filename)
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { //const vector<string> bands_str { clean_split_string <string> (_bands) };
-
-//    for (const auto& band_name : bands_str)
-    for (const auto& band_name : clean_split_string <string> (_bands))
+  { for (const auto& band_name : clean_split_string <string> (_bands))
+    //for (const auto& band_name : clean_split_string <string_view> (_bands)) // doesn't work in g++12; fails when at() is called
     { try
       { _score_bands += BAND_FROM_NAME.at(band_name);
       }
@@ -1574,9 +1571,6 @@ vector<string> drlog_context::sent_exchange_names(void) const
 vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-//  const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
-
-//  for (const auto& [ name, value ] : *ptr_vec_pss)
   for ( const auto& [ name, value ] : (m == MODE_CW ? _sent_exchange_cw : _sent_exchange_ssb) )
     rv += name;
 
@@ -1588,9 +1582,12 @@ vector<string> drlog_context::sent_exchange_names(const MODE m) const
     \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
 */
 decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m) const      // doxygen complains about the decltype; I have no idea why
-{ SAFELOCK(_context);
+{ using RT = decltype(_sent_exchange);
 
-  decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
+  SAFELOCK(_context);
+
+//  decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
+  RT rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
 
   if (rv.empty())
   { rv = _sent_exchange;
@@ -1599,6 +1596,8 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
     for (auto& [name, value] : rv)
     { if ( (m == MODE_SSB) and (name == "RST"sv) )
         tie(name, value) = pair { "RS"s, "59"s };       // hardwire report
+//        tie(name, value) = { "RS"s, "59"s };       // hardwire report
+//        [name, value] = pair { "RS"s, "59"s };       // hardwire report
 
       if ( (m == MODE_CW) and (name == "RS"sv) )
         tie(name, value) = pair { "RST"s, "599"s };     // hardwire report

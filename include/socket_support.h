@@ -108,7 +108,7 @@ inline std::string socket_error_name(const int error_number)
   
     Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
-std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
+std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply = 4096);
 
 /*! \brief          Flush a readable socket
     \param  sock    socket to flush

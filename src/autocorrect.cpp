@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 241 2024-06-02 19:59:44Z  $
+// $Id: autocorrect.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -274,7 +274,8 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
   const F100_TYPE low_target  { f_100 - 2 };            // target - 200 Hz
   const F100_TYPE high_target { f_100 + 3 };            // target + 200 Hz
 
-  unordered_map<string /* call */, int /* n_occurrences */> hits;
+//  unordered_map<string /* call */, int /* n_occurrences */> hits;
+  UNORDERED_STRING_MAP<int> hits;     // key = call; value = n_occurrences
 
   for (auto t_it { _data_map_map_map.cbegin() }; t_it != _data_map_map_map.cend(); ++t_it)
   {

@@ -43,7 +43,8 @@ class exchange_field_prefill
 {
 protected:
 
-  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
+//  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
+  STRING_MAP<std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
 
 public:
 
@@ -79,6 +80,7 @@ public:
     callsign <i>callsign</i>
 */
   std::string prefill_data(const std::string& field_name, const std::string& callsign) const;
+//  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
 };
 
 /// ostream << exchange_field_prefill
@@ -372,6 +374,7 @@ public:
     The returned value is inserted into the database.
 */
   std::string guess_value(const std::string& callsign, const std::string& field_name);
+//  std::string guess_value(const std::string_view callsign, const std::string& field_name);
 
 /*! \brief              Set a value in the database
     \param  callsign    callsign for the new entry

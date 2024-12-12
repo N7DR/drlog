@@ -95,9 +95,19 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
     callsign <i>callsign</i>
 */
 string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign) const
-{ const auto it { _db.find(field_name) };
+//string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
+{ //const auto it { _db.find(field_name) };
 
-  return ( (it == _db.cend()) ? string { } : MUM_VALUE(it->second, callsign) );
+  //return ( (it == _db.cend()) ? string { } : MUM_VALUE(it->second, callsign) );
+
+  const auto opt { OPT_MUM_VALUE(_db, field_name) };
+
+//  if (opt)
+//    return MUM_VALUE(opt.value(), callsign);
+//  else
+//    return string { };
+
+  return ( opt ? MUM_VALUE(opt.value(), callsign) : string { } );
 }
 
 /// ostream << exchange_field_prefill
@@ -854,17 +864,20 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
     The returned value is inserted into the database.
 */
 string exchange_field_database::guess_value(const string& callsign, const string& field_name)
+//string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
 
 // first, check the database
-  if (const auto it { _db.find( pair<string, string>( { callsign, field_name } ) ) }; it != _db.end())
-    return it->second;
+//  if (const auto it { _db.find( pair<string, string>( { callsign, field_name } ) ) }; it != _db.end())
+//    return it->second;
+  if (const auto opt { OPT_MUM_VALUE(_db, pair<string, string> { callsign, field_name }) }; opt)
+    return opt.value();
 
 // see if there's a pre-fill entry
   const string prefill_datum { prefill_data.prefill_data(field_name, callsign) };
 
   if (!prefill_datum.empty())
-  { _db += { { callsign, field_name }, prefill_datum };
+  { _db += { { static_cast<string>(callsign), field_name }, prefill_datum };
 
     return prefill_datum;
   }
@@ -874,7 +887,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
   { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
-    { _db += { { callsign, field_name }, EMPTY_STR };                     // so that it can be found immediately in future
+    { _db += { { static_cast<string>(callsign), field_name }, EMPTY_STR };                     // so that it can be found immediately in future
  
       return EMPTY_STR;
     }
@@ -888,12 +901,10 @@ string exchange_field_database::guess_value(const string& callsign, const string
     \param  get_canonical_value     whether to convert <i>value</i> to its corresponding canonical value
     \return                         <i>value</i> or canonical value corresponding to <i>value</i>, whichever was inserted, as a string
 */
-//  auto insert_value = [&callsign, &field_name, this] (const string& value, const bool get_canonical_value = false)
-  auto insert_value = [&callsign, &field_name, this] (auto value, const bool get_canonical_value = false)
-    { //const string rv { get_canonical_value ? rules.canonical_value(field_name, value) : value };     // empty -> empty
-      const string rv { get_canonical_value ? rules.canonical_value(field_name, to_string(value)) : to_string(value) };     // empty -> empty
+  auto insert_value = [&callsign, &field_name, this] (const auto value, const bool get_canonical_value = false)
+    { const string rv { get_canonical_value ? rules.canonical_value(field_name, to_string(value)) : to_string(value) };     // empty -> empty
 
-      _db += { { callsign, field_name }, rv };
+      _db += { { static_cast<string>(callsign), field_name }, rv };
 
       return rv;
     };
@@ -909,12 +920,23 @@ string exchange_field_database::guess_value(const string& callsign, const string
        return abbreviations[call_area - '0'];    // convert to number
     };
 
-  static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
-                                                                              { "VO2"s, "LB"s },
-                                                                              { "VY2"s, "PE"s }
-                                                                            };
+//  static const map<string /* prefix */, string /* province */, less<>> province_map { { "VO1"s, "NF"s },
+//                                                                                      { "VO2"s, "LB"s },
+//                                                                                      { "VY2"s, "PE"s }
+//                                                                                    };
+
+  static const STRING_MAP<string> province_map { { "VO1"s, "NF"s },  // prefix, province
+                                                 { "VO2"s, "LB"s },
+                                                 { "VY2"s, "PE"s }
+                                               };
 
   string rv;
+
+  auto value_from_ve_prefix = [&ve_area_to_province] (const string& pfx)
+    { const auto opt { OPT_MUM_VALUE(province_map, pfx) };
+
+      return ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
+    };
 
 // currently identical to 10MSTATE, except look up different value on the drmaster line
   if (field_name == "160MSTATE"sv)
@@ -927,13 +949,25 @@ string exchange_field_database::guess_value(const string& callsign, const string
         rv = to_upper(drm_line.qth());
     }
 
+//    auto value_from_ve_prefix = [&ve_area_to_province] (const string& pfx)
+ //     { const auto opt { OPT_MUM_VALUE(province_map, pfx) };
+//
+//        return ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
+//      };
+
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
-    { const string pfx { wpx_prefix(callsign) };
+    { rv = value_from_ve_prefix(wpx_prefix(callsign));
 
-      rv = MUM_VALUE(province_map, pfx);
+      //const string pfx { wpx_prefix(callsign) };
 
-      if (rv.empty())
-        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
+//      rv = MUM_VALUE(province_map, pfx);
+
+//      if (rv.empty())
+//        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
+
+//      const auto opt { OPT_MUM_VALUE(province_map, pfx) };
+
+//      rv = ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
     }
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);
@@ -950,12 +984,19 @@ string exchange_field_database::guess_value(const string& callsign, const string
     }
 
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
-    { const string pfx { wpx_prefix(callsign) };
+    { rv = value_from_ve_prefix(wpx_prefix(callsign));
 
-      rv = MUM_VALUE(province_map, pfx);
+ //     const string pfx { wpx_prefix(callsign) };
 
-      if (rv.empty())
-        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
+//      rv = MUM_VALUE(province_map, pfx);
+
+//      if (rv.empty())
+//        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
+
+
+//      const auto opt { OPT_MUM_VALUE(province_map, pfx) };
+
+//      rv = ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
     }
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);

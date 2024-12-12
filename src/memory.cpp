@@ -71,7 +71,7 @@ void memory_information::_get_meminfo(const bool force)
 */
 memory_information::memory_information(const std::chrono::system_clock::duration min_int) :
   _minimum_interval(min_int),
-  _last_update_time { std::chrono::system_clock::now() - 2 * _minimum_interval }        // force update when _get_meminfo() is called
+  _last_update_time { std::chrono::system_clock::now() - (2 * min_int) }        // force update when _get_meminfo() is called
 { _get_meminfo(); }
 
 /*! \brief          Convert to printable string

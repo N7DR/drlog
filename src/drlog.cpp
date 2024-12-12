@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 255 2024-11-10 20:30:33Z  $
+// $Id: drlog.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,7 +71,7 @@ using CALL_SET           = set<string, decltype(&compare_calls)>;     // set in 
 using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;
 using PING_TABLE         = vector<PING_TABLE_ELEMENT>;
 
-extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
+extern const set<string, std::less<>> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 /// active window
 enum class ACTIVE_WINDOW { CALL,
@@ -2906,7 +2906,6 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );
 
-//    bandmap_win <= bandmaps[current_band];
     bandmaps[current_band].protected_write_to_window(bandmap_win);
 
     for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
@@ -3083,9 +3082,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // In CQ mode, this is a self-spot
     if ( (drlog_mode == DRLOG_MODE::CQ) and self_spotting_enabled )
-    { const string callsign { my_call };
-      const string comment  { self_spotting_text };
-      const string qrg      { get_frequency() };
+    { const string& callsign { my_call };
+      const string& comment  { self_spotting_text };
+      const string  qrg      { get_frequency() };
 
       ost << "about to send self spot" << endl;
 
@@ -3108,9 +3107,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           alert("error posting spot: " + call_contents);
       }
       else                // call window contains no space; treat it as a call
-      { const string callsign { call_contents };
-        const string comment  { };
-        const string qrg      { get_frequency() };
+      { const string& callsign { call_contents };
+        const string& comment  { };
+        const string qrg       { get_frequency() };
 
         const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
 
@@ -3128,9 +3127,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       const QSO last_qso { logbk.last_qso() };
 
       if (!last_qso.empty())
-      { const string callsign { last_qso.callsign() };
-        const string qrg      { last_qso.freq() };
-        const string comment  { self_spotting_text };
+      { const string  callsign { last_qso.callsign() };
+        const string  qrg      { last_qso.freq() };
+        const string& comment  { self_spotting_text };
 
         ost << "about to send spot" << endl;
 
@@ -3153,7 +3152,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else
-    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems
+    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems; this method should be good enough
 
       ost << "Band change commanded: BAND " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
 
@@ -3305,7 +3304,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
 // clear the call window if there's something in it
-    if (!processed and (!remove_peripheral_spaces <std::string> (win.read()).empty()))
+//    if (!processed and (!remove_peripheral_spaces <std::string> (win.read()).empty()))
+    if (!processed and (!remove_peripheral_spaces <std::string_view> (win.read()).empty()))
     { win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win.insert(true);                         // force into INSERT mode
       processed = true;
@@ -3328,6 +3328,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // F11 -- band map filtering
   if (!processed and (e.symbol() == XK_F11))
   { const string contents { remove_peripheral_spaces <std::string> (win.read()) };
+    //const string_view contents { remove_peripheral_spaces <std::string_view> (win.read()) };
 
     bandmap& bm = bandmaps[cur_band];        // use current bandmap to make it easier to display column offset
 
@@ -3375,8 +3376,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ENTER, ALT-ENTER -- a lot of complicated stuff
   if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
-  { const string contents { remove_peripheral_spaces <std::string> ( win.read() ) };
-    //const string_view contents { remove_peripheral_spaces <std::string_view> ( win.read() ) };
+  { const string      contents_str  { remove_peripheral_spaces <std::string> ( win.read() ) };
+//    const string_view contents      { contents_str };
+    const string& contents { contents_str };      // temporary re-name, until we have full sv support
 
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())
@@ -3743,6 +3745,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     if (!processed)
     { const string& callsign { contents };
       //const string_view& callsign { contents };
+      //const string_view callsign { contents };      // could use a reference hr, since this just duplicates a variable
+
       const bool    is_dupe  { logbk.is_dupe(callsign, cur_band, cur_mode, rules) };
 
 // if we're in SAP mode, don't call him if he's a dupe

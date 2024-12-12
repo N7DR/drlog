@@ -348,7 +348,8 @@ class drmaster
 {
 protected:
 
-  std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
+//  std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
+  UNORDERED_STRING_MAP<drmaster_line> _records;       ///< the information; key = call
 
 public:
 
@@ -409,7 +410,8 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-  inline drmaster_line operator[](const std::string& call) const
+//  inline drmaster_line operator[](const std::string& call) const
+  inline drmaster_line operator[](const std::string_view call) const
     { return MUM_VALUE(_records, call); }
   
 /*! \brief          Return the record for a particular call
@@ -418,7 +420,8 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-  inline drmaster_line data(const std::string& call) const
+//  inline drmaster_line data(const std::string& call) const
+  inline drmaster_line data(const std::string_view call) const
     { return ((*this)[call]); }
 
 /*! \brief          Remove a call

@@ -35,7 +35,8 @@ class autocorrect_database
 {
 protected:
 
-  std::unordered_set<std::string> _calls;                                 ///< known good calls; can't use heterogenous lookup with unordered set
+//  std::unordered_set<std::string> _calls;                                 ///< known good calls; can't use heterogenous lookup with unordered set
+  UNORDERED_STRING_SET _calls;
 
   mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
 

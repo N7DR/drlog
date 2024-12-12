@@ -1,4 +1,4 @@
-// $Id: cty_data.h 239 2024-05-20 13:42:00Z  $
+// $Id: cty_data.h 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -236,21 +236,13 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-//  explicit cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
   explicit cty_data(const std::string_view filename = "cty.dat"sv);   // somewhere along the way the default name changed from CTY.DAT
 
 /*! \brief              Construct from a file
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
-//  explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
-//  inline explicit cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s)  // somewhere along the way the default name changed from CTY.DAT
   inline explicit cty_data(const std::vector<std::string>& path, const std::string_view filename = "cty.dat"sv)  // somewhere along the way the default name changed from CTY.DAT
-//    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR }), ';'), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
-//    { FOR_ALL(split_string <std::string> (remove_chars(read_file(path, filename), CRLF), ';'), [this] (const std::string& rec) { if (contains(rec, ':'))  // check that it looks like a record
-//                                                                                                                                   push_back(static_cast<cty_record>(rec));
-//                                                                                                                               }); }    // applies to base class
-//    { FOR_ALL(split_string_into_records <std::string> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string& rec) { push_back(static_cast<cty_record>(rec)); }); }    // applies to base class
     { FOR_ALL(split_string_into_records <std::string_view> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string_view rec) { emplace_back(cty_record { rec }); }); }    // applies to base class
 
 /// how many countries are present?
@@ -288,8 +280,6 @@ public:
     \param  sbstring    the prefix for the Russian district
     \param  line        line from Russian data file
 */
-//  russian_data_per_substring(const std::string& sbstring, const std::string& line);
-//  russian_data_per_substring(const std::string& sbstring, const std::string_view line);
   russian_data_per_substring(const std::string_view sbstring, const std::string_view line);
 
   READ(sstring);               ///< substring that matches this district
@@ -424,7 +414,6 @@ std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-//location_info guess_zones(const std::string& call, const location_info& li);
 location_info guess_zones(const std::string_view call, const location_info& li);
 
 // -----------  location_database  ----------------
@@ -438,8 +427,10 @@ class location_database
 protected:
 
   using ACI_DBTYPE      = decltype(cty_record::_alt_callsigns);
-  using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
-  using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
+//  using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
+  using LOCATION_DBTYPE = UNORDERED_STRING_MAP<location_info>;
+//  using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
+  using RUSSIAN_DBTYPE  = UNORDERED_STRING_MAP<russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
 
   mutable std::recursive_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
 
@@ -519,8 +510,9 @@ public:
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-  location_info info(const std::string& callpart) const;
-  
+//  location_info info(const std::string& callpart) const;
+  location_info info(const std::string_view callpart) const;
+
 /// return the database
   inline decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
@@ -586,7 +578,8 @@ public:
     \param  callpart    call (or partial call)
     \return             canonical prefix corresponding to <i>callpart</i>
 */
-  inline std::string canonical_prefix(const std::string& callpart) const
+//  inline std::string canonical_prefix(const std::string& callpart) const
+  inline std::string canonical_prefix(const std::string_view callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
 /*! \brief              Get name of the Russian district for a particular call or partial call
@@ -595,7 +588,8 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline std::string region_name(const std::string& callpart) const
+//  inline std::string region_name(const std::string& callpart) const
+  inline std::string region_name(const std::string_view callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
 /*! \brief              Get two-letter abbreviation for the Russian district for a particular call or partial call
@@ -604,7 +598,8 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline std::string region_abbreviation(const std::string& callpart) const
+//  inline std::string region_abbreviation(const std::string& callpart) const
+  inline std::string region_abbreviation(const std::string_view callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
 /// serialise

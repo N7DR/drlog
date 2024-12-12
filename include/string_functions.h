@@ -1,4 +1,4 @@
-// $Id: string_functions.h 255 2024-11-10 20:30:33Z  $
+// $Id: string_functions.h 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -363,8 +363,6 @@ inline bool contains(const std::string_view s, const std::string_view ss)
     \param  posn    putative start position of <i>ss</i>
     \return         whether <i>s</i> contains the substring <i>ss</i>, starting at position <i>posn</i>
 */
-//inline bool contains_at(const std::string& s, const std::string& ss, const size_t posn)
-//  { return (s.length() >= posn + ss.length()) and (substring <std::string> (s, posn, ss.length()) == ss); }
 inline bool contains_at(std::string_view s, std::string_view ss, const size_t posn)
   { return (s.length() >= posn + ss.length()) and (substring <std::string_view> (s, posn, ss.length()) == ss); }
 
@@ -373,7 +371,6 @@ inline bool contains_at(std::string_view s, std::string_view ss, const size_t po
     \param  c   character for which to search
     \return     whether <i>s</i> contains the character <i>c</i>
 */
-//inline bool contains(const std::string& s, const char c)
 inline bool contains(const std::string_view s, const char c)
   { return s.find(c) != std::string_view::npos; }
 
@@ -902,7 +899,7 @@ inline auto remove_peripheral_character(const std::string_view cs, const char c)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-std::string remove_char(std::string_view cs, const char char_to_remove);
+std::string remove_char(const std::string_view cs, const char char_to_remove);
   
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
@@ -1403,7 +1400,6 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
     \param  delim_2     closing delimiter
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
-//inline std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
 inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
   { return (delim_1 + str + delim_2); }
 
@@ -1535,19 +1531,51 @@ inline std::string operator+(const std::string_view sv1, const std::string_view 
 inline std::string operator+(const std::string_view sv1, const std::string& s2)
 { return std::string(sv1) + s2; }
 
-/*! \brief              Read an istream until a string delimiter is reached
-    \param  in          istream from which to read
-    \param  delimiter   the delimiter that mars the end of a record
-    \return             the contents if <i>in</i> from the current point to the delimiter
+/*! \brief                Read an istream until a string delimiter is reached
+    \param  in            istream from which to read
+    \param  delimiter     the delimiter that mars the end of a record
+    \param  keep_or_drop  whether to keep or drop the delimiter in the returned string
+    \return               the contents if <i>in</i> from the current point to the delimiter
 
-    Drops the delimiter, but see the comment at the end of the routine
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
-std::string readuntil(std::istream& in, const std::string_view delimiter);
+std::string readuntil(std::istream& in, const std::string_view delimiter, const DELIMITERS keep_or_drop = DELIMITERS::DROP);
 
 /// a standard hash function for strings (the DJB function)
-constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
-  { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                
+//constexpr long unsigned int STR_HASH(const char* str, int off = 0)
+//  { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }
+
+#if 0
+// https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
+struct stringly_hash
+{ using is_transparent = void;
+
+  [[nodiscard]] inline size_t operator()(const char* rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string_view rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string& rhs) const
+    { return std::hash<std::string>{}(rhs); }
+};
+
+// make the heterogeneous lookup versions easily available
+
+// hetrogenous lookup for unordered maps with string keys
+template <typename ValueType>
+using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
+
+// hetrogenous lookup for unordered sets of strings
+using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
+
+// hetrogenous lookup for ordered maps with string keys
+template <typename ValueType>
+using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
+
+// hetrogenous lookup for ordered sets of strings
+using STRING_SET = std::set<std::string, std::less<>>;
+#endif
 
 // -------------------------------------- Errors  -----------------------------------
 

@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 256 2024-11-25 03:18:31Z  $
+// $Id: socket_support.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -795,7 +795,7 @@ bool icmp_socket::ping(void)
     socklen_t slen { 0 };
 
     if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
-    { const auto recvfrom_error = errno;
+    { const auto recvfrom_error { errno };
 
       if ( (recvfrom_error == EAGAIN) or (recvfrom_error == EWOULDBLOCK) )
         ost << "ICMP timeout" << endl;
@@ -808,8 +808,9 @@ bool icmp_socket::ping(void)
     if (rcv_hdr.type == ICMP_ECHOREPLY)
     { ost << "ping reply from " << _destination_str << ", id = " << _icmp_hdr.un.echo.id << ", sequence = " << _icmp_hdr.un.echo.sequence << endl;
       rv = true;
-    } else
-        ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
+    }
+    else
+      ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
   }
 
   catch (const socket_support_error& e)
@@ -862,7 +863,8 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
 
     default:                   // response is waiting to be read
-    { char socket_buffer[4096];
+    { //char socket_buffer[4096];
+      char socket_buffer[buffer_length_for_reply];
 
       socklen_t from_length { sizeof(sockaddr_storage) };
 

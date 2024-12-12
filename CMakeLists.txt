@@ -7,7 +7,8 @@ endif()
 
 project(drlog)
 
-set (CMAKE_CXX_COMPILER "g++")
+#set (CMAKE_CXX_COMPILER "g++")
+set (CMAKE_CXX_COMPILER "/usr/local/programs/gcc-14.2.0/bin/g++-14")
 
 set ( SOURCE_FILES
                    src/drlog.cpp

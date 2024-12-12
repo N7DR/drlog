@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 256 2024-11-25 03:18:31Z  $
+// $Id: cluster.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -339,7 +339,6 @@ string dx_cluster::get_unprocessed_input(void)
     \param  db              the location database for this contest
     \param  post_source     the origin of the post
 */
-//dx_post::dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source) :
 dx_post::dx_post(const string_view received_info, location_database& db, const enum POSTING_SOURCE post_source) :
   _source(post_source),
   _valid(false)
@@ -556,7 +555,8 @@ bool monitored_posts::is_monitored(const std::string& callsign) const
     \param  post    post to be tested
 */
 void monitored_posts::operator+=(const dx_post& post)
-{ monitored_posts_entry mpe                 { post };
+{ const monitored_posts_entry mpe           { post };
+
   bool                  stop_search         { false };
   bool                  found_call_and_band { false };
 
@@ -620,13 +620,10 @@ void monitored_posts::operator-=(const string& call_to_remove)
 
 /// prune <i>_entries</i>
 void monitored_posts::prune(void)
-{ //const time_t now { ::time(NULL) };
-
-  SAFELOCK(monitored_posts);
+{ SAFELOCK(monitored_posts);
 
   const size_t original_size { _entries.size() };
 
-//  erase_if(_entries, [now] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
   erase_if(_entries, [now = NOW()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());

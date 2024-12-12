@@ -1,4 +1,4 @@
-// $Id: cluster.h 255 2024-11-10 20:30:33Z  $
+// $Id: cluster.h 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,7 +41,7 @@ constexpr std::chrono::seconds MONITORED_POSTS_DURATION_1 { 3600 };     ///< mon
 */
 
 class dx_cluster
-{ //using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+{
 
 protected:
 
@@ -94,7 +94,6 @@ public:
     \param  msg     the message to be sent
     \return         whether transmission was successful
 */
-//  bool send(const std::string& msg = CRLF);
   bool send(const std::string_view msg = CRLF);
 
 /*! \brief            Send a spot to the cluster
@@ -206,7 +205,7 @@ std::ostream& operator<<(std::ostream& ost, const dx_post& dxp);
 */
 
 class monitored_posts_entry
-{ //using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+{
 
 protected:
 

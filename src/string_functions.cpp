@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 255 2024-11-10 20:30:33Z  $
+// $Id: string_functions.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -357,7 +357,7 @@ vector<string> remove_empty_lines(const vector<string>& lines)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-string remove_char(string_view cs, const char char_to_remove)
+string remove_char(const string_view cs, const char char_to_remove)
 { string rv { cs };
 
   erase(rv, char_to_remove);
@@ -546,7 +546,6 @@ vector<size_t> starts_of_words(const string_view s)
 
     Returns <i>string::npos</i> if no word can be found
 */
-//size_t next_word_posn(const string& str, const size_t current_posn)
 size_t next_word_posn(const string_view str, const size_t current_posn)
 { if (str.length() <= current_posn)
     return string::npos;
@@ -629,9 +628,10 @@ bool is_legal_ipv4_address(const string_view cs)
 
   for (const auto field : fields)
   { try
-    { const int value { from_string<int>(field) };
+    { //const int value { from_string<int>(field) };
 
-      if ((value < 0) or (value > 255))
+      //if ((value < 0) or (value > 255))
+      if (const int value { from_string<int>(field) }; (value < 0) or (value > 255))
         return false;
     }
 
@@ -1000,15 +1000,15 @@ string to_printable_string(const string_view str)
   return rv;
 }
 
-/*! \brief              Read an istream until a string delimiter is reached
-    \param  in          istream from which to read
-    \param  delimiter   the delimiter that mars the end of a record
-    \return             the contents if <i>in</i> from the current point to the delimiter
+/*! \brief                Read an istream until a string delimiter is reached
+    \param  in            istream from which to read
+    \param  delimiter     the delimiter that mars the end of a record
+    \param  keep_or_drop  whether to keep or drop the delimiter in the returned string
+    \return               the contents if <i>in</i> from the current point to the delimiter
 
-    Drops the delimiter, but see the comment at the end of the routine
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
-string readuntil(istream& in, const string_view delimiter)
+string readuntil(istream& in, const string_view delimiter,const DELIMITERS keep_or_drop)
 { string cr;
 
   const char   delim { *(delimiter.rbegin()) };
@@ -1024,5 +1024,6 @@ string readuntil(istream& in, const string_view delimiter)
     tot = cr.size();
   } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
 
-  return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
+//  return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
+  return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);  // or return cr; if you want to keep the delimiter
 }

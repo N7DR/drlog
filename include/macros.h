@@ -1,4 +1,4 @@
-// $Id: macros.h 254 2024-10-20 15:53:54Z  $
+// $Id: macros.h 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,6 +64,7 @@ enum class SHOW_TIME { SHOW,
 /*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
+// R/W for strings that should be accessible via string_view
 #define READ_AND_WRITE_STR(y)                                       \
 /*! Read access to _##y */                                      \
   [[nodiscard]] inline const decltype(_##y)& y(void) const& { return _##y; }    \
@@ -1603,5 +1604,36 @@ auto RANGE_CONTAINER(R&& r) -> RT
 
   return RT(r_common.begin(), r_common.end());
 }
+
+// heterogeneous lookup for strings
+// https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
+struct stringly_hash
+{ using is_transparent = void;
+
+  [[nodiscard]] inline size_t operator()(const char* rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string_view rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string& rhs) const
+    { return std::hash<std::string>{}(rhs); }
+};
+
+// make the heterogeneous lookup versions easily available
+
+// hetrogenous lookup for unordered maps with string keys
+template <typename ValueType>
+using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
+
+// hetrogenous lookup for unordered sets of strings
+using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
+
+// hetrogenous lookup for ordered maps with string keys
+template <typename ValueType>
+using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
+
+// hetrogenous lookup for ordered sets of strings
+using STRING_SET = std::set<std::string, std::less<>>;
 
 #endif    // MACROS_H

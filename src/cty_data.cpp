@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 240 2024-05-27 12:45:41Z  $
+// $Id: cty_data.cpp 257 2024-12-08 16:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern const set<string> CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+extern const set<string, less<>> CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 
 constexpr unsigned int   CTY_FIELDS_PER_RECORD { 9 };                                                           ///< Number of fields in a single CTY record
 constexpr array<int, 10> VE_CQ                 { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 };     ///< default CQ zones for VE call areas; 0 to 9
@@ -399,103 +399,12 @@ unsigned int get_call_area(const string_view call)
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-//location_info guess_zones(const string& call, const location_info& li)
 location_info guess_zones(const string_view call, const location_info& li)
-{ //const unsigned int call_area { get_call_area(call) };
-#if 0
-  auto to_uint = [] (const char c) { return static_cast<unsigned int>(c - '0'); };
-
-// get the call area number, returned as an unsigned int
-  auto call_area = [&to_uint] (const string_view call)
-  { constexpr unsigned int rv { 0 };    // default
-
-    const auto n_slashes { std::ranges::count(call, '/') };
-
-    switch (n_slashes)
-    { case 0 :
-      { const size_t posn { call.find_last_of(DIGITS) };
-
-        return ( (posn != string::npos) ? to_uint(call[posn]) : rv );  // should always be true, unless it's a partial call
-      }
-
-      default :  // find the shortest one with a digit
-      {
-// all the parts that contains a digit
-       const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
-
-        switch (parts_with_digit.size())
-        { case 0 :                              // should never happen
-          default :
-            return rv;
-
-          case 1 :
-            return to_uint(first_digit(parts_with_digit[0]));
-
-          case 2 :
-            return to_uint(first_digit(parts_with_digit[ ((parts_with_digit[0].size() < parts_with_digit[1].size()) ? 0 : 1) ]));
-        }
-      }
-    }
-  };
-#endif
-
-  location_info rv { li };
-
-//  ost << "guessing zone for: " << call << endl;
-//  ost << "canonical prefix = " << rv.canonical_prefix() << endl;
+{ location_info rv { li };
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"sv)
   {
-
-#if 0
-    const auto n_slashes { std::ranges::count(call, '/') };
-
-//    ost << "n_slashes = " << n_slashes << endl;
-
-    unsigned int call_digit { 0 };    // default
-
-    switch (n_slashes)
-    { case 0 :
-      { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true, unless it's a partial call
-          call_digit = from_string<unsigned int>(string(1, call[posn]));
-
-        break;
-      }
-
-//      case 1 :  // find the shortest one with a digit
-      default :  // find the shortest one with a digit
-      { //const vector<string_view> parts { split_string <string_view> (call, '/') };
-
-        //vector<string_view> contains_digit { };
-
-        //FOR_ALL(parts, [&contains_digit] (const string_view sv) { if (::contains_digit(sv))
-        //                                                            contains_digit += sv;
-         //                                                       } );
-
-// all the parts that contains a digit
-       const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
-
-//       ost << "size of contains_digit = " << parts_with_digit.size() << endl;
-
-        switch (parts_with_digit.size())
-        { case 0 :                              // should never happen
-          default :
-            break;
-
-          case 1 :
-            call_digit = first_digit(parts_with_digit[0]) - '0';
-            break;
-
-          case 2 :
-            call_digit = first_digit(parts_with_digit[ ((parts_with_digit[0].size() < parts_with_digit[1].size()) ? 0 : 1) ]) - '0';
-            break;
-        }
-      }
-    }
-
-    ost << "call digit: " << call_digit << endl;
-#endif
 
  //   const unsigned int call_digit { call_area(call) };
     const unsigned int call_digit { get_call_area(call) };
@@ -713,7 +622,8 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-location_info location_database::info(const string& callpart) const
+//location_info location_database::info(const string& callpart) const
+location_info location_database::info(const string_view callpart) const
 { const string original_callsign { remove_peripheral_spaces <std::string> (callpart) };
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
@@ -723,16 +633,22 @@ location_info location_database::info(const string& callpart) const
   LOCATION_DBTYPE::const_iterator db_posn { _db_checked.find(callsign) };
 
 // it's easy if there's already an entry
-  if (db_posn != _db_checked.end())
-    return db_posn->second;
+//  if (db_posn != _db_checked.end())
+//    return db_posn->second;
+  if (const auto opt { OPT_MUM_VALUE(_db_checked, callsign) }; opt)
+    return opt.value();
   
 // see if there's an exact match in the alternative call db
-  db_posn = _alt_call_db.find(callsign);
-
-  if (db_posn != _alt_call_db.end())
-  { _db_checked += { callsign, db_posn->second };
-    return db_posn->second;  
+  if (const auto opt { OPT_MUM_VALUE(_alt_call_db, callsign) }; opt)
+  { _db_checked += { callsign, opt.value() };
+    return opt.value();
   }
+//  db_posn = _alt_call_db.find(callsign);
+
+//  if (db_posn != _alt_call_db.end())
+//  { _db_checked += { callsign, db_posn->second };
+//    return db_posn->second;
+//  }
 
   auto insert_best_info = [&callsign, this] (const location_info& li) { _db_checked += { callsign, li };
                                                                         return li;
@@ -740,12 +656,16 @@ location_info location_database::info(const string& callpart) const
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string target { remove_from_end <std::string> (callsign, 4u) };    // remove "/QRP"
+  { //const string target { remove_from_end <std::string> (callsign, 4u) };    // remove "/QRP"
+    const string_view target { remove_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
+
+    if (const auto opt { OPT_MUM_VALUE(_db_checked, target) }; opt)
+      return insert_best_info(opt.value());
   
-    db_posn = _db_checked.find(target);
+//    db_posn = _db_checked.find(target);
     
-    if (db_posn != _db_checked.end())
-      return insert_best_info(db_posn->second);
+//    if (db_posn != _db_checked.end())
+//      return insert_best_info(db_posn->second);
 
 // try the alternative call db
     db_posn = _alt_call_db.find(target);
