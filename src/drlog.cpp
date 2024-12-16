@@ -573,7 +573,8 @@ autocorrect_database ac_db;                     ///< the RBN autocorrection data
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band (even bands that aren't going to be used)
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
-array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
+//array<unordered_map<string, string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
+array<UNORDERED_STRING_MAP<string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
 array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
 
 call_history q_history;                         ///< history of calls worked
@@ -2556,7 +2557,10 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
         rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
 
-        const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"sv)) };      // don't process if RBN and not CW
+//        const bool wrong_mode { is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"sv)) };      // don't process if RBN and not CW
+        const bool wrong_mode { (is_rbn and (!post.mode_str().empty() and (post.mode_str() != "CW"sv))) or
+                                (is_cluster and !context.cluster_cw() and (putative_mode(post.freq()) == MODE_CW))
+        };      // don't process if RBN and not CW, or cluster and CW and CW is not to be processed
 
         if (post.valid() and !wrong_mode)                   // a valid post in the correct mode
         { if (is_rbn and autocorrect_rbn)                   // possibly autocorrect
@@ -2627,7 +2631,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 // record as the most recent QRG for this station
             const int band_nr { static_cast<int>(BAND(post.freq())) };
 
-            unordered_map<string, string>& qrg_map { last_posted_qrg[band_nr] };
+//            unordered_map<string, string>& qrg_map { last_posted_qrg[band_nr] };
+            UNORDERED_STRING_MAP<string>& qrg_map { last_posted_qrg[band_nr] };
 
             { lock_guard lck(last_posted_qrg_mutex[band_nr]);
 

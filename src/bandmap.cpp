@@ -131,7 +131,8 @@ bool n_posters_database::test_call(const string& call)
   int  count_n_posters { 0 };
 
   for (auto it { all_times.cbegin() }; !known_good and (it != all_times.end()); ++it)
-  { const unordered_map<string /* call */, unordered_set<string>>& um { _data.at(*it) };
+  { //const unordered_map<string /* call */, unordered_set<string>>& um { _data.at(*it) };
+    const UNORDERED_STRING_MAP<unordered_set<string>>& um { _data.at(*it) };    // key = call
 
     if (um.contains(call))
     { count_n_posters += um.at(call).size();

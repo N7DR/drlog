@@ -313,6 +313,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "CALLSIGN MULTS PER MODE"sv)
       _callsign_mults_per_mode = is_true;
 
+// CLUSTER CW
+    if (LHS == "CLUSTER CW"sv)
+      _cluster_cw = is_true;
+
 // CLUSTER PORT
     if (LHS == "CLUSTER PORT"sv)
       _cluster_port = from_string<decltype(_cluster_port)>(rhs);
@@ -820,7 +824,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
         const vector<string> values           { clean_split_string <string> (RHS) };
-        const set<string>    ss               { values.cbegin(), values.cend() };
+//        const set<string>    ss               { values.cbegin(), values.cend() };
+        const STRING_SET    ss               { values.cbegin(), values.cend() };
 
         _qthx += { canonical_prefix, ss };
       }

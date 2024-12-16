@@ -718,10 +718,8 @@ MULTIPLIER_VALUES running_statistics::worked_callsign_mults(const string& mult_n
     \param  m   target mode
     \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
 */
-//map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
-STRING_MAP<MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
-{ //map<string, MULTIPLIER_VALUES> rv;
-  STRING_MAP<MULTIPLIER_VALUES> rv;
+STRING_MAP<MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const   // key of return value = field name
+{ STRING_MAP<MULTIPLIER_VALUES> rv;     // key = field name
 
   SAFELOCK(statistics);
 

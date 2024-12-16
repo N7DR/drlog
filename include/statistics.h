@@ -42,7 +42,6 @@ class running_statistics
 {
 protected:
   
-//  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one)
   STRING_MAP<multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one); key = mult name
   bool                                                              _callsign_mults_used { false };     ///< are callsign mults used? Copied from rules
 
@@ -344,8 +343,7 @@ class call_history
 {
 protected:
 
-//  std::map<std::string, std::set<bandmode> > _history;                                      ///< container for the history
-  STRING_MAP<std::set<bandmode> > _history;                                      ///< container for the history
+  STRING_MAP<std::set<bandmode> > _history;                                      ///< container for the history; key = call
 
   mutable pt_mutex                           _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
 

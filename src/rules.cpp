@@ -1288,12 +1288,14 @@ set<string> contest_rules::exchange_field_names(void) const
 choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
 { choice_equivalents rv;
 
-  map<MODE, map<string, choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
+//  map<MODE, map<string, choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
+  map<MODE, STRING_MAP<choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
 
   if (cit_mode == _choice_exchange_equivalents.cend())     // no choice equivalents for this mode
     return rv;
 
-  const map<string, choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
+//  const map<string, choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
+  const STRING_MAP<choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
 
   map<string, choice_equivalents>::const_iterator cit_cp { choice_equivalents_this_mode.find(cp) };
 

@@ -422,4 +422,10 @@ template<class T> const BAND to_BAND(T f)
   return MIN_BAND;
 }
 
+/*! \brief      guess the mode for a particular frequency
+    \param  f   frequency
+    \return     guessed mode for the frequency <i>f</i>
+*/
+MODE putative_mode(const frequency& f);
+
 #endif /* BANDSMODES_H */

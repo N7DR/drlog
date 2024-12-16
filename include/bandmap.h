@@ -78,7 +78,8 @@ class n_posters_database
 {
 protected:
 
-  std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters
+//  std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters
+  std::map<time_t, UNORDERED_STRING_MAP<std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters; key is call
 
   std::unordered_set<std::string> _known_good_calls;        ///< calls whose number of posters meets or exceeds _min_posters
 

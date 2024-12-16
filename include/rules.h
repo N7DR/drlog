@@ -417,7 +417,8 @@ protected:
   std::array<std::map<BAND, points_structure>, N_MODES> _points;            ///< points structure for each band and mode
   
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;             ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
-  std::map<MODE, std::map<std::string /* canonical prefix */, choice_equivalents>>          _choice_exchange_equivalents;   ///< choices
+//  std::map<MODE, std::map<std::string /* canonical prefix */, choice_equivalents>>          _choice_exchange_equivalents;   ///< choices
+  std::map<MODE, STRING_MAP<choice_equivalents>>          _choice_exchange_equivalents;   ///< choices; key = canonical prefix
 
   std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 

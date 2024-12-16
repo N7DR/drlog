@@ -177,7 +177,8 @@ public:
   std::string canonical_value(const std::string& str) const;
 
 /// all the canonical values
-  std::set<std::string> canonical_values(void) const;
+//  std::set<std::string> canonical_values(void) const;
+  STRING_SET canonical_values(void) const;
 
 /// serialise
   template<typename Archive>

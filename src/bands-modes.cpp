@@ -9,9 +9,11 @@
 //    N7DR
 
 #include "bands-modes.h"
+#include "log_message.h"
 
 using namespace std;
 
+extern message_stream ost;          ///< for debugging and logging
 extern string FREQUENCY_STRING_POINT;
 
 /// default frequencies for bands and modes
@@ -222,5 +224,23 @@ frequency upper_edge(const BAND b)
 
     default :
       return 1'800_kHz;
+  }
+}
+
+/*! \brief      guess the mode for a particular frequency
+    \param  f   frequency
+    \return     guessed mode for the frequency <i>f</i>
+*/
+MODE putative_mode(const frequency& f)
+{ try
+  { const BAND b { to_BAND(f) };
+    const frequency break_point { MODE_BREAK_POINT.at(b) };
+
+    return ( (f < break_point) ? MODE_CW : MODE_SSB );
+  }
+
+  catch (...)
+  { ost << "Unable to determine putative mode for frequency: " << f << endl;
+    return MODE_CW;     // default
   }
 }

@@ -129,6 +129,7 @@ protected:
   STRING_SET                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band                 { false };                      ///< are callsign mults per-band?
   bool                                         _callsign_mults_per_mode                 { false };                      ///< are callsign mults per-mode?
+  bool                                         _cluster_cw                              { false };                      ///< are CW posts from the cluster placed on the bandmap?
   unsigned int                                 _cluster_port                            { 23 };                         ///< port on the cluster server; standard telnet server port
   std::string                                  _cluster_server                          { };                            ///< hostname or IP of cluster server
   unsigned int                                 _cluster_threshold                       { 1 };                          ///< number of different stations that have to post a station to the cluster before it appears on the bandmap
@@ -240,7 +241,9 @@ protected:
   std::string                                  _qtc_filename                            { "QTCs"s };                    ///< name of file where QTCs are stored
   unsigned int                                 _qtc_long_t                              { 0 };                          ///< whether and amount to extend length of initial Ts in serial number in QTCs
   unsigned int                                 _qtc_qrs                                 { 0 };                          ///< WPM decrease when sending QTC
-  std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
+//  std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
+//  STRING_MAP<std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
+  STRING_MAP<STRING_SET> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
 //  std::map<std::string, std::set<std::string>> _qth2x                                   { };                            ///< allowed exchange values as a function of country; set with qth2x
 
   std::vector<unsigned int>                    _rate_periods                            { 15, 30, 60 } ;                ///< periods (in minutes) over which rates should be calculated
@@ -297,7 +300,8 @@ protected:
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
-  std::map<std::string /* name */, window_information, std::less<> > _windows           { };                                ///< size and position info for each window
+//  std::map<std::string /* name */, window_information, std::less<> > _windows           { };                                ///< size and position info for each window
+  STRING_MAP<window_information> _windows           { };                                ///< size and position info for each window; key = name
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
@@ -418,6 +422,7 @@ public:
   CONTEXTREAD(callsign_mults);                   ///< mults derived from callsign; e.g., WPXPX
   CONTEXTREAD(callsign_mults_per_band);          ///< are callsign mults per-band?
   CONTEXTREAD(callsign_mults_per_mode);          ///< are callsign mults per-mode?
+  CONTEXTREAD(cluster_cw);                       ///< are CW posts from the cluster placed on the bandmap?
   CONTEXTREAD(cluster_port);                     ///< port on the cluster server
   CONTEXTREAD(cluster_server);                   ///< hostname or IP of cluster server
   CONTEXTREAD(cluster_threshold);                ///< number of different stations that have to post a station to the cluster before it appears on the bandmap

@@ -139,7 +139,9 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 { if (!_name.starts_with("QTHX["sv))
     return;
 
-  const map<string /* cp */, set<string> /* legal values */>& context_qthx { context.qthx() };
+//  const map<string /* cp */, set<string> /* legal values */>& context_qthx { context.qthx() };
+//  const STRING_MAP<set<string> /* legal values */>& context_qthx { context.qthx() };    // key = cp; value = legal values
+  const STRING_MAP<STRING_SET>& context_qthx { context.qthx() };    // key = cp; value = legal values
 
   if (context_qthx.empty())
     return;
@@ -238,8 +240,10 @@ string EFT::canonical_value(const std::string& str) const
 }
 
 /// all the canonical values
-set<string> EFT::canonical_values(void) const
-{ set<string> rv;
+//set<string> EFT::canonical_values(void) const
+STRING_SET EFT::canonical_values(void) const
+{ //set<string> rv;
+  STRING_SET rv;
 
   for (const auto& [ cv, equivalents ] : _values)   // this is clearer than using FOR_ALL
     rv += cv;
