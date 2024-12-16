@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 241 2024-06-02 19:59:44Z  $
+// $Id: autocorrect.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,8 @@ protected:
 //  std::unordered_set<std::string> _calls;                                 ///< known good calls; can't use heterogenous lookup with unordered set
   UNORDERED_STRING_SET _calls;
 
-  mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
+//  mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
+  mutable STRING_MAP<std::string /* output call */> _cache; ///< cache of input to output call mapping; key = input call; value = output call
 
 public:
 
@@ -90,9 +91,11 @@ protected:
   F100_TYPE _f_min_100;         ///< minimum frequency in hundreds of Hz
   F100_TYPE _f_max_100;         ///< maximum frequency in hundreds of Hz
 
-  std::map<time_t, std::map<F100_TYPE /* f_100 */, std::unordered_map<std::string /* call */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the call appears
+//  std::map<time_t, std::map<F100_TYPE /* f_100 */, std::unordered_map<std::string /* call */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the call appears
+  std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
 
-  std::set<std::string> _all_calls;
+//  std::set<std::string> _all_calls;
+  STRING_SET _all_calls;
 
 // this introduces a lot of pain, as it is non-copyable and non-moveable; it means that instances
 // have first to be default-created, then moved to the correct band, rather than creating in place.
@@ -224,7 +227,8 @@ class busts_database
 {
 protected:
 
-  std::unordered_set<std::string> _known_busts;         ///< all the known bust-pairs
+//  std::unordered_set<std::string> _known_busts;         ///< all the known bust-pairs
+  UNORDERED_STRING_SET _known_busts;         ///< all the known bust-pairs
   std::unordered_set<std::string> _known_non_busts;     ///< all the known non-bust pairs
 
 public:

@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 257 2024-12-08 16:29:32Z  $
+// $Id: autocorrect.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,7 +64,8 @@ string autocorrect_database::corrected_call(const string& str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+//  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+  static const STRING_SET broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };
@@ -126,14 +127,6 @@ string autocorrect_database::corrected_call(const string& str) const
         return insert(str, call_to_test);
     }
   }
-
-// initial W copied as an initial M
-//  if (str.starts_with('M'))
-//  { if (absent)
-//    { if (const string call_to_test { "W"s + substring <std::string> (str, 1) }; contains(call_to_test))
-//        return insert(str, call_to_test);
-//    }
-//  }
 
 // UA copied as MA
   if (str.starts_with("MA"sv))

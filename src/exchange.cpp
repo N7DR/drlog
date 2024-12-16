@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 243 2024-07-15 19:38:06Z  $
+// $Id: exchange.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,14 +45,16 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields to filenames
 */
-void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
+//void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
+void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
   { const string& field_name { this_pair.first };
     //const string  filename   { truncate_before_first <std::string> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
     string_view  filename   { truncate_before_first <std::string_view> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
 
     try
-    { unordered_map<string /* call */, string /* prefill value */> call_value_map;
+    { //unordered_map<string /* call */, string /* prefill value */> call_value_map;
+      UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
 
 // figure out the columns to be read; column numbers in the config file are wrt 1
       unsigned int call_column  { 0 };

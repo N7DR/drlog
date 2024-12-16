@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 257 2024-12-08 16:29:32Z  $
+// $Id: cty_data.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,8 @@
 
 using namespace std;
 
-extern const set<string, less<>> CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+//extern const set<string, less<>> CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+extern const STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 
 constexpr unsigned int   CTY_FIELDS_PER_RECORD { 9 };                                                           ///< Number of fields in a single CTY record
 constexpr array<int, 10> VE_CQ                 { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 };     ///< default CQ zones for VE call areas; 0 to 9
@@ -88,8 +89,9 @@ cty_record::cty_record(string_view record)
   constexpr int CTY_PREFIX     { 7 };
   constexpr int CTY_ALTS       { 8 };
 
-// map prefixes if they collide with a content
-  static const map<string, string> map_prefix { { "EU"s, "EW"s } };
+// map prefixes if they collide with a continent
+//  static const map<string, string> map_prefix { { "EU"s, "EW"s } };
+  static const STRING_MAP<string> map_prefix { { "EU"s, "EW"s } };
 
   const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
 //  const vector<string_view> fields { remove_peripheral_spaces <std::string_view> (split_string <std::string_view> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
@@ -887,12 +889,16 @@ location_info location_database::info(const string_view callpart) const
 }
 
 /// get a set of all the canonical prefixes for all countries
-auto location_database::countries(void) const -> unordered_set<string>
+//auto location_database::countries(void) const -> unordered_set<string>
+auto location_database::countries(void) const -> UNORDERED_STRING_SET
 { std::lock_guard lg(_location_database_mutex);
 
- // using RT = std::invoke_result_t<decltype(location_database::countries()), void>;
+//  using RT = std::invoke_result_t<decltype(location_database::countries() const), void>;
 
-  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
+//  RT rv;
+
+//  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
+  UNORDERED_STRING_SET rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
 
 //  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
 //  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'

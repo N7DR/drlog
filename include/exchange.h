@@ -1,4 +1,4 @@
-// $Id: exchange.h 205 2022-04-24 16:05:06Z  $
+// $Id: exchange.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,7 +44,8 @@ class exchange_field_prefill
 protected:
 
 //  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
-  STRING_MAP<std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
+//  STRING_MAP<std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
+  STRING_MAP<UNORDERED_STRING_MAP<std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
 
 public:
 
@@ -54,7 +55,8 @@ public:
 /*! \brief                          Constructor
     \param  prefill_filename_map    map of fields to filenames
 */
-  inline explicit exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
+//  inline explicit exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
+  inline explicit exchange_field_prefill(const STRING_MAP<std::string /* filename */>& prefill_filename_map)
     { insert_prefill_filename_map(prefill_filename_map); }
 
   READ(db);                                 ///< all the data
@@ -62,7 +64,8 @@ public:
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields to filenames
 */
-  void insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map);
+//  void insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map);
+  void insert_prefill_filename_map(const STRING_MAP<std::string>& prefill_filename_map);
 
 /*! \brief              Do prefill data exist for a particular field name?
     \param  field_name  field name to test

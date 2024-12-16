@@ -1,4 +1,4 @@
-// $Id: rules.h 251 2024-09-09 16:39:37Z  $
+// $Id: rules.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -340,8 +340,10 @@ class points_structure
 {
 protected:
 
-  std::map<std::string, unsigned int> _continent_points;                    ///< per-continent points
-  std::map<std::string, unsigned int> _country_points;                      ///< per-country points
+//  std::map<std::string, unsigned int> _continent_points;                    ///< per-continent points
+  STRING_MAP<unsigned int> _continent_points;                    ///< per-continent points
+//  std::map<std::string, unsigned int> _country_points;                      ///< per-country points
+  STRING_MAP<unsigned int> _country_points;                      ///< per-country points
   unsigned int                        _default_points;                      ///< default points
   POINTS                              _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
 
@@ -385,13 +387,16 @@ protected:
     
   std::set<std::string>               _bonus_countries;         ///< countries that are eligible for bonus points
 
-  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+//  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  STRING_SET               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
-  std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
-  std::unordered_set<std::string>     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+//  std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
+  UNORDERED_STRING_SET     _countries;                     ///< collection of canonical prefixes for all the valid countries
+//  std::unordered_set<std::string>     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+  UNORDERED_STRING_SET     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _mm_country_mults;              ///< can /MM QSOs be mults?

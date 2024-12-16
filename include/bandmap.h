@@ -869,6 +869,14 @@ public:
 */
   void not_needed_country_mult(const std::string& canonical_prefix);
 
+/*! \brief                      Set the needed country mult status of all calls in a particular country and on a particular mode to false
+    \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
+    \param  m                   mode for which the status should be set
+
+    Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap with the mode <i>m</i>
+*/
+  void not_needed_country_mult(const std::string& canonical_prefix, const MODE m);
+
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  pf                      pointer to function to return the callsign mult value
     \param  mult_type               name of mult type

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 257 2024-12-08 16:29:32Z  $
+// $Id: drlog.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -288,7 +288,8 @@ pt_mutex alert_mutex { "USER ALERT"s };     ///< mutex for the user alert
 time_t   alert_time  { 0 };                 ///< time of last alert
 
 pt_mutex                      batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
-unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
+//unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
+UNORDERED_STRING_MAP<string> batch_messages;         ///< batch messages associated with calls
 
 atomic<frequency> cq_mode_frequency;
 
@@ -296,7 +297,8 @@ pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>
 string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
 pt_mutex                      individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
-unordered_map<string, string> individual_messages;                                   ///< individual messages associated with calls
+//unordered_map<string, string> individual_messages;                                   ///< individual messages associated with calls
+UNORDERED_STRING_MAP<string> individual_messages;                                   ///< individual messages associated with calls
 
 pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
@@ -338,10 +340,12 @@ pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR
 
 // global variables
 
-map<string /* mult name */, accumulator<string>, std::less<> > acc_callsigns;    ///< accumulator for prefixes for auto callsign mults
+//map<string /* mult name */, accumulator<string>, std::less<> > acc_callsigns;    ///< accumulator for prefixes for auto callsign mults
+STRING_MAP<accumulator<string>> acc_callsigns;    ///< accumulator for prefixes for auto callsign mults; key = mult name
 accumulator<string>     acc_countries;                              ///< accumulator for canonical prefixes for auto countries
 int                     ACCEPT_COLOUR { COLOUR_GREEN };             ///< colour for calls that have been worked, but are not dupes
-unordered_set<string>   all_country_mults;                          ///< all the country mults from the rules
+//unordered_set<string>   all_country_mults;                          ///< all the country mults from the rules
+UNORDERED_STRING_SET   all_country_mults;                          ///< all the country mults from the rules
 bool                    allow_audio_recording { false };            ///< may we record audio?
 string                  alternative_qsl_message { };                ///< no default alternative QSL message
 string                  at_call;                                    ///< call that should replace commat in "call ok now" message
@@ -398,7 +402,8 @@ grid_square             my_grid;                                    ///< what is
 float                   my_latitude;                                ///< my latitude in degrees (north +ve)
 float                   my_longitude;                               ///< my longitude in degrees (east +ve)
 
-unordered_map<string, string> names;                                ///< map from call to name
+//unordered_map<string, string> names;                                ///< map from call to name
+UNORDERED_STRING_MAP<string> names;                                ///< map from call to name
 unsigned int                  next_qso_number { 1 };                ///< actual number of next QSO
 atomic<MINUTES_TYPE>          now_minutes { NOW_MINUTES() };        ///< current absolute number of minutes
 bool                          no_default_rst { false };             ///< do we not assign a default received RST?
@@ -1250,7 +1255,8 @@ int main(int argc, char** argv)
       }
 
 // create and populate windows; do static windows first
-      const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows { context.static_windows() };
+//      const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows { context.static_windows() };
+      const STRING_MAP<pair<string /* contents */, vector<window_information> > >& swindows { context.static_windows() };
 
 // static windows may contain either defined information or the contents of a file
       for (const auto& [ win_name, pr_content_vec_win_info ] : swindows)
@@ -3799,7 +3805,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const vector<exchange_field> expected_exchange { rules.unexpanded_exch(canonical_prefix, cur_mode) };
 
         string exchange_str;
-        map<string, string> mult_exchange_field_value;                                                 // the values of exchange fields that are mults
+//        map<string, string> mult_exchange_field_value;                                                 // the values of exchange fields that are mults
+        STRING_MAP<string> mult_exchange_field_value;                                                 // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
         { bool processed_field { false };
@@ -5137,7 +5144,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             const MULTIPLIER_VALUES old_worked_country_mults { statistics.worked_country_mults(cur_band, cur_mode) };
 
 // and any exchange multipliers
-            const map<string /* field name */, MULTIPLIER_VALUES /* values */ > old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+//            const map<string /* field name */, MULTIPLIER_VALUES /* values */ > old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+            const STRING_MAP<MULTIPLIER_VALUES /* values */ > old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
             const vector<exchange_field>                                        exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
 
             for (const auto& exch_field : exchange_fields)
@@ -5183,11 +5191,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
 // was the just-logged QSO an exchange mult?
-            const map<string /* field name */, MULTIPLIER_VALUES /* values */ > new_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+//            const map<string /* field name */, MULTIPLIER_VALUES /* values */ > new_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+            const STRING_MAP<MULTIPLIER_VALUES /* values */ > new_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
 
             bool no_exchange_mults_this_qso { true };
 
-            for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
+//            for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
+            for (STRING_MAP<MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
             { const size_t old_size { (cit->second).size() };
 
               if (const auto ncit { new_worked_exchange_mults.find(cit->first) }; ncit != new_worked_exchange_mults.cend())    // should never be equal
@@ -5281,7 +5291,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // country mult status
           if (country_mults_used)
           { if (const string canonical_prefix { location_db.canonical_prefix(qso.callsign()) }; rules.country_mults_per_band())
-              bandmap_this_band.not_needed_country_mult(canonical_prefix);
+            { if (rules.country_mults_per_mode())
+                bandmap_this_band.not_needed_country_mult(canonical_prefix, qso.mode());    // just change mults for this mode on the bandmap
+              else
+                bandmap_this_band.not_needed_country_mult(canonical_prefix);                // change mults for all modes on the bandmap
+            }
             else                                                                            // country mults are not per band
               FOR_ALL(bandmaps, [&canonical_prefix] (bandmap& bm) { bm.not_needed_country_mult(canonical_prefix); } );
           }
@@ -6175,7 +6189,8 @@ void populate_win_info(const string& callsign)
                                               val = pf(callsign);
                                          };
 
-      const set<string> callsign_mults { rules.callsign_mults() };  // in practice, has at most one element
+//      const set<string> callsign_mults { rules.callsign_mults() };  // in practice, has at most one element
+      const STRING_SET callsign_mults { rules.callsign_mults() };  // in practice, has at most one element
 
 // callsign mults
       const vector<BAND> bands { ( rules.callsign_mults_per_band() ? permitted_bands : vector<BAND> { current_band } ) };  // the bands that have callsign mults
@@ -6399,7 +6414,8 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
   if (context.auto_remaining_callsign_mults())
   { const string      continent      { location_db.continent(callsign) };
     const string      country        { location_db.canonical_prefix(callsign) };
-    const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+//    const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+    const STRING_SET callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
     if ((continent == "AS"sv) and callsign_mults.contains("AAPX"s))
       perform_update("AAPX"s, wpx_prefix(callsign));

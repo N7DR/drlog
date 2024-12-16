@@ -1,4 +1,4 @@
-// $Id: drmaster.h 254 2024-10-20 15:53:54Z  $
+// $Id: drmaster.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -430,6 +430,7 @@ public:
     Does nothing if <i>call</i> is not present
 */
   inline void operator-=(const std::string& call)
+//  inline void operator-=(const std::string_view call)
     { _records -= call; }
 
 /*! \brief          Remove a call
@@ -444,7 +445,8 @@ public:
     \param  call    target callsign
     \return         whether <i>call</i> is present
 */
-  inline bool contains(const std::string& call) const
+//  inline bool contains(const std::string& call) const
+  inline bool contains(const std::string_view call) const
     {  return _records.contains(call); }
 
 /*! \brief      Return object with only records with xscp below a given percentage value

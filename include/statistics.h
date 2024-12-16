@@ -1,4 +1,4 @@
-// $Id: statistics.h 212 2022-12-12 17:58:32Z  $
+// $Id: statistics.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,7 +42,8 @@ class running_statistics
 {
 protected:
   
-  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one)
+//  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one)
+  STRING_MAP<multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one); key = mult name
   bool                                                              _callsign_mults_used { false };     ///< are callsign mults used? Copied from rules
 
   multiplier                                                        _country_multipliers;               ///< country multipliers
@@ -51,7 +52,8 @@ protected:
 
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;              ///< exchange multipliers; vector so we can keep the correct order
   bool                                                              _exchange_mults_used { false };     ///< are country mults used? Copied from rules
-  std::set<std::string>                                             _exch_mult_fields;                  ///< names of the exch fields that are mults
+//  std::set<std::string>                                             _exch_mult_fields;                  ///< names of the exch fields that are mults
+  STRING_SET                                             _exch_mult_fields;                  ///< names of the exch fields that are mult
 
   bool                                                              _include_qtcs { false };            ///< do we include QTC information?
 
@@ -252,7 +254,8 @@ public:
     \param  m   mode
     \return     all the exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
-  std::map<std::string /* field name */, MULTIPLIER_VALUES /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
+//  std::map<std::string /* field name */, MULTIPLIER_VALUES /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
+  STRING_MAP<MULTIPLIER_VALUES> worked_exchange_mults(const BAND b, const MODE m) const;    // key = field_name; value = values
 
 /*! \brief                                  Is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
@@ -341,7 +344,8 @@ class call_history
 {
 protected:
 
-  std::map<std::string, std::set<bandmode> > _history;                                      ///< container for the history
+//  std::map<std::string, std::set<bandmode> > _history;                                      ///< container for the history
+  STRING_MAP<std::set<bandmode> > _history;                                      ///< container for the history
 
   mutable pt_mutex                           _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
 

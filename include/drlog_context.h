@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 257 2024-12-08 16:29:32Z  $
+// $Id: drlog_context.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -125,7 +125,8 @@ protected:
 
   std::set<BAND>                               _call_history_bands                      { };                            ///< bands to show in CALL HISTORY window
   std::string                                  _call_ok_now_message                     { };                            ///< message if call was changed
-  std::set<std::string>                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
+//  std::set<std::string>                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
+  STRING_SET                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band                 { false };                      ///< are callsign mults per-band?
   bool                                         _callsign_mults_per_mode                 { false };                      ///< are callsign mults per-mode?
   unsigned int                                 _cluster_port                            { 23 };                         ///< port on the cluster server; standard telnet server port
@@ -162,7 +163,8 @@ protected:
   bool                                         _exchange_mults_per_band                 { false };                      ///< are exchange mults per-band?
   bool                                         _exchange_mults_per_mode                 { false };                      ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
-  std::map<std::string, std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
+//  std::map<std::string, std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
+  STRING_MAP<std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
   std::string                                  _exchange_sap                            { };                            ///< exchange in SAP mode
   std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
 
@@ -283,11 +285,13 @@ protected:
   enum AUDIO_RECORDING                         _start_audio_recording                   { AUDIO_RECORDING::DO_NOT_START };  ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band                              { BAND_20 };                        ///< on what band do we start?
   enum MODE                                    _start_mode                              { MODE_CW };                        ///< on which mode do we start?
-  std::map<std::string /* name */,
-             std::pair<std::string /* contents */,
+//  std::map<std::string /* name */,
+//             std::pair<std::string /* contents */,
+//                         std::vector<window_information> > > _static_windows            { };                                ///< size, position and content information for each static window
+  STRING_MAP<std::pair<std::string /* contents */,
                          std::vector<window_information> > > _static_windows            { };                                ///< size, position and content information for each static window
-  bool                                         _sync_keyer                              { false };                          ///< whether to synchronise the rig keyer speed with the computer
 
+  bool                                         _sync_keyer                              { false };                          ///< whether to synchronise the rig keyer speed with the computer
   bool                                         _test                                    { false };                          ///< whether to put rig in TEST mode
   char                                         _thousands_separator                     { ',' };                            ///< character used as thousands separator in numbers
 

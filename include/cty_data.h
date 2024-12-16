@@ -1,4 +1,4 @@
-// $Id: cty_data.h 257 2024-12-08 16:29:32Z  $
+// $Id: cty_data.h 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -137,6 +137,7 @@ class cty_record
 protected:
 
   using ACI_DBTYPE = std::unordered_map<std::string, alternative_country_info>;
+//  using ACI_DBTYPE = UNORDERED_STRING_MAP<alternative_country_info>;
 
   ACI_DBTYPE    _alt_callsigns;         ///< alternative callsigns used by this country
   ACI_DBTYPE    _alt_prefixes;          ///< alternative prefixes used by this country
@@ -228,8 +229,10 @@ class cty_data : public std::vector<cty_record>
 protected:
 
 // all the alternative calls and prefixes (these are also maintained on a per-record basis)
-  std::map<std::string, alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
-  std::map<std::string, alternative_country_info> _alt_prefixes;     ///< key = alternative prefix
+//  std::map<std::string, alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
+  STRING_MAP<alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
+//  std::map<std::string, alternative_country_info> _alt_prefixes;     ///< key = alternative prefix
+  STRING_MAP<alternative_country_info> _alt_prefixes;     ///< key = alternative prefix
 
 public:
 
@@ -518,7 +521,8 @@ public:
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
-  std::unordered_set<std::string> countries(void) const;
+//  std::unordered_set<std::string> countries(void) const;
+  UNORDERED_STRING_SET countries(void) const;
 
 /// create a set of all the canonical prefixes for a particular continent
   std::unordered_set<std::string> countries(const std::string& cont_target) const;

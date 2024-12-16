@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 225 2023-08-14 17:29:55Z  $
+// $Id: statistics.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,7 +138,8 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     }
 
 // callsign mults
-    const set<string>&  callsign_mults { rules.callsign_mults() };      // collection of types of mults based on callsign (e.g., "WPXPX")
+//    const set<string>&  callsign_mults { rules.callsign_mults() };      // collection of types of mults based on callsign (e.g., "WPXPX")
+    const STRING_SET&  callsign_mults { rules.callsign_mults() };      // collection of types of mults based on callsign (e.g., "WPXPX")
 
     if (!callsign_mults.empty())
     { for (const auto& mult_name : callsign_mults)
@@ -286,7 +287,8 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
 // callsign mults
   if (_callsign_mults_used)
-  { const set<string> callsign_mult_names { rules.callsign_mults() };
+  { //const set<string> callsign_mult_names { rules.callsign_mults() };
+    const STRING_SET callsign_mult_names { rules.callsign_mults() };
 
     if (!callsign_mult_names.empty())                              // should always be true
     { for (const auto& callsign_mult_name : callsign_mult_names)
@@ -303,7 +305,8 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
 // country mults
   if (_country_mults_used)
-  { const unordered_set<string> country_mults { rules.country_mults() };
+  { //const unordered_set<string> country_mults { rules.country_mults() };
+    const UNORDERED_STRING_SET country_mults { rules.country_mults() };
 
     _country_multipliers.used(!country_mults.empty() or context.auto_remaining_country_mults());  // should always be true
     _country_multipliers.per_band(rules.country_mults_per_band());
@@ -715,8 +718,10 @@ MULTIPLIER_VALUES running_statistics::worked_callsign_mults(const string& mult_n
     \param  m   target mode
     \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
 */
-map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
-{ map<string, MULTIPLIER_VALUES> rv;
+//map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
+STRING_MAP<MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
+{ //map<string, MULTIPLIER_VALUES> rv;
+  STRING_MAP<MULTIPLIER_VALUES> rv;
 
   SAFELOCK(statistics);
 

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: rules.cpp 258 2024-12-16 16:29:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,8 @@ extern location_database location_db;   ///< location information
 
 extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
 
-using MSI = map<string, unsigned int>;                    ///< syntactic sugar
+//using MSI = map<string, unsigned int>;                    ///< syntactic sugar
+using MSI = STRING_MAP<unsigned int>;                    ///< syntactic sugar
 
 // -------------------------  choice_equivalents  ---------------------------
 
@@ -1117,12 +1118,14 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
   switch (const points_structure& points_this_band { pb.at(b) }; points_this_band.points_type())
   { default :
     case POINTS::NORMAL :
-    { const map<string, unsigned int>& country_points { points_this_band.country_points() };
+    { //const map<string, unsigned int>& country_points { points_this_band.country_points() };
+      const STRING_MAP<unsigned int>& country_points { points_this_band.country_points() };
 
       if (auto cit { country_points.find(canonical_prefix) }; cit != country_points.cend())    // if points are defined for this country
         return cit->second;
 
-      const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
+//      const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
+      const STRING_MAP<unsigned int>& continent_points { points_this_band.continent_points() };
 
       return MUM_VALUE(continent_points, location_db.continent(call), points_this_band.default_points());
     }
