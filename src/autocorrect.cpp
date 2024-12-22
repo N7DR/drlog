@@ -36,18 +36,21 @@ busts_database busts_db;
     \param  str     input call
     \return         <i>str</i> or a corrected version of same
 */
-string autocorrect_database::corrected_call(const string& str) const
+//string autocorrect_database::corrected_call(const string& str) const
+string autocorrect_database::corrected_call(const string_view str) const
 { if (str.empty())
-    return str;
+    return EMPTY_STR;
 
 // insert a mapping into the cache
-  auto insert = [this] (const string& input, const string& output)
-    { _cache += { input, output };
+  auto insert = [this] (const string_view input, const auto output)
+    { const string s { to_string(output) };
+
+      _cache += { input, s };
 
       if (output != input)
         ost << "  autocorrect: " << input << " -> " << output << endl;
 
-      return output;
+      return s;
     };
 
 // return cached value
@@ -64,7 +67,6 @@ string autocorrect_database::corrected_call(const string& str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-//  static const set<string> broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
   static const STRING_SET broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
@@ -190,7 +192,7 @@ string autocorrect_database::corrected_call(const string& str) const
       return insert(str, base_call_to_test + "/P"s);
   }
 
-  return insert(str, str);
+  return insert(str, str );
 }
 
 // -----------  band_dynamic_autocorrect_database  ----------------
@@ -210,15 +212,11 @@ void band_dynamic_autocorrect_database::prune(const int n_minutes)
 
   lock_guard<recursive_mutex> lg(_mtx);
 
-//  for (auto it { _data_map_map_map.begin() }; it != _data_map_map_map.end(); ++it)      // remove old keys (which are times in minutes)
-//    if (it->first <= target_min)
-//      keys_to_remove += it->first;
-//  for (const auto& [ time_in_minutes, map_element ] : _data_map_map_map)
-  for (const auto& [ time_in_minutes, _ ] : _data_map_map_map)
+  for (const auto& [ time_in_minutes, _ ] : _data_map_map_map)      // remove old keys (which are times in minutes); start by filling a container of keys to remove
     if (time_in_minutes <= target_min)
       keys_to_remove += time_in_minutes;
 
-  FOR_ALL(keys_to_remove, [this] (const time_t key_to_remove) { _data_map_map_map -= key_to_remove; });
+  FOR_ALL(keys_to_remove, [this] (const time_t key_to_remove) { _data_map_map_map -= key_to_remove; }); // actually perform the removal
 }
 
 /*! \brief      Set the value of the band
@@ -267,19 +265,26 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
   const F100_TYPE low_target  { f_100 - 2 };            // target - 200 Hz
   const F100_TYPE high_target { f_100 + 3 };            // target + 200 Hz
 
-//  unordered_map<string /* call */, int /* n_occurrences */> hits;
   UNORDERED_STRING_MAP<int> hits;     // key = call; value = n_occurrences
 
-  for (auto t_it { _data_map_map_map.cbegin() }; t_it != _data_map_map_map.cend(); ++t_it)
+//  std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
+
+
+//  for (auto t_it { _data_map_map_map.cbegin() }; t_it != _data_map_map_map.cend(); ++t_it)
+  for (auto& [minutes, freq_map] : _data_map_map_map)
   {
 // test only if frequency is in range
-    const auto lb { (t_it->second).lower_bound(low_target) };
-    const auto ub { (t_it->second).upper_bound(high_target) };
+ //   const auto lb { (t_it->second).lower_bound(low_target) };
+//    const auto ub { (t_it->second).upper_bound(high_target) };
+
+    const auto lb { freq_map.lower_bound(low_target) };
+    const auto ub { freq_map.upper_bound(high_target) };
 
     for (auto f_it { lb }; f_it != ub; ++f_it)
-    { for (auto c_it { f_it->second.cbegin() }; c_it != f_it->second.cend(); ++c_it)
-      { const auto& c { c_it->first };
-        const auto& n { c_it->second };
+    { //for (auto c_it { f_it->second.cbegin() }; c_it != f_it->second.cend(); ++c_it)
+      for (const auto& [c, n] : f_it->second)
+      { //const auto& c { c_it->first };
+        //const auto& n { c_it->second };
 
 // check it if it's a match or a bust of a match
         if (post_call != c)

@@ -36,18 +36,13 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
     \brief  encapsulate necessary stuff for a mult
 */
 
-//using MULTIPLIER_VALUES = std::set<std::string, call_comparison>;
-//using MULTIPLIER_VALUES = std::set<std::string, std::integral_constant<decltype(&compare_calls), &compare_calls>>;
-using MULTIPLIER_VALUES = std::set<std::string, MULT_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator;
-// modified to put zones in correct order
-
 class multiplier
 {
 protected:
 
   bool              _all_values_are_mults { true };     ///< whether allthe known values are actually mults
 
-  MULTIPLIER_VALUES _known      { };     ///< all the (currently) known possible values
+  MULT_SET _known      { };     ///< all the (currently) known possible values
 
   bool              _per_band   { false };  ///< is this multiplier accumulated per band?
   bool              _per_mode   { false };  ///< is this multiplier accumulated per mode?
@@ -58,7 +53,7 @@ protected:
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
    writes and reads to/from _worked from outside the object are non-trivial.
 */
-  std::array< std::array< MULTIPLIER_VALUES /* values */, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
+  std::array< std::array< MULT_SET /* values */, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
 
 // SHOULD I HAVE distinct _worked_values AND _worked_mults??
 
@@ -66,7 +61,7 @@ protected:
     \param  mv  multiplier values
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
-  MULTIPLIER_VALUES _filter_asterisks(const MULTIPLIER_VALUES& mv) const;
+  MULT_SET _filter_asterisks(const MULT_SET& mv) const;
 
 public:
 
@@ -91,6 +86,7 @@ public:
     \return     number of values added
 */
   template<typename T>
+    requires is_string<typename T::value_type>
   unsigned int add_known(const T& k)
     { unsigned int rv { 0 };
 
@@ -160,6 +156,7 @@ public:
     \return         whether <i>str</i> is a known multiplier value
 */
   bool is_known(const std::string& str) const;
+//  bool is_known(const std::string_view str) const;
 
 /*! \brief          Has a station been worked on a particular band and mode?
     \param  str     callsign to test
@@ -195,7 +192,7 @@ public:
 
     Includes any non-mult values
 */
-  MULTIPLIER_VALUES worked(const int b, const int m) const;
+  MULT_SET worked(const int b, const int m) const;
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)

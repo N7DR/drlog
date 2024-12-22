@@ -35,11 +35,9 @@ class autocorrect_database
 {
 protected:
 
-//  std::unordered_set<std::string> _calls;                                 ///< known good calls; can't use heterogenous lookup with unordered set
-  UNORDERED_STRING_SET _calls;
+  UNORDERED_STRING_SET _calls { };                                 ///< known good calls
 
-//  mutable std::map<std::string /* input call */, std::string /* output call */> _cache; ///< cache of input to output call mapping
-  mutable STRING_MAP<std::string /* output call */> _cache; ///< cache of input to output call mapping; key = input call; value = output call
+  mutable STRING_MAP<std::string /* output call */> _cache { }; ///< cache of input to output call mapping; key = input call; value = output call
 
 public:
 
@@ -50,13 +48,15 @@ public:
     \param  callsigns   vector of known-good calls
 */
   inline void init_from_calls(const std::vector<std::string>& callsigns)
-    { FOR_ALL(callsigns, [this] (const std::string& str) { _calls += str; } ); }
+//    { FOR_ALL(callsigns, [this] (const std::string& str) { _calls += str; } ); }
+    { _calls += callsigns; }
 
 /*! \brief                  Is a call a known-good call?
     \param  putative_call   target call
     \return                 whether <i>putative_call</i> is a known-good call
 */
-  inline bool contains(const std::string& putative_call) const
+//  inline bool contains(const std::string& putative_call) const
+  inline bool contains(const std::string_view putative_call) const
     { return _calls.contains(putative_call); }
 
 /// return the number of known-good calls
@@ -71,13 +71,14 @@ public:
     \param  str     input call
     \return         <i>str</i> or a corrected version of same
 */
-  std::string corrected_call(const std::string& str) const;
+//  std::string corrected_call(const std::string& str) const;
+  std::string corrected_call(const std::string_view str) const;
 };
 
 // -----------  band_dynamic_autocorrect_database  ----------------
 
 /*! \class  band_dynamic_autocorrect_database
-    \brief  A single-band database for the dynamic lookup
+    \brief  A single-band database for the dynamic autocorrection lookup
 */
 
 class band_dynamic_autocorrect_database
@@ -91,13 +92,11 @@ protected:
   F100_TYPE _f_min_100;         ///< minimum frequency in hundreds of Hz
   F100_TYPE _f_max_100;         ///< maximum frequency in hundreds of Hz
 
-//  std::map<time_t, std::map<F100_TYPE /* f_100 */, std::unordered_map<std::string /* call */, size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the call appears
   std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
 
-//  std::set<std::string> _all_calls;
   STRING_SET _all_calls;
 
-// this introduces a lot of pain, as it is non-copyable and non-moveable; it means that instances
+// this mutex introduces a lot of pain, as it is non-copyable and non-moveable; it means that instances
 // have first to be default-created, then moved to the correct band, rather than creating in place.
 // There's supposed to be a way to use .try_emplace(), but I can't find the correct magic incantation
 // (https://en.cppreference.com/w/cpp/container/map/try_emplace)
@@ -130,7 +129,7 @@ public:
     \param  post    post to add
 */
   inline void operator+=(const dx_post& post)
-    { this->insert(post); }
+    { this -> insert(post); }
 
 /*! \brief              Convert to a printable string
     \param  n_spaces    number of spaces to prepend to each line
@@ -227,26 +226,25 @@ class busts_database
 {
 protected:
 
-//  std::unordered_set<std::string> _known_busts;         ///< all the known bust-pairs
   UNORDERED_STRING_SET _known_busts;         ///< all the known bust-pairs
-  std::unordered_set<std::string> _known_non_busts;     ///< all the known non-bust pairs
+  UNORDERED_STRING_SET _known_non_busts;     ///< all the known non-bust pairs
 
 public:
 
 /// is a pair of calls a known bust pair? <i>index_string</i> is the result of executing pair_index() on the two calls
-  inline bool is_known_bust(const std::string& index_string) const
+  inline bool is_known_bust(const std::string_view index_string) const
     { return _known_busts.contains(index_string); }
 
 /// is a pair of calls a known non-bust pair? <i>index_string</i> is the result of executing pair_index() on the two calls
-  inline bool is_known_non_bust(const std::string& index_string) const
+  inline bool is_known_non_bust(const std::string_view index_string) const
     { return _known_non_busts.contains(index_string); }
 
 /// add a pair of calls to the set of known busts <i>index_string</i> is the result of executing pair_index() on the two calls
-  inline void known_bust(const std::string& index_string)
+  inline void known_bust(const std::string_view index_string)
     { _known_busts += index_string; }
 
 /// add a pair of calls to the set of known non-busts <i>index_string</i> is the result of executing pair_index() on the two calls
-  inline void known_non_bust(const std::string& index_string)
+  inline void known_non_bust(const std::string_view index_string)
     { _known_non_busts += index_string; }
 };
 

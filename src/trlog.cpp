@@ -44,7 +44,24 @@ struct QSO_CALL
 
 /// month of the year; 1 - 12
 int tr_record::month(void) const
-{ static const unordered_map<string, int> month_nr { { "JAN"s, 1 },
+{
+#if 0
+  static const unordered_map<string, int> month_nr { { "JAN"s, 1 },
+                                                     { "FEB"s, 2 },
+                                                     { "MAR"s, 3 },
+                                                     { "APR"s, 4 },
+                                                     { "MAY"s, 5 },
+                                                     { "JUN"s, 6 },
+                                                     { "JUL"s, 7 },
+                                                     { "AUG"s, 8 },
+                                                     { "SEP"s, 9 },
+                                                     { "OCT"s, 10 },
+                                                     { "NOV"s, 11 },
+                                                     { "DEC"s, 12 }
+                                                   };
+#endif
+
+static const UNORDERED_STRING_MAP<int> month_nr { { "JAN"s, 1 },
                                                      { "FEB"s, 2 },
                                                      { "MAR"s, 3 },
                                                      { "APR"s, 4 },

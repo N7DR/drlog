@@ -68,7 +68,7 @@ int COLOUR_PAIR(const PAIR_NUMBER_TYPE n)
 
 /// default constructor
 screen::screen(void)
-{ constexpr auto SLEEP_TIME { 2s };
+{ constexpr auto SLEEP_TIME { 2s };   // time to wait before exiting
 
   if (setlocale(LC_ALL, "") == nullptr)
   { cerr << "Unable to set locale" << endl;
@@ -84,7 +84,6 @@ screen::screen(void)
 
   if (start_color() == ERR)
   { cerr << "Unable to start colours on screen" << endl;
-//    sleep(2);
     sleep_for(SLEEP_TIME);
     endwin();
     exit(-1);
@@ -92,7 +91,6 @@ screen::screen(void)
 
   if (!has_colors())
   { cerr << "NO COLOURS" << endl;
- //   sleep(2);
     sleep_for(SLEEP_TIME);
     endwin();
     exit(-1);
@@ -378,11 +376,8 @@ window& window::operator<(const vector<std::pair<string, PAIR_NUMBER_TYPE /* col
 
   unsigned int idx { 0 };
 
-//  for (const auto& psi : vec)
   for (const auto& [ str, cp ] : vec)
-  { //const string&           str { psi.first };
-    //const PAIR_NUMBER_TYPE& cp  { psi.second };
-
+  {
 // see if there's enough room on this line
     cursor_position();
 
@@ -844,10 +839,13 @@ void window::show(void)
   }
 }
 
-/*! \brief      Obtain a readable description of the window properties
-    \return     the window properties as a human-readable string
+/*! \brief          Obtain a readable description of the window properties
+    \param    name  name of the window, if any
+    \return         the window properties as a human-readable string
+
+    Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-string window::properties(const string& name)
+string window::properties(const string_view name)
 { string rv { "Window "s + (name.empty() ? EMPTY_STR : name + SPACE_STR) + "is "s + (defined() ? EMPTY_STR : "NOT "s) + "defined"s + EOL };
   
   if (defined())
@@ -937,7 +935,7 @@ bool window::common_processing(const keyboard_event& e)
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
-vector<pair<string, string>> window_overlaps(const map<string /* name */, window_information, std::less<> >& windows)
+vector<pair<string, string>> window_overlaps(const STRING_MAP<window_information>& windows)   // key = window name
 { vector<pair<string, string>> rv;
 
   for (auto it { windows.cbegin() }; it != prev(windows.cend()); ++it)
@@ -1029,7 +1027,9 @@ pair<COLOUR_TYPE, COLOUR_TYPE> cpair::fgbg(const PAIR_NUMBER_TYPE pair_nr) const
     \return         the colour corresponding to <i>str</i>
 */
 COLOUR_TYPE string_to_colour(const string_view str)
-{ static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
+{
+#if 0
+  static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
                                                      { "BLUE"s,    COLOUR_BLUE },
                                                      { "CYAN"s,    COLOUR_CYAN },
                                                      { "GREEN"s,   COLOUR_GREEN },
@@ -1038,11 +1038,20 @@ COLOUR_TYPE string_to_colour(const string_view str)
                                                      { "WHITE"s,   COLOUR_WHITE },
                                                      { "YELLOW"s,  COLOUR_YELLOW }
                                                    };
+#endif
+
+  static const STRING_MAP<COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
+                                                    { "BLUE"s,    COLOUR_BLUE },
+                                                    { "CYAN"s,    COLOUR_CYAN },
+                                                    { "GREEN"s,   COLOUR_GREEN },
+                                                    { "MAGENTA"s, COLOUR_MAGENTA },
+                                                    { "RED"s,     COLOUR_RED },
+                                                    { "WHITE"s,   COLOUR_WHITE },
+                                                    { "YELLOW"s,  COLOUR_YELLOW }
+                                                  };
 
   const string s { to_upper(remove_peripheral_spaces <std::string_view> (str)) };
 
-//  if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
-//    return cit->second;
   if (const optional<COLOUR_TYPE> opt_clr { OPT_MUM_VALUE(colour_map, s) }; opt_clr)
     return opt_clr.value();
 

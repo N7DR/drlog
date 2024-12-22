@@ -79,7 +79,6 @@ using PAIR_NUMBER_TYPE   = short;
 using PAIR_OF_COLOURS = std::pair<COLOUR_TYPE, COLOUR_TYPE>;
 
 using WIN_INT_TYPE = int16_t;
-//using WIN_INT_TYPE = uint16_t;
 
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
@@ -692,11 +691,12 @@ public:
     { return (_insert = !_insert, *this); }
 
 /*! \brief          Obtain a readable description of the window properties
+    \param    name  name of the window, if any
     \return         the window properties as a human-readable string
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-  std::string properties(const std::string& name = std::string { });
+  std::string properties(const std::string_view name = EMPTY_STR);
 
 /// convert to bool
   inline operator bool(void) const
@@ -714,9 +714,7 @@ public:
     \param  windows   map containing all the windows
     \return           all the pairs of names of overlapping windows
 */
-//std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information >& windows);
-
-std::vector<std::pair<std::string, std::string>> window_overlaps(const std::map<std::string /* name */, window_information, std::less<> >& windows);
+std::vector<std::pair<std::string, std::string>> window_overlaps(const STRING_MAP<window_information>& windows); // key = window name
 
 /*! \brief          Move the cursor in a window
     \param  win     the window to be affected
@@ -738,7 +736,23 @@ inline window& operator<(window& win, const cursor_relative& cr)
   { return win.move_cursor_relative(cr.x(), cr.y()); }
 
 /// trivial class for centring a string on line y of a window
-WRAPPER_2(centre, std::string, s, int, y);
+class centre
+{
+protected:
+
+  std::string _s;
+  int         _y;
+
+public:
+
+  inline centre(const std::string_view sv, const int i) :
+    _s(sv),
+    _y(i)
+  { }
+
+  READ_AND_WRITE_STR(s);
+  READ_AND_WRITE(y);
+};
 
 /*! \brief          Write a centred string in a window
     \param  win     target window

@@ -40,9 +40,6 @@ class qtc_entry;
 
 using QTC_AND_STATUS = std::pair<qtc_entry, QTC_STATUS>;
 
-//inline qtc_entry& qe(const QTC_AND_STATUS& qes)
-//  { return (qes.first); }
-
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
 //                             -qtc rcvd by - --------------qtc info received-----------------
@@ -83,7 +80,7 @@ public:
 /*! \brief          Explicitly set the serial number sent by the other station
     \param  str     new serial number
 */
-  inline void serno(const std::string& str)
+  inline void serno(const std::string_view str)
     { _serno = pad_right(str, 4); }
 
 /// qtc_entry == qso
@@ -365,7 +362,7 @@ public:
     \param   destination_callsign   the station to which the QTCs have been sent
     \return                         number of QTCs that have been sent to <i>destination_callsign</i>
 */
-  unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
+  unsigned int n_qtcs_sent_to(const std::string_view destination_callsign) const;
 
 /*! \brief                          Get the total number of QTC entries that have been sent
     \return                         the number of QTC entries that have been sent
@@ -405,7 +402,7 @@ public:
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string()) const;
+  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string { }) const;
 
 /*! \brief          Add all unsent QSOs from a logbook to the buffer
     \param  logbk   logbook
@@ -413,7 +410,6 @@ public:
     Does not add QSOs already in the buffer (either as sent or unsent).
     Does not add non-EU QSOs.
 */
-//  void operator+=(const logbook&);
   inline void operator+=(const logbook& logbk)
     { FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { (*this) += qso; } ); }
 

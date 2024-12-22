@@ -38,7 +38,8 @@ protected:
   std::chrono::system_clock::time_point _last_update_time;         ///< time at which /proc/meminfo was last read
   std::chrono::system_clock::duration   _minimum_interval;         ///< minimum interval between unforced reads of /proc/meminfo
 
-  std::unordered_map<std::string /* name */, uint64_t /* value */> _values; ///< all the values from /proc/meminfo; see "man free", "man procfs"
+//  std::unordered_map<std::string /* name */, uint64_t /* value */> _values; ///< all the values from /proc/meminfo; see "man free", "man procfs"
+  UNORDERED_STRING_MAP<uint64_t /* value */> _values; ///< all the values from /proc/meminfo; see "man free", "man procfs"; key = name
 
 /*! \brief          Possibly read /proc/meminfo
     \param  force   whether to force reading of /proc/meminfo regardless of <i>_last_update_time</i> and <i>_minimum_interval</i>

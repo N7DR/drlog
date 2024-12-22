@@ -108,7 +108,6 @@ std::vector<std::string> from_csv(std::string_view line);
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-//std::string duplicate_char(const std::string& s, const char c = '"');
 std::string duplicate_char(const std::string_view s, const char c = '"');
 
 /*! \brief                      Provide a formatted UTC date/time string
@@ -130,23 +129,8 @@ std::string format_time(const std::string& format, const tm* tmp);
     \param  sv  string_view
     \return     <i>sv</i> converted to type <i>T</i>
 
-     https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
+    https://stackoverflow.com/questions/68615212/how-to-constrain-a-template-six-different-usages-of-stdenable-if
 */
-#if 0
-template <class T>
-T from_string(const std::convertible_to<std::string_view> auto& sv)
-{ T rv { };
-
-  std::from_chars(sv.data(), sv.data() + sv.size(), rv);
-
-  return rv;
-}
-#endif
-
-//template <class T>
-//inline T from_string(std::string_view sv)
-//{ return from_string<T>(std::string { sv }); }
-#if 1
 template <class T>
 T from_string(const std::string_view sv)
 { T rv { };
@@ -155,7 +139,6 @@ T from_string(const std::string_view sv)
 
   return rv;
 }
-#endif
 
 /*! \brief      Generic conversion from string
     \param  s   string
@@ -163,7 +146,6 @@ T from_string(const std::string_view sv)
 
     This is a complex no-op if type <i>T</i> is a string
 */
-#if 1
 template <class T>
 T from_string(const std::string& s)
 { std::istringstream stream { s };
@@ -172,19 +154,15 @@ T from_string(const std::string& s)
   stream >> t;
   return t;
 }
-#endif
 
-//template <class T>
-//inline T from_string(const std::string& s)
-//  { return from_string<T>(std::string_view { s }); }
+/// an explicit no-op
+inline std::string from_string(const std::string& s)
+  { return s; }
 
 /*! \brief      Generic conversion from C-style char*
     \param  cp  pointer to start of C string
     \return     <i>cp</i> converted to type <i>T</i>
 */
-//template <class T>
-//inline T from_string(const char* cp)
-//  { return from_string<T>(std::string { cp }); }
 template <class T>
 inline T from_string(const char* cp)
   { return from_string<T>(std::string_view { cp, strlen(cp) }); }
@@ -1289,18 +1267,27 @@ inline bool is_legal_value(const std::string_view value, const std::string_view 
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-bool compare_calls(const std::string& call1, const std::string& call2);
+//bool compare_calls(const std::string& call1, const std::string& call2);
+bool compare_calls(const std::string_view call1, const std::string_view call2);
+
+using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare callsigns
+
+using CALL_SET = std::set<std::string, CALL_COMPARISON>;   // elements are in callsign order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator; heterogeneous lookup automatically supported because of the signature of compare_calls()
 
 /*! \brief          Is the value of one mult earlier than another?
     \param  mult1   first mult value
     \param  mult2   second mult value
     \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
 */
-bool compare_mults(const std::string& mult1, const std::string& mult2);
+//bool compare_mults(const std::string& mult1, const std::string& mult2);
+bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 
 // https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
 //using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
 using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compare_mults>;   // type that knows how to compare mult strings (for exchange mults)
+
+using MULT_SET = std::set<std::string, MULT_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator; heterogeneous lookup automatically supported because of the signature of compare_mults()
+
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -1468,6 +1455,7 @@ std::string remove_substrings(const std::string_view cs, const std::vector<std::
 */
 template <class T, class C>
 T regex_matches(C&& container, const std::string& s)
+//T regex_matches(C&& container, const std::string_view s)
 { T rv { };
      
   const std::regex rgx { s };
@@ -1539,43 +1527,11 @@ inline std::string operator+(const std::string_view sv1, const std::string& s2)
 
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
-std::string readuntil(std::istream& in, const std::string_view delimiter, const DELIMITERS keep_or_drop = DELIMITERS::DROP);
+std::string read_until(std::istream& in, const std::string_view delimiter, const DELIMITERS keep_or_drop = DELIMITERS::DROP);
 
 /// a standard hash function for strings (the DJB function)
 //constexpr long unsigned int STR_HASH(const char* str, int off = 0)
 //  { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }
-
-#if 0
-// https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
-struct stringly_hash
-{ using is_transparent = void;
-
-  [[nodiscard]] inline size_t operator()(const char* rhs) const
-    { return std::hash<std::string_view>{}(rhs); }
-
-  [[nodiscard]] inline size_t operator()(const std::string_view rhs) const
-    { return std::hash<std::string_view>{}(rhs); }
-
-  [[nodiscard]] inline size_t operator()(const std::string& rhs) const
-    { return std::hash<std::string>{}(rhs); }
-};
-
-// make the heterogeneous lookup versions easily available
-
-// hetrogenous lookup for unordered maps with string keys
-template <typename ValueType>
-using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
-
-// hetrogenous lookup for unordered sets of strings
-using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
-
-// hetrogenous lookup for ordered maps with string keys
-template <typename ValueType>
-using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
-
-// hetrogenous lookup for ordered sets of strings
-using STRING_SET = std::set<std::string, std::less<>>;
-#endif
 
 // -------------------------------------- Errors  -----------------------------------
 

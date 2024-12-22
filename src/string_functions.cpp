@@ -675,7 +675,8 @@ string convert_to_dotted_decimal(const uint32_t val)
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-bool compare_calls(const string& call1, const string& call2)
+//bool compare_calls(const string& call1, const string& call2)
+bool compare_calls(const string_view call1, const string_view call2)
 {
 /* callsign sort order
 
@@ -733,7 +734,8 @@ bool compare_calls(const string& call1, const string& call2)
     \param  mult2   second mult value
     \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
 */
-bool compare_mults(const string& mult1, const string& mult2)
+//bool compare_mults(const string& mult1, const string& mult2)
+bool compare_mults(const string_view mult1, const string_view mult2)
 { if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and      // if two 2-digit numeric values (such as zones)
        (mult2.size() == 2) and isdigit(mult2[0]) and isdigit(mult2[1]) )
     return (mult1 < mult2);                                                     // simple string comparison
@@ -1008,7 +1010,7 @@ string to_printable_string(const string_view str)
 
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
-string readuntil(istream& in, const string_view delimiter,const DELIMITERS keep_or_drop)
+string read_until(istream& in, const string_view delimiter,const DELIMITERS keep_or_drop)
 { string cr;
 
   const char   delim { *(delimiter.rbegin()) };
@@ -1024,6 +1026,5 @@ string readuntil(istream& in, const string_view delimiter,const DELIMITERS keep_
     tot = cr.size();
   } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
 
-//  return cr.substr(0, tot - sz);  // or return cr; if you want to keep the delimiter
-  return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);  // or return cr; if you want to keep the delimiter
+  return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);
 }

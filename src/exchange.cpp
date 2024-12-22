@@ -45,24 +45,20 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields to filenames
 */
-//void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
 void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
   { const string& field_name { this_pair.first };
-    //const string  filename   { truncate_before_first <std::string> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
-    string_view  filename   { truncate_before_first <std::string_view> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
+    string_view   filename   { truncate_before_first <std::string_view> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two
 
     try
-    { //unordered_map<string /* call */, string /* prefill value */> call_value_map;
-      UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
+    { UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
 
 // figure out the columns to be read; column numbers in the config file are wrt 1
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
       if (contains(this_pair.second, ':'))
-      { //const vector<string> fields { split_string <std::string> (this_pair.second, ':') };
-        const vector<string_view> fields { split_string <std::string_view> (this_pair.second, ':') };
+      { const vector<string_view> fields { split_string <std::string_view> (this_pair.second, ':') };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
@@ -96,18 +92,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign) const
-//string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
-{ //const auto it { _db.find(field_name) };
-
-  //return ( (it == _db.cend()) ? string { } : MUM_VALUE(it->second, callsign) );
-
-  const auto opt { OPT_MUM_VALUE(_db, field_name) };
-
-//  if (opt)
-//    return MUM_VALUE(opt.value(), callsign);
-//  else
-//    return string { };
+string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
+{ const auto opt { OPT_MUM_VALUE(_db, field_name) };
 
   return ( opt ? MUM_VALUE(opt.value(), callsign) : string { } );
 }
@@ -368,7 +354,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the section
   ost << "getting section" << endl;
-  map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
+  STRING_MAP<EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   index = 0;
 
@@ -456,12 +442,13 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
 */
-void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) const
+//void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) const
+void parsed_exchange::_print_tuple(const tuple<int, string, STRING_SET>& t) const
 { ost << "tuple:" << endl;
   ost << "  field number: " << get<0>(t) << endl;
   ost << "  field value: " << get<1>(t) << endl;
 
-  const set<string>& ss { get<2>(t) };
+  const STRING_SET& ss { get<2>(t) };
 
   ost << "  { ";
 
@@ -475,7 +462,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
     \param  unassigned_tuples       all the unassigned fields
     \param  tuple_map_assignmens    the assignments
 */
-void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tuples, std::map<std::string, TRIPLET>& tuple_map_assignments)
+void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tuples, STRING_MAP<TRIPLET>& tuple_map_assignments)
 { size_t old_size_of_tuple_deque;
 
   do
@@ -495,7 +482,7 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     erase_if(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
     for (auto& t : unassigned_tuples)
-    { set<string>& ss { FIELD_NAMES(t) };
+    { STRING_SET& ss { FIELD_NAMES(t) };
 
       FOR_ALL(tuple_map_assignments, [&ss] (const auto& tm) { ss -= tm.first; });  // for each one that has been definitively assigned
     }
@@ -519,12 +506,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   vector<string> copy_received_values(received_values);
 
-//  for (auto v : received_values)
-//    ost << "received value: " << v << endl;
-
   const vector<exchange_field> exchange_template { rules.unexpanded_exch(canonical_prefix, m) };
-
-//  ost << " number of exchange fields = " << exchange_template.size() << endl;
 
   if (is_ss)                // SS is oh-so-special
   { const parsed_ss_exchange exch(from_callsign, received_values);
@@ -548,7 +530,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   }
 
 // how many fields are optional?
-  set<string> optional_field_names;
+//  set<string> optional_field_names;
+  STRING_SET optional_field_names;
 
   FOR_ALL(exchange_template, [&optional_field_names] (const exchange_field& ef) { if (ef.is_optional())
                                                                                     optional_field_names += ef.name();
@@ -558,10 +541,14 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   FOR_ALL(exchange_template, [this] (const exchange_field& ef) { _fields += { ef.name(), EMPTY_STRING, ef.is_mult() }; } );
 
 // if there's an explicit . field, use it to replace the call
-  for (const auto& received_value : received_values)
-  { if (contains(received_value, '.'))
-      _replacement_call = remove_char(received_value, '.');
-  }
+//  for (const auto& received_value : received_values)
+//  { if (contains(received_value, '.'))
+ //     _replacement_call = remove_char(received_value, '.');
+//  }
+
+  FOR_ALL(received_values, [this] (const auto& received_value) { if (contains(received_value, '.'))
+                                                                   _replacement_call = remove_char(received_value, '.');
+                                                               });
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
   { copy_received_values.clear();
@@ -570,33 +557,23 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   {
 // for each received field, which output fields does it match?
-    map<int /* received field number */, set<string>> matches;
+    map<int /* received field number */, STRING_SET> matches;
 
-    const map<string /* field name */, EFT> exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
-
-//    ost << "size of exchange_field_eft = " << exchange_field_eft.size() << endl;
-
-//    FOR_ALL(exchange_field_eft, [] (const auto& pr) { const string& field_name { pr.first };
-//                                                                                 ost << "field name = " << field_name << endl;
-//                                                                               } );
+    const STRING_MAP<EFT> exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
     int field_nr { 0 };
 
     for (const string& received_value : copy_received_values)
-    { //ost << "this received value = " << received_value << endl;
-
-      set<string> match;
+    { STRING_SET match;
 
       for (const auto& field : exchange_template)
       { const string& field_name { field.name() };
-
-        //ost << "testing field " << field_name << " for possible match" << endl;
 
         try
         { if (contains(field_name, '+'))                                           // if it's a CHOICE
           { const vector<string> choices_vec { split_string <std::string> (field_name, '+') };
 
-            set<string> choices(choices_vec.cbegin(), choices_vec.cend());
+            STRING_SET choices(choices_vec.cbegin(), choices_vec.cend());
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -608,12 +585,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
             }
           }
           else    // not a choice
-          { //ost << "not a choice" << endl;
-
-            if (exchange_field_eft.at(field_name).is_legal_value(received_value))
-            { //ost << received_value << " is a legal value for field " << field_name << endl;
+          { if (exchange_field_eft.at(field_name).is_legal_value(received_value))
               match += field_name;
-            }
           }
         }
 
@@ -631,7 +604,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       tuple_deque += { field_number, copy_received_values[field_number], matching_names };  // TRIPLET: field number, value, matching field names
 
     vector<TRIPLET>      tuple_vector_assignments;
-    map<string, TRIPLET> tuple_map_assignments;
+//    map<string, TRIPLET> tuple_map_assignments;
+    STRING_MAP<TRIPLET> tuple_map_assignments;
 
 // find entries with only one entry in set
     _assign_unambiguous_fields(tuple_deque, tuple_map_assignments);
@@ -647,7 +621,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       const TRIPLET& t { tuple_deque[0] };    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
-//      const auto cit { FIND_IF(exchange_template, [&t] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
       const auto cit { FIND_IF(exchange_template, [&t] (const exchange_field& ef) { return ( FIELD_NAMES(t).contains(ef.name())); } ) };
 
       if (cit != exchange_template.cend())
@@ -681,7 +654,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
 
         const TRIPLET& t   { tuple_deque[0] };
-//        const auto     cit { FIND_IF(exchange_template, [t] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
         const auto     cit { FIND_IF(exchange_template, [t] (const exchange_field& ef) { return ( FIELD_NAMES(t).contains(ef.name())); } ) };
 
         if (cit == exchange_template.cend())
@@ -742,8 +714,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       FOR_ALL(_fields, [&rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
   }  // end of !truncate received values
-
-//  ost << "parsed_exchange: " << boolalpha << _valid << endl;
 }
 
 #undef FIELD_NUMBER
@@ -808,8 +778,8 @@ string parsed_exchange::resolve_choice(const string& field_name, const string& r
   if (!contains(field_name, '+'))   // if not a CHOICE
     return field_name;
 
-  const vector<string>                     choices_vec        { split_string <std::string> (field_name, '+') };
-  const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
+  const vector<string>   choices_vec        { split_string <std::string> (field_name, '+') };
+  const STRING_MAP<EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
   { try
@@ -865,13 +835,10 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-//string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
+string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
 
 // first, check the database
-//  if (const auto it { _db.find( pair<string, string>( { callsign, field_name } ) ) }; it != _db.end())
-//    return it->second;
   if (const auto opt { OPT_MUM_VALUE(_db, pair<string, string> { callsign, field_name }) }; opt)
     return opt.value();
 
@@ -922,11 +889,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
        return abbreviations[call_area - '0'];    // convert to number
     };
 
-//  static const map<string /* prefix */, string /* province */, less<>> province_map { { "VO1"s, "NF"s },
-//                                                                                      { "VO2"s, "LB"s },
-//                                                                                      { "VY2"s, "PE"s }
-//                                                                                    };
-
   static const STRING_MAP<string> province_map { { "VO1"s, "NF"s },  // prefix, province
                                                  { "VO2"s, "LB"s },
                                                  { "VY2"s, "PE"s }
@@ -951,26 +913,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
         rv = to_upper(drm_line.qth());
     }
 
-//    auto value_from_ve_prefix = [&ve_area_to_province] (const string& pfx)
- //     { const auto opt { OPT_MUM_VALUE(province_map, pfx) };
-//
-//        return ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
-//      };
-
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
-    { rv = value_from_ve_prefix(wpx_prefix(callsign));
-
-      //const string pfx { wpx_prefix(callsign) };
-
-//      rv = MUM_VALUE(province_map, pfx);
-
-//      if (rv.empty())
-//        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
-
-//      const auto opt { OPT_MUM_VALUE(province_map, pfx) };
-
-//      rv = ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
-    }
+      rv = value_from_ve_prefix(wpx_prefix(callsign));
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
@@ -986,20 +930,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     }
 
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
-    { rv = value_from_ve_prefix(wpx_prefix(callsign));
-
- //     const string pfx { wpx_prefix(callsign) };
-
-//      rv = MUM_VALUE(province_map, pfx);
-
-//      if (rv.empty())
-//        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
-
-
-//      const auto opt { OPT_MUM_VALUE(province_map, pfx) };
-
-//      rv = ( opt ? opt.value() : ve_area_to_province( pfx[pfx.length() - 1] ) ); // call area is last character in prefix
-    }
+      rv = value_from_ve_prefix(wpx_prefix(callsign));
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
@@ -1015,7 +946,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
       { const string_view current_year   { substring <string_view> (dts, 0, 4) };
         const string_view year_from_file { substring <string_view> (encoded_age_from_file, 0, 4) };
         const string_view age_from_file  { substring <string_view> (encoded_age_from_file, 9) };
-//        const string      current_age    { ::to_string( from_string<int>(age_from_file) + from_string<int>(current_year) - from_string<int>(year_from_file) ) };
         const string      current_age    { ((age_from_file == "00"sv) or (age_from_file == "01"sv))   // don't change if [old, YL] 00 or [new, anyone] 01
                                              ? age_from_file
                                              : ::to_string( from_string<int>(age_from_file) + from_string<int>(current_year) - from_string<int>(year_from_file) )
@@ -1036,7 +966,6 @@ string exchange_field_database::guess_value(const string& callsign, const string
       return insert_value(rv, INSERT_CANONICAL_VALUE);
 
 // no entry in drmaster database; try the location database
-//    return insert_value(to_string(location_db.cq_zone(callsign)), INSERT_CANONICAL_VALUE);
     return insert_value(location_db.cq_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
@@ -1061,62 +990,71 @@ string exchange_field_database::guess_value(const string& callsign, const string
   if (field_name == "IOTA"sv)
   { string rv { drm_line.iota() };
 
+//   https://www.qsl.net/xe2nat/iotalist.htm; https://www.qsl.net/co8tw/iota.htm
+  // up to D6, AF007
+
     if (rv.empty())
-    { static const unordered_map<string /* cp */, string /* IOTA number */> iota_map { { "CM"s,   "NA015"s },
-                                                                                       { "CY9"s,  "NA094"s },
-                                                                                       { "CY0"s,  "NA063"s },
-                                                                                       { "C6"s,   "NA001"s },
-                                                                                       { "EA6"s,  "EU004"s },
-                                                                                       { "FG"s,   "NA102"s },
-                                                                                       { "FJ"s,   "NA146"s },
-                                                                                       { "FM"s,   "NA107"s },
-                                                                                       { "FP"s,   "NA032"s },
-                                                                                       { "FS"s,   "NA105"s },
-                                                                                       { "G"s,    "EU005"s },
-                                                                                       { "GJ"s,   "EU013"s },
-                                                                                       { "GM"s,   "EU005"s },
-                                                                                       { "GW"s,   "EU005"s },
-                                                                                       { "HH"s,   "NA096"s },
-                                                                                       { "HI"s,   "NA096"s },
-                                                                                       { "HK0"s,  "NA033"s },
-                                                                                       { "IS"s,   "EU024"s },
-                                                                                       { "IT9"s,  "EU025"s }, // WAE country only
-                                                                                       { "JW"s,   "EU026"s },
-                                                                                       { "JX"s,   "EU022"s },
-                                                                                       { "J3"s,   "NA024"s },
-                                                                                       { "J6"s,   "NA108"s },
-                                                                                       { "J7"s,   "NA101"s },
-                                                                                       { "J8"s,   "NA109"s },
-                                                                                       { "KP1"s,  "NA098"s },
-                                                                                       { "KP2"s,  "NA106"s },
-                                                                                       { "KP4"s,  "NA099"s },
-                                                                                       { "KP5"s,  "NA095"s },
-                                                                                       { "OH0"s,  "EU002"s },
-                                                                                       { "OJ0"s,  "EU053"s },
-                                                                                       { "OX"s,   "NA018"s },
-                                                                                       { "OY"s,   "EU018"s },
-                                                                                       { "PJ5"s,  "NA145"s },
-                                                                                       { "R1FJ"s, "EU019"s },
-                                                                                       { "SV5"s,  "EU001"s },
-                                                                                       { "SV9"s,  "EU015"s },
-                                                                                       { "TI9"s,  "NA012"s },
-                                                                                       { "TF"s,   "EU021"s },
-                                                                                       { "TK"s,   "EU014"s },
-                                                                                       { "VO1"s,  "NA027"s },
-                                                                                       { "VP2E"s, "NA022"s },
-                                                                                       { "VP2M"s, "NA103"s },
-                                                                                       { "VP2V"s, "NA023"s },
-                                                                                       { "VP9"s,  "NA005"s },
-                                                                                       { "VY2"s,  "NA029"s },
-                                                                                       { "V2"s,   "NA100"s },
-                                                                                       { "V4"s,   "NA104"s },
-                                                                                       { "XE4"s,  "NA030"s },
-                                                                                       { "YV0"s,  "NA020"s },
-                                                                                       { "ZF"s,   "NA016"s },
-                                                                                       { "6Y"s,   "NA097"s },
-                                                                                       { "8P"s,   "NA021"s },
-                                                                                       { "9H"s,   "EU023"s }
-                                                                                     };
+    { static const UNORDERED_STRING_MAP<string> iota_map { { "CM"s,   "NA015"s },  // key = cp, value = IOTA number
+                                                           { "CY9"s,  "NA094"s },
+                                                           { "CY0"s,  "NA063"s },
+                                                           { "C6"s,   "NA001"s },
+                                                           { "D4"s,   "AF005"s },
+                                                           { "D6"s,   "AF007"s },
+                                                           { "EA6"s,  "EU004"s },
+                                                           { "EA8"s,  "AF004"s },
+                                                           { "FG"s,   "NA102"s },
+                                                           { "FJ"s,   "NA146"s },
+                                                           { "FM"s,   "NA107"s },
+                                                           { "FP"s,   "NA032"s },
+                                                           { "FS"s,   "NA105"s },
+                                                           { "G"s,    "EU005"s },
+                                                           { "GJ"s,   "EU013"s },
+                                                           { "GM"s,   "EU005"s },
+                                                           { "GW"s,   "EU005"s },
+                                                           { "HH"s,   "NA096"s },
+                                                           { "HI"s,   "NA096"s },
+                                                           { "HK0"s,  "NA033"s },
+                                                           { "IS"s,   "EU024"s },
+                                                           { "IT9"s,  "EU025"s }, // WAE country only
+                                                           { "JW"s,   "EU026"s },
+                                                           { "JX"s,   "EU022"s },
+                                                           { "J3"s,   "NA024"s },
+                                                           { "J6"s,   "NA108"s },
+                                                           { "J7"s,   "NA101"s },
+                                                           { "J8"s,   "NA109"s },
+                                                           { "KP1"s,  "NA098"s },
+                                                           { "KP2"s,  "NA106"s },
+                                                           { "KP4"s,  "NA099"s },
+                                                           { "KP5"s,  "NA095"s },
+                                                           { "OH0"s,  "EU002"s },
+                                                           { "OJ0"s,  "EU053"s },
+                                                           { "OX"s,   "NA018"s },
+                                                           { "OY"s,   "EU018"s },
+                                                           { "PJ5"s,  "NA145"s },
+                                                           { "R1FJ"s, "EU019"s },
+                                                           { "SV5"s,  "EU001"s },
+                                                           { "SV9"s,  "EU015"s },
+                                                           { "TI9"s,  "NA012"s },
+                                                           { "TF"s,   "EU021"s },
+                                                           { "TK"s,   "EU014"s },
+                                                           { "VO1"s,  "NA027"s },
+                                                           { "VP2E"s, "NA022"s },
+                                                           { "VP2M"s, "NA103"s },
+                                                           { "VP2V"s, "NA023"s },
+                                                           { "VP9"s,  "NA005"s },
+                                                           { "VQ9"s,  "AF006"s },
+                                                           { "VY2"s,  "NA029"s },
+                                                           { "V2"s,   "NA100"s },
+                                                           { "V4"s,   "NA104"s },
+                                                           { "XE4"s,  "NA030"s },
+                                                           { "YV0"s,  "NA020"s },
+                                                           { "ZD8"s,  "AF003"s },
+                                                           { "ZF"s,   "NA016"s },
+                                                           { "6Y"s,   "NA097"s },
+                                                           { "8P"s,   "NA021"s },
+                                                           { "9H"s,   "EU023"s }
+                                                        };
+
 
         rv = MUM_VALUE(iota_map, location_db.canonical_prefix(callsign)); 
       }
@@ -1134,10 +1072,12 @@ string exchange_field_database::guess_value(const string& callsign, const string
     return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
-  if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+//  if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+  if ( (field_name == "JAPREF"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth());
 
-  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+//  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+  if ( (field_name == "KCJ"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
     return insert_value(drm_line.qth2());    // I think that this should work
 
   if (field_name == "NAME"sv)
@@ -1158,7 +1098,8 @@ string exchange_field_database::guess_value(const string& callsign, const string
   }
 
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
-  { static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
+  { //static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
+    static const STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
 
@@ -1210,7 +1151,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
   }
 
 // give up
-  _db += { { callsign, field_name }, EMPTY_STR };  // so we find it next time
+  _db += { { string { callsign }, field_name }, EMPTY_STR };  // so we find it next time
 
   return EMPTY_STR;
 }

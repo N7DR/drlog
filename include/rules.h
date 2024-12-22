@@ -57,7 +57,7 @@ class choice_equivalents
 {
 protected:
 
-  std::map<std::string /* one possible field name */, std::string /* other possible field name */> _choices;    // the choices; could have inherited this class from this type
+  STRING_MAP<std::string /* other possible field name */> _choices;    // the choices; could have inherited this class from this type; key = one possible field name; value = other possible field name
 
 public:
 
@@ -71,14 +71,14 @@ public:
 
     Throws exception if <i>ch1_ch2<i> appears to be malformed
 */
-  void operator+=(const std::string& ch1_ch2);
+  void operator+=(const std::string_view ch1_ch2);
 
 /*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
     \param  ch1_ch2     the two fields, separated by a plus sign
 
     If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
 */
-  void add_if_choice(const std::string& ch1_ch2);
+  void add_if_choice(const std::string_view ch1_ch2);
 
 /*! \brief              Return the other choice of a pair
     \param  field_name  current field name
@@ -113,20 +113,13 @@ public:
     \brief  Encapsulates the name and legal values for an exchange field
 */
 
-using MAP_STR_TO_SET =  std::map< std::string, std::set<std::string> >;
-//using MAP_STR_TO_SET =  std::map< std::string, std::set<std::string, std::less<>>, std::less<> >; // heterogeneous lookup for map and set... this turns out to be far too painful to use
-
 class exchange_field_values
 {
 protected:
 
   std::string _name;                           ///< name of the exchange field
 
-//  std::map<std::string,                        /* a canonical field value */
-//          std::set                             /* each equivalent value is a member of the set, including the canonical value */
-//            <std::string                       /* indistinguishable legal values */
-//            >> _values;                        ///< associate legal values with a canonical value
-  MAP_STR_TO_SET _values;   ///< associate legal values with a canonical value
+  STRING_MAP<STRING_SET> _values;   ///< associate legal values with a canonical value
 
 public:
 
@@ -144,8 +137,7 @@ public:
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
 */
-//  inline exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
-  inline exchange_field_values(const std::string& nm, const MAP_STR_TO_SET& mss) :
+  inline exchange_field_values(const std::string& nm, const STRING_MAP<STRING_SET>& mss) :
     _name(nm),
     _values(mss)
   { }
@@ -159,7 +151,7 @@ public:
     Also adds <i>cv</i> as a possible value. Does nothing if <i>cv</i> is already
     present as a canonical value.
 */
-  void add_canonical_value(const std::string& cv);
+  void add_canonical_value(const std::string_view cv);
 
 /*! \brief      Add a possible value
     \param  cv  canonical value to which <i>v</i> is to be added
@@ -167,7 +159,7 @@ public:
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-  void add_value(const std::string& cv, const std::string& v);
+  void add_value(const std::string_view cv, const std::string& v);
 
 /*! \brief          Add a possible value
     \param  pss     pair to be added, containing: canonical value to which <i>v</i> is to be added, value to be added
@@ -184,8 +176,7 @@ public:
     Returns 0 if the canonical value does not exist
 */
   inline size_t n_values(const std::string& cv) const
-    { return MUMF_VALUE(_values, cv, &std::set<std::string>::size); }
-//    { return MUMF_VALUE(_values, cv, &((decltype(_values)::value_type)::size)); }
+    { return MUMF_VALUE(_values, cv, &STRING_SET::size); }
 
 /// Get the number of canonical values
   inline size_t n_canonical_values(void) const
@@ -196,7 +187,8 @@ public:
 
     Returns empty set if there are no canonical values
 */
-  std::set<std::string> canonical_values(void) const;
+//  std::set<std::string> canonical_values(void) const;
+  STRING_SET canonical_values(void) const;
 
 /*! \brief      Get all the legal values for a single canonical value
     \param  cv  canonical value
@@ -204,8 +196,7 @@ public:
 
     Returns empty set if the canonical value does not exist
 */
-  inline std::set<std::string> values(const std::string& cv) const
-//  inline std::set<std::string, std::less<>> values(const std::string_view cv) const
+  inline STRING_SET values(const std::string_view cv) const
     { return MUM_VALUE(_values, cv); }
 
 /*! \brief      Get all the legal values (for all canonical values)
@@ -283,7 +274,7 @@ public:
 
     Also the default constructor
 */
-  inline explicit exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false) :
+  inline explicit exchange_field(const std::string& nm = std::string { }, const bool mult = false, const bool opt = false) :
     _name(nm),
     _is_mult(mult),
     _is_optional(opt)
@@ -340,12 +331,10 @@ class points_structure
 {
 protected:
 
-//  std::map<std::string, unsigned int> _continent_points;                    ///< per-continent points
   STRING_MAP<unsigned int> _continent_points;                    ///< per-continent points
-//  std::map<std::string, unsigned int> _country_points;                      ///< per-country points
   STRING_MAP<unsigned int> _country_points;                      ///< per-country points
-  unsigned int                        _default_points;                      ///< default points
-  POINTS                              _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
+  unsigned int             _default_points;                      ///< default points
+  POINTS                   _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
 
 public:
 
@@ -384,18 +373,16 @@ class contest_rules
                      };
 
 protected:
-    
-  std::set<std::string>               _bonus_countries;         ///< countries that are eligible for bonus points
 
-//  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+//  std::set<std::string>               _bonus_countries;         ///< countries that are eligible for bonus points
+  STRING_SET               _bonus_countries;         ///< countries that are eligible for bonus points
+
   STRING_SET               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
-//  std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
   UNORDERED_STRING_SET     _countries;                     ///< collection of canonical prefixes for all the valid countries
-//  std::unordered_set<std::string>     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   UNORDERED_STRING_SET     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
@@ -409,15 +396,15 @@ protected:
   bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
-  std::map<std::string /* exchange field name */, unsigned int>                             _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
+//  std::map<std::string /* exchange field name */, unsigned int>                             _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
+  STRING_MAP</* exchange field name */ unsigned int>                             _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
+  std::map<MODE, STRING_MAP</* cp */ std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
   std::vector<BAND>                                     _permitted_bands;   ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   std::set<MODE>                                        _permitted_modes;   ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;            ///< points structure for each band and mode
   
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;             ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
-//  std::map<MODE, std::map<std::string /* canonical prefix */, choice_equivalents>>          _choice_exchange_equivalents;   ///< choices
+  std::map<MODE, STRING_MAP</* cp */ std::vector<exchange_field>>> _received_exchange;             ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
   std::map<MODE, STRING_MAP<choice_equivalents>>          _choice_exchange_equivalents;   ///< choices; key = canonical prefix
 
   std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
@@ -432,9 +419,7 @@ protected:
   std::vector<exchange_field_values>  _exch_values;
 
 /// all the legal values for each exchange field that has defined legal values
-  std::map
-    <std::string,                                          /* exch field name */
-      std::set<std::string> >                   _permitted_exchange_values;  ///< all the legal values for each exchange field that has defined legal values; does not include regex
+  STRING_MAP<STRING_SET>                   _permitted_exchange_values;  ///< all the legal values for each exchange field that has defined legal values; does not include regex; key - exch field name; does not include regex legal values
 
 /// mapping from permitted values to canonical values
   std::map
@@ -443,10 +428,13 @@ protected:
         <std::string,                                      /* permitted value */
           std::string                                      /* canonical value */
            > >                                  _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
+//  std::map
+//    <std::string,                                          /* exch field name */
+//      STRING_MAP<std::string> /* key = permitted; values = canonical */>      _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
 
-  std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< exchange field information THIS SHOULD POSSIBLY REPLACE _permitted_exchange_values everywhere, as this supports regex
+  STRING_MAP<EFT>   _exchange_field_eft;        ///< exchange field information THIS SHOULD POSSIBLY REPLACE _permitted_exchange_values everywhere, as this supports regex; key = field name
 
-  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;     ///< exchange fields associated with a country
+  STRING_MAP<STRING_SET>  _per_country_exchange_fields;     ///< exchange fields associated with a country; key = cp; value =- exchange field names
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
@@ -494,7 +482,7 @@ auto _all_exchange_values(const std::string& field_name) const -> STYPE
     \param  ch                  whether to expand choices
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
+  std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
 
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         context for this contest
@@ -658,7 +646,7 @@ public:
     { return _exchange_field_names(canonical_prefix, m, CHOICES::NO_EXPAND); }
 
 /// Return all the known names of exchange fields
-  std::set<std::string> all_known_field_names(void) const;
+  STRING_SET all_known_field_names(void) const;
 
 /// Restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)
@@ -723,7 +711,7 @@ public:
 
     Returns empty set if the field can take any value, or if it's a regex.
 */
-  std::set<std::string> exch_permitted_values(const std::string& field_name) const;
+  STRING_SET exch_permitted_values(const std::string& field_name) const;
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
     \param  field_name  name of an exchange field (received)
@@ -835,7 +823,7 @@ public:
   bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
 /// the names of all the possible exchange fields
-  std::set<std::string> exchange_field_names(void) const;
+  STRING_SET exchange_field_names(void) const;
 
 /*! \brief      The equivalent choices of exchange fields for a given mode and country?
     \param  m   mode
@@ -896,7 +884,8 @@ public:
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
 */
-std::string wpx_prefix(const std::string& call);
+//std::string wpx_prefix(const std::string& call);
+std::string wpx_prefix(const std::string_view call);
 
 /*! \brief          The SAC prefix for a particular call
     \param  call    call for which the prefix is to be calculated
@@ -904,7 +893,8 @@ std::string wpx_prefix(const std::string& call);
 
     The SAC rules as written do not allow for weird prefixes such as LA100, etc.
 */
-std::string sac_prefix(const std::string& call);
+//std::string sac_prefix(const std::string& call);
+std::string sac_prefix(const std::string_view call);
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
     \param  field_name      name of the field

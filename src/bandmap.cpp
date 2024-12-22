@@ -27,12 +27,12 @@ using namespace std;
 namespace SR  = std::ranges;
 namespace SRV = std::ranges::views;
 
-using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
+//using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order; compare_calls() now allows heterogenous lookup
 
 extern bool                          bandmap_show_marked_frequencies;           ///< whether to display entries that would be marked
 extern bool                          bandmap_frequency_up;                      ///< whether increasing frequency goes upwards in the bandmap
 extern pt_mutex                      batch_messages_mutex;                      ///< mutex for batch messages
-extern unordered_map<string, string> batch_messages;                            ///< batch messages associated with calls
+extern UNORDERED_STRING_MAP<string> batch_messages;                            ///< batch messages associated with calls
 extern exchange_field_database       exchange_db;                               ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                               ///< location information
 extern unsigned int                  max_qsos_without_qsl;                      ///< limit for the N7DR matches_criteria() algorithm
@@ -40,7 +40,7 @@ extern MINUTES_TYPE                  now_minutes;                               
 extern map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges;   ///< the ranges of frequencies to be marked as red (i.e., not to be used in the ocntest)
 extern message_stream                ost;                                       ///< debugging/logging output
 
-extern const set<string> CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
+extern const STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 
 extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
 
@@ -53,8 +53,7 @@ extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
-//constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
-constexpr frequency  MAX_FREQUENCY_SKEW { 250_Hz };       ///< maximum separation to be treated as same frequency
+constexpr frequency     MAX_FREQUENCY_SKEW { 250_Hz };       ///< maximum separation to be treated as same frequency
 
 constexpr string MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
@@ -131,8 +130,7 @@ bool n_posters_database::test_call(const string& call)
   int  count_n_posters { 0 };
 
   for (auto it { all_times.cbegin() }; !known_good and (it != all_times.end()); ++it)
-  { //const unordered_map<string /* call */, unordered_set<string>>& um { _data.at(*it) };
-    const UNORDERED_STRING_MAP<unordered_set<string>>& um { _data.at(*it) };    // key = call
+  { const UNORDERED_STRING_MAP<UNORDERED_STRING_SET>& um { _data.at(*it) };    // key = call
 
     if (um.contains(call))
     { count_n_posters += um.at(call).size();
@@ -175,7 +173,7 @@ void n_posters_database::prune(void)
     _known_good_calls.clear();
 
 // rebuild _known_good_calls
-    unordered_set<string> all_calls;
+    UNORDERED_STRING_SET all_calls;
 
     FOR_ALL(all_times, [&all_calls, this] (const time_t t)     { all_calls += move(ALL_KEYS_USET(_data.at(t))); });
     FOR_ALL(all_calls, [this]             (const string& call) { test_call(call); });
@@ -209,7 +207,8 @@ string n_posters_database::to_string(void) const
   else
   { rv += "Known good calls: "s;
 
-    CALL_SET ordered_known_good_calls(compare_calls);
+//    CALL_SET ordered_known_good_calls(compare_calls);
+    CALL_SET ordered_known_good_calls;
 
     FOR_ALL(_known_good_calls,        [&ordered_known_good_calls] (const string& call) { ordered_known_good_calls += call; } );
     FOR_ALL(ordered_known_good_calls, [&rv]                       (const string& call) { rv += (call + " "s); } );
@@ -239,7 +238,7 @@ void bandmap_filter_type::add_or_subtract(const string& str)
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
   vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
-  set<string>     ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
+  STRING_SET     ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
 
   if (ss.contains(str_copy))    // remove a value
     ss -= str_copy;
@@ -648,7 +647,6 @@ bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (!old_be.valid())    // not already present
     return false;
 
-//  if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
   if (be.frequency_difference(old_be) > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
     return false;         // we're going to write a new entry
 
@@ -698,7 +696,6 @@ void bandmap::operator+=(bandmap_entry& be)
     if (add_it and mode_marker_is_present)
     { const bandmap_entry mode_marker_be { (*this)[MODE_MARKER] };    // assumes only one mode marker
 
-//      add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
       add_it = (be.frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
     }
   }
@@ -712,8 +709,7 @@ void bandmap::operator+=(bandmap_entry& be)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
-      { //if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // add only if more than 250 Hz away
-        if (be.frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // add only if more than 250 Hz away
+      { if (be.frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // add only if more than 250 Hz away
         { (*this) -= callsign;
           _insert(be);
         }
@@ -820,15 +816,14 @@ bandmap_entry bandmap::substr(const string& pcall) const
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-void bandmap::operator-=(const string& callsign)
+//void bandmap::operator-=(const string& callsign)
+void bandmap::operator-=(const string_view callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))
     FOR_ALL(regex_matches(callsign), [this] (const string& matched_call) { *this -= matched_call; });   // sets dirty_entries and augments _version (perhaps multiple times) if executed
   else
   { const size_t initial_size { _entries.size() };
-
-//    _entries.remove_if( [callsign] (const bandmap_entry& be) { return (be.callsign() == callsign); } );        // OK for lists
 
     erase_if(_entries, [callsign] (const bandmap_entry& be) { return (be.callsign() == callsign); } );
 
@@ -1479,7 +1474,6 @@ window& bandmap::write_to_window(window& win)
       const bool is_marked_entry { bandmap_show_marked_frequencies and is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq()) };
 
 // switch to red if this is a marked frequency and we are showing marked frequencies
-//      win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(COLOUR_WHITE, COLOUR_RED) : cpu );
       win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(MARKED_FG_COLOUR, MARKED_BG_COLOUR) : cpu );
 
       if (reverse)
@@ -1535,8 +1529,30 @@ void bandmap::remove_from_do_not_add(const string& callsign)
 // technically, we have changed the bandmap object; but we haven't changed anything visible, so don't mark dirty_entries() or _version
 }
 
-/*! \brief            Return all calls in the bandmap that match a regex string
-    \param  new_name  the new name of the mutex
+/*! \brief              Return all calls in the bandmap that match a regex string
+    \param  regex_str   the target regex string
+
+    See: https://www.reddit.com/r/cpp/comments/aqt7a0/status_of_string_view_and_regex/
+*/
+//vector<string> bandmap::regex_matches(const string& regex_str)
+vector<string> bandmap::regex_matches(const string_view regex_str)
+{ const BM_ENTRIES bme { displayed_entries() };
+  const regex      rgx { string { regex_str } };
+
+  smatch         base_match;
+  vector<string> rv;
+
+  FOR_ALL(bme, [&base_match, &rgx, &rv] (const bandmap_entry& displayed_entry) { if (const string& callsign { displayed_entry.callsign() }; regex_match(callsign, base_match, rgx))
+                                                                                   rv += callsign;
+                                                                               } );
+
+  return rv;
+}
+
+/*! \brief              Return all calls in the bandmap that match a regex string
+    \param  regex_str   the target regex string
+
+    See: https://www.reddit.com/r/cpp/comments/aqt7a0/status_of_string_view_and_regex/
 */
 vector<string> bandmap::regex_matches(const string& regex_str)
 { const BM_ENTRIES bme { displayed_entries() };

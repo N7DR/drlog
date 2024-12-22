@@ -29,10 +29,9 @@ using namespace   chrono;           // std::chrono
 using namespace   chrono_literals;  // std::chrono_literals
 using namespace   this_thread;      // std::this_thread
 
-extern message_stream ost;              ///< for debugging and logging
-extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
-
-extern bool exiting;                    ///< is the program exiting?
+extern bool           exiting;              ///< is the program exiting?
+extern message_stream ost;                  ///< for debugging and logging
+extern pt_mutex       thread_check_mutex;   ///< mutex for controlling threads
 
 pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
@@ -53,8 +52,6 @@ constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
 /// process a read error
 void dx_cluster::_process_error(void)
 { ost << "Processing error on TCP socket: " << _connection.to_string() << endl;
-
-//  _last_data_received = system_clock::now();  // reset the reception timer; moved to the end because this may take a long time if the server is unreachab;e
 
 new_socket:
   try
@@ -90,8 +87,8 @@ reconnect:
 
     catch (const socket_support_error& E)
     { ost << "socket support error " << E.code() << " while setting destination: " << E.reason() << endl;
-//      sleep_for(1min);    // sleep for one minute before retrying
 
+// sleep for one minute before retrying
       for (int counter { 0 }; counter < 60; ++counter)
       { sleep_for(1s);
 
@@ -259,11 +256,8 @@ bool dx_cluster::spot(const string& dx, const string& freq, const string& commen
     \param  msg   the message to be sent
     \return       whether the attempt to post was successful
 */
-//bool dx_cluster::spot(const std::string& msg)
 bool dx_cluster::spot(const std::string_view msg)
-{ const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
-
-//const string spot_msg { "DXT "s + msg + CRLF };       // DXT is a test spot
+{ const string dx_cmd   { _test_spots ? "DXT"s : "DX"s };       // DXT is a test spot
   const string spot_msg { dx_cmd + " "s + msg + CRLF };
 
   ost << "sending spot: " << spot_msg;
@@ -545,7 +539,8 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
     \param  callsign    call to be tested
     \return             whether <i>callsign</i> is being monitored
 */
-bool monitored_posts::is_monitored(const std::string& callsign) const
+//bool monitored_posts::is_monitored(const std::string& callsign) const
+bool monitored_posts::is_monitored(const std::string_view callsign) const
 { SAFELOCK(monitored_posts);
 
   return _callsigns.contains(callsign);
@@ -596,7 +591,8 @@ void monitored_posts::operator+=(const dx_post& post)
 /*! \brief              Add a call to the set of those being monitored
     \param  new_call    call to be added
 */
-void monitored_posts::operator+=(const string& new_call)
+//void monitored_posts::operator+=(const string& new_call)
+void monitored_posts::operator+=(const string_view new_call)
 { SAFELOCK(monitored_posts);
 
   _callsigns += new_call;
@@ -605,7 +601,8 @@ void monitored_posts::operator+=(const string& new_call)
 /*! \brief                  Remove a call from the set of those being monitored
     \param  call_to_remove  call to be removed
 */
-void monitored_posts::operator-=(const string& call_to_remove)
+//void monitored_posts::operator-=(const string& call_to_remove)
+void monitored_posts::operator-=(const string_view call_to_remove)
 { SAFELOCK(monitored_posts);
 
   _callsigns -= call_to_remove;

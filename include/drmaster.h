@@ -173,7 +173,8 @@ class trmaster
 {
 protected:
 
-  std::unordered_map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
+//  std::unordered_map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
+  UNORDERED_STRING_MAP</* callsign */ trmaster_line> _records;       ///< the information for each call
 
 /*! \brief              Get a "line" from a TRMASTER binary file
     \param  contents    string that contains a record (plus, perhaps, much more)
@@ -348,7 +349,6 @@ class drmaster
 {
 protected:
 
-//  std::unordered_map<std::string /* call */, drmaster_line> _records;       ///< the information
   UNORDERED_STRING_MAP<drmaster_line> _records;       ///< the information; key = call
 
 public:
@@ -410,7 +410,6 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-//  inline drmaster_line operator[](const std::string& call) const
   inline drmaster_line operator[](const std::string_view call) const
     { return MUM_VALUE(_records, call); }
   
@@ -420,7 +419,6 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-//  inline drmaster_line data(const std::string& call) const
   inline drmaster_line data(const std::string_view call) const
     { return ((*this)[call]); }
 
@@ -445,7 +443,6 @@ public:
     \param  call    target callsign
     \return         whether <i>call</i> is present
 */
-//  inline bool contains(const std::string& call) const
   inline bool contains(const std::string_view call) const
     {  return _records.contains(call); }
 

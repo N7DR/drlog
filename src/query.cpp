@@ -39,15 +39,18 @@ void query_database::operator+=(const std::string& call)
 
     The returned pair comprises: q1, qn
 */
-pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](const string& key) const
-{ set<string> rv_1 { };
+//pair<set<string> /* q1 */, set<string> /* qn */> query_database::operator[](const string& key) const
+pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string& key) const
+{ //set<string> rv_1 { };
+  STRING_SET rv_1 { };
 
   if (!contains(key, '?'))
     return { rv_1, rv_1 };
 
   rv_1 = _query(replace_char(key, '?', '.'));
 
-  set<string> rv_2 { _query(replace(key, "?"s, ".{1,}"s)) };
+//  set<string> rv_2 { _query(replace(key, "?"s, ".{1,}"s)) };
+  STRING_SET rv_2 { _query(replace(key, "?"s, ".{1,}"s)) };
 
 // remove any elements in rv_1 from rv_2
   rv_2 -= rv_1;

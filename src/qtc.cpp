@@ -41,7 +41,6 @@ string qtc_entry::to_string(void) const
     \param  qstatus     the status of the QTCs to return
     \return             all the QTCs whose status matches <i>qstatus</i>
 */
-//vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
 vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const QTC_STATUS qstatus) const
 { vector<qtc_entry> rv;
 
@@ -150,7 +149,6 @@ string qtc_series::output_string(const unsigned int n) const
 { if (n >= size())
     return string();
 
-//  const qtc_entry qe { _qtc_entries[n].first };
   const qtc_entry qe { entry(n) };
 
   string rv { pad_left(_frequency, 5) + SPACE_STR };
@@ -218,21 +216,6 @@ window& operator<(window& win, const qtc_series& qs)
     index++;
   }
 
-#if 0
-  for (const auto& pr : qtc_entries)
-  { const string entry_str { pr.first.to_string() };
-    const int    cpu       { static_cast<int>(colours.add(win.fg(), (pr.second == QTC_STATUS::SENT) ? COLOUR_RED : win.bg())) };
-
-// work out where to start the display of this call
-    const unsigned int x { static_cast<unsigned int>( (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) ) };
-    const unsigned int y { static_cast<unsigned int>( (win.height() - 1) - (index % win.height()) ) };
-
-    win < cursor(x, y) < colour_pair(cpu) < entry_str;
-
-    index++;
-  }
-#endif
-
   return win;
 }
 
@@ -241,8 +224,6 @@ window& operator<(window& win, const qtc_series& qs)
 /*!     \class qtc_database
         \brief All QTCs
 */
-
-//pt_mutex qtc_database_mutex { "QTC DATABASE"s };                            ///< mutex to allow correct locking
 
 /*! \brief      Add a series of QTCs to the database
     \param  q   the series of QTCs to be added
@@ -277,7 +258,7 @@ qtc_series qtc_database::operator[](size_t n) const
     \param   destination_callsign   the station to which the QTCs have been sent
     \return                         number of QTCs that have been sent to <i>destination_callsign</i>
 */
-unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsign) const
+unsigned int qtc_database::n_qtcs_sent_to(const string_view destination_callsign) const
 { unsigned int rv { 0 };
 
   SAFELOCK(_qtc_database);
@@ -329,7 +310,6 @@ void qtc_database::read(const string& filename)
 
   while (line_nr < lines.size())
   { const string&        line   { lines[line_nr++] };
-//    const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
     const vector<string> fields { remove_trailing_spaces <std::string> (split_string <std::string> (squash(line), ' ')) };
 
     if (fields.size() != 10)
@@ -395,14 +375,6 @@ void qtc_database::read(const string& filename)
     Does not add QSOs already in the buffer (either as sent or unsent).
     Does not add non-EU QSOs.
 */
-#if 0
-void qtc_buffer::operator+=(const logbook& logbk)
-{ //const vector<QSO> qsos { logbk.as_vector() };
-
-//  FOR_ALL(qsos, [this] (const QSO& qso) { (*this) += qso; } );
-  FOR_ALL(logbk.as_vector(), [this] (const QSO& qso) { (*this) += qso; } );
-}
-#endif
 
 /*! \brief          Add a QSO to the buffer
     \param  qso     QSO to add

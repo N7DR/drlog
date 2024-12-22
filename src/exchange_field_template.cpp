@@ -95,7 +95,8 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string_v
 bool EFT::read_values_file(const vector<string>& path, const string_view filename)
 { try
   { for (const auto& line : to_lines <std::string> (read_file(path, filename + ".values"s)))
-    { set<string> equivalent_values;                    // includes the canonical value
+    { //set<string> equivalent_values;                    // includes the canonical value
+      STRING_SET equivalent_values;                    // includes the canonical value
 
       if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
       { if (contains(line, '=') )
@@ -139,8 +140,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 { if (!_name.starts_with("QTHX["sv))
     return;
 
-//  const map<string /* cp */, set<string> /* legal values */>& context_qthx { context.qthx() };
-//  const STRING_MAP<set<string> /* legal values */>& context_qthx { context.qthx() };    // key = cp; value = legal values
   const STRING_MAP<STRING_SET>& context_qthx { context.qthx() };    // key = cp; value = legal values
 
   if (context_qthx.empty())
@@ -191,11 +190,7 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
 
-//  const auto& it { _values.find(cv) };  // this is now guaranteed not to be end()
-
-//  auto& ss { it->second };
-
-  auto& [ k, ss ] { *(_values.find(cv)) };
+  auto& [ k, ss ] { *(_values.find(cv)) };  // this is now guaranteed not to be end()
 
   ss += new_value;      // add it to _values
 
@@ -240,10 +235,8 @@ string EFT::canonical_value(const std::string& str) const
 }
 
 /// all the canonical values
-//set<string> EFT::canonical_values(void) const
 STRING_SET EFT::canonical_values(void) const
-{ //set<string> rv;
-  STRING_SET rv;
+{ STRING_SET rv;
 
   for (const auto& [ cv, equivalents ] : _values)   // this is clearer than using FOR_ALL
     rv += cv;

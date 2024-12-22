@@ -29,8 +29,8 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \param  mv  multiplier values
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
-MULTIPLIER_VALUES multiplier::_filter_asterisks(const MULTIPLIER_VALUES& mv) const
-{ MULTIPLIER_VALUES rv { mv };
+MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
+{ MULT_SET rv { mv };
 
   erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
 
@@ -49,7 +49,11 @@ bool multiplier::add_known(const std::string& str)
   if (!_used)
     return false;
 
-  const bool rv { _known.insert(str).second };
+  const auto a { _known.insert(str) };
+
+  const bool rv { a.second };
+
+//  const bool rv { _known.insert(str).second };
 
   if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
@@ -76,9 +80,10 @@ void multiplier::remove_known(const string& str)
     \return         whether <i>str</i> is a known multiplier value
 */
 bool multiplier::is_known(const string& str) const
+//bool multiplier::is_known(const string_view str) const
 { SAFELOCK(multiplier);
 
-  return (_used ? (_known > str) : false);
+  return (_used ? _known.contains(str) : false);
 }
 
 /*! \brief          Add a worked multiplier
@@ -101,13 +106,10 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
 
     if (rv)
-    { //pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
-      pb[ANY_BAND] += str;        // ANY_BAND, MODE
+    { pb[ANY_BAND] += str;        // ANY_BAND, MODE
 
       auto& pb_any { _worked[ANY_MODE] };
 
-//      pb_any[b_nr].insert(str);        // BAND, ANY_MODE
-//      pb_any[ANY_BAND].insert(str);    // ANY_BAND, ANY_MODE
       pb_any[b_nr] += str;        // BAND, ANY_MODE
       pb_any[ANY_BAND] += str;    // ANY_BAND, ANY_MODE
     }
@@ -186,12 +188,10 @@ bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
   if (!_used)
     return false;
 
-  const auto&              pb               { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
-  const MULTIPLIER_VALUES& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
+  const auto&     pb               { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
+  const MULT_SET& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
 
-//  return (worked_this_band.find(str) != worked_this_band.cend());
-//  return worked_this_band.contains(str);
-  return (worked_this_band > str);
+  return worked_this_band.contains(str);
 }
 
 /*! \brief      Number of mults worked on a particular band and mode
@@ -242,11 +242,11 @@ size_t multiplier::n_worked(const BAND b) const
 
     Includes any non-mult values
 */
-MULTIPLIER_VALUES multiplier::worked(const int b, const int m) const
+MULT_SET multiplier::worked(const int b, const int m) const
 { SAFELOCK(multiplier);
 
   if (!_used)
-    return MULTIPLIER_VALUES();
+    return MULT_SET { };
 
   const auto& pb { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
 
@@ -269,9 +269,10 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   { for (size_t n = 0; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
-      const MULTIPLIER_VALUES& ss { m.worked(n, static_cast<MODE>(nm)) };
+//      const MULT_SET& ss { m.worked(n, static_cast<MODE>(nm)) };
 
-      for (const auto& worked : ss)
+//      for (const auto& worked : ss)
+      for (const auto& worked : m.worked(n, static_cast<MODE>(nm)))
         ost << worked << " ";
 
       ost << endl;
@@ -280,9 +281,10 @@ ostream& operator<<(ostream& ost, const multiplier& m)
 
   ost << "known multipliers: ";
 
-  const MULTIPLIER_VALUES& ss { m.known() };
+//  const MULT_SET ss { m.known() };
 
-  for (const auto& known : ss)
+//  for (const auto& known : ss)
+  for (const auto& known : m.known())
     ost << known << " ";
 
   ost << "multiplier is used = " << m.used() << endl;

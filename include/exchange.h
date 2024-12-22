@@ -27,9 +27,10 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
+
 using TRIPLET = std::tuple<int                   /* field number wrt 0 */,
                            std::string           /* received value */,
-                           std::set<std::string> /* unassigned field names */>;   ///< used in parsed_exchange
+                           STRING_SET            /* unassigned field names */>;   ///< used in parsed_exchange
 
 const std::set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
 
@@ -43,8 +44,6 @@ class exchange_field_prefill
 {
 protected:
 
-//  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
-//  STRING_MAP<std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
   STRING_MAP<UNORDERED_STRING_MAP<std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
 
 public:
@@ -55,7 +54,6 @@ public:
 /*! \brief                          Constructor
     \param  prefill_filename_map    map of fields to filenames
 */
-//  inline explicit exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
   inline explicit exchange_field_prefill(const STRING_MAP<std::string /* filename */>& prefill_filename_map)
     { insert_prefill_filename_map(prefill_filename_map); }
 
@@ -64,7 +62,6 @@ public:
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields to filenames
 */
-//  void insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map);
   void insert_prefill_filename_map(const STRING_MAP<std::string>& prefill_filename_map);
 
 /*! \brief              Do prefill data exist for a particular field name?
@@ -82,8 +79,7 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-  std::string prefill_data(const std::string& field_name, const std::string& callsign) const;
-//  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
+  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
 };
 
 /// ostream << exchange_field_prefill
@@ -238,7 +234,7 @@ protected:
     \param  unassigned_tuplest      all the unassigned fields
     \param  tuple_map_assignmens    the assignments
 */
-  void _assign_unambiguous_fields(std::deque<TRIPLET>& unassigned_tuples, std::map<std::string, TRIPLET>& tuple_map_assignments);
+  void _assign_unambiguous_fields(std::deque<TRIPLET>& unassigned_tuples, STRING_MAP<TRIPLET>& tuple_map_assignments);
 
 /*! \brief                      Try to fill exchange fields with received field matches
     \param  matches             the names of the matching fields, for each received field number
@@ -251,7 +247,7 @@ protected:
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
 */
-  void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
+  void _print_tuple(const std::tuple<int, std::string, STRING_SET>& t) const;
 
 public:
 
@@ -376,8 +372,7 @@ public:
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-  std::string guess_value(const std::string& callsign, const std::string& field_name);
-//  std::string guess_value(const std::string_view callsign, const std::string& field_name);
+  std::string guess_value(const std::string_view callsign, const std::string& field_name);
 
 /*! \brief              Set a value in the database
     \param  callsign    callsign for the new entry

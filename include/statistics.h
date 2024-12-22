@@ -51,7 +51,6 @@ protected:
 
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;              ///< exchange multipliers; vector so we can keep the correct order
   bool                                                              _exchange_mults_used { false };     ///< are country mults used? Copied from rules
-//  std::set<std::string>                                             _exch_mult_fields;                  ///< names of the exch fields that are mults
   STRING_SET                                             _exch_mult_fields;                  ///< names of the exch fields that are mult
 
   bool                                                              _include_qtcs { false };            ///< do we include QTC information?
@@ -75,7 +74,7 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-  void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+  void _insert_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
 /*! \brief          Generate a summary string for display
     \param  rules   rules for this contest
@@ -140,7 +139,7 @@ public:
     \param  m           mode to test
     \return             whether the mult <i>mult_name</i> with value <i>mult_value</i> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
 */
-  bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
+  bool is_needed_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
 /*! \brief          Add a known value of country mult
     \param  str     canonical prefix of mult
@@ -158,8 +157,8 @@ public:
     \param  rules       rules for this context
     \return             whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
 */
-  bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m, const contest_rules& rules);
-  
+  bool is_needed_country_mult(const std::string_view callsign, const BAND b, const MODE m, const contest_rules& rules);
+
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
     \param  log     logbook (without the qso <i>qso</i>)
@@ -184,7 +183,7 @@ public:
     \param  name    name of the exchange multiplier
     \return         All the known legal values of <i>name</i>
 */
-  MULTIPLIER_VALUES known_exchange_mult_values(const std::string& name);
+  MULT_SET known_exchange_mult_values(const std::string& name);
 
 /*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
     \param  exchange_field_name     name of the target exchange field
@@ -224,20 +223,20 @@ public:
     \param  m           mode
     \return             callsign mults worked on band <i>b</i> and mode <i>m</i>
 */
-  MULTIPLIER_VALUES worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
+  MULT_SET worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
 
 /*! \brief      Worked country mults for a particular band and mode
     \param  b   target band
     \param  m   target mode
     \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
 */
-  inline MULTIPLIER_VALUES worked_country_mults(const BAND b, const MODE m)
+  inline MULT_SET worked_country_mults(const BAND b, const MODE m)
   { SAFELOCK(statistics);
     return ( _country_multipliers.worked(b, m) );
   }
 
 /// all the known country mults
-  inline MULTIPLIER_VALUES known_country_mults(void)
+  inline MULT_SET known_country_mults(void)
   { SAFELOCK(statistics);
     return _country_multipliers.known();
   }
@@ -253,14 +252,13 @@ public:
     \param  m   mode
     \return     all the exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
-//  std::map<std::string /* field name */, MULTIPLIER_VALUES /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
-  STRING_MAP<MULTIPLIER_VALUES> worked_exchange_mults(const BAND b, const MODE m) const;    // key = field_name; value = values
+  STRING_MAP<MULT_SET> worked_exchange_mults(const BAND b, const MODE m) const;    // key = field_name; value = values
 
 /*! \brief                                  Is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
     \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
-  bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
+  bool known_callsign_mult_name(const std::string_view putative_callsign_mult_name) const;
 
 /// clear the dynamic information
   void clear_info(void);
@@ -360,41 +358,41 @@ public:
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-  bool worked(const std::string& s, const BAND b, const MODE m) const;
+  bool worked(const std::string_view s, const BAND b, const MODE m) const;
 
 /*! \brief      Has a call been worked on a particular band?
     \param  s   callsign to test
     \param  b   band to test
     \return     whether <i>s</i> has been worked on band <i>b</i>
 */
-  bool worked(const std::string& s, const BAND b) const;
+  bool worked(const std::string_view s, const BAND b) const;
 
 /*! \brief      Has a call been worked on a particular mode?
     \param  s   callsign to test
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on mode <i>m</i>
 */
-  bool worked(const std::string& s, const MODE m) const;
+  bool worked(const std::string_view s, const MODE m) const;
 
 /*! \brief      Has a call been worked?
     \param  s   callsign to test
     \return     whether <i>s</i> has been worked
 */
-  bool worked(const std::string& s) const;
+  bool worked(const std::string_view s) const;
 
 /*! \brief      Has a call been worked on any other band?
     \param  s   callsign to test
     \param  b   band NOT to test
     \return     whether <i>s</i> has been worked on a band other than <i>b</i>
 */
-  bool worked_on_another_band(const std::string& s, const BAND b) const;
+  bool worked_on_another_band(const std::string_view s, const BAND b) const;
 
 /*! \brief      Has a call been worked on any other mode?
     \param  s   callsign to test
     \param  m   mode NOT to test
     \return     whether <i>s</i> has been worked on a mode other than <i>m</i>
 */
-  bool worked_on_another_mode(const std::string& s, const MODE m) const;
+  bool worked_on_another_mode(const std::string_view s, const MODE m) const;
 
 /*! \brief      Has a call been worked on any other band and mode combination?
     \param  s   callsign to test
@@ -402,7 +400,7 @@ public:
     \param  m   mode not to include
     \return     whether <i>s</i> has been worked on a band and mode other than <i>b</i> and <i>m</i>
 */
-  bool worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m);
+  bool worked_on_another_band_and_mode(const std::string_view s, const BAND b, const MODE m);
 
 /*! \brief          Perform a complete rebuild
     \param  logbk   logbook

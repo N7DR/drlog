@@ -28,7 +28,22 @@ extern bool             QSO_DISPLAY_COUNTRY_MULT;   ///< controls whether countr
 extern int              QSO_MULT_WIDTH;             ///< controls width of zone mults field in log line
 
 /// example: cabrillo qso = template: CQ WW
+#if 0
 static const map<string, string> cabrillo_qso_templates { { "ARRL DX"s, "ARRL DX"s }, // placeholder; mode chosen before we exit this function
+                                                          { "ARRL DX CW"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1"s },
+                                                          { "ARRL DX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1"s },
+
+                                                          { "CQ WW"s,      "CQ WW"s }, // placeholder; mode chosen before we exit this function
+                                                          { "CQ WW CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
+                                                          { "CQ WW SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
+
+                                                          { "JIDX"s,      "JIDX"s }, // placeholder; mode chosen before we exit this function
+                                                          { "JIDX CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s },
+                                                          { "JIDX SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s }
+                                                        };
+#endif
+
+static const STRING_MAP<string> cabrillo_qso_templates { { "ARRL DX"s, "ARRL DX"s }, // placeholder; mode chosen before we exit this function
                                                           { "ARRL DX CW"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1"s },
                                                           { "ARRL DX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1"s },
 
@@ -750,7 +765,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // POSTED BY CONTINENTS (default is anything other than my own continent)
     if ( (LHS == "POSTED BY CONTINENTS"sv) or (LHS == "POSTED BY CONTINENT"sv) )
-    { const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
+    { //const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
+      const UNORDERED_STRING_SET continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
 
       if (LHS == "POSTED BY CONTINENTS"sv)    // multiple continents
         FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
@@ -1083,7 +1099,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
       else
       { const vector<string_view> mults { clean_split_string <string_view> (RHS) };
 
-        _remaining_callsign_mults_list = set<string> { mults.cbegin(), mults.cend() } ;
+        _remaining_callsign_mults_list = STRING_SET { mults.cbegin(), mults.cend() } ;
       }
     }
 
@@ -1100,7 +1116,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
       else
       { const vector<string_view> countries { clean_split_string <string_view> (RHS) };
 
-        _remaining_country_mults_list = set<string> { countries.cbegin(), countries.cend() };
+        _remaining_country_mults_list = STRING_SET { countries.cbegin(), countries.cend() };
 //        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
       }
     }
@@ -1267,8 +1283,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (LHS == "WINDOW"sv)
     { if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, '=')[1]) }; window_info.size() >= 5)
-      { string name { window_info[0] };
-
+      { string             name  { window_info[0] };
         window_information winfo { from_string<WIN_INT_TYPE>(window_info[1]), from_string<WIN_INT_TYPE>(window_info[2]), from_string<WIN_INT_TYPE>(window_info[3]), from_string<WIN_INT_TYPE>(window_info[4]) };
 
         if (window_info.size() >= 6)
@@ -1286,9 +1301,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  STATIC WINDOWS  ---------------------------------
 
-    static map<string /* name */, bool /* whether verbatim */> verbatim;
-
-//    static map<string /* name */, bool /* whether verbatim */, std::less<>> verbatim; // transparent comparator for heterogeneous lookup; not before C++26!
+    static STRING_MAP<bool /* whether verbatim */> verbatim;   // key = name
 
     if (LHS == "STATIC WINDOW"sv)
     { const vector<string> fields { clean_split_string <string> (rhs) };
@@ -1477,7 +1490,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (actual_modes.size() == 1)
     { try
-      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
+      { if (STRING_SET( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
         {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
@@ -1540,23 +1553,6 @@ vector<string> drlog_context::window_name_contains(const string_view substr) con
   return rv;
 }
 
-/*! \brief      Get the points string for a particular band and mode
-    \param  b   band
-    \param  m   mode
-    \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
-*/
-#if 0
-string drlog_context::points_string(const BAND b, const MODE m) const
-{ SAFELOCK(_context);
-
-//  const auto& pbb { _per_band_points[m] };
-
-//  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string { } );
-//  return MUM_VALUE(pbb, b, string { });
-  return MUM_VALUE(_per_band_points[m], b);
-}
-#endif
-
 /*! \brief      Get the names of all the fields in the sent exchange
     \return     the names of all the fields in the sent exchange
 */
@@ -1601,8 +1597,6 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
     for (auto& [name, value] : rv)
     { if ( (m == MODE_SSB) and (name == "RST"sv) )
         tie(name, value) = pair { "RS"s, "59"s };       // hardwire report
-//        tie(name, value) = { "RS"s, "59"s };       // hardwire report
-//        [name, value] = pair { "RS"s, "59"s };       // hardwire report
 
       if ( (m == MODE_CW) and (name == "RS"sv) )
         tie(name, value) = pair { "RST"s, "599"s };     // hardwire report

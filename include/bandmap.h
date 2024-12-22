@@ -78,10 +78,9 @@ class n_posters_database
 {
 protected:
 
-//  std::map<time_t, std::unordered_map<std::string /* call */, std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters
-  std::map<time_t, UNORDERED_STRING_MAP<std::unordered_set<std::string>>> _data; ///< time in minutes, callsign, posters; key is call
+  std::map<time_t, UNORDERED_STRING_MAP<UNORDERED_STRING_SET>> _data; ///< time in minutes, callsign, posters; key is call
 
-  std::unordered_set<std::string> _known_good_calls;        ///< calls whose number of posters meets or exceeds _min_posters
+  UNORDERED_STRING_SET _known_good_calls;        ///< calls whose number of posters meets or exceeds _min_posters
 
   int _min_posters { 1 };                                   ///< minumum number of posters needed to appear on bandmap, default = 1
   int _width       { 15 };                                  ///< width in minutes
@@ -706,8 +705,8 @@ protected:
   
   int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                               _cull_function          { 0 };                        ///< cull function number to apply
-  std::unordered_set<std::string>   _do_not_add             { };                          ///< do not add these calls
-  std::map<std::string, std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
+  UNORDERED_STRING_SET   _do_not_add             { };                          ///< do not add these calls
+  STRING_MAP<std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
   BM_ENTRIES                        _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
@@ -718,7 +717,7 @@ protected:
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
 //  bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
-  std::unordered_set<std::string>   _recent_calls           { };                          ///< calls recently added
+  UNORDERED_STRING_SET   _recent_calls           { };                          ///< calls recently added
   COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };             ///< colour to use for entries < 120 seconds old (if black, then not used)
 
   int                               _last_displayed_version { -1 };
@@ -854,7 +853,8 @@ public:
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-  void operator-=(const std::string& callsign);
+//  void operator-=(const std::string& callsign);
+  void operator-=(const std::string_view callsign);
 
 /*! \brief              Set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
@@ -1087,7 +1087,8 @@ public:
      \param callsign    callsign to test
      \return            whether <i>callsign</i> was added since the bandmap was last pruned
 */
-  inline bool is_recent_call(const std::string& callsign)
+//  inline bool is_recent_call(const std::string& callsign)
+  inline bool is_recent_call(const std::string_view callsign)
     { SAFELOCK(_bandmap);
       return _recent_calls.contains(callsign);
     }
@@ -1098,6 +1099,15 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
   void do_not_add(const std::string& callsign);
+
+/*!  \brief             Add a call or regex to the do-not-add list
+     \param callsign    callsign or regex to add
+
+     Calls in the do-not-add list are never added to the bandmap
+*/
+//  void do_not_add(const std::string& callsign);
+  inline void do_not_add(const std::string_view callsign)
+    { do_not_add(std::string { callsign }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1172,10 +1182,19 @@ public:
   inline void rename_mutex(const std::string& new_name)
     { _bandmap_mutex.rename(new_name); }
 
-/*! \brief          Return all calls in the bandmap that match a regex string
-    \param  new_name    the new name of the mutex
+/*! \brief              Return all calls in the bandmap that match a regex string
+    \param  regex_str   the target regex string
+
+    See: https://www.reddit.com/r/cpp/comments/aqt7a0/status_of_string_view_and_regex/
 */
   std::vector<std::string> regex_matches(const std::string& regex_str);
+
+/*! \brief              Return all calls in the bandmap that match a regex string
+    \param  regex_str   the target regex string
+
+    See: https://www.reddit.com/r/cpp/comments/aqt7a0/status_of_string_view_and_regex/
+*/
+  std::vector<std::string> regex_matches(const std::string_view regex_str);
 
 /// increment version
   inline void increment_version(void)

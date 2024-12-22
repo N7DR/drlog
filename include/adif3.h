@@ -113,18 +113,18 @@ protected:
 
 // private objects and collections providing legal values
 
-  const static std::unordered_map<std::string /* field name */, ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
+  const static UNORDERED_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
 
-  static std::map<std::string /* field name */, std::pair<int, int> /* miniumum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
+  static STRING_MAP<std::pair<int, int> /* minimum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
 // soi-disant "enumeration" values (actually typically strings)
-  const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
+  const static UNORDERED_STRING_SET _ENUMERATION_BAND;     ///< band values
   const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, 
                                                             std::string /* canonical prefix */, 
                                                             COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
-  static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
-  static std::set<std::string> _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
+  static UNORDERED_STRING_SET _ENUMERATION_MODE;     ///< mode values
+  static STRING_SET _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
 
 public:
 
@@ -138,8 +138,8 @@ public:
     <i>field_name</i> is converted to upper case when stored as <i>_name</i>
     <i>field_value</i> is validated and converted to standardised format (if applicable)
 */
-  adif3_field(const std::string& field_name, const std::string& field_value);
-  
+  adif3_field(const std::string_view field_name, const std::string_view field_value);
+
   READ_AND_WRITE_STR(name);                    ///< name of the field
   READ_AND_WRITE(type);                        ///< type of the field
   READ_AND_WRITE(value);                       ///< value of the field
@@ -151,7 +151,7 @@ public:
     Returns empty string if either the name or the value is empty
 */
   inline std::string to_string(const std::string& append_str = "\n"s) const
-    { return ( (_name.empty() or _value.empty()) ? std::string() : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
+    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
     
 /*! \brief                  Import name and value from string, and return location past the end of the used part of the string
     \param  str             string from which to read
@@ -162,7 +162,7 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const std::set<std::string>& accept_fields = { });
+  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const STRING_SET& accept_fields = { });
 
 /// is the field empty?
   inline bool empty(void) const
@@ -179,7 +179,7 @@ class adif3_record
 {
 protected:
 
-  std::map<std::string /* field name */, adif3_field>  _elements;    ///< map field name to the complete field; simplest to keep this ordered so that the fields are in alphabetical order
+  STRING_MAP<adif3_field>  _elements;       ///< map field name to the complete field; simplest to keep this ordered so that the fields are in alphabetical order
 
   static std::set<ADIF3_DATA_TYPE> _import_only;                     ///< fields that are not to be output
 
@@ -189,7 +189,7 @@ protected:
 
     Result is valid ONLY if <i>str</i> contains only digits
 */  
-  int _fast_string_to_int(const std::string& str) const;            // convert a string to an int, assuming that the string contains just digits
+  int _fast_string_to_int(const std::string_view str) const;            // convert a string to an int, assuming that the string contains just digits
 
 public:
 
@@ -202,7 +202,7 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-  size_t import_and_eat(const std::string_view str, const size_t posn, const std::set<std::string>& accept_fields = { });
+  size_t import_and_eat(const std::string_view str, const size_t posn, const STRING_SET& accept_fields = { });
 
 /*! \brief      Convert to printable string
     \return     the canonical textual representation of the record
@@ -218,7 +218,7 @@ public:
 
     Returns the empty string if the field <i>str</i> does not exist in the record 
 */
-  inline std::string value(const std::string& str) const
+  inline std::string value(const std::string_view str) const
     { return MUM_VALUE(_elements, to_upper(str)).value(); }
   
 /*! \brief                  Set the value of a field (which does not have to be extant in the record)
@@ -229,8 +229,8 @@ public:
     <i>field_name</i> is converted to upper case when stored as <i>_name</i>
     <i>field_value</i> is validated and converted to standardised format (if applicable)
 */
-  bool value(const std::string& field_name, const std::string& field_value);
-  
+  bool value(const std::string_view field_name, const std::string_view field_value);
+
 /// return the ADIF3 value of the band (empty string if none) 
   inline std::string band(void) const
     { return value("BAND"s); }
@@ -274,7 +274,7 @@ inline std::ostream& operator<<(std::ostream& ost, const adif3_record& rec)
     \return        whether <i>record1</i> is chronologically before <i>record2</i> 
 */
 bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2);
-  
+
 // ---------------------------------------------------  adif3_file -----------------------------------------
 
 /*! \class  adif3_file
@@ -285,8 +285,8 @@ class adif3_file : public std::vector<adif3_record>
 {
 protected:
   
-  std::unordered_multimap<std::string /* call */, adif3_record> _map_data;      ///< alternative access using a map
-  
+  UNORDERED_STRING_MULTIMAP<adif3_record> _map_data;      ///< alternative access using a map; key = call
+
 public:
 
 /*! \brief              Construct from file name
@@ -294,7 +294,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  adif3_file(const std::string_view filename, const std::set<std::string>& accept_fields = { });
+  adif3_file(const std::string_view filename, const STRING_SET& accept_fields = { });
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
@@ -302,28 +302,28 @@ public:
 
     Returns empty object if a problem occurs
 */
-  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const std::set<std::string>& accept_fields = { });
+  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const STRING_SET& accept_fields = { });
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match
     \param      b           ADIF3 band to match
     \param      m           ADIF3 mode to match
     \return     filename    Return all the QSO records that match <i>callsign</i>, <i>b</i> and <i>m</i>
-*/  
-  std::vector<adif3_record> matching_qsos(const std::string& callsign, const std::string& b, const std::string& m) const;
+*/
+  std::vector<adif3_record> matching_qsos(const std::string_view callsign, const std::string_view b, const std::string_view m) const;
 
 /*! \brief                  Return all the QSOs that match a call
     \param      callsign    call to match
     \return     filename    Return all the QSO records that match <i>callsign</i>
 */
-  std::vector<adif3_record> matching_qsos(const std::string& callsign) const;
+  std::vector<adif3_record> matching_qsos(const std::string_view callsign) const;
 };
 
 /*! \brief              Return position at which to start processing the body of the file
     \param      str     string of contents of file
     \return             position of first "<" after the end of the header
 */
-size_t skip_adif3_header(const std::string& str);
+size_t skip_adif3_header(const std::string_view str);
 
 // -------------------------------------- Errors  -----------------------------------
 

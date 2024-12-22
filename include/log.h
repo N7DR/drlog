@@ -51,8 +51,8 @@ protected:
 // not possible to put that in chronological order without including seconds...
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
-//  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
-  std::multimap<std::string, QSO, std::less<>>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
+
+  STRING_MULTIMAP<QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
 /*! \brief          Modify a passed QSO with a new value for a named field
@@ -60,7 +60,7 @@ protected:
     \param  name    name of the field to modify
     \param  value   the new value to give to field <i>name</i>
 */
-  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);
+  void _modify_qso_with_name_and_value(QSO& qso, const std::string_view name, const std::string& value);
 
 /*! \brief          Obtain iterator to the first location of QSOs with a given call
     \param  call    target callsign
@@ -68,7 +68,6 @@ protected:
 
     Returns _log.end() if call <i>call</i> does not appear in the log
 */
-//  inline auto _LB(const std::string& call) const
   inline auto _LB(const std::string_view call) const
     { return _log.lower_bound(call); }
 
@@ -78,7 +77,6 @@ protected:
 
     Returns _log.end() if call <i>call</i> does not appear in the log
 */
-//  inline auto _UB(const std::string& call) const
   inline auto _UB(const std::string_view call) const
     { return _log.upper_bound(call); }  
 
@@ -166,7 +164,6 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
-//  inline bool qso_b4(const std::string& call, const MODE m) const
   inline bool qso_b4(const std::string_view call, const MODE m) const
   { SAFELOCK(_log);
 
@@ -179,8 +176,7 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
-//  bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
-  inline bool qso_b4(const std::string& call, const BAND b, const MODE m) const
+  inline bool qso_b4(const std::string_view call, const BAND b, const MODE m) const
   { SAFELOCK(_log);
 
     return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
@@ -191,8 +187,8 @@ public:
     \param  rules   rules for the contest
     \return         string list of bands on which a call is needed (separated by three spaces)
 */
-  std::string call_needed(const std::string& call, const contest_rules& rules) const;
-  
+  std::string call_needed(const std::string_view call, const contest_rules& rules) const;
+
 /*! \brief          Would a QSO be a dupe, according to the rules?
     \param  qso     target QSO
     \param  rules   rules for the contest
@@ -207,7 +203,6 @@ public:
     \param  rules   rules for the contest
     \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
-//  bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
   bool is_dupe(const std::string_view call, const BAND b, const MODE m, const contest_rules& rules) const;
 
 /// return time-ordered container of QSOs
@@ -298,7 +293,8 @@ public:
 /*! \brief          Return all the calls in the log
     \return         all the calls in the log
 */
-  std::set<std::string> calls(void) const;
+//  std::set<std::string> calls(void) const;
+  STRING_SET calls(void) const;
 
 /*! \brief      Reserve space for a known number of calls
     \param  n   number of calls for which space is to be reserved
@@ -443,13 +439,13 @@ class old_log
 {
 protected:
 
-  std::unordered_map<std::string /* callsign */,
-                     std::tuple< unsigned int /* qsls */,
+  UNORDERED_STRING_MAP<std::tuple< unsigned int /* qsls */,
                                  unsigned int /* qsos */,
                                  std::set< std::pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
                                  std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
                                >
                     > _olog;    ///< ADIF3 log of old QSOs (used for QSLs)
+
 
 /*! \brief          Return an iterator to the data for a particular callsign
     \param  call    callsign
@@ -484,7 +480,7 @@ public:
     \param  call    callsign
     \return         the number of QSOs with callsign <i>call</i>
 */
-  unsigned int n_qsos(const std::string& call) const;
+  unsigned int n_qsos(const std::string_view call) const;
 
 /*! \brief          Set the number of QSOs with a particular callsign
     \param  call    callsign
@@ -505,7 +501,7 @@ public:
     \param  m       target mode
     \return         number of QSOs associated with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-  unsigned int n_qsos(const std::string& call, const BAND b, const MODE m) const;
+  unsigned int n_qsos(const std::string_view call, const BAND b, const MODE m) const;
 
 /*! \brief          Increment the number of QSOs associated with a particular callsign, band and mode
     \param  call    target callsign
@@ -521,7 +517,7 @@ public:
     \param  m       target mode
     \return         Has a QSL ever been received for a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-  bool confirmed(const std::string& call, const BAND b, const MODE m) const;
+  bool confirmed(const std::string_view call, const BAND b, const MODE m) const;
 
 /*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
     \param  call    target callsign

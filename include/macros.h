@@ -219,9 +219,8 @@ inline constexpr bool is_stdarray<std::array<T, I>> = true;
 // basic types + string
 template <class T> concept is_int         = std::is_same_v<T, int>;
 template <class T> concept is_uint        = std::is_same_v<T, unsigned int>;
-//template <class T> concept is_string      = std::is_same_v<T, std::string>;     // is_same<> includes const and volatile qualifiers
 template <class T> concept is_string      = std::is_same_v<base_type<T>, std::string>;     // is_same<> includes const and volatile qualifiers
-template <class T> concept is_string_view = std::is_same_v<T, std::string_view>;
+template <class T> concept is_string_view = std::is_same_v<base_type<T>, std::string_view>;
 
 // standard containers
 template <class T> concept is_array              = is_stdarray<T>;
@@ -913,29 +912,65 @@ template <typename C>
 inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
   { mum.emplace(il); }
 
-/*! \brief          Write a <i>map<key, value></i> object to an output stream
+/*! \brief        Add a string_view element to a map with a string key
+    \param  mum   destination map or unordered map
+    \param  il    element to insert
+*/
+template <typename C>
+  requires (is_mum<C> or is_mmumm<C>) and is_string<typename C::key_type>
+inline void operator+=(C& mum, const std::pair<std::string_view, typename C::mapped_type>& il)
+  { mum.emplace( std::pair<std::string, typename C::mapped_type> { std::string {il.first}, il.second } ); }
+
+/*! \brief        Add a string_view element to a map with a string key
+    \param  mum   destination map or unordered map
+    \param  il    element to insert
+*/
+template <typename C, typename K, typename V>
+  requires (is_mum<C> or is_mmumm<C>) and is_string<typename C::key_type> and is_string_view<K> and (std::is_same_v<typename C::mapped_type, V>)
+inline void operator+=(C& mum, std::pair<K, V>&& element)
+  { mum.emplace(std::pair<std::string, typename C::mapped_type> { std::string {element.first}, element.second }); }
+
+/*! \brief          Write a map to an output stream
     \param  ost     output stream
     \param  mp      object to write
     \return         the output stream
 */
-template <class T1, class T2>
-std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
-{ for (typename std::map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
+template <class T>
+  requires is_map<T>
+std::ostream& operator<<(std::ostream& ost, const T& mp)
+{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
     ost << "map[" << cit->first << "]: " << cit->second << std::endl;
 
   return ost;
 }
+//template <class T1, class T2>
+//std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
+//{ for (typename std::map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
+//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
+//
+//  return ost;
+//}
 
-/*! \brief          Write an <i>unordered_map<key, value></i> object to an output stream
+/*! \brief          Write an unordered map to an output stream
     \param  ost     output stream
     \param  mp      object to write
     \return         the output stream
     
     Note that the output order is, unsurprisingly, effectively random
+    This works with unordered maps that support heterogeneous lookup
 */
-template <class T1, class T2>
-std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp)
-{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
+//template <class T1, class T2>
+//std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp)
+//{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
+//    ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
+//
+//  return ost;
+//}
+
+template <class T>
+  requires is_unordered_map<T>
+std::ostream& operator<<(std::ostream& ost, const T& mp)
+{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
     ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
 
   return ost;
@@ -1127,9 +1162,22 @@ inline void operator+=(C& sus, const V& vec)
     \param  element     element to remove, or an iterator into <i>sus</i>
 */
 template <typename C, typename T>
-  requires (is_sus<C> or is_mum<C>) and (std::is_same_v<typename C::key_type, base_type<T>> or std::is_same_v<base_type<T>, typename C::iterator>)
+  requires (is_sus<C> or is_mum<C>) and (std::is_convertible_v<base_type<T>, typename C::key_type> or std::is_same_v<base_type<T>, typename C::iterator>)
+//  requires (is_sus<C> or is_mum<C>) and (std::convertible_to<base_type<T>, typename C::key_type> or std::is_same_v<base_type<T>, typename C::iterator>)     // I don't know why this fails for string -= string_view
 inline void operator-=(C& sus, const T& element)
   { sus.erase(element); }
+
+/*! \brief              Remove an element from a set, map, unordered set or unordered map based on strings, referenced by a strng_view
+    \param  sus         destination set or unordered set
+    \param  element     element to remove, or an iterator into <i>sus</i>
+
+    Needed because string_view is NOT convertible to string : https://en.cppreference.com/w/cpp/types/is_convertible
+*/
+template <typename C, typename T>
+//  requires (is_sus<C> or is_mum<C>) and is_string<typename C::key_type> and is_ssv<T>
+  requires (is_sus<C> or is_mum<C>) and is_string<typename C::key_type> and is_string_view<T>
+inline void operator-=(C& sus, const T& element)
+  { sus.erase(static_cast<std::string>(element)); }
 
 /*! \brief              Add an element to a set
     \param  s           destination set
@@ -1258,6 +1306,21 @@ auto operator+(const S& s1, E&& element) -> S
   rv.insert(std::forward<E>(element));
   
   return rv; 
+}
+
+/*! \brief              Add a string_view element to a set or unordered set or strings
+    \param  sus         destination set or unordered set
+    \param  element     element to insert
+    \return             a new container, comprising <i>sus</i> with <i>element</i> inserted
+*/
+template <typename C>
+  requires is_sus<C> and is_string<typename C::value_type>
+C operator+(const C& sus, const std::string_view element)
+{ C rv { sus };
+
+  rv += element;
+
+  return rv;
 }
 
 /*! \brief              Append an element to a deque, list or vector
@@ -1455,6 +1518,7 @@ inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type
     \return                     inverted mapping
 */
 template <typename M>  // M = map<T, set<T> >
+  requires is_mum<M>
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
 { std::map<typename M::key_type, typename M::key_type> rv;
 
@@ -1463,6 +1527,18 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   return rv;
 }
+
+#if 0
+template <typename M>  // M = map<T, set<T> >
+auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
+{ std::map<typename M::key_type, typename M::key_type> rv;
+
+  for (const auto& [ k1, v1 ] : original_mapping)
+    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
+
+  return rv;
+}
+#endif
 
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached
@@ -1620,20 +1696,28 @@ struct stringly_hash
     { return std::hash<std::string>{}(rhs); }
 };
 
-// make the heterogeneous lookup versions easily available
+// make the versions with heterogeneous lookup easily available
 
-// hetrogenous lookup for unordered maps with string keys
+// heterogenous lookup for unordered maps with string keys
 template <typename ValueType>
 using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
 
-// hetrogenous lookup for unordered sets of strings
+// heterogenous lookup for unordered multimaps with string keys
+template <typename ValueType>
+using UNORDERED_STRING_MULTIMAP = std::unordered_multimap<std::string, ValueType, stringly_hash, std::equal_to<>>;
+
+// heterogenous lookup for unordered sets of strings
 using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
 
-// hetrogenous lookup for ordered maps with string keys
+// heterogenous lookup for ordered maps with string keys
 template <typename ValueType>
 using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
 
-// hetrogenous lookup for ordered sets of strings
+// heterogenous lookup for multimaps with string keys
+template <typename ValueType>
+using STRING_MULTIMAP = std::multimap<std::string, ValueType, std::less<>>;
+
+// heterogenous lookup for ordered sets of strings
 using STRING_SET = std::set<std::string, std::less<>>;
 
 #endif    // MACROS_H

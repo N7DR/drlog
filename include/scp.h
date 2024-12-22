@@ -26,9 +26,10 @@
 // forward declaration
 class scp_databases;
 
-using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
+//using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
+using SCP_SET = UNORDERED_STRING_SET;    ///< define the type of set used in SCP functions
 
-constexpr int SCP_KEY_SIZE = 2;         // we index using pairs of characters
+constexpr int SCP_KEY_SIZE { 2 };         // we index using pairs of characters
 
 // -----------  scp_database  ----------------
 
@@ -43,7 +44,8 @@ class scp_database
 {
 protected:
 
-  std::unordered_map<std::string /* two characters */, SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
+//  std::unordered_map<std::string /* two characters */, SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
+  UNORDERED_STRING_MAP</* two characters */ SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
 
 // a one-shot cache; I'm far from convinced that this is useful,
 // because an ordinary cache-miss lookup is so fast

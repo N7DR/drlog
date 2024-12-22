@@ -69,7 +69,7 @@ protected:
   unsigned int                                 _auto_remaining_callsign_mults_threshold { 1 };                          ///< number of times a callsign mult must be seen before it becomes known
   bool                                         _auto_remaining_country_mults            { false };                      ///< do we auto-generate the remaining country mults?
   unsigned int                                 _auto_remaining_country_mults_threshold  { 1 };                          ///< number of times a canonical prefix must be seen before it becomes known
-  std::set<std::string>                        _auto_remaining_exchange_mults           { };                            ///< the exchange mults for which we auto-generate the values
+  STRING_SET                        _auto_remaining_exchange_mults           { };                            ///< the exchange mults for which we auto-generate the values
   bool                                         _auto_screenshot                         { false };                      ///< do we create a screenshot every hour?
 
   int                                          _bandmap_cull_function                   { 0 };                          ///< number of the bandmap cull function
@@ -125,7 +125,6 @@ protected:
 
   std::set<BAND>                               _call_history_bands                      { };                            ///< bands to show in CALL HISTORY window
   std::string                                  _call_ok_now_message                     { };                            ///< message if call was changed
-//  std::set<std::string>                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   STRING_SET                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band                 { false };                      ///< are callsign mults per-band?
   bool                                         _callsign_mults_per_mode                 { false };                      ///< are callsign mults per-mode?
@@ -163,8 +162,7 @@ protected:
   std::string                                  _exchange_mults                          { };                            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band                 { false };                      ///< are exchange mults per-band?
   bool                                         _exchange_mults_per_mode                 { false };                      ///< are exchange mults per-mode?
-  std::map<std::string, std::string>           _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
-//  std::map<std::string, std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
+  STRING_MAP<std::string>           _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
   STRING_MAP<std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
   std::string                                  _exchange_sap                            { };                            ///< exchange in SAP mode
   std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
@@ -223,8 +221,8 @@ protected:
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
   std::vector<std::pair<std::string /* name/addr */, std::string /* label */>> _ping_targets { };               ///< targets for pings
-  std::set<std::string>                            _post_monitor_calls       { };               ///< calls to be monitored
-  std::set<std::string>                            _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
+  STRING_SET                            _post_monitor_calls       { };               ///< calls to be monitored
+  STRING_SET                            _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
   unsigned int                                     _ptt_delay                { 25 };            ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                             _p3                       { false };         ///< is a P3 available?
   bool                                             _p3_ignore_checksum_error { false };         ///< should checksum errors be ignored when acquiring P3 screendumps?
@@ -241,10 +239,7 @@ protected:
   std::string                                  _qtc_filename                            { "QTCs"s };                    ///< name of file where QTCs are stored
   unsigned int                                 _qtc_long_t                              { 0 };                          ///< whether and amount to extend length of initial Ts in serial number in QTCs
   unsigned int                                 _qtc_qrs                                 { 0 };                          ///< WPM decrease when sending QTC
-//  std::map<std::string, std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
-//  STRING_MAP<std::set<std::string>> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
   STRING_MAP<STRING_SET> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
-//  std::map<std::string, std::set<std::string>> _qth2x                                   { };                            ///< allowed exchange values as a function of country; set with qth2x
 
   std::vector<unsigned int>                    _rate_periods                            { 15, 30, 60 } ;                ///< periods (in minutes) over which rates should be calculated
   bool                                         _rbn_beacons                             { false };                      ///< whether to place RBN posts identified as from beacons on the bandmap
@@ -254,8 +249,8 @@ protected:
   unsigned int                                 _rbn_threshold                           { 1 };                          ///< number of different stations that have to post a station to the RBN before it appears on the bandmap
   std::string                                  _rbn_username                            { };                            ///< username to use on the RBN server
   int                                          _reject_colour                           { COLOUR_RED };                 ///< colour for calls that are dupes
-  std::set<std::string>                        _remaining_callsign_mults_list           { };                            ///< callsign mults to display
-  std::set<std::string>                        _remaining_country_mults_list            { };                            ///< country mults to display
+  STRING_SET                        _remaining_callsign_mults_list           { };                            ///< callsign mults to display
+  STRING_SET                        _remaining_country_mults_list            { };                            ///< country mults to display
   bool                                         _require_dot_in_replacement_call         { false };                      ///< whether to require a dot in a replacement call in the EXCHANGE window
   unsigned int                                 _rig1_baud                               { 4800 };                       ///< baud rate for rig
   unsigned int                                 _rig1_data_bits                          { 8 };                          ///< number of data bits for rig
@@ -288,9 +283,6 @@ protected:
   enum AUDIO_RECORDING                         _start_audio_recording                   { AUDIO_RECORDING::DO_NOT_START };  ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band                              { BAND_20 };                        ///< on what band do we start?
   enum MODE                                    _start_mode                              { MODE_CW };                        ///< on which mode do we start?
-//  std::map<std::string /* name */,
-//             std::pair<std::string /* contents */,
-//                         std::vector<window_information> > > _static_windows            { };                                ///< size, position and content information for each static window
   STRING_MAP<std::pair<std::string /* contents */,
                          std::vector<window_information> > > _static_windows            { };                                ///< size, position and content information for each static window
 
@@ -300,7 +292,6 @@ protected:
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
-//  std::map<std::string /* name */, window_information, std::less<> > _windows           { };                                ///< size and position info for each window
   STRING_MAP<window_information> _windows           { };                                ///< size and position info for each window; key = name
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
@@ -619,7 +610,6 @@ public:
     \param  name    name of window
     \return         location, size and colour information
 */
-//  inline window_information window_info(const std::string& name) const    // currently have to use string reference because of heterogeneous lookup
   inline window_information window_info(const std::string_view name) const
   { SAFELOCK(_context);
     return MUM_VALUE(_windows, name);
@@ -629,7 +619,6 @@ public:
     \param  name    name of window
     \return         whether the window <i>name</i> is defined in the configuration file
 */
-//  inline bool window_defined(const std::string& name) const
   inline bool window_defined(const std::string_view name) const
     { return window_info(name).defined(); } 
 

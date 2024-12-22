@@ -24,7 +24,8 @@
 #include <string>
 #include <unordered_set>
 
-using FUZZY_SET = std::unordered_set<std::string>;    ///< define the type of set used in fuzzy functions
+//using FUZZY_SET = std::unordered_set<std::string>;    ///< define the type of set used in fuzzy functions
+using FUZZY_SET = UNORDERED_STRING_SET;    ///< define the type of set used in fuzzy functions
 
 // -----------  fuzzy_database  ----------------
 
@@ -112,7 +113,8 @@ public:
 
 /// empty the database
   inline void clear(void)
-    { _db.fill( std::unordered_set<std::string> { } ); }
+//    { _db.fill( std::unordered_set<std::string> { } ); }
+    { _db.fill( UNORDERED_STRING_SET { } ); }
 };
 
 // -----------  fuzzy_databases  ----------------

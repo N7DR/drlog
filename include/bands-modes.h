@@ -60,31 +60,29 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                     "10"s
                                                                  } };         ///< names of bands
 
-//static std::map<std::string, BAND, std::less<>> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
 static STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
-                                                                 { "80"s,  BAND_80 },
-                                                                 { "60"s,  BAND_60 },
-                                                                 { "40"s,  BAND_40 },
-                                                                 { "30"s,  BAND_30 },
-                                                                 { "20"s,  BAND_20 },
-                                                                 { "17"s,  BAND_17 },
-                                                                 { "15"s,  BAND_15 },
-                                                                 { "12"s,  BAND_12 },
-                                                                 { "10"s,  BAND_10 }
-                                                               };                    ///< map a band name to a band
+                                         { "80"s,  BAND_80 },
+                                         { "60"s,  BAND_60 },
+                                         { "40"s,  BAND_40 },
+                                         { "30"s,  BAND_30 },
+                                         { "20"s,  BAND_20 },
+                                         { "17"s,  BAND_17 },
+                                         { "15"s,  BAND_15 },
+                                         { "12"s,  BAND_12 },
+                                         { "10"s,  BAND_10 }
+                                      };                    ///< map a band name to a band
 
-//static std::map<std::string, BAND, std::less<>> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
 static STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
-                                                                       { "80m"s,  BAND_80 },
-                                                                       { "60m"s,  BAND_60 },
-                                                                       { "40m"s,  BAND_40 },
-                                                                       { "30m"s,  BAND_30 },
-                                                                       { "20m"s,  BAND_20 },
-                                                                       { "17m"s,  BAND_17 },
-                                                                       { "15m"s,  BAND_15 },
-                                                                       { "12m"s,  BAND_12 },
-                                                                       { "10m"s,  BAND_10 }
-                                                                     };                    ///< map an ADIF3 band to a band
+                                               { "80m"s,  BAND_80 },
+                                               { "60m"s,  BAND_60 },
+                                               { "40m"s,  BAND_40 },
+                                               { "30m"s,  BAND_30 },
+                                               { "20m"s,  BAND_20 },
+                                               { "17m"s,  BAND_17 },
+                                               { "15m"s,  BAND_15 },
+                                               { "12m"s,  BAND_12 },
+                                               { "10m"s,  BAND_10 }
+                                            };                    ///< map an ADIF3 band to a band
 
 /// modes that drlog knows about
 enum MODE { MODE_CW = 0,
@@ -106,10 +104,6 @@ static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
                                                                   };
 
 /// generate the mode from a name
-//static const std::map<std::string, MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
-//                                                          { "SSB"s,  MODE_SSB },
-//                                                          { "RTTY"s, MODE_RTTY }
-//                                                        };
 
 static const STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
                                                { "SSB"s,  MODE_SSB },

@@ -108,7 +108,6 @@ public:
     \param  msg   the message to be sent
     \return       whether the attemnpt to post was successful
 */
-//  bool spot(const std::string& msg);
   bool spot(const std::string_view msg);
 
 /// reset the cluster socket
@@ -257,7 +256,7 @@ class monitored_posts
 {
 protected:
 
-  std::set<std::string>             _callsigns   { };           ///< monitored calls
+  STRING_SET                        _callsigns   { };           ///< monitored calls
   std::deque<monitored_posts_entry> _entries;                   ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
   bool                              _is_dirty    { false };     ///< whether info has changed since last output
   std::atomic<unsigned int>         _max_entries { 0 };         ///< number of displayable entries
@@ -282,7 +281,7 @@ public:
     \param  callsign    call to be tested
     \return             whether <i>callsign</i> is being monitored
 */
-  bool is_monitored(const std::string& callsign) const;
+  bool is_monitored(const std::string_view callsign) const;
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>
     \param  post    post to be tested
@@ -292,12 +291,14 @@ public:
 /*! \brief              Add a call to the set of those being monitored
     \param  new_call    call to be added
 */
-  void operator+=(const std::string& new_call);
+//  void operator+=(const std::string& new_call);
+  void operator+=(const std::string_view new_call);
 
 /*! \brief                  Remove a call from the set of those being monitored
     \param  call_to_remove  call to be removed
 */
-  void operator-=(const std::string& call_to_remove);
+//  void operator-=(const std::string& call_to_remove);
+  void operator-=(const std::string_view call_to_remove);
 
 /// prune <i>_entries</i>
   void prune(void);

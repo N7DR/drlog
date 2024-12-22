@@ -27,14 +27,13 @@ using namespace std;
 
 pt_mutex rules_mutex { "RULES"s };      ///< mutex for the contest_rules object
 
-extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
+extern const STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
 
 extern message_stream    ost;           ///< for debugging and logging
 extern location_database location_db;   ///< location information
 
 extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
 
-//using MSI = map<string, unsigned int>;                    ///< syntactic sugar
 using MSI = STRING_MAP<unsigned int>;                    ///< syntactic sugar
 
 // -------------------------  choice_equivalents  ---------------------------
@@ -58,7 +57,7 @@ void choice_equivalents::operator+=(const pair<string, string>& ch1_ch2)
 
     Throws exception if <i>ch1_ch2<i> appears to be malformed
 */
-void choice_equivalents::operator+=(const string& ch1_ch2)
+void choice_equivalents::operator+=(const string_view ch1_ch2)
 { if (number_of_occurrences(ch1_ch2, '+') != 1)
     throw exception();
 
@@ -72,7 +71,7 @@ void choice_equivalents::operator+=(const string& ch1_ch2)
 
     If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
 */
-void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FIELD2"
+void choice_equivalents::add_if_choice(const string_view ch1_ch2)  // add "FIELD1+FIELD2"
 { if (number_of_occurrences(ch1_ch2, '+') == 1)
     *this += ch1_ch2;
 }
@@ -89,10 +88,12 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     Also adds <i>cv</i> as a possible value. Does nothing if <i>cv</i> is already
     present as a canonical value.
 */
-void exchange_field_values::add_canonical_value(const string& cv)
-{ //if (!(_values > cv))
-  if (!(_values.contains(cv)))
-    _values += { cv, set<string>( { cv } ) };
+void exchange_field_values::add_canonical_value(const string_view cv)
+{ if (!(_values.contains(cv)))
+  { string cvs { cv };
+
+    _values += { cvs, STRING_SET { cvs } };
+  }
 }
 
 /*! \brief      Add a possible value
@@ -101,10 +102,12 @@ void exchange_field_values::add_canonical_value(const string& cv)
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-void exchange_field_values::add_value(const string& cv, const string& v)
-{ add_canonical_value(cv);
+void exchange_field_values::add_value(const string_view cv, const string& v)
+{ const string cvs { cv };
 
-  _values[cv] += v;
+  add_canonical_value(cvs);
+
+  _values[cvs] += v;
 }
 
 /*! \brief      Get all the canonical values
@@ -112,8 +115,8 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 
     Returns empty set if there are no canonical values
 */
-set<string> exchange_field_values::canonical_values(void) const
-{ set<string> rv;
+STRING_SET exchange_field_values::canonical_values(void) const
+{ STRING_SET rv;
 
   for (const auto& [ cv, set_of_values ] : _values)
     rv += cv;
@@ -130,8 +133,8 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
 { if (!is_legal_canonical_value(cv))
     return false;
 
-  const auto         posn { _values.find(cv) };               // must be != cend() if we get here
-  const set<string>& ss   { posn->second };
+  const auto        posn { _values.find(cv) };               // must be != cend() if we get here
+  const STRING_SET& ss   { posn->second };
 
   return ss.contains(putative_value);
 }
@@ -221,11 +224,8 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
   SAFELOCK(rules);
 
   if (!context_qthx.empty())
-  { //for (const auto& this_qthx : context_qthx)
-    for (const auto& [str, ss] : context_qthx)
-    { //const string      canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-//      const set<string> ss               { this_qthx.second };
-      const string canonical_prefix { location_db.canonical_prefix(str) };
+  { for (const auto& [str, ss] : context_qthx)
+    { const string canonical_prefix { location_db.canonical_prefix(str) };
 
       exchange_field_values qthx;
 
@@ -276,7 +276,7 @@ vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_p
   SAFELOCK(rules);
 
   try
-  { const map<string, vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) }; // this can throw exception if rig has been set to a mode that is not supported by the contest
+  { const STRING_MAP<vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) }; // this can throw exception if rig has been set to a mode that is not supported by the contest
 
     auto cit { exchange.find(canonical_prefix) };
 
@@ -356,7 +356,8 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
 // generate vector of all permitted exchange fields
-  map<string /* canonical prefix */, vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
+//  map<string /* canonical prefix */, vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
+  STRING_MAP</* canonical prefix */ vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
   const auto& per_country_exchanges { context.exchange_per_country() };   // map, per-country exchanges; key = prefix-or-call; value = exchange
 
@@ -365,7 +366,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
 //  for (const auto& pce : per_country_exchanges)
   for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
-  { set<string> ss;
+  { STRING_SET ss;
 
     for (auto str : clean_split_string <string> (allowed_exchange_values))
     { str = remove_from_start <std::string> (str, "CHOICE:"sv);
@@ -381,15 +382,14 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
   const vector<string> exchange_mults_vec { clean_split_string <std::string> (context.exchange_mults()) };
 
-  map<string, vector<exchange_field>> single_mode_rv_rst;
-  map<string, vector<exchange_field>> single_mode_rv_rs;
+  STRING_MAP<vector<exchange_field>> single_mode_rv_rst;
+  STRING_MAP<vector<exchange_field>> single_mode_rv_rs;
 
-//  for (const auto& mpef : permitted_exchange_fields)
   for (const auto& [ canonical_prefix, permitted_values ] : permitted_exchange_fields)
-  { //const vector<string>& vs { mpef.second };
-    const vector<string>& vs { permitted_values };
+  { //const vector<string>& vs { permitted_values };
 
-    vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
+//    vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
+    vector<exchange_field> vef { _inner_parse(permitted_values, exchange_mults_vec) };
 
 // force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
     auto vef_rs_rst = [&vef] (const string& initial_field_name, const string& final_field_name)
@@ -410,14 +410,13 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // g++'s restriction that values of maps cannot be altered in-place
 // makes it easier to do it now
 
-//    single_mode_rv_rst += { mpef.first, vef_rs_rst("RS"s, "RST"s) }; // force to RST
-//    single_mode_rv_rs += { mpef.first, vef_rs_rst("RST"s, "RS"s) };  // force to RS
     single_mode_rv_rst += { canonical_prefix, vef_rs_rst("RS"s, "RST"s) }; // force to RST
     single_mode_rv_rs += { canonical_prefix, vef_rs_rst("RST"s, "RS"s) };  // force to RS
   }
 
-  for (const auto& m : _permitted_modes)
-    _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) };
+//  for (const auto& m : _permitted_modes)
+//    _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) };
+  FOR_ALL(_permitted_modes, [this, &single_mode_rv_rs, &single_mode_rv_rst] (const MODE m) { _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) }; });
 }
 
 /*! \brief                  Initialize an object that was created from the default constructor
@@ -547,7 +546,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // build expanded version of _received_exchange, and _choice_exchange_equivalents
   for (const auto& m : _permitted_modes)
-  { map<string, vector<exchange_field>> expanded_exch;
+  { STRING_MAP<vector<exchange_field>> expanded_exch;
 
     auto& unexpanded_exch              { _received_exchange.at(m) };
     auto& choice_equivalents_this_mode { _choice_exchange_equivalents[m] };     // map<prefix, choice_equivalents>
@@ -596,7 +595,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
       string context_points { context.points_string(b, m) };
 
-      static const set<string> special_points_set { "IARU"s, "STEW"s };
+      static const STRING_SET special_points_set { "IARU"s, "STEW"s };
 
       const bool is_special_points { ( special_points_set.contains(context_points) ) };
 
@@ -663,7 +662,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
             const string  inside_square_brackets { delimited_substring <std::string> (f0, '[', ']', DELIMITERS::DROP) };
 
             if (!inside_square_brackets.empty())
-            { const set<string> all_exchange_field_names { exchange_field_names() };
+            { const STRING_SET all_exchange_field_names { exchange_field_names() };
 
               if (!all_exchange_field_names.empty())
               { const auto cit { all_exchange_field_names.find(inside_square_brackets) };
@@ -693,21 +692,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(vef, [&leaves_vec] (const auto& ef) { leaves_vec += ef.expand(); });
   }
 
-//  auto print_exch_field_names = [] (const auto& exch_values)
-//    { for (auto& ev : exch_values)
-//        ost << "exchange value name: " << ev.name() << endl;
-//    };
-
-//  print_exch_field_names(_exch_values);
-
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
   for (const auto& ef : leaves)
-  { static const set<string> no_canonical_values { "RS"s, "RST"s, "SERNO"s };    // some field values don't have canonical values
+  { static const STRING_SET no_canonical_values { "RS"s, "RST"s, "SERNO"s };    // some field values don't have canonical values
 
     const string& field_name { ef.name() };
-
- //   print_exch_field_names(_exch_values);
 
     string entire_file;
 
@@ -728,11 +718,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     if (read_file_ok)
     { const vector<string> lines { split_string <std::string> (entire_file, EOL_CHAR) };
 
-      map<string /* canonical value */, set<string> > map_canonical_to_all;
+      STRING_MAP<STRING_SET> map_canonical_to_all;    // key = canonical value; value = all the equivalet values
 
       for (const auto& line : lines)
-      { string lhs;
-        set<string> equivalent_values;    // includes the canonical
+      { string     lhs;
+        STRING_SET equivalent_values;    // includes the canonical
 
         if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
         { if (contains(line, '=') )
@@ -754,7 +744,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
           { const string str { remove_peripheral_spaces <std::string> (line) };
 
             if (!str.empty())
-              map_canonical_to_all += { str, set<string>{ str } };
+              map_canonical_to_all += { str, STRING_SET { str } };
           }
         }
       }
@@ -764,12 +754,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
     else
     { if (NONE_OF(_exch_values, [&field_name] (const auto& ev) { return (ev.name() == field_name); }))
-        _exch_values += { field_name, MAP_STR_TO_SET { } };  // pair<string, map<string, set<string> > >
+        _exch_values += { field_name, STRING_MAP<STRING_SET> { } };  // pair<string, map<string, set<string> > >
     }
   }
 
 // generate the sets of all acceptable values
-  FOR_ALL(all_known_field_names(), [this] (const string& field_name) { _permitted_exchange_values += { field_name, _all_exchange_values <set<string>> (field_name) }; });
+  FOR_ALL(all_known_field_names(), [this] (const string& field_name) { _permitted_exchange_values += { field_name, _all_exchange_values <STRING_SET> (field_name) }; });
 
 // generate all the mappings from permitted to canonical values
   FOR_ALL(_exch_values, [this] (const exchange_field_values& efv) { _permitted_to_canonical += { efv.name(), INVERT_MAPPING(efv.values()) }; } );
@@ -812,8 +802,8 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
 /*! \brief      Get all the known names of exchange fields (for all modes)
     \return     all the known names of exchange fields (for all modes)
 */
-set<string> contest_rules::all_known_field_names(void) const
-{ set<string> rv;
+STRING_SET contest_rules::all_known_field_names(void) const
+{ STRING_SET rv;
 
   SAFELOCK(rules);
 
@@ -951,10 +941,10 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
 
     Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
-set<string> contest_rules::exch_permitted_values(const string& field_name) const
+STRING_SET contest_rules::exch_permitted_values(const string& field_name) const
 { SAFELOCK(rules);
 
-  return MUM_VALUE(_permitted_exchange_values, field_name, set<string> { });
+  return MUM_VALUE(_permitted_exchange_values, field_name, STRING_SET { });
 }
 
 /*! \brief                  The canonical value for a field
@@ -975,7 +965,8 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
   if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
     return (substring <std::string> (actual_value, 0, 2) + pad_leftz(substring <std::string_view> (actual_value, 2), 3));  // XXnnn
 
-  const set<string> permitted_values { exch_permitted_values(field_name) };
+//  const set<string> permitted_values { exch_permitted_values(field_name) };
+  const STRING_SET permitted_values { exch_permitted_values(field_name) };
 
   if (permitted_values.empty())                         // if no permitted values => anything allowed
     return actual_value;
@@ -1118,13 +1109,11 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
   switch (const points_structure& points_this_band { pb.at(b) }; points_this_band.points_type())
   { default :
     case POINTS::NORMAL :
-    { //const map<string, unsigned int>& country_points { points_this_band.country_points() };
-      const STRING_MAP<unsigned int>& country_points { points_this_band.country_points() };
+    { const STRING_MAP<unsigned int>& country_points { points_this_band.country_points() };
 
       if (auto cit { country_points.find(canonical_prefix) }; cit != country_points.cend())    // if points are defined for this country
         return cit->second;
 
-//      const map<string, unsigned int>& continent_points { points_this_band.continent_points() };
       const STRING_MAP<unsigned int>& continent_points { points_this_band.continent_points() };
 
       return MUM_VALUE(continent_points, location_db.continent(call), points_this_band.default_points());
@@ -1234,9 +1223,7 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
 { SAFELOCK(rules);
 
   try
-  { //const auto& se { _sent_exchange_names.at(m) };
-
-    return contains(_sent_exchange_names.at(m), str);
+  { return contains(_sent_exchange_names.at(m), str);
   }
 
   catch (...)
@@ -1271,8 +1258,8 @@ bool contest_rules::is_exchange_field_used_for_country(const string& field_name,
 }
 
 /// the names of all the possible exchange fields
-set<string> contest_rules::exchange_field_names(void) const
-{ set<string> rv;
+STRING_SET contest_rules::exchange_field_names(void) const
+{ STRING_SET rv;
 
   for (const auto& [ field_name, unused_eft ] : _exchange_field_eft)      //std::map<std::string /* field name */, EFT>   _exchange_field_eft;
     rv += field_name;
@@ -1288,16 +1275,14 @@ set<string> contest_rules::exchange_field_names(void) const
 choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
 { choice_equivalents rv;
 
-//  map<MODE, map<string, choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
   map<MODE, STRING_MAP<choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
 
   if (cit_mode == _choice_exchange_equivalents.cend())     // no choice equivalents for this mode
     return rv;
 
-//  const map<string, choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
   const STRING_MAP<choice_equivalents>& choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
 
-  map<string, choice_equivalents>::const_iterator cit_cp { choice_equivalents_this_mode.find(cp) };
+  STRING_MAP<choice_equivalents>::const_iterator cit_cp { choice_equivalents_this_mode.find(cp) };
 
   if (cit_cp != choice_equivalents_this_mode.cend())
     return (cit_cp->second);
@@ -1342,7 +1327,7 @@ choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) co
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
 */
-string wpx_prefix(const string& call)
+string wpx_prefix(const string_view call)
 {
 // callsign has to contain three characters
   if (call.length() < 3)
@@ -1371,7 +1356,7 @@ string wpx_prefix(const string& call)
 
 // /MM, /MA, /AM
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
-  { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
+  { static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last <std::string> (callsign, 2)))
       callsign = remove_from_end <std::string> (callsign, 3u);
@@ -1443,8 +1428,8 @@ From SAC rules, the relevant countries are:
   Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI – SJ – SK – SL – SM
   Iceland TF
 */
-string sac_prefix(const string& call)
-{ static const unordered_set<string> scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
+string sac_prefix(const string_view call)
+{ static const UNORDERED_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 

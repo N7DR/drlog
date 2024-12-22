@@ -674,11 +674,19 @@ string QSO::verbose_format(void) const
   constexpr int BAND_WIDTH      { 3 };
   constexpr int FREQUENCY_WIDTH { 7 };
 
-  static const map<string /* tx field name */, pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
+//  static const map<string /* tx field name */, pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
+//                                                                                        { "sent-CQZONE"s, { 2, PAD::LEFT } }
+//                                                                                      };
+
+  static const STRING_MAP</* tx field name */ pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
                                                                                         { "sent-CQZONE"s, { 2, PAD::LEFT } }
                                                                                       };
 
-  static const map<string /* tx field name */, pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
+//  static const map<string /* tx field name */, pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
+//                                                                                        { "received-CQZONE"s, { 2, PAD::LEFT } }
+//                                                                                      };
+
+  static const STRING_MAP</* tx field name */ pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
                                                                                         { "received-CQZONE"s, { 2, PAD::LEFT } }
                                                                                       };
 
@@ -802,7 +810,9 @@ string QSO::sent_exchange(const string& field_name) const
     Also populates <i>_log_line_fields</i> to match the returned string
 */
 string QSO::log_line(void)
-{ static const map<string, unsigned int> field_widths { { "CHECK"s,     2 },
+{
+#if 0
+  static const map<string, unsigned int> field_widths { { "CHECK"s,     2 },
                                                         { "CQZONE"s,    2 },
                                                         { "CWPOWER"s,   3 },
                                                         { "DOK"s,       1 },
@@ -822,7 +832,28 @@ string QSO::log_line(void)
                                                         { "160MSTATE"s, 2 },
                                                         { "10MSTATE"s,  3 }
                                                       };
+#endif
 
+static const STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
+                                                        { "CQZONE"s,    2 },
+                                                        { "CWPOWER"s,   3 },
+                                                        { "DOK"s,       1 },
+                                                        { "GRID"s,      4 },
+                                                        { "ITUZONE"s,   2 },
+                                                        { "NAME"s,      6 },
+                                                        { "PREC"s,      1 },
+                                                        { "RDA"s,       4 },
+                                                        { "RS"s,        2 },
+                                                        { "RST"s,       3 },
+                                                        { "SECTION"s,   3 },
+                                                        { "SKCCNO"s,    6 },
+                                                        { "SOCIETY"s,   5 },
+                                                        { "SPC"s,       3 },
+                                                        { "SSBPOWER"s,  4 },
+                                                        { "UKEICODE"s,  2 },
+                                                        { "160MSTATE"s, 2 },
+                                                        { "10MSTATE"s,  3 }
+                                                      };
   constexpr size_t CALL_FIELD_LENGTH      { 12 };
   constexpr size_t DATE_FIELD_LENGTH      { 11 };
   constexpr size_t FREQUENCY_FIELD_LENGTH { 8 };

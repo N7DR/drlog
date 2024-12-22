@@ -33,36 +33,23 @@ class EFT
 {
 protected:
 
-// There are several ways to define a field:
+// There are two ways to define a field:
 //  1. regex
 //  2. .values file
 
-  bool                                  _is_mult { false };                   ///< is this field a mult?
+  bool                    _is_mult { false };                   ///< is this field a mult?
 
-  std::set<std::string>                 _legal_non_regex_values;    ///< all legal values not obtained from a regex
+  STRING_SET              _legal_non_regex_values;    ///< all legal values not obtained from a regex
 
-  std::string                           _name;                      ///< name of exchange field
+  std::string             _name;                      ///< name of exchange field
 
 // we simply store the expresison as a string, because the standard library version of regex is missing
 // too many useful functions; in particular, there is no way to test whether a regex has been set [i.e.,
 // whether it is equivalent to ""s]
-  std::string                           _regex_str;          ///< regex expression to define field
+  std::string             _regex_str;          ///< regex expression to define field
 
-#if 1
-  std::map<std::string,        /* a canonical field value */
-          std::set             /* each equivalent value is a member of the set, including the canonical value */
-            <std::string       /* indistinguishable legal values */
-            >>                          _values;                    ///< the canonical and alternative values for the field
-#endif
-
-#if 0
-  std::map<std::string,        /* a canonical field value */
-          std::set             /* each equivalent value is a member of the set, including the canonical value */
-            <std::string       /* indistinguishable legal values */
-            >, std::less<> >            _values;                    ///< the canonical and alternative values for the field
-#endif
-
-  std::map<std::string, std::string>    _value_to_canonical;        ///< key = value; value = corresponding canonical value
+  STRING_MAP<STRING_SET>  _values;    // key = cv      /* each equivalent value is a member of the set, including the canonical value */     ///< the canonical and alternative values for the field
+  STRING_MAP<std::string> _value_to_canonical;        ///< key = value; value = corresponding canonical value
 
 public:
 
@@ -87,9 +74,6 @@ public:
 
     Object is fully ready for use after this constructor.
 */
-//  EFT(const std::string& nm, const std::vector<std::string>& path,
-//      const std::string& regex_filename,
-//      const drlog_context& context, location_database& location_db);
   EFT(const std::string& nm, const std::vector<std::string>& path,
       const std::string_view regex_filename,
       const drlog_context& context, location_database& location_db);
@@ -106,7 +90,6 @@ public:
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-//  bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
   bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string_view filename);
 
 /*! \brief              Get info from .values file
@@ -114,7 +97,6 @@ public:
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-//  bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
   bool read_values_file(const std::vector<std::string>& path, const std::string_view filename);
 
 /*! \brief              Parse and incorporate QTHX values from context
@@ -153,7 +135,7 @@ public:
     Adds <i>cv</i> as a canonical value if necessary. Ignores any elements of
     <i>cv</i> that are already known as being equivalent to <i>cv</i>.
 */
-  inline void add_legal_values(const std::string& cv, const std::set<std::string>& new_values)
+  inline void add_legal_values(const std::string& cv, const STRING_SET& new_values)
     { FOR_ALL(new_values, [&cv, this] (const std::string& str) { add_legal_value(cv, str); } ); }
 
 /*! \brief          Is a string a legal value?
@@ -177,7 +159,6 @@ public:
   std::string canonical_value(const std::string& str) const;
 
 /// all the canonical values
-//  std::set<std::string> canonical_values(void) const;
   STRING_SET canonical_values(void) const;
 
 /// serialise
