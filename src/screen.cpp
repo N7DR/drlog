@@ -1027,28 +1027,15 @@ pair<COLOUR_TYPE, COLOUR_TYPE> cpair::fgbg(const PAIR_NUMBER_TYPE pair_nr) const
     \return         the colour corresponding to <i>str</i>
 */
 COLOUR_TYPE string_to_colour(const string_view str)
-{
-#if 0
-  static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
-                                                     { "BLUE"s,    COLOUR_BLUE },
-                                                     { "CYAN"s,    COLOUR_CYAN },
-                                                     { "GREEN"s,   COLOUR_GREEN },
-                                                     { "MAGENTA"s, COLOUR_MAGENTA },
-                                                     { "RED"s,     COLOUR_RED },
-                                                     { "WHITE"s,   COLOUR_WHITE },
-                                                     { "YELLOW"s,  COLOUR_YELLOW }
-                                                   };
-#endif
-
-  static const STRING_MAP<COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
-                                                    { "BLUE"s,    COLOUR_BLUE },
-                                                    { "CYAN"s,    COLOUR_CYAN },
-                                                    { "GREEN"s,   COLOUR_GREEN },
-                                                    { "MAGENTA"s, COLOUR_MAGENTA },
-                                                    { "RED"s,     COLOUR_RED },
-                                                    { "WHITE"s,   COLOUR_WHITE },
-                                                    { "YELLOW"s,  COLOUR_YELLOW }
-                                                  };
+{ static const UNORDERED_STRING_MAP<COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
+                                                              { "BLUE"s,    COLOUR_BLUE },
+                                                              { "CYAN"s,    COLOUR_CYAN },
+                                                              { "GREEN"s,   COLOUR_GREEN },
+                                                              { "MAGENTA"s, COLOUR_MAGENTA },
+                                                              { "RED"s,     COLOUR_RED },
+                                                              { "WHITE"s,   COLOUR_WHITE },
+                                                              { "YELLOW"s,  COLOUR_YELLOW }
+                                                            };
 
   const string s { to_upper(remove_peripheral_spaces <std::string_view> (str)) };
 

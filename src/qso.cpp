@@ -834,7 +834,7 @@ string QSO::log_line(void)
                                                       };
 #endif
 
-static const STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
+static const UNORDERED_STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
                                                         { "CQZONE"s,    2 },
                                                         { "CWPOWER"s,   3 },
                                                         { "DOK"s,       1 },

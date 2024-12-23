@@ -29,9 +29,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-//extern const std::map<std::string, int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
-extern const STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
-//extern const std::map<std::string, std::string> equivalent_key_names;   ///< names that are equivalent
+extern const UNORDERED_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
 extern const STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
 extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the keypad numbers and their equivalents
 

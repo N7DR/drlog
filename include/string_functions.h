@@ -245,8 +245,6 @@ inline std::string to_string(T&& val)
     \param  sv  string_view to append
     \return     concatenation of <i>s</i> and <i>sv</i>
 */
-//inline std::string operator+(const std::string& s, const std::string_view sv)
-//  { return s + std::string { sv }; }
   std::string operator+(const std::string& s, const std::string_view sv);
 
 /*! \brief      Append a character to a string_view
@@ -254,8 +252,6 @@ inline std::string to_string(T&& val)
     \param  c   character to append
     \return     concatenation of <i>sv</i> and <i>c</i>
 */
-//inline std::string operator+(const std::string_view sv, const char c)
-//  { return std::string { sv } + c; }
   std::string operator+(const std::string_view sv, const char c);
 
 /*! \brief              Safe version of the substr() member function
@@ -1284,6 +1280,18 @@ bool compare_calls(const std::string_view call1, const std::string_view call2);
 // this seems to work
 //using CALL_SET = std::set<std::string, CALL_COMPARISON>;   // elements are in callsign order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator; heterogeneous lookup automatically supported because of the signature of compare_calls()
 
+template<bool (*PF)(const std::string_view, const std::string_view)>
+struct CMP
+{ using is_transparent = void;      // the magic incantation
+
+  inline bool operator() (const std::string_view m1, const std::string_view m2) const
+    { return PF(m1, m2); }
+};
+
+using CALL_SET = std::set<std::string, CMP<compare_calls>>;
+
+
+#if 0
 // solution #4; works
 struct CALL_CMP
 { using is_transparent = void;      // the magic incantation
@@ -1293,6 +1301,11 @@ struct CALL_CMP
 };
 
 using CALL_SET = std::set<std::string, CALL_CMP>;
+#endif
+
+
+
+
 
 
 // the next line results inmultiple definitions of the lambda
@@ -1306,6 +1319,8 @@ using CALL_SET = std::set<std::string, CALL_CMP>;
 */
 //bool compare_mults(const std::string& mult1, const std::string& mult2);
 bool compare_mults(const std::string_view mult1, const std::string_view mult2);
+
+using MULT_SET = std::set<std::string, CMP<compare_mults>>;
 
 //using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
 //using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compare_mults>;   // type that knows how to compare mult strings (for exchange mults)
@@ -1322,6 +1337,7 @@ bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 //auto MULT_LAMBDA = [] (const std::string_view m1, const std::string_view m2) { return compare_mults(m1, m2); };
 //using MULT_SET = std::set<std::string, decltype(MULT_LAMBDA)>;
 
+#if 0
 // solution #4; works
 struct MULT_CMP
 { using is_transparent = void;      // the magic incantation
@@ -1331,6 +1347,7 @@ struct MULT_CMP
 };
 
 using MULT_SET = std::set<std::string, MULT_CMP>;
+#endif
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value

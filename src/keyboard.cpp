@@ -411,51 +411,27 @@ void keyboard_queue::push_key_press(const string& str, const int ms_delay)
     This is used to decode access to the correct CW messages when a key is pressed
     See the file drlog_context.cpp to see this in use
 */
-#if 0
-const map<string, int> key_names = { { "kp_0"s,      XK_KP_0 },
-                                     { "kp_1"s,      XK_KP_1 },
-                                     { "kp_2"s,      XK_KP_2 },
-                                     { "kp_3"s,      XK_KP_3 },
-                                     { "kp_4"s,      XK_KP_4 },
-                                     { "kp_5"s,      XK_KP_5 },
-                                     { "kp_6"s,      XK_KP_6 },
-                                     { "kp_7"s,      XK_KP_7 },
-                                     { "kp_8"s,      XK_KP_8 },
-                                     { "kp_9"s,      XK_KP_9 },
-                                     { "kp_insert"s, XK_KP_Insert },
-                                     { "kp_end"s,    XK_KP_End },
-                                     { "kp_down"s,   XK_KP_Down },
-                                     { "kp_next"s,   XK_KP_Next },
-                                     { "kp_left"s,   XK_KP_Left },
-                                     { "kp_begin"s,  XK_KP_Begin },
-                                     { "kp_right"s,  XK_KP_Right },
-                                     { "kp_home"s,   XK_KP_Home },
-                                     { "kp_up"s,     XK_KP_Up },
-                                     { "kp_prior"s,  XK_KP_Prior }
-                                   };
-#endif
-
-const STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
-                                     { "kp_1"s,      XK_KP_1 },
-                                     { "kp_2"s,      XK_KP_2 },
-                                     { "kp_3"s,      XK_KP_3 },
-                                     { "kp_4"s,      XK_KP_4 },
-                                     { "kp_5"s,      XK_KP_5 },
-                                     { "kp_6"s,      XK_KP_6 },
-                                     { "kp_7"s,      XK_KP_7 },
-                                     { "kp_8"s,      XK_KP_8 },
-                                     { "kp_9"s,      XK_KP_9 },
-                                     { "kp_insert"s, XK_KP_Insert },
-                                     { "kp_end"s,    XK_KP_End },
-                                     { "kp_down"s,   XK_KP_Down },
-                                     { "kp_next"s,   XK_KP_Next },
-                                     { "kp_left"s,   XK_KP_Left },
-                                     { "kp_begin"s,  XK_KP_Begin },
-                                     { "kp_right"s,  XK_KP_Right },
-                                     { "kp_home"s,   XK_KP_Home },
-                                     { "kp_up"s,     XK_KP_Up },
-                                     { "kp_prior"s,  XK_KP_Prior }
-                                   };
+const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
+                                              { "kp_1"s,      XK_KP_1 },
+                                              { "kp_2"s,      XK_KP_2 },
+                                              { "kp_3"s,      XK_KP_3 },
+                                              { "kp_4"s,      XK_KP_4 },
+                                              { "kp_5"s,      XK_KP_5 },
+                                              { "kp_6"s,      XK_KP_6 },
+                                              { "kp_7"s,      XK_KP_7 },
+                                              { "kp_8"s,      XK_KP_8 },
+                                              { "kp_9"s,      XK_KP_9 },
+                                              { "kp_insert"s, XK_KP_Insert },
+                                              { "kp_end"s,    XK_KP_End },
+                                              { "kp_down"s,   XK_KP_Down },
+                                              { "kp_next"s,   XK_KP_Next },
+                                              { "kp_left"s,   XK_KP_Left },
+                                              { "kp_begin"s,  XK_KP_Begin },
+                                              { "kp_right"s,  XK_KP_Right },
+                                              { "kp_home"s,   XK_KP_Home },
+                                              { "kp_up"s,     XK_KP_Up },
+                                              { "kp_prior"s,  XK_KP_Prior }
+                                            };
 
 /// key names that are equivalent to one another
 #if 0

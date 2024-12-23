@@ -982,13 +982,6 @@ std::ostream& operator<<(std::ostream& ost, const T& mp)
 
   return ost;
 }
-//template <class T1, class T2>
-//std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
-//{ for (typename std::map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
-//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
-//
-//  return ost;
-//}
 
 /*! \brief          Write an unordered map to an output stream
     \param  ost     output stream
@@ -998,14 +991,6 @@ std::ostream& operator<<(std::ostream& ost, const T& mp)
     Note that the output order is, unsurprisingly, effectively random
     This works with unordered maps that support heterogeneous lookup
 */
-//template <class T1, class T2>
-//std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp)
-//{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
-//    ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
-//
-//  return ost;
-//}
-
 template <class T>
   requires is_unordered_map<T>
 std::ostream& operator<<(std::ostream& ost, const T& mp)

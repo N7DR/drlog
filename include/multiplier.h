@@ -40,16 +40,14 @@ class multiplier
 {
 protected:
 
-  bool         _all_values_are_mults { true };     ///< whether all the known values are actually mults
+  bool     _all_values_are_mults { true };     ///< whether all the known values are actually mults
 
   MULT_SET _known      { };     ///< all the (currently) known possible values
 
-//  std::set<std::string, decltype(&compare_mults)>  _known { compare_mults };
+  bool     _per_band   { false };  ///< is this multiplier accumulated per band?
+  bool     _per_mode   { false };  ///< is this multiplier accumulated per mode?
 
-  bool         _per_band   { false };  ///< is this multiplier accumulated per band?
-  bool         _per_mode   { false };  ///< is this multiplier accumulated per mode?
-
-  bool         _used       { false };      ///< is this object in use?
+  bool     _used       { false };      ///< is this object in use?
 
 /* Stored in the _worked array is the precise detail of what has been worked and where.
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
@@ -82,6 +80,7 @@ public:
     Returns false if the value <i>str</i> was already known
 */
   bool add_known(const std::string& str);
+//  bool add_known(const std::string_view str);
 
 /*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add
@@ -165,7 +164,8 @@ public:
     \param  b       band to be tested
     \param  m       mode to be tested
 */
-  bool is_worked(const std::string& str, const BAND b, const MODE m) const;
+//  bool is_worked(const std::string& str, const BAND b, const MODE m) const;
+  bool is_worked(const std::string_view str, const BAND b, const MODE m) const;
 
 /*! \brief      Number of mults worked on a particular band and mode
     \param  b   band

@@ -965,7 +965,6 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
   if ((field_name == "IOTA"sv) and (actual_value.length() > 2))   // IOTA is special because there are so many possible received values, many of which are not canonical
     return (substring <std::string> (actual_value, 0, 2) + pad_leftz(substring <std::string_view> (actual_value, 2), 3));  // XXnnn
 
-//  const set<string> permitted_values { exch_permitted_values(field_name) };
   const STRING_SET permitted_values { exch_permitted_values(field_name) };
 
   if (permitted_values.empty())                         // if no permitted values => anything allowed
@@ -1326,6 +1325,8 @@ choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) co
 /*! \brief          Return the WPX prefix of a call
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
+
+    *** should be able to do most of this with string_views ***
 */
 string wpx_prefix(const string_view call)
 {

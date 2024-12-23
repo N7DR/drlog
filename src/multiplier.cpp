@@ -44,16 +44,13 @@ MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
     Returns false if the value <i>str</i> was already known
 */
 bool multiplier::add_known(const std::string& str)
+//bool multiplier::add_known(const std::string_view str)
 { SAFELOCK(multiplier); 
 
   if (!_used)
     return false;
 
-  const auto a { _known.insert(str) };
-
-  const bool rv { a.second };
-
-//  const bool rv { _known.insert(str).second };
+  const bool rv { _known.insert(str).second };
 
   if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
@@ -182,7 +179,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     \param  m       mode to test
     \return         whether <i>str</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
+//bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
+bool multiplier::is_worked(const string_view str, const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 
   if (!_used)

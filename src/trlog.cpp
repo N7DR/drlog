@@ -44,38 +44,19 @@ struct QSO_CALL
 
 /// month of the year; 1 - 12
 int tr_record::month(void) const
-{
-#if 0
-  static const unordered_map<string, int> month_nr { { "JAN"s, 1 },
-                                                     { "FEB"s, 2 },
-                                                     { "MAR"s, 3 },
-                                                     { "APR"s, 4 },
-                                                     { "MAY"s, 5 },
-                                                     { "JUN"s, 6 },
-                                                     { "JUL"s, 7 },
-                                                     { "AUG"s, 8 },
-                                                     { "SEP"s, 9 },
-                                                     { "OCT"s, 10 },
-                                                     { "NOV"s, 11 },
-                                                     { "DEC"s, 12 }
-                                                   };
-#endif
-
-static const UNORDERED_STRING_MAP<int> month_nr { { "JAN"s, 1 },
-                                                     { "FEB"s, 2 },
-                                                     { "MAR"s, 3 },
-                                                     { "APR"s, 4 },
-                                                     { "MAY"s, 5 },
-                                                     { "JUN"s, 6 },
-                                                     { "JUL"s, 7 },
-                                                     { "AUG"s, 8 },
-                                                     { "SEP"s, 9 },
-                                                     { "OCT"s, 10 },
-                                                     { "NOV"s, 11 },
-                                                     { "DEC"s, 12 }
-                                                   };
-
-//  const string tmps { substring(_record, 10, 3) };
+{ static const UNORDERED_STRING_MAP<int> month_nr { { "JAN"s, 1 },
+                                                    { "FEB"s, 2 },
+                                                    { "MAR"s, 3 },
+                                                    { "APR"s, 4 },
+                                                    { "MAY"s, 5 },
+                                                    { "JUN"s, 6 },
+                                                    { "JUL"s, 7 },
+                                                    { "AUG"s, 8 },
+                                                    { "SEP"s, 9 },
+                                                    { "OCT"s, 10 },
+                                                    { "NOV"s, 11 },
+                                                    { "DEC"s, 12 }
+                                                  };
 
   return MUM_VALUE(month_nr, substring <std::string> (_record, 10, 3), 0);
 }
@@ -180,9 +161,9 @@ string tr_record::frequency(void) const
 
 // -----------  tr_log  ----------------
 
-/// compare order of calls
-int _compare_calls(const void* a, const void* b)
-{ return (strcmp((*(QSO_CALL*)a)._call.c_str(), (*(QSO_CALL*)b)._call.c_str())); }
+/// compare order of calls; not that this is not a member function
+inline int _compare_calls(const void* a, const void* b)
+  { return (strcmp((*(QSO_CALL*)a)._call.c_str(), (*(QSO_CALL*)b)._call.c_str())); }
 
 // -----------  tr_log  ----------------
 
