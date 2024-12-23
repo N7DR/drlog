@@ -79,8 +79,8 @@ void multiplier::remove_known(const string& str)
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-bool multiplier::is_known(const string& str) const
-//bool multiplier::is_known(const string_view str) const
+//bool multiplier::is_known(const string& str) const
+bool multiplier::is_known(const string_view str) const
 { SAFELOCK(multiplier);
 
   return (_used ? _known.contains(str) : false);

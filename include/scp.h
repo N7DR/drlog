@@ -44,7 +44,6 @@ class scp_database
 {
 protected:
 
-//  std::unordered_map<std::string /* two characters */, SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
   UNORDERED_STRING_MAP</* two characters */ SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
 
 // a one-shot cache; I'm far from convinced that this is useful,
@@ -100,7 +99,6 @@ public:
     Actually tests only the set of calls for the first pair of characters in <i>call</i>
 */
   inline bool contains(const std::string& call)
-//    { return (call.empty() ? false : (_db[substring <std::string> (call, 0, 2)].contains(call))); }
     { return (call.empty() ? false : (_db[substring <std::string> (call, 0, SCP_KEY_SIZE)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call

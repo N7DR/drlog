@@ -293,7 +293,6 @@ public:
 /*! \brief          Return all the calls in the log
     \return         all the calls in the log
 */
-//  std::set<std::string> calls(void) const;
   STRING_SET calls(void) const;
 
 /*! \brief      Reserve space for a known number of calls
@@ -440,11 +439,11 @@ class old_log
 protected:
 
   UNORDERED_STRING_MAP<std::tuple< unsigned int /* qsls */,
-                                 unsigned int /* qsos */,
-                                 std::set< std::pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
-                                 std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
-                               >
-                    > _olog;    ///< ADIF3 log of old QSOs (used for QSLs)
+                                   unsigned int /* qsos */,
+                                   std::set< std::pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
+                                   std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
+                                 >
+                      > _olog;    ///< ADIF3 log of old QSOs (used for QSLs)
 
 
 /*! \brief          Return an iterator to the data for a particular callsign

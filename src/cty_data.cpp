@@ -684,7 +684,6 @@ location_info location_database::info(const string_view callpart) const
     { best_info = guess_zones(callsign, best_info);
 
 // insert Russian information
-//      static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
       static const STRING_SET RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
       if (RUSSIAN_COUNTRIES.contains(best_info.canonical_prefix()))
@@ -738,7 +737,6 @@ location_info location_database::info(const string_view callpart) const
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat;
 // add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
 // should be a very rare occurrence
-//    static const set<string> russian_long_prefixes { "RU4W"s };
     static const STRING_SET russian_long_prefixes { "RU4W"s };
 
     if (found_1 and !found_0)                               // second part had an exact match

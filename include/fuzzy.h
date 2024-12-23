@@ -24,7 +24,6 @@
 #include <string>
 #include <unordered_set>
 
-//using FUZZY_SET = std::unordered_set<std::string>;    ///< define the type of set used in fuzzy functions
 using FUZZY_SET = UNORDERED_STRING_SET;    ///< define the type of set used in fuzzy functions
 
 // -----------  fuzzy_database  ----------------
@@ -63,7 +62,6 @@ public:
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
   inline explicit fuzzy_database(const std::string& filename)
-//    { FOR_ALL(to_lines <std::string> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (const std::string& x) { *this += x; } ); }
     { FOR_ALL(to_lines <std::string_view> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (auto x) { *this += x; } ); }
 
 /*! \brief          Construct from a <i>drmaster</i> object
@@ -85,7 +83,6 @@ public:
 
     Does nothing if the call is already in the database
 */
-//  inline void operator+=(const std::string& call)
   inline void operator+=(const std::string_view call)
     { _db[ _to_valid_size(call.length()) ] += call; }
 
@@ -113,7 +110,6 @@ public:
 
 /// empty the database
   inline void clear(void)
-//    { _db.fill( std::unordered_set<std::string> { } ); }
     { _db.fill( UNORDERED_STRING_SET { } ); }
 };
 

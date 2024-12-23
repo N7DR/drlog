@@ -250,6 +250,45 @@ template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 //template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_string<typename T::value_type>;
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
+// heterogeneous lookup for strings
+// https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
+struct stringly_hash
+{ using is_transparent = void;
+
+  [[nodiscard]] inline size_t operator()(const char* rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string_view rhs) const
+    { return std::hash<std::string_view>{}(rhs); }
+
+  [[nodiscard]] inline size_t operator()(const std::string& rhs) const
+    { return std::hash<std::string>{}(rhs); }
+};
+
+// make the versions with heterogeneous lookup easily available
+
+// heterogenous lookup for unordered maps with string keys
+template <typename ValueType>
+using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
+
+// heterogenous lookup for unordered multimaps with string keys
+template <typename ValueType>
+using UNORDERED_STRING_MULTIMAP = std::unordered_multimap<std::string, ValueType, stringly_hash, std::equal_to<>>;
+
+// heterogenous lookup for unordered sets of strings
+using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
+
+// heterogenous lookup for ordered maps with string keys
+template <typename ValueType>
+using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
+
+// heterogenous lookup for multimaps with string keys
+template <typename ValueType>
+using STRING_MULTIMAP = std::multimap<std::string, ValueType, std::less<>>;
+
+// heterogenous lookup for ordered sets of strings
+using STRING_SET = std::set<std::string, std::less<>>;
+
 // ---------------------------------------------------------------------------
 
 // classes for tuples... it seems like there should be a way to do this with TMP,
@@ -1513,10 +1552,11 @@ template <typename M>
 inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type>
   { return ALL_KEYS <std::unordered_set<typename M::key_type>> (m); }
 
-/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
+/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, T>, where final keys are the elements of the original set
     \param  original_mapping    original mapping
     \return                     inverted mapping
 */
+#if 0
 template <typename M>  // M = map<T, set<T> >
   requires is_mum<M>
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
@@ -1527,11 +1567,44 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   return rv;
 }
+#endif
 
 #if 0
 template <typename M>  // M = map<T, set<T> >
-auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
-{ std::map<typename M::key_type, typename M::key_type> rv;
+  requires is_mum<M>
+auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type, typename M::key_compare>
+{ std::map<typename M::key_type, typename M::key_type, typename M::key_compare> rv;
+
+  for (const auto& [ k1, v1 ] : original_mapping)
+    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
+
+  return rv;
+}
+#endif
+
+// *** https://en.cppreference.com/w/cpp/container/map
+
+#if 1
+// need to use this so as to get heterogeneous lookup
+template <typename M>  // M = map<T, set<T> >
+//  requires is_mum<M> and is_sus<typename M::mapped_type> and std::is_same_v<typename M::key_type, typename M::mapped_type::value_type> and is_string<typename M::key_type>  // is_sus fails; I don't know why
+  requires is_mum<M> and is_string<typename M::key_type>
+auto INVERT_MAPPING(const M& original_mapping) -> STRING_MAP<std::string>
+{ //std::map<typename M::key_type, typename M::key_type> rv;
+  STRING_MAP<std::string> rv;
+
+  for (const auto& [ k1, v1 ] : original_mapping)
+    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
+
+  return rv;
+}
+#endif
+
+#if 0
+template <typename M>  // M = map<T, set<T> >
+  requires is_mum<M> and is_sus<typename M::value_type> and std::is_same_v<typename M::key_type, typename M::value_type::value_type>
+auto INVERT_MAPPING(const M& original_mapping) -> M
+{ M rv;
 
   for (const auto& [ k1, v1 ] : original_mapping)
     FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
@@ -1681,6 +1754,7 @@ auto RANGE_CONTAINER(R&& r) -> RT
   return RT(r_common.begin(), r_common.end());
 }
 
+#if 0
 // heterogeneous lookup for strings
 // https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
 struct stringly_hash
@@ -1719,5 +1793,6 @@ using STRING_MULTIMAP = std::multimap<std::string, ValueType, std::less<>>;
 
 // heterogenous lookup for ordered sets of strings
 using STRING_SET = std::set<std::string, std::less<>>;
+#endif
 
 #endif    // MACROS_H

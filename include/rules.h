@@ -422,12 +422,15 @@ protected:
   STRING_MAP<STRING_SET>                   _permitted_exchange_values;  ///< all the legal values for each exchange field that has defined legal values; does not include regex; key - exch field name; does not include regex legal values
 
 /// mapping from permitted values to canonical values
-  std::map
-    <std::string,                                          /* exch field name */
-      std::map
-        <std::string,                                      /* permitted value */
-          std::string                                      /* canonical value */
-           > >                                  _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
+//  std::map
+//    <std::string,                                          /* exch field name */
+//      std::map
+ //       <std::string,                                      /* permitted value */
+//          std::string                                      /* canonical value */
+//           > >                                  _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
+
+  STRING_MAP<STRING_MAP<std::string>>                     _permitted_to_canonical;      // [/* exch field name */, [/* permitted value */, /* canonical value */]]
+
 //  std::map
 //    <std::string,                                          /* exch field name */
 //      STRING_MAP<std::string> /* key = permitted; values = canonical */>      _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value

@@ -40,14 +40,16 @@ class multiplier
 {
 protected:
 
-  bool              _all_values_are_mults { true };     ///< whether allthe known values are actually mults
+  bool         _all_values_are_mults { true };     ///< whether all the known values are actually mults
 
   MULT_SET _known      { };     ///< all the (currently) known possible values
 
-  bool              _per_band   { false };  ///< is this multiplier accumulated per band?
-  bool              _per_mode   { false };  ///< is this multiplier accumulated per mode?
+//  std::set<std::string, decltype(&compare_mults)>  _known { compare_mults };
 
-  bool              _used       { false };      ///< is this object in use?
+  bool         _per_band   { false };  ///< is this multiplier accumulated per band?
+  bool         _per_mode   { false };  ///< is this multiplier accumulated per mode?
+
+  bool         _used       { false };      ///< is this object in use?
 
 /* Stored in the _worked array is the precise detail of what has been worked and where.
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
@@ -155,8 +157,8 @@ public:
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-  bool is_known(const std::string& str) const;
-//  bool is_known(const std::string_view str) const;
+//  bool is_known(const std::string& str) const;
+  bool is_known(const std::string_view str) const;
 
 /*! \brief          Has a station been worked on a particular band and mode?
     \param  str     callsign to test

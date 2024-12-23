@@ -31,8 +31,7 @@
 */
 
 class query_database
-{ //using QUERY_DB_TYPE = std::unordered_set<std::string>;
-  using QUERY_DB_TYPE = UNORDERED_STRING_SET;
+{ using QUERY_DB_TYPE = UNORDERED_STRING_SET;
 
 protected:
 
@@ -43,9 +42,6 @@ protected:
     \param      expression  expression against which to compare
     \return                 all calls that matches <i>expression</i>
 */
-//  inline std::set<std::string> _query(const std::string& expression) const
-//    { return std::set<std::string> { regex_matches<std::set<std::string>>(_qdb, expression) + regex_matches<std::set<std::string>>(_dynamic_qdb, expression) }; }
-
   inline STRING_SET _query(const std::string& expression) const
     { return STRING_SET { regex_matches <STRING_SET> (_qdb, expression) + regex_matches <STRING_SET> (_dynamic_qdb, expression) }; }
 
@@ -82,7 +78,6 @@ public:
 
     The returned pair comprises: q1, qn
 */
-//  std::pair<std::set<std::string> /* q1 */, std::set<std::string> /* qn */> operator[](const std::string& key) const;
   std::pair<STRING_SET /* q1 */, STRING_SET /* qn */> operator[](const std::string& key) const;
 
 /// clear the dynamic database

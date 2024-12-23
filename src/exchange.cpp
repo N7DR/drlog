@@ -442,7 +442,6 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
 */
-//void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) const
 void parsed_exchange::_print_tuple(const tuple<int, string, STRING_SET>& t) const
 { ost << "tuple:" << endl;
   ost << "  field number: " << get<0>(t) << endl;
@@ -523,14 +522,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     FOR_ALL(_fields, [rules] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
     _valid = ( (exch.serno() != 0) and (exch.section() != "AAA"s) and (exch.prec() != DEFAULT_PREC) );
-
-//    ost << "parsed_exchange: " << boolalpha << _valid << endl;
-
     return;
   }
 
 // how many fields are optional?
-//  set<string> optional_field_names;
   STRING_SET optional_field_names;
 
   FOR_ALL(exchange_template, [&optional_field_names] (const exchange_field& ef) { if (ef.is_optional())
@@ -541,11 +536,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   FOR_ALL(exchange_template, [this] (const exchange_field& ef) { _fields += { ef.name(), EMPTY_STRING, ef.is_mult() }; } );
 
 // if there's an explicit . field, use it to replace the call
-//  for (const auto& received_value : received_values)
-//  { if (contains(received_value, '.'))
- //     _replacement_call = remove_char(received_value, '.');
-//  }
-
   FOR_ALL(received_values, [this] (const auto& received_value) { if (contains(received_value, '.'))
                                                                    _replacement_call = remove_char(received_value, '.');
                                                                });
@@ -604,7 +594,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       tuple_deque += { field_number, copy_received_values[field_number], matching_names };  // TRIPLET: field number, value, matching field names
 
     vector<TRIPLET>      tuple_vector_assignments;
-//    map<string, TRIPLET> tuple_map_assignments;
     STRING_MAP<TRIPLET> tuple_map_assignments;
 
 // find entries with only one entry in set
@@ -778,13 +767,19 @@ string parsed_exchange::resolve_choice(const string& field_name, const string& r
   if (!contains(field_name, '+'))   // if not a CHOICE
     return field_name;
 
-  const vector<string>   choices_vec        { split_string <std::string> (field_name, '+') };
-  const STRING_MAP<EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
+//  const vector<string>   choices_vec        { split_string <std::string> (field_name, '+') };
+  const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, '+') };
+  const STRING_MAP<EFT>     exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
   { try
-    { if (exchange_field_eft.at(choice).is_legal_value(received_value))
-        return choice;
+    { //if (exchange_field_eft.at(choice).is_legal_value(received_value))   // heterogeneous lookup doesn't support at()!!!
+      //  return choice;
+
+      if (const auto opt { OPT_MUM_VALUE(exchange_field_eft, choice) }; opt)
+      { if (opt.value().is_legal_value(received_value))
+          return string { choice };
+      }
     }
 
     catch (...)
@@ -991,7 +986,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   { string rv { drm_line.iota() };
 
 //   https://www.qsl.net/xe2nat/iotalist.htm; https://www.qsl.net/co8tw/iota.htm
-  // up to D6, AF007
+  // up to FT/g, AF011
 
     if (rv.empty())
     { static const UNORDERED_STRING_MAP<string> iota_map { { "CM"s,   "NA015"s },  // key = cp, value = IOTA number
@@ -1007,6 +1002,8 @@ string exchange_field_database::guess_value(const string_view callsign, const st
                                                            { "FM"s,   "NA107"s },
                                                            { "FP"s,   "NA032"s },
                                                            { "FS"s,   "NA105"s },
+                                                           { "FT/g"s, "AF011"s },
+                                                           { "FT/w"s, "AF008"s },
                                                            { "G"s,    "EU005"s },
                                                            { "GJ"s,   "EU013"s },
                                                            { "GM"s,   "EU005"s },
@@ -1098,8 +1095,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
-  { //static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
-    static const STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
+  { static const STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
 

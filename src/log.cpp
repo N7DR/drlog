@@ -288,8 +288,6 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 // specification is silent as to what constitutes an EOL marker. The FAQ (why would a specification need
 // an FAQ if it were properly specified?) implies that the EOL of the underlying OS on the system that creates
 // the Cabrillo file should be accepted by the contest sponsor.
-//  string EOL_STRING { LF };
-
   const string EOL_STRING { (context.cabrillo_eol() == "CR"sv) ? CR : ( (context.cabrillo_eol() == "CRLF"sv) ? CRLF : LF ) };
 
 // this goes first
@@ -463,11 +461,8 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
 void logbook::read_cabrillo(const string_view filename, const vector<string>& cabrillo_fields)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
-//  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };
-
   unsigned int last_qso_number { 0 };
 
-//  for (const auto& line : lines)
   for (const auto& line : to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)))
   { if (starts_with(line, qso_markers))     // qso_markers is a vector of strings
     { QSO qso { };
@@ -560,11 +555,9 @@ QSO logbook::remove_last_qso(void)
 /*! \brief          Return all the calls in the log
     \return         all the calls in the log
 */
-//set<string> logbook::calls(void) const
 STRING_SET logbook::calls(void) const
 { SAFELOCK(_log);
 
-//  set<string> rv { };
   STRING_SET rv { };
 
 // https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
