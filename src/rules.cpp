@@ -255,7 +255,8 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
     \param  ch                  whether to expand choices
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-vector<string> contest_rules::_exchange_field_names(const string& canonical_prefix, const MODE m, const CHOICES ch) const
+//vector<string> contest_rules::_exchange_field_names(const string& canonical_prefix, const MODE m, const CHOICES ch) const
+vector<string> contest_rules::_exchange_field_names(const string_view canonical_prefix, const MODE m, const CHOICES ch) const
 { vector<string> rv;
 
   FOR_ALL(_exchange_fields(canonical_prefix, m, ch), [&rv] (const exchange_field& ef) { rv += ef.name(); });
@@ -269,7 +270,8 @@ vector<string> contest_rules::_exchange_field_names(const string& canonical_pref
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const CHOICES expand_choices) const
+//vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const CHOICES expand_choices) const
+vector<exchange_field> contest_rules::_exchange_fields(const string_view canonical_prefix, const MODE m, const CHOICES expand_choices) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 

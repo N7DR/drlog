@@ -265,7 +265,6 @@ inline std::string to_string(T&& val)
 */
 template <typename STYPE>
 inline auto substring(const std::string_view str, const size_t start_posn, const size_t length) -> STYPE
-//  { return ( (str.size() > start_posn) ? STYPE {str.substr(start_posn, length)} : STYPE { EMPTY_STR } ); }
 { if (length == 0)
     return STYPE { EMPTY_STR };
 
@@ -1263,24 +1262,28 @@ inline bool is_legal_value(const std::string_view value, const std::string_view 
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-//bool compare_calls(const std::string& call1, const std::string& call2);
 bool compare_calls(const std::string_view call1, const std::string_view call2);
+
+/*! \brief          Is the value of one mult earlier than another?
+    \param  mult1   first mult value
+    \param  mult2   second mult value
+    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
+*/
+bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 
 // ***** https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator    *****
 
 // *** https://www.fluentcpp.com/2017/06/09/search-set-another-type-key/ see discussion of is_transparent
-
-//using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare callsigns
 
 // the old way:
 // using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
 // then:
 // CALL SET burble(compare_calls)
 
-// this seems to work
-//using CALL_SET = std::set<std::string, CALL_COMPARISON>;   // elements are in callsign order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator; heterogeneous lookup automatically supported because of the signature of compare_calls()
-
-template<bool (*PF)(const std::string_view, const std::string_view)>
+/*! \brief  structure to sort strings
+    \param  PF  pointer to the function to perform the sorting
+*/
+template<bool (*PF)(const std::string_view, const std::string_view)>    // (sv, sv) => heterogeneous lookup automatically supported
 struct CMP
 { using is_transparent = void;      // the magic incantation
 
@@ -1289,65 +1292,7 @@ struct CMP
 };
 
 using CALL_SET = std::set<std::string, CMP<compare_calls>>;
-
-
-#if 0
-// solution #4; works
-struct CALL_CMP
-{ using is_transparent = void;      // the magic incantation
-
-  inline bool operator() (const std::string_view m1, const std::string_view m2) const
-    { return compare_calls(m1, m2); }
-};
-
-using CALL_SET = std::set<std::string, CALL_CMP>;
-#endif
-
-
-
-
-
-
-// the next line results inmultiple definitions of the lambda
-//auto CALL_LAMBDA = [] (const std::string_view m1, const std::string_view m2) { return compare_calls(m1, m2); };
-//using CALL_SET = std::set<std::string, decltype(CALL_LAMBDA)>;
-
-/*! \brief          Is the value of one mult earlier than another?
-    \param  mult1   first mult value
-    \param  mult2   second mult value
-    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
-*/
-//bool compare_mults(const std::string& mult1, const std::string& mult2);
-bool compare_mults(const std::string_view mult1, const std::string_view mult2);
-
 using MULT_SET = std::set<std::string, CMP<compare_mults>>;
-
-//using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
-//using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compare_mults>;   // type that knows how to compare mult strings (for exchange mults)
-
-// this doesn't allow find() with a string_view
-//using MULT_SET = std::set<std::string, MULT_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator; heterogeneous lookup automatically supported because of the signature of compare_mults()
-
-//using MULT_SET = std::set<std::string, decltype(&compare_mults)>; // crash, as expected
-
-//auto cmp = [](int a, int b) { return ... };
-//std::set<int, decltype(cmp)> s;
-
-// the next line results in multiple definitions of the lambda
-//auto MULT_LAMBDA = [] (const std::string_view m1, const std::string_view m2) { return compare_mults(m1, m2); };
-//using MULT_SET = std::set<std::string, decltype(MULT_LAMBDA)>;
-
-#if 0
-// solution #4; works
-struct MULT_CMP
-{ using is_transparent = void;      // the magic incantation
-
-  inline bool operator() (const std::string_view m1, const std::string_view m2) const
-    { return compare_mults(m1, m2); }
-};
-
-using MULT_SET = std::set<std::string, MULT_CMP>;
-#endif
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -1362,7 +1307,6 @@ std::string decimal_places(const std::string& str, const int n);
     \param  strs  the strings to search
     \return       the longest string in the container <i>strs</i>
 */
-
 template <typename T>
   requires is_container_of_strings<T>
 std::string longest(const T& strs)
@@ -1375,6 +1319,10 @@ std::string longest(const T& strs)
   return rv;
 }
 
+/*! \brief        Return the longest string from a container of strings
+    \param  strs  the strings to search
+    \return       the longest string in the container <i>strs</i>
+*/
 template <typename T>
  requires is_container_of_strings<T>
 std::string longest(T&& strs)

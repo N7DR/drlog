@@ -2494,13 +2494,17 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       }
     }
 
-    unprocessed_input += new_input;         // append the new unprocessed data
+    unprocessed_input += move(new_input);         // append the new unprocessed data
 
-    while (contains(unprocessed_input, CRLF))                               // look for EOL markers
-    { const size_t posn { unprocessed_input.find(CRLF) };                   // guaranteed to succeed
-      const string line { remove_char(substring <std::string_view> (unprocessed_input, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
+// perhaps introduce unprocessed_input_sv here, and use in what follows
+    string_view unprocessed_input_sv { unprocessed_input };
 
-      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
+    while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
+    { const size_t posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
+      const string line { remove_char(substring <std::string_view> (unprocessed_input_sv, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
+
+//      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
+      unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, min(posn + 2, unprocessed_input_sv.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
 
       if (!line.empty())
       { static const vector<string_view> beacon_markers { " BCN ",

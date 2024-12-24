@@ -387,7 +387,7 @@ string tcp_socket::read(void) const
     Throws an exception if the read times out
 */
 string tcp_socket::read(const unsigned long timeout_secs) const
-{ string rv;
+{ string rv { };
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 

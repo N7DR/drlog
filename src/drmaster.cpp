@@ -267,18 +267,15 @@ string trmaster_line::to_string(void) const
     New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
 trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
-{ if (call() != trml.call())
+{ if (call() != trml.call())        // check that the calls match
     return *this;
 
   trmaster_line rv { *this };                                  // copy the old line
 
-// check that the calls match
-//  if (trml.call() != call())
-//    return rv;
-
   using VOID_PARAM = const string& (trmaster_line::*) (void) const&;
   using STR_PARAM = void (trmaster_line::*) (const string&);
 
+// is this right, or do we need an insert_if_not_empty? or should I ditch trmaster entirely, as I dont use it?
   auto insert_if_empty = [&rv, this] (VOID_PARAM fn1, STR_PARAM fn2) { if (std::invoke(fn1, rv).empty())
                                                                          std::invoke( fn2, rv, std::invoke(fn1, *this) );
                                                                      };
@@ -406,43 +403,31 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
                                                       };
 
   while (static_cast<int>(contents[posn]) != 0)                                           // marks end of record
-  { //while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-    //  { callsign += contents[posn++]; }
-    get_field(callsign);
+  { get_field(callsign);
 
     switch (static_cast<int>(contents[posn]))
     { case 1 :              // ctrl-A
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { section += contents[posn++]; }
         get_field(section);
         break;
 
       case 3 :             // ctrl-C
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { cqzone += contents[posn++]; }
         get_field(cqzone);
         break;
 
       case 6 :             // ctrl-F
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { foc += contents[posn++]; }
         get_field(foc);
         break;
 
       case 7 :             // ctrl-G
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { grid += contents[posn++]; }
         get_field(grid);
         break;
 
       case 8 :             // ctrl-H
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { hits += contents[posn++]; }
         get_field(hits);
         break;
 

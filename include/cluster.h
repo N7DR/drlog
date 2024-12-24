@@ -54,7 +54,7 @@ protected:
   std::string         _server;                      ///< name or IP address of the server
   enum POSTING_SOURCE _source;                      ///< source for postings
   bool                _test_spots { false };        ///< whether sent spots are sent in test (DXT) mode
-  unsigned int        _timeout;                     ///< timeout in seconds (defaults to 1)
+  unsigned int        _timeout;                     ///< timeout in seconds (defaults to 2)
   std::string         _unprocessed_input;           ///< buffer for messages from the network
 
 /// process a read error

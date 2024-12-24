@@ -397,7 +397,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
     \param  str         pressed string
     \param  ms_delay    delay in milliseconds between each character in <i>str</i>
 */
-void keyboard_queue::push_key_press(const string& str, const int ms_delay)
+void keyboard_queue::push_key_press(const string_view str, const int ms_delay)
 { for (size_t n { 0 }; n < str.length(); ++n)
   { push_key_press(str[n]);
 
@@ -434,38 +434,19 @@ const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
                                             };
 
 /// key names that are equivalent to one another
-#if 0
-const map<string, string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
-                                                   { "kp_1"s, "kp_end"s },
-                                                   { "kp_2"s, "kp_down"s },
-                                                   { "kp_3"s, "kp_next"s },
-                                                   { "kp_4"s, "kp_left"s },
-                                                   { "kp_5"s, "kp_begin"s },
-                                                   { "kp_6"s, "kp_right"s },
-                                                   { "kp_7"s, "kp_home"s },
-                                                   { "kp_8"s, "kp_up"s },
-                                                   { "kp_9"s, "kp_prior"s }
-                                                 };
-#endif
-
-const STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
-                                                   { "kp_1"s, "kp_end"s },
-                                                   { "kp_2"s, "kp_down"s },
-                                                   { "kp_3"s, "kp_next"s },
-                                                   { "kp_4"s, "kp_left"s },
-                                                   { "kp_5"s, "kp_begin"s },
-                                                   { "kp_6"s, "kp_right"s },
-                                                   { "kp_7"s, "kp_home"s },
-                                                   { "kp_8"s, "kp_up"s },
-                                                   { "kp_9"s, "kp_prior"s }
-                                                 };
+const UNORDERED_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
+                                                            { "kp_1"s, "kp_end"s },
+                                                            { "kp_2"s, "kp_down"s },
+                                                            { "kp_3"s, "kp_next"s },
+                                                            { "kp_4"s, "kp_left"s },
+                                                            { "kp_5"s, "kp_begin"s },
+                                                            { "kp_6"s, "kp_right"s },
+                                                            { "kp_7"s, "kp_home"s },
+                                                            { "kp_8"s, "kp_up"s },
+                                                            { "kp_9"s, "kp_prior"s }
+                                                          };
 
 /// names of keys on the keypad
-//const unordered_set<KeySym> keypad_numbers({ { XK_KP_0 }, { XK_KP_1 }, { XK_KP_2 }, { XK_KP_3 }, { XK_KP_4 },
-//                                             { XK_KP_5 }, { XK_KP_6 }, { XK_KP_7 }, { XK_KP_8 }, { XK_KP_9 },
-//                                             { XK_KP_Insert }, { XK_KP_End }, { XK_KP_Down }, { XK_KP_Next }, { XK_KP_Left },
-//                                             { XK_KP_Begin }, { XK_KP_Right }, { XK_KP_Home }, { XK_KP_Up }, { XK_KP_Prior }
-//                                          });
 const unordered_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
                                              XK_KP_Insert, XK_KP_End, XK_KP_Down, XK_KP_Next, XK_KP_Left, XK_KP_Begin, XK_KP_Right, XK_KP_Home, XK_KP_Up, XK_KP_Prior
                                            };

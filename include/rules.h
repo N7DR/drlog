@@ -452,7 +452,8 @@ protected:
     Uses the variable <i>_exch_values</i> to obtain the returned value
 */
 template <typename STYPE>
-auto _all_exchange_values(const std::string& field_name) const -> STYPE
+//auto _all_exchange_values(const std::string& field_name) const -> STYPE
+auto _all_exchange_values(const std::string_view field_name) const -> STYPE
 { SAFELOCK(rules);
 
   const auto cit { FIND_IF(_exch_values, [&field_name] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
@@ -466,7 +467,8 @@ auto _all_exchange_values(const std::string& field_name) const -> STYPE
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
+//  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const CHOICES expand_choices) const;
+  std::vector<exchange_field> _exchange_fields(const std::string_view canonical_prefix, const MODE m, const CHOICES expand_choices) const;
 
 /*! \brief                      Get the expanded or unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
@@ -474,7 +476,8 @@ auto _all_exchange_values(const std::string& field_name) const -> STYPE
     \param  ch                  whether to expand choices
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
+//  std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
+  std::vector<std::string> _exchange_field_names(const std::string_view canonical_prefix, const MODE m, const CHOICES ch) const;
 
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         context for this contest

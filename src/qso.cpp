@@ -835,25 +835,25 @@ string QSO::log_line(void)
 #endif
 
 static const UNORDERED_STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
-                                                        { "CQZONE"s,    2 },
-                                                        { "CWPOWER"s,   3 },
-                                                        { "DOK"s,       1 },
-                                                        { "GRID"s,      4 },
-                                                        { "ITUZONE"s,   2 },
-                                                        { "NAME"s,      6 },
-                                                        { "PREC"s,      1 },
-                                                        { "RDA"s,       4 },
-                                                        { "RS"s,        2 },
-                                                        { "RST"s,       3 },
-                                                        { "SECTION"s,   3 },
-                                                        { "SKCCNO"s,    6 },
-                                                        { "SOCIETY"s,   5 },
-                                                        { "SPC"s,       3 },
-                                                        { "SSBPOWER"s,  4 },
-                                                        { "UKEICODE"s,  2 },
-                                                        { "160MSTATE"s, 2 },
-                                                        { "10MSTATE"s,  3 }
-                                                      };
+                                                               { "CQZONE"s,    2 },
+                                                               { "CWPOWER"s,   3 },
+                                                               { "DOK"s,       1 },
+                                                               { "GRID"s,      4 },
+                                                               { "ITUZONE"s,   2 },
+                                                               { "NAME"s,      6 },
+                                                               { "PREC"s,      1 },
+                                                               { "RDA"s,       4 },
+                                                               { "RS"s,        2 },
+                                                               { "RST"s,       3 },
+                                                               { "SECTION"s,   3 },
+                                                               { "SKCCNO"s,    6 },
+                                                               { "SOCIETY"s,   5 },
+                                                               { "SPC"s,       3 },
+                                                               { "SSBPOWER"s,  4 },
+                                                               { "UKEICODE"s,  2 },
+                                                               { "160MSTATE"s, 2 },
+                                                               { "10MSTATE"s,  3 }
+                                                             };
   constexpr size_t CALL_FIELD_LENGTH      { 12 };
   constexpr size_t DATE_FIELD_LENGTH      { 11 };
   constexpr size_t FREQUENCY_FIELD_LENGTH { 8 };

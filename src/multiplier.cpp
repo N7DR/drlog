@@ -63,20 +63,26 @@ bool multiplier::add_known(const std::string& str)
 
     Does nothing if <i>str</i> is not known
 */
-void multiplier::remove_known(const string& str)
+//void multiplier::remove_known(const string& str)
+void multiplier::remove_known(const string_view str)
 { SAFELOCK(multiplier);
 
   if (_used)
-    _known.erase(str);
+  { auto posn = _known.find(str);
 
-  _all_values_are_mults = ALL_OF(_known, [] (const string& str) { return !contains(str, '*'); } );
+    if (posn != _known.end())
+      _known.erase(posn);
+
+//    _known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
+  }
+
+  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !contains(known_value, '*'); } );
 }
 
 /*! \brief          Is a particular value a known multiplier value?
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-//bool multiplier::is_known(const string& str) const
 bool multiplier::is_known(const string_view str) const
 { SAFELOCK(multiplier);
 
@@ -132,9 +138,9 @@ bool multiplier::unconditional_add_worked(const string& str, const BAND b, const
 }
 
 /*! \brief          Remove a worked multiplier
-    \param  str     value to be worked
+    \param  str     value to be removed
     \param  b       band on which <i>str</i> is to be removed
-    \param  m       mode on which <i>str</i> has been worked
+    \param  m       mode on which <i>str</i> is to be removed
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
@@ -151,7 +157,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     bool present { false };
 
     for (int n {MIN_BAND}; !present and (n <= MAX_BAND); ++n)
-      present = (_worked[m_nr][n] > str);
+//      present = (_worked[m_nr][n] > str);
+      present = _worked[m_nr][n].contains(str);
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
@@ -160,13 +167,15 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     present = false;
 
     for (int n {MIN_MODE}; !present and (n <= MAX_MODE); ++n)
-      present = (_worked[n][b_nr] > str);
+//      present = (_worked[n][b_nr] > str);
+      present = _worked[n][b_nr].contains(str);
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
 
 // is it still present in any band and any mode?
-    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
+//    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
+    present = (_worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str) );
 
     if (!present)
       _worked[ANY_MODE][ANY_BAND].erase(str);
@@ -179,7 +188,6 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     \param  m       mode to test
     \return         whether <i>str</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-//bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
 bool multiplier::is_worked(const string_view str, const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 

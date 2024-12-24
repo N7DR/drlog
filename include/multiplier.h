@@ -112,14 +112,16 @@ public:
 
     Does nothing if <i>str</i> is not known
 */
-  void remove_known(const std::string& str);
+//  void remove_known(const std::string& str);
+  void remove_known(const std::string_view str);
 
 /*! \brief          Remove a value from the known values
     \param  str     value to be removed
 
     Does nothing if <i>str</i> is not known
 */
-  inline void operator-=(const std::string& str)
+//  inline void operator-=(const std::string& str)
+  inline void operator-=(const std::string_view str)
     { remove_known(str); }
 
 /*! \brief          Add a worked multiplier
@@ -156,7 +158,6 @@ public:
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-//  bool is_known(const std::string& str) const;
   bool is_known(const std::string_view str) const;
 
 /*! \brief          Has a station been worked on a particular band and mode?
@@ -164,7 +165,6 @@ public:
     \param  b       band to be tested
     \param  m       mode to be tested
 */
-//  bool is_worked(const std::string& str, const BAND b, const MODE m) const;
   bool is_worked(const std::string_view str, const BAND b, const MODE m) const;
 
 /*! \brief      Number of mults worked on a particular band and mode

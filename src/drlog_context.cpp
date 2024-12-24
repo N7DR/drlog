@@ -63,7 +63,6 @@ pt_mutex _context_mutex { "DRLOG CONTEXT"s };                    ///< mutex for 
     \param  command     the complete line from the configuration file
     \param  m           mode
 */
-//void drlog_context::_set_points(const string& command, const MODE m)
 void drlog_context::_set_points(const string_view command, const MODE m)
 { if (command.empty())
     return;
@@ -120,18 +119,16 @@ void drlog_context::_process_configuration_file(const string_view filename)
   const vector<string_view> lines { to_lines <std::string_view> (entire_file) };   // split into lines
 
   for (const auto tmpline : lines)                                            // process each line; string_view is cheap to copy
-  { //const string line { remove_trailing_comment <std::string> (tmpline) };    // remove any comment
-    const string_view line { remove_trailing_comment <std::string_view> (tmpline) };    // remove any comment
+  { const string_view line { remove_trailing_comment <std::string_view> (tmpline) };    // remove any comment
 
 // generate a number of useful variables
-    const string         testline { remove_leading_spaces <std::string> (to_upper(line)) };
- //   const vector<string> fields   { split_string <std::string> (line, '=') };
+    const string              testline { remove_leading_spaces <std::string> (to_upper(line)) };
     const vector<string_view> fields   { split_string <std::string_view> (line, '=') };
-    const string         rhs      { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
-    const string         RHS      { to_upper(rhs) };                                                                              // converted to upper case
-    const bool           is_true  { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
-    const string         lhs      { squash( (fields.empty()) ? string { } : remove_peripheral_spaces <std::string> (fields[0]) ) };              // the stuff to the left of the "="
-    const string         LHS      { to_upper(lhs) };                                                                              // converted to upper case
+    const string              rhs      { ((fields.size() > 1) ? remove_peripheral_spaces <std::string> (fields[1]) : string { }) };    // the stuff to the right of the "="
+    const string              RHS      { to_upper(rhs) };                                                                              // converted to upper case
+    const bool                is_true  { (RHS == "TRUE"sv) };                                                                          // is right hand side == "TRUE"?
+    const string              lhs      { squash( (fields.empty()) ? string { } : remove_peripheral_spaces <std::string> (fields[0]) ) };              // the stuff to the left of the "="
+    const string              LHS      { to_upper(lhs) };                                                                              // converted to upper case
 
 // ACCEPT COLOUR
     if ( ( (LHS == "ACCEPT COLOUR"sv) or (LHS == "ACCEPT COLOR"sv) ) and !rhs.empty() )
@@ -384,9 +381,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
         { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
 
           for (const auto& b_str: clean_split_string <string> (bands_str))
-          { //const BAND b { BAND_FROM_NAME[b_str] };
-
-            string new_str;
+          { string new_str;
 
             for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
             { new_str += str_vec[n];
@@ -396,7 +391,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
             }
 
             tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
-//            _per_band_country_mult_factor += { b, from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
             _per_band_country_mult_factor += { BAND_FROM_NAME[b_str], from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
           }
         }
@@ -421,7 +415,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // CW BANDWIDTH
     if (LHS == "CW BANDWIDTH"sv)
-    { const vector<string> bw { clean_split_string <string> (RHS, '/') };
+    { const vector<string_view> bw { clean_split_string <string_view> (RHS, '/') };
 
       if (bw.size() == 2)
       { _cw_bandwidth_narrow = from_string<decltype(_cw_bandwidth_narrow)>(bw[0]);

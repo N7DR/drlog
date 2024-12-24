@@ -30,8 +30,8 @@
 #include <X11/Xutil.h>
 
 extern const UNORDERED_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
-extern const STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
-extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the keypad numbers and their equivalents
+extern const UNORDERED_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
+extern const std::unordered_set<KeySym>        keypad_numbers;         ///< the keypad numbers and their equivalents
 
 extern message_stream ost;                  ///< for debugging, info
 
@@ -268,7 +268,8 @@ public:
     \param  str         pressed string
     \param  ms_delay    delay in milliseconds between each character in <i>str</i>
 */
-  void push_key_press(const std::string& str, const int ms_delay = 0);
+//  void push_key_press(const std::string& str, const int ms_delay = 0);
+  void push_key_press(const std::string_view str, const int ms_delay = 0);
 };
 
 # endif    // KEYBOARD_H
