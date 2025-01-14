@@ -108,7 +108,8 @@ public:
     \param  call    call to test
     \return         whether <i>call</i> is a known good call
 */
-  bool test_call(const std::string& call);
+//  bool test_call(const std::string& call);
+  bool test_call(const std::string_view call);
 
 /// Prune the database
   void prune(void);
@@ -349,6 +350,7 @@ protected:
   std::string                                               _canonical_prefix;                      ///< canonical prefix corresponding to the call
   std::string                                               _continent;                             ///< continent corresponding to the call
   time_t                                                    _expiration_time  { 0 };                ///< time at which this entry expires (in seconds since the epoch)
+  TIME_POINT                                                _expiration_time_1;                     ///< time at which this entry expires
   frequency                                                 _freq;                                  ///< QRG
   std::string                                               _frequency_str;                         ///< QRG (kHz, to 1 dp)
   bool                                                      _is_needed { true };                    ///< do we need this call?
@@ -384,6 +386,7 @@ public:
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
   READ(continent);                      ///< continent corresponding to the call
   READ_AND_WRITE_RET(expiration_time);  ///< time at which this entry expires (in seconds since the epoch)
+  READ_AND_WRITE_RET(expiration_time_1);    ///< time at which this entry expires
 
   READ(freq);                           ///< QRG
 
@@ -536,7 +539,8 @@ public:
     \param  target  target value of <i>_frequency_str</i>
     \return         whether <i>_frequency</i> matches <i>target</i>
 */
-  inline bool is_frequency_str(const std::string& target) const
+//  inline bool is_frequency_str(const std::string& target) const
+  inline bool is_frequency_str(const std::string_view target) const
     { return (_frequency_str == target); }
 
 /*! \brief      Set <i>_frequency string</i> to a particular number of decimal places (in kHz)
@@ -574,7 +578,8 @@ public:
     \return         whether this bandmap_entry has expired
 */
   inline bool should_prune(const time_t now = ::time(NULL)) const
-    { return ( (_expiration_time < now) and !is_marker()); }
+    { //ost << "expiration time = " << _expiration_time << "; now = " << now << std::endl;
+      return ( (_expiration_time < now) and !is_marker()); }
 
 /*! \brief              Re-mark the need/mult status
     \param  rules       rules for the contest
@@ -705,8 +710,8 @@ protected:
   
   int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
   int                               _cull_function          { 0 };                        ///< cull function number to apply
-  UNORDERED_STRING_SET   _do_not_add             { };                          ///< do not add these calls
-  STRING_MAP<std::regex> _do_not_add_regex       { };                          ///< regex string, actual regex
+  UNORDERED_STRING_SET              _do_not_add             { };                          ///< do not add these calls
+  STRING_MAP<std::regex>            _do_not_add_regex       { };                          ///< regex string, actual regex
   BM_ENTRIES                        _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
@@ -1167,14 +1172,14 @@ public:
     \param  win     window to which to write
     \return         the window
 */
-  window& write_to_window(window& win);
+  window& write_to_window(window& win /*, const bool refresh = true */);
 
 /*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
     \param  win         window to which to write
     \param  dead_time   time that must have passed for the write to occur
     \return             the window
 */
-  window& protected_write_to_window(window& win, const std::chrono::milliseconds min_delay = 1000ms);
+//  window& protected_write_to_window(window& win, const std::chrono::milliseconds min_delay = 1000ms);
 
 /*! \brief            Rename the mutex associated with this bandmap
     \param  new_name  the new name of the mutex
@@ -1199,6 +1204,12 @@ public:
 /// increment version
   inline void increment_version(void)
     { _version++; }
+
+/// has the version been changed since the last time the bandmap was displayed?
+  inline bool new_version(void)
+  { SAFELOCK(_bandmap);
+    return (_version > _last_displayed_version);
+  }
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
@@ -1233,7 +1244,7 @@ public:
     This is inside the bandmap class so that we have access to the bandmap mutex
 */
 inline window& operator<(window& win, bandmap& bm)
-  { return bm.write_to_window(win); }
+  { return bm.write_to_window(win /*, false */); }
 
 /*! \brief          Write a <i>bandmap</i> object to an output stream
     \param  ost     output stream

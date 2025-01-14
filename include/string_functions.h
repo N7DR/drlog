@@ -1335,6 +1335,32 @@ std::string longest(T&& strs)
   return rv;
 }
 
+/*! \brief        Erase a string from a container of strings
+    \param  c     target container
+    \param  str   atring to erase
+
+    This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
+*/
+template <typename T>
+ requires is_container_of_strings<T>
+inline void STRC_ERASE(T& c, const std::string& str)
+  { c.erase(str); }
+
+/*! \brief        Erase a string from a container of strings
+    \param  c     target container
+    \param  str   atring to erase
+
+    This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
+*/
+template <typename T>
+ requires is_container_of_strings<T>
+inline void STRC_ERASE(T& c, const std::string_view sv)
+{ const auto posn { c.find(sv) };
+
+  if (posn != c.end())
+    c.erase(posn);
+}
+
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
     \param  width   width of line in destination window
@@ -1536,6 +1562,13 @@ inline std::string operator+(const std::string_view sv1, const std::string& s2)
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
 std::string read_until(std::istream& in, const std::string_view delimiter, const DELIMITERS keep_or_drop = DELIMITERS::DROP);
+
+/*! \brief          Convert string to hex characters
+    \param  str     string to convert
+    \return         <i>str</i> as a series of hex characters
+*/
+//std::string hex_string(const std::string& str);
+std::string hex_string(const std::string_view str);
 
 /// a standard hash function for strings (the DJB function)
 //constexpr long unsigned int STR_HASH(const char* str, int off = 0)

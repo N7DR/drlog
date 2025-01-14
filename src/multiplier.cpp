@@ -44,13 +44,13 @@ MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
     Returns false if the value <i>str</i> was already known
 */
 bool multiplier::add_known(const std::string& str)
-//bool multiplier::add_known(const std::string_view str)
 { SAFELOCK(multiplier); 
 
   if (!_used)
     return false;
 
-  const bool rv { _known.insert(str).second };
+//  const bool rv { _known.insert(str).second };
+  const auto [_, rv] { _known.insert(str) };
 
   if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
@@ -68,10 +68,11 @@ void multiplier::remove_known(const string_view str)
 { SAFELOCK(multiplier);
 
   if (_used)
-  { auto posn = _known.find(str);
+  { //auto posn = _known.find(str);
 
-    if (posn != _known.end())
-      _known.erase(posn);
+    //if (posn != _known.end())
+    //  _known.erase(posn);
+    STRC_ERASE(_known, str);
 
 //    _known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
   }
@@ -106,7 +107,8 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     const int m_nr { static_cast<int>(m) };
 
     auto& pb { _worked[m_nr] };
-    bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
+//    bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
+    auto [ _, rv ] { pb[b_nr].insert(str) };  // BAND, MODE
 
     if (rv)
     { pb[ANY_BAND] += str;        // ANY_BAND, MODE
@@ -144,14 +146,16 @@ bool multiplier::unconditional_add_worked(const string& str, const BAND b, const
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
-void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
+//void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
+void multiplier::remove_worked(const string_view str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if (_used)
   { const int b_nr { static_cast<int>(b) };
     const int m_nr { static_cast<int>(m) };
 
-    _worked[m_nr][b_nr].erase(str);
+//    _worked[m_nr][b_nr].erase(str);
+    STRC_ERASE(_worked[m_nr][b_nr], str);
 
 // is it still present in any band for this mode?
     bool present { false };
@@ -161,7 +165,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
       present = _worked[m_nr][n].contains(str);
 
     if (!present)
-      _worked[m_nr][ANY_BAND].erase(str);
+//      _worked[m_nr][ANY_BAND].erase(str);
+      STRC_ERASE(_worked[m_nr][ANY_BAND], str);
 
 // is it still present in any mode for this band?
     present = false;
@@ -171,14 +176,16 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
       present = _worked[n][b_nr].contains(str);
 
     if (!present)
-      _worked[ANY_MODE][b_nr].erase(str);
+//      _worked[ANY_MODE][b_nr].erase(str);
+      STRC_ERASE(_worked[ANY_MODE][b_nr], str);
 
 // is it still present in any band and any mode?
 //    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
     present = (_worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str) );
 
     if (!present)
-      _worked[ANY_MODE][ANY_BAND].erase(str);
+//      _worked[ANY_MODE][ANY_BAND].erase(str);
+      STRC_ERASE(_worked[ANY_MODE][ANY_BAND], str);
   }
 }
 
@@ -275,9 +282,6 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   { for (size_t n = 0; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
-//      const MULT_SET& ss { m.worked(n, static_cast<MODE>(nm)) };
-
-//      for (const auto& worked : ss)
       for (const auto& worked : m.worked(n, static_cast<MODE>(nm)))
         ost << worked << " ";
 
@@ -287,9 +291,6 @@ ostream& operator<<(ostream& ost, const multiplier& m)
 
   ost << "known multipliers: ";
 
-//  const MULT_SET ss { m.known() };
-
-//  for (const auto& known : ss)
   for (const auto& known : m.known())
     ost << known << " ";
 

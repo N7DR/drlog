@@ -366,7 +366,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
     permitted_exchange_fields += { canonical_prefix, clean_split_string <string> (allowed_exchange_values) };   // unexpanded choice
 
-//  for (const auto& pce : per_country_exchanges)
   for (const auto& [canonical_prefix, allowed_exchange_values] : per_country_exchanges)
   { STRING_SET ss;
 
@@ -388,10 +387,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   STRING_MAP<vector<exchange_field>> single_mode_rv_rs;
 
   for (const auto& [ canonical_prefix, permitted_values ] : permitted_exchange_fields)
-  { //const vector<string>& vs { permitted_values };
-
-//    vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
-    vector<exchange_field> vef { _inner_parse(permitted_values, exchange_mults_vec) };
+  { vector<exchange_field> vef { _inner_parse(permitted_values, exchange_mults_vec) };
 
 // force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
     auto vef_rs_rst = [&vef] (const string& initial_field_name, const string& final_field_name)
@@ -416,8 +412,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     single_mode_rv_rs += { canonical_prefix, vef_rs_rst("RST"s, "RS"s) };  // force to RS
   }
 
-//  for (const auto& m : _permitted_modes)
-//    _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) };
   FOR_ALL(_permitted_modes, [this, &single_mode_rv_rs, &single_mode_rv_rst] (const MODE m) { _received_exchange += { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) }; });
 }
 
@@ -613,9 +607,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
 
-        const vector<string> points_str_vec { clean_split_string <string> (context_points) };
+//        const vector<string> points_str_vec { clean_split_string <string> (context_points) };
 
-        for (const string& points_str : points_str_vec)
+//        for (const string& points_str : points_str_vec)
+        for (const string& points_str : clean_split_string <string> (context_points))
         { const vector<string> fields { split_string <std::string> (points_str, ':') };
 
 // default?
@@ -823,7 +818,8 @@ STRING_SET contest_rules::all_known_field_names(void) const
 
     Returned EFT("none") if <i>field_name</i> is unknown.
 */
-EFT contest_rules::exchange_field_eft(const string& field_name) const
+//EFT contest_rules::exchange_field_eft(const string& field_name) const
+EFT contest_rules::exchange_field_eft(const string_view field_name) const
 { SAFELOCK(rules);
 
   return MUM_VALUE(_exchange_field_eft, field_name, EFT("none"s));
@@ -834,7 +830,8 @@ EFT contest_rules::exchange_field_eft(const string& field_name) const
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-vector<string> contest_rules::exch_canonical_values(const string& field_name) const
+//vector<string> contest_rules::exch_canonical_values(const string& field_name) const
+vector<string> contest_rules::exch_canonical_values(const string_view field_name) const
 { vector<string> rv;
 
   { SAFELOCK(rules);

@@ -28,7 +28,7 @@ enum class POSTING_SOURCE { CLUSTER,                  ///< traditional cluster
                             RBN                       ///< Reverse Beacon Network
                           };
 
-using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+//using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
 
 constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour; remove this at some point
 
@@ -123,7 +123,8 @@ public:
     \return     the time, in seconds, since the last data were received on the connection, in seconds
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
-    { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
+//    { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
+    { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _last_data_received); }
 };
 
 // -----------  dx_post  ----------------
@@ -210,8 +211,8 @@ protected:
 
   enum BAND     _band;              ///< band
   std::string   _callsign;          ///< callsign
-  time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
-  TIME_POINT    _expiration_1;      ///< time at which entry will expire
+//  time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
+  TIME_POINT    _expiration;      ///< time at which entry will expire
   std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
 
 public:
@@ -222,14 +223,15 @@ public:
   explicit monitored_posts_entry(const dx_post& post) :
     _callsign(post.callsign()),
     _frequency_str(post.frequency_str()),
-    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
-    _expiration_1(post.time_processed_1() + MONITORED_POSTS_DURATION_1),
+//    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+    _expiration(post.time_processed_1() + MONITORED_POSTS_DURATION_1),
     _band(post.band())
   { }
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign
-  READ(expiration);         ///< time (relative to the UNIX epoch) at which entry will expire
+//  READ(expiration);         ///< time (relative to the UNIX epoch) at which entry will expire
+  READ(expiration);      ///< time at which entry will expire
   READ(frequency_str);      ///< frequency in format xxxxx.y [kHz]
 
 /// convert to a string suitable for display in a window
@@ -305,6 +307,18 @@ public:
 
 /// convert to strings suitable for display in a window
   std::vector<std::string> to_strings(void) const;
+
+/// return the current number of entries found within the past MONITORED_POSTS_DURATION seconds
+  inline size_t size(void) const
+    { SAFELOCK(monitored_posts);
+      return _entries.size();
+    }
+
+/// whether the number of entries found within the past MONITORED_POSTS_DURATION seconds is zero
+  inline bool empty(void) const
+    { SAFELOCK(monitored_posts);
+      return _entries.empty();
+    }
 };
 
 #endif    // CLUSTER_H

@@ -356,8 +356,38 @@ public:
 
   CONTEXTREAD(bandmap_cull_function);            ///< number of the bandmap cull function
   CONTEXTREAD(bandmap_decay_time_local);         ///< time (in minutes) for an entry to age off the bandmap (local entries)
+
+/*! \brief    Return the bandmap decay time for local posts as a duration
+    \return   the C++ duration equivalent to the decay time for local posts
+*/
+  inline std::chrono::seconds bandmap_decay_time_local_duration(void) const
+  { SAFELOCK(_context);
+
+    return std::chrono::seconds(_bandmap_decay_time_local * 60);
+  }
+
   CONTEXTREAD(bandmap_decay_time_cluster);       ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
+
+/*! \brief    Return the bandmap decay time for cluster posts as a duration
+    \return   the C++ duration equivalent to the decay time for cluster posts
+*/
+  inline std::chrono::seconds bandmap_decay_time_cluster_duration(void) const
+  { SAFELOCK(_context);
+
+    return std::chrono::seconds(_bandmap_decay_time_cluster * 60);
+  }
+
   CONTEXTREAD(bandmap_decay_time_rbn);           ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
+
+/*! \brief    Return the bandmap decay time for RBN posts as a duration
+    \return   the C++ duration equivalent to the decay time for RBN posts
+*/
+  inline std::chrono::seconds bandmap_decay_time_rbn_duration(void) const
+  { SAFELOCK(_context);
+
+    return std::chrono::seconds(_bandmap_decay_time_rbn * 60);
+  }
+
   CONTEXTREAD(bandmap_fade_colours);             ///< the colours calls adopt as they fade
   CONTEXTREAD(bandmap_filter);                   ///< the strings in the bandmap filter
   CONTEXTREAD(bandmap_filter_disabled_colour);   ///< background colour when bandmap filter is disabled

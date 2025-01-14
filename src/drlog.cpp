@@ -759,6 +759,39 @@ inline void update_scp_window(const string& callsign)
 inline bool xscp_order_greater(const string& c1, const string& c2)
   { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
+  // OK
+string test_fn(const size_t start_posn, const size_t len)
+{ string str { "1234567890qwertyuiopasdfghjklzxcvbnm"sv };
+
+  string rv;
+
+  rv = substring <string_view> (str, start_posn, len);
+
+  return rv;
+}
+
+// NOT OK
+vector<string_view> test_fn2(void)
+{ string str { "This is a test with several words"sv };
+
+  vector<string_view> rv;
+
+  rv = clean_split_string <string_view> (str);
+
+  return rv;
+}
+
+// NOT OK
+vector<string_view> test_fn3(void)
+{ string str { "This is another test with several words"sv };
+
+  vector<string_view> rv;
+
+  rv = clean_split_string <string_view> (str);
+
+  return rv;
+}
+
 int main(int argc, char** argv)
 { 
 // generate version information
@@ -792,6 +825,30 @@ int main(int argc, char** argv)
 
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
+
+#if 0
+  { string_view sv1 { test_fn(0, 5) };
+
+    ost << "*** " << sv1 << endl;
+
+    string_view sv2 { test_fn(1, 6) };
+
+    ost << "*** " << sv1 << endl;
+    ost << "*** " << sv2 << endl;
+
+    const vector<string_view> v = test_fn2();
+
+    FOR_ALL(v, [] (const string_view sv) { ost << sv << endl; });
+
+    ost << "*** " << sv1 << endl;
+    ost << "*** " << sv2 << endl;
+
+    const vector<string_view> v2 = test_fn2();
+
+    ost << v[2] << endl;
+    ost << v2[2] << endl;
+  }
+#endif
 
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
@@ -2028,6 +2085,8 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
 }
 
 /*! \brief  Thread function to display the date and time, and perform other periodic functions
+
+     CHangename ot "tick"?
 */
 void display_date_and_time(void)
 { const string THREAD_NAME { "display date and time"s };
@@ -2088,6 +2147,13 @@ void display_date_and_time(void)
 
         if (rbn_p and (n_posters_db_rbn.min_posters() != 1))
           n_posters_db_rbn.prune();
+
+// prune monitored posts
+        { SAFELOCK(monitored_posts);
+
+          if (!mp.empty())
+            mp.prune();
+        }
 
 // possibly prune dynamic autocorrect databases
         if (dynamic_autocorrect_rbn)
@@ -2444,6 +2510,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     const string new_input { rbn.get_unprocessed_input() }; // get any unprocessed info from the cluster; deletes the data from the cluster
 
+//    ost << "length of new input = " << css(new_input.size()) << " bytes" << endl;
+
     posted_by_vector.clear();                               // prepare the posted_by vector
 
 // a visual marker that we are processing a pass; this should appear only briefly
@@ -2494,17 +2562,35 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       }
     }
 
+//    ost << "length of unprocessed input before adding new input = " << css(unprocessed_input.size()) << " bytes" << endl;
+
+//    ost << "hex: " << hex_string(unprocessed_input) << endl;
+
     unprocessed_input += move(new_input);         // append the new unprocessed data
+
+ //   ost << "length of unprocessed input = " << css(unprocessed_input.size()) << " bytes" << endl;
+
+//    ost << "hex: " << hex_string(unprocessed_input) << endl;
 
 // perhaps introduce unprocessed_input_sv here, and use in what follows
     string_view unprocessed_input_sv { unprocessed_input };
 
     while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
+//    while (contains(unprocessed_input, CRLF))                               // look for EOL markers
     { const size_t posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
-      const string line { remove_char(substring <std::string_view> (unprocessed_input_sv, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
+      //const size_t posn { unprocessed_input.find(CRLF) };                   // guaranteed to succeed
+//      const string line { remove_char(substring <std::string_view> (unprocessed_input_sv, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
+//      const string line { remove_char(substring <std::string> (unprocessed_input, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
+//      const string line { substring <std::string> (unprocessed_input, 0, posn) };      // store the next unprocessed line
+      const string_view line { substring <std::string_view> (unprocessed_input_sv, 0, posn) };      // store the next unprocessed line
 
 //      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
-      unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, min(posn + 2, unprocessed_input_sv.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
+//      unprocessed_input = substring <std::string> (unprocessed_input, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
+//      unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, min(posn + 2, unprocessed_input_sv.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
+      unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
+
+ //     ost << "line: " << hex_string(line) << endl;
+ //     ost << "remaining unprocessed: " << hex_string(unprocessed_input_sv) << endl;
 
       if (!line.empty())
       { static const vector<string_view> beacon_markers { " BCN ",
@@ -2549,7 +2635,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
           const BAND dx_band { post.band() };
 
-// is this station being monitored?
+// is this station being monitored? *** move this after correction? and correct call in post if necessary?? ***
           if (mp.is_monitored(post.callsign()))
             mp += post;
 
@@ -2618,6 +2704,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             if (rules.score_modes().contains(be.mode()))
             { be.frequency_str_decimal_places(1);
               be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
+
+//              ost << "adding expiration time = " << be.expiration_time() << " for " << be.callsign() << endl;
+
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );             // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
@@ -2729,6 +2818,13 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       }
     }
 
+    unprocessed_input = unprocessed_input_sv;       // copy to the original owner of the data
+//    ost << "after processing" << endl;
+
+//    ost << "length of next unprocessed input  = " << css(unprocessed_input_sv.size()) << " bytes" << endl;
+
+//    ost << "hex: " << hex_string(unprocessed_input_sv) << endl;
+
 // update displayed bandmap if there was a change
     const BAND cur_band { current_band };
 
@@ -2768,10 +2864,10 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-      const time_t              now             { NOW() };
+//      const time_t              now             { NOW() };
       const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
-      const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
-      const float               interval        { 1.0f / n_colours };                       // fraction covered by a single colour
+//      const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
+//      const float               interval        { 1.0f / n_colours };                       // fraction covered by a single colour
       const PAIR_NUMBER_TYPE    default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
@@ -2780,15 +2876,66 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
 // minutes to expiration
-        const unsigned int seconds_to_expiration  { static_cast<unsigned int>(entry.expiration() - now) };
-        const float        fraction_to_expiration { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
-        const float        fraction_from_start    { 1.0f - fraction_to_expiration };
+//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>(entry.expiration() - now) };
 
-        unsigned int clr_element_nr = (fraction_from_start / interval);
+//        const auto t1 = entry.expiration_1() - system_clock::now();
+//        const chrono::seconds t2 = std::chrono::duration_cast<std::chrono::seconds>(entry.expiration_1() - system_clock::now());
 
-        clr_element_nr = min(clr_element_nr, n_colours - 1);
+//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>((std::chrono::duration_cast<std::chrono::seconds>(entry.expiration_1() - system_clock::now())).count()) };
 
-        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(clr_element_nr), win_monitored_posts.bg()) };
+
+//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>((std::chrono::duration_cast<std::chrono::seconds>(entry.expiration() - system_clock::now())).count()) };
+//        const float        fraction_to_expiration { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
+//        const float        fraction_from_start    { 1.0f - fraction_to_expiration };
+
+//        unsigned int clr_element_nr = (fraction_from_start / interval);
+
+#if 0
+        ost << "callsign = " << entry.callsign() << endl
+            << "expiration = " << entry.expiration() << endl
+            << "now = " << system_clock::now() << endl
+            << "seconds_to_expiration = " << seconds_to_expiration << endl
+            << "fraction_to_expiration = " << fraction_to_expiration << endl
+            << "fraction_from_start = " << fraction_from_start << endl
+            << "clr_element_nr = " <<  clr_element_nr << endl;
+#endif
+
+//        clr_element_nr = min(clr_element_nr, n_colours - 1);
+
+//        ost << "colour = " << fade_colours.at(clr_element_nr) << endl;
+
+//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(seconds_to_expiration)) };
+//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(3600 - seconds_to_expiration)) };
+        const long unsigned int idx { static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION_1) ).count() ) };
+
+//        const auto clr { MAP_VALUE(std::span{fade_colours}, 0UL, 3600UL, idx) };
+
+        const auto clr { MAP_VALUE(fade_colours, 0UL, 3600UL, idx) };
+
+//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION_1) ).count() ) ) };
+#if 0
+        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, idx) };
+
+        ost << "n_values in span = " << std::span{fade_colours}.size() << endl;
+        ost << "idx parameter = " << idx << endl;
+
+        ost << "template element nr = " << p.first << endl
+            << "template colour = " << p.second << endl;
+
+        if (p.second != fade_colours.at(clr_element_nr))
+          ost << "WARNING: COLOUR MISMATCH" << endl;
+#endif
+
+//        const auto q { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(seconds_to_expiration)) };
+
+//        ost << "other template element nr = " << q.first << endl
+//            << "other template colour = " << q.second << endl;
+
+//        ost << "bounded clr_element_nr = " <<  clr_element_nr << endl;
+
+//        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(clr_element_nr), win_monitored_posts.bg()) };
+
+        const PAIR_NUMBER_TYPE cpu { colours.add(clr, win_monitored_posts.bg()) };
 
         win_monitored_posts < colour_pair(cpu)
                             < entry.to_string() < colour_pair(default_colours);
@@ -2871,7 +3018,13 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );
 
-    bandmaps[current_band].protected_write_to_window(bandmap_win);
+//    bandmaps[current_band].protected_write_to_window(bandmap_win);    // this seems to cause a big delay; I have no idea why :-(
+// the only difference is the enforced skip if too soon... but delay persists even if I remove that code
+//    bandmaps[current_band].increment_version();
+//    bandmaps[current_band].write_to_window(bandmap_win);
+    bandmap_win <= bandmaps[current_band];    // also inserts delay
+
+//    mp.prune();    // prune monitored posts
 
     for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
     {
@@ -2886,7 +3039,7 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
       sleep_for(1s);
     }
 
-    mp.prune();    // prune monitored posts
+//    mp.prune();    // prune monitored posts
   }
 }
 
@@ -2970,6 +3123,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // keyboard_queue::process_events() has already filtered out uninteresting events
   bool processed { win.common_processing(e) };
+
+// *********
+//  if (!processed and (e.is_control('a')))
+//    throw exception();
 
 // [ and ] (for regex)
   if (!processed and e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
@@ -3185,7 +3342,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         bandmap& bm { bandmaps[new_band] };
 
         ost << "displaying band map for band: " << BAND_NAME[new_band] << "m" << endl;
+
+        time_log <std::chrono::milliseconds> t2;
+
         win_bandmap <= bm;
+        t2.end_now();
+        ost << "time taken to display band = " << t2.time_span<int>() << " milliseconds" << endl;
 
 // is there a station close to our frequency?
         const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
@@ -8549,7 +8711,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 // check that we aren't somehow in an inconsistent state:
 // in 2024 CQ WPX CW I noticed a few times that the rig didn't seem to move,
 // although the CALL window had the contents as if it had moved
-#if 1
   bandmap_entry mbe_copy;
 
   { SAFELOCK(my_bandmap_entry);
@@ -8565,7 +8726,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
     debug = true;     // automatically turn on debugging
   }
-#endif
 
   return true;
 }

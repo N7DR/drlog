@@ -132,7 +132,8 @@ reconnect:
     goto new_socket;
   }
 
-  _last_data_received = system_clock::now();  // reset the reception timer
+//  _last_data_received = system_clock::now();  // reset the reception timer
+  _last_data_received = NOW_TP();  // reset the reception timer
 }
 
 /*! \brief              Constructor
@@ -203,9 +204,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 
 /// destructor
 dx_cluster::~dx_cluster(void)
-{ //ost << "Number of posts processed by " << ( (_source == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " = " << css(_n_posts) << endl;
-
-  _connection.send("BYE"s + CRLF);
+{ _connection.send("BYE"s + CRLF);
   
   { SAFELOCK(rbn_buffer);
     _unprocessed_input = _connection.read(_timeout / 2);  // add a delay before we tear down the connection
@@ -382,6 +381,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
               _valid = true;
               _time_processed = ::time(NULL);
+              _time_processed_1 = std::chrono::system_clock::now();
             }
           }
         }
@@ -427,6 +427,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
               _mode_str = fields[5];
               _valid = true;
               _time_processed = ::time(NULL);
+              _time_processed_1 = std::chrono::system_clock::now();
             }
           }
         }
@@ -462,6 +463,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
               _comment = copy.substr(char_posn);
               _valid = true;
               _time_processed = ::time(NULL);
+              _time_processed_1 = std::chrono::system_clock::now();
             }
           }
         }
@@ -504,6 +506,7 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
       << "  poster: " << dxp.poster() << endl
       << "  source: " << ( (dxp.source() == POSTING_SOURCE::RBN) ? "RBN" : "Cluster") << endl
       << "  time processed: " << dxp.time_processed() << endl
+      << "  time processed 1: " << dxp.time_processed_1() << endl
       << "  valid: " << dxp.valid();
 
   return ost;
@@ -522,8 +525,10 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
 */
 ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 { ost << "Monitored: " << mpe.callsign()
+//      << ", absolute expiration = " << mpe.expiration()
       << ", absolute expiration = " << mpe.expiration()
-      << ", relative expiration = " << mpe.expiration() - ::time(NULL)
+//      << ", relative expiration = " << mpe.expiration() - ::time(NULL)
+      << ", relative expiration = " << mpe.expiration() - NOW_TP()
       << ", frequency = " << mpe.frequency_str();
 
   return ost;
@@ -550,7 +555,10 @@ bool monitored_posts::is_monitored(const std::string_view callsign) const
     \param  post    post to be tested
 */
 void monitored_posts::operator+=(const dx_post& post)
-{ const monitored_posts_entry mpe           { post };
+{ //ost << "mp +=: " << post.callsign() << endl;
+  //ost << post << endl;
+
+  const monitored_posts_entry mpe           { post };
 
   bool                  stop_search         { false };
   bool                  found_call_and_band { false };
@@ -561,7 +569,9 @@ void monitored_posts::operator+=(const dx_post& post)
   { const monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
-    { if ( mpe.expiration() > old_mpe.expiration() )
+    { //if ( mpe.expiration() > old_mpe.expiration() )
+//      if ( mpe.expiration_1() > old_mpe.expiration_1() )
+      if ( mpe.expiration() > old_mpe.expiration() )
       { _entries -= it;
         stop_search = true;
       }
@@ -601,7 +611,6 @@ void monitored_posts::operator+=(const string_view new_call)
 /*! \brief                  Remove a call from the set of those being monitored
     \param  call_to_remove  call to be removed
 */
-//void monitored_posts::operator-=(const string& call_to_remove)
 void monitored_posts::operator-=(const string_view call_to_remove)
 { SAFELOCK(monitored_posts);
 
@@ -621,7 +630,10 @@ void monitored_posts::prune(void)
 
   const size_t original_size { _entries.size() };
 
-  erase_if(_entries, [now = NOW()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+//  erase_if(_entries, [now = NOW()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
+//  erase_if(_entries, [now = system_clock::now()] (monitored_posts_entry& mpe) { return (mpe.expiration_1() < now); } );
+//  erase_if(_entries, [now = NOW_TP()] (monitored_posts_entry& mpe) { return (mpe.expiration_1() < now); } );
+  erase_if(_entries, [now = NOW_TP()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());
 }

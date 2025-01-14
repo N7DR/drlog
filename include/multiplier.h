@@ -80,7 +80,6 @@ public:
     Returns false if the value <i>str</i> was already known
 */
   bool add_known(const std::string& str);
-//  bool add_known(const std::string_view str);
 
 /*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add
@@ -112,7 +111,6 @@ public:
 
     Does nothing if <i>str</i> is not known
 */
-//  void remove_known(const std::string& str);
   void remove_known(const std::string_view str);
 
 /*! \brief          Remove a value from the known values
@@ -120,7 +118,6 @@ public:
 
     Does nothing if <i>str</i> is not known
 */
-//  inline void operator-=(const std::string& str)
   inline void operator-=(const std::string_view str)
     { remove_known(str); }
 
@@ -152,7 +149,7 @@ public:
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
-  void remove_worked(const std::string& str, const BAND b, const MODE m);
+  void remove_worked(const std::string_view str, const BAND b, const MODE m);
 
 /*! \brief          Is a particular value a known multiplier value?
     \param  str     value to test

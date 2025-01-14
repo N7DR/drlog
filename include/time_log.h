@@ -31,9 +31,12 @@ class time_log
 {
 protected:
 
-  std::chrono::time_point<std::chrono::system_clock> _start { std::chrono::system_clock::now() };   ///< starting time point
-  std::chrono::time_point<std::chrono::system_clock> _end   { };                                    ///< ending time point
-  
+//  std::chrono::time_point<std::chrono::system_clock> _start { std::chrono::system_clock::now() };   ///< starting time point
+//  std::chrono::time_point<std::chrono::system_clock> _end   { };                                    ///< ending time point
+
+  TIME_POINT _start { NOW_TP() };   ///< starting time point
+  TIME_POINT _end   { };            ///< ending time point
+
 public:
 
   READ_AND_WRITE(start);                            ///< starting time point
@@ -42,12 +45,14 @@ public:
 /*! \brief  Start the timer
 */ 
   inline void start_now(void)
-    { _start = std::chrono::system_clock::now(); }
+//    { _start = std::chrono::system_clock::now(); }
+    { _start = NOW_TP(); }
 
 /*! \brief  Stop the timer
 */ 
   inline void end_now(void)
-    { _end = std::chrono::system_clock::now(); }
+//    { _end = std::chrono::system_clock::now(); }
+    { _end = NOW_TP(); }
 
 /*! \brief  Reset the timer to initial state, except that the timer is started at the current time
 */

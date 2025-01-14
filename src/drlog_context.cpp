@@ -588,11 +588,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // MARK FREQUENCIES [CW|SSB]
     if (testline.starts_with("MARK FREQUENCIES"sv) and !rhs.empty())
-    { //const vector<string_view> ranges { clean_split_string <string_view> (rhs) };
+    { vector<pair<frequency, frequency>> frequencies;
 
-      vector<pair<frequency, frequency>> frequencies;
-
-//      for (auto range : ranges)
       for (auto range : clean_split_string <string_view> (rhs))
       { const vector<string_view> bounds { clean_split_string <string_view> (range, '-') };
 
@@ -638,7 +635,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS"sv)
-    { const vector<string> break_points { clean_split_string <string> (RHS) };
+    { //const vector<string> break_points { clean_split_string <string> (RHS) };
+      const vector<string_view> break_points { clean_split_string <string_view> (RHS) };
 
       for (const auto& break_point : break_points)
       { const frequency f { break_point };
@@ -714,7 +712,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // PING = [ target1, label1 ], [target2, label2] ...
     if ( (LHS == "PING"sv) and (!rhs.empty()) )
     { for (const auto& target : delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP))
-      { const vector<string> target_info { clean_split_string <string> (target) };
+      { const vector<string> target_info { clean_split_string <string> (target) };;
 
         if (target_info.size() == 2)
           _ping_targets += { target_info[0], target_info[1] };
@@ -746,8 +744,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // POSTED BY CONTINENTS (default is anything other than my own continent)
     if ( (LHS == "POSTED BY CONTINENTS"sv) or (LHS == "POSTED BY CONTINENT"sv) )
-    { //const unordered_set<string> continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
-      const UNORDERED_STRING_SET continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
+    { const UNORDERED_STRING_SET continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
 
       if (LHS == "POSTED BY CONTINENTS"sv)    // multiple continents
         FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
@@ -821,8 +818,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
         const vector<string> values           { clean_split_string <string> (RHS) };
-//        const set<string>    ss               { values.cbegin(), values.cend() };
-        const STRING_SET    ss               { values.cbegin(), values.cend() };
+        const STRING_SET    ss                { values.cbegin(), values.cend() };
 
         _qthx += { canonical_prefix, ss };
       }
@@ -908,8 +904,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
     { for (const auto& band_str : clean_split_string <string> (rhs))
+      //for (const auto band_str : clean_split_string <string_view> (rhs))
       { try
-        { _score_bands += BAND_FROM_NAME.at(band_str);
+        { _score_bands += BAND_FROM_NAME.at(band_str);  // .at() does not yet support heterogenwous lookup
         }
 
         catch (...)
@@ -1007,11 +1004,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // START BAND
     if (LHS == "START BAND"sv)
-    { //const auto cit { BAND_FROM_NAME.find(RHS) };
-
-      //if (cit != BAND_FROM_NAME.cend())
-      //  _start_band = cit->second;
-      if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
+    { if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
         _start_band = opt.value();
     }
 
@@ -1378,7 +1371,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
     if (testline.starts_with("MESSAGE KEY"sv))
-    { vector<string> message_info { split_string <std::string> (testline, ' ') };
+    { //vector<string> message_info { split_string <std::string> (testline, ' ') };
+      const vector<string_view> message_info { split_string <std::string_view> (testline, ' ') };
 
       if ( (message_info.size() >= 5) and contains(testline, '=') )
       {

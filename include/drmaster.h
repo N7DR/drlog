@@ -426,8 +426,8 @@ public:
 
     Does nothing if <i>call</i> is not present
 */
-  inline void operator-=(const std::string& call)
-//  inline void operator-=(const std::string_view call)
+//  inline void operator-=(const std::string& call)
+  inline void operator-=(const std::string_view call)
     { _records -= call; }
 
 /*! \brief          Remove a call
@@ -435,7 +435,8 @@ public:
 
     Does nothing if <i>call</i> is not present
 */
-  inline void remove(const std::string& call)
+//  inline void remove(const std::string& call)
+  inline void remove(const std::string_view call)
     { *this -= call; }
 
 /*! \brief          Is a particular call present in the file?

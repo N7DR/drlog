@@ -1028,3 +1028,19 @@ string read_until(istream& in, const string_view delimiter,const DELIMITERS keep
 
   return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);
 }
+
+/*! \brief          Convert string to hex characters
+    \param  str     string to convert
+    \return         <i>str</i> as a series of hex characters
+*/
+//string hex_string(const std::string& str)
+string hex_string(const std::string_view str)
+{ ostringstream stream;
+
+  stream << hex << setfill('0');
+
+  for (const auto c : str)
+    stream << setw(2) << static_cast<int>(static_cast<unsigned char>(c)) << ' ';  // setw needs to be sent for every character!
+
+  return stream.str();
+}

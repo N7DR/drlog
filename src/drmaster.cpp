@@ -433,43 +433,31 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 
       case 9 :             // ctrl-I
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { ituzone += contents[posn++]; }
         get_field(ituzone);
         break;
 
       case 11 :             // ctrl-K
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { check += contents[posn++]; }
         get_field(check);
         break;
 
       case 14 :             // ctrl-N
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { name += contents[posn++]; }
         get_field(name);
         break;
 
       case 15 :             // ctrl-O
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { oldcall += contents[posn++]; }
         get_field(oldcall);
         break;
 
       case 17 :             // ctrl-Q
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { qth += contents[posn++]; }
         get_field(qth);
         break;
 
       case 19 :             // ctrl-S
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { speed += contents[posn++]; }
         get_field(speed);
         break;
 

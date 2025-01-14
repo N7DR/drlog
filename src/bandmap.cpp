@@ -18,6 +18,7 @@
 #include "log_message.h"
 #include "statistics.h"
 #include "string_functions.h"
+#include "time_log.h"
 
 #include <fstream>
 #include <functional>
@@ -27,12 +28,10 @@ using namespace std;
 namespace SR  = std::ranges;
 namespace SRV = std::ranges::views;
 
-//using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order; compare_calls() now allows heterogenous lookup
-
 extern bool                          bandmap_show_marked_frequencies;           ///< whether to display entries that would be marked
 extern bool                          bandmap_frequency_up;                      ///< whether increasing frequency goes upwards in the bandmap
 extern pt_mutex                      batch_messages_mutex;                      ///< mutex for batch messages
-extern UNORDERED_STRING_MAP<string> batch_messages;                            ///< batch messages associated with calls
+extern UNORDERED_STRING_MAP<string>  batch_messages;                            ///< batch messages associated with calls
 extern exchange_field_database       exchange_db;                               ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                               ///< location information
 extern unsigned int                  max_qsos_without_qsl;                      ///< limit for the N7DR matches_criteria() algorithm
@@ -118,7 +117,8 @@ set<time_t> n_posters_database::times(void) const
     \param  call    call to test
     \return         whether <i>call</i> is a known good call
 */
-bool n_posters_database::test_call(const string& call)
+//bool n_posters_database::test_call(const string& call)
+bool n_posters_database::test_call(const string_view call)
 { lock_guard<recursive_mutex> lg(_mtx); 
 
   if ( (_min_posters == 1) or _known_good_calls.contains(call) )
@@ -133,10 +133,12 @@ bool n_posters_database::test_call(const string& call)
   { const UNORDERED_STRING_MAP<UNORDERED_STRING_SET>& um { _data.at(*it) };    // key = call
 
     if (um.contains(call))
-    { count_n_posters += um.at(call).size();
+    { const string call_str { call };
+
+      count_n_posters += um.at(call_str).size();
 
       if (count_n_posters >= _min_posters)
-      { _known_good_calls += call;
+      { _known_good_calls += call_str;
         
         return true;
       }
@@ -773,15 +775,12 @@ void bandmap::operator+=(bandmap_entry& be)
 void bandmap::prune(void)
 { SAFELOCK(_bandmap);                                   // hold the lock for the entire process
 
+//  ost << "before pruning, size = " << _entries.size() << endl;
+
 //  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could also use erase_if
   erase_if(_entries, [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could also use erase_if
 
-#if 0
-  if (_entries.size() != initial_size)
-  { //_dirty_entries();
-//    _version++;
-  }
-#endif
+//  ost << "after pruning, size = " << _entries.size() << endl;
 
   _recent_calls.clear();                       // empty the container of recent calls
   _version++;
@@ -1360,7 +1359,11 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
     // although if we get here, it means that the version must have been incremented, I think
 //    w <= (*this);
 
-    protected_write_to_window(w);
+//    ost << NOW() << ": calling pwtw from process_insertion_queue()" << endl;
+//    protected_write_to_window(w);
+//    ost << NOW() << ": end of pwtw from process_insertion_queue()" << endl;
+//    increment_version();
+    write_to_window(w);
   }
 }
 
@@ -1369,27 +1372,43 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
     \param  dead_time   time that must have passed for the write to occur
     \return             the window
 */
+#if 0
 window& bandmap::protected_write_to_window(window& win, const std::chrono::milliseconds min_delay)
-{ SAFELOCK(_bandmap);
+{ ost << "inside protected write to window" << endl;
+
+  time_log <std::chrono::milliseconds> tlog;
+
+  SAFELOCK(_bandmap);
 
   if (_version <= _last_displayed_version)  // don't display if this isn't newer than the last write
+  { ost << "version = " << static_cast<int>(_version) << "; last displayed version = " << _last_displayed_version << endl;
     return win;
+  }
 
   const std::chrono::time_point<std::chrono::system_clock> current_time { std::chrono::system_clock::now() };
 
-  if ( (current_time - _time_last_displayed) < min_delay )  // don't display if this is too soon after the most recent display
-    return win;
+  ost << "actual delta time = " << duration_cast<std::chrono::milliseconds>(current_time - _time_last_displayed).count() << "; min delay = " << min_delay.count() << endl;
 
-  win <= (*this);
+  if ( (current_time - _time_last_displayed) < min_delay )  // don't display if this is too soon after the most recent display
+  { ost << "delta time = " << duration_cast<std::chrono::milliseconds>(current_time - _time_last_displayed).count() << "; min delay = " << min_delay.count() << endl;
+    return win;
+  }
+
+  ost << "going to write to window" << endl;
+  win <= (*this);   // calls (unprotected) write_to_window()
+
+  tlog.end_now();
+  ost << "time taken in protected write with written window = " << tlog.time_span<int>() << " milliseconds" << endl;
 
   return win;
 }
+#endif
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window to which to write
     \return         the window
 */
-window& bandmap::write_to_window(window& win)
+window& bandmap::write_to_window(window& win /*, const bool refresh */)
 { constexpr time_t      GREEN_TIME                 { 120 };             // time in seconds for which calls are marked in green
   constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
@@ -1420,10 +1439,9 @@ window& bandmap::write_to_window(window& win)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
     { const string entry_str { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
 
-      string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
-      string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
-
-      const bool is_marker { be.is_marker() };
+      const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
+      const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
+      const bool        is_marker     { be.is_marker() };
   
 // change to the correct colour
       const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
@@ -1491,8 +1509,12 @@ window& bandmap::write_to_window(window& win)
     index++;
   }
 
+//  if (refresh)
+  win.refresh();    // force the visual update ... do we really want this?
+
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
-  _time_last_displayed = std::chrono::system_clock::now();
+//  _time_last_displayed = std::chrono::system_clock::now();
+  _time_last_displayed = NOW_TP();
 
   return win;
 }

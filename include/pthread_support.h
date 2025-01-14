@@ -42,7 +42,6 @@ using namespace std::literals::string_literals;
 
 /// Syntactic sugar to create a safe lock using a native mutex
 #define NATIVELOCK(z) std::lock_guard LG(z)
-//std::lock_guard lg(_location_database_mutex);
 
 // errors
 constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error locking mutex
@@ -278,14 +277,12 @@ public:
         throw pthread_error(PTHREAD_NO_KEY, "Unable to create pthread key for thread-specific data"s);
     }
 
-/// destructor -- should NOT delete key; there's nothing to stop someone else in a different thread from using it later
-/// as long as mutexes of which thread_specific_data<int> objects are a part are global, this shouldn't be a problem
-#if 1
+/// destructor -- should NOT delete key; there's nothing to stop someone else in a different thread from using it later.
+/// As long as mutexes of which thread_specific_data<int> objects are a part are global, this shouldn't be a problem
   ~thread_specific_data(void)
   { if (const int status { pthread_key_delete(_key) }; status != 0)
       std::cerr << "ERROR IN DESTRUCTOR FOR thread_specific_data!!!" << std::endl;   // can't do this because of circularity; need to rework this sometime
   }
-#endif
 
 /*! \brief      Get a pointer into the thread-specific data
     \return     pointer to thread-specific data

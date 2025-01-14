@@ -574,7 +574,8 @@ public:
 
     CHOICE fields ARE NOT expanded
 */
-  inline std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
+//  inline std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> unexpanded_exch(const std::string_view canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, CHOICES::NO_EXPAND); }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -584,7 +585,8 @@ public:
 
     CHOICE fields ARE expanded
 */
-  inline std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
+//  inline std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> expanded_exch(const std::string_view canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, CHOICES::EXPAND); }
 
   RULESREAD(callsign_mults);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
@@ -622,14 +624,16 @@ public:
 
     Returns EFT("none") if <i>field_name</i> is unknown.
 */
-  EFT exchange_field_eft(const std::string& field_name) const;
+//  EFT exchange_field_eft(const std::string& field_name) const;
+  EFT exchange_field_eft(const std::string_view field_name) const;
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  inline std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const
+//  inline std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<std::string> expanded_exchange_field_names(const std::string_view canonical_prefix, const MODE m) const
     { return _exchange_field_names(canonical_prefix, m, CHOICES::EXPAND); }
 
 /*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
@@ -698,7 +702,8 @@ public:
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-  std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
+//  std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
+  std::vector<std::string> exch_canonical_values(const std::string_view field_name) const;
 
 /*! \brief              The permitted values for a particular exchange field
     \param  field_name  name of an exchange field (received)

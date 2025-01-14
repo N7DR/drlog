@@ -36,6 +36,8 @@
 using centiseconds = std::chrono::duration<long, std::centi>;
 using deciseconds = std::chrono::duration<long, std::deci>;
 
+using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+
 // define enum classes used in more than one file
 
 // used for whether to display time in alert()
@@ -1645,6 +1647,10 @@ public:
 inline time_t NOW(void)
   { return ::time(NULL); }           // get the time from the kernel
 
+// current time, as a TIME_POINT
+inline TIME_POINT NOW_TP(void)
+  { return std::chrono::system_clock::now(); }
+
 /*! \brief        Create a reverse iterator from a bidirectional iterator, pointing to the same element
     \param  it    bidirectional iterator
     \return       reverse iterator that points to <i>*fit</i>
@@ -1739,45 +1745,58 @@ auto RANGE_CONTAINER(R&& r) -> RT
   return RT(r_common.begin(), r_common.end());
 }
 
-#if 0
-// heterogeneous lookup for strings
-// https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
-struct stringly_hash
-{ using is_transparent = void;
+/*! \brief      Given a container of values and a coresponding pseudo-index, return the calue corresponding to a particular pseudo-indes
+    \param  r   range
+    \return     <i>r</i> as a particular container
+*/
+template <typename T>
+T MAP_VALUE(const std::span<T> values, const size_t idx_1, const size_t idx_2, const size_t idx)
+{ if (values.empty())
+    return T { };
 
-  [[nodiscard]] inline size_t operator()(const char* rhs) const
-    { return std::hash<std::string_view>{}(rhs); }
+  const size_t min_idx { (idx_1 < idx_2) ? idx_1 : idx_2 };
+  const size_t max_idx { (min_idx == idx_1) ? idx_2 : idx_1 };
 
-  [[nodiscard]] inline size_t operator()(const std::string_view rhs) const
-    { return std::hash<std::string_view>{}(rhs); }
+//  const size_t limited_idx { std::clamp(idx, min_idx, max_idx) };   // force the index into the valid range
+  const size_t idx_range   { max_idx - min_idx };
+  const size_t n_values    { values.size() };
 
-  [[nodiscard]] inline size_t operator()(const std::string& rhs) const
-    { return std::hash<std::string>{}(rhs); }
-};
+  const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
 
-// make the versions with heterogeneous lookup easily available
+  size_t element_nr { static_cast<size_t> (frac * n_values) };
 
-// heterogenous lookup for unordered maps with string keys
-template <typename ValueType>
-using UNORDERED_STRING_MAP = std::unordered_map<std::string, ValueType, stringly_hash, std::equal_to<>>;
+  element_nr = std::clamp(element_nr, 0UL, n_values - 1);
 
-// heterogenous lookup for unordered multimaps with string keys
-template <typename ValueType>
-using UNORDERED_STRING_MULTIMAP = std::unordered_multimap<std::string, ValueType, stringly_hash, std::equal_to<>>;
+  return values[element_nr];
+}
 
-// heterogenous lookup for unordered sets of strings
-using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std::equal_to<>>;
+template <typename C>
+  requires is_vector<C> or is_array<C>
+inline typename C::value_type MAP_VALUE(const C& values, const size_t idx_1, const size_t idx_2, const size_t idx)
+  { return MAP_VALUE(std::span<const typename C::value_type> { values }, idx_1, idx_2, idx); }
+//  { ///*const*/ std::span<typename C::value_type> tmps { values };
+//    return MAP_VALUE(static_cast<std::span<const typename C::value_type>>(values), idx_1, idx_2, idx);
+//  }
 
-// heterogenous lookup for ordered maps with string keys
-template <typename ValueType>
-using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
+template <typename T>
+std::pair<size_t, T> MAP_VALUE_PAIR(std::span<T> values, const size_t idx_1, const size_t idx_2, const size_t idx)
+{ if (values.empty())
+    return { 0, T { } };
 
-// heterogenous lookup for multimaps with string keys
-template <typename ValueType>
-using STRING_MULTIMAP = std::multimap<std::string, ValueType, std::less<>>;
+  const size_t min_idx { (idx_1 < idx_2) ? idx_1 : idx_2 };
+  const size_t max_idx { (min_idx == idx_1) ? idx_2 : idx_1 };
 
-// heterogenous lookup for ordered sets of strings
-using STRING_SET = std::set<std::string, std::less<>>;
-#endif
+  const size_t limited_idx { std::clamp(idx, min_idx, max_idx) };   // force the index into the valid range
+  const size_t idx_range   { max_idx - min_idx };
+  const size_t n_values    { values.size() };
+
+  const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
+
+  size_t element_nr { static_cast<size_t> ((frac * n_values) /* + 0.5 */) };
+
+  element_nr = std::clamp(element_nr, 0UL, n_values - 1);
+
+  return { element_nr, values[element_nr] };
+}
 
 #endif    // MACROS_H
