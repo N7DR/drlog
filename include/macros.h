@@ -252,6 +252,22 @@ template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 //template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_string<typename T::value_type>;
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
+// chrono durations
+// https://www.reddit.com/r/cpp_questions/comments/mqx6jo/c_constraints_testing_for_stdchronoduration/
+
+template <class A>
+inline constexpr bool is_duration_trait = false;
+
+template <class Rep, class Period>
+inline constexpr bool is_duration_trait<std::chrono::duration<Rep, Period>> = true;
+
+template <class T> concept is_duration              = is_duration_trait<T>;
+
+//template <class T> struct is_duration_trait : std::false_type {};
+//template <class Rep, class Period> struct is_duration_trait<std::chrono::duration<Rep, Period>> : std::true_type {};
+
+//template <class T> concept is_duration = is_duration_trait<T>;
+
 // heterogeneous lookup for strings
 // https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
 struct stringly_hash
@@ -1745,21 +1761,22 @@ auto RANGE_CONTAINER(R&& r) -> RT
   return RT(r_common.begin(), r_common.end());
 }
 
-/*! \brief      Given a container of values and a coresponding pseudo-index, return the calue corresponding to a particular pseudo-indes
-    \param  r   range
-    \return     <i>r</i> as a particular container
+/*! \brief          Given a container of values and a coresponding pseudo-index, return the calue corresponding to a particular pseudo-index
+    \param  values  the allowed different values
+    \param  idx_1   one of the extremum values of index
+    \param  idx_2   the other of the extremum values of index
+    \param  idx     the (pseudo) index for which the corresponding value is required
+    \return         the value corresponding to the pseudo-index <i>idx</i>
 */
 template <typename T>
 T MAP_VALUE(const std::span<T> values, const size_t idx_1, const size_t idx_2, const size_t idx)
 { if (values.empty())
     return T { };
 
-  const size_t min_idx { (idx_1 < idx_2) ? idx_1 : idx_2 };
-  const size_t max_idx { (min_idx == idx_1) ? idx_2 : idx_1 };
-
-//  const size_t limited_idx { std::clamp(idx, min_idx, max_idx) };   // force the index into the valid range
-  const size_t idx_range   { max_idx - min_idx };
-  const size_t n_values    { values.size() };
+  const size_t min_idx   { (idx_1 < idx_2) ? idx_1 : idx_2 };
+  const size_t max_idx   { (min_idx == idx_1) ? idx_2 : idx_1 };
+  const size_t idx_range { max_idx - min_idx };
+  const size_t n_values  { values.size() };
 
   const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
 
@@ -1770,14 +1787,25 @@ T MAP_VALUE(const std::span<T> values, const size_t idx_1, const size_t idx_2, c
   return values[element_nr];
 }
 
+/*! \brief          Given a container of values and a corresponding pseudo-index, return the value corresponding to a particular pseudo-index
+    \param  values  the allowed different values
+    \param  idx_1   one of the extremum values of index
+    \param  idx_2   the other of the extremum values of index
+    \param  idx     the (pseudo) index for which the corresponding value is required
+    \return         the value corresponding to the pseudo-index <i>idx</i>
+*/
 template <typename C>
   requires is_vector<C> or is_array<C>
 inline typename C::value_type MAP_VALUE(const C& values, const size_t idx_1, const size_t idx_2, const size_t idx)
   { return MAP_VALUE(std::span<const typename C::value_type> { values }, idx_1, idx_2, idx); }
-//  { ///*const*/ std::span<typename C::value_type> tmps { values };
-//    return MAP_VALUE(static_cast<std::span<const typename C::value_type>>(values), idx_1, idx_2, idx);
-//  }
 
+/*! \brief          Given a span of values and a corresponding pseudo-index, return the index corresplonding to the pseudo-index, and the value corresponding to the pseudo-index
+    \param  values  the allowed different values
+    \param  idx_1   one of the extremum values of index
+    \param  idx_2   the other of the extremum values of index
+    \param  idx     the (pseudo) index for which the corresponding value is required
+    \return         the element number and value corresponding to the pseudo-index <i>idx</i>
+*/
 template <typename T>
 std::pair<size_t, T> MAP_VALUE_PAIR(std::span<T> values, const size_t idx_1, const size_t idx_2, const size_t idx)
 { if (values.empty())
@@ -1798,5 +1826,190 @@ std::pair<size_t, T> MAP_VALUE_PAIR(std::span<T> values, const size_t idx_1, con
 
   return { element_nr, values[element_nr] };
 }
+
+//template <typename V, typename I>
+template <typename V>
+//requires std::is_integral_v<I>
+class value_map
+{
+protected:
+
+  std::vector<V> _vec;
+
+  size_t _idx_1;
+  size_t _idx_2;
+
+public:
+
+// for now, assume idx_1 < idx_2, idx_1 == 0
+  template <typename I>
+//    requires (!is_duration<I>)
+  value_map(const std::vector<V>& vec, const I idx_1, const I idx_2) :
+    _idx_1(idx_1),
+    _idx_2(idx_2)
+  { if (idx_1 == idx_2)
+      return;
+
+    const size_t idx_range     { _idx_2 - _idx_1 };
+    const size_t nvalues       { static_cast<size_t>(abs(idx_range)) + 1 };
+    const size_t input_nvalues { vec.size() };
+
+    _vec = std::vector<V>(nvalues, { });
+
+    const size_t min_idx { _idx_1 };
+
+    for (size_t idx { std::min(_idx_1, _idx_2) }; idx <= std::max(_idx_1, _idx_2); ++idx)
+    { const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
+
+      size_t element_nr { static_cast<size_t> (frac * input_nvalues) };
+
+      element_nr = std::clamp(element_nr, 0UL, (input_nvalues - 1));
+
+      _vec[idx] = vec[element_nr];
+    }
+  }
+
+//  template <typename D>
+//    requires is_duration<D>
+//  inline value_map(const std::vector<V>& vec, const _is_duration idx_1, const is_duration idx_2)
+//    { *this = value_map(vec, idx_1.count(), idx_2.count()); }
+
+  template <typename D>
+    requires is_duration<D>
+  inline value_map(const std::vector<V>& vec, const D idx_1, const D idx_2) // requires can go here; try it
+    { *this = value_map(vec, idx_1.count(), idx_2.count()); }
+
+//  inline value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2)
+//    { *this = value_map(vec, idx_1.count(), idx_2.count()); }
+
+#if 0
+  value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2) :
+    _idx_1(idx_1.count()),
+    _idx_2(idx_2.count())
+//      { *this = value_map(vec, idx_1.count(), idx_2.count()); }
+  { if (idx_1 == idx_2)
+      return;
+
+    const size_t idx_range     { _idx_2 - _idx_1 };
+    const size_t nvalues       { static_cast<size_t>(abs(idx_range)) + 1 };
+    const size_t input_nvalues { vec.size() };
+
+    _vec = std::vector<V>(nvalues, { });
+
+    const size_t min_idx { _idx_1 };
+ //   const size_t max_idx { _idx_2 };
+
+    for (size_t idx { std::min(_idx_1, _idx_2) }; idx <= std::max(_idx_1, _idx_2); ++idx)
+    { const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
+
+      size_t element_nr { static_cast<size_t> (frac * input_nvalues) };
+
+      element_nr = std::clamp(element_nr, 0UL, (input_nvalues - 1));
+
+      _vec[idx] = vec[element_nr];
+    }
+  }
+#endif
+
+//  void overwrite(const I idx, const V val)
+//  { if ( (idx >= _idx_1) and (idx <= _idx_2) )
+//      _vec[idx] = val;
+//  }
+  template <typename I>
+  V operator[](const I idx) const
+  { //if ( (idx < _idx_1) or (idx > _idx_2) )   // or perhaps use clamp so as to avoid requiring default constructor?
+    //  return V { };
+    if ( static_cast<size_t>(idx) < _idx_1 )
+      return _vec[0];
+
+    if ( static_cast<size_t>(idx) > _idx_2 )
+      return _vec[_vec.size() - 1];
+
+    return _vec.at(idx);
+  }
+
+// WARNING MUST use same type as the constructor (e.g., std::chrono::seconds)
+// there has to be some way to force the above to be true, but I can't immediately think what it is
+  template <typename D>
+    requires is_duration<D>
+  inline V operator[](const D idx_time) const
+    { return (*this)[idx_time.count()]; }
+
+//  inline V operator[](const std::chrono::seconds idx_sec) const
+//    { return (*this)[idx_sec.count()]; }
+
+#if 0
+  V operator[](const std::chrono::seconds idx_sec) const
+  { const size_t idx { static_cast<size_t>(idx_sec.count()) };
+
+//    if ( (idx < _idx_1) or (idx > _idx_2) )   // or perhaps use clamp so as to avoid requiring default constructor?
+//      return V { };
+    if (idx < _idx_1)
+      return _vec[0];
+
+    if (idx > _idx_2)
+      return _vec[_vec.size() - 1];
+
+    return _vec.at(idx);
+  }
+#endif
+
+  };
+
+#if 0
+template <typename V, typename I>
+  requires std::is_same_v<I, std::chrono::seconds>
+class value_map
+{
+protected:
+
+  std::vector<V> _vec;
+
+  std::chrono::seconds _idx_1;
+  std::chrono::seconds _idx_2;
+
+public:
+
+// for now, assume idx_1 < idx_2, idx_1 == 0
+  value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2) :
+    _idx_1(idx_1),
+    _idx_2(idx_2)
+  { if (idx_1 == idx_2)
+      return;
+
+    const size_t cnt1 { idx_1.count() };
+    const size_t cnt2 { idx_2.count() };
+
+    const std::chrono::seconds idx_range     { _idx_2 - _idx_1 };
+    const size_t                         nvalues       { idx_range.count() + 1 };
+    const size_t                         input_nvalues { vec.size() };
+
+    _vec = std::vector<V>(nvalues, { });
+
+    const I min_idx { cnt1 };
+    const I max_idx { cnt2 };
+
+    for (std::chrono::seconds idx { std::min(idx_1, idx_2) }; idx <= std::max(idx_1, idx_2); ++idx)
+    { //I index = (idx_1 < idx_2) ? idx : (idx_2 - idx);
+
+      const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
+
+      size_t element_nr { static_cast<size_t> (frac * input_nvalues) };
+
+      element_nr = std::clamp(element_nr, 0UL, (input_nvalues - 1));
+
+      _vec[idx] = vec[element_nr];
+    }
+
+  }
+
+//  void overwrite(const I idx, const V val)
+//  { if ( (idx >= _idx_1) and (idx <= _idx_2) )
+//      _vec[idx] = val;
+//  }
+
+};
+#endif
+
 
 #endif    // MACROS_H

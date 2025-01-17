@@ -856,7 +856,8 @@ vector<string> contest_rules::exch_canonical_values(const string_view field_name
     Also adds <i>new_canonical_value</i> to the legal values for the field <i>field_name</i>. Does nothing
     if <i>new_canonical_value</i> is already a canonical value.
 */
-void contest_rules::add_exch_canonical_value(const string& field_name, const string& new_canonical_value)
+//void contest_rules::add_exch_canonical_value(const string& field_name, const string& new_canonical_value)
+void contest_rules::add_exch_canonical_value(const string_view field_name, const string& new_canonical_value)
 { SAFELOCK(rules);
 
   const auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
@@ -883,7 +884,8 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 
     Returns false if <i>field_name</i> is unrecognized
 */
-bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
+//bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
+bool contest_rules::is_canonical_value(const string_view field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
   const auto it { FIND_IF(_exch_values, [&field_name] (const auto& ev) { return ev.name() == field_name; }) };
@@ -898,10 +900,11 @@ bool contest_rules::is_canonical_value(const string& field_name, const string& p
     Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
 bool contest_rules::is_legal_value(const string& field_name, const string& putative_value) const
+//bool contest_rules::is_legal_value(const string_view field_name, const string& putative_value) const
 { SAFELOCK(rules);
 
   try
-  { const EFT& eft { _exchange_field_eft.at(field_name) };
+  { const EFT& eft { _exchange_field_eft.at(field_name) };    // at() not yet supported for heterogeneous lookup
 
     return eft.is_legal_value(putative_value);
   }
@@ -940,7 +943,8 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
 
     Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
-STRING_SET contest_rules::exch_permitted_values(const string& field_name) const
+//STRING_SET contest_rules::exch_permitted_values(const string& field_name) const
+STRING_SET contest_rules::exch_permitted_values(const string_view field_name) const
 { SAFELOCK(rules);
 
   return MUM_VALUE(_permitted_exchange_values, field_name, STRING_SET { });
@@ -954,7 +958,8 @@ STRING_SET contest_rules::exch_permitted_values(const string& field_name) const
     Returns <i>actual_value</i> if there are no canonical values or if <i>actual_value</i> is empty
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>.
 */
-string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
+//string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
+string contest_rules::canonical_value(const string_view field_name, const string& actual_value) const
 { if (actual_value.empty())
     return actual_value;
 
@@ -981,7 +986,7 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
 */
   SAFELOCK(rules);
   
-  return MUM_VALUE(_permitted_to_canonical.at(field_name), actual_value, actual_value);  // we don't get here if field_name isn't valid
+  return MUM_VALUE(_permitted_to_canonical.at(string { field_name }), actual_value, actual_value);  // we don't get here if field_name isn't valid; at doesn'y yet support heterogeneous lookup
 }
 
 /*! \brief                  Get the next mode in sequence
@@ -1217,7 +1222,8 @@ bool contest_rules::is_exchange_mult(const string& name) const
     \param  m       mode
     \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
 */
-bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
+//bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
+bool contest_rules::sent_exchange_includes(const std::string_view str, const MODE m) const
 { SAFELOCK(rules);
 
   try
@@ -1235,7 +1241,8 @@ bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m)
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
+//bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
+bool contest_rules::is_exchange_field_used_for_country(const string_view field_name, const string& canonical_prefix) const
 { SAFELOCK(rules);
 
   if (!_exchange_field_eft.contains(field_name))
@@ -1270,7 +1277,8 @@ STRING_SET contest_rules::exchange_field_names(void) const
     \param  cp  canonical prefix of country
     \return     all the equivalent fields for mode <i>m</i> and country <i>cp</i>
 */
-choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
+//choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
+choice_equivalents contest_rules::equivalents(const MODE m, const string_view cp) const
 { choice_equivalents rv;
 
   map<MODE, STRING_MAP<choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
@@ -1458,7 +1466,8 @@ string sac_prefix(const string_view call)
     Currently, the only field name that precipitates special processing is DOK.
     Adding IOTA.
 */
-string MULT_VALUE(const string_view field_name, const string& received_value)
+//string MULT_VALUE(const string_view field_name, const string& received_value)
+string MULT_VALUE(const string_view field_name, const string_view received_value)
 { if (field_name == "DOK"sv)
   { if (!received_value.empty())
     { const auto posn { received_value.find_first_of(UPPER_CASE_LETTERS) };
@@ -1466,11 +1475,11 @@ string MULT_VALUE(const string_view field_name, const string& received_value)
       return ( (posn == string::npos) ? string { } : create_string(received_value[posn]) );
     }
     else        // should never happen: DOK with no value; might be empty if no value to guess
-      return received_value;  // same as string()
+      return string { received_value };  // same as string()
   }
 
   if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
     return (substring <std::string> (received_value, 0, 2) + pad_leftz(substring <std::string> (received_value, 2), 3));  // XXnnn
 
-  return received_value;
+  return string { received_value };
 }

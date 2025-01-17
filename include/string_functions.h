@@ -101,7 +101,7 @@ constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
 
     This is actually quite difficult to do properly
 */
-std::vector<std::string> from_csv(std::string_view line);
+std::vector<std::string> from_csv(const std::string_view line);
 
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
@@ -636,8 +636,12 @@ template <typename STYPE>
 inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
   { return remove_trailing <STYPE> (cs, ' '); }
 
+/*! \brief      Remove trailing instances of a particular character, for all strings in a container
+    \param  t   original container of strings
+    \param  c   char to remove
+    \return     a vector of strings or string_views based on <i>t</i>with all trailing instances of <i>c</i> removed
+*/
 template <typename STYPE, typename T>
-//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
   requires is_vector<T> and is_ssv<typename T::value_type>
 auto remove_trailing_chars(const T& t, const char c) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
@@ -647,12 +651,21 @@ auto remove_trailing_chars(const T& t, const char c) -> std::vector<STYPE>
   return rv;
 }
 
+/*! \brief      Remove trailing instances of a particular character, for all strings in a container
+    \param  t   original container of strings
+    \param  c   char to remove
+    \return     a vector of strings or string_views based on <i>t</i>with all trailing instances of <i>c</i> removed
+*/
 template <typename STYPE, typename T>
 //  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_trailing(const T& t, const char c) -> std::vector<STYPE>
   { return remove_trailing_chars <STYPE> (t, c); }
 
+/*! \brief      Remove trailing spaces, for all strings in a container
+    \param  t   original container of strings
+    \return     a vector of strings or string_views based on <i>t</i>with all trailing spaces removed
+*/
 template <typename STYPE, typename T>
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_trailing_spaces(const T& t) -> std::vector<STYPE>
@@ -990,7 +1003,6 @@ auto delimited_substrings(const std::string_view cs, const std::string_view deli
 
   size_t cs_start_posn { 0 };
 
-//  while (!substring <std::string> (cs, cs_start_posn).empty())
   while (!substring <std::string_view> (cs, cs_start_posn).empty())
   { std::string_view sstring { substring <std::string_view> (cs, cs_start_posn) };
     
@@ -1244,9 +1256,8 @@ std::string convert_to_dotted_decimal(const uint32_t val);
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-//inline bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator)
 inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const std::string_view separator)
-  { return (contains( split_string <std::string_view> (legal_values, separator), value )); }
+  { return contains( split_string <std::string_view> (legal_values, separator), value ); }
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -1355,9 +1366,10 @@ inline void STRC_ERASE(T& c, const std::string& str)
 template <typename T>
  requires is_container_of_strings<T>
 inline void STRC_ERASE(T& c, const std::string_view sv)
-{ const auto posn { c.find(sv) };
+{ //const auto posn { c.find(sv) };
 
-  if (posn != c.end())
+  //if (posn != c.end())
+  if ( const auto posn { c.find(sv) }; posn != c.end() )
     c.erase(posn);
 }
 
@@ -1486,6 +1498,8 @@ std::string remove_substrings(const std::string_view cs, const std::vector<std::
     \param  container   container of strings
     \param  s           regular expression string
     \return             All the elements of <i>container</i> that match <i>s</i>
+
+    Can't use string_view as regex does not support heterogeneous lookup
 */
 template <class T, class C>
 T regex_matches(C&& container, const std::string& s)
@@ -1567,7 +1581,6 @@ std::string read_until(std::istream& in, const std::string_view delimiter, const
     \param  str     string to convert
     \return         <i>str</i> as a series of hex characters
 */
-//std::string hex_string(const std::string& str);
 std::string hex_string(const std::string_view str);
 
 /// a standard hash function for strings (the DJB function)

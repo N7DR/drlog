@@ -1424,6 +1424,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (LHS == "MESSAGE CQ 2"sv)
     { const vector<string> tokens { split_string <std::string> (testline, '=') };
 
+      if (tokens.size() != 2)
+        print_error_and_exit(testline);
+
       if (tokens.size() == 2)
         _message_cq_2 = move(tokens[1]);
     }
@@ -1461,7 +1464,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
-  { const vector<string> actual_modes { clean_split_string <string> (_modes) };
+  { //const vector<string> actual_modes { clean_split_string <string> (_modes) };
+    const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
 
     if (actual_modes.size() == 1)
     { try
@@ -1562,7 +1566,6 @@ decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE 
 
   SAFELOCK(_context);
 
-//  decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
   RT rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
 
   if (rv.empty())

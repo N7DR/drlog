@@ -38,7 +38,7 @@ extern message_stream    ost;           ///< for debugging and logging
 
     This is actually quite difficult to do properly
 */
-vector<string> from_csv(string_view line)
+vector<string> from_csv(const string_view line)
 { constexpr char quote { '"' };
   constexpr char comma { ',' };
 
@@ -508,7 +508,6 @@ string transform_string(const string_view cs, int (*pf) (int))
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-//vector<size_t> starts_of_words(const string& s)
 vector<size_t> starts_of_words(const string_view s)
 { vector<size_t> rv { };
 
@@ -628,10 +627,7 @@ bool is_legal_ipv4_address(const string_view cs)
 
   for (const auto field : fields)
   { try
-    { //const int value { from_string<int>(field) };
-
-      //if ((value < 0) or (value > 255))
-      if (const int value { from_string<int>(field) }; (value < 0) or (value > 255))
+    { if (const int value { from_string<int>(field) }; (value < 0) or (value > 255))
         return false;
     }
 
@@ -675,7 +671,6 @@ string convert_to_dotted_decimal(const uint32_t val)
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-//bool compare_calls(const string& call1, const string& call2)
 bool compare_calls(const string_view call1, const string_view call2)
 {
 /* callsign sort order
@@ -734,7 +729,6 @@ bool compare_calls(const string_view call1, const string_view call2)
     \param  mult2   second mult value
     \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order (used for exchange mults)
 */
-//bool compare_mults(const string& mult1, const string& mult2)
 bool compare_mults(const string_view mult1, const string_view mult2)
 { if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and      // if two 2-digit numeric values (such as zones)
        (mult2.size() == 2) and isdigit(mult2[0]) and isdigit(mult2[1]) )
@@ -878,8 +872,9 @@ string YYYYMMDD_utc(void)
 string remove_substrings(const string_view cs, const vector<string>& vs)
 { string rv { cs };
   
-  for (const std::string& ss : vs)
-    rv = remove_substring(rv, ss);
+//  for (const std::string& ss : vs)
+//    rv = remove_substring(rv, ss);
+  FOR_ALL(vs, [&rv] (const string& str) { rv = remove_substring(rv, str); });
       
   return rv; 
 }
@@ -1010,7 +1005,7 @@ string to_printable_string(const string_view str)
 
     https://stackoverflow.com/questions/41851454/reading-a-iostream-until-a-string-delimiter-is-found
 */
-string read_until(istream& in, const string_view delimiter,const DELIMITERS keep_or_drop)
+string read_until(istream& in, const string_view delimiter, const DELIMITERS keep_or_drop)
 { string cr;
 
   const char   delim { *(delimiter.rbegin()) };
@@ -1020,20 +1015,19 @@ string read_until(istream& in, const string_view delimiter,const DELIMITERS keep
 
   do
   { string temp;
-    getline(in, temp, delim);
 
+    getline(in, temp, delim);
     cr += temp + delim;
     tot = cr.size();
-  } while ((tot < sz) || (cr.substr(tot - sz, sz) != delimiter));
+  } while ((tot < sz) or (cr.substr(tot - sz, sz) != delimiter));
 
   return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);
 }
 
 /*! \brief          Convert string to hex characters
     \param  str     string to convert
-    \return         <i>str</i> as a series of hex characters
+    \return         <i>str</i> as a series ofspace-separated  hex characters
 */
-//string hex_string(const std::string& str)
 string hex_string(const std::string_view str)
 { ostringstream stream;
 

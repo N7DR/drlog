@@ -42,6 +42,16 @@ extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW
 
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
+void set_nonblocking(const int fd)
+{ int flags;
+
+  flags = fcntl(fd, F_GETFL, 0);
+  int status = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+  if (status == -1)
+    throw socket_support_error(SOCKET_SUPPORT_FLAG_ERROR);
+}
+
 // ---------------------------------  tcp_socket  -------------------------------
 
 constexpr struct linger DEFAULT_TCP_LINGER { false, 0 };      // the default is not to linger
@@ -712,6 +722,8 @@ icmp_socket::icmp_socket(void) :
   _sock(::socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
 { if (_sock <= 0)
     throw icmp_socket_error(ICMP_SOCKET_UNABLE_TO_CREATE, strerror(errno));
+
+//  set_nonblocking(_sock);
 }
 
 /*! \brief                                  Create and associate with a particular destination
@@ -719,9 +731,11 @@ icmp_socket::icmp_socket(void) :
 */
 icmp_socket::icmp_socket(const string& destination_ip_address_or_fqdn) :
   _destination_str(destination_ip_address_or_fqdn),
-  _sock(::socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP))
+  _sock(::socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_ICMP))
 { if (_sock <= 0)
     throw icmp_socket_error(ICMP_SOCKET_UNABLE_TO_CREATE, strerror(errno));
+
+//  set_nonblocking(_sock);
 
   _dest.sin_family = AF_INET;
 
@@ -765,6 +779,9 @@ void icmp_socket::bind(const sockaddr_storage& local_address)
 /*! \brief                          Perform a ping
 
     This is ridiculously C-ish, basically taken from: https://stackoverflow.com/questions/8290046/icmp-sockets-linux
+
+    And, of course, it's broken.
+    250217: Now fixed, by forcing the socket to be non-blocking. The bug was in the original code from the above URL.
 */
 bool icmp_socket::ping(void)
 { SAFELOCK(_icmp_socket);
@@ -785,23 +802,34 @@ bool icmp_socket::ping(void)
     memcpy(data + sizeof(_icmp_hdr), payload, strlen(payload)); //icmp payload
 
     if (const ssize_t status { sendto(_sock, data, sizeof(_icmp_hdr) + strlen(payload), 0, (struct sockaddr*)&_dest, sizeof(_dest)) }; (status < 0))
+    { //ost << "ping status 1 = " << status << endl;
       throw icmp_socket_error(ICMP_SOCKET_SEND_ERROR, "sendto error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+    }
+//    else
+//      ost << "ping status 1 = " << status << endl;
 
     FD_SET(_sock, &read_set);
 
     if (int status { select(_sock + 1, &read_set, NULL, NULL, &_socket_timeout) }; (status < 0))
+    { //ost << "ping status 2 = " << status << endl;
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR, "select() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
+    }
+//    else
+//      ost << "ping status 2 = " << status << endl;
 
     socklen_t slen { 0 };
 
     if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
-    { const auto recvfrom_error { errno };
+    { //ost << "ping status 3 = " << status << endl;
+      const auto recvfrom_error { errno };
 
       if ( (recvfrom_error == EAGAIN) or (recvfrom_error == EWOULDBLOCK) )
         ost << "ICMP timeout" << endl;
       else
         throw socket_support_error(SOCKET_SUPPORT_RECVFROM_ERROR, "recvfrom() error; errno = "s + ::to_string(errno) + ": "s + strerror(errno));
     }
+//    else
+//      ost << "ping status 3 = " << status << endl;
 
     memcpy(&rcv_hdr, data, sizeof rcv_hdr);
 

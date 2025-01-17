@@ -57,7 +57,8 @@ public:
 /*! \brief  Reset the timer to initial state, except that the timer is started at the current time
 */
   void restart(void)
-  { _start = std::chrono::system_clock::now();
+  { //_start = std::chrono::system_clock::now();
+    _start = NOW_TP();
     _end = { };
   }
 
@@ -75,7 +76,8 @@ public:
 */
   template <class U = double, class T = A>
   inline U click(void) const
-    { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
+//    { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
+    { return static_cast<U>(duration_cast<T>(NOW_TP() - _start).count()); }
 
 /*! \brief  Return the time between the start time and the end time, in units of the duration template (default microseconds)
 

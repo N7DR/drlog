@@ -21,6 +21,7 @@
 #include "socket_support.h"
 
 #include <atomic>
+#include <chrono>
 #include <string>
 
 /// the source of a remote post
@@ -28,11 +29,11 @@ enum class POSTING_SOURCE { CLUSTER,                  ///< traditional cluster
                             RBN                       ///< Reverse Beacon Network
                           };
 
-//using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+//constexpr std::chrono::seconds MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour
 
-constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour; remove this at some point
+using namespace std::chrono_literals;
 
-constexpr std::chrono::seconds MONITORED_POSTS_DURATION_1 { 3600 };     ///< monitored posts are valid for one hour
+constexpr std::chrono::seconds MONITORED_POSTS_DURATION { 1h };     ///< monitored posts are valid for one hour
 
 // -----------  dx_cluster  ----------------
 
@@ -211,8 +212,7 @@ protected:
 
   enum BAND     _band;              ///< band
   std::string   _callsign;          ///< callsign
-//  time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
-  TIME_POINT    _expiration;      ///< time at which entry will expire
+  TIME_POINT    _expiration;        ///< time at which entry will expire
   std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
 
 public:
@@ -223,14 +223,12 @@ public:
   explicit monitored_posts_entry(const dx_post& post) :
     _callsign(post.callsign()),
     _frequency_str(post.frequency_str()),
-//    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
-    _expiration(post.time_processed_1() + MONITORED_POSTS_DURATION_1),
+    _expiration(post.time_processed_1() + MONITORED_POSTS_DURATION),
     _band(post.band())
   { }
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign
-//  READ(expiration);         ///< time (relative to the UNIX epoch) at which entry will expire
   READ(expiration);      ///< time at which entry will expire
   READ(frequency_str);      ///< frequency in format xxxxx.y [kHz]
 
@@ -293,13 +291,11 @@ public:
 /*! \brief              Add a call to the set of those being monitored
     \param  new_call    call to be added
 */
-//  void operator+=(const std::string& new_call);
   void operator+=(const std::string_view new_call);
 
 /*! \brief                  Remove a call from the set of those being monitored
     \param  call_to_remove  call to be removed
 */
-//  void operator-=(const std::string& call_to_remove);
   void operator-=(const std::string_view call_to_remove);
 
 /// prune <i>_entries</i>

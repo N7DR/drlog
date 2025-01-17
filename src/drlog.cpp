@@ -138,7 +138,7 @@ string bearing(const string_view callsign);   ///< Return the bearing to a stati
 
 bool        calculate_exchange_mults(QSO& qso, const contest_rules& rules);                    ///< Populate QSO with correct exchange mults
 STRING_SET  calls_from_do_not_show_file(const BAND b);                                         ///< get the calls from a DO NOT SHOW file
-void        calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b);             ///< send calls to a DO NOT SHOW file
+void        calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b);              ///< send calls to a DO NOT SHOW file
 string      callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
 bool        change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
 void        cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
@@ -371,8 +371,8 @@ bool                         dynamic_autocorrect_rbn { false };     ///< whether
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
 
+vector<COLOUR_TYPE>     fade_colours { };                           ///< the colours used for fading on bandmaps and monitored posts
 bool                    filter_remaining_country_mults { false };   ///< whether to apply filter to remaining country mults
-bool                    windows_overlap { false };                  ///< whether any windows overlap
 
 string                  geomagnetic_indices_command { };            ///< command to issue in order to obtain geomagnetic indices
 float                   greatest_distance { 0 };                    ///< greatest distance in miles
@@ -446,6 +446,7 @@ running_statistics      statistics;                         ///< all the QSO sta
 
 bool                    wicm_calls_is_dirty  { false };     ///< whether there has been a change requiring redisplay to wicm_calls  
 size_t                  wicm_calls_size      { 0 };         ///< maximum number of calls in the WICM window
+bool                    windows_overlap      { false };                  ///< whether any windows overlap
 
 bool                    xscp_sort          { false };       ///< whether to enable XSCP ordering in matches
 
@@ -922,6 +923,8 @@ int main(int argc, char** argv)
     display_grid                    = context.display_grid();
     do_not_show_filename            = context.do_not_show_filename();
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
+
+    fade_colours                    = context.bandmap_fade_colours();
 
     geomagnetic_indices_command     = context.geomagnetic_indices_command();
 
@@ -2222,6 +2225,7 @@ void display_date_and_time(void)
     }
 
     sleep_for(new_second ? 800ms : 100ms);
+//    sleep_until();
   }
 }
 
@@ -2510,8 +2514,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     const string new_input { rbn.get_unprocessed_input() }; // get any unprocessed info from the cluster; deletes the data from the cluster
 
-//    ost << "length of new input = " << css(new_input.size()) << " bytes" << endl;
-
     posted_by_vector.clear();                               // prepare the posted_by vector
 
 // a visual marker that we are processing a pass; this should appear only briefly
@@ -2561,10 +2563,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
           ost << "cluster timeout of " << context.cluster_timeout() << " seconds not yet exceeded; reset not attempted" <<  endl;
       }
     }
-
-//    ost << "length of unprocessed input before adding new input = " << css(unprocessed_input.size()) << " bytes" << endl;
-
-//    ost << "hex: " << hex_string(unprocessed_input) << endl;
 
     unprocessed_input += move(new_input);         // append the new unprocessed data
 
@@ -2704,9 +2702,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             if (rules.score_modes().contains(be.mode()))
             { be.frequency_str_decimal_places(1);
               be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
-
-//              ost << "adding expiration time = " << be.expiration_time() << " for " << be.callsign() << endl;
-
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );             // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
@@ -2819,11 +2814,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     }
 
     unprocessed_input = unprocessed_input_sv;       // copy to the original owner of the data
-//    ost << "after processing" << endl;
-
-//    ost << "length of next unprocessed input  = " << css(unprocessed_input_sv.size()) << " bytes" << endl;
-
-//    ost << "hex: " << hex_string(unprocessed_input_sv) << endl;
 
 // update displayed bandmap if there was a change
     const BAND cur_band { current_band };
@@ -2864,76 +2854,53 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-//      const time_t              now             { NOW() };
-      const vector<COLOUR_TYPE> fade_colours    { context.bandmap_fade_colours() };
-//      const unsigned int        n_colours       { static_cast<unsigned int>(fade_colours.size()) };
-//      const float               interval        { 1.0f / n_colours };                       // fraction covered by a single colour
-      const PAIR_NUMBER_TYPE    default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
+      const PAIR_NUMBER_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
       for (const monitored_posts_entry& entry : entries)
       { win_monitored_posts < cursor(0, y++);
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
-// minutes to expiration
-//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>(entry.expiration() - now) };
-
-//        const auto t1 = entry.expiration_1() - system_clock::now();
-//        const chrono::seconds t2 = std::chrono::duration_cast<std::chrono::seconds>(entry.expiration_1() - system_clock::now());
-
-//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>((std::chrono::duration_cast<std::chrono::seconds>(entry.expiration_1() - system_clock::now())).count()) };
-
-
-//        const unsigned int seconds_to_expiration  { static_cast<unsigned int>((std::chrono::duration_cast<std::chrono::seconds>(entry.expiration() - system_clock::now())).count()) };
-//        const float        fraction_to_expiration { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
-//        const float        fraction_from_start    { 1.0f - fraction_to_expiration };
-
-//        unsigned int clr_element_nr = (fraction_from_start / interval);
-
-#if 0
-        ost << "callsign = " << entry.callsign() << endl
-            << "expiration = " << entry.expiration() << endl
-            << "now = " << system_clock::now() << endl
-            << "seconds_to_expiration = " << seconds_to_expiration << endl
-            << "fraction_to_expiration = " << fraction_to_expiration << endl
-            << "fraction_from_start = " << fraction_from_start << endl
-            << "clr_element_nr = " <<  clr_element_nr << endl;
-#endif
-
-//        clr_element_nr = min(clr_element_nr, n_colours - 1);
-
-//        ost << "colour = " << fade_colours.at(clr_element_nr) << endl;
 
 //        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(seconds_to_expiration)) };
 //        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(3600 - seconds_to_expiration)) };
-        const long unsigned int idx { static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION_1) ).count() ) };
+        long unsigned int idx { static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) ).count() ) };
+
+        idx = min(3600UL, idx);    // because we might be going to prune the value at the next top-of-the-minute opportunity, so idx might be > 3600
 
 //        const auto clr { MAP_VALUE(std::span{fade_colours}, 0UL, 3600UL, idx) };
 
         const auto clr { MAP_VALUE(fade_colours, 0UL, 3600UL, idx) };
 
-//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION_1) ).count() ) ) };
-#if 0
-        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, idx) };
+        static const value_map monitored_posts_vm(fade_colours, 0UL, 3600UL);
 
-        ost << "n_values in span = " << std::span{fade_colours}.size() << endl;
-        ost << "idx parameter = " << idx << endl;
+        static const value_map monitored_posts_vm_1(fade_colours, std::chrono::seconds { 0 }, MONITORED_POSTS_DURATION);
 
-        ost << "template element nr = " << p.first << endl
-            << "template colour = " << p.second << endl;
+        static const value_map monitored_posts_vm_2(fade_colours, std::chrono::minutes { 0 }, std::chrono::minutes { 60 });
 
-        if (p.second != fade_colours.at(clr_element_nr))
-          ost << "WARNING: COLOUR MISMATCH" << endl;
-#endif
+        const auto clr2 { monitored_posts_vm[idx] };
 
-//        const auto q { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(seconds_to_expiration)) };
+        if (clr2 != clr)
+        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr2 = " << clr2 << "; idx = " << idx << endl;
+        }
 
-//        ost << "other template element nr = " << q.first << endl
-//            << "other template colour = " << q.second << endl;
+        const auto dsec = std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
 
-//        ost << "bounded clr_element_nr = " <<  clr_element_nr << endl;
+        const auto clr3 { monitored_posts_vm_1[std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
 
-//        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(clr_element_nr), win_monitored_posts.bg()) };
+        if (clr3 != clr)
+        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr3 = " << clr3 << "; idx = " << idx << endl;
+          ost << "dsec = " << dsec.count() << endl;
+        }
+
+        const auto dmin = std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
+
+        const auto clr4 { monitored_posts_vm_2[std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
+
+        if (clr4 != clr)
+        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr4 = " << clr4 << "; idx = " << idx << endl;
+          ost << "dsec = " << dsec.count() << "; dmin = " << dmin.count() << endl;
+        }
 
         const PAIR_NUMBER_TYPE cpu { colours.add(clr, win_monitored_posts.bg()) };
 
@@ -9747,7 +9714,10 @@ void update_pings(window& win, PING_TABLE& table)
 
     for (const auto& [label, socket_p] : ping_table_p)
     { const string line_string { centred_string(label, win.width()) };
+//      ost << "About to ping: " << label << endl;
+
       const bool   success     { socket_p -> ping() };
+//      ost << "ping status: " << boolalpha << success << endl;
 
       win.move_cursor(0, y--);
 

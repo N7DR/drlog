@@ -390,7 +390,8 @@ public:
 
     If there's already an entry for <i>call</i>, then does nothing
 */
-  void operator+=(const std::string& call);
+//  void operator+=(const std::string& call);
+  void operator+=(const std::string_view call);
 
 /*! \brief          Add a drmaster_line
     \param  drml    drmaster line to add
@@ -426,7 +427,6 @@ public:
 
     Does nothing if <i>call</i> is not present
 */
-//  inline void operator-=(const std::string& call)
   inline void operator-=(const std::string_view call)
     { _records -= call; }
 
@@ -435,7 +435,6 @@ public:
 
     Does nothing if <i>call</i> is not present
 */
-//  inline void remove(const std::string& call)
   inline void remove(const std::string_view call)
     { *this -= call; }
 

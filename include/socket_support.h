@@ -47,7 +47,8 @@ constexpr int SOCKET_SUPPORT_UNABLE_TO_LISTEN    { -1 },  ///< Unable to listen 
               SOCKET_SUPPORT_CONNECT_ERROR       { -8 },  ///< Error received from connect()
               SOCKET_SUPPORT_LISTEN_ERROR        { -9 },  ///< Error received from listen()
               SOCKET_SUPPORT_ACCEPT_ERROR        { -10 }, ///< Error received from accept()
-              SOCKET_SUPPORT_WRONG_PROTOCOL      { -11 }; ///< Incorrect protocol (IPv4 vs. IPv6)
+              SOCKET_SUPPORT_WRONG_PROTOCOL      { -11 }, ///< Incorrect protocol (IPv4 vs. IPv6)
+              SOCKET_SUPPORT_FLAG_ERROR          { -12 }; ///< Error setting flag
 
 constexpr int TCP_SOCKET_UNKNOWN_DESTINATION  { -1 },     ///< Destination not set
               TCP_SOCKET_ERROR_IN_WRITE       { -2 },     ///< Error received from write()
@@ -79,6 +80,8 @@ const std::string icmp_socket_error_string[3] { std::string { },
 
 /// Type that holds a socket -- syntactic sugar
 using SOCKET = int;
+
+void set_nonblocking(const int fd);
 
 /*! \brief        Set an fd_set to contain a particular single value of a file descriptor
     \param  fds   set of file descriptors

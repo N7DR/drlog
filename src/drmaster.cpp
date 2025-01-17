@@ -463,43 +463,31 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 
       case 20 :             // ctrl-T
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { ten_ten += contents[posn++]; }
         get_field(ten_ten);
         break;
 
       case 21 :             // ctrl-U
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { user_1 += contents[posn++]; }
         get_field(user_1);
         break;
 
       case 22 :             // ctrl-V
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { user_2 += contents[posn++]; }
         get_field(user_2);
         break;
 
       case 23 :             // ctrl-W
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { user_3 += contents[posn++]; }
         get_field(user_3);
         break;
 
       case 24 :             // ctrl-X
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { user_4 += contents[posn++]; }
         get_field(user_4);
         break;
 
       case 25 :             // ctrl-Y
         ++posn;
-//        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-//          { user_5 += contents[posn++]; }
         get_field(user_5);
         break;
 
@@ -577,7 +565,7 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv += rec.first; } );
+  FOR_ALL(_records, [&rv] (const auto& rec) { rv += rec.first; } );
 
   SORT(rv, compare_calls);                                          // added compare_calls 201101
 
@@ -679,7 +667,7 @@ void drmaster_line::_process_field(const std::string_view sv)
     return;
   }
 
-  SETTER pf = it -> second;
+  const SETTER pf { it -> second };
 
   std::invoke(pf, this, svalue);
 }
@@ -975,9 +963,13 @@ string drmaster::to_string(void) const
 
     If there's already an entry for <i>call</i>, then does nothing
 */
-void drmaster::operator+=(const string& call)
+//void drmaster::operator+=(const string& call)
+void drmaster::operator+=(const string_view call)
 { if (!::contains(call, ' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
+  { const string call_str { call };
+
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use
+  }
 }
 
 /*! \brief          Add a drmaster_line

@@ -132,7 +132,6 @@ reconnect:
     goto new_socket;
   }
 
-//  _last_data_received = system_clock::now();  // reset the reception timer
   _last_data_received = NOW_TP();  // reset the reception timer
 }
 
@@ -302,8 +301,6 @@ void dx_cluster::read(void)
     _unprocessed_input += buf;
     _last_data_received = system_clock::now();
   }
-  
- // return _unprocessed_input;
 }
 
 /*! \brief      Read from the cluster socket
@@ -525,9 +522,7 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
 */
 ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 { ost << "Monitored: " << mpe.callsign()
-//      << ", absolute expiration = " << mpe.expiration()
       << ", absolute expiration = " << mpe.expiration()
-//      << ", relative expiration = " << mpe.expiration() - ::time(NULL)
       << ", relative expiration = " << mpe.expiration() - NOW_TP()
       << ", frequency = " << mpe.frequency_str();
 
@@ -544,7 +539,6 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
     \param  callsign    call to be tested
     \return             whether <i>callsign</i> is being monitored
 */
-//bool monitored_posts::is_monitored(const std::string& callsign) const
 bool monitored_posts::is_monitored(const std::string_view callsign) const
 { SAFELOCK(monitored_posts);
 
@@ -555,10 +549,7 @@ bool monitored_posts::is_monitored(const std::string_view callsign) const
     \param  post    post to be tested
 */
 void monitored_posts::operator+=(const dx_post& post)
-{ //ost << "mp +=: " << post.callsign() << endl;
-  //ost << post << endl;
-
-  const monitored_posts_entry mpe           { post };
+{ const monitored_posts_entry mpe           { post };
 
   bool                  stop_search         { false };
   bool                  found_call_and_band { false };
@@ -569,9 +560,7 @@ void monitored_posts::operator+=(const dx_post& post)
   { const monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
-    { //if ( mpe.expiration() > old_mpe.expiration() )
-//      if ( mpe.expiration_1() > old_mpe.expiration_1() )
-      if ( mpe.expiration() > old_mpe.expiration() )
+    { if ( mpe.expiration() > old_mpe.expiration() )
       { _entries -= it;
         stop_search = true;
       }
@@ -601,7 +590,6 @@ void monitored_posts::operator+=(const dx_post& post)
 /*! \brief              Add a call to the set of those being monitored
     \param  new_call    call to be added
 */
-//void monitored_posts::operator+=(const string& new_call)
 void monitored_posts::operator+=(const string_view new_call)
 { SAFELOCK(monitored_posts);
 
@@ -630,9 +618,6 @@ void monitored_posts::prune(void)
 
   const size_t original_size { _entries.size() };
 
-//  erase_if(_entries, [now = NOW()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
-//  erase_if(_entries, [now = system_clock::now()] (monitored_posts_entry& mpe) { return (mpe.expiration_1() < now); } );
-//  erase_if(_entries, [now = NOW_TP()] (monitored_posts_entry& mpe) { return (mpe.expiration_1() < now); } );
   erase_if(_entries, [now = NOW_TP()] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());

@@ -711,7 +711,8 @@ public:
 
     Returns empty set if the field can take any value, or if it's a regex.
 */
-  STRING_SET exch_permitted_values(const std::string& field_name) const;
+//  STRING_SET exch_permitted_values(const std::string& field_name) const;
+  STRING_SET exch_permitted_values(const std::string_view field_name) const;
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
     \param  field_name  name of an exchange field (received)
@@ -719,7 +720,8 @@ public:
 
     Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
-  inline bool exch_has_permitted_values(const std::string& field_name) const
+//  inline bool exch_has_permitted_values(const std::string& field_name) const
+  inline bool exch_has_permitted_values(const std::string_view field_name) const
     { SAFELOCK(rules);
       return (_permitted_exchange_values.contains(field_name));
     }
@@ -739,7 +741,8 @@ public:
 
     Returns the received value if there are no canonical values
 */
-  std::string canonical_value(const std::string& field_name, const std::string& actual_value) const;
+//  std::string canonical_value(const std::string& field_name, const std::string& actual_value) const;
+  std::string canonical_value(const std::string_view field_name, const std::string& actual_value) const;
 
 /*! \brief                          Add a canonical value for a particular exchange field
     \param  field_name              name of an exchange field (received)
@@ -748,7 +751,8 @@ public:
     Also adds <i>new_canonical_value</i> to the legal values for the field <i>field_name</i>. Does nothing
     if <i>new_canonical_value</i> is already a canonical value.
 */
-  void add_exch_canonical_value(const std::string& field_name, const std::string& new_canonical_value);
+//  void add_exch_canonical_value(const std::string& field_name, const std::string& new_canonical_value);
+  void add_exch_canonical_value(const std::string_view field_name, const std::string& new_canonical_value);
 
 /*! \brief                              Is a particular string the canonical value for a particular exchange field?
     \param  field_name                  name of an exchange field (received)
@@ -757,7 +761,8 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized
 */
-  bool is_canonical_value(const std::string& field_name, const std::string& putative_canonical_value) const;
+//  bool is_canonical_value(const std::string& field_name, const std::string& putative_canonical_value) const;
+  bool is_canonical_value(const std::string_view field_name, const std::string& putative_canonical_value) const;
 
 /*! \brief                  Is a particular string a legal value for a particular exchange field?
     \param  field_name      name of an exchange field (received)
@@ -765,8 +770,8 @@ public:
     \return                 whether <i>putative_value</i> is a legal value for the field <i>field_name</i>
 
     Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
-*/
-  bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
+*/  bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
+//  bool is_legal_value(const std::string_view field_name, const std::string& putative_value) const;
 
 /// number of permitted bands
   inline size_t n_bands(void) const
@@ -809,7 +814,8 @@ public:
     \param  m       mode
     \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
 */
-  bool sent_exchange_includes(const std::string& str, const MODE m) const;
+//  bool sent_exchange_includes(const std::string& str, const MODE m) const;
+  bool sent_exchange_includes(const std::string_view str, const MODE m) const;
 
 /// get the permitted bands as a set
   inline std::set<BAND> permitted_bands_set(void) const
@@ -820,7 +826,8 @@ public:
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-  bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
+//  bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
+  bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string& canonical_prefix) const;
 
 /// the names of all the possible exchange fields
   STRING_SET exchange_field_names(void) const;
@@ -830,7 +837,8 @@ public:
     \param  cp  canonical prefix of country
     \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
 */
-  choice_equivalents equivalents(const MODE m, const std::string& cp) const;
+//  choice_equivalents equivalents(const MODE m, const std::string& cp) const;
+  choice_equivalents equivalents(const MODE m, const std::string_view cp) const;
 
 /// read from and write to disk
   template<typename Archive>
@@ -884,7 +892,6 @@ public:
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
 */
-//std::string wpx_prefix(const std::string& call);
 std::string wpx_prefix(const std::string_view call);
 
 /*! \brief          The SAC prefix for a particular call
@@ -893,7 +900,6 @@ std::string wpx_prefix(const std::string_view call);
 
     The SAC rules as written do not allow for weird prefixes such as LA100, etc.
 */
-//std::string sac_prefix(const std::string& call);
 std::string sac_prefix(const std::string_view call);
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
@@ -903,6 +909,7 @@ std::string sac_prefix(const std::string_view call);
 
     For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
-std::string MULT_VALUE(const std::string_view field_name, const std::string& received_value);
+//std::string MULT_VALUE(const std::string_view field_name, const std::string& received_value);
+std::string MULT_VALUE(const std::string_view field_name, const std::string_view received_value);
 
 #endif    // RULES_H

@@ -539,7 +539,6 @@ public:
     \param  target  target value of <i>_frequency_str</i>
     \return         whether <i>_frequency</i> matches <i>target</i>
 */
-//  inline bool is_frequency_str(const std::string& target) const
   inline bool is_frequency_str(const std::string_view target) const
     { return (_frequency_str == target); }
 
@@ -578,8 +577,7 @@ public:
     \return         whether this bandmap_entry has expired
 */
   inline bool should_prune(const time_t now = ::time(NULL)) const
-    { //ost << "expiration time = " << _expiration_time << "; now = " << now << std::endl;
-      return ( (_expiration_time < now) and !is_marker()); }
+    { return ( (_expiration_time < now) and !is_marker()); }
 
 /*! \brief              Re-mark the need/mult status
     \param  rules       rules for the contest
@@ -769,6 +767,19 @@ protected:
 */
   std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
 
+/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme                         band map entries
+     \param target_frequency_in_khz     the target frequency, in kHz
+     \param guard_band_in_hz            how far from the target to search, in Hz
+     \return                            Callsign of a station within the guard band
+
+     Returns the nearest station within the guard band, or the null string if no call is found.
+     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
+
+     UNTESTED
+*/
+  std::string _nearest_callsign(const BM_ENTRIES& bme, const frequency target_frequency, const frequency guard_band) const;
+
 public:
 
 /// default constructor
@@ -837,7 +848,8 @@ public:
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-  bandmap_entry operator[](const std::string& callsign) const;
+//  bandmap_entry operator[](const std::string& callsign) const;
+  bandmap_entry operator[](const std::string_view callsign) const;
 
 /*! \brief              Return the bandmap_entry corresponding to my current frequency
     \return             the bandmap_entry corresponding to my location in the bandmap
@@ -851,14 +863,13 @@ public:
 
     Returns the default <i>bandmap_entry</i>> if <i>pcall</i> matches no entries in the bandmap
 */
-  bandmap_entry substr(const std::string& pcall) const;
+  bandmap_entry substr(const std::string_view pcall) const;
 
 /*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-//  void operator-=(const std::string& callsign);
   void operator-=(const std::string_view callsign);
 
 /*! \brief              Set the needed status of a call to <i>false</i>
@@ -866,7 +877,7 @@ public:
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-  void not_needed(const std::string& callsign);
+  void not_needed(const std::string_view callsign);
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
@@ -988,6 +999,9 @@ public:
   inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
+  inline std::string nearest_rbn_threshold_and_filtered_callsign(const frequency target_frequency, const frequency guard_band)
+    { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency, guard_band); }
+
 /*!  \brief                             Find the station in the displayed bandmap that is closest to a target frequency
      \param target_frequency_in_khz     target frequency, in kHz
      \param guard_band_in_hz            guard band, in Hz
@@ -997,6 +1011,9 @@ public:
 */
   inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
+
+  inline std::string nearest_displayed_callsign(const frequency target_frequency, const frequency guard_band)
+    { return _nearest_callsign(displayed_entries(), target_frequency, guard_band); }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
@@ -1070,7 +1087,8 @@ public:
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-  bandmap_entry next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
+//  bandmap_entry next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
+  bandmap_entry next_displayed_be(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
 
 /*! \brief      Get lowest frequency on the bandmap
     \return     lowest frequency on the bandmap
@@ -1110,7 +1128,6 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-//  void do_not_add(const std::string& callsign);
   inline void do_not_add(const std::string_view callsign)
     { do_not_add(std::string { callsign }); }
 
@@ -1145,7 +1162,8 @@ public:
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-  bool is_present(const std::string& target_callsign) const;
+//  bool is_present(const std::string& target_callsign) const;
+  bool is_present(const std::string_view target_callsign) const;
 
 /// convert to a printable string
   std::string to_str(void);

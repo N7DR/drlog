@@ -49,7 +49,6 @@ bool multiplier::add_known(const std::string& str)
   if (!_used)
     return false;
 
-//  const bool rv { _known.insert(str).second };
   const auto [_, rv] { _known.insert(str) };
 
   if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
@@ -63,7 +62,6 @@ bool multiplier::add_known(const std::string& str)
 
     Does nothing if <i>str</i> is not known
 */
-//void multiplier::remove_known(const string& str)
 void multiplier::remove_known(const string_view str)
 { SAFELOCK(multiplier);
 
@@ -106,8 +104,7 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
   { const int b_nr { static_cast<int>(b) };
     const int m_nr { static_cast<int>(m) };
 
-    auto& pb { _worked[m_nr] };
-//    bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
+    auto& pb       { _worked[m_nr] };
     auto [ _, rv ] { pb[b_nr].insert(str) };  // BAND, MODE
 
     if (rv)
@@ -146,7 +143,6 @@ bool multiplier::unconditional_add_worked(const string& str, const BAND b, const
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
-//void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 void multiplier::remove_worked(const string_view str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
@@ -161,7 +157,6 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
     bool present { false };
 
     for (int n {MIN_BAND}; !present and (n <= MAX_BAND); ++n)
-//      present = (_worked[m_nr][n] > str);
       present = _worked[m_nr][n].contains(str);
 
     if (!present)
@@ -172,7 +167,6 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
     present = false;
 
     for (int n {MIN_MODE}; !present and (n <= MAX_MODE); ++n)
-//      present = (_worked[n][b_nr] > str);
       present = _worked[n][b_nr].contains(str);
 
     if (!present)
@@ -180,7 +174,6 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
       STRC_ERASE(_worked[ANY_MODE][b_nr], str);
 
 // is it still present in any band and any mode?
-//    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
     present = (_worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str) );
 
     if (!present)

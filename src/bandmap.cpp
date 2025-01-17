@@ -519,6 +519,45 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
   return rv;
 }
 
+/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme                         band map entries
+     \param target_frequency_in_khz     the target frequency, in kHz
+     \param guard_band_in_hz            how far from the target to search, in Hz
+     \return                            Callsign of a station within the guard band
+
+     Returns the nearest station within the guard band, or the null string if no call is found.
+     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
+
+     UNTESTED
+*/
+string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_frequency, const frequency guard_band) const
+{ if ( !target_frequency.is_within_ham_band() )
+  { ost << "WARNING: bandmap::_nearest_callsign called with frequency = " << target_frequency << endl;
+    return string { };
+  }
+
+  bool      finish_looking      { false };
+  frequency smallest_difference { 1_MHz };              // start with a big number
+
+  string rv { };
+
+  for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
+  { const frequency Δf { target_frequency.difference(cit->freq()) };
+
+    if ( (Δf <= guard_band) and (!cit->is_my_marker()))
+    { if (Δf < smallest_difference)
+      { smallest_difference = Δf;
+        rv = cit->callsign();
+      }
+    }
+
+    if ( (cit->freq() > target_frequency) and (Δf > guard_band) )  // no need to keep looking we if are past the allowed guard band
+      finish_looking = true;
+  }
+
+  return rv;
+}
+
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
 
@@ -550,17 +589,6 @@ void bandmap::_insert(const bandmap_entry& be)
 
   _version++;
 }
-
-/*!  \brief     Mark filtered and rbn/filtered entries as dirty
-*/
-#if 0
-void bandmap::_dirty_entries(void)
-{ SAFELOCK (_bandmap);              // should be unnecessary, since if the entries are dirty we should already have the lock
-
-  _filtered_entries_dirty = true;
-  _rbn_threshold_and_filtered_entries_dirty = true;
-}
-#endif
 
 // a call will be marked as recent if:
 // its source is LOCAL or CLUSTER
@@ -762,9 +790,11 @@ void bandmap::operator+=(bandmap_entry& be)
     if (be.is_not_marker() and mark_as_recent)
       _recent_calls += callsign;
 
+// don't think I need to increment manually
+
 // I think that these have already been marked; probably no need for the next two lines
 //    _dirty_entries();
-    _version++;
+//    _version++;
   }
 
   if (mode_marker_is_present and !is_present(MODE_MARKER))
@@ -792,7 +822,8 @@ void bandmap::prune(void)
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-bandmap_entry bandmap::operator[](const string& str) const
+//bandmap_entry bandmap::operator[](const string& str) const
+bandmap_entry bandmap::operator[](const string_view str) const
 { SAFELOCK(_bandmap);
 
   return VALUE_IF(_entries, [&str] (const bandmap_entry& be) { return (be.callsign() == str); });
@@ -804,7 +835,7 @@ bandmap_entry bandmap::operator[](const string& str) const
 
     Returns the default <i>bandmap_entry</i>> if <i>pcall</i> matches no entries in the bandmap
 */
-bandmap_entry bandmap::substr(const string& pcall) const
+bandmap_entry bandmap::substr(const string_view pcall) const
 { SAFELOCK(_bandmap);
 
   return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return contains(be.callsign(), pcall); });
@@ -815,7 +846,6 @@ bandmap_entry bandmap::substr(const string& pcall) const
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-//void bandmap::operator-=(const string& callsign)
 void bandmap::operator-=(const string_view callsign)
 { SAFELOCK(_bandmap);
 
@@ -838,7 +868,8 @@ void bandmap::operator-=(const string_view callsign)
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-void bandmap::not_needed(const string& callsign)
+//void bandmap::not_needed(const string& callsign)
+void bandmap::not_needed(const string_view callsign)
 { SAFELOCK(_bandmap);
 
   bandmap_entry be { (*this)[callsign] };
@@ -1185,7 +1216,8 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const frequency f, const enum 
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-bandmap_entry bandmap::next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
+//bandmap_entry bandmap::next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
+bandmap_entry bandmap::next_displayed_be(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
 { const string dirn_str { (dirn == UP) ? "UP"s : "DOWN"s };
 
   bandmap_entry rv { };
@@ -1318,7 +1350,8 @@ string bandmap::to_str(void)
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-bool bandmap::is_present(const string& target_callsign) const
+//bool bandmap::is_present(const string& target_callsign) const
+bool bandmap::is_present(const string_view target_callsign) const
 { SAFELOCK(_bandmap);
 
   return ANY_OF(_entries, [&target_callsign] (const bandmap_entry& be) { return (be.callsign() == target_callsign); });
@@ -1357,12 +1390,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
 { if (process_insertion_queue(biq))       // don't need to output if nothing is done
   { // could put stuff here to make the following output optional -- if, for example, the bm has been recently written, or the version hasn't been incremented
     // although if we get here, it means that the version must have been incremented, I think
-//    w <= (*this);
 
-//    ost << NOW() << ": calling pwtw from process_insertion_queue()" << endl;
-//    protected_write_to_window(w);
-//    ost << NOW() << ": end of pwtw from process_insertion_queue()" << endl;
-//    increment_version();
     write_to_window(w);
   }
 }
@@ -1513,7 +1541,6 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
   win.refresh();    // force the visual update ... do we really want this?
 
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
-//  _time_last_displayed = std::chrono::system_clock::now();
   _time_last_displayed = NOW_TP();
 
   return win;
