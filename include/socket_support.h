@@ -1,4 +1,4 @@
-// $Id: socket_support.h 258 2024-12-16 16:29:04Z  $
+// $Id: socket_support.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,11 +30,11 @@
 #include <string>
 #include <string_view>
 
-#include <netinet/ip_icmp.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
 
 // Errors
 constexpr int SOCKET_SUPPORT_UNABLE_TO_LISTEN    { -1 },  ///< Unable to listen on socket
@@ -61,6 +61,9 @@ constexpr int TCP_SOCKET_UNKNOWN_DESTINATION  { -1 },     ///< Destination not s
 constexpr int ICMP_SOCKET_UNABLE_TO_CREATE    { -1 },     ///< Unable to create socket
               ICMP_SOCKET_SEND_ERROR          { -2 };     ///< Error when sending
 
+constexpr int EPOLL_UNABLE_TO_CREATE          { -1 },     ///< unable to create epoll
+              EPOLL_UNABLE_TO_ADD_DESCRIPTOR  { -2 };     ///< unable to add a file descriptor to an epoll
+
 /// TCP socket error messages
 const std::string tcp_socket_error_string[8] { std::string { },
                                                "Destination not set"s,
@@ -81,7 +84,7 @@ const std::string icmp_socket_error_string[3] { std::string { },
 /// Type that holds a socket -- syntactic sugar
 using SOCKET = int;
 
-void set_nonblocking(const int fd);
+void fd_set_option(const int opt, const int fd);
 
 /*! \brief        Set an fd_set to contain a particular single value of a file descriptor
     \param  fds   set of file descriptors
@@ -213,6 +216,7 @@ std::ostream& operator<<(std::ostream& ost, const struct sockaddr_in& pa);
 
 class tcp_socket
 {
+
 protected:
 
   sockaddr_storage  _bound_address      { };                        ///< address to which socket is bound
@@ -224,9 +228,32 @@ protected:
   mutable pt_mutex  _tcp_socket_mutex   { "UNNAMED TCP SOCKET"s };  ///< mutex to control access
   unsigned int      _timeout_in_tenths  { 600 };                    ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
+  mutable char*     _in_buffer_p        { nullptr };                ///< used to store data read from the network, if this is a read socket
+  mutable size_t    _in_buffer_size     { 0 };
+
 /*! \brief close the socket
 */
   void _close_the_socket(void);
+
+/*! \brief create an input buffer if one doesn't exist
+*/
+  void _create_buffer_if_necessary(void) const;   // logically const
+
+/*! \brief    Resize the buffer
+    \return   whether the buffer was actually resized
+
+    Doubles the size of the input buffer, or sets it to MAX_IN_BUFFER_SIZE, whichever is less
+*/
+  bool _resize_buffer(void) const;   // logically const
+
+/*! \brief            Resize the buffer
+    \param  new_size  the new size of the buffer
+    \return   whether the buffer was actually resized
+
+    If the current size is not already MAX_IN_BUFFER_SIZE, then sets the size of the input buffer
+    to <i>new_size</i>, or sets it to MAX_IN_BUFFER_SIZE, whichever is less
+*/
+  bool _resize_buffer(const size_t new_size) const;   // logically const
 
 public:
 
@@ -545,6 +572,33 @@ public:
     { _icmp_socket_mutex.rename(new_name); }
 };
 
+#if 0
+
+not yet ready for use
+
+// ------------------------------------  epoller  ----------------------------------
+
+/*! \class  epoller
+    \brief  Encapsulate and manage Linux epoll functions
+*/
+
+class epoller
+{
+protected:
+
+  int                _fd;
+
+  struct epoll_event _ev;
+
+public:
+
+  epoller(void);
+
+  void operator+=(const int file_descriptor);   // fd of interest
+
+};
+#endif
+
 /*! \brief              Convert a name to a dotted decimal IP address
     \param  fqdn        name to be resolved
     \param  n_tries     maximum number of tries
@@ -564,6 +618,8 @@ ERROR_CLASS(socket_support_error);  ///< general socket-related errors
 
 ERROR_CLASS(tcp_socket_error);      ///< errors related to TCP sockets
 
-ERROR_CLASS(icmp_socket_error);     ///< errors related to TCP sockets
+ERROR_CLASS(icmp_socket_error);     ///< errors related to ICMP sockets
+
+//ERROR_CLASS(epoll_error);           ///< errors related to epolls
 
 #endif    // !SOCKET_SUPPORT_H

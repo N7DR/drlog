@@ -1,4 +1,4 @@
-// $Id: query.h 200 2022-01-16 14:48:14Z  $
+// $Id: query.h 259 2025-01-19 15:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

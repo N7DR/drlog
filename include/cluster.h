@@ -1,4 +1,4 @@
-// $Id: cluster.h 258 2024-12-16 16:29:04Z  $
+// $Id: cluster.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -124,7 +124,6 @@ public:
     \return     the time, in seconds, since the last data were received on the connection, in seconds
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
-//    { return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _last_data_received); }
     { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _last_data_received); }
 };
 
@@ -229,7 +228,7 @@ public:
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign
-  READ(expiration);      ///< time at which entry will expire
+  READ(expiration);         ///< time at which entry will expire
   READ(frequency_str);      ///< frequency in format xxxxx.y [kHz]
 
 /// convert to a string suitable for display in a window
@@ -274,7 +273,7 @@ public:
   inline void max_entries(const unsigned int v)
     { _max_entries = v; }
 
-  unsigned int max_entries(void) const
+  inline unsigned int max_entries(void) const
     { return _max_entries; }
 
 /*! \brief              Is a particular call monitored?

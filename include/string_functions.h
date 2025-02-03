@@ -1,4 +1,4 @@
-// $Id: string_functions.h 258 2024-12-16 16:29:04Z  $
+// $Id: string_functions.h 259 2025-01-19 15:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -166,17 +166,6 @@ inline std::string from_string(const std::string& s)
 template <class T>
 inline T from_string(const char* cp)
   { return from_string<T>(std::string_view { cp, strlen(cp) }); }
-
-#if 0
-template <class T>
-T from_string(const char* cp)
-{ T rv { };
-
-  std::from_chars(cp, cp + strlen(cp), rv);
-
-  return rv;
-}
-#endif
 
 /*! \brief          Generic conversion from string, without an explicit type
     \param  s       string

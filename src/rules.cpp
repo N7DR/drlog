@@ -1,4 +1,4 @@
-// $Id: rules.cpp 258 2024-12-16 16:29:04Z  $
+// $Id: rules.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -358,7 +358,6 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
 // generate vector of all permitted exchange fields
-//  map<string /* canonical prefix */, vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
   STRING_MAP</* canonical prefix */ vector<string> /* permitted values of exchange */> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
   const auto& per_country_exchanges { context.exchange_per_country() };   // map, per-country exchanges; key = prefix-or-call; value = exchange
@@ -607,9 +606,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
 
-//        const vector<string> points_str_vec { clean_split_string <string> (context_points) };
-
-//        for (const string& points_str : points_str_vec)
         for (const string& points_str : clean_split_string <string> (context_points))
         { const vector<string> fields { split_string <std::string> (points_str, ':') };
 
@@ -816,9 +812,8 @@ STRING_SET contest_rules::all_known_field_names(void) const
     \param  field_name  name of the field
     \return             the exchange field information associated with <i>field_name</i>
 
-    Returned EFT("none") if <i>field_name</i> is unknown.
+    Returns EFT("none") if <i>field_name</i> is unknown.
 */
-//EFT contest_rules::exchange_field_eft(const string& field_name) const
 EFT contest_rules::exchange_field_eft(const string_view field_name) const
 { SAFELOCK(rules);
 
@@ -830,7 +825,6 @@ EFT contest_rules::exchange_field_eft(const string_view field_name) const
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-//vector<string> contest_rules::exch_canonical_values(const string& field_name) const
 vector<string> contest_rules::exch_canonical_values(const string_view field_name) const
 { vector<string> rv;
 
@@ -856,7 +850,6 @@ vector<string> contest_rules::exch_canonical_values(const string_view field_name
     Also adds <i>new_canonical_value</i> to the legal values for the field <i>field_name</i>. Does nothing
     if <i>new_canonical_value</i> is already a canonical value.
 */
-//void contest_rules::add_exch_canonical_value(const string& field_name, const string& new_canonical_value)
 void contest_rules::add_exch_canonical_value(const string_view field_name, const string& new_canonical_value)
 { SAFELOCK(rules);
 
@@ -884,7 +877,6 @@ void contest_rules::add_exch_canonical_value(const string_view field_name, const
 
     Returns false if <i>field_name</i> is unrecognized
 */
-//bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
 bool contest_rules::is_canonical_value(const string_view field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
@@ -926,7 +918,7 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
 { SAFELOCK(rules);
 
   try
-  { const EFT& eft { _exchange_field_eft.at(field_name) };
+  { const EFT& eft { _exchange_field_eft.at(field_name) };    // at() not yet supported for heterogeneous lookup
 
     return eft.regex_str().empty();
   }
@@ -943,7 +935,6 @@ bool contest_rules::exchange_field_is_regex(const string& field_name) const
 
     Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
-//STRING_SET contest_rules::exch_permitted_values(const string& field_name) const
 STRING_SET contest_rules::exch_permitted_values(const string_view field_name) const
 { SAFELOCK(rules);
 
@@ -958,7 +949,6 @@ STRING_SET contest_rules::exch_permitted_values(const string_view field_name) co
     Returns <i>actual_value</i> if there are no canonical values or if <i>actual_value</i> is empty
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>.
 */
-//string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
 string contest_rules::canonical_value(const string_view field_name, const string& actual_value) const
 { if (actual_value.empty())
     return actual_value;
@@ -1193,7 +1183,8 @@ void contest_rules::score_modes(const set<MODE>& new_modes)
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-bool contest_rules::country_mults_used(const string& cp) const
+//bool contest_rules::country_mults_used(const string& cp) const
+bool contest_rules::country_mults_used(const string_view cp) const
 { SAFELOCK(rules);
 
   if (cp.empty())
@@ -1211,7 +1202,8 @@ bool contest_rules::country_mults_used(const string& cp) const
 
     Returns <i>false</i> if <i>name</i> is unrecognised
 */
-bool contest_rules::is_exchange_mult(const string& name) const
+//bool contest_rules::is_exchange_mult(const string& name) const
+bool contest_rules::is_exchange_mult(const string_view name) const
 { SAFELOCK(rules);
 
   return contains(_exchange_mults, name);
@@ -1222,7 +1214,6 @@ bool contest_rules::is_exchange_mult(const string& name) const
     \param  m       mode
     \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
 */
-//bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
 bool contest_rules::sent_exchange_includes(const std::string_view str, const MODE m) const
 { SAFELOCK(rules);
 
@@ -1241,7 +1232,6 @@ bool contest_rules::sent_exchange_includes(const std::string_view str, const MOD
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-//bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 bool contest_rules::is_exchange_field_used_for_country(const string_view field_name, const string& canonical_prefix) const
 { SAFELOCK(rules);
 

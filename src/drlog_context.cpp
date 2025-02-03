@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 258 2024-12-16 16:29:04Z  $
+// $Id: drlog_context.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,6 +138,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "ALLOW AUDIO RECORDING"sv)
       _allow_audio_recording = is_true;
 
+// ALLOW CTRL-A
+    if (LHS == "ALLOW CTRL-A"sv)
+      _allow_ctrl_a = is_true;
+
 // ALTERNATIVE EXCHANGE CQ
     if (LHS == "ALTERNATIVE EXCHANGE CQ"sv)
       _alternative_exchange_cq = RHS;
@@ -258,18 +262,22 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _bandmap_frequency_up = is_true;
 
 // BAND MAP GUARD BAND CW
+// rhs is in Hz
     if ( (LHS == "BAND MAP GUARD BAND CW"sv) or (LHS == "BANDMAP GUARD BAND CW"sv) )
-      _guard_band[MODE_CW] = from_string<decltype(_guard_band)::mapped_type>(rhs);
+//      _guard_band[MODE_CW] = from_string<decltype(_guard_band)::mapped_type>(rhs);
+      _guard_band[MODE_CW] = frequency { from_string<double>(rhs), FREQUENCY_UNIT::HZ };
 
 // BAND MAP GUARD BAND SSB
+// rhs is in Hz
     if ( (LHS == "BAND MAP GUARD BAND SSB"sv) or (LHS == "BANDMAP GUARD BAND SSB"sv) )
-      _guard_band[MODE_SSB] = from_string<decltype(_guard_band)::mapped_type>(rhs);
+//      _guard_band[MODE_SSB] = from_string<decltype(_guard_band)::mapped_type>(rhs);
+      _guard_band[MODE_SSB] = frequency { from_string<double>(rhs), FREQUENCY_UNIT::HZ };
 
 // BAND MAP RECENT COLOUR
     if ( (LHS == "BAND MAP RECENT COLOUR"sv) or (LHS == "BANDMAP RECENT COLOUR"sv) or
          (LHS == "BANDMAP RECENT COLOR"sv) or (LHS == "BANDMAP RECENT COLOR"sv) )
     { if (!RHS.empty())
-        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces <std::string> (RHS));
+        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces <std::string_view> (RHS));
     }
 
 // BAND MAP SHOW MARKED FREQUENCIES

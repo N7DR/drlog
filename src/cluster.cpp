@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 258 2024-12-16 16:29:04Z  $
+// $Id: cluster.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -299,7 +299,7 @@ void dx_cluster::read(void)
   { SAFELOCK(rbn_buffer);
 
     _unprocessed_input += buf;
-    _last_data_received = system_clock::now();
+    _last_data_received = NOW_TP();
   }
 }
 
@@ -560,23 +560,21 @@ void monitored_posts::operator+=(const dx_post& post)
   { const monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
-    { if ( mpe.expiration() > old_mpe.expiration() )
-      { _entries -= it;
-        stop_search = true;
-      }
+    { if ( mpe.expiration() > old_mpe.expiration() )                // new expiration is later than expiration from old post
+        _entries -= it;                                             // remove old entry
       else
-      { found_call_and_band = true;  // found entry, but it expires after the post we're testing
-        stop_search = true;
-      }
+        found_call_and_band = true;  // found entry, but it expires after the post we're testing
+
+      stop_search = true;
     }
   }
 
-  if (stop_search and !found_call_and_band)
-  { _entries += mpe;
+  if (stop_search and !found_call_and_band)               // new expiration is later than expiration from old post
+  { _entries += mpe;                                      // insert new entry
     _is_dirty = true;
   }
 
-  if (!stop_search)
+  if (!stop_search)                                       // no old post exists
   { _entries += mpe;
     _is_dirty = true;
   }
@@ -604,7 +602,7 @@ void monitored_posts::operator-=(const string_view call_to_remove)
 
   _callsigns -= call_to_remove;
 
-// remove any entries that have this call
+// remove any entries that are for this call
   const size_t original_size { _entries.size() };
 
   erase_if(_entries, [call_to_remove] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );

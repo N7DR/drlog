@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 258 2024-12-16 16:29:04Z  $
+// $Id: drlog.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,7 +52,6 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-//#include <numeric>    // for accumulate()
 #include <thread>
 
 #include <future>
@@ -335,18 +334,18 @@ pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR
 
 // global variables
 
-STRING_MAP<accumulator<string>> acc_callsigns;    ///< accumulator for prefixes for auto callsign mults; key = mult name
-accumulator<string>     acc_countries;                              ///< accumulator for canonical prefixes for auto countries
-int                     ACCEPT_COLOUR { COLOUR_GREEN };             ///< colour for calls that have been worked, but are not dupes
-UNORDERED_STRING_SET    all_country_mults;                          ///< all the country mults from the rules
-bool                    allow_audio_recording { false };            ///< may we record audio?
-string                  alternative_qsl_message { };                ///< no default alternative QSL message
-string                  alternative_sap_exchange { };               ///< no default alternative SAP exchange
-string                  at_call;                                    ///< call that should replace commat in "call ok now" message
-audio_recorder          audio;                                      ///< provide capability to record audio
-AUDIO_RECORDING         audio_recording_mode { AUDIO_RECORDING::DO_NOT_START }; // mode of audio recording
-atomic<bool>            autocorrect_rbn { false };                  ///< whether to try to autocorrect posts from the RBN
-string                  auto_backup_directory { };                  ///< directory into which backup log and QTC files are to be written
+STRING_MAP<accumulator<string>> acc_callsigns;                                  ///< accumulator for prefixes for auto callsign mults; key = mult name
+accumulator<string>             acc_countries;                                          ///< accumulator for canonical prefixes for auto countries
+int                             ACCEPT_COLOUR { COLOUR_GREEN };                         ///< colour for calls that have been worked, but are not dupes
+UNORDERED_STRING_SET            all_country_mults;                                      ///< all the country mults from the rules
+bool                            allow_audio_recording { false };                        ///< may we record audio?
+string                          alternative_qsl_message { };                            ///< no default alternative QSL message
+string                          alternative_sap_exchange { };                           ///< no default alternative SAP exchange
+string                          at_call;                                                ///< call that should replace commat in "call ok now" message
+audio_recorder                  audio;                                                  ///< provide capability to record audio
+AUDIO_RECORDING                 audio_recording_mode { AUDIO_RECORDING::DO_NOT_START }; ///< mode of audio recording
+atomic<bool>                    autocorrect_rbn { false };                              ///< whether to try to autocorrect posts from the RBN
+string                          auto_backup_directory { };                              ///< directory into which backup log and QTC files are to be written
 
 unsigned int            bandmap_decay_time_cluster_secs { };        ///< time in seconds for an entry to age off the bandmap (cluster entries)
 unsigned int            bandmap_decay_time_rbn_secs { };            ///< time in seconds for an entry to age off the bandmap (RBN entries)
@@ -2701,7 +2700,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
             if (rules.score_modes().contains(be.mode()))
             { be.frequency_str_decimal_places(1);
-              be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
+//              be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
+              be.expiration_time(be.time() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) ); // don't rely on the time in the post
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );             // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
@@ -2862,45 +2862,37 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
 
-//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(seconds_to_expiration)) };
-//        const auto p { MAP_VALUE_PAIR(std::span{fade_colours}, 0UL, 3600UL, static_cast<long unsigned int>(3600 - seconds_to_expiration)) };
-        long unsigned int idx { static_cast<long unsigned int> (std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) ).count() ) };
+//        const auto clr { MAP_VALUE(fade_colours, 0UL, 3600UL, idx) };
 
-        idx = min(3600UL, idx);    // because we might be going to prune the value at the next top-of-the-minute opportunity, so idx might be > 3600
+//        static const value_map monitored_posts_vm_2(fade_colours, std::chrono::minutes { 0 }, std::chrono::minutes { 60 });
+//        static const value_map monitored_posts_vm(fade_colours, std::chrono::minutes { 0 }, std::chrono::duration_cast<std::chrono::minutes> (MONITORED_POSTS_DURATION));
+        static const value_map monitored_posts_vm(fade_colours, minutes { 0 }, duration_cast<minutes> (MONITORED_POSTS_DURATION));
+//        const auto clr2 { monitored_posts_vm[idx] };
 
-//        const auto clr { MAP_VALUE(std::span{fade_colours}, 0UL, 3600UL, idx) };
+//        if (clr2 != clr)
+//        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr2 = " << clr2 << "; idx = " << idx << endl;
+//        }
 
-        const auto clr { MAP_VALUE(fade_colours, 0UL, 3600UL, idx) };
+ //       const auto dsec = std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
 
-        static const value_map monitored_posts_vm(fade_colours, 0UL, 3600UL);
+ //       const auto clr3 { monitored_posts_vm_1[std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
 
-        static const value_map monitored_posts_vm_1(fade_colours, std::chrono::seconds { 0 }, MONITORED_POSTS_DURATION);
+ //       if (clr3 != clr)
+ //       { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr3 = " << clr3 << "; idx = " << idx << endl;
+ //         ost << "dsec = " << dsec.count() << endl;
+ //       }
 
-        static const value_map monitored_posts_vm_2(fade_colours, std::chrono::minutes { 0 }, std::chrono::minutes { 60 });
+ //       const auto dmin = std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
 
-        const auto clr2 { monitored_posts_vm[idx] };
+        auto age = [] (const monitored_posts_entry& mpe) { return duration_cast<minutes> (NOW_TP() - (mpe.expiration() - MONITORED_POSTS_DURATION) ); };
 
-        if (clr2 != clr)
-        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr2 = " << clr2 << "; idx = " << idx << endl;
-        }
+//        const auto clr4 { monitored_posts_vm_2[std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
+        const auto clr { monitored_posts_vm[age(entry)] };
 
-        const auto dsec = std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
-
-        const auto clr3 { monitored_posts_vm_1[std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
-
-        if (clr3 != clr)
-        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr3 = " << clr3 << "; idx = " << idx << endl;
-          ost << "dsec = " << dsec.count() << endl;
-        }
-
-        const auto dmin = std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
-
-        const auto clr4 { monitored_posts_vm_2[std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
-
-        if (clr4 != clr)
-        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr4 = " << clr4 << "; idx = " << idx << endl;
-          ost << "dsec = " << dsec.count() << "; dmin = " << dmin.count() << endl;
-        }
+ //       if (clr4 != clr)
+//        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr4 = " << clr4 << "; idx = " << idx << endl;
+//          ost << "dsec = " << dsec.count() << "; dmin = " << dmin.count() << endl;
+ //       }
 
         const PAIR_NUMBER_TYPE cpu { colours.add(clr, win_monitored_posts.bg()) };
 
@@ -2947,7 +2939,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 /// thread function to obtain data from the cluster
 void get_cluster_info(dx_cluster* cluster_p)
-{ constexpr int READ_INTERVAL_SEC { 5 };                  // number of seconds to pause between reads from the socket
+{ //constexpr int READ_INTERVAL_SEC { 5 };                  // number of seconds to pause between reads from the socket
+//  constexpr int READ_INTERVAL_SEC { 4 };                  // number of seconds to pause between reads from the socket
+  constexpr int READ_INTERVAL_SEC { 3 };                  // number of seconds to pause between reads from the socket
 
   const string THREAD_NAME { "get cluster info"s };
 
@@ -2985,13 +2979,7 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );
 
-//    bandmaps[current_band].protected_write_to_window(bandmap_win);    // this seems to cause a big delay; I have no idea why :-(
-// the only difference is the enforced skip if too soon... but delay persists even if I remove that code
-//    bandmaps[current_band].increment_version();
-//    bandmaps[current_band].write_to_window(bandmap_win);
-    bandmap_win <= bandmaps[current_band];    // also inserts delay
-
-//    mp.prune();    // prune monitored posts
+    bandmap_win <= bandmaps[current_band];
 
     for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
     {
@@ -3005,8 +2993,6 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
 
       sleep_for(1s);
     }
-
-//    mp.prune();    // prune monitored posts
   }
 }
 
@@ -3040,6 +3026,7 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     ALT-<-        -- VFO B -> VFO A
     ALT-->        -- VFO A -> VFO B
     BACKSLASH     -- send to the scratchpad
+    CTRL-A        -- immediate termination, if enabled
     CTRL-B        -- fast bandwidth
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
@@ -3091,9 +3078,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // keyboard_queue::process_events() has already filtered out uninteresting events
   bool processed { win.common_processing(e) };
 
-// *********
-//  if (!processed and (e.is_control('a')))
-//    throw exception();
+// CTRL-A -- immediate termination, if enabled
+  if (!processed and e.is_control('a') and context.allow_ctrl_a())
+    throw exception();
 
 // [ and ] (for regex)
   if (!processed and e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
@@ -3317,7 +3304,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         ost << "time taken to display band = " << t2.time_span<int>() << " milliseconds" << endl;
 
 // is there a station close to our frequency?
-        const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
+//        const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
+        const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency, context.guard_band(cur_mode)) };
 
         display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
 
@@ -3398,7 +3386,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
 // clear the call window if there's something in it
-//    if (!processed and (!remove_peripheral_spaces <std::string> (win.read()).empty()))
     if (!processed and (!remove_peripheral_spaces <std::string_view> (win.read()).empty()))
     { win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win.insert(true);                         // force into INSERT mode
@@ -3421,8 +3408,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // F11 -- band map filtering
   if (!processed and (e.symbol() == XK_F11))
-  { const string contents { remove_peripheral_spaces <std::string> (win.read()) };
-    //const string_view contents { remove_peripheral_spaces <std::string_view> (win.read()) };
+  { const string contents { remove_peripheral_spaces <std::string> (win.read()) };  // can't use string_view here
 
     bandmap& bm = bandmaps[cur_band];        // use current bandmap to make it easier to display column offset
 
@@ -3616,7 +3602,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           for (const auto& band_str : clean_split_string <string> (rhs))
           { try
-            { score_bands += BAND_FROM_NAME.at(band_str);
+            { score_bands += BAND_FROM_NAME.at(band_str);     // at() does not yet support heterogeneous lookup
             }
 
             catch (...)
@@ -3632,7 +3618,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no band information
           rules.restore_original_score_bands();
 
-        string bands_str;
+        string bands_str { };
 
         FOR_ALL(rules.score_bands(), [&bands_str] (const BAND& b) { bands_str += (BAND_NAME[b] + ' '); } );
 
@@ -3651,7 +3637,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           for (const auto& mode_str : clean_split_string <std::string> (substring <std::string> (command, posn)))
           { try
-            { score_modes += MODE_FROM_NAME.at(mode_str);
+            { score_modes += MODE_FROM_NAME.at(mode_str);     // at() does not yet support heterogeneous lookup
             }
 
             catch (...)
@@ -3667,7 +3653,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no mode information
           rules.restore_original_score_modes();
 
-        string modes_str;
+        string modes_str { };
 
         FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + ' '); } );
 
@@ -3745,7 +3731,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                   break;
 
                 case BAND_30 :
-                  value += 10100; //(value < 100 ? 10100 : 10000);
+                  value += 10100;
                   break;
 
                 case BAND_20 :
@@ -3753,7 +3739,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                   break;
 
                 case BAND_17 :
-                  value += 18000; // (value < 100 ? 18100 : 10000);
+                  value += 18000;
                   break;
 
                 case BAND_15 :
@@ -3761,7 +3747,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                   break;
 
                 case BAND_12 :
-                  value += 24000; // (value < 100 ? 18100 : 10000);
+                  value += 24000;
                   break;
 
                 case BAND_10 :
@@ -4322,9 +4308,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // some trickery needed to provide capability to walk through SCP calls after trying to find an obvious match
 // includes fuzzy matches after SCP matches
   if (!processed and (cursor_down or cursor_up))
-  { bool found_match { false };
-
-    string new_callsign;
+  { bool   found_match  { false };
+    string new_callsign { };
 
     if ( (!in_scp_matching) and cursor_down)            // first down arrow; select best match, according to match_callsign() algorithm
     { const string current_contents { remove_peripheral_spaces <std::string> (win.read()) }; 
@@ -8474,11 +8459,11 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   }
 
   if (f == last_update_frequency)   // don't update if the frequency hasn't changed
-  { ost << "frequency has not changed: " << f << "; NO UPDATE" << endl;
+  { //ost << "frequency has not changed: " << f << "; NO UPDATE" << endl;
     return;
   }
 
-  ost << "updating to: " << f << endl;
+    //ost << "updating to: " << f << endl;
 
   const frequency mx_f { rig.rig_frequency() };
 
@@ -8562,7 +8547,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-    const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
+//    const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
+    const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
 
     if (!nearby_callsign.empty())
     { ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
@@ -8629,8 +8615,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
   }
 
 // 240929
-//  if (be.empty() and (f_rig != bm.my_bandmap_entry().freq()))  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
-//  if (be.empty() and (f_rig.difference(bm.my_bandmap_entry().freq()) > 2_Hz))  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
   if ( be.empty() and (f_rig.difference(bm.my_bandmap_entry().freq()) > (2 * MY_MARKER_BIAS)) )  // update bm even if be is empty (i.e., at lowest or highest entry in bm)
   { if (debug)
       ost << "forcing bm change to frequency: " << f_rig << "; bm says freq is: " << bm.my_bandmap_entry().freq() << endl;
@@ -8642,7 +8626,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     my_be.freq(f_rig);
     bm += my_be;    // changes version of the bm
 
-    update_based_on_frequency_change(f_rig, current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
+    update_based_on_frequency_change(f_rig, current_mode);   // update win_bandmap, and other windows
 
     if (debug)
       ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
@@ -8664,7 +8648,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 // we may require a mode change
     possible_mode_change(be.freq());
 
-    update_based_on_frequency_change(be.freq(), current_mode /*, bm.my_bandmap_entry().freq() */);   // update win_bandmap, and other windows
+    update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
     if (debug)
       ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;

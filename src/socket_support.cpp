@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 258 2024-12-16 16:29:04Z  $
+// $Id: socket_support.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,13 +40,17 @@ extern message_stream ost;                                              ///< for
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
+constexpr size_t MIN_IN_BUFFER_SIZE { 4096 };   // minumum size of a TCP input buffer
+//constexpr size_t MAX_IN_BUFFER_SIZE { 8192 };   // maximum size of a TCP input buffer
+constexpr size_t MAX_IN_BUFFER_SIZE { 16'384 };   // maximum size of a TCP input buffer
+
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
-void set_nonblocking(const int fd)
+void fd_set_option(const int opt, const int fd)  // e.g., O_NONBLOCK
 { int flags;
 
   flags = fcntl(fd, F_GETFL, 0);
-  int status = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+  int status = fcntl(fd, F_SETFL, flags | opt);
 
   if (status == -1)
     throw socket_support_error(SOCKET_SUPPORT_FLAG_ERROR);
@@ -64,6 +68,61 @@ void tcp_socket::_close_the_socket(void)
     if (const int status { ::close(_sock) }; status == -1)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_CLOSE, strerror(errno));
   }
+}
+
+/*! \brief create an input buffer if one doesn't exist
+*/
+void tcp_socket::_create_buffer_if_necessary(void) const  // logically const
+{ if (_in_buffer_p == nullptr)
+  { _in_buffer_p    = new char[MIN_IN_BUFFER_SIZE];
+    _in_buffer_size = MIN_IN_BUFFER_SIZE;
+  }
+}
+
+/*! \brief    Resize the buffer
+    \return   whether the buffer was actually resized
+
+    Doubles the size of the input buffer, or sets it to MAX_IN_BUFFER_SIZE, whichever is less
+*/
+bool tcp_socket::_resize_buffer(void) const  // logically const
+{ if (_in_buffer_size < MAX_IN_BUFFER_SIZE)
+  { const size_t new_buffer_size { min(MAX_IN_BUFFER_SIZE, _in_buffer_size * 2) };
+
+    ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
+
+    delete [] _in_buffer_p;
+
+    _in_buffer_size = new_buffer_size;
+    _in_buffer_p = new char[_in_buffer_size];
+
+    return true;
+  }
+
+  return false;
+}
+
+/*! \brief            Resize the buffer
+    \param  new_size  the new size of the buffer
+    \return   whether the buffer was actually resized
+
+    If the current size is not already MAX_IN_BUFFER_SIZE, then sets the size of the input buffer
+    to <i>new_size</i>, or sets it to MAX_IN_BUFFER_SIZE, whichever is less
+*/
+bool tcp_socket::_resize_buffer(const size_t new_size) const   // logically const
+{ if ( (_in_buffer_size < MAX_IN_BUFFER_SIZE) and (new_size > _in_buffer_size) )
+  { const size_t new_buffer_size { min(MAX_IN_BUFFER_SIZE, new_size) };
+
+    ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
+
+    delete [] _in_buffer_p;
+
+    _in_buffer_size = new_buffer_size;
+    _in_buffer_p = new char[_in_buffer_size];
+
+    return true;
+  }
+
+  return false;
 }
 
 /// default constructor
@@ -86,8 +145,7 @@ tcp_socket::tcp_socket(void) :
   
     Acts as default constructor if passed pointer is nullptr
 */
-tcp_socket::tcp_socket(SOCKET* sp) //:
-//  _preexisting_socket(true)
+tcp_socket::tcp_socket(SOCKET* sp)
 { if (sp)
   { _sock = *sp;
     _preexisting_socket = true;
@@ -97,9 +155,7 @@ tcp_socket::tcp_socket(SOCKET* sp) //:
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
       reuse();      // enable re-use
-//      linger();     // linger turned on, immediate time-out
-    linger(DEFAULT_TCP_LINGER);
-//      _preexisting_socket = false;
+      linger(DEFAULT_TCP_LINGER);
     }
 
     catch (...)
@@ -120,15 +176,8 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
-{ //ost << "In tcp_socket constructor: " << endl
-  //    << "  destination address: " << destination_ip_address_or_fqdn << endl
-  //    << "  destination port: " << destination_port << endl
-  //    << "  source addrsss: " << source_address << endl
-  //    << "  retry time (sec): " << retry_time_in_seconds << endl;
-
-  try
-  { reuse();    // enable re-use    
-//    linger();   // linger turned on, immediate time-out
+{ try
+  { reuse();                        // enable re-use
     linger(DEFAULT_TCP_LINGER);
 
     bind(source_address);
@@ -206,6 +255,14 @@ tcp_socket::~tcp_socket(void)
     catch (...)
     { }
   }
+
+// free the storage associated with the input buffer
+  if (_in_buffer_p != nullptr)
+  { delete [] _in_buffer_p;
+
+    _in_buffer_p = nullptr;
+    _in_buffer_size = 0;
+  }
 }
 
 /*! \brief  Create and use a different underlying socket
@@ -270,17 +327,13 @@ void tcp_socket::destination(const sockaddr_storage& adr)
     See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
 void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long timeout_secs)
-{ //ost << "SETTING DESTINATION" << endl;
-
-  struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
+{ struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
   SAFELOCK(_tcp_socket);
 
   fd_set r_set, w_set;
   int flags;
 
-//  FD_ZERO(&r_set);
-//  FD_SET(_sock, &r_set);
   fd_set_value(r_set, _sock);
   w_set = r_set;
 
@@ -293,9 +346,6 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   if (status == 0)        // all OK
   { _destination = adr;
     _destination_is_set = true;
-
-    //ost << "DESTINATION HAS BEEN SET OK" << endl;
-    //ost << "ADDRESS: " << dotted_decimal_address(*(sockaddr*)(&adr)) << endl;
   }
   else
   { _destination_is_set = false;
@@ -306,11 +356,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     if (errno != EINPROGRESS)
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
-//    ost << "IN PROGRESS" << endl;
-
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
-
-//    ost << "status returned from select: " << status << endl;
 
     if (status < 0)
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
@@ -319,8 +365,6 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     { errno = ETIMEDOUT;
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
     }
-
-//    ost << "status is OK" << endl;
 
 // select is positive, which means that the file descriptor is OK
     _destination_is_set = true;
@@ -361,18 +405,19 @@ void tcp_socket::send(const std::string_view msg)
     \return     received string
 */
 string tcp_socket::read(void) const
-{ constexpr unsigned int BUFSIZE { 4096 };       // a decent size for a read buffer
-  //constexpr unsigned int BUFSIZE { 8192 };       // a decent size for a read buffer
+{ _create_buffer_if_necessary();
 
-  char cp[BUFSIZE];
+  const char* cp { _in_buffer_p };
 
   string rv;
   int    status;
-  
+
+  bool filled_buffer { false };       // indicate whether we filled the input buffer
+
   SAFELOCK(_tcp_socket);
 
   do
-  { status = ::recv(_sock, cp, BUFSIZE, 0);      // status is the number of bytes received; waits for at least some data to be present
+  { status = ::recv(_sock, (char*)cp, _in_buffer_size, 0);      // status is the number of bytes received; waits for at least some data to be present
 
     if (status == -1)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
@@ -380,12 +425,17 @@ string tcp_socket::read(void) const
     if (status == 0)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);    
     
-    if (status == BUFSIZE)
-      ost << "Informative: TCP buffer filled in read without timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
+    if (status == static_cast<int>(_in_buffer_size))
+    { ost << "Informative: TCP buffer (size = " << _in_buffer_size << ") filled in read without timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
 
-//    rv += string(cp, status);
+      filled_buffer = true;
+    }
+
     rv += string { cp, static_cast<size_t>(status) };
-  } while (status == BUFSIZE);
+  } while (status == static_cast<int>(_in_buffer_size));
+
+  if (filled_buffer)
+    _resize_buffer();
 
   return rv;
 }
@@ -397,7 +447,9 @@ string tcp_socket::read(void) const
     Throws an exception if the read times out
 */
 string tcp_socket::read(const unsigned long timeout_secs) const
-{ string rv { };
+{ _create_buffer_if_necessary();
+
+  string rv { };
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
@@ -417,6 +469,8 @@ string tcp_socket::read(const unsigned long timeout_secs) const
 
   int socket_status { select(max_socket_number, &ps_set, NULL, NULL, &timeout) };  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
 
+  bool filled_buffer { false };       // indicate whether we filled the input buffer
+
   switch (socket_status)
   { case 0:                    // timeout
     { if (timeout_secs)        // don't signal timeout if we weren't given a duration to wait
@@ -430,9 +484,8 @@ string tcp_socket::read(const unsigned long timeout_secs) const
     }
 
     default:                            // response is waiting to be read, at least in theory... sometimes it seems that in fact zero bytes are read
-    { constexpr int BUFSIZE { 4096 };   // a reasonable size for a buffer
+    { const char* cp { _in_buffer_p };
 
-      char cp[BUFSIZE];
       int status;
 
       int error_count { 0 };
@@ -441,10 +494,13 @@ string tcp_socket::read(const unsigned long timeout_secs) const
       do
       { retry = false;
 
-        status = ::recv(_sock, cp, BUFSIZE, 0);
+        status = ::recv(_sock, (char*)cp, _in_buffer_size, 0);
 
-        if (status == BUFSIZE)
-          ost << "Informative: TCP buffer filled in read with timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
+        if (status == static_cast<int>(_in_buffer_size))
+        { ost << "Informative: TCP buffer (size = " << _in_buffer_size << ") filled in read with timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
+
+          filled_buffer = true;
+        }
 
         if (status == -1)
         { switch (errno)
@@ -479,7 +535,25 @@ string tcp_socket::read(const unsigned long timeout_secs) const
         }
 
         rv += ( (status == -1) ? EMPTY_STR : string { cp, static_cast<size_t>(status)} );
-      } while ((status == BUFSIZE) or (retry == true));
+      } while ((status == static_cast<int>(_in_buffer_size)) or (retry == true));
+
+      if (filled_buffer)
+      { //filled_buffer = false;
+        _resize_buffer();
+
+#if 0
+        if (_in_buffer_size < MAX_IN_BUFFER_SIZE)
+        { const size_t new_buffer_size = min(MAX_IN_BUFFER_SIZE, _in_buffer_size * 2);
+
+          ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
+
+          delete [] cp;
+
+          _in_buffer_size = new_buffer_size;
+          _in_buffer_p = new char[_in_buffer_size];
+        }
+#endif
+      }
 
       break;
     }
@@ -819,6 +893,8 @@ bool icmp_socket::ping(void)
 
     socklen_t slen { 0 };
 
+// try changing this to have several attempts one second apart if we get an EWOULDBLOCK
+
     if (ssize_t status { recvfrom(_sock, data, sizeof(data), 0, NULL, &slen) }; (status < 0))
     { //ost << "ping status 3 = " << status << endl;
       const auto recvfrom_error { errno };
@@ -855,6 +931,46 @@ bool icmp_socket::ping(void)
 
   return rv;
 }
+
+#if 0
+not ready for use
+// ------------------------------------  epoller  ----------------------------------
+
+/*! \class  epoller
+    \brief  Encapsulate and manage Linux epoll functions
+*/
+
+epoller::epoller(void)
+{ const int status { epoll_create1(0) };
+
+  if (status == -1)
+    throw epoll_error(EPOLL_UNABLE_TO_CREATE, "Error creating epoll object");
+
+  _fd = status;
+
+  _ev.events = EPOLLIN;     // temporary: just show interest in pollin; see man epoll(7)
+//  _ev.data.fd = _fd;
+//
+//  status = epoll_ctl(_fd, EPOLL_CTL_ADD, listen_sock, &ev
+ //
+ //              if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &ev) == -1) {
+ //              perror("epoll_ctl: listen_sock");
+//               exit(EXIT_FAILURE);
+//           }
+
+//  }
+
+}
+
+void epoller::operator+=(const int file_descriptor)
+{ _ev.data.fd = file_descriptor;
+
+  const int status { epoll_ctl(_fd, EPOLL_CTL_ADD, file_descriptor, &_ev) };
+
+  if (status == -1)
+    throw epoll_error(EPOLL_UNABLE_TO_ADD_DESCRIPTOR, "Error adding file descriptor to epoll");
+}
+#endif
 
 // ---------------------------------------------- generic socket functions ---------------------
 

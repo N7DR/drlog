@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 258 2024-12-16 16:29:04Z  $
+// $Id: drlog_context.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,7 @@ protected:
 
   int                                          _accept_colour                           { COLOUR_GREEN };               ///< colour for calls that have been worked, but are not dupes
   bool                                         _allow_audio_recording                   { false };                      ///< whether to allow recording of audio
+  bool                                         _allow_ctrl_a                            { false };                      /// < allow immediate termination with ctrl-a, for debugging purposes
 //  bool                                         _allow_variable_sent_rst;                    ///< whether to permit the sent RST to vary
   std::string                                  _alternative_exchange_cq                 { };                            ///< alternative exchange in CQ mode
   std::string                                  _alternative_exchange_sap                { };                            ///< alternative exchange in SAP mode
@@ -125,7 +126,7 @@ protected:
 
   std::set<BAND>                               _call_history_bands                      { };                            ///< bands to show in CALL HISTORY window
   std::string                                  _call_ok_now_message                     { };                            ///< message if call was changed
-  STRING_SET                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
+  STRING_SET                                   _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band                 { false };                      ///< are callsign mults per-band?
   bool                                         _callsign_mults_per_mode                 { false };                      ///< are callsign mults per-mode?
   bool                                         _cluster_cw                              { false };                      ///< are CW posts from the cluster placed on the bandmap?
@@ -162,8 +163,8 @@ protected:
   std::string                                  _exchange_mults                          { };                            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band                 { false };                      ///< are exchange mults per-band?
   bool                                         _exchange_mults_per_mode                 { false };                      ///< are exchange mults per-mode?
-  STRING_MAP<std::string>           _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
-  STRING_MAP<std::string>           _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
+  STRING_MAP<std::string>                      _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
+  STRING_MAP<std::string>                      _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
   std::string                                  _exchange_sap                            { };                            ///< exchange in SAP mode
   std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
 
@@ -171,7 +172,8 @@ protected:
   unsigned int                                 _fast_sap_bandwidth                      { 400 };                        ///< fast CW bandwidth in SAP mode, in Hz
 
   std::string                                  _geomagnetic_indices_command             { };                                        ///< command to get geomagnetic indices
-  std::map<MODE, unsigned int>                 _guard_band                              { { MODE_CW, 500 }, { MODE_SSB, 2000 } };   ///< guard band, in Hz
+//  std::map<MODE, unsigned int>                 _guard_band                              { { MODE_CW, 500 }, { MODE_SSB, 2000 } };   ///< guard band, in Hz
+  std::map<MODE, frequency>                    _guard_band                              { { MODE_CW, 500_Hz }, { MODE_SSB, 2_kHz } };   ///< guard band
 
   bool                                         _home_exchange_window                    { false };                      ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
@@ -221,8 +223,8 @@ protected:
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
   std::vector<std::pair<std::string /* name/addr */, std::string /* label */>> _ping_targets { };               ///< targets for pings
-  STRING_SET                            _post_monitor_calls       { };               ///< calls to be monitored
-  STRING_SET                            _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
+  STRING_SET                                       _post_monitor_calls       { };               ///< calls to be monitored
+  STRING_SET                                       _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
   unsigned int                                     _ptt_delay                { 25 };            ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                             _p3                       { false };         ///< is a P3 available?
   bool                                             _p3_ignore_checksum_error { false };         ///< should checksum errors be ignored when acquiring P3 screendumps?
@@ -249,8 +251,8 @@ protected:
   unsigned int                                 _rbn_threshold                           { 1 };                          ///< number of different stations that have to post a station to the RBN before it appears on the bandmap
   std::string                                  _rbn_username                            { };                            ///< username to use on the RBN server
   int                                          _reject_colour                           { COLOUR_RED };                 ///< colour for calls that are dupes
-  STRING_SET                        _remaining_callsign_mults_list           { };                            ///< callsign mults to display
-  STRING_SET                        _remaining_country_mults_list            { };                            ///< country mults to display
+  STRING_SET                                   _remaining_callsign_mults_list           { };                            ///< callsign mults to display
+  STRING_SET                                   _remaining_country_mults_list            { };                            ///< country mults to display
   bool                                         _require_dot_in_replacement_call         { false };                      ///< whether to require a dot in a replacement call in the EXCHANGE window
   unsigned int                                 _rig1_baud                               { 4800 };                       ///< baud rate for rig
   unsigned int                                 _rig1_data_bits                          { 8 };                          ///< number of data bits for rig
@@ -324,6 +326,7 @@ public:
 
   CONTEXTREAD(accept_colour);                            ///< colour for calls that have been worked, but are not dupes
   CONTEXTREAD(allow_audio_recording);                    ///< whether to allow recording of audio
+  CONTEXTREAD(allow_ctrl_a);                             /// < allow immediate termination with ctrl-a, for debugging purposes
 //  CONTEXTREAD(allow_variable_sent_rst);                  ///< whether to permit the sent RST to vary
   CONTEXTREAD(alternative_exchange_cq);                  ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
@@ -491,10 +494,11 @@ public:
     \param  m   target mode
     \return     guard band for mode <i>m</i>, in Hz
 */
-  inline unsigned int guard_band(const MODE m)
+//  inline unsigned int guard_band(const MODE m)
+  inline decltype(_guard_band)::mapped_type guard_band(const MODE m)
   { SAFELOCK(_context);
 
-    return MUM_VALUE(_guard_band, m, 1000);
+    return MUM_VALUE(_guard_band, m, 1000_Hz);
   }
 
   CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)

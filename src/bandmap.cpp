@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 255 2024-11-10 20:30:33Z  $
+// $Id: bandmap.cpp 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,6 +32,7 @@ extern bool                          bandmap_show_marked_frequencies;           
 extern bool                          bandmap_frequency_up;                      ///< whether increasing frequency goes upwards in the bandmap
 extern pt_mutex                      batch_messages_mutex;                      ///< mutex for batch messages
 extern UNORDERED_STRING_MAP<string>  batch_messages;                            ///< batch messages associated with calls
+extern drlog_context                 context;                                   ///< the context for the contest
 extern exchange_field_database       exchange_db;                               ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;                               ///< location information
 extern unsigned int                  max_qsos_without_qsl;                      ///< limit for the N7DR matches_criteria() algorithm
@@ -463,12 +464,30 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "is needed mult: " << be.is_needed_mult() << endl
       << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl
       << "is needed country mult: " << be.is_needed_country_mult_details() << endl
-      << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl
-      << "mode: " << MODE_NAME[be.mode()] << endl
-      << "mult status is known: " << be.mult_status_is_known() << endl
-      << "putative mode: " << MODE_NAME[be.putative_mode()] << endl
-      << "source: " << to_string(be.source()) << endl
-      << "time: " << be.time() << endl;
+      << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
+
+
+
+//      try
+//      { ost << "mode: " << MODE_NAME[be.mode()] << endl;
+//      }
+
+//      catch (...)
+//      { ost << "mode cannot be mapped to mode name: mode = " << be.mode() << endl;
+//      }
+
+      ost << "mult status is known: " << be.mult_status_is_known() << endl;
+
+//      try
+//      { ost << "putative mode: " << MODE_NAME[be.putative_mode()] << endl;
+//      }
+
+//      catch (...)
+//      { ost << "putative mode cannot be mapped to mode name: putative mode = " << be.putative_mode() << endl;
+//      }
+
+      ost << "source: " << to_string(be.source()) << endl
+          << "time: " << be.time() << endl;
 
   return ost;
 }
@@ -488,6 +507,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
+#if 0
 string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const
 { if ( (target_frequency_in_khz < 1800) or (target_frequency_in_khz > 29700) )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
@@ -518,6 +538,7 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
 
   return rv;
 }
+#endif
 
 /*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                         band map entries
@@ -531,7 +552,9 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
      UNTESTED
 */
 string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_frequency, const frequency guard_band) const
-{ if ( !target_frequency.is_within_ham_band() )
+{ //ost << "inside nearest displayed callsign; target frequency = " << target_frequency << "; guard band = " << guard_band << endl;
+
+  if ( !target_frequency.is_within_ham_band() )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency = " << target_frequency << endl;
     return string { };
   }
@@ -541,19 +564,29 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_
 
   string rv { };
 
+//  bandmap_entry tmp_be { };
+
   for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
   { const frequency Δf { target_frequency.difference(cit->freq()) };
 
-    if ( (Δf <= guard_band) and (!cit->is_my_marker()))
+//    if ( (Δf <= guard_band) and (!cit->is_my_marker()))
+    if ( (Δf <= guard_band) and (!cit->is_marker()))
     { if (Δf < smallest_difference)
       { smallest_difference = Δf;
         rv = cit->callsign();
+//        tmp_be = *(cit);
       }
     }
 
     if ( (cit->freq() > target_frequency) and (Δf > guard_band) )  // no need to keep looking we if are past the allowed guard band
-      finish_looking = true;
+    { finish_looking = true;
+//      ost << "target: " << target_frequency << "; guard: " << guard_band << " finished looking: " << finish_looking << "  delta: " << Δf << endl;
+    }
   }
+
+//  ost << "tmp_be = " << tmp_be << endl;
+
+//  ost << "target: " << target_frequency << "; guard: " << guard_band << " finished looking: " << finished_looking << "  delta: " << Δf << endl;
 
   return rv;
 }
@@ -750,7 +783,8 @@ void bandmap::operator+=(bandmap_entry& be)
           }
           else    // new expiration is later
           { old_be.source(BANDMAP_ENTRY_SOURCE::RBN);
-            old_be.expiration_time(be.expiration_time());
+            old_be.expiration_time(be.expiration_time()); // NB: don't change time(); this line causes duration to change, which means that we can't use value_maps for colour
+ //           old_be.time(be.time());                   // 250120... is this right? it makes the duration correct
 
             (*this) -= callsign;
             be.time_of_earlier_bandmap_entry(old_be);    // could change be
@@ -790,11 +824,7 @@ void bandmap::operator+=(bandmap_entry& be)
     if (be.is_not_marker() and mark_as_recent)
       _recent_calls += callsign;
 
-// don't think I need to increment manually
-
-// I think that these have already been marked; probably no need for the next two lines
-//    _dirty_entries();
-//    _version++;
+// don't think I need to increment the version manually
   }
 
   if (mode_marker_is_present and !is_present(MODE_MARKER))
@@ -805,12 +835,7 @@ void bandmap::operator+=(bandmap_entry& be)
 void bandmap::prune(void)
 { SAFELOCK(_bandmap);                                   // hold the lock for the entire process
 
-//  ost << "before pruning, size = " << _entries.size() << endl;
-
-//  _entries.remove_if( [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could also use erase_if
-  erase_if(_entries, [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );  // OK for lists; could also use erase_if
-
-//  ost << "after pruning, size = " << _entries.size() << endl;
+  erase_if(_entries, [now = NOW()] (const bandmap_entry& be) { return (be.should_prune(now)); } );
 
   _recent_calls.clear();                       // empty the container of recent calls
   _version++;
@@ -822,7 +847,6 @@ void bandmap::prune(void)
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-//bandmap_entry bandmap::operator[](const string& str) const
 bandmap_entry bandmap::operator[](const string_view str) const
 { SAFELOCK(_bandmap);
 
@@ -857,9 +881,7 @@ void bandmap::operator-=(const string_view callsign)
     erase_if(_entries, [callsign] (const bandmap_entry& be) { return (be.callsign() == callsign); } );
 
     if (_entries.size() != initial_size)  // mark as dirty if we removed any
-    { //_dirty_entries();
       _version++;
-    }
   }
 }
 
@@ -876,13 +898,8 @@ void bandmap::not_needed(const string_view callsign)
 
   if (!be.callsign().empty())        // did we get an entry?
   { be.is_needed(false);
-    (*this) += be;                   // this will remove the pre-existing entry; should also mark as dirty and increment the version
-
-//    _dirty_entries();   // the += line above should mark as dirty and increment the version
-//    _version++;
+    (*this) += be;                   // this will remove the pre-existing entry and increment the version
   }
-
-//  _dirty_entries();
 }
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country to false
@@ -898,9 +915,7 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
   FOR_ALL(_entries, [&canonical_prefix, &changed] (decltype(*_entries.begin())& be) { changed = ( be.remove_country_mult(canonical_prefix) or changed); } );
 
   if (changed)
-  { //_dirty_entries();
     _version++;
-  }
 }
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country and on a particular mode to false
@@ -912,16 +927,9 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 void bandmap::not_needed_country_mult(const string& canonical_prefix, const MODE m)
 { SAFELOCK(_bandmap);
 
-//  bool changed { false };
-
   FOR_ALL(_entries, [m, &canonical_prefix] (decltype(*_entries.begin())& be) { if (be.mode() == m)
                                                                                  be.remove_country_mult(canonical_prefix);
                                                                              } );
-
-//  if (changed)
-//  { //_dirty_entries();
-//    _version++;
-//  }
 }
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
@@ -946,14 +954,12 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX
       const string  this_callsign_mult { (*pf)(mult_type, callsign) };
 
       if (this_callsign_mult == callsign_mult_string)
-        changed = be.remove_callsign_mult(mult_type, callsign_mult_string) or changed;
+        changed |= be.remove_callsign_mult(mult_type, callsign_mult_string);
     }
   }
 
   if (changed)
-  { //_dirty_entries();
     _version++;
-  }
 }
 
 /*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
@@ -971,9 +977,7 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed = (be.remove_exchange_mult(mult_name, mult_value) or changed); } );
 
   if (changed)
-  { //_dirty_entries();
     _version++;
-  }
 }
 
 /*! \brief          Enable or disable the filter
@@ -986,7 +990,6 @@ void bandmap::filter_enabled(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->enabled(torf);
-//    _dirty_entries();
     _version++;
   }
 }
@@ -1445,6 +1448,14 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
   constexpr COLOUR_TYPE MARKED_FG_COLOUR           { COLOUR_WHITE };
   constexpr COLOUR_TYPE MARKED_BG_COLOUR           { COLOUR_RED };
 
+//  unsigned int                                 _bandmap_decay_time_local                { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (local entries)
+//  unsigned int                                 _bandmap_decay_time_cluster              { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
+//  unsigned int                                 _bandmap_decay_time_rbn                  { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
+
+  static const value_map bandap_vm_cluster { _fade_colours, 0U, context.bandmap_decay_time_cluster() }; // time in minutes
+  static const value_map bandap_vm_local   { _fade_colours, 0U, context.bandmap_decay_time_local() };   // time in minutes
+  static const value_map bandap_vm_rbn     { _fade_colours, 0U, context.bandmap_decay_time_rbn() };     // time in minutes
+
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
@@ -1473,15 +1484,44 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
   
 // change to the correct colour
       const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
-      const time_t age_since_this_inserted     { be.time_since_inserted() };
-      const time_t start_time                  { be.time() };                  // time it was inserted
-      const time_t expiration_time             { be.expiration_time() };
-      const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
-      const int    n_colours                   { static_cast<int>(fade_colours().size()) };
-      const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
-      const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
+ //     const time_t age_since_this_inserted     { be.time_since_inserted() };
+ //     const time_t start_time                  { be.time() };                  // time it was inserted
+ //     const time_t expiration_time             { be.expiration_time() };
+ //     const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
+ //     const int    n_colours                   { static_cast<int>(fade_colours().size()) };
+ //     const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
+ //     const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
-      PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
+      long unsigned int age { 0 };
+      int               clr { 0 };
+
+      if (!is_marker)       // we don't need to change the colour of the markers
+      { switch (be.source())
+        { case BANDMAP_ENTRY_SOURCE::CLUSTER :
+            age = be.time_since_inserted() / 60;    // age in minutes
+            clr = bandap_vm_cluster[age];
+            break;
+
+          case BANDMAP_ENTRY_SOURCE::LOCAL :
+            age = be.time_since_inserted() / 60;    // age in minutes
+            clr = bandap_vm_local[age];
+            break;
+
+          case BANDMAP_ENTRY_SOURCE::RBN :
+            age = be.time_since_inserted() / 60;    // age in minutes
+            clr = bandap_vm_rbn[age];
+            break;
+        }
+
+//        if (clr != fade_colours().at(n_intervals))
+//        { ost << "BANDMAP COLOUR MISMATCH FOR " << be.callsign() << ", clr = " << clr << ", oldsyle = " << fade_colours().at(n_intervals) << "; age = " << age << "; n_intervals = " << n_intervals << endl;
+//          ost << "  fraction = " << fraction << "; interval = " << interval << "; age_since_this_inserted = " << age_since_this_inserted << endl;
+//          ost << "  start = " << start_time << "; expiration = " << expiration_time << "; total duration = " << expiration_time - start_time << endl;
+//        }
+      }
+
+//      PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
+      PAIR_NUMBER_TYPE cpu { colours.add(clr, win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
       if ( (age_since_original_inserted < GREEN_TIME) and !be.is_marker() and (recent_colour() != COLOUR_BLACK) )

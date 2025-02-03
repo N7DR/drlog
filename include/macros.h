@@ -1,4 +1,4 @@
-// $Id: macros.h 258 2024-12-16 16:29:04Z  $
+// $Id: macros.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1799,7 +1799,7 @@ template <typename C>
 inline typename C::value_type MAP_VALUE(const C& values, const size_t idx_1, const size_t idx_2, const size_t idx)
   { return MAP_VALUE(std::span<const typename C::value_type> { values }, idx_1, idx_2, idx); }
 
-/*! \brief          Given a span of values and a corresponding pseudo-index, return the index corresplonding to the pseudo-index, and the value corresponding to the pseudo-index
+/*! \brief          Given a span of values and a corresponding pseudo-index, return the index corresponding to the pseudo-index, and the value corresponding to the pseudo-index
     \param  values  the allowed different values
     \param  idx_1   one of the extremum values of index
     \param  idx_2   the other of the extremum values of index
@@ -1827,9 +1827,13 @@ std::pair<size_t, T> MAP_VALUE_PAIR(std::span<T> values, const size_t idx_1, con
   return { element_nr, values[element_nr] };
 }
 
-//template <typename V, typename I>
+// -----------  value_map  ----------------
+
+/*! \class  value_map
+    \brief  Given a container of values of a given size, and a domain of pseudo-indices, provide a way to map between a pseudo-index and a value in the ocntainer
+*/
+
 template <typename V>
-//requires std::is_integral_v<I>
 class value_map
 {
 protected:
@@ -1841,9 +1845,14 @@ protected:
 
 public:
 
-// for now, assume idx_1 < idx_2, idx_1 == 0
+/*! \brief          Constructor
+    \param  vec     the allowed different values
+    \param  idx_1   one of the extremum values of the pseudo-index
+    \param  idx_2   the other of the extremum values of the pseudo-index
+
+    For now, the code assumes that idx_1 < idx_2, and idx_1 == 0
+*/
   template <typename I>
-//    requires (!is_duration<I>)
   value_map(const std::vector<V>& vec, const I idx_1, const I idx_2) :
     _idx_1(idx_1),
     _idx_2(idx_2)
@@ -1869,57 +1878,24 @@ public:
     }
   }
 
-//  template <typename D>
-//    requires is_duration<D>
-//  inline value_map(const std::vector<V>& vec, const _is_duration idx_1, const is_duration idx_2)
-//    { *this = value_map(vec, idx_1.count(), idx_2.count()); }
+/*! \brief          Constructor with durations
+    \param  vec     the allowed different values
+    \param  idx_1   one of the extremum values of the duration
+    \param  idx_2   the other of the extremum values of the duration
 
+    For now, the code assumes that idx_1 < idx_2, and idx_1 == 0
+*/
   template <typename D>
     requires is_duration<D>
-  inline value_map(const std::vector<V>& vec, const D idx_1, const D idx_2) // requires can go here; try it
+  inline value_map(const std::vector<V>& vec, const D idx_1, const D idx_2) // requires can go here
     { *this = value_map(vec, idx_1.count(), idx_2.count()); }
 
-//  inline value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2)
-//    { *this = value_map(vec, idx_1.count(), idx_2.count()); }
-
-#if 0
-  value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2) :
-    _idx_1(idx_1.count()),
-    _idx_2(idx_2.count())
-//      { *this = value_map(vec, idx_1.count(), idx_2.count()); }
-  { if (idx_1 == idx_2)
-      return;
-
-    const size_t idx_range     { _idx_2 - _idx_1 };
-    const size_t nvalues       { static_cast<size_t>(abs(idx_range)) + 1 };
-    const size_t input_nvalues { vec.size() };
-
-    _vec = std::vector<V>(nvalues, { });
-
-    const size_t min_idx { _idx_1 };
- //   const size_t max_idx { _idx_2 };
-
-    for (size_t idx { std::min(_idx_1, _idx_2) }; idx <= std::max(_idx_1, _idx_2); ++idx)
-    { const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
-
-      size_t element_nr { static_cast<size_t> (frac * input_nvalues) };
-
-      element_nr = std::clamp(element_nr, 0UL, (input_nvalues - 1));
-
-      _vec[idx] = vec[element_nr];
-    }
-  }
-#endif
-
-//  void overwrite(const I idx, const V val)
-//  { if ( (idx >= _idx_1) and (idx <= _idx_2) )
-//      _vec[idx] = val;
-//  }
+/*! \brief          Return value from <i>_vec</i> that corresponds to a given pseudo-index
+    \param  idx     the pseudo index for which the corresponding value is required
+*/
   template <typename I>
   V operator[](const I idx) const
-  { //if ( (idx < _idx_1) or (idx > _idx_2) )   // or perhaps use clamp so as to avoid requiring default constructor?
-    //  return V { };
-    if ( static_cast<size_t>(idx) < _idx_1 )
+  { if ( static_cast<size_t>(idx) < _idx_1 )
       return _vec[0];
 
     if ( static_cast<size_t>(idx) > _idx_2 )
@@ -1928,88 +1904,39 @@ public:
     return _vec.at(idx);
   }
 
-// WARNING MUST use same type as the constructor (e.g., std::chrono::seconds)
-// there has to be some way to force the above to be true, but I can't immediately think what it is
+/*! \brief          Return value from <i>_vec</i> that corresponds to a given pseudo-index
+    \param  idx     the pseudo index for which the corresponding value is required
+
+    WARNING MUST use same type as the constructor (e.g., std::chrono::seconds)
+   there has to be some way to force the above to be true, but I can't immediately think what it is
+*/
   template <typename D>
     requires is_duration<D>
   inline V operator[](const D idx_time) const
     { return (*this)[idx_time.count()]; }
 
-//  inline V operator[](const std::chrono::seconds idx_sec) const
-//    { return (*this)[idx_sec.count()]; }
-
-#if 0
-  V operator[](const std::chrono::seconds idx_sec) const
-  { const size_t idx { static_cast<size_t>(idx_sec.count()) };
-
-//    if ( (idx < _idx_1) or (idx > _idx_2) )   // or perhaps use clamp so as to avoid requiring default constructor?
-//      return V { };
-    if (idx < _idx_1)
-      return _vec[0];
-
-    if (idx > _idx_2)
-      return _vec[_vec.size() - 1];
-
-    return _vec.at(idx);
-  }
-#endif
-
-  };
-
-#if 0
-template <typename V, typename I>
-  requires std::is_same_v<I, std::chrono::seconds>
-class value_map
-{
-protected:
-
-  std::vector<V> _vec;
-
-  std::chrono::seconds _idx_1;
-  std::chrono::seconds _idx_2;
-
-public:
-
-// for now, assume idx_1 < idx_2, idx_1 == 0
-  value_map(const std::vector<V>& vec, const std::chrono::seconds idx_1, const std::chrono::seconds idx_2) :
-    _idx_1(idx_1),
-    _idx_2(idx_2)
-  { if (idx_1 == idx_2)
-      return;
-
-    const size_t cnt1 { idx_1.count() };
-    const size_t cnt2 { idx_2.count() };
-
-    const std::chrono::seconds idx_range     { _idx_2 - _idx_1 };
-    const size_t                         nvalues       { idx_range.count() + 1 };
-    const size_t                         input_nvalues { vec.size() };
-
-    _vec = std::vector<V>(nvalues, { });
-
-    const I min_idx { cnt1 };
-    const I max_idx { cnt2 };
-
-    for (std::chrono::seconds idx { std::min(idx_1, idx_2) }; idx <= std::max(idx_1, idx_2); ++idx)
-    { //I index = (idx_1 < idx_2) ? idx : (idx_2 - idx);
-
-      const float frac { static_cast<float>(idx - min_idx) / static_cast<float>(idx_range) };
-
-      size_t element_nr { static_cast<size_t> (frac * input_nvalues) };
-
-      element_nr = std::clamp(element_nr, 0UL, (input_nvalues - 1));
-
-      _vec[idx] = vec[element_nr];
-    }
-
+/*! \brief          Overwrite the value in <i>_vec</i> that corresponds to a given pseudo-index
+    \param  idx     the pseudo index whose corresponding value is to be overwritten
+    \param  val     the replacement value
+*/
+  template <typename I>
+  void overwrite(const I idx, const V val)
+  { if ( (idx >= _idx_1) and (idx <= _idx_2) )
+      _vec[idx] = val;
   }
 
-//  void overwrite(const I idx, const V val)
-//  { if ( (idx >= _idx_1) and (idx <= _idx_2) )
-//      _vec[idx] = val;
-//  }
+/*! \brief          Overwrite the value in <i>_vec</i> that corresponds to a given pseudo-index that is a duration
+    \param  idx     the duration pseudo index whose corresponding value is to be overwritten
+    \param  val     the replacement value
+*/
+  template <typename D>
+    requires is_duration<D>
+  void overwrite(const D idx_time, const V val)
+  { const auto idx { idx_time.count() };
 
+    if ( (idx >= _idx_1) and (idx <= _idx_2) )
+      _vec[idx] = val;
+  }
 };
-#endif
-
 
 #endif    // MACROS_H

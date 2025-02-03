@@ -1,4 +1,4 @@
-// $Id: bandmap.h 255 2024-11-10 20:30:33Z  $
+// $Id: bandmap.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -406,7 +406,7 @@ public:
   READ_AND_WRITE(mode);                 ///< mode
   READ(mult_status_is_known);           ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
   READ_AND_WRITE_RET(source);           ///< the source of this entry
-  READ(time);                           ///< time (in seconds since the epoch) at which the object was created
+  READ_AND_WRITE(time);                 ///< time (in seconds since the epoch) at which the object was created; may be adjusted later to maintain correct duration; see bandmap.cpp l. 755 dated 250120
   READ(time_of_earlier_bandmap_entry);  ///< time (in seconds since the epoch) of object that this object replaced
 
 /// was this bandmap_entry generated from the RBN?
@@ -726,10 +726,7 @@ protected:
   int                               _last_displayed_version { -1 };
   std::atomic<int>                  _version                { 0 };                        ///< used for debugging; strictly monotonically increases with each change
 
-  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { std::chrono::system_clock::now() };
-
-///  Mark filtered and rbn/filtered entries as dirty
-//  void _dirty_entries(void);
+  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { NOW_TP() };
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
@@ -765,13 +762,13 @@ protected:
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
-  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
+//  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
 
-/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                         band map entries
-     \param target_frequency_in_khz     the target frequency, in kHz
-     \param guard_band_in_hz            how far from the target to search, in Hz
-     \return                            Callsign of a station within the guard band
+/*!  \brief                   Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme               band map entries
+     \param target_frequency  the target frequency
+     \param guard_band        how far from the target to search
+     \return                  callsign of a station within the guard band
 
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
@@ -848,7 +845,6 @@ public:
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-//  bandmap_entry operator[](const std::string& callsign) const;
   bandmap_entry operator[](const std::string_view callsign) const;
 
 /*! \brief              Return the bandmap_entry corresponding to my current frequency
@@ -996,9 +992,17 @@ public:
      Applies filtering and the RBN threshold before searching for the station. Returns the
      empty string if no station was found within the guard band.
 */
-  inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-    { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
+//  inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+//    { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
+/*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
+     \param target_frequency_in_khz     target frequency
+     \param guard_band_in_hz            guard band
+     \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
+
+     Applies filtering and the RBN threshold before searching for the station. Returns the
+     empty string if no station was found within the guard band.
+*/
   inline std::string nearest_rbn_threshold_and_filtered_callsign(const frequency target_frequency, const frequency guard_band)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency, guard_band); }
 
@@ -1009,9 +1013,16 @@ public:
 
      Returns the empty string if no station was found within the guard band.
 */
-  inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-    { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
+//  inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+//    { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
+/*!  \brief                   Find the station in the displayed bandmap that is closest to a target frequency
+     \param target_frequency  target frequency
+     \param guard_band        guard band
+     \return                  call of closest bandmap entry (if any) to the target frequency and within the guard band
+
+     Returns the empty string if no station was found within the guard band.
+*/
   inline std::string nearest_displayed_callsign(const frequency target_frequency, const frequency guard_band)
     { return _nearest_callsign(displayed_entries(), target_frequency, guard_band); }
 
@@ -1087,7 +1098,6 @@ public:
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-//  bandmap_entry next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
   bandmap_entry next_displayed_be(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew);
 
 /*! \brief      Get lowest frequency on the bandmap

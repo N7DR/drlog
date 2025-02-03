@@ -1,4 +1,4 @@
-// $Id: rules.h 258 2024-12-16 16:29:04Z  $
+// $Id: rules.h 260 2025-01-27 18:44:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -679,13 +679,15 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-  bool country_mults_used(const std::string& cp = std::string { }) const;
+//  bool country_mults_used(const std::string& cp = std::string { }) const;
+  bool country_mults_used(const std::string_view cp = EMPTY_STR) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
 */
-  inline bool is_country_mult(const std::string& cp) const
+//  inline bool is_country_mult(const std::string& cp) const
+  inline bool is_country_mult(const std::string_view cp) const
     { return country_mults_used(cp); }
 
 /*! \brief          Is an exchange field a mult?
@@ -694,7 +696,7 @@ public:
 
     Returns <i>false</i> if <i>name</i> is unrecognised
 */
-  bool is_exchange_mult(const std::string& name) const;
+  bool is_exchange_mult(const std::string_view name) const;
 
 /*! \brief              All the canonical values for a particular exchange field
     \param  field_name  name of an exchange field (received)
@@ -702,7 +704,6 @@ public:
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-//  std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
   std::vector<std::string> exch_canonical_values(const std::string_view field_name) const;
 
 /*! \brief              The permitted values for a particular exchange field
