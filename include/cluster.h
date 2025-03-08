@@ -1,4 +1,4 @@
-// $Id: cluster.h 260 2025-01-27 18:44:34Z  $
+// $Id: cluster.h 261 2025-02-19 21:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,7 +121,7 @@ public:
     { return _connection.to_string(); }
 
 /*! \brief      Return time in seconds since the last data were received on the connection
-    \return     the time, in seconds, since the last data were received on the connection, in seconds
+    \return     the time since the last data were received on the connection
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
     { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _last_data_received); }

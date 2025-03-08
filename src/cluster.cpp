@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: cluster.cpp 261 2025-02-19 21:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -271,9 +271,9 @@ void dx_cluster::reset_connection(void)
 }
 
 /*! \brief      Read from the cluster socket
-    \return     the current bytes waiting on the cluster socket
+
+    Any data read from the socket are appended to <i>_unprocessed_input</i>
 */
-//string dx_cluster::read(void)
 void dx_cluster::read(void)
 { string buf;
     
@@ -363,22 +363,23 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             char_posn = copy.find_first_not_of(' ', space_posn);
             space_posn = copy.find_first_of(' ', char_posn);
 
-            const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
-
+//            const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
+// skip the date
             char_posn = copy.find_first_not_of(' ', space_posn);
             space_posn = copy.find_first_of(' ', char_posn);
             char_posn = copy.find_first_not_of(' ', space_posn);
 
-            const size_t bra_posn { copy.find_last_of('<') };
+//            const size_t bra_posn { copy.find_last_of('<') };
 
-            if (bra_posn != string_view::npos)
+            if (const size_t bra_posn { copy.find_last_of('<') }; bra_posn != string_view::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
               _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
               _poster_continent = db.info(_poster).continent();
 
               _valid = true;
               _time_processed = ::time(NULL);
-              _time_processed_1 = std::chrono::system_clock::now();
+//              _time_processed_1 = std::chrono::system_clock::now();
+              _time_processed_1 = NOW_TP();
             }
           }
         }

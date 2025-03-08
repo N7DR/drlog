@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: drlog.cpp 262 2025-02-23 14:11:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -100,7 +100,7 @@ constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugg
 message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
 screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed;
-                                            // declare early so it is ready when any of the colour functions are called
+                                            // declare early so that it is ready when any of the colour functions are called
 
 string VERSION;         ///< version string
 string DP("·"s);        ///< character for decimal point            // things get too painful if we use a wchar_t
@@ -155,10 +155,10 @@ void   do_not_show(const string_view callsign, const BAND b = ALL_BANDS);       
 string dump_screen(const string& filename = string());                                              ///< Dump a screen image to PNG file
 
 void   end_of_thread(const string& name);
-void   enter_cq_mode(void);                                 ///< Enter CQ mode
-void   enter_cq_or_sap_mode(const DRLOG_MODE new_mode);     ///< enter CQ or SAP mode
-void   enter_sap_mode(void);                                ///< Enter SAP mode
-void   exit_drlog(void);                                    ///< Cleanup and exit
+void   enter_cq_mode(void);                                     ///< Enter CQ mode
+void   enter_cq_or_sap_mode(const DRLOG_MODE new_mode);         ///< enter CQ or SAP mode
+void   enter_sap_mode(void);                                    ///< Enter SAP mode
+void   exit_drlog(void);                                        ///< Cleanup and exit
 string expand_cw_message(const string_view msg);                ///< Expand a CW message, replacing special characters
 string expected_received_exchange(const string_view callsign);  ///< expected exchange field name
 
@@ -179,8 +179,8 @@ MINUTES_TYPE NOW_MINUTES(void);                                                 
 
 void populate_win_call_history(const string_view str);                                      ///< Populate the QSO/QSL call history window
 void populate_win_info(const string_view str);                                              ///< Populate the information window
-void possible_mode_change(const frequency& f);                                          ///< possibly change mode in accordance with frequency
-void print_thread_names(void);                                                          ///< output the names of the currently active threads
+void possible_mode_change(const frequency& f);                                              ///< possibly change mode in accordance with frequency
+void print_thread_names(void);                                                              ///< output the names of the currently active threads
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
@@ -291,8 +291,8 @@ atomic<frequency> cq_mode_frequency;
 pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
 string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
-pt_mutex                      individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
-UNORDERED_STRING_MAP<string> individual_messages;                                   ///< individual messages associated with calls
+pt_mutex                      individual_messages_mutex { "INDIVIDUAL MESSAGES"s };   ///< mutex for individual messages
+UNORDERED_STRING_MAP<string> individual_messages;                                     ///< individual messages associated with calls
 
 pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
@@ -303,11 +303,11 @@ COLOUR_TYPE log_extract_bg;                 ///< background colour of LOG EXTRAC
 pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
 time_t    time_last_qsy          { time_t(NULL) };      ///< time of last QSY
 
-pt_mutex            thread_check_mutex { "THREAD CHECK"s };                     ///< mutex for controlling threads; both the following variables are under this mutex
-int                 n_running_threads { 0 };                ///< how many additional threads are running?
-atomic<bool>        exiting { false };                      ///< is the program exiting?
-bool                exiting_rig_status { false };           ///< turn off the display-rig_status thread first
-STRING_SET          thread_names;                           ///< the names of the threads
+pt_mutex            thread_check_mutex { "THREAD CHECK"s };   ///< mutex for controlling threads; both the following variables are under this mutex
+int                 n_running_threads { 0 };                  ///< how many additional threads are running?
+atomic<bool>        exiting { false };                        ///< is the program exiting?
+bool                exiting_rig_status { false };             ///< turn off the display-rig_status thread first
+STRING_SET          thread_names;                             ///< the names of the threads
 
 bool                auto_remaining_country_mults { false }; ///< whether country mults are to be automatically added (value read from context before use)
 
@@ -334,7 +334,7 @@ pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR
 
 // global variables
 
-STRING_MAP<accumulator<string>> acc_callsigns;                                  ///< accumulator for prefixes for auto callsign mults; key = mult name
+STRING_MAP<accumulator<string>> acc_callsigns;                                          ///< accumulator for prefixes for auto callsign mults; key = mult name
 accumulator<string>             acc_countries;                                          ///< accumulator for canonical prefixes for auto countries
 int                             ACCEPT_COLOUR { COLOUR_GREEN };                         ///< colour for calls that have been worked, but are not dupes
 UNORDERED_STRING_SET            all_country_mults;                                      ///< all the country mults from the rules
@@ -554,7 +554,7 @@ dx_cluster* rbn_p     { nullptr };      ///< pointer to RBN information
 const drmaster& drm_cdb { drm_db };     ///< const version of the drmaster database
 
 location_database location_db;              ///< global location database
-rig_interface rig;                          ///< rig control
+rig_interface     rig;                      ///< rig control
 
 thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
 
@@ -568,7 +568,7 @@ array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///<
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 array<UNORDERED_STRING_MAP<string>, NUMBER_OF_BANDS>  last_posted_qrg;          ///< per-band container of most recent posted QRG for calls
-array<mutex, NUMBER_OF_BANDS>                          last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
+array<mutex, NUMBER_OF_BANDS>                         last_posted_qrg_mutex;    ///< mutexes for per-band container of most recent posted QRG for calls
 
 call_history q_history;                         ///< history of calls worked
 
@@ -582,9 +582,9 @@ vector<string> win_log_snapshot;                ///< individual lines in the LOG
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 using STR_COLOUR_PAIR = pair<string, PAIR_NUMBER_TYPE>; 
-using MATCHES_TYPE = vector<STR_COLOUR_PAIR>;  // str = callsign
+using MATCHES_TYPE    = vector<STR_COLOUR_PAIR>;  // str = callsign
 
-array<MATCHES_TYPE, 4> matches_array;
+array<MATCHES_TYPE, 4> matches_array;             // this allows one to cycle easily through all four types of matches
 
 MATCHES_TYPE& scp_matches     { matches_array[0] };
 MATCHES_TYPE& fuzzy_matches   { matches_array[1] };
@@ -600,8 +600,8 @@ query_database  query_db;                       ///< database for query matches
 map<BAND, pair<frequency, MODE>> quick_qsy_map;
 
 /// variables to hold the foreground and background colours of the QTC HINT window
-int win_qtc_hint_fg;
-int win_qtc_hint_bg;
+int win_qtc_hint_fg { COLOUR_WHITE };
+int win_qtc_hint_bg { COLOUR_BLACK };
 
 // prepare for terminal I/O
 keyboard_queue keyboard;                    ///< queue of keyboard events
@@ -626,7 +626,7 @@ bool mm_country_mults    { false };            ///< can /MM stns be country mult
     ordinary matches
     red matches
 
-    Might want to put red matches after green matches
+  TODO?: Might want to put red matches immediately after green matches
 
   This has to go before the inline functions that use it
 */
@@ -634,7 +634,7 @@ template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
 { using CALL_AND_COLOURS = pair<string, PAIR_NUMBER_TYPE>;
 
-  if (callsign.length() >= context.match_minimum())
+  if (callsign.length() >= context.match_minimum())   // only process if the callsign is sufficiently long
   { const auto [win_fg, win_bg] { win.fgbg() };
 
 // put in right order and also get the colours right
@@ -670,7 +670,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // change the order within each category if XSCP ordering is to be used
     if (xscp_sort)
-    { for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })
+    { for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })    // step through each type of match
         if (matches_p->size() > 1)
          SORT(*matches_p, xscp_order_greater);
     }
@@ -681,7 +681,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
     win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= match_vector;
   }
-  else
+  else                                        // callsign is too short
     win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 }
 
@@ -700,7 +700,7 @@ inline memory_entry recall_memory(const unsigned int n)
 
     This does not need to be, and is not, either robust or clever. It's used only to control
     behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
-    a slow machine if the CW is not being sent on a thread with RT scheduling.
+    a very slow machine if the CW is not being sent on a thread with RT scheduling.
 */
 inline bool sending_cw(void)
   { return (cw_p != nullptr) and !(cw_p->empty()); }
@@ -759,7 +759,8 @@ inline void update_scp_window(const string& callsign)
 inline bool xscp_order_greater(const string& c1, const string& c2)
   { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
-  // OK
+#if 0
+// OK
 string test_fn(const size_t start_posn, const size_t len)
 { string str { "1234567890qwertyuiopasdfghjklzxcvbnm"sv };
 
@@ -791,6 +792,7 @@ vector<string_view> test_fn3(void)
 
   return rv;
 }
+#endif
 
 int main(int argc, char** argv)
 { 
@@ -825,30 +827,6 @@ int main(int argc, char** argv)
 
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
-
-#if 0
-  { string_view sv1 { test_fn(0, 5) };
-
-    ost << "*** " << sv1 << endl;
-
-    string_view sv2 { test_fn(1, 6) };
-
-    ost << "*** " << sv1 << endl;
-    ost << "*** " << sv2 << endl;
-
-    const vector<string_view> v = test_fn2();
-
-    FOR_ALL(v, [] (const string_view sv) { ost << sv << endl; });
-
-    ost << "*** " << sv1 << endl;
-    ost << "*** " << sv2 << endl;
-
-    const vector<string_view> v2 = test_fn2();
-
-    ost << v[2] << endl;
-    ost << v2[2] << endl;
-  }
-#endif
 
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
@@ -2542,7 +2520,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
 
       if (time_since_data_last_received > 60s)
-      { const string msg       { "NO DATA RECEIVED FOR "s + to_string(time_since_data_last_received.count()) + " SECONDS"s };
+      { const string msg       { "NO DATA RECEIVED FOR "s + to_string(duration_cast<seconds>(time_since_data_last_received).count()) + " SECONDS"s };
         const int    bg_colour { cluster_line_win.bg() };
         const int    fg_colour { cluster_line_win.fg() };
 
@@ -2941,7 +2919,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 void get_cluster_info(dx_cluster* cluster_p)
 { //constexpr int READ_INTERVAL_SEC { 5 };                  // number of seconds to pause between reads from the socket
 //  constexpr int READ_INTERVAL_SEC { 4 };                  // number of seconds to pause between reads from the socket
-  constexpr int READ_INTERVAL_SEC { 3 };                  // number of seconds to pause between reads from the socket
+//  constexpr int READ_INTERVAL_SEC { 3 };                  // number of seconds to pause between reads from the socket
+  constexpr int READ_INTERVAL_SEC { 2 };                  // number of seconds to pause between reads from the socket
 
   const string THREAD_NAME { "get cluster info"s };
 
@@ -8708,7 +8687,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
-  { //if (debug)
+  { if (debug)
       ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
@@ -8730,27 +8709,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
   }
-
-// check that we aren't somehow in an inconsistent state:
-// in 2024 CQ WPX CW I noticed a few times that the rig didn't seem to move,
-// although the CALL window had the contents as if it had moved
-#if 0
-  bandmap_entry mbe_copy;
-
-  { SAFELOCK(my_bandmap_entry);
-
-    mbe_copy = my_bandmap_entry;
-  }
-
-  if ( (be.freq() - mbe_copy.freq()) > 100)   // if we're more than 100Hz from where we expect
-  { ost << "INCONSISTENT BANDMAP STATE" << endl
-        << "be: " << be << endl
-        << "mbe = " << mbe_copy << endl
-        << "actual measured frequency of rig = " << rig.rig_frequency() << endl;
-
-    debug = true;     // automatically turn on debugging
-  }
-#endif
 
   return true;
 }

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: rules.cpp 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1232,7 +1232,8 @@ bool contest_rules::sent_exchange_includes(const std::string_view str, const MOD
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-bool contest_rules::is_exchange_field_used_for_country(const string_view field_name, const string& canonical_prefix) const
+//bool contest_rules::is_exchange_field_used_for_country(const string_view field_name, const string& canonical_prefix) const
+bool contest_rules::is_exchange_field_used_for_country(const string_view field_name, const string_view canonical_prefix) const
 { SAFELOCK(rules);
 
   if (!_exchange_field_eft.contains(field_name))

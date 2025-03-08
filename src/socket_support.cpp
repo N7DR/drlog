@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: socket_support.cpp 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,19 +40,29 @@ extern message_stream ost;                                              ///< for
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
-constexpr size_t MIN_IN_BUFFER_SIZE { 4096 };   // minumum size of a TCP input buffer
-//constexpr size_t MAX_IN_BUFFER_SIZE { 8192 };   // maximum size of a TCP input buffer
-constexpr size_t MAX_IN_BUFFER_SIZE { 16'384 };   // maximum size of a TCP input buffer
+constexpr size_t MIN_IN_BUFFER_SIZE { 4'096 };   // minumum size of a TCP input buffer, in bytes
+//constexpr size_t MAX_IN_BUFFER_SIZE { 8'192 };   // maximum size of a TCP input buffer
+//constexpr size_t MAX_IN_BUFFER_SIZE { 16'384 };   // maximum size of a TCP input buffer
+constexpr size_t MAX_IN_BUFFER_SIZE { 32'768 };   // maximum size of a TCP input buffer, in bytes
 
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
+/*! \brief          Set an option for a file descriptor
+    \param  option  the option to set
+    \param  fd      file descriptor on which the option <i>option</i> is to be set
+
+    See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
+    NB: a socket is a valid file descriptor
+*/
 void fd_set_option(const int opt, const int fd)  // e.g., O_NONBLOCK
-{ int flags;
+{ //int flags;
 
-  flags = fcntl(fd, F_GETFL, 0);
-  int status = fcntl(fd, F_SETFL, flags | opt);
+  //flags = fcntl(fd, F_GETFL, 0);
+  int flags { fcntl(fd, F_GETFL, 0) };
 
-  if (status == -1)
+//  int status = fcntl(fd, F_SETFL, flags | opt);
+
+  if (const int status { fcntl(fd, F_SETFL, flags | opt) }; status == -1)
     throw socket_support_error(SOCKET_SUPPORT_FLAG_ERROR);
 }
 
@@ -88,7 +98,7 @@ bool tcp_socket::_resize_buffer(void) const  // logically const
 { if (_in_buffer_size < MAX_IN_BUFFER_SIZE)
   { const size_t new_buffer_size { min(MAX_IN_BUFFER_SIZE, _in_buffer_size * 2) };
 
-    ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
+//    ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
 
     delete [] _in_buffer_p;
 
@@ -332,13 +342,14 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   SAFELOCK(_tcp_socket);
 
   fd_set r_set, w_set;
-  int flags;
+//  int flags;
 
   fd_set_value(r_set, _sock);
   w_set = r_set;
 
 // set socket nonblocking flag
-  flags = fcntl(_sock, F_GETFL, 0);
+  int flags { fcntl(_sock, F_GETFL, 0) };
+
   fcntl(_sock, F_SETFL, flags | O_NONBLOCK);
 
   int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
@@ -354,16 +365,19 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     const unsigned int p       { port(*(sockaddr*)(&adr)) };
 
     if (errno != EINPROGRESS)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR,
+                                   "Status "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
     if (status < 0)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR,
+                                   "EINPROGRESS: "s + ::to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
 
     if (status == 0)  // timed out
     { errno = ETIMEDOUT;
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR,
+                                   "Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + ::to_string(p));
     }
 
 // select is positive, which means that the file descriptor is OK

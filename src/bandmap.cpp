@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: bandmap.cpp 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1623,7 +1623,6 @@ void bandmap::remove_from_do_not_add(const string& callsign)
 
     See: https://www.reddit.com/r/cpp/comments/aqt7a0/status_of_string_view_and_regex/
 */
-//vector<string> bandmap::regex_matches(const string& regex_str)
 vector<string> bandmap::regex_matches(const string_view regex_str)
 { const BM_ENTRIES bme { displayed_entries() };
   const regex      rgx { string { regex_str } };

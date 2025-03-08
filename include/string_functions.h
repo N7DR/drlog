@@ -1,4 +1,4 @@
-// $Id: string_functions.h 259 2025-01-19 15:44:33Z  $
+// $Id: string_functions.h 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -198,17 +198,20 @@ std::string to_string(const T val)
   return ""s;
 }
 
+/*! \brief      Generic conversion to string, for parameters that can be trivially converted
+    \param  s   value to convert
+    \return     <i>s</i>converted to a string
+*/
 template <class T>
 inline T to_string(const std::convertible_to<std::string> auto& s)
   { return s; }
 
-//template <class T>
-//inline std::string to_string(const T val)
-//  requires is_string<T> or is_string_view<T>
-//{ return val; }
-
-inline std::string to_string(const char val)
-  { return std::string { val }; }
+/*! \brief      Convert a single char to a string
+    \param  c   char to convert
+    \return     <i>c</i>converted to a string
+*/
+inline std::string to_string(const char c)
+  { return std::string { c }; }
 
 // catchall
 template <class T>
@@ -387,7 +390,7 @@ char first_digit(const std::string_view sv, const char c = ' ');
     \param  str     string to test
     \return         whether <i>str</i> comprises only digits
 */
-inline bool is_digits(std::string_view str)
+inline bool is_digits(const std::string_view str)
   { return ALL_OF(str, [] (const char c) { return isdigit(c); } ); }
 
 /*! \brief      Is a character a digit?
@@ -418,7 +421,7 @@ std::string pad_string(const std::string_view s, const size_t len, const enum PA
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-inline std::string pad_left(std::string_view s, const size_t len, const char pad_char = ' ')
+inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = ' ')
   { return pad_string(s, len, PAD::LEFT, pad_char); }
 
   /*! \brief            Left pad a number to a particular size

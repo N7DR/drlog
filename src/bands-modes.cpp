@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: bands-modes.cpp 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,10 +47,10 @@ const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES { { { BAND
     \param f    frequency in Hz, kHz or MHz
 */
 frequency::frequency(const double f)
-{ if (f < 100)                  // MHz
+{ if (f < 100)                                                // MHz
     _hz = static_cast<HZ_TYPE>(f * 1'000'000 + 0.5);
   else
-    _hz = static_cast<HZ_TYPE>( (f < 100'000) ? (f * 1'000 + 0.5) : (f + 0.5) );
+    _hz = static_cast<HZ_TYPE>( (f < 100'000) ? (f * 1'000 + 0.5) : (f + 0.5) );  // kHz and Hz
 }
 
 /*! \brief      return string suitable for use in bandmap
@@ -115,9 +115,9 @@ frequency frequency::difference(const frequency& f2) const
     Returns BAND_160 if the frequency is outside all bands
 */
 BAND frequency::next_band_down(const set<BAND>& bands) const
-{ for (auto cit { bands.crbegin() }; cit != bands.crend(); ++cit)
-  { if (upper_edge(*cit) < *this)
-     return *cit;
+{ for (auto crit { bands.crbegin() }; crit != bands.crend(); ++crit)
+  { if (upper_edge(*crit) < *this)
+     return *crit;
   }
 
   return ( is_within_ham_band() ? BAND(*this) : BAND_160 );
@@ -233,7 +233,7 @@ frequency upper_edge(const BAND b)
 */
 MODE putative_mode(const frequency& f)
 { try
-  { const BAND b { to_BAND(f) };
+  { const BAND      b           { to_BAND(f) };
     const frequency break_point { MODE_BREAK_POINT.at(b) };
 
     return ( (f < break_point) ? MODE_CW : MODE_SSB );

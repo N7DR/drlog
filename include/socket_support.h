@@ -1,4 +1,4 @@
-// $Id: socket_support.h 260 2025-01-27 18:44:34Z  $
+// $Id: socket_support.h 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -84,6 +84,13 @@ const std::string icmp_socket_error_string[3] { std::string { },
 /// Type that holds a socket -- syntactic sugar
 using SOCKET = int;
 
+/*! \brief          Set an option for a file descriptor
+    \param  option  the option to set
+    \param  fd      file descriptor on which the option <i>option</i> is to be set
+
+    See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
+    NB: a socket is a valid file descriptor
+*/
 void fd_set_option(const int opt, const int fd);
 
 /*! \brief        Set an fd_set to contain a particular single value of a file descriptor
@@ -229,7 +236,7 @@ protected:
   unsigned int      _timeout_in_tenths  { 600 };                    ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
   mutable char*     _in_buffer_p        { nullptr };                ///< used to store data read from the network, if this is a read socket
-  mutable size_t    _in_buffer_size     { 0 };
+  mutable size_t    _in_buffer_size     { 0 };                      ///< size of the buffer at <i>_in_buffer_p</i>
 
 /*! \brief close the socket
 */

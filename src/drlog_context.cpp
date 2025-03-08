@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 260 2025-01-27 18:44:34Z  $
+// $Id: drlog_context.cpp 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -303,6 +303,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"sv)
       FOR_ALL(clean_split_string <string> (rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
+//      FOR_ALL(clean_split_string <string_view> (rhs), [this] (const string_view band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; }); // [] not yet supported
 
 // CALL OK NOW MESSAGE
     if (LHS == "CALL OK NOW MESSAGE"sv)
@@ -479,9 +480,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // EXCHANGE[
     if (testline.starts_with("EXCHANGE["sv))
-    { const string country_list { delimited_substring <std::string> (LHS, '[', ']', DELIMITERS::DROP) };
+    { const string_view country_list { delimited_substring <std::string_view> (LHS, '[', ']', DELIMITERS::DROP) };
 
-      FOR_ALL(clean_split_string <string> (country_list), [RHS, this] (const string& str) { _exchange_per_country += { str, RHS }; } );
+      FOR_ALL(clean_split_string <string_view> (country_list), [RHS, this] (const string_view str) { _exchange_per_country += { str, RHS }; } );
     }
 
 // EXCHANGE CQ
@@ -511,9 +512,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE"sv) or (LHS == "EXCHANGE PREFILL FILES"sv) )
-    { const vector<string> files { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) };
+    { //const vector<string> files { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) };
 
-      for (const auto& file : files)
+      for (const auto& file : vector<string> { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) })
       { if (const vector<string> fields { clean_split_string <std::string> (file) }; fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
       }

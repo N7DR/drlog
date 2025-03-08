@@ -67,7 +67,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-  static const STRING_SET broken_TEST { "EST"s, "NST"s, "TEAT"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+  static const STRING_SET broken_TEST { "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };
@@ -181,6 +181,12 @@ string autocorrect_database::corrected_call(const string_view str) const
 // initial PY copied as initial TM
   if (absent and str.starts_with("TM"sv))
   { if (const string call_to_test { "PY"s + substring <std::string> (str, 2) }; contains(call_to_test))
+      return insert(str, call_to_test);
+  }
+
+// initial YB copied as initial TI
+  if (absent and str.starts_with("TI"sv))
+  { if (const string call_to_test { "YB"s + substring <std::string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 

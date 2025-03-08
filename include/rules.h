@@ -1,4 +1,4 @@
-// $Id: rules.h 260 2025-01-27 18:44:34Z  $
+// $Id: rules.h 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -712,7 +712,6 @@ public:
 
     Returns empty set if the field can take any value, or if it's a regex.
 */
-//  STRING_SET exch_permitted_values(const std::string& field_name) const;
   STRING_SET exch_permitted_values(const std::string_view field_name) const;
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
@@ -721,7 +720,6 @@ public:
 
     Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
-//  inline bool exch_has_permitted_values(const std::string& field_name) const
   inline bool exch_has_permitted_values(const std::string_view field_name) const
     { SAFELOCK(rules);
       return (_permitted_exchange_values.contains(field_name));
@@ -828,7 +826,8 @@ public:
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
 //  bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
-  bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string& canonical_prefix) const;
+//  bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string& canonical_prefix) const;
+  bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string_view canonical_prefix) const;
 
 /// the names of all the possible exchange fields
   STRING_SET exchange_field_names(void) const;

@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 259 2025-01-19 15:44:33Z  $
+// $Id: bands-modes.h 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -104,7 +104,6 @@ static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
                                                                   };
 
 /// generate the mode from a name
-
 static const STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
                                                { "SSB"s,  MODE_SSB },
                                                { "RTTY"s, MODE_RTTY }

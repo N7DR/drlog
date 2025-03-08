@@ -1,4 +1,4 @@
-// $Id: bandmap.h 260 2025-01-27 18:44:34Z  $
+// $Id: bandmap.h 263 2025-03-03 14:23:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -414,7 +414,8 @@ public:
     { return (_source == BANDMAP_ENTRY_SOURCE::RBN); }
 
 /// does the call in this bandmap_entry match the value <i>str</i>?
-  inline bool call_is(const std::string& str) const
+//  inline bool call_is(const std::string& str) const
+  inline bool call_is(const std::string_view str) const
     { return (_callsign == str); }
 
 /// does this entry correspond to me?
@@ -713,12 +714,10 @@ protected:
   BM_ENTRIES                        _entries                { };                          ///< all the entries
   std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
-//  bool                              _filtered_entries_dirty { false };                    ///< is the filtered version dirty?
   bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
   frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
   uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
-//  bool                              _rbn_threshold_and_filtered_entries_dirty { false };  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
   UNORDERED_STRING_SET   _recent_calls           { };                          ///< calls recently added
   COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };             ///< colour to use for entries < 120 seconds old (if black, then not used)
