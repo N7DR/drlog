@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 261 2025-02-19 21:27:02Z  $
+// $Id: cluster.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,7 +56,7 @@ void dx_cluster::_process_error(void)
 new_socket:
   try
   { try
-    { _connection.close();                     // releases the file descriptor
+    { _connection.close();                     // releases the file descriptor, closes the fundamental TCP connection
       ost << "TCP connection closed OK" << endl;
     }
 
@@ -73,7 +73,7 @@ new_socket:
 // reconnect to the server
 reconnect:
     try
-    { ost << "Attempting to use the new socket to reconnect to server: " << _server << " on port " << _port << endl;
+    { ost << "Attempting to use the new socket to connect to server: " << _server << " on port " << _port << endl;
 
 // resolve the name
       const string dotted_decimal { name_to_dotted_decimal(_server) };
@@ -98,6 +98,7 @@ reconnect:
           return;
       }
 
+      ost << "will attempt to reconnect" << endl;
       goto reconnect;
     }
   }
@@ -114,6 +115,7 @@ reconnect:
         return;
     }
 
+    ost << "will attempt to create new socket" << endl;
     goto new_socket;
   }
 
@@ -214,7 +216,6 @@ dx_cluster::~dx_cluster(void)
     \param  msg     the message to be sent
     \return         whether transmission was successful
 */
-//bool dx_cluster::send(const std::string& msg)
 bool dx_cluster::send(const std::string_view msg)
 { try
   { _connection.send(msg);

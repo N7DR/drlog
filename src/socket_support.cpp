@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 263 2025-03-03 14:23:07Z  $
+// $Id: socket_support.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -140,7 +140,6 @@ tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
   { reuse();    // enable re-use
- //   linger();   // linger turned on, immediate time-out
     linger(DEFAULT_TCP_LINGER);
   }
 
@@ -164,7 +163,7 @@ tcp_socket::tcp_socket(SOCKET* sp)
   { try
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-      reuse();      // enable re-use
+      reuse();            // enable re-use
       linger(DEFAULT_TCP_LINGER);
     }
 
@@ -285,6 +284,12 @@ void tcp_socket::new_socket(void)
 
     reuse();    // enable re-use
     linger(DEFAULT_TCP_LINGER);
+
+// probably should clear out pre-existing information; but we keep the old data buffer (that is removed only by the destructor)
+    _bound_address = sockaddr_storage { };
+    _destination = sockaddr_storage { };
+    _destination_is_set = false;
+    _preexisting_socket = false;
   }
   
   catch (...)
@@ -320,7 +325,8 @@ void tcp_socket::destination(const sockaddr_storage& adr)
     _destination_is_set = true;
   }
   else
-  { _destination_is_set = false;
+  { ost << "unable to connect to destination in tcp_socket::destination()" << endl;
+    _destination_is_set = false;
   
     const string       address { dotted_decimal_address(*(sockaddr*)(&adr)) };
     const unsigned int p       { port(*(sockaddr*)(&adr)) };
@@ -342,7 +348,6 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   SAFELOCK(_tcp_socket);
 
   fd_set r_set, w_set;
-//  int flags;
 
   fd_set_value(r_set, _sock);
   w_set = r_set;
@@ -405,25 +410,30 @@ void tcp_socket::connected(const sockaddr_storage& adr)
 */
 void tcp_socket::send(const std::string_view msg)
 { if (!_destination_is_set)
+  { ost << "Error in tcp_socket::send(); destination unknown" << endl;
     throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
+  }
 
   SAFELOCK(_tcp_socket);
 
   const ssize_t status { ::send(_sock, msg.data(), msg.length(), 0) };
 
   if (status == -1)
+  { ost << "Error in tcp_socket::send(); status -1 returned from ::send() when sending message: " << msg << endl;
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);
+  }
 }
 
 /*! \brief      Simple receive
     \return     received string
 */
 string tcp_socket::read(void) const
-{ _create_buffer_if_necessary();
+{ _create_buffer_if_necessary();    // check that we have a place to put read data
 
   const char* cp { _in_buffer_p };
 
-  string rv;
+  string rv { };
+
   int    status;
 
   bool filled_buffer { false };       // indicate whether we filled the input buffer
@@ -461,7 +471,7 @@ string tcp_socket::read(void) const
     Throws an exception if the read times out
 */
 string tcp_socket::read(const unsigned long timeout_secs) const
-{ _create_buffer_if_necessary();
+{ _create_buffer_if_necessary();    // check that we have a place to put read data
 
   string rv { };
 
@@ -474,7 +484,7 @@ string tcp_socket::read(const unsigned long timeout_secs) const
   SAFELOCK(_tcp_socket);
 
 // check
-  if (!FD_ISSET(_sock, &ps_set))                         // unable to set socket for listening
+  if (!FD_ISSET(_sock, &ps_set))                            // unable to set socket for listening
   { ost << "Throwing SOCKET_SUPPORT_UNABLE_TO_LISTEN" << endl;
     throw socket_support_error(SOCKET_SUPPORT_UNABLE_TO_LISTEN);
   }
@@ -552,22 +562,7 @@ string tcp_socket::read(const unsigned long timeout_secs) const
       } while ((status == static_cast<int>(_in_buffer_size)) or (retry == true));
 
       if (filled_buffer)
-      { //filled_buffer = false;
         _resize_buffer();
-
-#if 0
-        if (_in_buffer_size < MAX_IN_BUFFER_SIZE)
-        { const size_t new_buffer_size = min(MAX_IN_BUFFER_SIZE, _in_buffer_size * 2);
-
-          ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
-
-          delete [] cp;
-
-          _in_buffer_size = new_buffer_size;
-          _in_buffer_p = new char[_in_buffer_size];
-        }
-#endif
-      }
 
       break;
     }
@@ -928,7 +923,7 @@ bool icmp_socket::ping(void)
       rv = true;
     }
     else
-      ost << "Got ICMP packet with type: " << rcv_hdr.type << endl;
+      ost << "Got ICMP packet with type: " << static_cast<int>(rcv_hdr.type) << endl;
   }
 
   catch (const socket_support_error& e)

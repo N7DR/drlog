@@ -109,6 +109,7 @@ static const STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
                                                { "RTTY"s, MODE_RTTY }
                                              };
 
+// the bottoms of bands, as strings
 static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                           { BAND_80,  "3500"s },
                                                           { BAND_60,  "5330.5"s },
@@ -293,6 +294,8 @@ public:
 */
   BAND next_band_up(const std::set<BAND>& bands) const;
 
+
+// frequency + frequency
   inline frequency operator+(const frequency& f) const
     { return frequency(hz() + f.hz(), FREQUENCY_UNIT::HZ); }
 

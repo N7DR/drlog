@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 250 2024-08-12 15:16:35Z  $
+// $Id: rig_interface.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -977,7 +977,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
                     ost << "status communication with rig failed" << endl;
                 }
                 else
-                  ost << "last-attempt timeout (" << (TIMEOUT_MICROSECONDS * MAX_ATTEMPTS) << "µs) in select() in raw_command: " << cmd << endl;
+                  ost << "last-attempt timeout (" << (TIMEOUT_MICROSECONDS * MAX_ATTEMPTS) << " microseconds) in select() in raw_command: " << cmd << endl;
               }
             }
             else
@@ -1028,6 +1028,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
 
 #endif
 
+// THIS IS NOT CURRENTLY USED
 #if defined(NEW_RAW_COMMAND)
 BURBLE
 const string rig_interface::raw_command(const string& cmd, const unsigned int expected_length)
@@ -1115,8 +1116,8 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
             const int percent = rcvd.length() * 100 / 131640;
 
             _error_alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
-//            ost << "not yet complete; counter now = " << counter << " and received length = " << rcvd.length() << endl;
-            sleep_for(milliseconds(1000));  // we have the lock for all this time
+ //           sleep_for(milliseconds(1000));  // we have the lock for all this time
+            sleep_for(1s);  // we have the lock for all this time
           }
           else
             _error_alert("P3 screendump complete");
@@ -1131,11 +1132,10 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
           timeout.tv_usec = timeout_microseconds;
 
           if (counter)                          // we've already slept the first time through
- //           sleep_for(milliseconds(50));
             sleep_for(50ms);
 
-          int status = select(fd + 1, &set, NULL, NULL, &timeout);
-          int nread = 0;
+          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
+          int nread  { 0 };
 
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
@@ -1636,19 +1636,19 @@ string hamlib_error_code_to_string(const int e)
       return "No error, operation completed sucessfully"s;
 
     case RIG_EINVAL :
-      return "invalid parameter"s;
+      return "Invalid parameter"s;
 
     case RIG_ECONF :
-      return "invalid configuration (serial,..)"s;
+      return "Invalid configuration (serial,..)"s;
 
     case RIG_ENOMEM :
-      return "memory shortage"s;
+      return "Memory shortage"s;
 
     case RIG_ENIMPL :
-      return "function not implemented, but will be"s;
+      return "Function not implemented, but will be"s;
 
     case RIG_ETIMEOUT :
-      return "communication timed out"s;
+      return "Communication timed out"s;
 
     case RIG_EIO :
       return "IO error, including open failed"s;
@@ -1666,7 +1666,7 @@ string hamlib_error_code_to_string(const int e)
       return "Command performed, but arg truncated"s;
 
     case RIG_ENAVAIL :
-      return "function not available"s;
+      return "Function not available"s;
 
     case RIG_ENTARGET :
       return "VFO not targetable"s;

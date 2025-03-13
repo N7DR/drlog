@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 263 2025-03-03 14:23:07Z  $
+// $Id: drlog_context.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -644,10 +644,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS"sv)
-    { //const vector<string> break_points { clean_split_string <string> (RHS) };
-      const vector<string_view> break_points { clean_split_string <string_view> (RHS) };
+    { //const vector<string_view> break_points { clean_split_string <string_view> (RHS) };
 
-      for (const auto& break_point : break_points)
+      //for (const auto& break_point : break_points)
+      for (const string_view break_point : clean_split_string <string_view> (RHS))
       { const frequency f { break_point };
 
         _mode_break_points += { to_BAND(f), f };
@@ -1046,7 +1046,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
     { if (rhs.ends_with('%'))           // if percentage
-        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end <std::string> (rhs, '%')), 0, 100);
+        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_char_from_end <std::string> (rhs, '%')), 0, 100);
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
     }
@@ -1099,8 +1099,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
       else
       { const vector<string_view> countries { clean_split_string <string_view> (RHS) };
 
-        _remaining_country_mults_list = STRING_SET { countries.cbegin(), countries.cend() };
+//        _remaining_country_mults_list = STRING_SET { countries.cbegin(), countries.cend() };
 //        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
+        _remaining_country_mults_list = std::ranges::to<STRING_SET>(countries);              // not yet supported
       }
     }
 

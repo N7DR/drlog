@@ -719,7 +719,7 @@ protected:
   uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied
   decltype(_entries)                _rbn_threshold_filtered_and_culled_entries { };       ///< entries, with the RBN threshold, filter and cull function applied
-  UNORDERED_STRING_SET   _recent_calls           { };                          ///< calls recently added
+  UNORDERED_STRING_SET              _recent_calls           { };                          ///< calls recently added
   COLOUR_TYPE                       _recent_colour          { COLOUR_BLACK };             ///< colour to use for entries < 120 seconds old (if black, then not used)
 
   int                               _last_displayed_version { -1 };
@@ -1238,6 +1238,15 @@ public:
     return (_version > _last_displayed_version);
   }
 
+// provide externally-accessible lock and unlock... be very careful with these
+// these are necessary so that blocks containing several bandmap calls can be protected without leaving unprotected periods
+
+//  inline void lock(void)
+//    { _bandmap_mutex.lock(); }
+
+//  inline void unlock(void)
+//    { _bandmap_mutex.unlock(); }
+
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
 
@@ -1271,7 +1280,7 @@ public:
     This is inside the bandmap class so that we have access to the bandmap mutex
 */
 inline window& operator<(window& win, bandmap& bm)
-  { return bm.write_to_window(win /*, false */); }
+  { return bm.write_to_window(win); }
 
 /*! \brief          Write a <i>bandmap</i> object to an output stream
     \param  ost     output stream

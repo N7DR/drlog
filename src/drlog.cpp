@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 262 2025-02-23 14:11:49Z  $
+// $Id: drlog.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,7 @@
 #include "functions.h"
 #include "fuzzy.h"
 #include "grid.h"
+#include "internals.h"
 #include "keyboard.h"
 #include "log.h"
 #include "log_message.h"
@@ -827,6 +828,10 @@ int main(int argc, char** argv)
 
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
+
+  { gcc_backtrace bt(true);
+
+  }
 
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
@@ -2530,11 +2535,17 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // insert connection reset here if time_since_data_last_received.count() is "too large"
         if (time_since_data_last_received > context.cluster_timeout())
-        { ost << "WARNING: cluster timeout exceeded; connection status = " << rbn.connection_status() <<  endl;
+        { ost << "WARNING: cluster timeout exceeded; connection status = " << endl
+                                                                           << "----------" << endl
+                                                                           << rbn.connection_status()
+                                                                           << "----------" << endl;
 
           rbn.reset_connection();
 
-          ost << "attempted to reset connection; connection_status = " << rbn.connection_status() <<  endl;
+          ost << "attempted to reset connection; connection_status = " << endl
+                                                                       << "----------" << endl
+                                                                       << rbn.connection_status()
+                                                                       << "----------" << endl;
         }
         else
           ost << "cluster timeout of " << context.cluster_timeout() << " seconds not yet exceeded; reset not attempted" <<  endl;
@@ -3283,7 +3294,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         ost << "time taken to display band = " << t2.time_span<int>() << " milliseconds" << endl;
 
 // is there a station close to our frequency?
-//        const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
         const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency, context.guard_band(cur_mode)) };
 
         display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
@@ -3484,7 +3494,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const string log_str           { logbk.cabrillo_log(context, context.cabrillo_include_score() ? statistics.points(rules) : 0) };    // 0 indicates that score is not to be included
 
         write_file(log_str, cabrillo_filename);
-        alert((string("Cabrillo file "s) + context.cabrillo_filename() + " written"s));
+//        alert((string("Cabrillo file "s) + context.cabrillo_filename() + " written"s));
+        alert("Cabrillo file "s + context.cabrillo_filename() + " written"s);
       }
 
       win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -8428,6 +8439,8 @@ void end_of_thread(const string& name)
     \param  m       mode
 
     If the relevant bandmap has changed, but my frequency hasn't changed since the last time that this was called, THEN DO NOTHING
+
+    I suspect that there is still a bug in here somewhere, leading to the occasional inconsistent update that (rarely) appears
 */
 void update_based_on_frequency_change(const frequency& f, const MODE m)
 { static frequency last_update_frequency { };
@@ -8575,10 +8588,13 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     \param  nskip   number of stations to skip (default = 0)
     \return         always returns true
 
-    This is a friend function to the bandmap class, to allow us to lock the bandmap here
+    This is a friend function to the bandmap class, to allow us to lock the bandmap here.
+    This is NOT the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ bandmap& bm { bandmaps[current_band] };
+{ ost << "explicit process_band_map_function() called" << endl;
+
+  bandmap& bm { bandmaps[current_band] };
 
   safelock bm_lock(bm._bandmap_mutex);    // hold the lock for this entire routine; this essentially forces this update to occur on-screen
 
@@ -8665,7 +8681,8 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     \param  nskip   number of stations to skip (default = 0)
     \return         always returns true
 
-    This is a friend function to the bandmap class, to allow us to lock the bandmap here
+    This is a friend function to the bandmap class, to allow us to lock the bandmap here.
+    This is the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 { constexpr frequency MAX_SKEW { 95_Hz };
@@ -8687,13 +8704,13 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
-  { if (debug)
+  { //if (debug)
       ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
-    rig.rig_frequency(be.freq());
-    win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
+    rig.rig_frequency(be.freq());                                   // QSY to next station
+    win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();    // display call of next station
 
     enter_sap_mode();
 
@@ -8701,8 +8718,13 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     possible_mode_change(be.freq());
     update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
-    if (debug)
+    //if (debug)
       ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
+
+    { const bandmap_entry my_be { bm[MY_MARKER] };
+
+      ost << "be at MY_MARKER: " << my_be << endl;
+    }
 
     ok_to_poll_k3 = true;
 

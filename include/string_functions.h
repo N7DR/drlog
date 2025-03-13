@@ -557,7 +557,8 @@ auto remove_from_start(const std::string_view s, const std::string_view ss) -> S
     the empty string is returned.
 */
 template <typename STYPE>
-inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
+//inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
+inline auto remove_chars_from_end(const std::string_view s, const unsigned int n) -> STYPE
   { return ( (n >= s.length()) ? STYPE { EMPTY_STR } : STYPE { s.substr(0, s.length() - n) } ); }
 
 /*! \brief      Remove characters if present at the end of a string
@@ -568,8 +569,9 @@ inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
     If <i>e</i> is not present, just returns <i>s</i>
 */
 template <typename STYPE>
-inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
-  { return ( s.ends_with(e) ? remove_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
+//inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
+inline auto remove_string_from_end(const std::string_view s, const std::string_view e) -> STYPE
+  { return ( s.ends_with(e) ? remove_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
 
 /*! \brief      Remove character if present at the end of a string
     \param  s   original string
@@ -579,8 +581,8 @@ inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
     If <i>c</i> is not present, just returns <i>s</i>
 */
 template <typename STYPE>
-inline auto remove_from_end(std::string_view s, const char c) -> STYPE
-  { return ( s.ends_with(c) ? remove_from_end <STYPE> (s, 1u) : STYPE { s } ); }
+inline auto remove_char_from_end(const std::string_view s, const char c) -> STYPE
+  { return ( s.ends_with(c) ? remove_chars_from_end <STYPE> (s, 1u) : STYPE { s } ); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -588,7 +590,7 @@ inline auto remove_from_end(std::string_view s, const char c) -> STYPE
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 template <typename STYPE>
-auto remove_leading(std::string_view cs, const char c) -> STYPE
+auto remove_leading(const std::string_view cs, const char c) -> STYPE
 { if (cs.empty())
     return STYPE { };
 
@@ -602,7 +604,7 @@ auto remove_leading(std::string_view cs, const char c) -> STYPE
     \return     <i>cs</i> with any leading spaces removed
 */
 template <typename STYPE>
-inline auto remove_leading_spaces(std::string_view cs) -> STYPE
+inline auto remove_leading_spaces(const std::string_view cs) -> STYPE
   { return remove_leading <STYPE> (cs, ' '); }
 
 /*! \brief      Remove all instances of a specific trailing character

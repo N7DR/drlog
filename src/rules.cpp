@@ -1,4 +1,4 @@
-// $Id: rules.cpp 263 2025-03-03 14:23:07Z  $
+// $Id: rules.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1268,7 +1268,6 @@ STRING_SET contest_rules::exchange_field_names(void) const
     \param  cp  canonical prefix of country
     \return     all the equivalent fields for mode <i>m</i> and country <i>cp</i>
 */
-//choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
 choice_equivalents contest_rules::equivalents(const MODE m, const string_view cp) const
 { choice_equivalents rv;
 
@@ -1338,18 +1337,18 @@ string wpx_prefix(const string_view call)
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-  callsign = remove_from_end <std::string> (callsign, "/QRP"sv);
+  callsign = remove_string_from_end <std::string> (callsign, "/QRP"sv);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
   { static const string portables { "AEJMP"sv };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
-      callsign = remove_from_end <std::string> (callsign, 2u);
+      callsign = remove_chars_from_end <std::string> (callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
-        callsign = remove_from_end <std::string> (callsign, 2u);
+        callsign = remove_chars_from_end <std::string> (callsign, 2u);
       }
   }
 
@@ -1357,8 +1356,9 @@ string wpx_prefix(const string_view call)
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
-    if (mobiles.contains(last <std::string> (callsign, 2)))
-      callsign = remove_from_end <std::string> (callsign, 3u);
+//    if (mobiles.contains(last <std::string> (callsign, 2)))
+    if (mobiles.contains(last <string_view> (callsign, 2)))
+      callsign = remove_chars_from_end <std::string> (callsign, 3u);
   }
 
 // trivial -- and almost unknown -- case first: no digits
@@ -1377,20 +1377,25 @@ string wpx_prefix(const string_view call)
   }
 
 // we have a (meaningful) slash in the call
-  const string left       { substring <std::string> (callsign, 0, slash_posn) };
-  const size_t left_size  { left.size() };
-  const string right      { substring <std::string> (callsign, slash_posn + 1) };
-  const size_t right_size { right.size() };
+//  const string left       { substring <std::string> (callsign, 0, slash_posn) };
+//  const size_t left_size  { left.size() };
+//  const string right      { substring <std::string> (callsign, slash_posn + 1) };
+//  const size_t right_size { right.size() };
+
+  const string_view left       { substring <std::string_view> (callsign, 0, slash_posn) };
+  const size_t      left_size  { left.size() };
+  const string_view right      { substring <std::string_view> (callsign, slash_posn + 1) };
+  const size_t      right_size { right.size() };
 
   if (left_size == right_size)
   { const string left_canonical_prefix  { location_db.canonical_prefix(left) };
     const string right_canonical_prefix { location_db.canonical_prefix(right) };
 
     if (left_canonical_prefix == left)
-      return left;
+      return string { left };
 
     if (right_canonical_prefix == right)
-      return right;
+      return string { right };
   }
 
   string designator { (left_size < right_size) ? left : right };

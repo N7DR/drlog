@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: autocorrect.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -275,23 +275,15 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
 
 //  std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
 
-
-//  for (auto t_it { _data_map_map_map.cbegin() }; t_it != _data_map_map_map.cend(); ++t_it)
   for (auto& [minutes, freq_map] : _data_map_map_map)
   {
 // test only if frequency is in range
- //   const auto lb { (t_it->second).lower_bound(low_target) };
-//    const auto ub { (t_it->second).upper_bound(high_target) };
-
     const auto lb { freq_map.lower_bound(low_target) };
     const auto ub { freq_map.upper_bound(high_target) };
 
     for (auto f_it { lb }; f_it != ub; ++f_it)
-    { //for (auto c_it { f_it->second.cbegin() }; c_it != f_it->second.cend(); ++c_it)
-      for (const auto& [c, n] : f_it->second)
-      { //const auto& c { c_it->first };
-        //const auto& n { c_it->second };
-
+    { for (const auto& [c, n] : f_it->second)     // callsign, number of appearances
+      {
 // check it if it's a match or a bust of a match
         if (post_call != c)
         { const string calls { pair_index(post_call, c) };
@@ -325,13 +317,21 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     ost << this->to_string() << endl;
   }
   else
-  { string best_match { hits.begin()->first };
-    int    highest_n  { hits.begin()->second };
+  { string best_match; // { hits.begin()->first };
+    int    highest_n;  //  { hits.begin()->second };
+
+    tie(best_match, highest_n) = *(hits.begin());
+//    auto [ best_match, highest_n ] { *(hits.begin()) };   // this makes the new values const; presumably because the key is const
 
     for (auto it { next(hits.begin()) }; it != hits.end(); ++it)
-    { if (it->second > highest_n)
-      { best_match = it->first;
-        highest_n = it->second;
+    { const auto& [ possible_best_match, possible_highest_n ] { *it };
+
+      if (possible_highest_n > highest_n)
+ //     if (it->second > highest_n)
+      { //best_match = it->first;
+        //highest_n = it->second;
+        best_match = possible_best_match;
+        highest_n = possible_highest_n;
       }
     }
 
@@ -438,17 +438,20 @@ string dynamic_autocorrect_database::autocorrect(const dx_post& post)
   return post.callsign();
 }
 
-/*! \brief              Convert to a printable string
-    \return             printable string describing the database
+/*! \brief    Convert to a printable string
+    \return   printable string describing the database
 */
 string dynamic_autocorrect_database::to_string(void) const
-{ string rv;
+{ constexpr int N_SPACES { 2 };
+
+  string rv { };
 
   const set<BAND> bands { _known_bands() };
 
   for (const BAND b : bands)
   { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
-    rv += _per_band_db.at(b).to_string(2) + EOL;    // the "2" means to prepend each line with two spaces
+//    rv += _per_band_db.at(b).to_string(2) + EOL;    // the "2" means to prepend each line with two spaces
+    rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "2" means to prepend each line with two spaces
   }
 
   return rv;

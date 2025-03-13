@@ -31,6 +31,7 @@ set ( SOURCE_FILES
                    src/functions.cpp
                    src/fuzzy.cpp
                    src/grid.cpp
+                   src/internals.cpp
                    src/keyboard.cpp
                    src/log.cpp
                    src/log_message.cpp

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: cty_data.cpp 264 2025-03-13 20:01:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -605,7 +605,7 @@ location_info location_database::info(const string_view callpart) const
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string_view target { remove_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
+  { const string_view target { remove_chars_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
 
     if (const auto opt { OPT_MUM_VALUE(_db_checked, target) }; opt)
       return insert_best_info(opt.value());
@@ -629,7 +629,7 @@ location_info location_database::info(const string_view callpart) const
 // I can think of counter-examples to do with the silly US call system, but at least this is a starting point.
     bool found_any_hits { false };              // no hits so far with this call
 
-    string best_fit;
+    string        best_fit;
     location_info best_info;
 
     unsigned int len { 1 };
@@ -833,8 +833,11 @@ auto location_database::countries(void) const -> UNORDERED_STRING_SET
 //  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
 //  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
 
-  FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
+//  FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
 // not allowed  FOR_ALL(_db, [&rv] (const auto& [ prefix, li ]) { rv += li.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
+
+  for (const auto& [_, li] : _db)
+   { rv += li.canonical_prefix(); }
 
   return rv;
 }
