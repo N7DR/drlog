@@ -1,4 +1,4 @@
-// $Id: bandmap.h 263 2025-03-03 14:23:07Z  $
+// $Id: bandmap.h 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1249,6 +1249,7 @@ public:
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
+  friend void update_based_on_frequency_change(const frequency& f, const MODE m);
 
 /// serialize using boost
   template<typename Archive>

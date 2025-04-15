@@ -1,4 +1,4 @@
-// $Id: socket_support.h 263 2025-03-03 14:23:07Z  $
+// $Id: socket_support.h 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -97,7 +97,7 @@ void fd_set_option(const int opt, const int fd);
     \param  fds   set of file descriptors
     \param  fd    the file descriptor to place into fds
 */
-void fd_set_value(fd_set& fds, int fd);
+void fd_set_value(fd_set& fds, const int fd);
 
 /*! \brief        Set an fd_set to contain a particular single value of a file descriptor
     \param  fds   set of file descriptors

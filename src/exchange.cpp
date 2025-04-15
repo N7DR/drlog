@@ -279,8 +279,8 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         { case 1 :  // if there's only one, it should be a serial number
             break;
 
-          default :
-            ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break
+ //         default :
+ //           ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break... gives error if compiled with extra nannying
 
           case 2 :  // first should be serial number, second should check
           { const unsigned int field_nr { ambiguous_fields[1] };
@@ -289,6 +289,16 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
             check_field_nr = static_cast<int>(field_nr);
             break;
           }
+
+          default :
+            ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break; treat as 2
+
+            { const unsigned int field_nr { ambiguous_fields[1] };
+
+              _check = copy_received_fields[field_nr];
+              check_field_nr = static_cast<int>(field_nr);
+              break;
+            }
         }
       }
       else

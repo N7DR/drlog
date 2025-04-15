@@ -533,7 +533,7 @@ public:
      \param  code       reason code
      \param  reason     message to add
 */
-  inline void add(const int code, const std::string& reason)
+  inline void add(/* const int code, */ const std::string& reason)
     { push_back(reason); }    // the code is ignored except for readability when the add  is called
 };
 

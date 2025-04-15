@@ -54,6 +54,9 @@ public:
     std::ifstream(std::string { filename })
   { }
 
+  void nop(void) const    // used in textfile_iterator end(textfile& tf)
+   { };
+
 /// begin() needs access to <i>textfile</i> internals
   friend textfile_iterator begin(textfile& tf);
 };
@@ -101,6 +104,9 @@ public:
 */
   textfile_iterator operator++(int);
 
+//  void nop(void) const
+//   { };
+
 /// begin() needs access to <i>textfile_iterator</i> internals
   friend textfile_iterator begin(textfile& tf);
 };
@@ -116,7 +122,9 @@ textfile_iterator begin(textfile& tf);
     \return     the end() iterator associated with <i>tf/i>
 */
 inline textfile_iterator end(textfile& tf)
-  { return textfile_iterator(); }
+  { tf.nop();
+    return textfile_iterator();
+  }
 
 // -----------  textstream  ----------------
 
@@ -135,6 +143,9 @@ public:
 */
   inline explicit textstream(std::istream& ist)
     { rdbuf(ist.rdbuf()); }
+
+  void nop(void) const    // used in textstream_iterator end(textstream& tf)
+   { };
 
 /// begin() needs access to <i>textstream</i> internals
   friend textstream_iterator begin(textstream& ts);
@@ -197,6 +208,8 @@ textstream_iterator begin(textstream& tf);
     \return     the end() iterator associated with <i>tf/i>
 */
 inline textstream_iterator end(textstream& tf)
-  { return textstream_iterator(); }
+  { tf.nop();
+    return textstream_iterator();
+  }
 
 #endif    // TEXTFILE_H

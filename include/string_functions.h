@@ -1,4 +1,4 @@
-// $Id: string_functions.h 263 2025-03-03 14:23:07Z  $
+// $Id: string_functions.h 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1306,7 +1306,8 @@ using MULT_SET = std::set<std::string, CMP<compare_mults>>;
 
     Assumes that <i>str</i> is a number
 */
-std::string decimal_places(const std::string& str, const int n);
+//std::string decimal_places(const std::string& str, const int n);
+std::string decimal_places(const std::string_view str, const int n);
 
 /*! \brief        Return the longest string from a container of strings
     \param  strs  the strings to search
@@ -1360,10 +1361,7 @@ inline void STRC_ERASE(T& c, const std::string& str)
 template <typename T>
  requires is_container_of_strings<T>
 inline void STRC_ERASE(T& c, const std::string_view sv)
-{ //const auto posn { c.find(sv) };
-
-  //if (posn != c.end())
-  if ( const auto posn { c.find(sv) }; posn != c.end() )
+{ if ( const auto posn { c.find(sv) }; posn != c.end() )
     c.erase(posn);
 }
 
@@ -1374,7 +1372,8 @@ inline void STRC_ERASE(T& c, const std::string_view sv)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-std::string reformat_for_wprintw(const std::string& str, const int width);
+//std::string reformat_for_wprintw(const std::string& str, const int width);
+std::string reformat_for_wprintw(const std::string_view str, const int width);
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  vecstr  vector of strings to be reformatted
@@ -1496,7 +1495,7 @@ std::string remove_substrings(const std::string_view cs, const std::vector<std::
     Can't use string_view as regex does not support heterogeneous lookup
 */
 template <class T, class C>
-T regex_matches(C&& container, const std::string& s)
+T regex_matches(C&& container, const std::string& s)        // it seems that std::regex(param) does not support a string_view param(!)
 //T regex_matches(C&& container, const std::string_view s)
 { T rv { };
      

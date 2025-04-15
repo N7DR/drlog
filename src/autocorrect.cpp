@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: autocorrect.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -451,7 +451,7 @@ string dynamic_autocorrect_database::to_string(void) const
   for (const BAND b : bands)
   { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
 //    rv += _per_band_db.at(b).to_string(2) + EOL;    // the "2" means to prepend each line with two spaces
-    rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "2" means to prepend each line with two spaces
+    rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "N_SPACES" means to prepend each line with N_SPACES spaces
   }
 
   return rv;

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 263 2025-03-03 14:23:07Z  $
+// $Id: bandmap.cpp 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,6 +15,7 @@
 
 #include "bandmap.h"
 #include "exchange.h"
+#include "internals.h"
 #include "log_message.h"
 #include "statistics.h"
 #include "string_functions.h"
@@ -34,6 +35,7 @@ extern pt_mutex                      batch_messages_mutex;                      
 extern UNORDERED_STRING_MAP<string>  batch_messages;                            ///< batch messages associated with calls
 extern drlog_context                 context;                                   ///< the context for the contest
 extern exchange_field_database       exchange_db;                               ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern atomic<frequency>             last_update_frequency;                     ///< the frequency of the last bm window update
 extern location_database             location_db;                               ///< location information
 extern unsigned int                  max_qsos_without_qsl;                      ///< limit for the N7DR matches_criteria() algorithm
 extern MINUTES_TYPE                  now_minutes;                               ///< access the current time in minutes
@@ -1458,6 +1460,13 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
+  { //ost << "bandmap::write_to_window gcc_backtrace: " << gcc_backtrace(BACKTRACE::ACQUIRE) << endl;
+    //ost << endl;
+//    ost << "at time " << NOW_TP() << ": " << endl;
+//    ost << "bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
+    ost << "at time " << NOW_TP() << ": request to display bandmap version: " << static_cast<int>(_version) << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
+  }
+
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
   { ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
     return win;
@@ -1474,6 +1483,9 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
   size_t index { 0 };    // keep track of where we are in the bandmap
 
+  bool      found_my_marker { false };
+  frequency my_marker_qrg   { };
+
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
     { const string entry_str { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
@@ -1481,16 +1493,18 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
       const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
       const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
       const bool        is_marker     { be.is_marker() };
+
+// debug: write QRG of marker
+      if (be.is_my_marker())
+        ost << "BE OF MY MARKER: "  << be << endl;
+
+      if (!found_my_marker and be.is_my_marker())
+      { found_my_marker = true;
+        my_marker_qrg = be.freq();
+      }
   
 // change to the correct colour
       const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
- //     const time_t age_since_this_inserted     { be.time_since_inserted() };
- //     const time_t start_time                  { be.time() };                  // time it was inserted
- //     const time_t expiration_time             { be.expiration_time() };
- //     const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
- //     const int    n_colours                   { static_cast<int>(fade_colours().size()) };
- //     const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
- //     const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
       long unsigned int age { 0 };
       int               clr { 0 };
@@ -1512,15 +1526,8 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
             clr = bandap_vm_rbn[age];
             break;
         }
-
-//        if (clr != fade_colours().at(n_intervals))
-//        { ost << "BANDMAP COLOUR MISMATCH FOR " << be.callsign() << ", clr = " << clr << ", oldsyle = " << fade_colours().at(n_intervals) << "; age = " << age << "; n_intervals = " << n_intervals << endl;
-//          ost << "  fraction = " << fraction << "; interval = " << interval << "; age_since_this_inserted = " << age_since_this_inserted << endl;
-//          ost << "  start = " << start_time << "; expiration = " << expiration_time << "; total duration = " << expiration_time - start_time << endl;
-//        }
       }
 
-//      PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
       PAIR_NUMBER_TYPE cpu { colours.add(clr, win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
@@ -1577,11 +1584,12 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
     index++;
   }
 
-//  if (refresh)
   win.refresh();    // force the visual update ... do we really want this?
 
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
   _time_last_displayed = NOW_TP();
+
+  last_update_frequency = (my_marker_qrg + MY_MARKER_BIAS);    // store as actual QRG rather than the marker QRG
 
   return win;
 }

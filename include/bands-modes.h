@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 263 2025-03-03 14:23:07Z  $
+// $Id: bands-modes.h 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,7 +138,7 @@ class frequency;
 extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
 
 // forward declaration
-template<class T> const BAND to_BAND(T f);
+template<class T> /* const */ BAND to_BAND(T f);
 
 /*! \brief      Return the lower edge of a band
     \param  b   target band
@@ -386,7 +386,7 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    
 
      Frequency may be in Hz, kHz or MHz.
 */
-template<class T> const BAND to_BAND(T f)
+template<class T> /* const */ BAND to_BAND(T f)
 { if (f <= 0)
     return MIN_BAND;
 

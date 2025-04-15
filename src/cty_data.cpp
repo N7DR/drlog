@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: cty_data.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -879,6 +879,7 @@ russian_data_per_substring::russian_data_per_substring(const string_view ss, con
   _region_name = ::substring <std::string> (line, posn_1 + 1, posn_2 - posn_1 - 1);
 
   const vector<string> fields { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(line.substr(posn_2 + 1), ' ')), ' ') };
+
   try
   { _region_abbreviation = fields.at(0);
     _cq_zone = from_string<unsigned int>(fields.at(1));

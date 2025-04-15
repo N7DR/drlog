@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: string_functions.cpp 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,7 +110,7 @@ vector<string> from_csv(const string_view line)
     \param  sv  string_view to append
     \return     concatenation of <i>s</i> and <i>sv</i>
 */
-string operator+(const std::string& s, const std::string_view sv)
+string operator+(const string& s, const string_view sv)
 { string rv { };
 
   rv.reserve(s.size() + sv.size());
@@ -345,9 +345,12 @@ string squash(const string_view cs, const char c)
     If the line contains anything, even just whitespace, it is not removed
 */
 vector<string> remove_empty_lines(const vector<string>& lines)
-{ vector<string> rv;
+{ vector<string> rv { lines };
 
-  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+//  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
+//string rv { s };
+
+  erase_if(rv, [] (const string& line) { return line.empty(); } );
 
   return rv;
 }
@@ -744,10 +747,12 @@ bool compare_mults(const string_view mult1, const string_view mult2)
 
     Assumes that <i>str</i> is a number
 */
-string decimal_places(const string& str, const int n)
+//string decimal_places(const string& str, const int n)
+string decimal_places(const string_view str, const int n)
 {
 // for now, assume that it's a number
-  if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
+//  if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
+  if ( (str.length() >= 2) and (penultimate_char(str) != '.') )
   { const float fl { from_string<float>(str) };
 
     ostringstream stream;
@@ -756,7 +761,7 @@ string decimal_places(const string& str, const int n)
     return stream.str();
   }
 
-  return str;
+  return string { str };
 }
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
@@ -766,7 +771,8 @@ string decimal_places(const string& str, const int n)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-string reformat_for_wprintw(const string& str, const int width)
+//string reformat_for_wprintw(const string& str, const int width)
+string reformat_for_wprintw(const string_view str, const int width)
 { string rv;
 
   int since_last_newline { 0 };
@@ -872,8 +878,6 @@ string YYYYMMDD_utc(void)
 string remove_substrings(const string_view cs, const vector<string>& vs)
 { string rv { cs };
   
-//  for (const std::string& ss : vs)
-//    rv = remove_substring(rv, ss);
   FOR_ALL(vs, [&rv] (const string& str) { rv = remove_substring(rv, str); });
       
   return rv; 
@@ -1028,7 +1032,7 @@ string read_until(istream& in, const string_view delimiter, const DELIMITERS kee
     \param  str     string to convert
     \return         <i>str</i> as a series ofspace-separated  hex characters
 */
-string hex_string(const std::string_view str)
+string hex_string(const string_view str)
 { ostringstream stream;
 
   stream << hex << setfill('0');

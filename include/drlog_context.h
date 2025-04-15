@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 261 2025-02-19 21:27:02Z  $
+// $Id: drlog_context.h 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -155,6 +155,7 @@ protected:
   std::vector<std::string>                     _do_not_show                             { };                            ///< do not show these calls when spotted (MY CALL is automatically not shown)
   std::string                                  _do_not_show_filename                    { };                            ///< filename containing calls (one per line) not to be shown
   std::string                                  _drmaster_filename                       { "drmaster"s };                ///< filename of drmaster file
+  std::string                                  _dx_spotting_text                        { };                            ///< text in comment portion of DX spots
   bool                                         _dynamic_autocorrect_rbn                 { false };                      ///< whether to try to autocorrect posts from the RBN dynamically
 
   std::string                                  _exchange                                { "RST"s };                      ///< comma-delimited received exchange
@@ -472,6 +473,7 @@ public:
   CONTEXTREAD(do_not_show);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
   CONTEXTREAD(do_not_show_filename);             ///< filename of calls (one per line) not to be shown
   CONTEXTREAD(drmaster_filename);                ///< filename of drmaster file (default = "drmaster")
+  CONTEXTREAD(dx_spotting_text);                 ///< text in comment portion of DX spots
   CONTEXTREAD(dynamic_autocorrect_rbn);          ///< whether to try to autocorrect posts from the RBN dynamically
 
   CONTEXTREAD(exchange);                         ///< comma-delimited received exchange
@@ -494,7 +496,6 @@ public:
     \param  m   target mode
     \return     guard band for mode <i>m</i>, in Hz
 */
-//  inline unsigned int guard_band(const MODE m)
   inline decltype(_guard_band)::mapped_type guard_band(const MODE m)
   { SAFELOCK(_context);
 

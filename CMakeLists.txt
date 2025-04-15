@@ -59,11 +59,15 @@ set ( SOURCE_FILES
 
 #set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++2b" )
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23" )
+#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra -pedantic -Werror" )
+#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra" )
 
 add_executable(drlog ${SOURCE_FILES})
 
 target_include_directories (drlog PUBLIC include)
-target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284)
+#target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284)
+
+target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284 stdc++exp)
 
 add_custom_command(
   TARGET drlog

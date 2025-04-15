@@ -1,4 +1,4 @@
-// $Id: rules.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: rules.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1377,11 +1377,6 @@ string wpx_prefix(const string_view call)
   }
 
 // we have a (meaningful) slash in the call
-//  const string left       { substring <std::string> (callsign, 0, slash_posn) };
-//  const size_t left_size  { left.size() };
-//  const string right      { substring <std::string> (callsign, slash_posn + 1) };
-//  const size_t right_size { right.size() };
-
   const string_view left       { substring <std::string_view> (callsign, 0, slash_posn) };
   const size_t      left_size  { left.size() };
   const string_view right      { substring <std::string_view> (callsign, slash_posn + 1) };
@@ -1462,7 +1457,6 @@ string sac_prefix(const string_view call)
     Currently, the only field name that precipitates special processing is DOK.
     Adding IOTA.
 */
-//string MULT_VALUE(const string_view field_name, const string& received_value)
 string MULT_VALUE(const string_view field_name, const string_view received_value)
 { if (field_name == "DOK"sv)
   { if (!received_value.empty())

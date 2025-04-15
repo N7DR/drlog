@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: drlog.cpp 267 2025-04-13 19:47:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -222,7 +222,7 @@ bool toggle_cw(void);                                                           
 bool toggle_recording_status(audio_recorder& audio);                                ///< toggle status of audio recording
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
-void update_bandmap_window(bandmap& bm, const int bm_version = 0);                                                      ///< update the BANDMAP window
+void update_bandmap_window(bandmap& bm /*, const int bm_version = 0 */);                                                      ///< update the BANDMAP window
 void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);   ///< Update some windows based on a change in my frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
@@ -284,7 +284,7 @@ void spawn_rbn(void);                                                           
 pt_mutex alert_mutex { "USER ALERT"s };     ///< mutex for the user alert
 time_t   alert_time  { 0 };                 ///< time of last alert
 
-pt_mutex                      batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
+pt_mutex                     batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
 UNORDERED_STRING_MAP<string> batch_messages;         ///< batch messages associated with calls
 
 atomic<frequency> cq_mode_frequency;
@@ -322,8 +322,8 @@ DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };     ///< mutex for the callsign mults we know about in AUTO mode
 STRING_SET          known_callsign_mults;                                       ///< callsign mults we know about in AUTO mode
 
-pt_mutex            last_polled_frequency_mutex { "LAST POLLED FREQUENCY"s };                       ///< mutex for accessing <i>drlog_mode</i>
-string              last_polled_frequency { };                  ///< frequency string from the most recent poll of the rig
+pt_mutex            last_polled_frequency_mutex { "LAST POLLED FREQUENCY"s }; ///< mutex for accessing <i>drlog_mode</i>
+string              last_polled_frequency { };                                ///< frequency string from the most recent poll of the rig
 
 pt_mutex            wicm_mutex {"WICM" };
 deque<string>       wicm_calls;                         ///< calls in the WICM window
@@ -367,6 +367,7 @@ dynamic_autocorrect_database dad;                                   ///< dynamic
 bool                         debug { false };                       ///< whether to log additional information
 bool                         display_grid;                          ///< whether to display the grid in GRID and INFO windows
 string                       do_not_show_filename;                  ///< name of DO NOT SHOW file
+string                       dx_spotting_text    { };                ///< text in comment portion of DX spots
 bool                         dynamic_autocorrect_rbn { false };     ///< whether to try to autocorrect posts from the RBN dynamically
 
 exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
@@ -382,6 +383,7 @@ bool                    home_exchange_window { false };             ///< whether
 int                     inactivity_time;                            ///< max time since the last activity (activity = QSY or QSO)
 bool                    is_ss        { false };                     ///< ss is special
 
+atomic<frequency>       last_update_frequency { };                  ///< the frequency of the last bm window update
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 string                  logfile_name { };                           ///< the name of the logfile
 unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
@@ -415,6 +417,7 @@ set<MODE>               permitted_modes;                    ///< the permitted m
 PING_TABLE              ping_table_p;
 STRING_SET              posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
+//atomic<bool>            preempted { false };                ///< has display of a bandmap been preempted by a manual intervention?
 exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
 unsigned int            p3_span_cq { 5 };                   ///< span of P3 when in CQ mode, in kHz
 unsigned int            p3_span_sap { 20 };                 ///< span of P3 when in SAP mode, in kHz
@@ -628,6 +631,7 @@ bool mm_country_mults    { false };            ///< can /MM stns be country mult
     red matches
 
   TODO?: Might want to put red matches immediately after green matches
+  TODO?: Might want to put green matches before exact matches
 
   This has to go before the inline functions that use it
 */
@@ -829,10 +833,6 @@ int main(int argc, char** argv)
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
 
-  { gcc_backtrace bt(true);
-
-  }
-
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
      bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
@@ -904,6 +904,7 @@ int main(int argc, char** argv)
 
     display_grid                    = context.display_grid();
     do_not_show_filename            = context.do_not_show_filename();
+    dx_spotting_text                = context.dx_spotting_text();
     dynamic_autocorrect_rbn         = context.dynamic_autocorrect_rbn();
 
     fade_colours                    = context.bandmap_fade_colours();
@@ -3174,7 +3175,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
       else                // call window contains no space; treat it as a call
       { const string& callsign { call_contents };
-        const string& comment  { };
+        const string& comment  { dx_spotting_text };
         const string qrg       { get_frequency() };
 
         const bool spot_status { cluster_p -> spot(callsign, qrg, comment) };
@@ -4157,7 +4158,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { update_quick_qsy();
-      processed = process_bandmap_function(/*&bandmap::matches_criteria, */(e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? DOWN : UP);
+      processed = process_bandmap_function((e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? DOWN : UP);
     }
     else
       processed = true;
@@ -6018,8 +6019,8 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 { if (!win_remaining_exch_mults_p.contains(exch_mult_name))
     return;
 
-  const MULT_SET known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
-  const vector<string>    known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
+  const MULT_SET       known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
+  const vector<string> known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
 
   window& win { ( *(win_remaining_exch_mults_p[exch_mult_name]) ) };
 
@@ -8443,11 +8444,11 @@ void end_of_thread(const string& name)
     I suspect that there is still a bug in here somewhere, leading to the occasional inconsistent update that (rarely) appears
 */
 void update_based_on_frequency_change(const frequency& f, const MODE m)
-{ static frequency last_update_frequency { };
+{ //static frequency last_update_frequency { };
 
   if (debug)
   { ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
-    ost << "last_update_frequency = " << last_update_frequency << endl;
+    ost << "last_update_frequency = " << static_cast<frequency>(last_update_frequency) << endl;
   }
 
   if (f == last_update_frequency)   // don't update if the frequency hasn't changed
@@ -8460,7 +8461,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   const frequency mx_f { rig.rig_frequency() };
 
   if (f != mx_f)
-  { ost << "WARNING! f = " << f.hz() << "; mx = " << mx_f.hz() << "; last update = " << last_update_frequency << endl;
+  { ost << "WARNING! f = " << f.hz() << "; mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << endl;
     ost << "ignoring update" << endl;
 
     return;
@@ -8480,7 +8481,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 
   if (debug)
   { ost << "time = " << hhmmss() << endl;
-    ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << last_update_frequency.hz() << endl;
+    ost << "inside update_based...; f = " << f.hz() << "; last_update_frequency = " << static_cast<frequency>(last_update_frequency).hz() << endl;
     ost << "tmp_changed_frequency = " << boolalpha << tmp_changed_frequency << endl;
   }
 
@@ -8509,8 +8510,10 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 
     if (tmp_changed_frequency)
     { if (debug)
-        ost << "tmp changed frequency from " << last_update_frequency << " to " << f << endl;
+        ost << "tmp changed frequency from " << static_cast<frequency>(last_update_frequency) << " to " << f << endl;
       last_update_frequency = f;
+
+//      prempted = false;
     }
 
     if (debug)
@@ -8520,59 +8523,69 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   if (tmp_changed_frequency)
   { time_last_qsy = NOW();
     mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
-    display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
-    bandmap& bm { bandmaps[mbe_copy.band()] };
+   {
+// really need a way to say that if a pre-emptive change (; or ') has occurred since we started the routine, we should
+// abort and not display anything.
 
-    bm += mbe_copy;         // changes bm version
 
-    const int bm_version { bm.version() };
+     bandmap& bm { bandmaps[mbe_copy.band()] };
+     safelock bm_lock(bm._bandmap_mutex);             // attempt to stop race condition with ; and '
 
-    { SAFELOCK(my_bandmap_entry);
+      display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
+
+//    bandmap& bm { bandmaps[mbe_copy.band()] };
+
+      bm += mbe_copy;         // changes bm version
+
+//    const int bm_version { bm.version() };    // was here
+
+      { SAFELOCK(my_bandmap_entry);
     
-      my_bandmap_entry = mbe_copy;
-    }
+        my_bandmap_entry = mbe_copy;
+      }
 
-    update_bandmap_window(bm, bm_version);
-    display_bandmap_filter(bm);
+      update_bandmap_window(bm /*, bm_version */);    // really shouldn't do this if there's been a manual change via, for example, ; or '
+      display_bandmap_filter(bm);
 
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
 //    const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
-    const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
+      const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
 
-    if (!nearby_callsign.empty())
-    { ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
-      display_nearby_callsign(nearby_callsign);
-    }
-    else                                        // no nearby callsign; possibly clear windows
-    { const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
+      if (!nearby_callsign.empty())
+      { ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
+        display_nearby_callsign(nearby_callsign);
+      }
+      else                                        // no nearby callsign; possibly clear windows
+      { const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
-      if (in_call_window)
+        if (in_call_window)
 // see if we are within twice the guard band before we clear the call window
-      { const string        call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
-        const bandmap_entry be            { bm[call_contents] };
-        const unsigned int  f_diff        { static_cast<unsigned int>(abs(be.freq().hz() - f.hz())) };
+        { const string        call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
+          const bandmap_entry be            { bm[call_contents] };
+          const unsigned int  f_diff        { static_cast<unsigned int>(abs(be.freq().hz() - f.hz())) };
 
-        if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
-        { if (!win_nearby.empty())
-            win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+          if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
+          { if (!win_nearby.empty())
+              win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-          if (!call_contents.empty())
-          { string last_call;
+            if (!call_contents.empty())
+            { string last_call;
 
-            { SAFELOCK(dupe_check);
+              { SAFELOCK(dupe_check);
 
-              last_call = last_call_inserted_with_space;
+                last_call = last_call_inserted_with_space;
+              }
+
+              if ((call_contents == last_call) or (call_contents == (last_call + " DUPE"s)) )
+                win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
             }
-
-            if ((call_contents == last_call) or (call_contents == (last_call + " DUPE"s)) )
-              win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
           }
         }
       }
-    }
+    }       // release bm lock
 
 // possibly start audio recording
     if ( allow_audio_recording and (audio_recording_mode == AUDIO_RECORDING::AUTO) /* (context.start_audio_recording() == AUDIO_RECORDING::AUTO) */ and !audio.recording())
@@ -8696,18 +8709,21 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
-        << "current actual frequency from rig = " << rig.rig_frequency()
+        << "f_rig = " << f_rig
+        << "; current actual frequency from rig = " << rig.rig_frequency()
         << "; bandmap version: " << bm.version() << endl
         << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
         << "; next bandmap entry: " << be
         << endl;
   }
 
-  if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
-  { //if (debug)
-      ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
+  if (!be.empty())  // get and process the next non-empty stn/mult, according to the function; this tests for non-empty callsign
+  { ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
-    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+//if (debug)
+//      ost << "at time " << NOW_TP() << ": " << endl;
+      ost << "moving from: " << f_rig << endl;
+      ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     rig.rig_frequency(be.freq());                                   // QSY to next station
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();    // display call of next station
@@ -8723,7 +8739,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 
     { const bandmap_entry my_be { bm[MY_MARKER] };
 
-      ost << "be at MY_MARKER: " << my_be << endl;
+      ost << "bandmap_entry at MY_MARKER: " << my_be << endl;
     }
 
     ok_to_poll_k3 = true;
@@ -9554,10 +9570,10 @@ char t_char(const unsigned short long_t)
 }
 
 // temporary
-void update_bandmap_window(bandmap& bm, const int bm_version)
-{ const bool proceed { ( bm_version == 0) or (bm.version() == bm_version) };
+void update_bandmap_window(bandmap& bm /*, const int bm_version */)
+{ //const bool proceed { ( bm_version == 0) or (bm.version() == bm_version) };
 
-  if (proceed)
+//  if (proceed)
   { const int highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
     const int original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
 
@@ -9572,9 +9588,9 @@ void update_bandmap_window(bandmap& bm, const int bm_version)
 // clear the mark that we are processing
     win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
   }
-  else
-  { ost << "asked to write bm version " << bm_version << " but actual version is: " << bm.version() << endl;
-  }
+//  else
+//  { ost << "asked to write bm version " << bm_version << " but actual version is: " << bm.version() << endl;
+//  }
 }
 
 /*! \brief                              Is a particular frequency within any marked range?

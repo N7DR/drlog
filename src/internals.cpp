@@ -1,4 +1,4 @@
-// $Id: internals.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: internals.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,58 +69,101 @@ free( demangledName );
 https://gcc.gnu.org/onlinedocs/libstdc++/libstdc++-html-USERS-4.3/a01696.html
 
 */
-gcc_backtrace::gcc_backtrace(const bool acquire, const int max_sz)
-{ if (acquire)
-  { _max_size = max_sz;
 
-// get the initial backtrace as pointers
-    void* vp [max_sz];
-    void** vpp = vp;        // horrible C
+#if 0
+// ------------------------------------  gcc_backtrace  ----------------------------------
 
-    int status = backtrace(vpp, max_sz);
+/*! \class  gcc_backtrace
+    \brief  Encapsulate and manage a GNU GCC backtrace
+*/
 
-    ost << "backtrace size = " << status << endl;
+/*! \brief            Constructor
+    \param  acquire   whether to acquire a backtrace during construction
+    \param  max_sz    maximum number of functions in the backtrace
+*/
+gcc_backtrace::gcc_backtrace(const BACKTRACE acq, const int max_sz) :
+  _max_size(max_sz)
+{ if (acq == BACKTRACE::ACQUIRE)
+    acquire();
+}
 
-    if (status > 0)
-    { /* const */ char** cpp = backtrace_symbols(vpp, status);
+/// Acquire a backtrace
+void gcc_backtrace::acquire(void)
+{ _backtrace.clear();
 
-      _backtrace.reserve(status);
+  void* vp [_max_size];                 // we're going to put the backtrace on the stack
+  void** vpp { vp };                      // horrible C
 
-      for (int n { 0 }; n < status; ++n)
-      { const string demangled_name = _backtrace.emplace_back(cpp[n]);
-        ost << n << ": " << _backtrace[n] << endl;
+  const int status { ::backtrace(vpp, _max_size) };      // this is the number of values returned
+
+  if (status > 0)
+  {  char** cpp { ::backtrace_symbols(vpp, status) };   // can't make this const for some reason
+
+    _backtrace.reserve(status);       // we probably won't need all of these, but save the space anyway
+
+    for (int n { 0 }; n < status; ++n)
+      _backtrace.emplace_back(cpp[n]);
+
+    free(cpp);        // we're finished with this memory; I hate C
+
+    for (int n { 0 }; n < status; ++n)
+    {
+// work through special cases
+      if (contains(_backtrace[n], "/libc.so.6("sv))
+      { _backtrace[n] = "libc.so.6";
+        continue;
       }
 
+      if (contains(_backtrace[n], "(main+"sv))
+      { _backtrace[n] = "main";
+        continue;
+      }
 
-      for (int n { 0 }; n < status; ++n)
-      { //char *demangledName = abi::__cxa_demangle( "_Z16displayBacktracev", NULL, NULL, &status );
+      if (contains(_backtrace[n], "(_start+"sv))
+      { _backtrace[n] = "start";
+        continue;
+      }
 
-        // need to convert from something like: /home/n7dr/projects/drlog/build-debug/drlog(_ZN13gcc_backtraceC1Ebi+0xc9) [0x55a704be0875]
+// need to convert from something like: /home/n7dr/projects/drlog/build-debug/drlog(_ZN13gcc_backtraceC1Ebi+0xc9) [0x55a704be0875]
+      const string         str    { delimited_substring <string> (_backtrace[n], '(', ')', DELIMITERS::DROP) };
+      const vector<string> fields { split_string <string> (str, "+"s) };
 
-        const string str = delimited_substring <string> (_backtrace[n], '(', ')', DELIMITERS::DROP);
-        const vector<string> fields = split_string <string> (str, "+"s);
+      if (fields.size() > 1)
+      { int   val       { -1 };
+        char* demangled { abi::__cxa_demangle( fields[0].c_str(), NULL, NULL, &val ) };
 
-        if (fields.size() > 1)
-        { ost << n << ": fields[0] = " << fields[0] << endl;
+        if (val == 0)
+          _backtrace[n] = demangled;
 
-          int val = -1;
-
-          char* demangled = abi::__cxa_demangle( fields[0].c_str(), NULL, NULL, &val );
-
-          if (val == 0)
-          { //ost << "val = " << val << endl;
-            ost << n << ": " << demangled << endl;
-          }
-          else
-//            ost << n << ": elided; val = " << val << " demangled name = " << demangled << endl;
-            ost << n << ": elided; val = " << val << " str = " << str << endl;
-        }
-        else
-          ost << n << ": elided; str = " << str << endl;
-
-//        _backtrace.emplace_back(cpp[n]);
-//        ost << n << ": " << _backtrace[n] << endl;
+        free(demangled);        // we're finished with this memory; I still hate C
       }
     }
   }
+}
+
+/// Return as human-readable string; one level per line
+string gcc_backtrace::to_string(void) const
+{ string rv;
+
+  for (size_t n { 0 }; n < _backtrace.size(); ++n)
+    rv += ::to_string(n) + ": "s + _backtrace[n] + EOL;
+
+  return rv;
+}
+#endif
+
+// ------------------------------------  backtrace  ----------------------------------
+
+/*! \class  backtrace
+    \brief  Encapsulate and manage std::stacktrace
+
+    For reasons I don't understand, we can't just call this class "backtrace"
+*/
+
+/*! \brief        Constructor
+    \param  acq   whether to acquire a backtrace during construction
+*/
+std_backtrace::std_backtrace(const BACKTRACE acq)
+{ if (acq == BACKTRACE::ACQUIRE)
+    _backtrace = stacktrace::current();
 }

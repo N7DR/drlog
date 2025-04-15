@@ -47,6 +47,7 @@ public:
 
 /// constructor
   inline explicit procfs(const std::chrono::system_clock::duration min_int = 1s) :
+    _minimum_interval(min_int),
     _pid(getpid())
   { }
 

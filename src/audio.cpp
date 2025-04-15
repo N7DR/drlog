@@ -32,7 +32,7 @@ extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threa
 
 extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
 extern const string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
-extern const bool   sending_cw(void);                       ///< am I sending Cw?
+extern bool   sending_cw(void);                       ///< am I sending Cw?
 extern void         start_of_thread(const string& name);    ///< increase the counter for the number of running threads
 
 // -----------  audio_recorder  ----------------
@@ -444,11 +444,12 @@ create_file:
   bool first_time_through_loop { true };
 
   do
-  { const size_t c   { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
-    const size_t f   { c * 8 / _bits_per_frame };
+  { const size_t  c  { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
+    const size_t  f  { c * 8 / _bits_per_frame };
     const ssize_t pr { _pcm_read(_audio_buf) };
 
-    if (static_cast<decltype(f)>(pr) != f)
+//    if (static_cast<decltype(f)>(pr) != f)    // decltype is const
+    if (static_cast<size_t>(pr) != f)
     { ost << "WARNING: pr != f" << endl;
         break;
     }

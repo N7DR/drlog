@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: cluster.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -364,13 +364,10 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             char_posn = copy.find_first_not_of(' ', space_posn);
             space_posn = copy.find_first_of(' ', char_posn);
 
-//            const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
 // skip the date
             char_posn = copy.find_first_not_of(' ', space_posn);
             space_posn = copy.find_first_of(' ', char_posn);
             char_posn = copy.find_first_not_of(' ', space_posn);
-
-//            const size_t bra_posn { copy.find_last_of('<') };
 
             if (const size_t bra_posn { copy.find_last_of('<') }; bra_posn != string_view::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
@@ -626,6 +623,7 @@ void monitored_posts::prune(void)
 /// convert to a vector of strings suitable for display in a window
 vector<string> monitored_posts::to_strings(void) const
 { vector<string> rv;
+  rv.reserve(_entries.size());
 
   SAFELOCK(monitored_posts);
 

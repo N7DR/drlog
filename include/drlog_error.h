@@ -35,7 +35,7 @@ public:
 
 /*! \brief  RO access to _code
 */
-  inline const int code(void) const
+  inline /* const */int code(void) const
     { return _code; }
 
 /*! \brief  RO access to _reason

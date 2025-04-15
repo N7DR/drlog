@@ -235,10 +235,10 @@ size_t multiplier::n_worked(const BAND b) const
   const auto& pb { _worked[ N_MODES ] };
 
   if (_all_values_are_mults)
-    return pb[ (_per_band ? b : N_BANDS) ].size();
+    return pb[ (_per_band ? static_cast<unsigned int>(b) : N_BANDS) ].size();
 
 // some values are not mults (e.g., XXX* in UBA contest)
-  return _filter_asterisks(pb[ (_per_band ? b : N_BANDS) ]).size();
+  return _filter_asterisks(pb[ (_per_band ? static_cast<unsigned int>(b) : N_BANDS) ]).size();
 }
 
 /*! \brief      All the mults worked on a particular band and mode

@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: socket_support.cpp 265 2025-03-31 01:32:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1048,7 +1048,7 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
     \param  fds   set of file descriptors
     \param  fd    the file descriptor to place into fds
 */
-void fd_set_value(fd_set& fds, int fd)
+void fd_set_value(fd_set& fds, const int fd)
 { FD_ZERO(&fds);
   FD_SET(fd, &fds);
 }

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: drlog_context.cpp 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -470,6 +470,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "DRMASTER FILENAME"sv)
       _drmaster_filename = rhs;
 
+// DX SPOTTING TEXT
+    if (LHS == "DX SPOTTING TEXT"sv)
+      _dx_spotting_text = RHS;
+
 // DYNAMIC AUTOCORRECT RBN
     if (LHS == "DYNAMIC AUTOCORRECT RBN"sv)
       _dynamic_autocorrect_rbn = is_true;
@@ -512,9 +516,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE"sv) or (LHS == "EXCHANGE PREFILL FILES"sv) )
-    { //const vector<string> files { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) };
-
-      for (const auto& file : vector<string> { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) })
+    { for (const auto& file : vector<string> { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) })
       { if (const vector<string> fields { clean_split_string <std::string> (file) }; fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
       }
@@ -644,10 +646,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS"sv)
-    { //const vector<string_view> break_points { clean_split_string <string_view> (RHS) };
-
-      //for (const auto& break_point : break_points)
-      for (const string_view break_point : clean_split_string <string_view> (RHS))
+    { for (const string_view break_point : clean_split_string <string_view> (RHS))
       { const frequency f { break_point };
 
         _mode_break_points += { to_BAND(f), f };
@@ -1101,7 +1100,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 //        _remaining_country_mults_list = STRING_SET { countries.cbegin(), countries.cend() };
 //        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
-        _remaining_country_mults_list = std::ranges::to<STRING_SET>(countries);              // not yet supported
+        _remaining_country_mults_list = std::ranges::to<STRING_SET>(countries);
       }
     }
 
@@ -1535,7 +1534,7 @@ drlog_context::drlog_context(const string_view filename)
 vector<string> drlog_context::window_name_contains(const string_view substr) const
 { vector<string> rv;
 
-  for (const auto& [ name, wi ] : _windows)
+  for (const auto& [ name, _ ] : _windows)
     if (contains(name, substr))
       rv += name;
 
@@ -1548,7 +1547,7 @@ vector<string> drlog_context::window_name_contains(const string_view substr) con
 vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
 
-  for (const auto& [name, value] : _sent_exchange)
+  for (const auto& [name, _] : _sent_exchange)
     rv += name;
 
   return rv;
@@ -1561,7 +1560,7 @@ vector<string> drlog_context::sent_exchange_names(void) const
 vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-  for ( const auto& [ name, value ] : (m == MODE_CW ? _sent_exchange_cw : _sent_exchange_ssb) )
+  for ( const auto& [ name, _ ] : (m == MODE_CW ? _sent_exchange_cw : _sent_exchange_ssb) )
     rv += name;
 
   return rv;

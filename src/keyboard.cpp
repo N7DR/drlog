@@ -56,7 +56,10 @@ bool keyboard_event::is_control(const char c) const
     Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler()
 */
 int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_event_p)
-{ 
+{ Display* tmp = display_p;   // perhaps remove this parameter?
+  if (tmp)
+    tmp = nullptr;
+
 // http://www.rahul.net/kenton/xproto/xrequests.html
   if ( (static_cast<int>(error_event_p->error_code) == BadMatch) and (static_cast<int>(error_event_p->request_code) == 73) )
   { ost << "X BadMatch error in XGetImage() ignored" << endl;
@@ -112,7 +115,11 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
     The XSetIOErrorHandler man page says: If the I/O error handler does return, the client process exits.
 */
 int keyboard_queue::_x_io_error_handler(Display* display_p)
-{ ost << "X IO Error; terminating" << endl;
+{ Display* tmp = display_p;   // perhaps remove this parameter?
+  if (tmp)
+    tmp = nullptr;
+
+  ost << "X IO Error; terminating" << endl;
 
   sleep(2);
   exit(-1);

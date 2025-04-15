@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 264 2025-03-13 20:01:50Z  $
+// $Id: rig_interface.cpp 266 2025-04-07 22:34:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,7 @@ using namespace   this_thread;   // std::this_thread
 
 using namespace std::literals::chrono_literals;
 
-extern bool                          debug;                             ///< debug frequency changes
+extern bool debug;                             ///< debug frequency changes
 extern bool rig_is_split;
 
 extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
@@ -105,10 +105,12 @@ void rig_interface::_error_alert(const string& msg) const
     \param  f   new frequency
     \param  v   VFO
 
-    Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band.
+    Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
 void rig_interface::_rig_frequency(const frequency& f, const VFO v)
-{ constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries
+{ //constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries
+  constexpr std::chrono::duration RETRY_TIME { 100ms };      // period between retries
 
   if (f.is_within_ham_band())
   { switch (v)
@@ -130,7 +132,7 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
 
       int n_retries { 0 };
 
- // the brain-dead K3 will sometimes infinitely fail to go to the correct frequency
+// the brain-dead K3 will sometimes infinitely fail to go to the correct frequency
       while ( (retry) and (n_retries++ <= MAX_RETRIES) )
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
@@ -276,7 +278,6 @@ void rig_interface::prepare(const drlog_context& context)
     _rig_connected = true;
 
 // if it's a K3, enable extended mode
-//  k3_extended_mode();
   k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 }
 
@@ -286,8 +287,10 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ constexpr milliseconds RETRY_TIME          { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
-  constexpr milliseconds K3_MODE_CHANGE_TIME { 500ms }; // time for a K3 to change mode
+{ //constexpr milliseconds RETRY_TIME          { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
+  //constexpr milliseconds K3_MODE_CHANGE_TIME { 500ms }; // time for a K3 to change mode
+  constexpr chrono::duration RETRY_TIME { 10ms };            // wait time if a retry is necessary; decreasing this makes little difference
+  constexpr chrono::duration K3_MODE_CHANGE_TIME { 500ms };  // time for a K3 to change mode
 
   _last_commanded_mode = m;
 
@@ -297,7 +300,6 @@ void rig_interface::rig_mode(const MODE m)
 
       MODE last_tested_mode;
 
-//      while ( (counter++ <= 10) and (rig_mode() != m) ) // don't change mode if we're already in the correct mode
       while ( (counter++ <= 10) and (last_tested_mode = rig_mode(), last_tested_mode != m) ) // don't change mode if we're already in the correct mode
       { if (counter != 1)                               // no pause the first time through
           sleep_for(RETRY_TIME);
@@ -841,7 +843,7 @@ void rig_interface::wait_until_not_busy(void) const
 }
 
 // explicit K3 commands
-#if !defined(NEW_RAW_COMMAND)
+//#if !defined(NEW_RAW_COMMAND)
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
@@ -851,8 +853,14 @@ void rig_interface::wait_until_not_busy(void) const
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
-{ constexpr milliseconds RETRY_TIME { 10ms };  // wait time if a retry is necessary
+//string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
+string rig_interface::raw_command(const string_view cmd, const RESPONSE expectation, const int expected_len) const
+{ if (expected_len)           // stop nannying error
+  { auto tmp = expected_len;
+    tmp += 1;
+  }
+
+  constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
 
   const bool response_expected { expectation == RESPONSE::EXPECTED };
 
@@ -876,13 +884,13 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     return string();
 
   if (cmd.empty())
-    return string();
+    return string { };
 
   constexpr int MAX_ATTEMPTS         { 10 };
   constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
 
 // sanity check ... on K3 all commands end in a ";"
-  if (cmd[cmd.length() - 1] != ';')
+  if (last_char(cmd) != ';')
   {  _error_alert("Invalid rig command: "s + cmd);
     return string();
   }
@@ -907,6 +915,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
     auto set_timeout = [fd, &set, &timeout] (const time_t sec, const long usec)
       { FD_ZERO(&set);    // clear the set
         FD_SET(fd, &set); // add the file descriptor to the set
+        //fd_set_value(set, fd);    // requires socket support
 
         timeout.tv_sec = sec;
         timeout.tv_usec = usec;
@@ -1026,156 +1035,7 @@ string rig_interface::raw_command(const string& cmd, const RESPONSE expectation,
   return string { };
 }
 
-#endif
-
-// THIS IS NOT CURRENTLY USED
-#if defined(NEW_RAW_COMMAND)
-BURBLE
-const string rig_interface::raw_command(const string& cmd, const unsigned int expected_length)
-{ struct rig_state* rs_p { &(_rigp->state) };
-  struct rig_state& rs   { *rs_p };
-
-  const int fd           { _file_descriptor() };
-
-  static array<char, 1000> c_in;
-
-  int n_read              { 0 };
-  unsigned int total_read { 0 };
-
-  string rcvd;
-
-  const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
-
-  if (!_rig_connected)
-    return string();
-
-  if (cmd.empty())
-    return string();
-
-  static const int max_attempts = 10;
-  static const int timeout_microseconds = 100000;    // 100 milliseconds
-
-// sanity check ... on K3 all commands end in a ";"
-  if (cmd[cmd.length() - 1] != ';')
-  {  _error_alert("Invalid rig command: " + cmd);
-    return string();
-  }
-
-  bool completed = false;
-
-  { SAFELOCK(_rig);
-
-    serial_flush(&rs_p->rigport);
-    write(fd, cmd.c_str(), cmd.length());
-    serial_flush(&rs_p->rigport);
-//    sleep_for(milliseconds(100));
-    sleep_for(100ms);
-
-    fd_set set;
-    struct timeval timeout;
-
-    int counter = 0;
-
-    if (response_expected)
-    { if (is_p3_screenshot)
-      { array<char, 131640> c_in;    // hide the static array
-
-        const int n_bits = 131640 * 10;
-        const int n_secs = n_bits / baud_rate();
-
-        while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
-        { FD_ZERO(&set);    // clear the set
-          FD_SET(fd, &set); // add the file descriptor to the set
-
-          timeout.tv_sec = 1;
-          timeout.tv_usec = 0;
-
-          int status = select(fd + 1, &set, NULL, NULL, &timeout);
-          int nread = 0;
-
-          if (status == -1)
-            ost << "Error in select() in raw_command()" << endl;
-          else
-          { if (status == 0)
-             ost << "timeout in select() in raw_command: " << cmd << endl;
-            else
-            { n_read = read(fd, c_in.data(), 131640 - total_read);
-
-              if (n_read > 0)                      // should always be true
-              { total_read += n_read;
-                rcvd.append(c_in.data(), n_read);
-
-                if (rcvd.length() == 131640)
-                  completed = true;
-              }
-            }
-          }
-          counter++;
-          if (!completed)
-          { static const string percent_str("%%");
-            const int percent = rcvd.length() * 100 / 131640;
-
-            _error_alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
- //           sleep_for(milliseconds(1000));  // we have the lock for all this time
-            sleep_for(1s);  // we have the lock for all this time
-          }
-          else
-            _error_alert("P3 screendump complete");
-        }
-      }
-      else
-      { while (!completed and (counter < max_attempts) )
-        { FD_ZERO(&set);    // clear the set
-          FD_SET(fd, &set); // add the file descriptor to the set
-
-          timeout.tv_sec = 0;
-          timeout.tv_usec = timeout_microseconds;
-
-          if (counter)                          // we've already slept the first time through
-            sleep_for(50ms);
-
-          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
-          int nread  { 0 };
-
-          if (status == -1)
-            ost << "Error in select() in raw_command()" << endl;
-          else
-          { if (status == 0)
-            { if (counter == max_attempts - 1)
-                ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
-            }
-            else
-            { n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
-
-//              ost << "n_read = " << n_read << " bytes; counter = " << counter << endl;
-
-              if (n_read > 0)                      // should always be true
-              { total_read += n_read;
-                c_in[n_read] = static_cast<char>(0);    // append a null byte
-//                ost << "  received: *" << c_in.data() << "*" << endl;
-
-                rcvd += string(c_in.data());
-
-                if (contains(rcvd, ";"))
-                  completed = true;
-              }
-            }
-          }
-          counter++;
-        }
-      }
-    }
-  }
-
-  if (response_expected and !completed)
-    _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
-
-  if (response_expected and completed)
-    return rcvd;
-
-  return string();
-}
-#endif
+//#endif
 
 /// is the VFO locked?
 bool rig_interface::is_locked(void) const
@@ -1278,7 +1138,7 @@ bool rig_interface::is_transmitting(void) const
         return true;                // be paranoid
       }
     }
-    else    // connected but not K3
+    else        // connected but not K3
       return true;            // be paranoid
   }
   else              // no rig connected
@@ -1442,9 +1302,10 @@ void rig_interface::centre_frequency(const unsigned int fc) const
     return; 
   }
 
-  const string cmd { "IS "s + fc_str + ";"s };
+//  const string cmd { "IS "s + fc_str + ";"s };
 
-  raw_command(cmd, RESPONSE::NOT_EXPECTED);
+//  raw_command(cmd, RESPONSE::NOT_EXPECTED);
+  raw_command( ("IS "s + fc_str + ";"s), RESPONSE::NOT_EXPECTED);
 }
 
 /*! \brief      Is an RX antenna in use?

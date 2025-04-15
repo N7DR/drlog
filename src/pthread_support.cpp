@@ -919,7 +919,7 @@ unsigned int n_threads(void)
   const vector<string> lines    { to_lines <std::string> (contents) };
 
   for (const auto& line : lines)
-  { if (line.length() > 8 and line.substr(0, 8) == string("Threads:"))
+  { if ( (line.length() > 8) and (line.substr(0, 8) == string("Threads:")) )
    { const string       n  { remove_peripheral_spaces <std::string> (line.substr(8)) };
      const unsigned int rv { from_string<unsigned int>(n) };
 
@@ -933,10 +933,10 @@ unsigned int n_threads(void)
 // -----------------------------------------  Errors  -----------------------------------
 
 pthread_error_messages::pthread_error_messages(void)
-{ add(0,                         "No error");
-  add(PTHREAD_LOCK_ERROR,        "Lock error");
-  add(PTHREAD_UNLOCK_ERROR,      "Unlock error");
-  add(PTHREAD_INVALID_MUTEX,     "Invalid mutex");
-  add(PTHREAD_ATTR_ERROR,        "Error managing thread attribute");
-  add(PTHREAD_CREATION_ERROR,    "Error creating thread");
+{ add(/* 0,                         */"No error");         // 0
+  add(/* PTHREAD_LOCK_ERROR,        */"Lock error");       // PTHREAD_LOCK_ERROR
+  add(/* PTHREAD_UNLOCK_ERROR,      */"Unlock error");     // PTHREAD_UNLOCK_ERROR
+  add(/* PTHREAD_INVALID_MUTEX,     */"Invalid mutex");    // PTHREAD_INVALID_MUTEX
+  add(/* PTHREAD_ATTR_ERROR,        */"Error managing thread attribute");  // PTHREAD_ATTR_ERROR
+  add(/* PTHREAD_CREATION_ERROR,    */"Error creating thread");            // PTHREAD_CREATION_ERROR
 }
