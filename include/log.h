@@ -310,8 +310,11 @@ public:
 
 /// serialise logbook
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-  { SAFELOCK(_log);
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    SAFELOCK(_log);
 
     ar & _log
        & _log_vec;

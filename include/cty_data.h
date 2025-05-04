@@ -384,8 +384,11 @@ public:
 
 /// archive using boost
    template<typename Archive>
-   void serialize(Archive& ar, const unsigned version)
-     { ar & _canonical_prefix
+   void serialize(Archive& ar, const unsigned int version)
+     { unsigned int v { version };   // dummy; for now, version isn't used
+       v = v + 0;
+
+       ar & _canonical_prefix
           & _continent
           & _country_name
           & _cq_zone
@@ -597,8 +600,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { std::lock_guard lg(_location_database_mutex);
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      std::lock_guard lg(_location_database_mutex);
 
       ar & _db
          & _alt_call_db

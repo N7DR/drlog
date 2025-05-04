@@ -598,8 +598,11 @@ public:                                                                     \
     { std::get<3>(*this) = var; }                                           \
                                                                             \
 template<typename Archive>                                                  \
-  void serialize(Archive& ar, const unsigned version)                       \
-    { ar & std::get<0>(*this)                                               \
+  void serialize(Archive& ar, const unsigned int version)                   \
+    { unsigned int v { version }; /* dummy; for now, version isn't used */  \
+      v = v + 0;                                                            \
+                                                                            \
+      ar & std::get<0>(*this)                                               \
          & std::get<1>(*this)                                               \
          & std::get<2>(*this)                                               \
          & std::get<3>(*this);                                              \

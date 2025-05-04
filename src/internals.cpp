@@ -1,4 +1,4 @@
-// $Id: internals.cpp 265 2025-03-31 01:32:02Z  $
+// $Id: internals.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

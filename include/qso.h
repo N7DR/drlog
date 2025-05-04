@@ -295,8 +295,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _band
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _band
          & _callsign
          & _canonical_prefix
          & _comment

@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 259 2025-01-19 15:44:33Z  $
+// $Id: pthread_support.h 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -587,7 +587,7 @@ T SAFELOCK_GET(std::recursive_mutex& m, const T& v)
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string());
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string { });
 
 /*! \brief                  Wrapper for pthread_create()
     \param  thread          pointer to thread ID

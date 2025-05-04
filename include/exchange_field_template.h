@@ -150,7 +150,7 @@ public:
 */
   std::string value_to_log(const std::string& str) const;
 
-/*! \brief          Obtain canonical value corresponding to a given received value?
+/*! \brief          Obtain canonical value corresponding to a given received value
     \param  str     received value
     \return         canonical value equivalent to <i>str</i>
 
@@ -163,8 +163,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-  { ar & _is_mult
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    ar & _is_mult
        & _legal_non_regex_values
        & _name
        & _regex_str

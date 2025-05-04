@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 265 2025-03-31 01:32:02Z  $
+// $Id: bands-modes.h 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -231,7 +231,6 @@ public:
 
 /// get frequency in kHz
   inline float khz(void) const
-//    { return static_cast<float>(_hz) / 1000; }
     { return kHz(); }
 
 /// get frequency in MHz
@@ -240,7 +239,6 @@ public:
 
 /// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
   inline float mhz(void) const
-//    { return static_cast<float>(_hz) / 1'000'000; }
     { return MHz(); }
 
 /// get frequency in kHz, rounded to the nearest kHz
@@ -304,8 +302,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _hz;
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _hz;
     }
 };
 

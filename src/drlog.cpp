@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 267 2025-04-13 19:47:47Z  $
+// $Id: drlog.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,7 +67,7 @@ using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
 using namespace   this_thread;   // std::this_thread
 
-using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;
+using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;    // label, pointer to ICMP socket
 using PING_TABLE         = vector<PING_TABLE_ELEMENT>;
 
 extern const STRING_SET CONTINENT_SET;     ///< two-letter abbreviations of continents
@@ -240,9 +240,9 @@ void update_rate_window(void);                                                  
 void update_recording_status_window(void);                                                                              ///< update the RECORDING STATUS window
 void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
 void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);                            ///< Update the REMAINING COUNTRY MULTS window
-void update_remaining_exch_mults_window(const string& mult_name, const contest_rules& rules, 
+void update_remaining_exch_mults_window(const string& mult_name, /* const contest_rules& rules, */
                                         running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
-void update_remaining_exchange_mults_windows(const contest_rules&, running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
+void update_remaining_exchange_mults_windows(/*const contest_rules&, */running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
 bool update_rx_ant_window(void);                                                                                        ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 void update_score_window(const unsigned int score);                                                                     ///< update the SCORE window
 void update_system_memory(void);                                                                                        ///< update the SYSTEM MEMORY window
@@ -414,7 +414,7 @@ old_log                 olog;                               ///< old (ADIF) log 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
 set<BAND>               permitted_bands_set;                ///< permitted bands
 set<MODE>               permitted_modes;                    ///< the permitted modes
-PING_TABLE              ping_table_p;
+PING_TABLE              ping_table_p;                       ///< vector of (label, ICMP socket pointer)
 STRING_SET              posted_by_continents;               ///< continents to be included in POSTED BY window
 vector<dx_post>         posted_by_vector;                   ///< vector of posts of my call during a processing pass of RBN data
 //atomic<bool>            preempted { false };                ///< has display of a bandmap been preempted by a manual intervention?
@@ -1856,7 +1856,7 @@ int main(int argc, char** argv)
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
 
 // QTCs
         if (send_qtcs)
@@ -2256,8 +2256,10 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
         if ( is_ssb and ( rigp -> k3_command_mode() == K3_COMMAND_MODE::NORMAL ) )  // NB this is the mode drlog /thinks/ is correct, but it saves time
           rigp -> k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 
-        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };               // K3 returns 38 characters
-        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
+//        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };               // K3 returns 38 characters
+        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
+//        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
+        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters; currently needed only in SSB
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
@@ -2301,7 +2303,7 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
 
               update_remaining_callsign_mults_window(statistics, string(), current_band, m);
               update_remaining_country_mults_window(statistics, current_band, m);
-              update_remaining_exchange_mults_windows(rules, statistics, current_band, m);
+              update_remaining_exchange_mults_windows(/* rules, */statistics, current_band, m);
 
               update_based_on_frequency_change(f, m);   // changes windows, including bandmap
             }
@@ -2715,7 +2717,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                   if (is_possible_exchange_field)
                   { if (const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) }; !guess.empty())
                     { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
-                        update_remaining_exch_mults_window(exch_mult_name, rules, statistics, current_band, current_mode);    // update if we added a new value of the mult
+                        update_remaining_exch_mults_window(exch_mult_name, /* rules, */ statistics, current_band, current_mode);    // update if we added a new value of the mult
                     }
                   }
                 }
@@ -3305,7 +3307,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // update displays of needed mults
         update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
         update_remaining_country_mults_window(statistics, new_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, new_band, cur_mode);
 
         display_bandmap_filter(bm);
 
@@ -3787,7 +3789,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // update displays of needed mults
               update_remaining_callsign_mults_window(statistics, string(), cur_band, m);
               update_remaining_country_mults_window(statistics, cur_band, m);
-              update_remaining_exchange_mults_windows(rules, statistics, cur_band, m);
+              update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, m);
             }
 
             enter_sap_mode();    // we want to be in SAP mode after a frequency change
@@ -4115,7 +4117,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
       }
     }
 
@@ -4240,7 +4242,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
 
 // removal of a Q might change the colour indication of stations
         for (auto& bm : bandmaps)
@@ -5241,7 +5243,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               { no_exchange_mults_this_qso = ( old_size == ncit->second.size() );   // has the size changed?
 
                 if (!no_exchange_mults_this_qso)
-                  update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+                  update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
               }
             }
 
@@ -5806,7 +5808,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
 
         next_qso_number = logbk.n_qsos() + 1;
         win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
@@ -6015,7 +6017,7 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 
     Does nothing if there is no window for this exchange mult
 */
-void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
+void update_remaining_exch_mults_window(const string& exch_mult_name, /* const contest_rules& rules, */ running_statistics& statistics, const BAND b, const MODE m)
 { if (!win_remaining_exch_mults_p.contains(exch_mult_name))
     return;
 
@@ -6043,9 +6045,9 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
     \param  b           current band
     \param  m           current mode
 */
-void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
+void update_remaining_exchange_mults_windows(/* const contest_rules& rules, */ running_statistics& statistics, const BAND b, const MODE m)
 { for (const auto& [exch_mult_name, wp] : win_remaining_exch_mults_p)
-    update_remaining_exch_mults_window(exch_mult_name, rules, statistics, b, m);
+    update_remaining_exch_mults_window(exch_mult_name, /* rules, */ statistics, b, m);
 }
 
 /*! \brief              Return the bearing to a station
@@ -6357,7 +6359,7 @@ void simulator_thread(string filename, int max_n_qsos)
         const MODE cur_mode { current_mode };
 
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
       }
 
       last_frequency = str_frequency;
@@ -8512,8 +8514,6 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     { if (debug)
         ost << "tmp changed frequency from " << static_cast<frequency>(last_update_frequency) << " to " << f << endl;
       last_update_frequency = f;
-
-//      prempted = false;
     }
 
     if (debug)
@@ -8524,21 +8524,16 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   { time_last_qsy = NOW();
     mbe_copy.freq(f);               // also updates the band; stores frequency as (f - MY_MARKER_BIAS)
 
-   {
+    {
 // really need a way to say that if a pre-emptive change (; or ') has occurred since we started the routine, we should
 // abort and not display anything.
 
-
-     bandmap& bm { bandmaps[mbe_copy.band()] };
-     safelock bm_lock(bm._bandmap_mutex);             // attempt to stop race condition with ; and '
+      bandmap& bm { bandmaps[mbe_copy.band()] };
+      safelock bm_lock(bm._bandmap_mutex);             // attempt to stop race condition with ; and '
 
       display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
-//    bandmap& bm { bandmaps[mbe_copy.band()] };
-
       bm += mbe_copy;         // changes bm version
-
-//    const int bm_version { bm.version() };    // was here
 
       { SAFELOCK(my_bandmap_entry);
     
@@ -8551,7 +8546,6 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-//    const string nearby_callsign { bm.nearest_displayed_callsign(f.khz(), context.guard_band(m)) };
       const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
 
       if (!nearby_callsign.empty())
@@ -9692,7 +9686,8 @@ void update_pings(window& win, PING_TABLE& table)
 
     unsigned int y { static_cast<unsigned int>(win.height() - 1) };
 
-    for (const auto& [label, socket_p] : ping_table_p)
+//    for (const auto& [label, socket_p] : ping_table_p)
+    for (const auto& [label, socket_p] : table)
     { const string line_string { centred_string(label, win.width()) };
 //      ost << "About to ping: " << label << endl;
 

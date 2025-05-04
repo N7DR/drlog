@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 266 2025-04-07 22:34:06Z  $
+// $Id: bandmap.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -424,7 +424,7 @@ MODE bandmap_entry::putative_mode(void) const
       0. is a needed QSO AND does not have an associated batch message; AND one of:
 
       1. not worked on this band/mode; OR
-      2. worked and QSLed on this band/mode;
+      2. worked and QSLed on this band/mode; OR
       3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
 */
 bool bandmap_entry::matches_criteria(void) const

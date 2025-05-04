@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 266 2025-04-07 22:34:06Z  $
+// $Id: rig_interface.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -200,17 +200,18 @@ frequency rig_interface::_rig_frequency(const VFO v) const
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-string rig_interface::_retried_raw_command(const string& cmd, const int expected_len, const int timeout_ms, const int n_retries)
+string rig_interface::_retried_raw_command(const string& cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
 { string rv;
 
   int counter    { 0 };
   bool completed { false };
 
   while (!completed and (counter != n_retries))  
-  { rv = raw_command(cmd, RESPONSE::EXPECTED, expected_len);    // issue the command each time
+  { rv = raw_command(cmd, RESPONSE::EXPECTED/*, expected_len*/);    // issue the command each time
 
-    completed = contains_at(rv, ';', expected_len - 1);
-   
+//    completed = contains_at(rv, ';', expected_len - 1);
+    completed = (rv.empty() ? false : last_char(rv) == ';');
+
     if (!completed)
     { counter++;
       sleep_for(milliseconds(timeout_ms));
@@ -854,11 +855,11 @@ void rig_interface::wait_until_not_busy(void) const
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
 //string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
-string rig_interface::raw_command(const string_view cmd, const RESPONSE expectation, const int expected_len) const
-{ if (expected_len)           // stop nannying error
-  { auto tmp = expected_len;
-    tmp += 1;
-  }
+string rig_interface::raw_command(const string_view cmd, const RESPONSE expectation/*, const int expected_len */) const
+{ //if (expected_len)           // stop nannying error
+  //{ auto tmp = expected_len;
+  //  tmp += 1;
+  //}
 
   constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
 

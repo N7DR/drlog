@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 266 2025-04-07 22:34:06Z  $
+// $Id: string_functions.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -892,7 +892,7 @@ string remove_substrings(const string_view cs, const vector<string>& vs)
     is the conclusion of <i>str</i>
 */
 size_t find_and_go_to_end_of(const string_view str, const string_view target)
-{ size_t posn { str.find(target) };
+{ const size_t posn { str.find(target) };
 
   if (posn == string::npos)
     return string::npos;

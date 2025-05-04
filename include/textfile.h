@@ -1,4 +1,4 @@
-// $Id: textfile.h 251 2024-09-09 16:39:37Z  $
+// $Id: textfile.h 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 

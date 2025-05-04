@@ -102,8 +102,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _choices;
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _choices;
     }
 };
 
@@ -244,8 +247,11 @@ template<typename STYPE>
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _name
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _name
          & _values;
     }
 };
@@ -306,8 +312,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _name
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _name
          & _is_mult
          & _is_optional
          & _choice;
@@ -348,8 +357,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-  { ar & _continent_points
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    ar & _continent_points
        & _country_points
        & _default_points
        & _points_type;
@@ -842,8 +854,11 @@ public:
 
 /// read from and write to disk
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { SAFELOCK(rules);
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      SAFELOCK(rules);
 
       ar & _bonus_countries
          & _callsign_mults

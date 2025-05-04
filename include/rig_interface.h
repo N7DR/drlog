@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 265 2025-03-31 01:32:02Z  $
+// $Id: rig_interface.h 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -168,7 +168,7 @@ protected:
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-  std::string _retried_raw_command(const std::string& cmd, const int expected_len = 0, const int timeout_ms = 250, const int n_retries = 0);
+  std::string _retried_raw_command(const std::string& cmd, /*const int expected_len = 0, */const int timeout_ms = 250, const int n_retries = 0);
 
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
@@ -465,7 +465,7 @@ public:
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
 //  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
-  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
+  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED/*, const int expected_len = 0*/) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode

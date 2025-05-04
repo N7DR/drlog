@@ -1,4 +1,4 @@
-// $Id: bandmap.h 266 2025-04-07 22:34:06Z  $
+// $Id: bandmap.h 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -239,8 +239,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-  { ar & _is_needed
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    ar & _is_needed
        & _is_status_known
        & _values;
   }
@@ -327,8 +330,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-  { ar & _continents
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    ar & _continents
        & _enabled
        & _hide
        & _prefixes;
@@ -414,7 +420,6 @@ public:
     { return (_source == BANDMAP_ENTRY_SOURCE::RBN); }
 
 /// does the call in this bandmap_entry match the value <i>str</i>?
-//  inline bool call_is(const std::string& str) const
   inline bool call_is(const std::string_view str) const
     { return (_callsign == str); }
 
@@ -648,7 +653,7 @@ public:
       0. is a needed QSO; AND one of:
 
       1. not worked on this band/mode; OR
-      2. worked and QSLed on this band/mode;
+      2. worked and QSLed on this band/mode; OR
       3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
 */
   bool matches_criteria(void) const;
@@ -661,8 +666,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _band
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _band
          & _callsign
          & _canonical_prefix
          & _continent
@@ -752,17 +760,6 @@ protected:
 */
   bool _mark_as_recent(const bandmap_entry& be);
 
-/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                         band map entries
-     \param target_frequency_in_khz     the target frequency, in kHz
-     \param guard_band_in_hz            how far from the target to search, in Hz
-     \return                            Callsign of a station within the guard band
-
-     Returns the nearest station within the guard band, or the null string if no call is found.
-     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
-*/
-//  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const;
-
 /*!  \brief                   Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme               band map entries
      \param target_frequency  the target frequency
@@ -771,8 +768,6 @@ protected:
 
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
-
-     UNTESTED
 */
   std::string _nearest_callsign(const BM_ENTRIES& bme, const frequency target_frequency, const frequency guard_band) const;
 
@@ -1253,8 +1248,11 @@ public:
 
 /// serialize using boost
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { SAFELOCK(_bandmap);
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      SAFELOCK(_bandmap);
 
       ar & _column_offset
          & _cull_function

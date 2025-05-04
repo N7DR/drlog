@@ -151,8 +151,11 @@ public:
 
 /// serialize using boost
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { SAFELOCK(_rate);
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      SAFELOCK(_rate);
 
       ar & _data;
     }

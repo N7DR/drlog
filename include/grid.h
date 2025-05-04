@@ -71,8 +71,11 @@ public:
   
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _designation
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      ar & _designation
          & _latitude
          & _longitude;
     }

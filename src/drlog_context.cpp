@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 266 2025-04-07 22:34:06Z  $
+// $Id: drlog_context.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -826,9 +826,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
       if (fields.size() == 2)
       { const string         canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
         const vector<string> values           { clean_split_string <string> (RHS) };
-        const STRING_SET    ss                { values.cbegin(), values.cend() };
+//        const STRING_SET     ss               { values.cbegin(), values.cend() };
 
-        _qthx += { canonical_prefix, ss };
+//        _qthx += { canonical_prefix, ss };
+        _qthx += { canonical_prefix, STRING_SET { values.cbegin(), values.cend() } };
       }
     }
 

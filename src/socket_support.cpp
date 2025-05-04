@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 265 2025-03-31 01:32:02Z  $
+// $Id: socket_support.cpp 268 2025-05-04 12:31:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1017,13 +1017,16 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
 
     default:                   // response is waiting to be read
     { //char socket_buffer[4096];
-      char socket_buffer[buffer_length_for_reply];
+//      char socket_buffer[buffer_length_for_reply];
+//      array<char, buffer_length_for_reply> socket_buffer;
+      vector<char> socket_buffer(buffer_length_for_reply);
 
       socklen_t from_length { sizeof(sockaddr_storage) };
 
       sockaddr_storage ps_sockaddr;                    // unused but needed in recvfrom
 
-      socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
+//      socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
+      socket_status = recvfrom(in_socket, &(socket_buffer[0]), buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
 
       if (socket_status == SOCKET_ERROR)
       { socket_status = errno;
