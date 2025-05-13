@@ -168,7 +168,10 @@ bool fast_cw_bandwidth(void);                           ///< set CW bandwidth to
 string hhmmss(void);                                    ///< Obtain the current time in HH:MM:SS format
 
 void insert_memory(void);                                                                               ///< insert an entry into the memories
-bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
+//bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
+//bool is_daylight(const string_view sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
+//bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string& current_time);    ///< is it currently daylight?
+bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string_view current_time);    ///< is it currently daylight?
 bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
 bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                                 ///<   Is a callsign needed on a particular band and mode?
 
@@ -644,8 +647,11 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
 // put in right order and also get the colours right
     vector<string> vec_str;
+    vec_str.reserve(matches.size());
 
     vec_str += matches;
+//    vector<string> vec_str(matches);
+
     SORT(vec_str, compare_calls);           // default will be to have calls in each colour sorted by call
     match_vector.clear();
 
@@ -668,6 +674,20 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
       }
     }
 
+//    FOR_ALL(vec_str | SRV::filter([] (const string& str) { return { str != callsign; } ), [] (const string& cs)
+//                       { vector<string>& tmp_matches { (is_dupe(cs) ? tmp_red_matches : ( logbk.qso_b4(cs) ? tmp_green_matches : tmp_ordinary_matches)) };
+//
+//                         tmp_matches += cs;
+//                       } );
+
+//    for (auto cs : vec_str | SRV::filter([] (const string& str) { return { str != callsign; } ))
+//    { //if (cs != callsign)
+//      { vector<string>& tmp_matches { (is_dupe(cs) ? tmp_red_matches : ( logbk.qso_b4(cs) ? tmp_green_matches : tmp_ordinary_matches)) };
+//
+//        tmp_matches += cs;
+//      }
+//    }
+
     for (const auto& cs : tmp_exact_matches)
     { match_vector += (is_dupe(cs) ? CALL_AND_COLOURS { cs, colours.add(REJECT_COLOUR, win_bg) }
                                    : CALL_AND_COLOURS { cs, colours.add( (logbk.qso_b4(cs) ? ACCEPT_COLOUR : win_fg), win_bg ) });
@@ -680,9 +700,9 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
          SORT(*matches_p, xscp_order_greater);
     }
 
-    FOR_ALL(tmp_green_matches,    [win_bg, &match_vector] (const string& cs)         { match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) }; });
+    FOR_ALL(tmp_green_matches,    [win_bg, &match_vector]         (const string& cs) { match_vector += { cs, colours.add(ACCEPT_COLOUR, win_bg) }; });
     FOR_ALL(tmp_ordinary_matches, [win_bg, win_fg, &match_vector] (const string& cs) { match_vector += { cs, colours.add(win_fg, win_bg) }; });
-    FOR_ALL(tmp_red_matches,      [win_bg, &match_vector] (const string& cs)         { match_vector += { cs, colours.add(REJECT_COLOUR, win_bg) }; });
+    FOR_ALL(tmp_red_matches,      [win_bg, &match_vector]         (const string& cs) { match_vector += { cs, colours.add(REJECT_COLOUR, win_bg) }; });
 
     win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= match_vector;
   }
@@ -829,6 +849,50 @@ int main(int argc, char** argv)
   { ost << "Error: Unable to generate drlog version information" << endl;
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
+
+#if 0
+  { constexpr size_t ITERATIONS { 1'000'000 };
+
+    vector<string> vs { };
+
+    for (size_t n { 0 }; n < ITERATIONS; ++n)
+      vs += to_string(n);
+
+    vector<string_view> vsv { };
+
+    for (size_t n { 0 }; n < ITERATIONS; ++n)
+      vsv += vs[n];
+
+    { time_log <std::chrono::milliseconds> tl;
+//FOR_ALL(clean_split_string <string_view> (RHS), [this] (const string_view str) { _auto_remaining_exchange_mults += str; });
+
+      STRING_SET acc { };
+
+      FOR_ALL(vsv, [&acc] (const string_view str) { acc += str; });
+
+      tl.end_now();
+      ost << "old time = " << tl.time_span<int>() << " milliseconds" << endl;
+    }
+
+    { time_log <std::chrono::milliseconds> tl;
+//FOR_ALL(clean_split_string <string_view> (RHS), [this] (const string_view str) { _auto_remaining_exchange_mults += str; });
+
+      STRING_SET acc { };
+      STRING_SET& accref { acc };
+//      STRING_SET* accp { &acc };
+
+//      acc = SR::fold_left(vsv, STRING_SET { }, [] (STRING_SET acc, const string_view sv) { return acc + sv; });
+      acc = SR::fold_left(vsv, accref, [] (auto accref, const auto sv) { return (accref + sv); });
+
+      tl.end_now();
+      ost << "new time = " << tl.time_span<int>() << " milliseconds" << endl;
+    }
+
+//        _auto_remaining_exchange_mults = std::ranges::fold_left(clean_split_string <string_view> (RHS), STRING_SET { }, [] (STRING_SET acc, const string_view sv) { return acc + sv; }); // can't use a STRING_SET&
+
+    exit(0);
+  }
+#endif
 
 // output the number of colours available
   ost << "Number of colours supported on screen = " << COLORS << endl;
@@ -1012,17 +1076,18 @@ int main(int argc, char** argv)
 
     const cty_data& country_data { *country_data_p };
 
+// read the drmaster database
     try
     { time_log <std::chrono::milliseconds> tl;
 
-      drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() /* xscp_limit */ };
+      drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() };
 
       tl.end_now();
       ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
 
       ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
 
-      if (context.xscp_percent_cutoff())
+      if (context.xscp_percent_cutoff())                              // prune the database of low XSCP numbers
       { drm_db = drm_db.prune(context.xscp_percent_cutoff().value());
 
         ost << "pruned drmaster database contains " << css(drm_db.size()) << " entries" << endl;
@@ -1103,10 +1168,10 @@ int main(int argc, char** argv)
     }
 
 // set some more-or-less immutable variables from the rules
-    permitted_bands = rules.permitted_bands();
+    permitted_bands     = rules.permitted_bands();
     permitted_bands_set = rules.permitted_bands_set();
-    permitted_modes = rules.permitted_modes();
-    all_country_mults = rules.country_mults();
+    permitted_modes     = rules.permitted_modes();
+    all_country_mults   = rules.country_mults();
 
 // is it SS?
     if (rules.n_modes() == 1)
@@ -1139,9 +1204,9 @@ int main(int argc, char** argv)
 
 // define types of mults that are in use; after this point these should be treated as read-only
       callsign_mults_used = rules.callsign_mults_used();
-      country_mults_used = rules.country_mults_used();
+      country_mults_used  = rules.country_mults_used();
       exchange_mults_used = rules.exchange_mults_used();
-      mm_country_mults = rules.mm_country_mults();
+      mm_country_mults    = rules.mm_country_mults();
 
 // possibly get a list of IARU society exchanges; note that we normally do this with a prefill file instead
       if (!context.society_list_filename().empty())
@@ -1204,7 +1269,7 @@ int main(int argc, char** argv)
       { current_band = ( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
         current_mode = ( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
 
-// see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
+// see whether the rig is on the right band and mode (as defined in the configuration file); if not, then move it
         if (current_band != static_cast<BAND>(rig.rig_frequency()))
         { rig.rig_frequency(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
           sleep_for(2s);                                                       // give things time to settle on the rig
@@ -1220,10 +1285,10 @@ int main(int argc, char** argv)
         rig.rig_mode(current_mode);
 
       fast_cw_bandwidth();    // set to default SAP bandwidth if on CW
-      rig.base_state();
+      rig.base_state();       // put rig in known base state
 
 // configure bandmaps so user's call and calls in the do-not-show list do not display
-      FOR_ALL(bandmaps, [dns = context.do_not_show()] (bandmap& bm) { bm.do_not_add(my_call);     // should it be &dns = context... ?
+      FOR_ALL(bandmaps, [dns = context.do_not_show()] (bandmap& bm) { bm.do_not_add(my_call);
                                               
                                                                       if (!dns.empty())
                                                                         bm.do_not_add(dns); 
@@ -1252,8 +1317,8 @@ int main(int argc, char** argv)
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-      if (const int cull_function { context.bandmap_cull_function() }; cull_function)           // if not cull function number zero
-        FOR_ALL(bandmaps, [cull_function] (bandmap& bm) { bm.cull_function(cull_function); } );
+      if (const int cull_function_nr { context.bandmap_cull_function() }; cull_function_nr)           // if not cull function number zero
+        FOR_ALL(bandmaps, [cull_function_nr] (bandmap& bm) { bm.cull_function(cull_function_nr); } );
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
@@ -1318,13 +1383,14 @@ int main(int argc, char** argv)
 
       if (!context.batch_messages_file().empty())
       { try
-        { const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
+        { //const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
 
           string current_message { };
 
           SAFELOCK(batch_messages);
 
-          for (const auto& messages_line : messages)
+//          for (const auto& messages_line : messages)
+          for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.batch_messages_file())))
           { if (!messages_line.empty())
             { if (contains(messages_line, '['))
                 current_message = delimited_substring <std::string> (messages_line, '[', ']', DELIMITERS::DROP);       // extract this batch message
@@ -1406,9 +1472,9 @@ int main(int argc, char** argv)
             { const string& f_0 { fields[0] };
 
 // is it a date or a call?
-              const string&     callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
+              const string& callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
 
-              string_view msg      { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
+              string_view msg { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
 
               if (is_digits(f_0))
                 msg = remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (msg, ':'));
@@ -1568,16 +1634,17 @@ int main(int argc, char** argv)
 
 // SCORE BANDS window
       win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
-      { string bands_str;
+      { string bands_str { };
 
         FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+        //const string bands_str { SR::fold_left(rules.score_bands(), string { }, [] (const BAND b) { return (BAND_NAME[b] + SPACE_STR); } ) };   // but how to define plus?
 
         win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
       }
 
 // SCORE MODES window
       win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
-      { string modes_str;
+      { string modes_str { };
 
         FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
@@ -1856,7 +1923,7 @@ int main(int argc, char** argv)
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(statistics, cur_band, cur_mode);
 
 // QTCs
         if (send_qtcs)
@@ -2176,9 +2243,9 @@ void display_date_and_time(void)
 
             if ( inactive_qso and inactive_qsy )
             { stop_recording(audio);
-              alert("audio recording halted due to inactivity: "s);
-              ost << "time_since_qso = " << time_since_qso << endl;
-              ost << "time_since_qsy = " << time_since_qsy << endl;
+              alert("audio recording halted due to inactivity"s);
+              ost << "  time_since_qso = " << time_since_qso << endl;
+              ost << "  time_since_qsy = " << time_since_qsy << endl;
             }
           }
         }
@@ -2279,21 +2346,27 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
 
 // have we changed band (perhaps manually)?
           if (const BAND sgb { current_band }; sgb != to_BAND(f))
-          { ost << "Band mismatch during poll; sgb = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
+          { ost << "Band mismatch during poll; sgb (current_band) = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
 
 // changing bands is ssslllloooowwww, and maybe the rig is in transition in another thread -- holding mutex locks
 // is no good because it's too slow
             bool need_to_set_band { true };
 
             frequency new_f;
-            BAND new_sgb;
+            BAND      new_sgb;
 
-            for ( [[maybe_unused]] int n { 1 }; need_to_set_band and n != 5; ++n)
+            for ( [[maybe_unused]] int n { 1 }; need_to_set_band and (n != 5); ++n)
             { sleep_for(500ms);
 
               new_f = rig.rig_frequency();
-              new_sgb = current_band;
-              need_to_set_band = (new_sgb != to_BAND(new_f));
+
+// 250509
+              new_sgb = to_BAND(new_f);
+              need_to_set_band = (current_band != to_BAND(new_f));
+
+              ost << "  attempt number " << n << ": new_f = " << new_f << "; new_sgb = " << new_sgb << "; current_band = " << static_cast<BAND>(current_band) << endl;
+//              new_sgb = current_band;
+//              need_to_set_band = (new_sgb != to_BAND(new_f));
             }
 
             if (need_to_set_band)               // it looks like this was probably a manual band change
@@ -2441,7 +2514,6 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
     {
     }
 
-//    sleep_for(milliseconds(millisecond_poll_period));
     sleep_for(poll_period);
 
     { SAFELOCK(thread_check);
@@ -2528,7 +2600,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
 
       if (time_since_data_last_received > 60s)
-      { const string msg       { "NO DATA RECEIVED FOR "s + to_string(duration_cast<seconds>(time_since_data_last_received).count()) + " SECONDS"s };
+      { //const string msg       { "NO DATA RECEIVED FOR "s + to_string(duration_cast<seconds>(time_since_data_last_received).count()) + " SECONDS"s };
+        //const int SEC = N_SECONDS(time_since_data_last_received);
+        const string msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
         const int    bg_colour { cluster_line_win.bg() };
         const int    fg_colour { cluster_line_win.fg() };
 
@@ -2557,29 +2631,13 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     unprocessed_input += move(new_input);         // append the new unprocessed data
 
- //   ost << "length of unprocessed input = " << css(unprocessed_input.size()) << " bytes" << endl;
-
-//    ost << "hex: " << hex_string(unprocessed_input) << endl;
-
-// perhaps introduce unprocessed_input_sv here, and use in what follows
     string_view unprocessed_input_sv { unprocessed_input };
 
     while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
-//    while (contains(unprocessed_input, CRLF))                               // look for EOL markers
-    { const size_t posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
-      //const size_t posn { unprocessed_input.find(CRLF) };                   // guaranteed to succeed
-//      const string line { remove_char(substring <std::string_view> (unprocessed_input_sv, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
-//      const string line { remove_char(substring <std::string> (unprocessed_input, 0, posn), LF_CHAR) };      // store the next unprocessed line, having removed any extraneous line-feeds
-//      const string line { substring <std::string> (unprocessed_input, 0, posn) };      // store the next unprocessed line
+    { const size_t      posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
       const string_view line { substring <std::string_view> (unprocessed_input_sv, 0, posn) };      // store the next unprocessed line
 
-//      unprocessed_input = substring <std::string> (unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
-//      unprocessed_input = substring <std::string> (unprocessed_input, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
-//      unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, min(posn + 2, unprocessed_input_sv.length() - 1));  // delete the line (including the CRLF) from the unprocessed buffer
       unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
-
- //     ost << "line: " << hex_string(line) << endl;
- //     ost << "remaining unprocessed: " << hex_string(unprocessed_input_sv) << endl;
 
       if (!line.empty())
       { static const vector<string_view> beacon_markers { " BCN ",
@@ -5363,7 +5421,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // possibly update BEST DX window
           if (win_best_dx.valid())
-            update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
+            update_best_dx(grid_square { qso.received_exchange("GRID"sv) }, qso.callsign());
         }                                                     // end pexch.valid()
         else        // unable to parse exchange
           alert("Unable to parse exchange"s);
@@ -6781,7 +6839,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
     rate += { qso.epoch_time(), statistics.points(rules) };
     
     if (using_best_dx)
-      update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
+      update_best_dx( grid_square { qso.received_exchange("GRID"sv) }, qso.callsign());
     
     lgb += qso;
   }
@@ -8931,7 +8989,7 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
 
   if (win_best_dx.valid())              // check even though it should have been checked before being called
   { if (!dx_gs.designation().empty() and dx_gs.designation() != INVALID_GRID)
-    { float distance_in_units { ( my_grid - dx_gs.designation() ) };    // km
+    { float distance_in_units { ( my_grid - grid_square { dx_gs.designation() } ) };    // km
 
       if (best_dx_is_in_miles)
         distance_in_units = kilometres_to_miles(distance_in_units);
@@ -9098,8 +9156,9 @@ void update_system_memory(void)
 /// update value of <i>quick_qsy_info</i> and write it to <i>win_quick_qsy</i>
 void update_quick_qsy(void)
 { const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
-  const frequency&            f              { quick_qsy_info.first };
-  const MODE                  m              { quick_qsy_info.second };
+//  const frequency&            f              { quick_qsy_info.first };
+//  const MODE                  m              { quick_qsy_info.second };
+  const auto [ f, m ] { quick_qsy_info };
 
   quick_qsy_map[BAND(f)] = quick_qsy_info;
 
@@ -9175,7 +9234,7 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
     if (vqsos[n].idate() >= target_idate)
       return { vqsos[n], n };
       
-  return { adif3_record(), -1 };
+  return { adif3_record { }, -1 };
 };
 
 /*! \brief                          Find the first QSO in a chronological vector of ADIF3 records that occurs on or after a target date; or the first confirmed QSO after a given index number
@@ -9192,7 +9251,7 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
       if ( (vqsos[n].idate() >= target_idate) or vqsos[n].confirmed() )
         return { vqsos[n], n };
       
-  return { adif3_record(), -1 };
+  return { adif3_record { }, -1 };
 };
 
 /*! \brief Build the old log info from an ADIF3 file
@@ -9239,7 +9298,7 @@ void adif3_build_old_log(void)
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
-  { const adif3_file  old_adif3_log { context_path,  context.old_adif_log_name(), STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
+  { const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
     alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
@@ -9260,7 +9319,7 @@ void adif3_build_old_log(void)
             FOR_ALL(matching_qsos, [&bmode_records] (const auto& rec) { bmode_records[{ BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) }] += rec; } );
 
 // now for each different band/mode
-            for ( const auto& [bmode, vrec] : bmode_records )
+            for ( const auto& [_, vrec] : bmode_records )
             { adif3_record last_marked_qso       { vrec[0] };
               int          index_last_marked_qso { 0 };
 
@@ -9345,7 +9404,9 @@ void audio_error_alert(const string& msg)
     \param  current_time    HH:MM
     \return                 whether <i>current_time</i> is in daylight
 */
-bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time)
+//bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time)
+//bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string& current_time)
+bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string_view current_time)
 { if (sunrise_time == "DARK"sv)
     return false;
 
@@ -9409,22 +9470,24 @@ bool ssb_toggle_bandwidth(void)
     \param  aw  the active window
 */
 void set_active_window(const ACTIVE_WINDOW aw)
-{ active_window = aw;
+{ using enum ACTIVE_WINDOW;
+
+  active_window = aw;
 
   switch (aw)
-  { case ACTIVE_WINDOW::CALL :
+  { case CALL :
       win_active_p = &win_call;
       break;
 
-    case ACTIVE_WINDOW::EXCHANGE :
+    case EXCHANGE :
       win_active_p = &win_exchange;
       break;
 
-    case ACTIVE_WINDOW::LOG :
+    case LOG :
       win_active_p = &win_log;
       break;
 
-    case ACTIVE_WINDOW::LOG_EXTRACT :
+    case LOG_EXTRACT :
       win_active_p = &win_log_extract;
       break;
   }
@@ -9449,7 +9512,7 @@ void update_query_windows(const string& callsign)
     \param  logbk   the logbook to be used to rebuild the databases
 */
 void rebuild_dynamic_call_databases(const logbook& logbk)
-{ scp_dynamic_db.clear();     // clears cache of parent
+{ scp_dynamic_db.clear();             // clears cache of parent
   fuzzy_dynamic_db.clear();
   query_db.clear_dynamic_database();
 
@@ -9526,13 +9589,14 @@ STRING_SET calls_from_do_not_show_file(const BAND b)
 void calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b)
 { if (callsigns.empty())
     return;
-  
-  const string filename_suffix { (b == ALL_BANDS) ? string { } : "-"s + BAND_NAME[b] };
-  const string filename        { context.do_not_show_filename() + filename_suffix };
 
-  CALL_SET output_set;    // define the ordering to be callsign order
+  const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };
+  const string   filename_suffix { (b == ALL_BANDS) ? string { } : "-"s + BAND_NAME[b] };
+  const string   filename        { context.do_not_show_filename() + filename_suffix };
 
-  FOR_ALL(callsigns, [&output_set] (const string& callsign) { output_set += callsign; });
+//  CALL_SET output_set;    // define the ordering to be callsign order
+
+//  FOR_ALL(callsigns, [&output_set] (const string& callsign) { output_set += callsign; });
 
   ofstream outfile(filename);
 

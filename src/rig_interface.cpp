@@ -209,7 +209,6 @@ string rig_interface::_retried_raw_command(const string& cmd, /*const int expect
   while (!completed and (counter != n_retries))  
   { rv = raw_command(cmd, RESPONSE::EXPECTED/*, expected_len*/);    // issue the command each time
 
-//    completed = contains_at(rv, ';', expected_len - 1);
     completed = (rv.empty() ? false : last_char(rv) == ';');
 
     if (!completed)
@@ -238,7 +237,7 @@ void rig_interface::prepare(const drlog_context& context)
   const string rig_type { context.rig1_type() };
 
 // ugly map of name to hamlib model number
-  if (rig_type == "K3"s)
+  if (rig_type == "K3"sv)
     _model = RIG_MODEL_K3;
 
   if (_model == RIG_MODEL_DUMMY and !rig_type.empty())
@@ -288,9 +287,7 @@ void rig_interface::prepare(const drlog_context& context)
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ //constexpr milliseconds RETRY_TIME          { 10ms };  // wait time if a retry is necessary; decreasing this makes little difference
-  //constexpr milliseconds K3_MODE_CHANGE_TIME { 500ms }; // time for a K3 to change mode
-  constexpr chrono::duration RETRY_TIME { 10ms };            // wait time if a retry is necessary; decreasing this makes little difference
+{ constexpr chrono::duration RETRY_TIME          { 10ms };   // wait time if a retry is necessary; decreasing this makes little difference
   constexpr chrono::duration K3_MODE_CHANGE_TIME { 500ms };  // time for a K3 to change mode
 
   _last_commanded_mode = m;
@@ -483,6 +480,7 @@ bool rig_interface::split_enabled(void) const
 void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
   { SAFELOCK(_rig);
+
     _rigp->state.rigport.parm.serial.rate = rate;
   }
 }
@@ -492,6 +490,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 */
 unsigned int rig_interface::baud_rate(void) const
 { SAFELOCK(_rig);
+
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
 
@@ -515,6 +514,7 @@ void rig_interface::data_bits(const unsigned int bits)
 */
 unsigned int rig_interface::data_bits(void) const
 { SAFELOCK(_rig);
+
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
 }
 
@@ -773,9 +773,9 @@ void rig_interface::unlock(void) const
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
-void rig_interface::sub_receiver(const bool b) const
+void rig_interface::sub_receiver(const bool torf) const
 { if (_model == RIG_MODEL_K3)
-    raw_command( (b ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED);
+    raw_command( (torf ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED);
 }
 
 /// is sub-receiver on?
@@ -815,7 +815,9 @@ void rig_interface::keyer_speed(const int wpm) const
 
 /// get the keyer speed in WPM
 int rig_interface::keyer_speed(void) const
-{ SAFELOCK(_rig);
+{ constexpr int DEFAULT_WPM { 26 };
+
+  SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
   { if ( const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"s, 0) )
@@ -830,7 +832,7 @@ int rig_interface::keyer_speed(void) const
 
     if (const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) }; status != RIG_OK)
     { _error_alert("Hamlib error getting keyer speed"s);
-      return 26;  // default speed
+      return DEFAULT_WPM;  // default speed
     }
 
     return v.i;
@@ -844,7 +846,6 @@ void rig_interface::wait_until_not_busy(void) const
 }
 
 // explicit K3 commands
-//#if !defined(NEW_RAW_COMMAND)
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
@@ -854,14 +855,8 @@ void rig_interface::wait_until_not_busy(void) const
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-//string rig_interface::raw_command(const string& cmd, const RESPONSE expectation, const int expected_len) const
 string rig_interface::raw_command(const string_view cmd, const RESPONSE expectation/*, const int expected_len */) const
-{ //if (expected_len)           // stop nannying error
-  //{ auto tmp = expected_len;
-  //  tmp += 1;
-  //}
-
-  constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
+{ constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
 
   const bool response_expected { expectation == RESPONSE::EXPECTED };
 
@@ -1036,8 +1031,6 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
   return string { };
 }
 
-//#endif
-
 /// is the VFO locked?
 bool rig_interface::is_locked(void) const
 { if (_model == RIG_MODEL_K3)
@@ -1111,12 +1104,16 @@ frequency rig_interface::get_last_frequency(const bandmode bm) const
     \param  bm  band and mode
     \param  f   frequency
 */
-void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
+void rig_interface::set_last_frequency(const bandmode bm, const frequency f)
 { SAFELOCK(_rig);
 
-  if (BAND(f) != bm.first)
+  const auto [b, m] { bm };
+
+//  if (BAND(f) != bm.first)
+  if (BAND(f) != b)
   { alert("Attempt to set out-of-band frequency in set_last_frequency()"); 
-    ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << bm.first << ", mode = " << bm.second << ", f  " << f << endl;
+//    ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << bm.first << ", mode = " << bm.second << ", f  " << f << endl;
+    ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << b << ", mode = " << m << ", f  " << f << endl;
   }
   else
     _last_frequency[bm] = f;
@@ -1215,8 +1212,9 @@ VFO rig_interface::tx_vfo(void) const
     \param  hz  desired bandwidth, in Hz
 */
 void rig_interface::bandwidth_a(const unsigned int hz) const
-{ constexpr std::chrono::milliseconds RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
-  constexpr int                       PRECISION  { 50 };          // hertz
+{ //constexpr std::chrono::milliseconds RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
+  constexpr std::chrono::duration RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
+  constexpr int                   PRECISION  { 50 };          // hertz
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
@@ -1303,9 +1301,6 @@ void rig_interface::centre_frequency(const unsigned int fc) const
     return; 
   }
 
-//  const string cmd { "IS "s + fc_str + ";"s };
-
-//  raw_command(cmd, RESPONSE::NOT_EXPECTED);
   raw_command( ("IS "s + fc_str + ";"s), RESPONSE::NOT_EXPECTED);
 }
 

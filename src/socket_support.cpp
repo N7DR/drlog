@@ -1030,6 +1030,7 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
 
       if (socket_status == SOCKET_ERROR)
       { socket_status = errno;
+
         switch (socket_status)
         { case EFAULT:
             throw socket_support_error(SOCKET_SUPPORT_EFAULT);
@@ -1137,8 +1138,10 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
     Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */
 string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
-{ if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
-    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name"s);
+{ constexpr std::chrono::duration RETRY_TIME { 1s };       // period between retries
+
+  if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
+    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to look up empty name"s);
 
   constexpr int BUF_LEN { 2048 };
   
@@ -1159,7 +1162,7 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
     success = ( (status == 0) and (result != nullptr) );    // the second test should be redundant
 
     if (!success and n_try != n_tries)
-      sleep_for(1s);
+      sleep_for(RETRY_TIME);
   }
 
   if (success)

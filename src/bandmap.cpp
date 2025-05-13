@@ -238,19 +238,20 @@ string n_posters_database::to_string(void) const
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
 */
-void bandmap_filter_type::add_or_subtract(const string& str)
+//void bandmap_filter_type::add_or_subtract(const string& str)
+void bandmap_filter_type::add_or_subtract(const string_view str)
 { const bool   is_continent { CONTINENT_SET.contains(str) };
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
 
   vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
-  STRING_SET     ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
+  STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
 
   if (ss.contains(str_copy))    // remove a value
     ss -= str_copy;
   else                          // add a value
     ss += str_copy;
 
-  vs_p->clear();                                        // empty it
+  vs_p -> clear();                                      // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
   SORT(*vs_p, compare_calls);                           // make it easy for humans
 }
@@ -276,7 +277,7 @@ bandmap_entry& bandmap_entry::callsign(const string_view call)
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-bandmap_entry& bandmap_entry::freq(const frequency& f)
+bandmap_entry& bandmap_entry::freq(const frequency f)
 { _freq = f;
   _frequency_str = _freq.display_string();
   _band = to_BAND(f);
@@ -499,48 +500,6 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 /*! \class  bandmap
     \brief  A bandmap
 */
-
-/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                         band map entries
-     \param target_frequency_in_khz     the target frequency, in kHz
-     \param guard_band_in_hz            how far from the target to search, in Hz
-     \return                            callsign of a station within the guard band
-
-     Returns the nearest station within the guard band, or the null string if no call is found.
-     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
-*/
-#if 0
-string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz) const
-{ if ( (target_frequency_in_khz < 1800) or (target_frequency_in_khz > 29700) )
-  { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
-    return string { };
-  }
-
-  const float guard_band_in_khz { static_cast<float>(guard_band_in_hz) / 1000.0f };
-
-  bool  finish_looking      { false };
-  float smallest_difference { 1'000'000};              // start with a big number
-
-  string rv { };
-
-  for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
-  { const float difference     { cit->freq().kHz() - target_frequency_in_khz };
-    const float abs_difference { fabs(difference) };
-
-    if ( (abs_difference <= guard_band_in_khz) and (!cit->is_my_marker()))
-    { if (abs_difference < smallest_difference)
-      { smallest_difference = abs_difference;
-        rv = cit->callsign();
-      }
-    }
-
-    if (difference > guard_band_in_khz)  // no need to keep looking we if are past the allowed guard band
-      finish_looking = true;
-  }
-
-  return rv;
-}
-#endif
 
 /*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                         band map entries
@@ -1059,7 +1018,11 @@ BM_ENTRIES bandmap::filtered_entries(void)
                                                      }
                   };
 
-  _filtered_entries = move(RANGE_CONTAINER <BM_ENTRIES> (_entries | SRV::filter(include_be)));
+//  _filtered_entries = move(RANGE_CONTAINER <BM_ENTRIES> (_entries | SRV::filter(include_be)));
+
+//  _filtered_entries = std::ranges::to<BM_ENTRIES> (_entries | SRV::filter(include_be));
+  _filtered_entries = to<BM_ENTRIES> (_entries | SRV::filter(include_be));
+
 //  _filtered_entries_dirty = false;
 
 // is it correct that we don't mark dirty_entries() or _version?
@@ -1089,6 +1052,7 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 0 :
       return rbn_threshold_and_filtered_entries();
 
+/*
     case 1 :                                                        // N7DR criteria
       return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.matches_criteria()); }) );
 
@@ -1099,6 +1063,19 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 3 :                                                        // never worked anywhere
       return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
                                                                                                          { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
+*/
+
+    case 1 :                                                        // N7DR criteria
+      return SR::to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.matches_criteria()); }) );
+
+    case 2 :                                                        // new on this band+mode
+      return to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
+                                                                                                         { return (be.is_marker() or be.is_all_time_first_and_needed_qso()); }));
+
+    case 3 :                                                        // never worked anywhere
+      return to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
+                                                                                                         { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
+
   }
 }
 
@@ -1106,7 +1083,8 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 BM_ENTRIES bandmap::displayed_entries_no_markers(void)
 { SAFELOCK (_bandmap);
 
-  return RANGE_CONTAINER <BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }));
+//  return RANGE_CONTAINER <BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }));
+  return SR::to<BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }) );
 }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location

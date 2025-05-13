@@ -1296,8 +1296,10 @@ struct CMP
     { return PF(m1, m2); }
 };
 
-using CALL_SET = std::set<std::string, CMP<compare_calls>>;
-using MULT_SET = std::set<std::string, CMP<compare_mults>>;
+//using CALL_SET = std::set<std::string, CMP<compare_calls>>;
+using CALL_SET = CUSTOM_STRING_SET<CMP<compare_mults>>;
+//using MULT_SET = std::set<std::string, CMP<compare_mults>>;
+using MULT_SET = CUSTOM_STRING_SET<CMP<compare_mults>>;
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -1306,7 +1308,6 @@ using MULT_SET = std::set<std::string, CMP<compare_mults>>;
 
     Assumes that <i>str</i> is a number
 */
-//std::string decimal_places(const std::string& str, const int n);
 std::string decimal_places(const std::string_view str, const int n);
 
 /*! \brief        Return the longest string from a container of strings
@@ -1316,11 +1317,14 @@ std::string decimal_places(const std::string_view str, const int n);
 template <typename T>
   requires is_container_of_strings<T>
 std::string longest(const T& strs)
-{ std::string rv;
+{ std::string rv { };
 
-  for (const auto& str : strs)
-    if (str.length() > rv.length())
-      rv = str;
+//  for (const auto& str : strs)
+//    if (str.length() > rv.length())
+//      rv = str;
+  FOR_ALL(strs, [&rv] (const auto& str) { if (str.length() > rv.length())
+                                            rv = str;
+                                        });
 
   return rv;
 }
@@ -1343,7 +1347,7 @@ std::string longest(T&& strs)
 
 /*! \brief        Erase a string from a container of strings
     \param  c     target container
-    \param  str   atring to erase
+    \param  str   string to erase
 
     This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
 */
@@ -1372,7 +1376,6 @@ inline void STRC_ERASE(T& c, const std::string_view sv)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-//std::string reformat_for_wprintw(const std::string& str, const int width);
 std::string reformat_for_wprintw(const std::string_view str, const int width);
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
@@ -1426,8 +1429,9 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
     \param  delim_2     closing delimiter
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
-inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
-  { return (delim_1 + str + delim_2); }
+//inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
+inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string& delim_2)
+  { return (std::string { delim_1 } + str + delim_2); }
 
 /*! \brief              Perform a case-insensitive search for a substring
     \param  str         string to search
@@ -1554,11 +1558,11 @@ std::string to_printable_string(const std::string_view str);
 
 /// concatenate two string_views
 inline std::string operator+(const std::string_view sv1, const std::string_view sv2)
-{ return std::string(sv1) + sv2; }
+  { return std::string(sv1) + sv2; }
 
 // concatenate a string with a string_view
 inline std::string operator+(const std::string_view sv1, const std::string& s2)
-{ return std::string(sv1) + s2; }
+  { return std::string(sv1) + s2; }
 
 /*! \brief                Read an istream until a string delimiter is reached
     \param  in            istream from which to read

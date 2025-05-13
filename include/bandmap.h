@@ -326,7 +326,8 @@ public:
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
 */
-  void add_or_subtract(const std::string& str);
+//  void add_or_subtract(const std::string& str);
+  void add_or_subtract(const std::string_view str);
 
 /// serialise
   template<typename Archive>
@@ -399,7 +400,8 @@ public:
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-  bandmap_entry& freq(const frequency& f);
+//  bandmap_entry& freq(const frequency& f);
+  bandmap_entry& freq(const frequency f);
 
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
 
@@ -478,16 +480,18 @@ public:
 
     Does nothing if the value <i>value</i> is already known for the mult <i>name</i>
 */
-  inline void add_callsign_mult(const std::string& name, const std::string& value)
-    { _is_needed_callsign_mult += { name, value }; }
+//  inline void add_callsign_mult(const std::string& name, const std::string& value)
+  inline void add_callsign_mult(const std::string_view name, const std::string& value)
+    { _is_needed_callsign_mult += { std::string { name }, value }; }
 
 /*! \brief          Add a value of country mult
     \param  value   value of the mult
 
     Does nothing if the value <i>value</i> is already known
 */
-  inline void add_country_mult(const std::string& value)
-    { _is_needed_country_mult += value; }
+//  inline void add_country_mult(const std::string& value)
+  inline void add_country_mult(const std::string_view value)
+    { _is_needed_country_mult += std::string { value }; }
 
 /*! \brief          Add a value of exchange mult
     \param  name    name of the mult

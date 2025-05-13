@@ -68,8 +68,10 @@ bool QSO::_is_received_field_optional(const string& field_name, const vector<exc
 bool QSO::_process_name_value_pair(const pair<string, string>& nv)
 { bool processed { false };
 
-  const string& name  { nv.first };
-  const string& value { nv.second };
+//  const string& name  { nv.first };
+//  const string& value { nv.second };
+
+  const auto& [ name, value ] { nv };
 
   if (!processed and (name == "number"sv))
     processed = ( _number = from_string<decltype(_number)>(value), true );
@@ -134,7 +136,9 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
 */
-time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
+//time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
+//time_t QSO::_to_epoch_time(const string_view date_str, const string& utc_str) const
+time_t QSO::_to_epoch_time(const string_view date_str, const string_view utc_str) const
 { struct tm time_struct;
 
   time_struct.tm_sec  = from_string<int>(utc_str.substr(6, 2));
@@ -176,6 +180,8 @@ QSO::QSO(void) :
 
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    <i>statistics</i> might be changed by this function
 */
 //QSO::QSO(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 QSO::QSO(const drlog_context& context, const string_view str, const contest_rules& rules, running_statistics& statistics)
@@ -202,6 +208,8 @@ void QSO::freq_and_band(const decltype(_frequency_tx)& str)
 
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    <i>statistics</i> might be changed by this function
 */
 //void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 void QSO::populate_from_verbose_format(const drlog_context& context, string_view str, const contest_rules& rules, running_statistics& statistics)
@@ -255,7 +263,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, string_view
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
 //void QSO::populate_from_verbose_format(const string& str)
-void QSO::populate_from_verbose_format(const string& str)
+//void QSO::populate_from_verbose_format(const string& str)
+void QSO::populate_from_verbose_format(const string_view str)
 {
 // build a vector of name/value pairs
   size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
@@ -736,7 +745,8 @@ string QSO::verbose_format(void) const
 
     I don't think that this is currently used.
 */
-bool QSO::exchange_match(const string& rule_to_match) const
+//bool QSO::exchange_match(const string& rule_to_match) const
+bool QSO::exchange_match(const string_view rule_to_match) const
 {
 // remove the [] markers
   const string         target { rule_to_match.substr(1, rule_to_match.length() - 2) };
@@ -745,7 +755,8 @@ bool QSO::exchange_match(const string& rule_to_match) const
   if (tokens.size() != 3)
     ost << "Number of tokens = " << tokens.size() << endl;
   else                          // three tokens
-  { const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+  { //const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+    const string_view exchange_field_name { remove_peripheral_spaces <std::string_view> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
 // is this field present?
     const string exchange_field_value { received_exchange(exchange_field_name) };   // default is empty field
@@ -753,10 +764,12 @@ bool QSO::exchange_match(const string& rule_to_match) const
 // now try the various legal operations
 // !=
     if (!remove_leading_spaces <std::string_view> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
-    { const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
+    { //const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
+      const string_view op { remove_peripheral_spaces <std::string_view> (tokens[1]) };
 
       if (op == "!="sv)                                                // precise inequality
-      { const string target { remove_trailing <std::string> (remove_leading <std::string> (remove_peripheral_spaces <std::string> (tokens[2]), '"'), '"') };                   // strip any double quotation marks
+      { //const string target { remove_trailing <std::string> (remove_leading <std::string> (remove_peripheral_spaces <std::string> (tokens[2]), '"'), '"') };  // strip any double quotation marks
+        const string_view target { remove_trailing <std::string_view> (remove_leading <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"'), '"') };  // strip any double quotation marks
 
         ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
@@ -776,8 +789,8 @@ bool QSO::exchange_match(const string& rule_to_match) const
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-string QSO::received_exchange(const string& field_name) const
-{ for (const auto& field : _received_exchange)
+string QSO::received_exchange(const string_view field_name) const
+{ for (auto field : _received_exchange)
   { if (field.name() == field_name)
       return field.value();
   }
@@ -791,13 +804,8 @@ string QSO::received_exchange(const string& field_name) const
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-string QSO::sent_exchange(const string& field_name) const
-{ //for (const auto& field : _sent_exchange)
-  //{ if (field.first == field_name)
-  //    return field.second;
-  //}
-
-  for (const auto& [name, value] : _sent_exchange)
+string QSO::sent_exchange(const string_view field_name) const
+{ for (const auto& [name, value] : _sent_exchange)
     if (name == field_name)
       return value;
 
@@ -810,50 +818,26 @@ string QSO::sent_exchange(const string& field_name) const
     Also populates <i>_log_line_fields</i> to match the returned string
 */
 string QSO::log_line(void)
-{
-#if 0
-  static const map<string, unsigned int> field_widths { { "CHECK"s,     2 },
-                                                        { "CQZONE"s,    2 },
-                                                        { "CWPOWER"s,   3 },
-                                                        { "DOK"s,       1 },
-                                                        { "GRID"s,      4 },
-                                                        { "ITUZONE"s,   2 },
-                                                        { "NAME"s,      6 },
-                                                        { "PREC"s,      1 },
-                                                        { "RDA"s,       4 },
-                                                        { "RS"s,        2 },
-                                                        { "RST"s,       3 },
-                                                        { "SECTION"s,   3 },
-                                                        { "SKCCNO"s,    6 },
-                                                        { "SOCIETY"s,   5 },
-                                                        { "SPC"s,       3 },
-                                                        { "SSBPOWER"s,  4 },
-                                                        { "UKEICODE"s,  2 },
-                                                        { "160MSTATE"s, 2 },
-                                                        { "10MSTATE"s,  3 }
-                                                      };
-#endif
-
-static const UNORDERED_STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
-                                                               { "CQZONE"s,    2 },
-                                                               { "CWPOWER"s,   3 },
-                                                               { "DOK"s,       1 },
-                                                               { "GRID"s,      4 },
-                                                               { "ITUZONE"s,   2 },
-                                                               { "NAME"s,      6 },
-                                                               { "PREC"s,      1 },
-                                                               { "RDA"s,       4 },
-                                                               { "RS"s,        2 },
-                                                               { "RST"s,       3 },
-                                                               { "SECTION"s,   3 },
-                                                               { "SKCCNO"s,    6 },
-                                                               { "SOCIETY"s,   5 },
-                                                               { "SPC"s,       3 },
-                                                               { "SSBPOWER"s,  4 },
-                                                               { "UKEICODE"s,  2 },
-                                                               { "160MSTATE"s, 2 },
-                                                               { "10MSTATE"s,  3 }
-                                                             };
+{ static const UNORDERED_STRING_MAP<unsigned int> field_widths { { "CHECK"s,     2 },
+                                                                 { "CQZONE"s,    2 },
+                                                                 { "CWPOWER"s,   3 },
+                                                                 { "DOK"s,       1 },
+                                                                 { "GRID"s,      4 },
+                                                                 { "ITUZONE"s,   2 },
+                                                                 { "NAME"s,      6 },
+                                                                 { "PREC"s,      1 },
+                                                                 { "RDA"s,       4 },
+                                                                 { "RS"s,        2 },
+                                                                 { "RST"s,       3 },
+                                                                 { "SECTION"s,   3 },
+                                                                 { "SKCCNO"s,    6 },
+                                                                 { "SOCIETY"s,   5 },
+                                                                 { "SPC"s,       3 },
+                                                                 { "SSBPOWER"s,  4 },
+                                                                 { "UKEICODE"s,  2 },
+                                                                 { "160MSTATE"s, 2 },
+                                                                 { "10MSTATE"s,  3 }
+                                                               };
   constexpr size_t CALL_FIELD_LENGTH      { 12 };
   constexpr size_t DATE_FIELD_LENGTH      { 11 };
   constexpr size_t FREQUENCY_FIELD_LENGTH { 8 };

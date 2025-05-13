@@ -36,7 +36,8 @@ constexpr float SQUARE_HEIGHT { 1.0f };             ///< width of a Maidenhead "
 /*! \brief      Construct from a designation
     \param  gs  four-character designation
 */
-grid_square::grid_square(const string& gs)
+//grid_square::grid_square(const string& gs)
+grid_square::grid_square(const string_view gs)
 { if ( is_valid_grid_designation(gs) )
   { auto round_it { [] (const float f) { return static_cast<int>(round(f)); } };     // round a float to the nearest int
 

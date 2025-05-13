@@ -30,11 +30,14 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
 MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
-{ MULT_SET rv { mv };
+{ return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !contains(str, '*'); }));
 
-  erase_if(rv, [] (const std::string& str) { return contains(str, '*'); } );
 
-  return rv;
+//  MULT_SET rv { mv };
+
+//  erase_if(rv, [] (const string& str) { return contains(str, '*'); } );
+
+//  return rv;
 }
 
 /*! \brief          Add a value to the set of known values
@@ -43,16 +46,23 @@ MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
 
     Returns false if the value <i>str</i> was already known
 */
-bool multiplier::add_known(const std::string& str)
-{ SAFELOCK(multiplier); 
+//bool multiplier::add_known(const std::string& str)
+bool multiplier::add_known(const string_view str)
+{ SAFELOCK(multiplier);
 
   if (!_used)
     return false;
 
-  const auto [_, rv] { _known.insert(str) };
+ // const string s       { str };
+  const auto [_, rv] { _known.insert(string { str }) };
 
   if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
+
+//  const auto [_, rv] { _known.insert(str) };
+//
+//  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
+//    _all_values_are_mults = false;
 
   return rv;
 }
@@ -66,13 +76,10 @@ void multiplier::remove_known(const string_view str)
 { SAFELOCK(multiplier);
 
   if (_used)
-  { //auto posn = _known.find(str);
-
-    //if (posn != _known.end())
-    //  _known.erase(posn);
-    STRC_ERASE(_known, str);
+  { STRC_ERASE(_known, str);
 
 //    _known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
+                              // still not available: https://gcc.gnu.org/onlinedocs/gcc-15.1.0/libstdc++/manual/manual/status.html#status.iso.2020
   }
 
   _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !contains(known_value, '*'); } );
@@ -97,7 +104,7 @@ bool multiplier::is_known(const string_view str) const
     Returns false if the value <i>str</i> is not known.
     Adds even if it's NOT a mult value.
 */
-bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
+bool multiplier::add_worked(const string_view str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if ((_used) and is_known(str))                                          // add only known mults
@@ -105,7 +112,7 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     const int m_nr { static_cast<int>(m) };
 
     auto& pb       { _worked[m_nr] };
-    auto [ _, rv ] { pb[b_nr].insert(str) };  // BAND, MODE
+    auto [ _, rv ] { pb[b_nr].insert(string { str }) };  // BAND, MODE
 
     if (rv)
     { pb[ANY_BAND] += str;        // ANY_BAND, MODE
@@ -130,7 +137,7 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 
     Makes <i>str</i> known if it was previously unknown
 */
-bool multiplier::unconditional_add_worked(const string& str, const BAND b, const MODE m)
+bool multiplier::unconditional_add_worked(const string_view str, const BAND b, const MODE m)
 { add_known(str);
 
   return add_worked(str, b, m);
@@ -271,8 +278,8 @@ ostream& operator<<(ostream& ost, const multiplier& m)
       << "multiplier is per-band = " << boolalpha << m.per_band() << endl
       << "worked multipliers:" << endl;
 
-  for (size_t nm = 0; nm <= N_MODES; ++nm)
-  { for (size_t n = 0; n <= N_BANDS; ++n)
+  for (size_t nm { 0 }; nm <= N_MODES; ++nm)
+  { for (size_t n { 0 }; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
       for (const auto& worked : m.worked(n, static_cast<MODE>(nm)))

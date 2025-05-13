@@ -48,7 +48,8 @@ constexpr unsigned int FIELD_WIDTH        { 6 };    ///< width of other fields
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-void running_statistics::_insert_callsign_mult(const string_view mult_name, const string& mult_value, const unsigned int band_nr, const unsigned int mode_nr)
+//void running_statistics::_insert_callsign_mult(const string_view mult_name, const string& mult_value, const unsigned int band_nr, const unsigned int mode_nr)
+void running_statistics::_insert_callsign_mult(const string_view mult_name, const string_view mult_value, const unsigned int band_nr, const unsigned int mode_nr)
 { if (_callsign_mults_used and !mult_value.empty())     // do we actually have to do anything?
   { SAFELOCK(statistics);
 
@@ -61,7 +62,7 @@ void running_statistics::_insert_callsign_mult(const string_view mult_name, cons
     { multiplier mult;                                                                          // create new mult
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));      // we've worked it
-      _callsign_multipliers += { string { mult_name }, mult };                                             // store the info
+      _callsign_multipliers += { string { mult_name }, mult };                                  // store the info
     }
   }
 }
@@ -408,7 +409,8 @@ bool running_statistics::is_needed_country_mult(const string_view callsign, cons
 
     Does nothing and returns <i>false</i> if <i>str</i> is already known
 */
-bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
+//bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
+bool running_statistics::add_known_country_mult(const string_view str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
   return ( (rules.country_mults().contains(str)) ? _country_multipliers.add_known(str) : false );
@@ -437,9 +439,10 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // callsign mults
 // for now, just assume that there's at most one possible callsign mult, and the value is in qso.prefix()
   if (!_callsign_multipliers.empty() and !(qso.prefix().empty()) )
-  { const string mult_name { _callsign_multipliers.begin()->first };
+  { //const string mult_name { _callsign_multipliers.begin()->first };
 
-    multiplier& m { _callsign_multipliers.begin()->second };
+    //multiplier& m { _callsign_multipliers.begin()->second };
+    auto& [ mult_name, m ] { *(_callsign_multipliers.begin()) };
 
     m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
@@ -454,17 +457,18 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // exchange mults
   for (auto& exchange_multiplier : _exchange_multipliers)
-  { const string& field_name { exchange_multiplier.first };
+  { //const string& field_name { exchange_multiplier.first };
+    auto& [ field_name, mult ] { exchange_multiplier };
     const string  value      { qso.received_exchange(field_name) };
     const string  mv         { MULT_VALUE(field_name, value) };            // the mult value of the received field
 
     if (!value.empty())
-    { multiplier& mult { exchange_multiplier.second };
+    { //multiplier& mult { exchange_multiplier.second };
 
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
     }
   }
-  
+
   const bool is_dupe { log.is_dupe(qso, rules) };
 
   if (is_dupe)
@@ -492,7 +496,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     \param  value   new legal value for the exchange multiplier <i>name</i>
     \return         whether <i>value</i> was actually added
 */
-bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
+bool running_statistics::add_known_exchange_mult(const string_view name, const string& value)
 { SAFELOCK(statistics);
 
   for (auto& [ field_name, mult ] : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
@@ -509,7 +513,7 @@ bool running_statistics::add_known_exchange_mult(const string& name, const strin
     \param  name    name of the exchange multiplier
     \return         all the known legal values of <i>name</i>
 */
-MULT_SET running_statistics::known_exchange_mult_values(const string& name)
+MULT_SET running_statistics::known_exchange_mult_values(const string_view name)
 { SAFELOCK(statistics);
 
   for (auto& [ field_name, mult ] : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
@@ -529,7 +533,7 @@ MULT_SET running_statistics::known_exchange_mult_values(const string& name)
 
     Doesn't add if the value <i>field_value</i> is unknown.
 */
-bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int band_nr, const int mode_nr)
+bool running_statistics::add_worked_exchange_mult(const string_view field_name, const string_view field_value, const int band_nr, const int mode_nr)
 { if (!field_value.empty())
   { const string mv { MULT_VALUE(field_name, field_value) };  // the mult value of the received field
 
@@ -554,7 +558,7 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
 
 // done this way so as to account for dupes correctly
   for (const auto& qso : log.as_vector())
-  { this->add_qso(qso, l, rules);
+  { this -> add_qso(qso, l, rules);
     l += qso;
   }
 }
@@ -566,7 +570,8 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
     \param  m                       target mode
     \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
-bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
+//bool running_statistics::is_needed_exchange_mult(const string_view exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
+bool running_statistics::is_needed_exchange_mult(const string_view exchange_field_name, const string_view exchange_field_value, const BAND b, const MODE m) const
 { const string mv { MULT_VALUE(exchange_field_name, exchange_field_value) };  // the mult value of the received field
 
   SAFELOCK(statistics);
@@ -698,13 +703,13 @@ unsigned int running_statistics::points(const contest_rules& rules) const
     \param  m           target mode
     \return             all the worked values of the callsign mult <i>mult_name</i> on band <i>b</i> and mode <i>m</i>
 */
-MULT_SET running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
+MULT_SET running_statistics::worked_callsign_mults(const string_view mult_name, const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
-  if (mult_name.empty() and _callsign_multipliers.size() == 1)
+  if (mult_name.empty() and (_callsign_multipliers.size() == 1))
     return _callsign_multipliers.cbegin()->second.worked(b, m);
 
-  const auto& cit { _callsign_multipliers.find(mult_name) };
+  const auto cit { _callsign_multipliers.find(mult_name) };
 
   return ( (cit == _callsign_multipliers.cend()) ? MULT_SET { } : cit->second.worked(b, m) );
 }
@@ -719,7 +724,10 @@ STRING_MAP<MULT_SET /* values */ > running_statistics::worked_exchange_mults(con
 
   SAFELOCK(statistics);
 
-  FOR_ALL(_exchange_multipliers, [b, m, &rv] (const auto& psm) { rv += { psm.first, psm.second.worked(b, m) }; } );
+//  FOR_ALL(_exchange_multipliers, [b, m, &rv] (const auto& psm) { rv += { psm.first, psm.second.worked(b, m) }; } );   // so annoying that can't use [a, b] in lambda
+
+  for (const auto& [field_name, mult] : _exchange_multipliers)
+    rv += { field_name, mult.worked(b, m) };
 
   return rv;
 }

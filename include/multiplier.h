@@ -27,8 +27,8 @@
 #include <set>
 #include <string>
 
-extern message_stream    ost;       ///< for debugging and logging
-extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
+extern message_stream    ost;               ///< for debugging and logging
+extern pt_mutex          multiplier_mutex;  ///< mutex for multiplier objects
 
 // -----------  multiplier  ----------------
 
@@ -79,7 +79,7 @@ public:
 
     Returns false if the value <i>str</i> was already known
 */
-  bool add_known(const std::string& str);
+  bool add_known(const std::string_view str);
 
 /*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add
@@ -103,7 +103,7 @@ public:
 
     Does nothing if <i>str</i> is already known
 */
-  inline void operator+=(const std::string& str)
+  inline void operator+=(const std::string_view str)
     { add_known(str); }
 
 /*! \brief          Remove a value from the known values
@@ -130,7 +130,8 @@ public:
     Returns false if the value <i>str</i> is not known.
     Adds even if it's NOT a mult value.
 */
-  bool add_worked(const std::string& str, const BAND b, const MODE m);
+//  bool add_worked(const std::string& str, const BAND b, const MODE m);
+  bool add_worked(const std::string_view str, const BAND b, const MODE m);
 
 /*! \brief          Add a worked multiplier, even if it is unknown
     \param  str     value that has been worked
@@ -140,7 +141,8 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
+//  bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
+  bool unconditional_add_worked(const std::string_view str, const BAND b, const MODE m);
 
 /*! \brief          Remove a worked multiplier
     \param  str     value to be removed

@@ -29,8 +29,6 @@ enum class POSTING_SOURCE { CLUSTER,                  ///< traditional cluster
                             RBN                       ///< Reverse Beacon Network
                           };
 
-//constexpr std::chrono::seconds MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour
-
 using namespace std::chrono_literals;
 
 constexpr std::chrono::seconds MONITORED_POSTS_DURATION { 1h };     ///< monitored posts are valid for one hour
@@ -103,7 +101,10 @@ public:
     \param  comment   comment to add to the post
     \return           whether the attemnpt to post was successful
 */
-  bool spot(const std::string& dx, const std::string& freq, const std::string& comment = EMPTY_STR);
+//  bool spot(const std::string& dx, const std::string& freq, const std::string& comment = EMPTY_STR);
+//  bool spot(const std::string_view dx, const std::string& freq, const std::string& comment = EMPTY_STR);
+//  bool spot(const std::string_view dx, const std::string_view freq, const std::string& comment = EMPTY_STR);
+  bool spot(const std::string_view dx, const std::string_view freq, const std::string_view comment = EMPTY_STR);
 
 /*! \brief        Send a spot to the cluster
     \param  msg   the message to be sent

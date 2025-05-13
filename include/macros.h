@@ -38,6 +38,10 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 
 using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
 
+// define shorthand namespaces
+namespace SR  = std::ranges;
+namespace SRV = std::ranges::views;
+
 // define enum classes used in more than one file
 
 // used for whether to display time in alert()
@@ -300,12 +304,22 @@ using UNORDERED_STRING_SET = std::unordered_set<std::string, stringly_hash, std:
 template <typename ValueType>
 using STRING_MAP = std::map<std::string, ValueType, std::less<>>;
 
+// heterogenous lookup for ordered maps with string keys, with custom ordering
+template <typename ValueType, typename Comparison>
+using CUSTOM_STRING_MAP = std::map<std::string, ValueType, Comparison>;
+
 // heterogenous lookup for multimaps with string keys
 template <typename ValueType>
 using STRING_MULTIMAP = std::multimap<std::string, ValueType, std::less<>>;
 
 // heterogenous lookup for ordered sets of strings
 using STRING_SET = std::set<std::string, std::less<>>;
+
+// heterogenous lookup for ordered sets of strings with custom ordering
+template <typename Comparison>
+using CUSTOM_STRING_SET = std::set<std::string, Comparison>;
+
+// should try to create a string set with custom comparator (CMP) that supports heterogeneous lookup; see string_functions.h for defn of CMP; perhaps CMP() is the right syntax??
 
 // ---------------------------------------------------------------------------
 
@@ -1152,12 +1166,6 @@ namespace std
   };
 }
 
-// generate a set from a vector, done here because the vector MUST NOT be generated twice 
-// (e.g., by returning a member of a class twice), because then the iterators might not match
-template <typename T>
-inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
-  { return std::set<T> { v.cbegin(), v.cend() }; }
-
 /*! \brief      Sort the contents of a container
     \param  v   container
     \param  f   sort function
@@ -1208,7 +1216,6 @@ inline void operator+=(C& sus, const V& vec)
 */
 template <typename C, typename T>
   requires (is_sus<C> or is_mum<C>) and (std::is_convertible_v<base_type<T>, typename C::key_type> or std::is_same_v<base_type<T>, typename C::iterator>)
-//  requires (is_sus<C> or is_mum<C>) and (std::convertible_to<base_type<T>, typename C::key_type> or std::is_same_v<base_type<T>, typename C::iterator>)     // I don't know why this fails for string -= string_view
 inline void operator-=(C& sus, const T& element)
   { sus.erase(element); }
 
@@ -1219,22 +1226,21 @@ inline void operator-=(C& sus, const T& element)
     Needed because string_view is NOT convertible to string : https://en.cppreference.com/w/cpp/types/is_convertible
 */
 template <typename C, typename T>
-//  requires (is_sus<C> or is_mum<C>) and is_string<typename C::key_type> and is_ssv<T>
   requires (is_sus<C> or is_mum<C>) and is_string<typename C::key_type> and is_string_view<T>
 inline void operator-=(C& sus, const T& element)
   { sus.erase(static_cast<std::string>(element)); }
 
-/*! \brief              Add an element to a set
-    \param  s           destination set
-    \param  element     element to insert
+/*! \brief              Add a pair element to a set of pairs
+    \param  s           destination set of pairs
+    \param  element     pair element to insert
 */
 template <typename F, typename S>
 inline void operator+=(std::set<std::pair<F, S>>& s, const std::pair<F, S>& element)
   { s.insert(element); }
 
-/*! \brief              Add an element to a multiset
-    \param  s           destination multiset
-    \param  element     element to insert
+/*! \brief              Add a pair element to a multiset
+    \param  s           destination multiset of pairs
+    \param  element     pair element to insert
 */
 template <typename F, typename S>
 inline void operator+=(std::multiset<std::pair<F, S>>& s, const std::pair<F, S>& element)
@@ -1481,7 +1487,7 @@ inline void operator-=(D& d, typename D::iterator&& it)
 template <typename D>
   requires is_deque<D>
 inline void operator-=(D& d, const typename D::iterator& it)
-{ d.erase(it); }
+  { d.erase(it); }
 
 /*! \brief              Is an element in a deque, list or vector?
     \param  c           the deque, list or vector
@@ -1510,10 +1516,10 @@ inline auto RANGE(const U u, const V v)
 template <class C, class UnaryPredicate>
   requires is_list<C>
 typename C::value_type VALUE_IF(const C& c, UnaryPredicate pred)
-  { const auto cit { FIND_IF(c, pred) };
+{ const auto cit { FIND_IF(c, pred) };
 
-    return ( (cit == c.end()) ? typename C::value_type {} : *cit );
-  }
+  return ( (cit == c.end()) ? typename C::value_type { } : *cit );
+}
 
 /*! \brief          Remove all the elements in a container from another container
     \param  c1      the container that may be modified
@@ -1534,7 +1540,7 @@ template <typename RV, typename M>
 auto ALL_KEYS(const M& m) -> RV
 { RV rv;
 
-  for (const auto& [ k, v ] : m)
+  for (const auto& [ k, _ ] : m)
     rv += k;
 
   return rv;
@@ -1562,51 +1568,22 @@ inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type
     \param  original_mapping    original mapping
     \return                     inverted mapping
 */
-#if 0
-template <typename M>  // M = map<T, set<T> >
-  requires is_mum<M>
-auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
-{ std::map<typename M::key_type, typename M::key_type> rv;
-
-  for (const auto& [ k1, v1 ] : original_mapping)
-    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
-
-  return rv;
-}
-#endif
-
-#if 0
-template <typename M>  // M = map<T, set<T> >
-  requires is_mum<M>
-auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type, typename M::key_compare>
-{ std::map<typename M::key_type, typename M::key_type, typename M::key_compare> rv;
-
-  for (const auto& [ k1, v1 ] : original_mapping)
-    FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
-
-  return rv;
-}
-#endif
 
 // *** https://en.cppreference.com/w/cpp/container/map
 
-#if 1
-// need to use this so as to get heterogeneous lookup
+// need to use this so as to get heterogeneous lookup for string types
 template <typename M>  // M = map<T, set<T> >
-//  requires is_mum<M> and is_sus<typename M::mapped_type> and std::is_same_v<typename M::key_type, typename M::mapped_type::value_type> and is_string<typename M::key_type>  // is_sus fails; I don't know why
   requires is_mum<M> and is_string<typename M::key_type>
 auto INVERT_MAPPING(const M& original_mapping) -> STRING_MAP<std::string>
-{ //std::map<typename M::key_type, typename M::key_type> rv;
-  STRING_MAP<std::string> rv;
+{ STRING_MAP<std::string> rv;
 
   for (const auto& [ k1, v1 ] : original_mapping)
     FOR_ALL(v1, [ k1, &rv ] (const auto& v) { rv += { v, k1 }; });
 
   return rv;
 }
-#endif
 
-#if 0
+#if 1
 template <typename M>  // M = map<T, set<T> >
   requires is_mum<M> and is_sus<typename M::value_type> and std::is_same_v<typename M::key_type, typename M::value_type::value_type>
 auto INVERT_MAPPING(const M& original_mapping) -> M
@@ -1707,61 +1684,6 @@ auto VALUES(const S& s) -> std::vector<typename S::value_type>
   FOR_ALL(s, [&rv] (const typename S::value_type& v) { rv += v; });
 
   return rv;
-}
-
-/*! \brief      Convert a range to a vector
-    \param  r   range
-    \return     <i>r</i> as a vector
-*/
-template <std::ranges::range R>
-auto RANGE_VECTOR(R&& r)
-{ auto r_common { std::forward<R>(r) | std::views::common };
-
-  return std::vector(r_common.begin(), r_common.end());
-}
-
-/*! \brief      Convert a range to a list
-    \param  r   range
-    \return     <i>r</i> as a list
-*/
-template <std::ranges::range R>
-auto RANGE_LIST(R&& r)
-{ auto r_common { std::forward<R>(r) | std::views::common };
-
-  return std::list(r_common.begin(), r_common.end());
-}
-
-/*! \brief      Convert a range to a set
-    \param  r   range
-    \return     <i>r</i> as a set
-*/
-template <std::ranges::range R>
-auto RANGE_SET(R&& r)
-{ auto r_common { std::forward<R>(r) | std::views::common };
-
-  return std::set(r_common.begin(), r_common.end());
-}
-
-/*! \brief      Convert a range to an unordered set
-    \param  r   range
-    \return     <i>r</i> as an unordered set
-*/
-template <std::ranges::range R>
-auto RANGE_USET(R&& r)
-{ auto r_common { std::forward<R>(r) | std::views::common };
-
-  return std::unordered_set(r_common.begin(), r_common.end());
-}
-
-/*! \brief      Convert a range to a particular container type
-    \param  r   range
-    \return     <i>r</i> as a particular container
-*/
-template <typename RT, std::ranges::range R>
-auto RANGE_CONTAINER(R&& r) -> RT
-{ auto r_common { std::forward<R>(r) | std::views::common };
-
-  return RT(r_common.begin(), r_common.end());
 }
 
 /*! \brief          Given a container of values and a coresponding pseudo-index, return the calue corresponding to a particular pseudo-index
@@ -1941,5 +1863,11 @@ public:
       _vec[idx] = val;
   }
 };
+
+/// convert a duration to a number of seconds
+  template <typename D>
+    requires is_duration<D>
+  inline int N_SECONDS(const D dur)
+    { return duration_cast<std::chrono::seconds>(dur).count(); }
 
 #endif    // MACROS_H

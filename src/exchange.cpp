@@ -92,7 +92,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
+//string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
+string exchange_field_prefill::prefill_data(const string_view field_name, const string_view callsign) const
 { const auto opt { OPT_MUM_VALUE(_db, field_name) };
 
   return ( opt ? MUM_VALUE(opt.value(), callsign) : string { } );
@@ -130,8 +131,9 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name
 */
-void parsed_exchange_field::name(const string& nm)
-{ _name = nm;
+//void parsed_exchange_field::name(const string& nm)
+void parsed_exchange_field::name(const string_view nm)
+{ _name = string { nm };
   _mult_value = MULT_VALUE(_name, _value);
 }
 
@@ -171,7 +173,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-bool parsed_ss_exchange::_is_possible_serno(const string& str) const
+//bool parsed_ss_exchange::_is_possible_serno(const string& str) const
+bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
 { if (!contains_digit(str))
     return false;
 
@@ -186,7 +189,8 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   if (rv)
   { const char lchar { last_char(str) };
 
-    rv = isdigit(lchar) or (legal_prec > lchar);
+//    rv = isdigit(lchar) or (legal_prec > lchar);
+    rv = isdigit(lchar) or legal_prec.contains(lchar);
   }
 
   return rv;
@@ -196,7 +200,8 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
 */
-parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
+//parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
+parsed_ss_exchange::parsed_ss_exchange(const string_view call, const vector<string>& received_fields) :
   _callsign(call)
 { using INDEX_TYPE = uint8_t;
 
@@ -279,9 +284,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         { case 1 :  // if there's only one, it should be a serial number
             break;
 
- //         default :
- //           ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break... gives error if compiled with extra nannying
-
           case 2 :  // first should be serial number, second should check
           { const unsigned int field_nr { ambiguous_fields[1] };
 
@@ -291,7 +293,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
           }
 
           default :
-            ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break; treat as 2
+          { ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break; treat as 2
 
             { const unsigned int field_nr { ambiguous_fields[1] };
 
@@ -299,6 +301,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
               check_field_nr = static_cast<int>(field_nr);
               break;
             }
+          }
         }
       }
       else
@@ -316,7 +319,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   if (possible_callsigns.empty())
     _callsign = call;    // default
   else
-  { const unsigned int field_nr { possible_callsigns[possible_callsigns.size() - 1] };
+  { const size_t field_nr { possible_callsigns[possible_callsigns.size() - 1] };
 
     _callsign = copy_received_fields[field_nr];
   }
@@ -326,6 +329,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
   if (possible_sernos.empty())
   { ost << "ERROR: no possible serno in exchange received from " << call << endl;
+
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
   }
@@ -338,6 +342,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     if (field_nr == check_field_nr)    // what abt if check_field_nr == -1?
     { if (possible_sernos.size() == 1)
       { ost << "ERROR: insufficient possible sernos in exchange received from " << call << endl;
+
         for (const auto& field : received_fields)
           ost << field << " : " << endl;
         _serno = DEFAULT_SERNO;
@@ -364,7 +369,8 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the section
   ost << "getting section" << endl;
-  STRING_MAP<EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
+
+  STRING_MAP<EFT> exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   index = 0;
 
@@ -382,6 +388,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
     if (section_field_nr == -1)
     { ost << "ERROR: no valid section in exchange received from " << call << endl;
+
       for (const auto& field : received_fields)
         ost << field << " : " << endl;
     }
@@ -571,9 +578,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
         try
         { if (contains(field_name, '+'))                                           // if it's a CHOICE
-          { const vector<string> choices_vec { split_string <std::string> (field_name, '+') };
+          { //const vector<string> choices_vec { split_string <std::string> (field_name, '+') };
 
-            STRING_SET choices(choices_vec.cbegin(), choices_vec.cend());
+//            STRING_SET choices(choices_vec.cbegin(), choices_vec.cend());
+            const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, '+') ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -603,7 +611,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     for (const auto& [ field_number, matching_names ] : matches)
       tuple_deque += { field_number, copy_received_values[field_number], matching_names };  // TRIPLET: field number, value, matching field names
 
-    vector<TRIPLET>      tuple_vector_assignments;
+    vector<TRIPLET>     tuple_vector_assignments;
     STRING_MAP<TRIPLET> tuple_map_assignments;
 
 // find entries with only one entry in set
@@ -647,7 +655,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
           _valid = true;
       }
 
-      if (!_valid) // we aren't finished -- tuple_vector is not empty
+      if (!_valid)          // we aren't finished -- tuple_vector is not empty
       { ost << "Not finished; tuple vector is not empty" << endl;
 
         FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
@@ -657,9 +665,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
         if (cit == exchange_template.cend())
         { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
-          { const bool replace_callsign { CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) };
+          { //const bool replace_callsign { CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) };
 
-            if (replace_callsign)
+//            if (replace_callsign)
+            if ( CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) )
             { _replacement_call = RECEIVED_VALUE(t);
 
               if (tuple_deque.size() == 1)
@@ -725,7 +734,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     Returns empty string if <i>field_name</i> does not exist
 */
-string parsed_exchange::field_value(const string& field_name) const
+//string parsed_exchange::field_value(const string& field_name) const
+string parsed_exchange::field_value(const string_view field_name) const
 { const auto cit { FIND_IF(_fields, [field_name] (const auto& field) { return (field.name() == field_name); } ) };   // returns first match in the vector
 
   return (cit == _fields.cend()) ? string { } : cit->value();
@@ -770,12 +780,14 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
+//string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
+//string parsed_exchange::resolve_choice(const string_view field_name, const string& received_value, const contest_rules& rules) const
+string parsed_exchange::resolve_choice(const string_view field_name, const string_view received_value, const contest_rules& rules) const
 { if (field_name.empty())
     return string { };
 
   if (!contains(field_name, '+'))   // if not a CHOICE
-    return field_name;
+    return string { field_name };
 
 //  const vector<string>   choices_vec        { split_string <std::string> (field_name, '+') };
   const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, '+') };
@@ -840,7 +852,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
+//string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
+string exchange_field_database::guess_value(const string_view callsign, const string_view field_name)
 { SAFELOCK(exchange_field_database);
 
 // first, check the database
@@ -851,7 +864,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   const string prefill_datum { prefill_data.prefill_data(field_name, callsign) };
 
   if (!prefill_datum.empty())
-  { _db += { { static_cast<string>(callsign), field_name }, prefill_datum };
+  { _db += { { string { callsign }, string { field_name } }, prefill_datum };
 
     return prefill_datum;
   }
@@ -861,7 +874,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
-    { _db += { { static_cast<string>(callsign), field_name }, EMPTY_STR };                     // so that it can be found immediately in future
+    { _db += { { string { callsign }, string { field_name } }, EMPTY_STR };                     // so that it can be found immediately in future
  
       return EMPTY_STR;
     }
@@ -878,7 +891,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   auto insert_value = [&callsign, &field_name, this] (const auto value, const bool get_canonical_value = false)
     { const string rv { get_canonical_value ? rules.canonical_value(field_name, to_string(value)) : to_string(value) };     // empty -> empty
 
-      _db += { { static_cast<string>(callsign), field_name }, rv };
+      _db += { { string { callsign }, string { field_name } }, rv };
 
       return rv;
     };
@@ -1157,7 +1170,8 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
 // give up
-  _db += { { string { callsign }, field_name }, EMPTY_STR };  // so we find it next time
+//  _db += { { string { callsign }, field_name }, EMPTY_STR };  // so we find it next time
+  _db += { { string { callsign }, string { field_name } }, EMPTY_STR };  // so we find it next time
 
   return EMPTY_STR;
 }
@@ -1167,10 +1181,11 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     \param  field_name  name of the field for the new entry
     \param  value       the new entry
 */
-void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
+//void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
+void exchange_field_database::set_value(const string_view callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
 
-  _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
+  _db[ { string { callsign }, field_name } ] = value;    // don't use insert, since we must overwrite
 }
 
 /*! \brief              Set value of a field for multiple calls using a file

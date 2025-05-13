@@ -242,7 +242,10 @@ bool dx_cluster::send(const std::string_view msg)
     \return           whether the attemnpt to post was successful
 
 */
-bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
+//bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
+//bool dx_cluster::spot(const string_view dx, const string& freq, const string& comment)
+//bool dx_cluster::spot(const string_view dx, const string_view freq, const string& comment)
+bool dx_cluster::spot(const string_view dx, const string_view freq, const string_view comment)
 { const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
   const string msg    { dx_cmd + " "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
 
@@ -376,7 +379,6 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
               _valid = true;
               _time_processed = ::time(NULL);
-//              _time_processed_1 = std::chrono::system_clock::now();
               _time_processed_1 = NOW_TP();
             }
           }
@@ -400,7 +402,10 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
 // we treat everything after the call as a comment
   if (!_valid)
-  { if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
+  { if (received_info.length() <= 70)
+      ost << "received short post: " << received_info << endl;
+
+    if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
     { try
       { if (post_source == POSTING_SOURCE::RBN)
         { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
@@ -622,12 +627,18 @@ void monitored_posts::prune(void)
 
 /// convert to a vector of strings suitable for display in a window
 vector<string> monitored_posts::to_strings(void) const
-{ vector<string> rv;
-  rv.reserve(_entries.size());
+{ //    std::ranges::for_each(in | std::views::transform(rot13), show);
 
   SAFELOCK(monitored_posts);
 
-  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv += (mpe.to_string()); } );
+  return SR::to<vector<string>>(_entries | std::views::transform([] (const monitored_posts_entry& mpe) { return mpe.to_string(); }) );
 
-  return rv;
+//  vector<string> rv;
+//  rv.reserve(_entries.size());
+
+//  SAFELOCK(monitored_posts);
+
+//  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv += (mpe.to_string()); } );
+
+//  return rv;
 }

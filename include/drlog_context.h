@@ -70,7 +70,7 @@ protected:
   unsigned int                                 _auto_remaining_callsign_mults_threshold { 1 };                          ///< number of times a callsign mult must be seen before it becomes known
   bool                                         _auto_remaining_country_mults            { false };                      ///< do we auto-generate the remaining country mults?
   unsigned int                                 _auto_remaining_country_mults_threshold  { 1 };                          ///< number of times a canonical prefix must be seen before it becomes known
-  STRING_SET                        _auto_remaining_exchange_mults           { };                            ///< the exchange mults for which we auto-generate the values
+  STRING_SET                                   _auto_remaining_exchange_mults           { };                            ///< the exchange mults for which we auto-generate the values
   bool                                         _auto_screenshot                         { false };                      ///< do we create a screenshot every hour?
 
   int                                          _bandmap_cull_function                   { 0 };                          ///< number of the bandmap cull function
@@ -172,8 +172,7 @@ protected:
   unsigned int                                 _fast_cq_bandwidth                       { 400 };                        ///< fast CW bandwidth in CQ mode, in Hz
   unsigned int                                 _fast_sap_bandwidth                      { 400 };                        ///< fast CW bandwidth in SAP mode, in Hz
 
-  std::string                                  _geomagnetic_indices_command             { };                                        ///< command to get geomagnetic indices
-//  std::map<MODE, unsigned int>                 _guard_band                              { { MODE_CW, 500 }, { MODE_SSB, 2000 } };   ///< guard band, in Hz
+  std::string                                  _geomagnetic_indices_command             { };                                            ///< command to get geomagnetic indices
   std::map<MODE, frequency>                    _guard_band                              { { MODE_CW, 500_Hz }, { MODE_SSB, 2_kHz } };   ///< guard band
 
   bool                                         _home_exchange_window                    { false };                      ///< whether to move cursor to left of exchange window (and insert space if necessary)
@@ -295,7 +294,7 @@ protected:
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
-  STRING_MAP<window_information> _windows           { };                                ///< size and position info for each window; key = name
+  STRING_MAP<window_information>               _windows                                 { };                                ///< size and position info for each window; key = name
   COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
   int                                          _xscp_cutoff                             { 1 };                              ///< use XCSP values >= this value
@@ -495,6 +494,8 @@ public:
 /*! \brief      Get the guard band for a particular mode
     \param  m   target mode
     \return     guard band for mode <i>m</i>, in Hz
+
+    If there is no known value for a particular mode, then returns 1000 Hz
 */
   inline decltype(_guard_band)::mapped_type guard_band(const MODE m)
   { SAFELOCK(_context);
@@ -638,6 +639,7 @@ public:
 */
   inline std::string points_string(const BAND b, const MODE m) const
   { SAFELOCK(_context);
+
     return MUM_VALUE(_per_band_points[m], b);
   }
 
@@ -647,41 +649,46 @@ public:
 */
   inline window_information window_info(const std::string_view name) const
   { SAFELOCK(_context);
+
     return MUM_VALUE(_windows, name);
   }
 
-/*! \brief          Is a particular window defined
+/*! \brief          Is a particular window defined?
     \param  name    name of window
     \return         whether the window <i>name</i> is defined in the configuration file
 */
   inline bool window_defined(const std::string_view name) const
     { return window_info(name).defined(); } 
 
-/*! \brief          Get a vector of the names of the legal bands for the contest (e.g., "160", "80", etc.)
-    \return         the bands that are legal for the context
+/*! \brief    Get a vector of the names of the legal bands for the contest (e.g., "160", "80", etc.)
+    \return   the bands that are legal for the context
 */
   inline std::vector<std::string> band_names(void) const
   { SAFELOCK(_context);
+
     return split_string <std::string> (_bands);
   }
 
-/*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
-    \return         the modes that are legal for the context
+/*! \brief    Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
+    \return   the modes that are legal for the context
 */
   inline std::vector<std::string> mode_names(void) const
   { SAFELOCK(_context);
+
     return split_string <std::string> (_modes);
   }
 
 /// how many bands are used in this contest?
   inline unsigned int n_bands(void) const
   { SAFELOCK(_context);
+
     return band_names().size();
   }
 
 /// how many modes are used in this contest?
   inline unsigned int n_modes(void) const
   { SAFELOCK(_context);
+
     return mode_names().size();
   }
 
@@ -705,12 +712,14 @@ public:
 /// swap QSL and ALTERNATIVE QSL messages
   inline void swap_qsl_messages(void)
   { SAFELOCK(_context);
+
     swap(_qsl_message, _alternative_qsl_message);
   }
 
 /// are multiple modes permitted?
   inline bool multiple_modes(void) const
   { SAFELOCK(_context);
+
     return (_modes.size() != 1);
   }
 
@@ -719,6 +728,7 @@ public:
 */
   inline void qtc_qrs(const unsigned int n)
   { SAFELOCK(_context);
+
     _qtc_qrs = n;
   }
 };

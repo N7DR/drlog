@@ -202,8 +202,9 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-bool EFT::is_legal_value(const string& str) const
-{ if (!_regex_str.empty() and regex_match(str, regex(_regex_str)))
+//bool EFT::is_legal_value(const string& str) const
+bool EFT::is_legal_value(const string_view str) const
+{ if (!_regex_str.empty() and regex_match( string { str }, regex(_regex_str)))
     return true;
 
   return (_values.empty() ? false : (_legal_non_regex_values.contains(str)));
@@ -213,10 +214,11 @@ bool EFT::is_legal_value(const string& str) const
     \param  str     received value
     \return         value to be logged
 */
-string EFT::value_to_log(const string& str) const
+//string EFT::value_to_log(const string& str) const
+string EFT::value_to_log(const string_view str) const
 { const string rv { canonical_value(str) };
 
-  return (rv.empty() ? str : rv);
+  return (rv.empty() ? string { str } : rv);
 }
 
 /*! \brief          Obtain canonical value corresponding to a given received value
@@ -225,8 +227,11 @@ string EFT::value_to_log(const string& str) const
 
     Returns empty string if no equivalent canonical value can be found
 */
-string EFT::canonical_value(const std::string& str) const
-{ const string canonical { MUM_VALUE(_value_to_canonical, str) };
+//string EFT::canonical_value(const std::string& str) const
+string EFT::canonical_value(const std::string_view sv) const
+{ const string str { sv };          // regex does not support string_view
+
+  const string canonical { MUM_VALUE(_value_to_canonical, str) };
 
   if (!canonical.empty())
     return canonical;

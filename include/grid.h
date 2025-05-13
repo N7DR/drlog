@@ -31,9 +31,9 @@ class grid_square
 {
 protected:
 
-  std::string   _designation;       ///< the designation of the square (e.g., "DN70")
-  float         _latitude;          ///< latitude of centre (°N)
-  float         _longitude;         ///< longitude of centre (°W)
+  std::string _designation;       ///< the designation of the square (e.g., "DN70")
+  float       _latitude;          ///< latitude of centre (°N)
+  float       _longitude;         ///< longitude of centre (°W)
 
 public:
 
@@ -43,7 +43,8 @@ public:
 /*! \brief      Construct from a designation
     \param  gs  four-character designation
 */
-  grid_square(const std::string& gs);
+//  grid_square(const std::string& gs);
+  explicit grid_square(const std::string_view gs);
 
   READ(designation);                ///< the designation of the square (e.g., "DN70")
   READ(latitude);                   ///< latitude of centre (°N)

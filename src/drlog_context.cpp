@@ -18,6 +18,7 @@
 #include "exchange.h"
 #include "string_functions.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -913,7 +914,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
     { for (const auto& band_str : clean_split_string <string> (rhs))
-      //for (const auto band_str : clean_split_string <string_view> (rhs))
       { try
         { _score_bands += BAND_FROM_NAME.at(band_str);  // .at() does not yet support heterogenwous lookup
         }
@@ -984,9 +984,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SSB AUDIO
     if (LHS == "SSB AUDIO"sv)
-    { const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') };
+    { //const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') };
 
-      if (cbw.size() == 2)
+      if (const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') }; cbw.size() == 2)
       { const vector<string_view> cbw_wide { clean_split_string <string_view> (cbw[0], ':') };
 
         _ssb_centre_wide = from_string<decltype(_ssb_centre_wide)>(cbw_wide[0]);
@@ -1074,15 +1074,16 @@ void drlog_context::_process_configuration_file(const string_view filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
-      { const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
+      { //const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
 
-        if (tokens.size() == 2)
+        if (const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') }; tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string_view> mults { clean_split_string <string_view> (RHS) };
+      { //const vector<string_view> mults { clean_split_string <string_view> (RHS) };
 
-        _remaining_callsign_mults_list = STRING_SET { mults.cbegin(), mults.cend() } ;
+        //_remaining_callsign_mults_list = STRING_SET { mults.cbegin(), mults.cend() } ;
+        _remaining_callsign_mults_list = ranges::to<STRING_SET>( clean_split_string <string> (RHS) );
       }
     }
 
@@ -1097,18 +1098,14 @@ void drlog_context::_process_configuration_file(const string_view filename)
           _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { const vector<string_view> countries { clean_split_string <string_view> (RHS) };
-
-//        _remaining_country_mults_list = STRING_SET { countries.cbegin(), countries.cend() };
-//        _remaining_country_mults_list = std::ranges::to<set<string>>(countries);              // not yet supported
-        _remaining_country_mults_list = std::ranges::to<STRING_SET>(countries);
-      }
+        _remaining_country_mults_list = std::ranges::to<STRING_SET>(clean_split_string <string_view> (RHS));
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
     if (LHS == "AUTO REMAINING EXCHANGE MULTS"sv)
       FOR_ALL(clean_split_string <string_view> (RHS), [this] (const string_view str) { _auto_remaining_exchange_mults += str; });
- //ranges::fold_left(clean_split_string <string> (RHS), _auto_remaining_exchange_mults);  // not yet supported
+// the following line works but is very slow (see example at start of main())
+//      _auto_remaining_exchange_mults = std::ranges::fold_left(clean_split_string <string_view> (RHS), STRING_SET { }, [] (STRING_SET acc, const string_view sv) { return acc + sv; }); // can't use a STRING_SET&;
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
@@ -1288,14 +1285,15 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     static STRING_MAP<bool /* whether verbatim */> verbatim;   // key = name
 
     if (LHS == "STATIC WINDOW"sv)
-    { const vector<string> fields { clean_split_string <string> (rhs) };
+    { const vector<string> fields { clean_split_string <string> (rhs) };       // avoid heterogeneous lookup (see below)
 
       if (fields.size() == 2)  // name, contents
       { const string& name { fields[0] };
+        //const string_view name { fields[0] };       // avoid heterogeneous lookup (see below)
 
         string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
 
-        verbatim[name] = contains(fields[1], '"');     // verbatim if contains quotation mark
+        verbatim[name] = contains(fields[1], '"');     // verbatim if contains quotation mark; operator [] does not yet support heterogeneous lookup
 
         if (file_exists(contents))
           contents = read_file(contents);
@@ -1381,8 +1379,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
     if (testline.starts_with("MESSAGE KEY"sv))
-    { //vector<string> message_info { split_string <std::string> (testline, ' ') };
-      const vector<string_view> message_info { split_string <std::string_view> (testline, ' ') };
+    { const vector<string_view> message_info { split_string <std::string_view> (testline, ' ') };
 
       if ( (message_info.size() >= 5) and contains(testline, '=') )
       {
@@ -1392,31 +1389,38 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         const string target { to_lower(message_info[2]) };
 
         if (const auto& cit { key_names.find(target) }; cit != key_names.cend())    // key_names, defined in keyboard.cpp, maps names to keysyms
-        { const auto&          [ keyname_str, key_symbol ] { *cit };
-          const vector<string> vec_str                     { split_string <std::string> (testline, '=') };
-          const string         str                         { remove_leading_spaces <std::string> (vec_str.at(1)) };
+        { try
+          { const auto&          [ keyname_str, key_symbol ] { *cit };
+            const vector<string> vec_str                     { split_string <std::string> (testline, '=') };
+            const string         str                         { remove_leading_spaces <std::string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
-          _messages += { key_symbol, str };
+            _messages += { key_symbol, str };
 
-          ost << "message associated with " << target << ", which is keysym " << hex << key_symbol << dec << ", is: " << str << endl;
+            ost << "message associated with " << target << ", which is keysym " << hex << key_symbol << dec << ", is: " << str << endl;
 
-          if (const auto& cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
-          { const auto& [ ori_keyname_str, equiv_keyname_str ] { *cit2 };
+            if (const auto& cit2 { equivalent_key_names.find(target) }; cit2 != equivalent_key_names.cend())
+            { const auto& [ ori_keyname_str, equiv_keyname_str ] { *cit2 };
 
-            ost << "found equivalent key name: " << equiv_keyname_str << endl;
+              ost << "found equivalent key name: " << equiv_keyname_str << endl;
 
-            const string& alternative { equiv_keyname_str };
+              const string& alternative { equiv_keyname_str };
 
-            if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
-            { const auto& [ alt_keyname_str, alt_key_symbol ] { *cit };
+              if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
+              { const auto& [ alt_keyname_str, alt_key_symbol ] { *cit };
 
-              if (!_messages.contains(alt_key_symbol))  // only if there is no message for this key
-              {  ost << "message associated with equivalent key is: " << str << endl;
+                if (!_messages.contains(alt_key_symbol))  // only if there is no message for this key
+                {  ost << "message associated with equivalent key is: " << str << endl;
 
-                _messages += { alt_key_symbol, str };
+                  _messages += { alt_key_symbol, str };
+                }
               }
             }
+          }
+
+          catch (...)
+          { ost << "ERROR parsing line in config file: " << testline << endl;
+            exit(-1);
           }
         }
       }
@@ -1464,7 +1468,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   if (_call_history_bands.empty())
   { for ( const auto& str : clean_split_string <std::string> (bands()) )
     { try
-      { _call_history_bands += BAND_FROM_NAME.at(str);
+      { _call_history_bands += BAND_FROM_NAME.at(str);    // heterogeneous lookup not yet supported
       }
 
       catch (...)
@@ -1474,8 +1478,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
-  { //const vector<string> actual_modes { clean_split_string <string> (_modes) };
-    const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
+  { const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
 
     if (actual_modes.size() == 1)
     { try
@@ -1510,7 +1513,7 @@ drlog_context::drlog_context(const string_view filename)
   { for (const auto& band_name : clean_split_string <string> (_bands))
     //for (const auto& band_name : clean_split_string <string_view> (_bands)) // doesn't work in g++12; fails when at() is called
     { try
-      { _score_bands += BAND_FROM_NAME.at(band_name);
+      { _score_bands += BAND_FROM_NAME.at(band_name);       // heteogeneous lookup is not yet implemented for at()
       }
 
       catch (...)

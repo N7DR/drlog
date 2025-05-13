@@ -79,7 +79,8 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
+//  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
+  std::string prefill_data(const std::string_view field_name, const std::string_view callsign) const;
 };
 
 /// ostream << exchange_field_prefill
@@ -110,7 +111,9 @@ public:
     \param  v   field value
     \param  m   is this field a mult?
 */
-  inline parsed_exchange_field(const std::string& nm, const std::string& v, const bool m) :
+//  inline parsed_exchange_field(const std::string& nm, const std::string& v, const bool m) :
+//  inline parsed_exchange_field(const std::string_view nm, const std::string& v, const bool m) :
+  inline parsed_exchange_field(const std::string_view nm, const std::string_view v, const bool m) :
     _name(nm),
     _value(v),
     _is_mult(m),
@@ -125,7 +128,8 @@ public:
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name
 */
-  void name(const std::string& nm);
+//  void name(const std::string& nm);
+  void name(const std::string_view nm);
 
 /*! \brief      Set the value and corresponding mult value
     \param  v   new value
@@ -167,7 +171,8 @@ protected:
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-  bool _is_possible_serno(const std::string& str) const;
+//  bool _is_possible_serno(const std::string& str) const;
+  bool _is_possible_serno(const std::string_view str) const;
 
 /*! \brief          Does a string possibly contain a precedence?
     \param  str     string to check
@@ -177,21 +182,25 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-  inline bool _is_possible_prec(const std::string& str) const
-    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
+//  inline bool _is_possible_prec(const std::string& str) const
+  inline bool _is_possible_prec(const std::string_view str) const
+//    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
+    { return ( (str.length() == 1) ? legal_prec.contains(last_char(str)) : (_is_possible_serno(str) and (legal_prec.contains(last_char(str))) ) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-  inline bool _is_possible_check(const std::string& str) const
+//  inline bool _is_possible_check(const std::string& str) const
+  inline bool _is_possible_check(const std::string_view str) const
     { return ( (str.length() == 2) ? ( isdigit(str[0]) and isdigit(str[1]) ) : false ); }
 
 /*! \brief          Does a string contain a possible callsign?
     \param  str     string to check
     \return         whether <i>str</i> is a reasonable callsign
 */
-  inline bool _is_possible_callsign(const std::string& str) const
+//  inline bool _is_possible_callsign(const std::string& str) const
+  inline bool _is_possible_callsign(const std::string_view str) const
     { return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) ); }
 
 public:
@@ -200,7 +209,8 @@ public:
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
 */
-  parsed_ss_exchange(const std::string& call, const std::vector<std::string>& received_fields);
+//  parsed_ss_exchange(const std::string& call, const std::vector<std::string>& received_fields);
+  parsed_ss_exchange(const std::string_view call, const std::vector<std::string>& received_fields);
 
   READ(serno);          ///< serial number
   READ(prec);           ///< precedence
@@ -278,7 +288,8 @@ public:
 
     Returns empty string if <i>field_name</i> does not exist
 */
-  std::string field_value(const std::string& field_name) const;
+//  std::string field_value(const std::string& field_name) const;
+  std::string field_value(const std::string_view field_name) const;
 
 /// the number of fields
   inline size_t n_fields(void) const
@@ -337,7 +348,9 @@ public:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-  std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
+//  std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
+//  std::string resolve_choice(const std::string_view choice_name, const std::string& received_field,  const contest_rules& rules) const;
+  std::string resolve_choice(const std::string_view choice_name, const std::string_view received_field,  const contest_rules& rules) const;
 };
 
 /*! \brief          Write a <i>parsed_exchange</i> object to an output stream
@@ -372,14 +385,16 @@ public:
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-  std::string guess_value(const std::string_view callsign, const std::string& field_name);
+//  std::string guess_value(const std::string_view callsign, const std::string& field_name);
+  std::string guess_value(const std::string_view callsign, const std::string_view field_name);
 
 /*! \brief              Set a value in the database
     \param  callsign    callsign for the new entry
     \param  field_name  name of the field for the new entry
     \param  value       the new entry
 */
-  void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
+//  void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
+  void set_value(const std::string_view callsign, const std::string& field_name, const std::string& value);
 
 /*! \brief              Set value of a field for multiple calls using a file
     \param  path        path for file

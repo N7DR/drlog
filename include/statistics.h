@@ -42,7 +42,7 @@ class running_statistics
 {
 protected:
   
-  STRING_MAP<multiplier>                 _callsign_multipliers;              ///< callsign multipliers (supports more than one); key = mult name
+  STRING_MAP<multiplier>                                            _callsign_multipliers;              ///< callsign multipliers (supports more than one); key = mult name
   bool                                                              _callsign_mults_used { false };     ///< are callsign mults used? Copied from rules
 
   multiplier                                                        _country_multipliers;               ///< country multipliers
@@ -51,7 +51,7 @@ protected:
 
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;              ///< exchange multipliers; vector so we can keep the correct order
   bool                                                              _exchange_mults_used { false };     ///< are country mults used? Copied from rules
-  STRING_SET                                             _exch_mult_fields;                  ///< names of the exch fields that are mult
+  STRING_SET                                                        _exch_mult_fields;                  ///< names of the exch fields that are mult
 
   bool                                                              _include_qtcs { false };            ///< do we include QTC information?
 
@@ -74,7 +74,8 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-  void _insert_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+//  void _insert_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+  void _insert_callsign_mult(const std::string_view mult_name, const std::string_view mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
 /*! \brief          Generate a summary string for display
     \param  rules   rules for this contest
@@ -148,8 +149,9 @@ public:
 
     Does nothing and returns false if <i>str</i> is already known
 */
-  bool add_known_country_mult(const std::string& str, const contest_rules& rules);
-  
+//  bool add_known_country_mult(const std::string& str, const contest_rules& rules);
+  bool add_known_country_mult(const std::string_view str, const contest_rules& rules);
+
 /*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
     \param  callsign    call to test
     \param  b           band to test
@@ -177,13 +179,14 @@ public:
     \param  value   new legal value for the exchange multiplier <i>name</i>
     \return         whether <i>value</i> was actually added
 */
-  bool add_known_exchange_mult(const std::string& name, const std::string& value);
+//  bool add_known_exchange_mult(const std::string& name, const std::string& value);
+  bool add_known_exchange_mult(const std::string_view name, const std::string& value);
 
 /*! \brief          Return all known legal values for a particular exchange multiplier
     \param  name    name of the exchange multiplier
     \return         All the known legal values of <i>name</i>
 */
-  MULT_SET known_exchange_mult_values(const std::string& name);
+  MULT_SET known_exchange_mult_values(const std::string_view name);
 
 /*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
     \param  exchange_field_name     name of the target exchange field
@@ -192,7 +195,8 @@ public:
     \param  m                       target mode
     \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
-  bool is_needed_exchange_mult(const std::string& exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
+//  bool is_needed_exchange_mult(const std::string_view exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
+  bool is_needed_exchange_mult(const std::string_view exchange_field_name, const std::string_view exchange_field_value, const BAND b, const MODE m) const;
 
 /*! \brief                  Add a worked exchange mult
     \param  field_name      exchange mult field name
@@ -203,7 +207,7 @@ public:
 
     Doesn't add if the value <i>field_value</i> is unknown.
 */
-  bool add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
+  bool add_worked_exchange_mult(const std::string_view field_name, const std::string_view field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 
 /*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
     \param  rules   rules for this contest
@@ -223,7 +227,7 @@ public:
     \param  m           mode
     \return             callsign mults worked on band <i>b</i> and mode <i>m</i>
 */
-  MULT_SET worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
+  MULT_SET worked_callsign_mults(const std::string_view mult_name, const BAND b, const MODE m);
 
 /*! \brief      Worked country mults for a particular band and mode
     \param  b   target band
@@ -346,7 +350,7 @@ protected:
 
   STRING_MAP<std::set<bandmode> > _history;                                      ///< container for the history; key = call
 
-  mutable pt_mutex                           _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
+  mutable pt_mutex                _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
 
 public:
 

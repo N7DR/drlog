@@ -243,7 +243,7 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  inline void rig_frequency_a(const frequency& f)
+  inline void rig_frequency_a(const frequency f)
     { _rig_frequency(f, VFO::A); }
 
 /*! \brief      Set frequency of VFO A
@@ -251,7 +251,7 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  inline void rig_frequency(const frequency& f)
+  inline void rig_frequency(const frequency f)
     { rig_frequency_a(f); }
 
 /*! \brief      Get the frequency of VFO A
@@ -271,7 +271,7 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  inline void rig_frequency_b(const frequency& f)
+  inline void rig_frequency_b(const frequency f)
     { _rig_frequency(f, VFO::B); }
 
 /// get frequency of VFO B
@@ -416,7 +416,7 @@ public:
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
-  void sub_receiver(const bool) const;
+  void sub_receiver(const bool torf) const;
 
 /// is sub-receiver on?
   bool sub_receiver(void) const;
@@ -489,14 +489,15 @@ public:
     \param  bm  band and mode
     \param  f   frequency
 */
-  void set_last_frequency(const bandmode bm, const frequency& f);
+  void set_last_frequency(const bandmode bm, const frequency f);
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  b   band
     \param  m   mode
     \param  f   frequency
 */
-  inline void set_last_frequency(const BAND b, const MODE m, const frequency& f)
+//  inline void set_last_frequency(const BAND b, const MODE m, const frequency& f)
+  inline void set_last_frequency(const BAND b, const MODE m, const frequency f)
     { set_last_frequency( { b, m }, f ); }
 
 /*! \brief Is the rig transmitting?

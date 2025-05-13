@@ -142,13 +142,15 @@ public:
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-  bool is_legal_value(const std::string& str) const;
+//  bool is_legal_value(const std::string& str) const;
+  bool is_legal_value(const std::string_view str) const;
 
 /*! \brief          What value should actually be logged for a given received value?
     \param  str     received value
     \return         value to be logged
 */
-  std::string value_to_log(const std::string& str) const;
+//  std::string value_to_log(const std::string& str) const;
+  std::string value_to_log(const std::string_view str) const;
 
 /*! \brief          Obtain canonical value corresponding to a given received value
     \param  str     received value
@@ -156,7 +158,8 @@ public:
 
     Returns empty string if no equivalent canonical value can be found
 */
-  std::string canonical_value(const std::string& str) const;
+//  std::string canonical_value(const std::string& str) const;
+  std::string canonical_value(const std::string_view sv) const;
 
 /// all the canonical values
   STRING_SET canonical_values(void) const;

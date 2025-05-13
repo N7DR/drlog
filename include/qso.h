@@ -97,7 +97,9 @@ protected:
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
 */
-  time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
+//  time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
+//  time_t _to_epoch_time(const std::string_view date_str, const std::string& utc_str) const;
+  time_t _to_epoch_time(const std::string_view date_str, const std::string_view utc_str) const;
 
 public:
   
@@ -112,6 +114,8 @@ public:
 
     line in disk log looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    <i>statistics</i> might be changed by this function
 */
   QSO(const drlog_context& context, const std::string_view str, const contest_rules& rules, running_statistics& statistics);
 
@@ -214,7 +218,8 @@ public:
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
-  void populate_from_verbose_format(const std::string& str);
+//  void populate_from_verbose_format(const std::string& str);
+  void populate_from_verbose_format(const std::string_view str);
 
 /*! \brief                  Does the QSO match an expression for a received exchange field?
     \param  rule_to_match   boolean rule to attempt to match
@@ -225,13 +230,15 @@ public:
 
     I don't think that this is currently used.
 */
-  bool exchange_match(const std::string& rule_to_match) const;
+//  bool exchange_match(const std::string& rule_to_match) const;
+  bool exchange_match(const std::string_view rule_to_match) const;
 
 /*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
-  inline bool exchange_match_string(const std::string& target) const
+//  inline bool exchange_match_string(const std::string& target) const
+  inline bool exchange_match_string(const std::string_view target) const
     { return ANY_OF(_received_exchange, [target] (const auto& field) { return (field.value() == target); } ); }
 
 /*! \brief              Return a single field from the received exchange
@@ -240,13 +247,13 @@ public:
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-  std::string received_exchange(const std::string& field_name) const;
+  std::string received_exchange(const std::string_view field_name) const;
 
 /*! \brief              Is a particular field present in the received exchange?
     \param  field_name  name of field for whose presence to test
     \return             whether <i>field_name</i> is present
 */
-  inline bool is_exchange_field_present(const std::string& field_name) const
+  inline bool is_exchange_field_present(const std::string_view field_name) const
     { return !(received_exchange(field_name).empty()); }
 
 /*! \brief              Return a single field from the sent exchange
@@ -255,7 +262,7 @@ public:
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-  std::string sent_exchange(const std::string& field_name) const;
+  std::string sent_exchange(const std::string_view field_name) const;
 
 /*! \brief              Return a single field from the sent exchange
     \param  field_name  name of field to return
@@ -263,14 +270,15 @@ public:
 
     Synonym for sent_exchange(<i>field_name</i>)
 */
-  inline std::string sent_exchange_field(const std::string& field_name) const
+  inline std::string sent_exchange_field(const std::string_view field_name) const
     { return sent_exchange(field_name); }
 
 /*! \brief              Does the sent exchange include a particular field?
     \param  field_name  name of field to test
     \return             whether the sent exchange includes the field <i>field_name</i>
 */
-  inline bool sent_exchange_includes(const std::string& field_name) const
+//  inline bool sent_exchange_includes(const std::string& field_name) const
+  inline bool sent_exchange_includes(const std::string_view field_name) const
     { return ANY_OF(_sent_exchange, [field_name] (const auto& field) { return (field.first == field_name); }); }
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
