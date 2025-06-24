@@ -1,4 +1,4 @@
-// $Id: macros.h 260 2025-01-27 18:44:34Z  $
+// $Id: macros.h 269 2025-05-19 22:42:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1686,7 +1686,7 @@ auto VALUES(const S& s) -> std::vector<typename S::value_type>
   return rv;
 }
 
-/*! \brief          Given a container of values and a coresponding pseudo-index, return the calue corresponding to a particular pseudo-index
+/*! \brief          Given a container of values and a corresponding pseudo-index, return the calue corresponding to a particular pseudo-index
     \param  values  the allowed different values
     \param  idx_1   one of the extremum values of index
     \param  idx_2   the other of the extremum values of index

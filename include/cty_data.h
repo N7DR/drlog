@@ -1,4 +1,4 @@
-// $Id: cty_data.h 259 2025-01-19 15:44:33Z  $
+// $Id: cty_data.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -520,7 +520,8 @@ public:
 
 /// create a set of all the canonical prefixes for a particular continent
 //  std::unordered_set<std::string> countries(const std::string& cont_target) const;
-  UNORDERED_STRING_SET countries(const std::string& cont_target) const;
+//  UNORDERED_STRING_SET countries(const std::string& cont_target) const;
+  UNORDERED_STRING_SET countries(const std::string_view cont_target) const;
 
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)

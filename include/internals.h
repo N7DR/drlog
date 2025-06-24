@@ -1,4 +1,4 @@
-// $Id: internals.h 268 2025-05-04 12:31:03Z  $
+// $Id: internals.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,7 +122,7 @@ public:
     { _backtrace = std::stacktrace::current(); }
 
 /// Return as human-readable string; one level per line
-  std::string to_string(void) const
+  inline std::string to_string(void) const
     { return std::to_string(_backtrace); }
 };
 
@@ -131,7 +131,7 @@ public:
     \param  bt      object to write
     \return         the output stream
 */
-inline std::ostream& operator<<(std::ostream& ost, const std_backtrace& bt)   // I don't know why the "class" is necessary
+inline std::ostream& operator<<(std::ostream& ost, const std_backtrace& bt)
   { return (ost << bt.to_string()); }
 
 #endif    // INTERNALS_H

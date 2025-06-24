@@ -1,4 +1,4 @@
-// $Id: bandmap.h 268 2025-05-04 12:31:03Z  $
+// $Id: bandmap.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -297,10 +297,13 @@ class bandmap_filter_type
 {
 protected:
 
-  std::vector<std::string>  _continents  { };           ///< continents to filter
-  bool                      _enabled     { false };     ///< is bandmap filtering enabled?
-  bool                      _hide        { true };      ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _prefixes    { };           ///< canonical country prefixes to filter
+//  using GROUP_TYPE = std::vector<std::string>;    // container type to hold continents or canonical prefixes
+  using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixes
+
+  GROUP_TYPE  _continents  { };           ///< continents to filter
+  bool        _enabled     { false };     ///< is bandmap filtering enabled?
+  bool        _hide        { true };      ///< are we in hide mode? (as opposed to show)
+  GROUP_TYPE  _prefixes    { };           ///< canonical country prefixes to filter
 
 public:
 
@@ -318,7 +321,9 @@ public:
     The continents precede the canonical prefixes
 */
   inline std::vector<std::string> filter(void) const
-    { return (_continents + _prefixes); } 
+//    { return (_continents + _prefixes); }
+//auto con = std::views::concat(v0, v1, a, ie);
+    { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -326,7 +331,6 @@ public:
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
 */
-//  void add_or_subtract(const std::string& str);
   void add_or_subtract(const std::string_view str);
 
 /// serialise
@@ -400,7 +404,6 @@ public:
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-//  bandmap_entry& freq(const frequency& f);
   bandmap_entry& freq(const frequency f);
 
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
@@ -480,16 +483,14 @@ public:
 
     Does nothing if the value <i>value</i> is already known for the mult <i>name</i>
 */
-//  inline void add_callsign_mult(const std::string& name, const std::string& value)
-  inline void add_callsign_mult(const std::string_view name, const std::string& value)
-    { _is_needed_callsign_mult += { std::string { name }, value }; }
+  inline void add_callsign_mult(const std::string_view name, const std::string_view value)
+    { _is_needed_callsign_mult += { std::string { name },  std::string { value } }; }
 
 /*! \brief          Add a value of country mult
     \param  value   value of the mult
 
     Does nothing if the value <i>value</i> is already known
 */
-//  inline void add_country_mult(const std::string& value)
   inline void add_country_mult(const std::string_view value)
     { _is_needed_country_mult += std::string { value }; }
 
@@ -498,8 +499,10 @@ public:
     \param  value   value of the mult
     \return         whether the mult was actually added
 */
-  inline bool add_exchange_mult(const std::string& name, const std::string& value)
-    { return (_is_needed_exchange_mult.add( { name, value } ) ); }  // can't use += here because we need the result
+//  inline bool add_exchange_mult(const std::string& name, const std::string& value)
+//  inline bool add_exchange_mult(const std::string_view name, const std::string& value)
+  inline bool add_exchange_mult(const std::string_view name, const std::string_view value)
+    { return (_is_needed_exchange_mult.add( { std::string { name }, std::string { value } } ) ); }  // can't use += here because we need the result
 
 /// remove all callsign mults
   inline void clear_callsign_mult(void)
@@ -520,8 +523,10 @@ public:
 
     Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
 */
-  inline bool remove_callsign_mult(const std::string& name, const std::string& value)
-    { return _is_needed_callsign_mult.remove( { name, value } ); }
+//  inline bool remove_callsign_mult(const std::string& name, const std::string& value)
+//  inline bool remove_callsign_mult(const std::string_view name, const std::string& value)
+  inline bool remove_callsign_mult(const std::string_view name, const std::string_view value)
+    { return _is_needed_callsign_mult.remove( { std::string { name }, std::string { value } } ); }
 
 /*! \brief          Remove a particular value of country mult
     \param  value   value of the mult
@@ -529,8 +534,8 @@ public:
 
     Does nothing if the value <i>value</i> is unknown
 */
-  inline bool remove_country_mult(const std::string& value)
-    { return _is_needed_country_mult.remove(value); }
+  inline bool remove_country_mult(const std::string_view value)
+    { return _is_needed_country_mult.remove( std::string { value } ); }
 
 /*! \brief          Remove a particular value of an exchange mult
     \param  name    name of the exchange mult
@@ -538,8 +543,10 @@ public:
 
     Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
 */
-  inline bool remove_exchange_mult(const std::string& name, const std::string& value)
-    { return _is_needed_exchange_mult.remove( { name, value } ); }
+//  inline bool remove_exchange_mult(const std::string& name, const std::string& value)
+//  inline bool remove_exchange_mult(const std::string_view name, const std::string& value)
+  inline bool remove_exchange_mult(const std::string_view name, const std::string_view value)
+    { return _is_needed_exchange_mult.remove( { std::string { name }, std::string { value } } ); }
 
 /// is this a needed mult of any type?
   inline bool is_needed_mult(void) const
@@ -620,14 +627,6 @@ public:
   inline bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
-/*! \brief          Add a call to the associated posters
-    \param  call    call to add
-    \return         number of posters associated with this call, after adding <i>call</i>
-
-    Does nothing if <i>call</i> is already a poster
-*/
-  unsigned int add_poster(const std::string& call);
-
 /// return all the posters as a space-separated string
   std::string posters_string(void) const;
 
@@ -689,6 +688,9 @@ public:
          & _source
          & _time;
     }
+
+    inline std::string to_brief_string(void) const
+      { return (_callsign + ": " + to_string(_freq)); }
 };
 
 /*! \brief          Write a <i>bandmap_entry</i> object to an output stream
@@ -809,6 +811,15 @@ public:
   inline int version(void) const
     { return _version; }
 
+/// return version as comma-separated string
+  inline std::string version_str(void) const
+    { return css(version()); }
+
+   inline std::string last_version_str(void) const
+  { SAFELOCK(_bandmap);
+    return css(_last_displayed_version);
+  }
+
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
 
@@ -878,7 +889,8 @@ public:
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
-  void not_needed_country_mult(const std::string& canonical_prefix);
+//  void not_needed_country_mult(const std::string& canonical_prefix);
+  void not_needed_country_mult(const std::string_view canonical_prefix);
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country and on a particular mode to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
@@ -886,27 +898,37 @@ public:
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap with the mode <i>m</i>
 */
-  void not_needed_country_mult(const std::string& canonical_prefix, const MODE m);
+//  void not_needed_country_mult(const std::string& canonical_prefix, const MODE m);
+  void not_needed_country_mult(const std::string_view canonical_prefix, const MODE m);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  pf                      pointer to function to return the callsign mult value
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+//  void not_needed_callsign_mult(std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
+//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string& /* callsign */),
+//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
+//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
+//                                  const std::string_view mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
+                                  const std::string_view mult_type /* e.g., "WPXPX" */ , const std::string_view callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
+//  void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
     \param  mult_name   name of exchange mult
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
-  void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);
+//  void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);
+  void not_needed_exchange_mult(const std::string_view mult_name, const std::string& mult_value);
 
 /// prune the bandmap
   void prune(void);
@@ -1129,15 +1151,16 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-  void do_not_add(const std::string& callsign);
+//  void do_not_add(const std::string& callsign);
+  void do_not_add(const std::string_view callsign);
 
 /*!  \brief             Add a call or regex to the do-not-add list
      \param callsign    callsign or regex to add
 
      Calls in the do-not-add list are never added to the bandmap
 */
-  inline void do_not_add(const std::string_view callsign)
-    { do_not_add(std::string { callsign }); }
+//  inline void do_not_add(const std::string_view callsign)
+//    { do_not_add(std::string { callsign }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1164,13 +1187,13 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-  void remove_from_do_not_add(const std::string& callsign);
+//  void remove_from_do_not_add(const std::string& callsign);
+  void remove_from_do_not_add(const std::string_view callsign);
 
 /*!  \brief                     Is a particular call present?
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-//  bool is_present(const std::string& target_callsign) const;
   bool is_present(const std::string_view target_callsign) const;
 
 /// convert to a printable string
@@ -1210,7 +1233,8 @@ public:
 /*! \brief            Rename the mutex associated with this bandmap
     \param  new_name  the new name of the mutex
 */
-  inline void rename_mutex(const std::string& new_name)
+//  inline void rename_mutex(const std::string& new_name)
+  inline void rename_mutex(const std::string_view new_name)
     { _bandmap_mutex.rename(new_name); }
 
 /*! \brief              Return all calls in the bandmap that match a regex string
@@ -1248,7 +1272,8 @@ public:
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
-  friend void update_based_on_frequency_change(const frequency& f, const MODE m);
+//  friend void update_based_on_frequency_change(const frequency& f, const MODE m);
+  friend void update_based_on_frequency_change(const frequency f, const MODE m);
 
 /// serialize using boost
   template<typename Archive>

@@ -1,4 +1,4 @@
-// $Id: qtc.h 259 2025-01-19 15:44:33Z  $
+// $Id: qtc.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -205,7 +205,8 @@ public:
     { _frequency = s; }
 
 /// set frequency from a frequency object
-  inline void frequency_str(const frequency& f)
+//  inline void frequency_str(const frequency& f)
+  inline void frequency_str(const frequency f)
     { _frequency = f.display_string(); }
 
 /// return the number of qtc_entries in the series
@@ -306,8 +307,6 @@ window& operator<(window& win, const qtc_series& qs);
     \brief  All QTCs
 */
 
-//extern pt_mutex qtc_database_mutex;         ///< the mutex to control access to the database
-
 class qtc_database
 {
 protected:
@@ -402,7 +401,8 @@ public:
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string { }) const;
+//  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string { }) const;
+  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string_view target = std::string { }) const;
 
 /*! \brief          Add all unsent QSOs from a logbook to the buffer
     \param  logbk   logbook

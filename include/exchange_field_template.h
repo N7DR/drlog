@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.h 259 2025-01-19 15:44:33Z  $
+// $Id: exchange_field_template.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,7 +61,8 @@ public:
 
     Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
 */
-  inline explicit EFT(const std::string& nm) :
+//  inline explicit EFT(const std::string& nm) :
+  inline explicit EFT(const std::string_view nm) :
     _name(nm)
   { }
 
@@ -74,7 +75,8 @@ public:
 
     Object is fully ready for use after this constructor.
 */
-  EFT(const std::string& nm, const std::vector<std::string>& path,
+//  EFT(const std::string& nm, const std::vector<std::string>& path,
+  EFT(const std::string_view nm, const std::vector<std::string>& path,
       const std::string_view regex_filename,
       const drlog_context& context, location_database& location_db);
 
@@ -109,7 +111,8 @@ public:
     \param  str     string to test
     \return         whether <i>str</i> is a canonical value
 */
-  inline bool is_canonical_value(const std::string& str) const
+//  inline bool is_canonical_value(const std::string& str) const
+  inline bool is_canonical_value(const std::string_view str) const
     { return _values.contains(str); }
 
 /*! \brief                          Add a canonical value
@@ -117,7 +120,8 @@ public:
 
     Does nothing if <i>new_canonical_value</i> is already known
 */
-  void add_canonical_value(const std::string& new_canonical_value);
+//  void add_canonical_value(const std::string& new_canonical_value);
+  void add_canonical_value(const std::string_view new_canonical_value);
 
 /*! \brief              Add a legal value that corresponds to a canonical value
     \param  cv          canonical value
@@ -126,7 +130,9 @@ public:
     Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
     canonical value if necessary.
 */
-  void add_legal_value(const std::string& cv, const std::string& new_value);
+//  void add_legal_value(const std::string& cv, const std::string& new_value);
+//  void add_legal_value(const std::string_view cv, const std::string& new_value);
+  void add_legal_value(const std::string_view cv, const std::string_view new_value);
 
 /*! \brief              Add legal values that correspond to a canonical value
     \param  cv          canonical value
@@ -135,14 +141,13 @@ public:
     Adds <i>cv</i> as a canonical value if necessary. Ignores any elements of
     <i>cv</i> that are already known as being equivalent to <i>cv</i>.
 */
-  inline void add_legal_values(const std::string& cv, const STRING_SET& new_values)
+  inline void add_legal_values(const std::string_view cv, const STRING_SET& new_values)
     { FOR_ALL(new_values, [&cv, this] (const std::string& str) { add_legal_value(cv, str); } ); }
 
 /*! \brief          Is a string a legal value?
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-//  bool is_legal_value(const std::string& str) const;
   bool is_legal_value(const std::string_view str) const;
 
 /*! \brief          What value should actually be logged for a given received value?

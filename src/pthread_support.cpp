@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: pthread_support.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -139,7 +139,8 @@ const pthread_error_messages pthread_error_message;     ///< object to hold erro
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string& thread_name)
+//void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string& thread_name)
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string_view thread_name)
 { if (const int status { pthread_create(thread, attr, start_routine, arg) }; status != 0)
   { string errname;
 
@@ -317,9 +318,7 @@ int thread_attribute::inheritance_policy(void) const
     "[w]hen a stack is specified, the thread should also be created PTHREAD_CREATE_JOINABLE"
 */
 void thread_attribute::stack_size(const size_t size)
-{ //const int status { pthread_attr_setstacksize(&_attr, size) };
-
-  if (const int status { pthread_attr_setstacksize(&_attr, size) }; status != 0)
+{ if (const int status { pthread_attr_setstacksize(&_attr, size) }; status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: "s + to_string(size) + "status = "s + to_string(status));
 }
 
@@ -384,15 +383,6 @@ int thread_attribute::priority(void) const
   return param.sched_priority;
 }
 
-/*! \brief          Write a <i>thread_attribute</i> object to an output stream
-    \param  ost     output stream
-    \param  ta      object to write
-    \return         the output stream
-*/
-//ostream& operator<<(ostream& ost, const thread_attribute& ta)
-//{ return (ost << ta.attr());
-//}
-
 /*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
     \param  ost     output stream
     \param  pa      object to write
@@ -429,7 +419,7 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 
   const int tscope { attribute_scope(pa) };
 
-  string scope_str;
+  string scope_str { };
 
   switch (tscope)
   { case PTHREAD_SCOPE_PROCESS :
@@ -480,8 +470,6 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 bool attribute_detached(const pthread_attr_t& pa)
 { int state;
 
-//  const int status { pthread_attr_getdetachstate(&pa, &state) };
-
   if (const int status { pthread_attr_getdetachstate(&pa, &state) }; status)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute"s);
 
@@ -494,8 +482,6 @@ bool attribute_detached(const pthread_attr_t& pa)
 */
 int attribute_policy(const pthread_attr_t& pa)
 { int policy;
-
-//  const int status { pthread_attr_getschedpolicy(&pa, &policy) };
 
   if (const int status { pthread_attr_getschedpolicy(&pa, &policy) }; status != 0)
     throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: "s + to_string(policy) + "status = "s + to_string(status));
@@ -510,8 +496,6 @@ int attribute_policy(const pthread_attr_t& pa)
 int attribute_scope(const pthread_attr_t& pa)
 { int scope;
 
-//  const int status { pthread_attr_getscope(&pa, &scope) };
-
   if (const int status { pthread_attr_getscope(&pa, &scope) }; status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: "s + to_string(scope) + "status = "s + to_string(status));
 
@@ -525,8 +509,6 @@ int attribute_scope(const pthread_attr_t& pa)
 int attribute_inheritance_policy(const pthread_attr_t& pa)
 { int ipolicy;
 
-//  const int status { pthread_attr_getinheritsched(&pa, &ipolicy) };
-
   if (const int status { pthread_attr_getinheritsched(&pa, &ipolicy) }; status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 
@@ -539,8 +521,6 @@ int attribute_inheritance_policy(const pthread_attr_t& pa)
 */
 size_t attribute_stack_size(const pthread_attr_t& pa)
 { size_t size;
-
-//  const int status { pthread_attr_getstacksize(&pa, &size) };
 
   if (const int status { pthread_attr_getstacksize(&pa, &size) }; status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: "s + to_string(size) + "status = "s + to_string(status));
@@ -583,8 +563,6 @@ int attribute_min_priority(const pthread_attr_t& pa)
 int attribute_priority(const pthread_attr_t& pa)
 { struct sched_param param;
 
-//  const int status { pthread_attr_getschedparam(&pa, &param) };
-
   if (const int status { pthread_attr_getschedparam(&pa, &param) }; status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = "s + to_string(status));
 
@@ -603,28 +581,14 @@ int attribute_priority(const pthread_attr_t& pa)
 /// destructor; do not write to message_stream, because the mutex in that class might no longer
 // exist if we are in the process of cleaning up
 pt_mutex::~pt_mutex(void)
-{ //cerr << "destroying mutex: " << _name << endl;
-
-  pthread_mutex_destroy(&_mutex);
+{ pthread_mutex_destroy(&_mutex);
 
   int* ip { nullptr };
 
-  //cerr << "getting refcount pointer: " << _name << endl;
-
   ip = _tsd_refcount.get();
 
-  //cerr << "refcount pointer is " << ( (ip == nullptr) ? "" : "NOT " ) << "nullptr" << endl; // nullptr if no data were written by calling _tsd_refcount.set()
-
   if (ip)
-  { //cerr << "deleting pointer" << endl;
     delete ip;
-  }
-  
-// debug -- DON'T write to message_stream
-  //cerr << "Mutex destroyed: " << _name << endl;
-  
-// create core dump
-//  throw exception();
 }
 
 /// lock
@@ -681,7 +645,8 @@ void pt_mutex::unlock(void)
 }
 
 /// rename
-void pt_mutex::rename(const string& new_name)
+//void pt_mutex::rename(const string& new_name)
+void pt_mutex::rename(const string_view new_name)
 { //lock();
   _name = new_name;
   //unlock();
@@ -885,11 +850,12 @@ void pt_condition_variable::signal(void)
     \param  ptm     mutex to be locked
     \param  name    name of safelock (defaults to name of mutex)
 */
-safelock::safelock(pt_mutex& ptm, const string& name) :
+//safelock::safelock(pt_mutex& ptm, const string& name) :
+safelock::safelock(pt_mutex& ptm, const string_view name) :
  _name(name.empty() ? ptm.name() : name)
 { try
   { _ptm_p = &ptm;
-    _ptm_p->lock();
+    _ptm_p -> lock();
   }
 
   catch (...)

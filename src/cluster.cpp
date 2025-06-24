@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 265 2025-03-31 01:32:02Z  $
+// $Id: cluster.cpp 269 2025-05-19 22:42:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -631,8 +631,8 @@ vector<string> monitored_posts::to_strings(void) const
 
   SAFELOCK(monitored_posts);
 
-  return SR::to<vector<string>>(_entries | std::views::transform([] (const monitored_posts_entry& mpe) { return mpe.to_string(); }) );
-
+//  return SR::to<vector<string>>(_entries | std::views::transform([] (const monitored_posts_entry& mpe) { return mpe.to_string(); }) );
+  return SR::to<vector<string>>( _entries | std::views::transform(&monitored_posts_entry::to_string) );
 //  vector<string> rv;
 //  rv.reserve(_entries.size());
 

@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: adif3.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -904,16 +904,16 @@ const unordered_map<int /* country number */, tuple<string /*country name */, st
   {  187, { "NIGER"s,                                   "5U"s,    CURRENT } },
   {  188, { "NIUE"s,                                    "ZK2"s,   CURRENT } },
   {  189, { "NORFOLK I."s,                              "VK9N"s,  CURRENT } },
-  {  190, { "SAMOA"s,                                   "E5/n"s,   CURRENT } },
-  {  191, { "NORTH COOK IS."s,                          "E5/n"s,   CURRENT } },
-  {  192, { "OGASAWARA"s,                               "JD/o"s,   CURRENT } },
+  {  190, { "SAMOA"s,                                   "E5/n"s,  CURRENT } },
+  {  191, { "NORTH COOK IS."s,                          "E5/n"s,  CURRENT } },
+  {  192, { "OGASAWARA"s,                               "JD/o"s,  CURRENT } },
   {  193, { "OKINAWA (RYUKYU IS.)"s,                    ""s,      DELETED } },
   {  194, { "OKINO TORI-SHIMA"s,                        ""s,      DELETED } },
-  {  195, { "ANNOBON I."s,                              "3C0"s,    CURRENT } },
+  {  195, { "ANNOBON I."s,                              "3C0"s,   CURRENT } },
   {  196, { "PALESTINE"s,                               ""s,      DELETED } },
-  {  197, { "PALMYRA & JARVIS IS."s,                    "KH5"s,    CURRENT } },
+  {  197, { "PALMYRA & JARVIS IS."s,                    "KH5"s,   CURRENT } },
   {  198, { "PAPUA TERRITORY"s,                         ""s,      DELETED } },
-  {  199, { "PETER 1 I."s,                              "3Y/p"s,   CURRENT } },
+  {  199, { "PETER 1 I."s,                              "3Y/p"s,  CURRENT } },
   {  200, { "PORTUGUESE TIMOR"s,                        ""s,      DELETED } },
   {  201, { "PRINCE EDWARD & MARION IS."s,              "ZS8"s,   CURRENT } },
   {  202, { "PUERTO RICO"s,                             "KP4"s,   CURRENT } },

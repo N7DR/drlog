@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: drlog.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -139,13 +139,16 @@ string bearing(const string_view callsign);   ///< Return the bearing to a stati
 bool        calculate_exchange_mults(QSO& qso, const contest_rules& rules);                    ///< Populate QSO with correct exchange mults
 STRING_SET  calls_from_do_not_show_file(const BAND b);                                         ///< get the calls from a DO NOT SHOW file
 void        calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b);              ///< send calls to a DO NOT SHOW file
-string      callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
+//string      callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
+//string      callsign_mult_value(const string_view callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
+string      callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
 bool        change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
 void        cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
 bool        cw_toggle_bandwidth(void);                                                         ///< Toggle 50Hz/200Hz bandwidth if on CW
 
 bool   debug_dump(void);                                                                            ///< Dump useful information to disk
-MODE   default_mode(const frequency& f);                                                            ///< get the default mode on a frequency
+//MODE   default_mode(const frequency& f);                                                            ///< get the default mode on a frequency
+MODE   default_mode(const frequency f);                                                             ///< get the default mode on a frequency
 void   display_bandmap_filter(bandmap& bm);                                                         ///< display the bandmap cull/filter information in win_bandmap_filter
 void   display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);       ///< Display band and mode
 void   display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);     ///< Update several call-related windows
@@ -183,12 +186,15 @@ MINUTES_TYPE NOW_MINUTES(void);                                                 
 
 void populate_win_call_history(const string_view str);                                      ///< Populate the QSO/QSL call history window
 void populate_win_info(const string_view str);                                              ///< Populate the information window
-void possible_mode_change(const frequency& f);                                              ///< possibly change mode in accordance with frequency
+//void possible_mode_change(const frequency& f);                                              ///< possibly change mode in accordance with frequency
+void possible_mode_change(const frequency f);                                              ///< possibly change mode in accordance with frequency
 void print_thread_names(void);                                                              ///< output the names of the currently active threads
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                    ///< process backspace
+bool process_keypress_F1(const string_view original_contents);                          ///< process key F1
+bool process_keypress_F2(void);                          ///< process key F2
 bool process_keypress_F5(void);                                                         ///< process key F5
 bool p3_screenshot(void);                                                               ///< Start a thread to take a snapshot of a P3
 void p3_span(const unsigned int khz_span);                                              ///< set the span of a P3
@@ -201,7 +207,7 @@ void rebuild_history(const logbook& logbk,
                      rate_meter& rate);             ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
 memory_entry recall_memory(const unsigned int n);   ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
-void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
+void restore_data(const string_view archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 string run_external_command(const string& cmd);     ///< run an external command
 
@@ -225,13 +231,14 @@ bool toggle_cw(void);                                                           
 bool toggle_recording_status(audio_recorder& audio);                                ///< toggle status of audio recording
 
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
-void update_bandmap_window(bandmap& bm /*, const int bm_version = 0 */);                                                      ///< update the BANDMAP window
-void update_based_on_frequency_change(const frequency& f, const MODE m /*, const frequency& old_f = frequency {} */);   ///< Update some windows based on a change in my frequency
+void update_bandmap_window(bandmap& bm);                                                                                ///< update the BANDMAP window
+void update_based_on_frequency_change(const frequency f, const MODE m);                                                 ///< Update some windows based on a change in my frequency
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
 void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
-void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);    ///< Possibly add a new callsign mult
-bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);     ///< Possibly add a new country to the known country mults
+void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);///< Possibly add a new callsign mult
+//bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);   ///< Possibly add a new country to the known country mults
+bool update_known_country_mults(const string_view callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN); ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_pings(window& win, PING_TABLE& table);                                                                      ///< execute pings and update PING window
@@ -241,10 +248,12 @@ void update_qsls_window(const string& = EMPTY_STR);                             
 void update_qtc_queue_window(void);                                                                                     ///< the head of the QTC queue
 void update_rate_window(void);                                                                                          ///< Update the QSO and score values in <i>win_rate</i>
 void update_recording_status_window(void);                                                                              ///< update the RECORDING STATUS window
-void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
+//void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
+void update_remaining_callsign_mults_window(running_statistics&, const string_view mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
 void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);                            ///< Update the REMAINING COUNTRY MULTS window
-void update_remaining_exch_mults_window(const string& mult_name, /* const contest_rules& rules, */
-                                        running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
+//void update_remaining_exch_mults_window(const string& mult_name, /* const contest_rules& rules, */
+//                                        running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
+void update_remaining_exch_mults_window(const string_view mult_name, running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
 void update_remaining_exchange_mults_windows(/*const contest_rules&, */running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
 bool update_rx_ant_window(void);                                                                                        ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 void update_score_window(const unsigned int score);                                                                     ///< update the SCORE window
@@ -369,6 +378,7 @@ unsigned int            cw_speed_change;                            ///< amount 
 dynamic_autocorrect_database dad;                                   ///< dynamic autocorrect database
 bool                         debug { false };                       ///< whether to log additional information
 bool                         display_grid;                          ///< whether to display the grid in GRID and INFO windows
+thread::id                   display_rig_status_thread_id { };      ///< will hold the thread ID for the display_rig_status thread
 string                       do_not_show_filename;                  ///< name of DO NOT SHOW file
 string                       dx_spotting_text    { };                ///< text in comment portion of DX spots
 bool                         dynamic_autocorrect_rbn { false };     ///< whether to try to autocorrect posts from the RBN dynamically
@@ -449,6 +459,8 @@ int                     ssb_bandwidth_wide   { 1800 };      ///< wide SSB bandwi
 int                     ssb_centre_narrow    { 1300 };      ///< narrow SSB bandwidth centre frequency, in Hz
 int                     ssb_centre_wide      { 1500 };      ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
+
+map<thread::id, string> thread_map { };                     ///< map C++ thread_id to thread name
 
 bool                    wicm_calls_is_dirty  { false };     ///< whether there has been a change requiring redisplay to wicm_calls  
 size_t                  wicm_calls_size      { 0 };         ///< maximum number of calls in the WICM window
@@ -759,6 +771,10 @@ inline string sunrise(const string_view callsign)
 inline string sunset(const string_view callsign)
   { return sunrise_or_sunset(callsign, SRSS::SUNSET); }
 
+/// return the name of the current thread
+inline string my_thread_name(void)
+  { return MUM_VALUE(thread_map, my_thread_id(), "UNKNOWN THREAD NAME"s); }
+
 /*! \brief              Update the fuzzy window with matches for a particular call
     \param  callsign    callsign against which to generate the fuzzy matches
 */
@@ -849,6 +865,8 @@ int main(int argc, char** argv)
   { ost << "Error: Unable to generate drlog version information" << endl;
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
+
+  thread_map += { my_thread_id(), "MAIN"s };    // add main thread name to known threads
 
 #if 0
   { constexpr size_t ITERATIONS { 1'000'000 };
@@ -1896,7 +1914,8 @@ int main(int argc, char** argv)
           octothorpe = 1;
 
 // display most-recent lines from log
-        editable_log.recent_qsos(logbk, true);
+//        editable_log.recent_qsos(logbk, true);
+        editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
 // correct QSO number (and octothorpe)
         if (!logbk.empty())
@@ -2288,6 +2307,8 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
 { const string THREAD_NAME { "display rig status"s };
 
   start_of_thread(THREAD_NAME);
+
+  display_rig_status_thread_id = my_thread_id();    // make this thread ID globally available
 
   DRLOG_MODE last_drlog_mode { DRLOG_MODE::SAP };
   bool       locked_warning  { false };            // is a warning about XIT while locked being displayed?
@@ -2750,7 +2771,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
             if (rules.score_modes().contains(be.mode()))
             { be.frequency_str_decimal_places(1);
-//              be.expiration_time(post.time_processed() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) );
               be.expiration_time(be.time() + (post.from_cluster() ? bandmap_decay_time_cluster_secs : bandmap_decay_time_rbn_secs) ); // don't rely on the time in the post
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );             // do we still need this guy?
 
@@ -2857,9 +2877,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             }
           }
         }   // no else; if it's an invalid post, do nothing
-//        else
-//        { // invalid post; do nothing
-//        }
       }
     }
 
@@ -2910,29 +2927,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       for (const monitored_posts_entry& entry : entries)
       { win_monitored_posts < cursor(0, y++);
 
-// correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
-
-//        const auto clr { MAP_VALUE(fade_colours, 0UL, 3600UL, idx) };
-
-//        static const value_map monitored_posts_vm_2(fade_colours, std::chrono::minutes { 0 }, std::chrono::minutes { 60 });
-//        static const value_map monitored_posts_vm(fade_colours, std::chrono::minutes { 0 }, std::chrono::duration_cast<std::chrono::minutes> (MONITORED_POSTS_DURATION));
         static const value_map monitored_posts_vm(fade_colours, minutes { 0 }, duration_cast<minutes> (MONITORED_POSTS_DURATION));
-//        const auto clr2 { monitored_posts_vm[idx] };
-
-//        if (clr2 != clr)
-//        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr2 = " << clr2 << "; idx = " << idx << endl;
-//        }
-
- //       const auto dsec = std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
-
- //       const auto clr3 { monitored_posts_vm_1[std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
-
- //       if (clr3 != clr)
- //       { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr3 = " << clr3 << "; idx = " << idx << endl;
- //         ost << "dsec = " << dsec.count() << endl;
- //       }
-
- //       const auto dmin = std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) );
 
         auto age = [] (const monitored_posts_entry& mpe) { return duration_cast<minutes> (NOW_TP() - (mpe.expiration() - MONITORED_POSTS_DURATION) ); };
 
@@ -3927,8 +3922,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         string             exchange_str;
         STRING_MAP<string> mult_exchange_field_value;                                                 // the values of exchange fields that are mults
 
+        ost << "length of exchange vector = " << expected_exchange.size() << endl;
+//        ost << "canonical prefix = " << canonical_prefix << endl;
+
         for (const auto& exf : expected_exchange)
-        { bool processed_field { false };
+        { //ost << "exf.name() = " << exf.name() << endl;
+          //ost << "no default RST = " << no_default_rst << endl;
+
+           bool processed_field { false };
 
 // if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
 // need to figure out a way to generalise all this
@@ -3964,7 +3965,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           }
 
           if (!processed_field and !no_default_rst and (exf.name() == "RST"sv) and !exf.is_optional())
-          { exchange_str += ( (cur_mode == MODE_CW) ? "599 "s : "59 "s );
+          { //ost << "HERE" << endl;
+            exchange_str += ( (cur_mode == MODE_CW) ? "599 "s : "59 "s );
             processed_field = true;
           }
 
@@ -4227,7 +4229,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // and unmodified ; and ': also up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
-    { update_quick_qsy();
+    { ost << "UP or DOWN using N7DR criteria" << endl;
+      update_quick_qsy();
       processed = process_bandmap_function(e.is_char(';') ? DOWN : UP);
     }
     else
@@ -4645,30 +4648,56 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = fast_cw_bandwidth();
 
 // F1 -- first step in SAP QSO during run
+//    turn on sub-receiver, put sub-receiver on frequency of call (or substring of call)
+//    moves call to BCALL window
+// intent here is to see whether we can hear the station whose call is in the CALL window
+#if 0
   if (!processed and (e.symbol() == XK_F1))
-  { if (!original_contents.empty())
-    {
+  { if (drlog_mode == DRLOG_MODE::CQ)      // don't do anything in SAP mode
+    { if (!original_contents.empty())
+      {
 // assume it's a call -- look for the same call in the current bandmap
-      bandmap_entry be { bandmaps[current_band][original_contents] };
+        bandmap_entry be { bandmaps[current_band][original_contents] };
 
-      if (be.callsign().empty())  // didn't find an exact match; try a substring search
-        be = bandmaps[current_band].substr(original_contents);
+        if (be.callsign().empty())          // didn't find an exact match; try a substring search
+          be = bandmaps[current_band].substr(original_contents);
 
-      const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
+//        ost << "bandmap_entry: " << be.to_brief_string() << endl;
 
-      rig.rig_frequency_b(be.freq());
-      win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
+        const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
 
-      if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
-        sleep_for(100ms);
+        rig.rig_frequency_b(be.freq());
+        win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();     // put call in BCALL
 
-      rig.sub_receiver_enable();
+        if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
+          sleep_for(100ms);
+
+        rig.sub_receiver_enable();
+
+// move contents of CALL to BCALL, clear CALL
+        if (win_bcall.defined() and !win_call.empty())
+        { win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+        }
+      }
+      else      // nothing in CALL: emtpy bcall and turn off sub-receiver
+      { win_bcall <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+        rig.sub_receiver_disable();
+      }
     }
 
     processed = true;
   }
+#endif
+
+  if (!processed and (e.symbol() == XK_F1))
+    processed = process_keypress_F1(original_contents);
 
 // F2 toggle: split and force SAP mode
+// intent here is to be ready to call the station: the TX is on the other station's QRG (which is VFO B)
+  if (!processed and (e.symbol() == XK_F2))
+    processed = process_keypress_F2();
+
+#if 0
   if (!processed and (e.symbol() == XK_F2))
   { if (rig.split_enabled())
     { rig.split_disable();
@@ -4682,6 +4711,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
+#endif
 
 // F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
   if (!processed and (e.symbol() == XK_F4))
@@ -5856,7 +5886,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         rebuild_dynamic_call_databases(logbk);
 
 // all the QSOs are added; now display the last few in the log window
-        editable_log.recent_qsos(logbk, true);
+//        editable_log.recent_qsos(logbk, true);
+        editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
         display_statistics(statistics.summary_string(rules));   // display the current statistics
         update_score_window(statistics.points(rules));
@@ -5920,7 +5951,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
     set_active_window(ACTIVE_WINDOW::CALL);
 
     win_log.hide_cursor();
-    editable_log.recent_qsos(logbk, true);
+//    editable_log.recent_qsos(logbk, true);
+    editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
     processed = (win_call < WINDOW_ATTRIBUTES::WINDOW_REFRESH, true);
   }
@@ -6011,7 +6043,8 @@ void enter_cq_or_sap_mode(const DRLOG_MODE new_mode)
     \param  b           current band
     \param  m           current mode
 */
-void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
+//void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
+void update_remaining_callsign_mults_window(running_statistics& statistics, const string_view mult_name, const BAND b, const MODE m)
 { const MULT_SET worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
 
 // the original list of callsign mults
@@ -6026,12 +6059,15 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     erase_if(original, [&worked_callsign_mults] (const string& s) { return (worked_callsign_mults.contains(s)); } );
 
 // put in right order and get the colours right
-  vector<string> vec_str(original.begin(), original.end());
-  SORT(vec_str, compare_calls);
+//  vector<string> vec_str(original.begin(), original.end());
+
+//  vector<string> vec_str { SR::to<vector<string>>(original) };
+//  SORT(vec_str, compare_calls);
 
   vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
-  for (const auto& canonical_prefix : vec_str)
+//  for (const auto& canonical_prefix : vec_str)
+  for (const auto& canonical_prefix : SR::to<CALL_SET>(original))
   { const bool             is_needed          { !worked_callsign_mults.contains(canonical_prefix) };
     const PAIR_NUMBER_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
 
@@ -6051,12 +6087,14 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   const MULT_SET known_country_mults  { statistics.known_country_mults() };
 
 // put in right order and get the colours right
-  vector<string> vec_str(known_country_mults.begin(), known_country_mults.end());
-  SORT(vec_str, compare_calls);
+//  vector<string> vec_str(known_country_mults.begin(), known_country_mults.end());
+//  vector<string> vec_str(known_country_mults.begin(), known_country_mults.end());
+//  SORT(vec_str, compare_calls);
 
   vector<pair<string /* country */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
-  for (const auto& canonical_prefix : vec_str)
+//  for (const auto& canonical_prefix : vec_str)
+  for (const auto& canonical_prefix : SR::to<CALL_SET>(known_country_mults))            // actually, CALL_SET is currently the same as MULT_SET
   { const bool             is_needed          { !worked_country_mults.contains(canonical_prefix) };
     const PAIR_NUMBER_TYPE colour_pair_number { colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg()) };
 
@@ -6075,14 +6113,15 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 
     Does nothing if there is no window for this exchange mult
 */
-void update_remaining_exch_mults_window(const string& exch_mult_name, /* const contest_rules& rules, */ running_statistics& statistics, const BAND b, const MODE m)
+//void update_remaining_exch_mults_window(const string& exch_mult_name, /* const contest_rules& rules, */ running_statistics& statistics, const BAND b, const MODE m)
+void update_remaining_exch_mults_window(const string_view exch_mult_name, running_statistics& statistics, const BAND b, const MODE m)
 { if (!win_remaining_exch_mults_p.contains(exch_mult_name))
     return;
 
   const MULT_SET       known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
   const vector<string> known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
 
-  window& win { ( *(win_remaining_exch_mults_p[exch_mult_name]) ) };
+  window& win { ( *(win_remaining_exch_mults_p[ string { exch_mult_name } ]) ) };
 
 // get the colours right
   vector<pair<string /* exch value */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
@@ -6103,9 +6142,9 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, /* const c
     \param  b           current band
     \param  m           current mode
 */
-void update_remaining_exchange_mults_windows(/* const contest_rules& rules, */ running_statistics& statistics, const BAND b, const MODE m)
-{ for (const auto& [exch_mult_name, wp] : win_remaining_exch_mults_p)
-    update_remaining_exch_mults_window(exch_mult_name, /* rules, */ statistics, b, m);
+void update_remaining_exchange_mults_windows(running_statistics& statistics, const BAND b, const MODE m)
+{ for (const auto& [exch_mult_name, _] : win_remaining_exch_mults_p)
+    update_remaining_exch_mults_window(exch_mult_name, statistics, b, m);
 }
 
 /*! \brief              Return the bearing to a station
@@ -6275,7 +6314,6 @@ void populate_win_info(const string_view callsign)
     \param  pf          pointer to function that calculates the prefix
     \param  callsign    call for which the prefix is to be calculated
 */
-
       auto SET_CALLSIGN_MULT_VALUE = [] (string& val, const bool b, string (*pf)(const string_view), const string_view callsign)
                                          {  if (b and val.empty())
                                               val = pf(callsign);
@@ -6473,7 +6511,8 @@ void simulator_thread(string filename, int max_n_qsos)
     Does not add the mult if the mult is unknown, unless <i>force_known</i> is known
     force_known is always CALLSIGN_MULT::NO_FORCE_KNOWN in all known contests
 */
-void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_known)
+//void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_known)
+void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT force_known)
 { if (callsign.empty())
     return;
 
@@ -6529,7 +6568,8 @@ void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_
     Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file,
     and if the accumulator has reached the threshold
 */
-bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known)
+//bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known)
+bool update_known_country_mults(const string_view callsign, const KNOWN_MULT force_known)
 { if (callsign.empty())
     return false;
 
@@ -6597,10 +6637,12 @@ void archive_data(void)
 /*! \brief                      Extract the data from the archive file
     \param  archive_filename    name of the file that contains the archive
 */
-void restore_data(const string& archive_filename)
+//void restore_data(const string& archive_filename)
+void restore_data(const string_view archive_filename)
 { if (file_exists(archive_filename))
   { try
-    { ifstream                        ifs { archive_filename };            // the source archive
+    { ifstream                        ifs { string { archive_filename } };            // the source archive; there is no string_view constructor!
+      //ifstream                        ifs(archive_filename);            // the source archive
       boost::archive::binary_iarchive ar  { ifs };
 
 // miscellaneous variables
@@ -6905,6 +6947,8 @@ void start_of_thread(const string& name)
 
   if (!success)
     ost << "failed to insert thread name: " << name << endl;
+  else
+    thread_map += { my_thread_id(), name };
 }
 
 /// Cleanup and exit
@@ -7201,7 +7245,9 @@ void update_batch_messages_window(const string& callsign)
 
     Returns the empty string if no sensible result can be returned
 */
-string callsign_mult_value(const string& callsign_mult_name, const string& callsign)
+//string callsign_mult_value(const string& callsign_mult_name, const string& callsign)
+//string callsign_mult_value(const string_view callsign_mult_name, const string& callsign)
+string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign)
 { if ( (callsign_mult_name == "AAPX"sv) and (location_db.continent(callsign) == "AS"sv) )  // All Asian
     return wpx_prefix(callsign);
 
@@ -8267,7 +8313,8 @@ bool process_change_in_bandmap_column_offset(const KeySym symbol)
 }
 
 /// get the default mode on a frequency
-MODE default_mode(const frequency& f)
+//MODE default_mode(const frequency& f)
+MODE default_mode(const frequency f)
 { const BAND b { to_BAND(f) };
 
   try
@@ -8339,11 +8386,75 @@ void update_qsls_window(const string& str)
   }
 }
 
+/*! \brief                    Process an F1 keystroke in the CALL window
+    \param original_contents  contents of the CALL window
+    \return                   always returns <i>true</i>
+
+ F1 -- first step in SAP QSO during run
+    turn on sub-receiver, put sub-receiver on frequency of call (or substring of call)
+    moves call to BCALL window
+ intent here is to see whether we can hear the station whose call is in the CALL window
+*/
+bool process_keypress_F1(const string_view original_contents)
+{ if (drlog_mode == DRLOG_MODE::CQ)      // don't do anything in SAP mode
+  { if (original_contents.empty())      // nothing in CALL: emtpy bcall and turn off sub-receiver
+    { win_bcall <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      rig.sub_receiver_disable();
+    }
+    else
+    {
+// assume it's a call -- look for the same call in the current bandmap
+      bandmap_entry be { bandmaps[current_band][original_contents] };
+
+      if (be.callsign().empty())          // didn't find an exact match; try a substring search
+        be = bandmaps[current_band].substr(original_contents);
+
+      const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
+
+      rig.rig_frequency_b(be.freq());
+      win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();     // put call in BCALL
+
+      if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
+        sleep_for(100ms);
+
+      rig.sub_receiver_enable();
+
+// move contents of CALL to BCALL, clear CALL
+      if (win_bcall.defined() and !win_call.empty())
+        win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    }
+  }
+
+  return true;
+}
+
+/*! \brief                    Process an F2 keystroke
+    \return                   always returns <i>true</i>
+
+  F2 toggle: split and force SAP mode
+  intent here is to be ready to call the station: the TX is on the other station's QRG (which is VFO B)
+*/
+bool process_keypress_F2(void)
+{ if (rig.split_enabled())
+  { rig.split_disable();
+    enter_cq_or_sap_mode(a_drlog_mode);
+  }
+  else
+  { rig.split_enable();
+    a_drlog_mode = drlog_mode;
+    enter_sap_mode();
+  }
+
+  return true;
+}
+
 /*! \brief      Process an F5 keystroke in the CALL or EXCHANGE windows
     \return     always returns <i>true</i>
 */
 bool process_keypress_F5(void)
-{ if (rig.split_enabled())      // split is enabled; go back to situation before it was enabled
+{
+#if 0
+  if (rig.split_enabled())      // split is enabled; go back to situation before it was enabled
   { rig.split_disable();
     enter_cq_or_sap_mode(a_drlog_mode);
   }
@@ -8352,6 +8463,9 @@ bool process_keypress_F5(void)
     a_drlog_mode = drlog_mode;
     enter_sap_mode();
   }
+#endif
+
+  process_keypress_F2();
 
   if (win_bcall.defined())                      // swap contents of CALL and BCALL
   { const string tmp   { win_call.read() };
@@ -8503,10 +8617,15 @@ void end_of_thread(const string& name)
 
     I suspect that there is still a bug in here somewhere, leading to the occasional inconsistent update that (rarely) appears
 */
-void update_based_on_frequency_change(const frequency& f, const MODE m)
+//void update_based_on_frequency_change(const frequency& f, const MODE m)
+void update_based_on_frequency_change(const frequency f, const MODE m)
 { //static frequency last_update_frequency { };
+  ost << "update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
 
-  if (debug)
+ // if (my_thread_id() == display_rig_status_thread_id)
+ //   ost << "update_based_on_frequency_change() called from display_rig_status() thread" << endl;
+
+//  if (debug)
   { ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
     ost << "last_update_frequency = " << static_cast<frequency>(last_update_frequency) << endl;
   }
@@ -8523,9 +8642,12 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   if (f != mx_f)
   { ost << "WARNING! f = " << f.hz() << "; mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << endl;
     ost << "ignoring update" << endl;
+    ost << "backtrace in ignored call: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
     return;
   }
+  else
+    ost << "f = mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << "; looks OK; proceeding" << endl;
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
 
@@ -8669,9 +8791,9 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
         << "current actual frequency from rig = " << rig.rig_frequency() << endl
-        << "; bandmap version: " << bm.version() << endl
-        << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
-        << "; next bandmap entry: " << be << endl;
+        << "; bandmap version: " << bm.version_str() << endl
+        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
+        << "; next bandmap entry: " << be.to_brief_string() << endl;
   }
 
 // 240929
@@ -8750,7 +8872,9 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     This is the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ constexpr frequency MAX_SKEW { 95_Hz };
+{ ost << endl << endl << "inside process_bandmap_function; dirn = " << ((dirn == BANDMAP_DIRECTION::DOWN) ? "DOWN"s : "UP"s) << endl;
+
+  constexpr frequency MAX_SKEW { 95_Hz };
 
   bandmap& bm { bandmaps[current_band] };
 
@@ -8763,9 +8887,18 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   { ost << "DEBUG process_bandmap_function(): " << endl
         << "f_rig = " << f_rig
         << "; current actual frequency from rig = " << rig.rig_frequency()
-        << "; bandmap version: " << bm.version() << endl
-        << "; my bandmap entry(): " << bm.my_bandmap_entry() << endl
-        << "; next bandmap entry: " << be
+        << "; bandmap version: " << bm.version_str() << endl
+        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
+        << "; next bandmap entry: " << be.to_brief_string()
+        << endl;
+  }
+  else
+  { ost << "inside process_bandmap_function(): " << endl
+        << "f_rig = " << f_rig
+        << "; current actual frequency from rig = " << rig.rig_frequency()
+        << "; bandmap version: " << bm.version_str() << endl
+        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
+        << "; next bandmap entry: " << be.to_brief_string()
         << endl;
   }
 
@@ -8787,18 +8920,20 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
     //if (debug)
-      ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
+      ost << "after window update based on frequency change purportedly to " << be.freq() << "; my bandmap entry now: " << bm.my_bandmap_entry().to_brief_string() << endl;
 
-    { const bandmap_entry my_be { bm[MY_MARKER] };
-
-      ost << "bandmap_entry at MY_MARKER: " << my_be << endl;
-    }
+//    { const bandmap_entry my_be { bm[MY_MARKER] };
+//
+//      ost << "bandmap_entry at MY_MARKER: " << my_be << endl;
+//    }
 
     ok_to_poll_k3 = true;
 
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
   }
+
+  ost << "end of process_bandmap_function" << endl << endl << endl;
 
   return true;
 }
@@ -8809,7 +8944,8 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     Changes to the default mode associated with <i>f</i>, if multiple
     modes are supported in this contest
 */
-void possible_mode_change(const frequency& f)
+//void possible_mode_change(const frequency& f)
+void possible_mode_change(const frequency f)
 { if (multiple_modes)
   { if (const MODE m { default_mode(f) }; m != current_mode)
     { rig.rig_mode(m);

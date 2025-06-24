@@ -403,7 +403,8 @@ void qtc_buffer::rebuild_unsent_list(const logbook& logbk)
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target) const
+//vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target) const
+vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string_view target) const
 { vector<qtc_entry> rv;
 
   auto cit { _unsent_qtcs.cbegin() };

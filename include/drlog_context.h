@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 266 2025-04-07 22:34:06Z  $
+// $Id: drlog_context.h 269 2025-05-19 22:42:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -349,7 +349,8 @@ public:
     \param  mult_name   name of the exchange mult
     \return             whether the remaining values of the exchange mult <i>mult_name</i> are auto generated
 */
-  inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
+//  inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
+  inline bool auto_remaining_exchange_mults(const std::string_view mult_name) const
     { SAFELOCK(_context);
 
       return (_auto_remaining_exchange_mults.contains(mult_name));

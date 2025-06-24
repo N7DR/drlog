@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 268 2025-05-04 12:31:03Z  $
+// $Id: bands-modes.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,10 +39,11 @@ enum BAND { BAND_160 = 0,
             BAND_15,
             BAND_12,
             BAND_10,
+            BAND_6,
             ANY_BAND,
             ALL_BANDS = ANY_BAND,
             MIN_BAND = BAND_160,
-            MAX_BAND = BAND_10
+            MAX_BAND = BAND_6
           };                        // these MUST be in order of increasing frequency
 
 constexpr unsigned int NUMBER_OF_BANDS { MAX_BAND + 1 };                          ///< how many bands does drlog know about?
@@ -57,7 +58,8 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                     "17"s,
                                                                     "15"s,
                                                                     "12"s,
-                                                                    "10"s
+                                                                    "10"s,
+                                                                    "6"s
                                                                  } };         ///< names of bands
 
 static STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
@@ -69,7 +71,8 @@ static STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is us
                                          { "17"s,  BAND_17 },
                                          { "15"s,  BAND_15 },
                                          { "12"s,  BAND_12 },
-                                         { "10"s,  BAND_10 }
+                                         { "10"s,  BAND_10 },
+                                         { "6"s,   BAND_6 }
                                       };                    ///< map a band name to a band
 
 static STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
@@ -81,7 +84,8 @@ static STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [
                                                { "17m"s,  BAND_17 },
                                                { "15m"s,  BAND_15 },
                                                { "12m"s,  BAND_12 },
-                                               { "10m"s,  BAND_10 }
+                                               { "10m"s,  BAND_10 },
+                                               { "6m"s,   BAND_6 }
                                             };                    ///< map an ADIF3 band to a band
 
 /// modes that drlog knows about
@@ -119,7 +123,8 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                           { BAND_17,  "18068"s },
                                                           { BAND_15,  "21000"s },
                                                           { BAND_12,  "24890"s },
-                                                          { BAND_10,  "28000"s }
+                                                          { BAND_10,  "28000"s },
+                                                          { BAND_6,   "50000"s }
                                                         };
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
@@ -274,7 +279,7 @@ public:
   auto operator<=>(const frequency&) const = default;
 
 /// difference in two frequencies, always +ve
-  frequency difference(const frequency& f2) const;
+  frequency difference(const frequency f2) const;
 
 /*! \brief          Find the next lower band
     \param  bands   set of bands that may be returned
@@ -294,10 +299,11 @@ public:
 
 
 // frequency + frequency
-  inline frequency operator+(const frequency& f) const
+  inline frequency operator+(const frequency f) const
     { return frequency(hz() + f.hz(), FREQUENCY_UNIT::HZ); }
 
-  inline frequency operator-(const frequency& f) const      // param must be < value of this object
+// frequency - frequency
+  inline frequency operator-(const frequency f) const      // param must be < value of this object
     { return frequency( ((hz() > f.hz()) ? (hz() - f.hz()) : 0), FREQUENCY_UNIT::HZ); }
 
 /// serialise
@@ -331,17 +337,17 @@ inline constexpr frequency operator""_MHz(const unsigned long long int  f)
 /// integer * frequency
 template <typename T>
   requires std::is_integral_v<T>
-inline frequency operator*(const T factor, const frequency& f)
+inline frequency operator*(const T factor, const frequency f)
   { return frequency(factor * f.hz(), FREQUENCY_UNIT::HZ); }
 
 /// frequency * integer
 template <typename T>
   requires std::is_integral_v<T>
-inline frequency operator*(const frequency& f, const T factor)
+inline frequency operator*(const frequency f, const T factor)
   { return (factor * f); }
 
 /// ostream << frequency
-std::ostream& operator<<(std::ostream& ost, const frequency& f);
+std::ostream& operator<<(std::ostream& ost, const frequency f);
 
 /*!  \brief         Convert the string representation of a frequency to a band
      \param  str    any string representation of a frequency, such that the string can be converted to a frequency object
@@ -356,7 +362,7 @@ inline BAND to_BAND(const std::string_view str)
      \param  f  frequency to convert
      \return    band corresponding to <i>f</i>
 */
-inline BAND to_BAND(const frequency& f)
+inline BAND to_BAND(const frequency f)
   { return to_BAND(f.hz()); }
 
 /*!  \brief     Convert a frequency to a printable string
@@ -365,7 +371,7 @@ inline BAND to_BAND(const frequency& f)
 
      Appends " Hz" to the numerical frequency.
 */
-inline std::string to_string(const frequency& f)
+inline std::string to_string(const frequency f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it; see http://www.arrl.org/images/view//Charts/Band_Chart_Image_for_ARRL_Web.jpg
@@ -378,7 +384,8 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    
                                                     { BAND_17,  18'110_kHz },
                                                     { BAND_15,  21'200_kHz },
                                                     { BAND_12,  24'930_kHz },
-                                                    { BAND_10,  28'300_kHz }
+                                                    { BAND_10,  28'300_kHz },
+                                                    { BAND_6,   50'100_kHz }
                                                   };
 
 /*!  \brief     Convert a frequency to a band
@@ -387,7 +394,7 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    
 
      Frequency may be in Hz, kHz or MHz.
 */
-template<class T> /* const */ BAND to_BAND(T f)
+template<class T> BAND to_BAND(T f)
 { if (f <= 0)
     return MIN_BAND;
 
@@ -398,7 +405,7 @@ template<class T> /* const */ BAND to_BAND(T f)
     return to_BAND(static_cast<long>(f) * 1000);
 
 // at this point, f is in Hz
-  const static std::vector<BAND> non_warc_bands { BAND_160, BAND_80, BAND_60, BAND_40, BAND_20, BAND_15, BAND_10 };
+  const static std::vector<BAND> non_warc_bands { BAND_160, BAND_80, BAND_60, BAND_40, BAND_20, BAND_15, BAND_10, BAND_6 };
 
 // non-WARC bands
   for (const auto non_warc_band : non_warc_bands)
@@ -423,6 +430,6 @@ template<class T> /* const */ BAND to_BAND(T f)
     \param  f   frequency
     \return     guessed mode for the frequency <i>f</i>
 */
-MODE putative_mode(const frequency& f);
+MODE putative_mode(const frequency f);
 
 #endif /* BANDSMODES_H */

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: bandmap.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,7 +52,9 @@ extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency
 
     Returns the empty string if no sensible result can be returned
 */
-extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
+//extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
+//extern const string callsign_mult_value(const string_view callsign_mult_name, const string& callsign);
+extern const string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr frequency     MAX_FREQUENCY_SKEW { 250_Hz };       ///< maximum separation to be treated as same frequency
@@ -239,14 +241,38 @@ string n_posters_database::to_string(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 //void bandmap_filter_type::add_or_subtract(const string& str)
+
 void bandmap_filter_type::add_or_subtract(const string_view str)
 { const bool   is_continent { CONTINENT_SET.contains(str) };
-  const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
+  const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix if necessary
 
-  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
-  STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
+//  using GROUP_PTR = decltype(&_continents);
+//  using GROUP_PTR = GROUP_TYPE*;
 
-  if (ss.contains(str_copy))    // remove a value
+//  GROUP_PTR g_ptr { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct group
+  GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) };    // create reference to correct group
+
+  if (g_ref.contains(str_copy))    // remove a value
+    g_ref -= str_copy;
+  else
+    g_ref += str_copy;
+
+#if 0
+  STRING_SET ss1 = SR::to<STRING_SET>(*vs_p);
+
+  if (ss1.contains(str_copy))    // remove a value
+    ss1 -= str_copy;
+  else                          // add a value
+    ss1 += str_copy;
+
+  *vs_p = SR::to<vector<string>>(ss1);
+  SORT(*vs_p, compare_calls);                           // make it easy for humans
+#endif
+
+#if 0
+ STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
+
+ if (ss.contains(str_copy))    // remove a value
     ss -= str_copy;
   else                          // add a value
     ss += str_copy;
@@ -254,7 +280,44 @@ void bandmap_filter_type::add_or_subtract(const string_view str)
   vs_p -> clear();                                      // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
   SORT(*vs_p, compare_calls);                           // make it easy for humans
+#endif
+
 }
+
+#if 0
+void bandmap_filter_type::add_or_subtract(const string_view str)
+{ const bool   is_continent { CONTINENT_SET.contains(str) };
+  const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
+
+  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
+
+#if 1
+  STRING_SET ss1 = SR::to<STRING_SET>(*vs_p);
+
+  if (ss1.contains(str_copy))    // remove a value
+    ss1 -= str_copy;
+  else                          // add a value
+    ss1 += str_copy;
+
+  *vs_p = SR::to<vector<string>>(ss1);
+  SORT(*vs_p, compare_calls);                           // make it easy for humans
+#endif
+
+#if 0
+ STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
+
+ if (ss.contains(str_copy))    // remove a value
+    ss -= str_copy;
+  else                          // add a value
+    ss += str_copy;
+
+  vs_p -> clear();                                      // empty it
+  copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
+  SORT(*vs_p, compare_calls);                           // make it easy for humans
+#endif
+
+}
+#endif
 
 // -----------  bandmap_entry  ----------------
 
@@ -298,7 +361,8 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // callsign mult
   clear_callsign_mult();
 
-  for ( const auto& callsign_mult_name : rules.callsign_mults() )
+//  for ( const auto& callsign_mult_name : rules.callsign_mults() )
+  for ( string_view callsign_mult_name : rules.callsign_mults() )
   { if (const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) }; !callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
         add_callsign_mult(callsign_mult_name, callsign_mult_val);
@@ -513,9 +577,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      UNTESTED
 */
 string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_frequency, const frequency guard_band) const
-{ //ost << "inside nearest displayed callsign; target frequency = " << target_frequency << "; guard band = " << guard_band << endl;
-
-  if ( !target_frequency.is_within_ham_band() )
+{ if ( !target_frequency.is_within_ham_band() )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency = " << target_frequency << endl;
     return string { };
   }
@@ -530,24 +592,16 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_
   for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
   { const frequency Δf { target_frequency.difference(cit->freq()) };
 
-//    if ( (Δf <= guard_band) and (!cit->is_my_marker()))
-    if ( (Δf <= guard_band) and (!cit->is_marker()))
+    if ( (Δf <= guard_band) and (!cit -> is_marker()))
     { if (Δf < smallest_difference)
       { smallest_difference = Δf;
-        rv = cit->callsign();
-//        tmp_be = *(cit);
+        rv = cit -> callsign();
       }
     }
 
     if ( (cit->freq() > target_frequency) and (Δf > guard_band) )  // no need to keep looking we if are past the allowed guard band
-    { finish_looking = true;
-//      ost << "target: " << target_frequency << "; guard: " << guard_band << " finished looking: " << finish_looking << "  delta: " << Δf << endl;
-    }
+      finish_looking = true;
   }
-
-//  ost << "tmp_be = " << tmp_be << endl;
-
-//  ost << "target: " << target_frequency << "; guard: " << guard_band << " finished looking: " << finished_looking << "  delta: " << Δf << endl;
 
   return rv;
 }
@@ -694,7 +748,7 @@ void bandmap::operator+=(bandmap_entry& be)
   bool add_it { true };  
 
 // do not add if it's already been done recently, or matches several other conditions
-  { add_it = !_do_not_add.contains(callsign);
+  { add_it = !(_do_not_add.contains(callsign));
 
     if (add_it)           // handle regex do-not-match conditions
     { smatch base_match;
@@ -702,7 +756,7 @@ void bandmap::operator+=(bandmap_entry& be)
       bool found_match { false };
 
       for ( auto it { _do_not_add_regex.begin() }; !found_match and (it != _do_not_add_regex.end()); ++it)
-      { const regex& rgx { it->second };
+      { const regex& rgx { it -> second };
 
         found_match = regex_match(callsign, base_match, rgx);
       }
@@ -745,7 +799,6 @@ void bandmap::operator+=(bandmap_entry& be)
           else    // new expiration is later
           { old_be.source(BANDMAP_ENTRY_SOURCE::RBN);
             old_be.expiration_time(be.expiration_time()); // NB: don't change time(); this line causes duration to change, which means that we can't use value_maps for colour
- //           old_be.time(be.time());                   // 250120... is this right? it makes the duration correct
 
             (*this) -= callsign;
             be.time_of_earlier_bandmap_entry(old_be);    // could change be
@@ -851,7 +904,6 @@ void bandmap::operator-=(const string_view callsign)
 
     Does nothing if <i>callsign</i> is not in the bandmap
 */
-//void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed(const string_view callsign)
 { SAFELOCK(_bandmap);
 
@@ -868,7 +920,7 @@ void bandmap::not_needed(const string_view callsign)
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
-void bandmap::not_needed_country_mult(const string& canonical_prefix)
+void bandmap::not_needed_country_mult(const string_view canonical_prefix)
 { SAFELOCK(_bandmap);
 
   bool changed { false };
@@ -885,7 +937,7 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap with the mode <i>m</i>
 */
-void bandmap::not_needed_country_mult(const string& canonical_prefix, const MODE m)
+void bandmap::not_needed_country_mult(const string_view canonical_prefix, const MODE m)
 { SAFELOCK(_bandmap);
 
   FOR_ALL(_entries, [m, &canonical_prefix] (decltype(*_entries.begin())& be) { if (be.mode() == m)
@@ -898,9 +950,21 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix, const MODE
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX" */, const string& /* callsign */),
-                                       const string& mult_type /* e.g., "WPXPX" */,
-                                       const string& callsign_mult_string /* e.g., SM1 */)
+//void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX" */, const string& /* callsign */),
+//                                       const string& mult_type /* e.g., "WPXPX" */,
+//                                       const string& callsign_mult_string /* e.g., SM1 */)
+//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string& /* callsign */),
+//                                       const string& mult_type /* e.g., "WPXPX" */,
+//                                       const string& callsign_mult_string /* e.g., SM1 */)
+//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
+//                                       const string& mult_type /* e.g., "WPXPX" */,
+//                                       const string& callsign_mult_string /* e.g., SM1 */)
+//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
+//                                       const string_view mult_type /* e.g., "WPXPX" */,
+//                                       const string& callsign_mult_string /* e.g., SM1 */)
+void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
+                                       const string_view mult_type /* e.g., "WPXPX" */,
+                                       const string_view callsign_mult_string /* e.g., SM1 */)
 { if (callsign_mult_string.empty() or mult_type.empty())
     return;
 
@@ -927,15 +991,17 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX
     \param  mult_name   name of exchange mult
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
-void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
+//void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
+void bandmap::not_needed_exchange_mult(const string_view mult_name, const string& mult_value)
 { if (mult_name.empty() or mult_value.empty())
     return;
 
-  SAFELOCK(_bandmap);
-
   bool changed { false };   // have we changed anything?
 
-  FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed = (be.remove_exchange_mult(mult_name, mult_value) or changed); } );
+  SAFELOCK(_bandmap);
+
+//  FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed = (be.remove_exchange_mult(mult_name, mult_value) or changed); } );
+  FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed |= be.remove_exchange_mult(mult_name, mult_value); } );
 
   if (changed)
     _version++;
@@ -1012,7 +1078,8 @@ BM_ENTRIES bandmap::filtered_entries(void)
   auto include_be { [this] (const bandmap_entry& be) { if (be.is_marker())
                                                          return true;
 
-                                                       const bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
+//                                                       const bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
+                                                       const bool display_this_entry { _filter_p->continents().contains(be.continent()) or _filter_p->prefixes().contains(be.canonical_prefix()) };
 
                                                        return filter_hide() ? !display_this_entry : display_this_entry;
                                                      }
@@ -1035,10 +1102,7 @@ BM_ENTRIES bandmap::filtered_entries(void)
 BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 { SAFELOCK(_bandmap);
 
-//  if (_rbn_threshold_and_filtered_entries_dirty)
-  { _rbn_threshold_and_filtered_entries = filtered_entries();
-//    _rbn_threshold_and_filtered_entries_dirty = false;
-  }
+  _rbn_threshold_and_filtered_entries = filtered_entries();
 
   return _rbn_threshold_and_filtered_entries;
 }
@@ -1052,30 +1116,14 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
     case 0 :
       return rbn_threshold_and_filtered_entries();
 
-/*
-    case 1 :                                                        // N7DR criteria
-      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.matches_criteria()); }) );
-
-    case 2 :                                                        // new on this band+mode
-      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
-                                                                                                         { return (be.is_marker() or be.is_all_time_first_and_needed_qso()); }));
-
-    case 3 :                                                        // never worked anywhere
-      return RANGE_CONTAINER <BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
-                                                                                                         { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
-*/
-
     case 1 :                                                        // N7DR criteria
       return SR::to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.matches_criteria()); }) );
 
     case 2 :                                                        // new on this band+mode
-      return to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
-                                                                                                         { return (be.is_marker() or be.is_all_time_first_and_needed_qso()); }));
+      return SR::to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or be.is_all_time_first_and_needed_qso()); }));
 
     case 3 :                                                        // never worked anywhere
-      return to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be)
-                                                                                                         { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
-
+      return SR::to<BM_ENTRIES> ( rbn_threshold_and_filtered_entries() | SRV::filter([] (const bandmap_entry& be) { return (be.is_marker() or (olog.n_qsos(be.callsign()) == 0)); }));
   }
 }
 
@@ -1083,7 +1131,6 @@ BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 BM_ENTRIES bandmap::displayed_entries_no_markers(void)
 { SAFELOCK (_bandmap);
 
-//  return RANGE_CONTAINER <BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }));
   return SR::to<BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }) );
 }
 
@@ -1199,7 +1246,6 @@ bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const frequency f, const enum 
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-//bandmap_entry bandmap::next_displayed_be(const frequency& f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
 bandmap_entry bandmap::next_displayed_be(const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip, const frequency max_skew)
 { const string dirn_str { (dirn == UP) ? "UP"s : "DOWN"s };
 
@@ -1333,7 +1379,6 @@ string bandmap::to_str(void)
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-//bool bandmap::is_present(const string& target_callsign) const
 bool bandmap::is_present(const string_view target_callsign) const
 { SAFELOCK(_bandmap);
 
@@ -1378,43 +1423,6 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
   }
 }
 
-/*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
-    \param  win         window to which to write
-    \param  dead_time   time that must have passed for the write to occur
-    \return             the window
-*/
-#if 0
-window& bandmap::protected_write_to_window(window& win, const std::chrono::milliseconds min_delay)
-{ ost << "inside protected write to window" << endl;
-
-  time_log <std::chrono::milliseconds> tlog;
-
-  SAFELOCK(_bandmap);
-
-  if (_version <= _last_displayed_version)  // don't display if this isn't newer than the last write
-  { ost << "version = " << static_cast<int>(_version) << "; last displayed version = " << _last_displayed_version << endl;
-    return win;
-  }
-
-  const std::chrono::time_point<std::chrono::system_clock> current_time { std::chrono::system_clock::now() };
-
-  ost << "actual delta time = " << duration_cast<std::chrono::milliseconds>(current_time - _time_last_displayed).count() << "; min delay = " << min_delay.count() << endl;
-
-  if ( (current_time - _time_last_displayed) < min_delay )  // don't display if this is too soon after the most recent display
-  { ost << "delta time = " << duration_cast<std::chrono::milliseconds>(current_time - _time_last_displayed).count() << "; min delay = " << min_delay.count() << endl;
-    return win;
-  }
-
-  ost << "going to write to window" << endl;
-  win <= (*this);   // calls (unprotected) write_to_window()
-
-  tlog.end_now();
-  ost << "time taken in protected write with written window = " << tlog.time_span<int>() << " milliseconds" << endl;
-
-  return win;
-}
-#endif
-
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window to which to write
     \return         the window
@@ -1438,24 +1446,19 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  { //ost << "bandmap::write_to_window gcc_backtrace: " << gcc_backtrace(BACKTRACE::ACQUIRE) << endl;
-    //ost << endl;
-//    ost << "at time " << NOW_TP() << ": " << endl;
-//    ost << "bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
-    ost << "at time " << NOW_TP() << ": request to display bandmap version: " << static_cast<int>(_version) << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
-  }
+//  ost << "at time " << NOW_TP() << ": request to display bandmap version: " << static_cast<int>(_version) << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
+  ost << "at time " << NOW_TP() << ": request to display bandmap version: " << version_str() << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
-  { ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
+  { //ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
+    ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
     return win;
   }
 
 // we are a more recent version, so display it
-  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
-
-  BM_ENTRIES entries { displayed_entries() };    // automatically filter
-
-  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
+  const size_t     maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
+  const BM_ENTRIES entries                               { displayed_entries() };    // automatically filter
+  const size_t     start_entry                           { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
@@ -1466,15 +1469,15 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
-
+    { const string      entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
       const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
       const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
       const bool        is_marker     { be.is_marker() };
 
 // debug: write QRG of marker
       if (be.is_my_marker())
-        ost << "BE OF MY MARKER: "  << be << endl;
+//        ost << "BE OF MY MARKER: "  << be << endl;
+        ost << "MY MARKER: " << be.to_brief_string() << endl;
 
       if (!found_my_marker and be.is_my_marker())
       { found_my_marker = true;
@@ -1577,11 +1580,12 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-void bandmap::do_not_add(const string& callsign)
+//void bandmap::do_not_add(const string& callsign)
+void bandmap::do_not_add(const string_view callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))
-    _do_not_add_regex += { callsign, regex(callsign) };
+    _do_not_add_regex += { callsign, regex( string { callsign } ) };
   else
     _do_not_add += callsign;
 
@@ -1593,7 +1597,8 @@ void bandmap::do_not_add(const string& callsign)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-void bandmap::remove_from_do_not_add(const string& callsign)
+//void bandmap::remove_from_do_not_add(const string& callsign)
+void bandmap::remove_from_do_not_add(const string_view callsign)
 { SAFELOCK(_bandmap);
 
   if (_is_regex(callsign))

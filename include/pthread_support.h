@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 268 2025-05-04 12:31:03Z  $
+// $Id: pthread_support.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,11 +25,13 @@
 #include <iostream>
 #include <mutex>
 #include <string>
+#include <thread>   // for C++ thread IDs
 #include <vector>
 
 #include <pthread.h>
 
 using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 /// Lock a mutex
 #define LOCK(z)  z##_mutex.lock()
@@ -354,7 +356,7 @@ public:
     { return _name; }
 
 /// rename
-  void rename(const std::string& new_name);  
+  void rename(const std::string_view new_name);
 
   friend class pt_condition_variable;       ///< needs access to details of the mutex
 };
@@ -503,7 +505,7 @@ public:
     \param  ptm     mutex to be locked
     \param  name    name of safelock (defaults to name of mutex)
 */
-  explicit safelock(pt_mutex& ptm, const std::string& name = std::string());
+  explicit safelock(pt_mutex& ptm, const std::string_view name = ""sv);
 
 /// forbid copying
   safelock(const safelock&) = delete;
@@ -533,8 +535,8 @@ public:
      \param  code       reason code
      \param  reason     message to add
 */
-  inline void add(/* const int code, */ const std::string& reason)
-    { push_back(reason); }    // the code is ignored except for readability when the add  is called
+  inline void add(/* const int code, */ const std::string_view reason)
+    { push_back(std::string { reason }); }    // the code is ignored except for readability when the add  is called
 };
 
 /// How many threads belong to this process?
@@ -587,7 +589,7 @@ T SAFELOCK_GET(std::recursive_mutex& m, const T& v)
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string { });
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string_view thread_name = std::string { });
 
 /*! \brief                  Wrapper for pthread_create()
     \param  thread          pointer to thread ID
@@ -598,8 +600,12 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-inline void create_thread(pthread_t *thread, const thread_attribute& t_attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string())
+inline void create_thread(pthread_t *thread, const thread_attribute& t_attr, void *(*start_routine) (void *), void *arg, const std::string_view thread_name = std::string { })
   { create_thread(thread, &(t_attr.attr()), start_routine, arg, thread_name); }
+
+// C++ thread ID
+inline std::thread::id my_thread_id(void)
+  { return std::this_thread::get_id(); }
 
 // -------------------------------------- Errors  -----------------------------------
 

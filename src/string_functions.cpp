@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: string_functions.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -345,10 +345,7 @@ string squash(const string_view cs, const char c)
     If the line contains anything, even just whitespace, it is not removed
 */
 vector<string> remove_empty_lines(const vector<string>& lines)
-{ vector<string> rv { lines };
-
-//  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
-//string rv { s };
+{ vector<string> rv { lines };                      // create a copy
 
   erase_if(rv, [] (const string& line) { return line.empty(); } );
 
@@ -416,7 +413,7 @@ string remove_char_from_delimited_substrings(const string_view cs, const char ch
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
 string remove_chars(const string_view s, const string_view chars_to_remove)
-{ string rv { s };
+{ string rv { s };                      // create a copy
 
   erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
 
@@ -570,7 +567,7 @@ size_t next_word_posn(const string_view str, const size_t current_posn)
     \param  wrt     value with respect to which <i>n</i> is counted
     \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
 
-    Returns <i>string::npos</i> if there is no <i>n</i>th word
+    Returns the empty string if there is no <i>n</i>th word
     Could modify this to be a template and return an STYPE, if that is useful
 */
 string nth_word(const string_view s, const unsigned int n, const unsigned int wrt)
@@ -747,11 +744,9 @@ bool compare_mults(const string_view mult1, const string_view mult2)
 
     Assumes that <i>str</i> is a number
 */
-//string decimal_places(const string& str, const int n)
 string decimal_places(const string_view str, const int n)
 {
 // for now, assume that it's a number
-//  if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
   if ( (str.length() >= 2) and (penultimate_char(str) != '.') )
   { const float fl { from_string<float>(str) };
 
@@ -771,7 +766,6 @@ string decimal_places(const string_view str, const int n)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-//string reformat_for_wprintw(const string& str, const int width)
 string reformat_for_wprintw(const string_view str, const int width)
 { string rv;
 

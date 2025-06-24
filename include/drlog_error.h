@@ -1,4 +1,4 @@
-// $Id: drlog_error.h 268 2025-05-04 12:31:03Z  $
+// $Id: drlog_error.h 270 2025-05-26 01:09:07Z  $
 
 #ifndef DRLOG_ERROR_H
 #define DRLOG_ERROR_H
@@ -35,7 +35,7 @@ public:
 
 /*! \brief  RO access to _code
 */
-  inline /* const */int code(void) const
+  inline int code(void) const
     { return _code; }
 
 /*! \brief  RO access to _reason

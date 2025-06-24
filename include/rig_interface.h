@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 268 2025-05-04 12:31:03Z  $
+// $Id: rig_interface.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -177,7 +177,8 @@ protected:
     Does nothing if <i>f</i> is not within a ham band.
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
-  void _rig_frequency(const frequency&, const VFO v);
+//  void _rig_frequency(const frequency&, const VFO v);
+  void _rig_frequency(const frequency, const VFO v);
 
 /*! \brief      Get the frequency of a VFO
     \param  v   VFO
@@ -464,8 +465,7 @@ public:
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
 */
-//  std::string raw_command(const std::string& cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED, const int expected_len = 0) const;
-  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED/*, const int expected_len = 0*/) const;
+  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode
@@ -496,7 +496,6 @@ public:
     \param  m   mode
     \param  f   frequency
 */
-//  inline void set_last_frequency(const BAND b, const MODE m, const frequency& f)
   inline void set_last_frequency(const BAND b, const MODE m, const frequency f)
     { set_last_frequency( { b, m }, f ); }
 
@@ -588,7 +587,8 @@ public:
 
     Works only with K3
 */
-  bool notch_enabled(const std::string& ds_result = std::string { }) const;
+//  bool notch_enabled(const std::string& ds_result = std::string { }) const;
+  bool notch_enabled(const std::string_view ds_result = std::string { }) const;
 
 /*! \brief              Toggle the notch status
 

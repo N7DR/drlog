@@ -1,4 +1,4 @@
-// $Id: log.h 259 2025-01-19 15:44:33Z  $
+// $Id: log.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +34,10 @@
 #include <iostream>
 
 extern message_stream ost;                  ///< for debugging, info
+
+enum class LOG_EXTRACT { DISPLAY,
+                         NO_DISPLAY
+                       };
 
 // -----------  logbook  ----------------
 
@@ -340,8 +344,8 @@ protected:
 
 public:
 
-/*! \brief  constructor
-    \param  w               window to be used by this extract
+/*! \brief      Constructor
+    \param  w   window to be used by this extract
 */
   explicit log_extract(window& w);
 
@@ -407,7 +411,8 @@ public:
 
     Displayed in order from oldest to newest
 */
-  void recent_qsos(const logbook& lgbook, const bool to_display = true);
+//  void recent_qsos(const logbook& lgbook, const bool to_display = true);
+  void recent_qsos(const logbook& lgbook, const LOG_EXTRACT = LOG_EXTRACT::DISPLAY);
 
 /*! \brief          Display the QSOs from a log that match an exchange
     \param  lgbook  logbook to use
@@ -455,7 +460,8 @@ protected:
 
     The data for <i>call</i> are created if they don't already exist, and the corresponding iterator returned
 */
-  decltype(_olog)::iterator _find_or_create(const std::string& call);
+//  decltype(_olog)::iterator _find_or_create(const std::string& call);
+  decltype(_olog)::iterator _find_or_create(const std::string_view call);
 
 public:
 
@@ -463,20 +469,23 @@ public:
     \param  call    callsign
     \return         the number of QSLs from callsign <i>call</i>
 */
-  unsigned int n_qsls(const std::string& call) const;
+//  unsigned int n_qsls(const std::string& call) const;
+  unsigned int n_qsls(const std::string_view call) const;
 
 /*! \brief          Set the number of QSLs from a particular callsign
     \param  call    callsign
     \param  n       number of QSLs from <i>call</i>
 */
-  inline void n_qsls(const std::string& call, const unsigned int n)
+//  inline void n_qsls(const std::string& call, const unsigned int n)
+  inline void n_qsls(const std::string_view call, const unsigned int n)
     { get<0>(_find_or_create(call) -> second) = n; }
 
 /*! \brief          Increment the number of QSLs from a particular callsign
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
 */
-  unsigned int increment_n_qsls(const std::string& call);
+//  unsigned int increment_n_qsls(const std::string& call);
+  unsigned int increment_n_qsls(const std::string_view call);
 
 /*! \brief          Return total number of QSOs with a particular callsign
     \param  call    callsign
@@ -488,14 +497,16 @@ public:
     \param  call    callsign
     \param  n       number of QSOs with <i>call</i>
 */
-  inline void n_qsos(const std::string& call, const unsigned int n)
+//  inline void n_qsos(const std::string& call, const unsigned int n)
+  inline void n_qsos(const std::string_view call, const unsigned int n)
     { get<1>(_find_or_create(call) -> second) = n; }
 
 /*! \brief          Increment the number of QSOs associated with a particular callsign
     \param  call    callsign for which the number of QSOs should be incremented
     \return         number of QSOs associated with <i>call</i>
 */
-  unsigned int increment_n_qsos(const std::string& call);
+//  unsigned int increment_n_qsos(const std::string& call);
+  unsigned int increment_n_qsos(const std::string_view call);
 
 /*! \brief          How many QSOs have taken place with a particular call on a particular band and mode
     \param  call    target callsign
@@ -511,7 +522,8 @@ public:
     \param  m       target mode
     \return         number of QSOs associated with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
-  unsigned int increment_n_qsos(const std::string& call, const BAND b, const MODE m);
+//  unsigned int increment_n_qsos(const std::string& call, const BAND b, const MODE m);
+  unsigned int increment_n_qsos(const std::string_view call, const BAND b, const MODE m);
 
 /*! \brief          Has a QSL ever been received for a particular call on a particular band and mode
     \param  call    target callsign
@@ -526,7 +538,8 @@ public:
     \param  b       target band
     \param  m       target mode
 */
-  inline void qsl_received(const std::string& call, const BAND b, const MODE m)
+//  inline void qsl_received(const std::string& call, const BAND b, const MODE m)
+  inline void qsl_received(const std::string_view call, const BAND b, const MODE m)
     { get<2>(_find_or_create(call) -> second) += { b, m }; }
 };
 

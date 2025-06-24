@@ -1,4 +1,4 @@
-// $Id: exchange.h 259 2025-01-19 15:44:33Z  $
+// $Id: exchange.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,7 +68,8 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-  inline bool prefill_data_exists(const std::string& field_name) const
+//  inline bool prefill_data_exists(const std::string& field_name) const
+  inline bool prefill_data_exists(const std::string_view field_name) const
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -394,7 +395,9 @@ public:
     \param  value       the new entry
 */
 //  void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
-  void set_value(const std::string_view callsign, const std::string& field_name, const std::string& value);
+//  void set_value(const std::string_view callsign, const std::string& field_name, const std::string& value);
+//  void set_value(const std::string_view callsign, const std::string_view field_name, const std::string& value);
+  void set_value(const std::string_view callsign, const std::string_view field_name, const std::string_view value);
 
 /*! \brief              Set value of a field for multiple calls using a file
     \param  path        path for file
@@ -406,7 +409,7 @@ public:
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-  void set_values_from_file(const std::vector<std::string>& path, const std::string_view filename, const std::string& field_name);
+  void set_values_from_file(const std::vector<std::string>& path, const std::string_view filename, const std::string_view field_name);
 
 /// return number of calls in the database
   inline size_t size(void) const
@@ -441,7 +444,9 @@ public:
     \param  callsign            callsign to which the exchange is to be attributed
     \param  received_exchange   exchange as received
 */
-  sweepstakes_exchange(const contest_rules& rules, const std::string& callsign, const std::string& received_exchange);
+//  sweepstakes_exchange(const contest_rules& rules, const std::string& callsign, const std::string& received_exchange);
+//  sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string& received_exchange);
+  sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string_view received_exchange);
 
   READ(serno);    ///< serial number
   READ(prec);     ///< precedence

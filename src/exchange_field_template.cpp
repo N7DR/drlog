@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: exchange_field_template.cpp 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,7 +37,8 @@ using namespace std;
 */
 //EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
 //    const drlog_context& context, location_database& location_db) :
-EFT::EFT(const string& nm, const vector<string>& path, const string_view regex_filename,
+//EFT::EFT(const string& nm, const vector<string>& path, const string_view regex_filename,
+EFT::EFT(const string_view nm, const vector<string>& path, const string_view regex_filename,
     const drlog_context& context, location_database& location_db) :
   _name(nm)
 { read_regex_expression_file(path, regex_filename);
@@ -52,7 +53,6 @@ EFT::EFT(const string& nm, const vector<string>& path, const string_view regex_f
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-//bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
 bool EFT::read_regex_expression_file(const vector<string>& paths, const string_view filename)
 { if (filename.empty())
     return false;
@@ -95,8 +95,7 @@ bool EFT::read_regex_expression_file(const vector<string>& paths, const string_v
 bool EFT::read_values_file(const vector<string>& path, const string_view filename)
 { try
   { for (const auto& line : to_lines <std::string> (read_file(path, filename + ".values"s)))
-    { //set<string> equivalent_values;                    // includes the canonical value
-      STRING_SET equivalent_values;                    // includes the canonical value
+    { STRING_SET equivalent_values { };                    // will include the canonical value
 
       if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
       { if (contains(line, '=') )
@@ -106,8 +105,7 @@ bool EFT::read_values_file(const vector<string>& path, const string_view filenam
           equivalent_values += lhs;                  // canonical value
 
           if (lhsrhs.size() != 1)
-          { //const string& rhs { lhsrhs[1] };
-            const string rhs { lhsrhs[1] };
+          { const string rhs { lhsrhs[1] };
 
             COPY_ALL(clean_split_string <string> (rhs), inserter(equivalent_values, equivalent_values.begin()));
 
@@ -171,12 +169,15 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 
     Does nothing if <i>new_canonical_value</i> is already known
 */
-void EFT::add_canonical_value(const string& new_canonical_value)
-{ if (!is_canonical_value(new_canonical_value))
-    _values += { new_canonical_value, { new_canonical_value } };
+//void EFT::add_canonical_value(const string& new_canonical_value)
+void EFT::add_canonical_value(const string_view new_canonical_value)
+{ const string str { new_canonical_value };
 
-  _legal_non_regex_values += new_canonical_value;
-  _value_to_canonical += { new_canonical_value, new_canonical_value };
+  if (!is_canonical_value(new_canonical_value))
+    _values += { str, { str } };
+
+  _legal_non_regex_values += str;
+  _value_to_canonical += { str, str };
 }
 
 /*! \brief              Add a legal value that corresponds to a canonical value
@@ -186,16 +187,18 @@ void EFT::add_canonical_value(const string& new_canonical_value)
     Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
     canonical value if necessary.
 */
-void EFT::add_legal_value(const string& cv, const string& new_value)
+//void EFT::add_legal_value(const string& cv, const string& new_value)
+//void EFT::add_legal_value(const string_view cv, const string& new_value)
+void EFT::add_legal_value(const string_view cv, const string_view new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
 
-  auto& [ k, ss ] { *(_values.find(cv)) };  // this is now guaranteed not to be end()
+  auto& [ _, ss ] { *(_values.find(cv)) };  // this is now guaranteed not to be end()
 
   ss += new_value;      // add it to _values
 
   _legal_non_regex_values += new_value;
-  _value_to_canonical += { new_value, cv };
+  _value_to_canonical += { new_value, string { cv } };
 }
 
 /*! \brief          Is a string a legal value?
@@ -214,7 +217,6 @@ bool EFT::is_legal_value(const string_view str) const
     \param  str     received value
     \return         value to be logged
 */
-//string EFT::value_to_log(const string& str) const
 string EFT::value_to_log(const string_view str) const
 { const string rv { canonical_value(str) };
 
@@ -227,7 +229,6 @@ string EFT::value_to_log(const string_view str) const
 
     Returns empty string if no equivalent canonical value can be found
 */
-//string EFT::canonical_value(const std::string& str) const
 string EFT::canonical_value(const std::string_view sv) const
 { const string str { sv };          // regex does not support string_view
 

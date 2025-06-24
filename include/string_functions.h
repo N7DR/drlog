@@ -1,4 +1,4 @@
-// $Id: string_functions.h 266 2025-04-07 22:34:06Z  $
+// $Id: string_functions.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -558,7 +558,7 @@ auto remove_from_start(const std::string_view s, const std::string_view ss) -> S
 */
 template <typename STYPE>
 //inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
-inline auto remove_chars_from_end(const std::string_view s, const unsigned int n) -> STYPE
+inline auto remove_n_chars_from_end(const std::string_view s, const unsigned int n) -> STYPE
   { return ( (n >= s.length()) ? STYPE { EMPTY_STR } : STYPE { s.substr(0, s.length() - n) } ); }
 
 /*! \brief      Remove characters if present at the end of a string
@@ -571,7 +571,8 @@ inline auto remove_chars_from_end(const std::string_view s, const unsigned int n
 template <typename STYPE>
 //inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
 inline auto remove_string_from_end(const std::string_view s, const std::string_view e) -> STYPE
-  { return ( s.ends_with(e) ? remove_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
+//  { return ( s.ends_with(e) ? remove_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
+  { return ( s.ends_with(e) ? remove_n_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
 
 /*! \brief      Remove character if present at the end of a string
     \param  s   original string
@@ -582,7 +583,7 @@ inline auto remove_string_from_end(const std::string_view s, const std::string_v
 */
 template <typename STYPE>
 inline auto remove_char_from_end(const std::string_view s, const char c) -> STYPE
-  { return ( s.ends_with(c) ? remove_chars_from_end <STYPE> (s, 1u) : STYPE { s } ); }
+  { return ( s.ends_with(c) ? remove_n_chars_from_end <STYPE> (s, 1u) : STYPE { s } ); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -1219,7 +1220,8 @@ std::vector<size_t> starts_of_words(const std::string_view s);
     \param  wrt     value with respect to which <i>n</i> is counted
     \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
 
-    Returns <i>string::npos</i> if there is no <i>n</i>th word
+    Returns the empty string if there is no <i>n</i>th word
+    Could modify this to be a template and return an STYPE, if that is useful
 */
 std::string nth_word(const std::string_view s, const unsigned int n, const unsigned int wrt = 0);
 
@@ -1319,9 +1321,6 @@ template <typename T>
 std::string longest(const T& strs)
 { std::string rv { };
 
-//  for (const auto& str : strs)
-//    if (str.length() > rv.length())
-//      rv = str;
   FOR_ALL(strs, [&rv] (const auto& str) { if (str.length() > rv.length())
                                             rv = str;
                                         });
@@ -1430,7 +1429,8 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
 //inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
-inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string& delim_2)
+//inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string& delim_2)
+inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string_view delim_2)
   { return (std::string { delim_1 } + str + delim_2); }
 
 /*! \brief              Perform a case-insensitive search for a substring

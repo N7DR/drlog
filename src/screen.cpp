@@ -967,13 +967,11 @@ PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgb
 
   const auto [fg, bg] { fgbg };
 
-//  if (fgbg.first >= COLORS)
   if (fg >= COLORS)
   { ost << "Attempt to set foreground to colour " << fg << " with only " << COLORS << " colours available" << endl;
     throw exception();
   }
 
-//  if (fgbg.second >= COLORS)
   if (bg >= COLORS)
   { ost << "Attempt to set background to colour " << bg << " with only " << COLORS << " colours available" << endl;
     throw exception();

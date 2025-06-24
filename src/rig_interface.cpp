@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: rig_interface.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,7 +108,8 @@ void rig_interface::_error_alert(const string& msg) const
     Does nothing if <i>f</i> is not within a ham band.
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
-void rig_interface::_rig_frequency(const frequency& f, const VFO v)
+//void rig_interface::_rig_frequency(const frequency& f, const VFO v)
+void rig_interface::_rig_frequency(const frequency f, const VFO v)
 { //constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries
   constexpr std::chrono::duration RETRY_TIME { 100ms };      // period between retries
 
@@ -137,7 +138,7 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
       { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
           _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
-        if (debug)
+//        if (debug)
         { ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
         }
 
@@ -304,12 +305,12 @@ void rig_interface::rig_mode(const MODE m)
         
         switch(m)
         { case MODE_CW :
-            raw_command("MD3;"s);
+            raw_command("MD3;"sv);
             sleep_for(K3_MODE_CHANGE_TIME);
             break;
 
           case MODE_SSB :
-            { const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"s : "MD2;"s };
+            { const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"sv : "MD2;"sv };
 
               raw_command(k3_mode_cmd);
               sleep_for(K3_MODE_CHANGE_TIME);
@@ -877,7 +878,7 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
   const bool is_p3_screenshot { (cmd == "#BMP;"sv) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
-    return string();
+    return string { };
 
   if (cmd.empty())
     return string { };
@@ -893,7 +894,7 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
   bool completed { false };
 
-  { SAFELOCK(_rig);
+  { SAFELOCK(_rig);             // hold lock until we're done
 
     serial_flush(&rs_p->rigport);
 
@@ -909,8 +910,8 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
     struct timeval timeout;  // time_t (seconds), long (microseconds)
 
     auto set_timeout = [fd, &set, &timeout] (const time_t sec, const long usec)
-      { FD_ZERO(&set);    // clear the set
-        FD_SET(fd, &set); // add the file descriptor to the set
+      { FD_ZERO(&set);        // clear the set
+        FD_SET(fd, &set);     // add the file descriptor to the set
         //fd_set_value(set, fd);    // requires socket support
 
         timeout.tv_sec = sec;
@@ -1109,10 +1110,8 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency f)
 
   const auto [b, m] { bm };
 
-//  if (BAND(f) != bm.first)
   if (BAND(f) != b)
   { alert("Attempt to set out-of-band frequency in set_last_frequency()"); 
-//    ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << bm.first << ", mode = " << bm.second << ", f  " << f << endl;
     ost << "Attempt to set out-of-band frequency in set_last_frequency(): band = " << b << ", mode = " << m << ", f  " << f << endl;
   }
   else
@@ -1342,7 +1341,8 @@ void rig_interface::rx_ant(const bool torf) const
 
     Works only with K3
 */
-bool rig_interface::notch_enabled(const string& ds_result) const
+//bool rig_interface::notch_enabled(const string& ds_result) const
+bool rig_interface::notch_enabled(const string_view ds_result) const
 { if (!_rig_connected)
     return false;
 
@@ -1350,9 +1350,8 @@ bool rig_interface::notch_enabled(const string& ds_result) const
     return false;
 
 // it's a K3
-  const string result { ds_result.empty() ? raw_command("DS;", RESPONSE::EXPECTED) : ds_result };
+  const string result { ds_result.empty() ? raw_command("DS;"sv, RESPONSE::EXPECTED) : ds_result };
 
-//  if (!contains(result, ";"s) or (result.size() != 13) )
   if ( (result.size() != 13) or (result[12] != ';') )
     ost << "ERROR in notch_enabled(); result = " << result << endl;
   else

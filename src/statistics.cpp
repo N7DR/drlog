@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: statistics.cpp 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -351,7 +351,8 @@ bool running_statistics::known_callsign_mult_name(const string_view putative_cal
     \param  m           mode to test
     \return             whether the callsign mult <i>mult_name</i> with the value <i>mult_value</i> is still needed on band <i>b</i> and mode <i>m</i>
 */
-bool running_statistics::is_needed_callsign_mult(const string_view mult_name, const string& mult_value, const BAND b, const MODE m) const
+//bool running_statistics::is_needed_callsign_mult(const string_view mult_name, const string& mult_value, const BAND b, const MODE m) const
+bool running_statistics::is_needed_callsign_mult(const string_view mult_name, const string_view mult_value, const BAND b, const MODE m) const
 { SAFELOCK(statistics);
 
   if (!known_callsign_mult_name(mult_name))
@@ -409,7 +410,6 @@ bool running_statistics::is_needed_country_mult(const string_view callsign, cons
 
     Does nothing and returns <i>false</i> if <i>str</i> is already known
 */
-//bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 bool running_statistics::add_known_country_mult(const string_view str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
@@ -439,10 +439,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // callsign mults
 // for now, just assume that there's at most one possible callsign mult, and the value is in qso.prefix()
   if (!_callsign_multipliers.empty() and !(qso.prefix().empty()) )
-  { //const string mult_name { _callsign_multipliers.begin()->first };
-
-    //multiplier& m { _callsign_multipliers.begin()->second };
-    auto& [ mult_name, m ] { *(_callsign_multipliers.begin()) };
+  { auto& [ mult_name, m ] { *(_callsign_multipliers.begin()) };
 
     m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
@@ -457,16 +454,13 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // exchange mults
   for (auto& exchange_multiplier : _exchange_multipliers)
-  { //const string& field_name { exchange_multiplier.first };
-    auto& [ field_name, mult ] { exchange_multiplier };
-    const string  value      { qso.received_exchange(field_name) };
-    const string  mv         { MULT_VALUE(field_name, value) };            // the mult value of the received field
+  { auto& [ field_name, mult ] { exchange_multiplier };
+
+    const string  value { qso.received_exchange(field_name) };
+    const string  mv    { MULT_VALUE(field_name, value) };            // the mult value of the received field
 
     if (!value.empty())
-    { //multiplier& mult { exchange_multiplier.second };
-
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
-    }
   }
 
   const bool is_dupe { log.is_dupe(qso, rules) };
@@ -496,7 +490,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     \param  value   new legal value for the exchange multiplier <i>name</i>
     \return         whether <i>value</i> was actually added
 */
-bool running_statistics::add_known_exchange_mult(const string_view name, const string& value)
+//bool running_statistics::add_known_exchange_mult(const string_view name, const string& value)
+bool running_statistics::add_known_exchange_mult(const string_view name, const string_view value)
 { SAFELOCK(statistics);
 
   for (auto& [ field_name, mult ] : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
@@ -570,7 +565,6 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
     \param  m                       target mode
     \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
-//bool running_statistics::is_needed_exchange_mult(const string_view exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
 bool running_statistics::is_needed_exchange_mult(const string_view exchange_field_name, const string_view exchange_field_value, const BAND b, const MODE m) const
 { const string mv { MULT_VALUE(exchange_field_name, exchange_field_value) };  // the mult value of the received field
 
@@ -707,11 +701,13 @@ MULT_SET running_statistics::worked_callsign_mults(const string_view mult_name, 
 { SAFELOCK(statistics);
 
   if (mult_name.empty() and (_callsign_multipliers.size() == 1))
-    return _callsign_multipliers.cbegin()->second.worked(b, m);
+    return _callsign_multipliers.cbegin() -> second.worked(b, m);
+//    _callsign_multipliers | SRV::take(1)
+//    return ( auto [_, mult] { *_callsign_multipliers.cbegin() }, mult.worked(b, m) );
 
   const auto cit { _callsign_multipliers.find(mult_name) };
 
-  return ( (cit == _callsign_multipliers.cend()) ? MULT_SET { } : cit->second.worked(b, m) );
+  return ( (cit == _callsign_multipliers.cend()) ? MULT_SET { } : cit -> second.worked(b, m) );
 }
 
 /*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
@@ -741,9 +737,9 @@ void running_statistics::clear_info(void)
   _qso_points = move(decltype(_qso_points)( { { } } ));
 
 // clear the mults
-  FOR_ALL(_callsign_multipliers, [] (pair<const string, multiplier>& callsign_m) { callsign_m.second.clear(); } );
+  FOR_ALL(_callsign_multipliers, [] (pair<const string, multiplier>& callsign_m) { callsign_m.second.clear(); } );  // so annoying that can't use [a, b] in lambda
   _country_multipliers.clear();
-  FOR_ALL(_exchange_multipliers, [] (pair<string, multiplier>& sm) { sm.second.clear(); } );
+  FOR_ALL(_exchange_multipliers, [] (pair<string, multiplier>& sm) { sm.second.clear(); } );  // so annoying that can't use [a, b] in lambda
 }
 
 /*! \brief      Set the number of sent QTC QSOs
@@ -876,15 +872,6 @@ unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& ru
       rv += mult.n_worked(ALL_BANDS);
   }
 
-#if 0
-  for (const auto& sm : _callsign_multipliers)
-  { if (const multiplier& mult { sm.second }; mult.per_band())
-      FOR_ALL(permitted_bands, [&mult, &rv, &score_bands] (const auto& b) { if (score_bands.contains(b)) rv += mult.n_worked(b); });
-    else
-      rv += mult.n_worked(ALL_BANDS);
-  }
-#endif
-
   return rv;
 }
 
@@ -917,8 +904,10 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
 
   SAFELOCK(statistics);
 
-  for (const auto& em : _exchange_multipliers)
-  { if (const multiplier& mult { em.second }; mult.per_mode())
+//  for (const auto& em : _exchange_multipliers)
+  for (auto& [_, mult] : _exchange_multipliers)
+  { //if (const multiplier& mult { em.second }; mult.per_mode())
+    if (mult.per_mode())
     { for (const auto& m : permitted_modes)
       { if (mult.per_band())
           FOR_ALL(permitted_bands, [m, &mult, &rv] (const auto& b) { rv += mult.n_worked(b, m); });
@@ -983,7 +972,6 @@ void call_history::operator+=(const QSO& qso)
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-//bool call_history::worked(const string& s, const BAND b , const MODE m) const
 bool call_history::worked(const string_view s, const BAND b , const MODE m) const
 { SAFELOCK(_history);
 
@@ -992,7 +980,7 @@ bool call_history::worked(const string_view s, const BAND b , const MODE m) cons
   if (cit == _history.cend())
     return false;
 
-  const set<bandmode>& sbm  { cit->second };
+  const set<bandmode>& sbm  { cit -> second };
 
   return sbm.contains( bandmode { b, m } );
 }
@@ -1006,7 +994,7 @@ bool call_history::worked(const string_view s, const BAND b) const
 { SAFELOCK(_history);
 
 // it's less clear to use a filtered range here
-   for (const auto& [ call, set_bm ] : _history)
+  for (const auto& [ call, set_bm ] : _history)
   { if ( (s == call) and ANY_OF(set_bm, [b] (const auto& this_bm) { return (this_bm == b); }) )
       return true;
   }
@@ -1047,7 +1035,6 @@ bool call_history::worked(const string_view s) const
     \param  b   band NOT to test
     \return     whether <i>s</i> has been worked on a band other than <i>b</i>
 */
-//bool call_history::worked_on_another_band(const string& s, const BAND b) const
 bool call_history::worked_on_another_band(const string_view s, const BAND b) const
 { SAFELOCK(_history);
 

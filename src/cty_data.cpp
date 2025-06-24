@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 265 2025-03-31 01:32:02Z  $
+// $Id: cty_data.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -605,7 +605,7 @@ location_info location_database::info(const string_view callpart) const
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string_view target { remove_chars_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
+  { const string_view target { remove_n_chars_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
 
     if (const auto opt { OPT_MUM_VALUE(_db_checked, target) }; opt)
       return insert_best_info(opt.value());
@@ -659,26 +659,27 @@ location_info location_database::info(const string_view callpart) const
       len++;
     }
 
-   auto redefine_best = [this] (const string& cp) { return pair { cp, _db.find(cp)->second }; }; 
+//   auto redefine_best = [this] (const string& cp) { return pair { cp, _db.find(cp) -> second }; };
+   auto redefine_best = [this] (const string_view cp) { return pair { string { cp }, _db.find(cp) -> second }; };
 
 // Guantanamo Bay is a mess
     if ( (best_fit == "KG4"sv) and (callsign.length() != 5) )
-      tie(best_fit, best_info) = redefine_best("K"s);
+      tie(best_fit, best_info) = redefine_best("K"sv);
     
 // special stuff for Greek call areas
     if ( (best_fit == "SV"sv) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )
     { const char lc { last_char(callsign) };
     
       if (lc == '5')
-        tie(best_fit, best_info) = redefine_best("SV5"s);
+        tie(best_fit, best_info) = redefine_best("SV5"sv);
 
       if (lc == '9')
-        tie(best_fit, best_info) = redefine_best("SV9"s);
+        tie(best_fit, best_info) = redefine_best("SV9"sv);
     }
     
 // and Ecuador
     if ( (best_fit == "HC"sv) and (penultimate_char(callsign) == '/') and (last_char(callsign) == '8') )
-      tie(best_fit, best_info) = redefine_best("HC8"s);
+      tie(best_fit, best_info) = redefine_best("HC8"sv);
     
     if (found_any_hits)                                 // return the best fit
     { best_info = guess_zones(callsign, best_info);
@@ -843,7 +844,8 @@ auto location_database::countries(void) const -> UNORDERED_STRING_SET
 }
 
 /// create a set of all the canonical prefixes for a particular continent
-UNORDERED_STRING_SET location_database::countries(const string& cont_target) const
+//UNORDERED_STRING_SET location_database::countries(const string& cont_target) const
+UNORDERED_STRING_SET location_database::countries(const string_view cont_target) const
 { UNORDERED_STRING_SET rv { };
 
   ranges::copy_if(countries(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );

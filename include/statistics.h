@@ -1,4 +1,4 @@
-// $Id: statistics.h 259 2025-01-19 15:44:33Z  $
+// $Id: statistics.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -74,7 +74,6 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-//  void _insert_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
   void _insert_callsign_mult(const std::string_view mult_name, const std::string_view mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
 /*! \brief          Generate a summary string for display
@@ -140,7 +139,7 @@ public:
     \param  m           mode to test
     \return             whether the mult <i>mult_name</i> with value <i>mult_value</i> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
 */
-  bool is_needed_callsign_mult(const std::string_view mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
+  bool is_needed_callsign_mult(const std::string_view mult_name, const std::string_view mult_value, const BAND b, const MODE m) const;
 
 /*! \brief          Add a known value of country mult
     \param  str     canonical prefix of mult
@@ -149,7 +148,6 @@ public:
 
     Does nothing and returns false if <i>str</i> is already known
 */
-//  bool add_known_country_mult(const std::string& str, const contest_rules& rules);
   bool add_known_country_mult(const std::string_view str, const contest_rules& rules);
 
 /*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
@@ -179,8 +177,7 @@ public:
     \param  value   new legal value for the exchange multiplier <i>name</i>
     \return         whether <i>value</i> was actually added
 */
-//  bool add_known_exchange_mult(const std::string& name, const std::string& value);
-  bool add_known_exchange_mult(const std::string_view name, const std::string& value);
+  bool add_known_exchange_mult(const std::string_view name, const std::string_view value);
 
 /*! \brief          Return all known legal values for a particular exchange multiplier
     \param  name    name of the exchange multiplier
@@ -195,7 +192,6 @@ public:
     \param  m                       target mode
     \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
-//  bool is_needed_exchange_mult(const std::string_view exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
   bool is_needed_exchange_mult(const std::string_view exchange_field_name, const std::string_view exchange_field_value, const BAND b, const MODE m) const;
 
 /*! \brief                  Add a worked exchange mult

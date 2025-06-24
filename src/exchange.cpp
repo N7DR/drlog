@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: exchange.cpp 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1182,10 +1182,11 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     \param  value       the new entry
 */
 //void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
-void exchange_field_database::set_value(const string_view callsign, const string& field_name, const string& value)
+//void exchange_field_database::set_value(const string_view callsign, const string& field_name, const string& value)
+void exchange_field_database::set_value(const string_view callsign, const string_view field_name, const string_view value)
 { SAFELOCK(exchange_field_database);
 
-  _db[ { string { callsign }, field_name } ] = value;    // don't use insert, since we must overwrite
+  _db[ { string { callsign }, string { field_name } } ] = value;    // don't use insert, since we must overwrite
 }
 
 /*! \brief              Set value of a field for multiple calls using a file
@@ -1198,7 +1199,8 @@ void exchange_field_database::set_value(const string_view callsign, const string
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string& field_name)
+//void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string& field_name)
+void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string_view field_name)
 { try
   { const string contents { read_file(path, filename) };
 
@@ -1264,10 +1266,13 @@ string process_cut_digits(const string& input)
           2. A call may be present as part of the exchange
           3. The order may be quite different from the canonical order if part of the exchange has come from drmaster
 */
-
-sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string& callsign, const string& received_exchange) :
+//sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string& callsign, const string& received_exchange) :
+//sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string_view callsign, const string& received_exchange) :
+sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string_view callsign, const string_view received_exchange) :
   _call(callsign)
-{ static EFT  check_eft;
+{
+/*
+  static EFT  check_eft;
   static EFT  serno_eft;
   static EFT  prec_eft;
   static EFT  section_eft;
@@ -1281,6 +1286,11 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
 
     first_time = false;
   }
+*/
+  static const EFT check_eft   { rules.exchange_field_eft("CHECK"sv) };
+  static const EFT serno_eft   { rules.exchange_field_eft("SERNO"sv) };
+  static const EFT prec_eft    { rules.exchange_field_eft("PREC"sv) };
+  static const EFT section_eft { rules.exchange_field_eft("SECTION"sv) };
 
   const vector<string> r_vec { remove_peripheral_spaces <std::string> (split_string <std::string> (received_exchange, SPACE_STR)) };
 

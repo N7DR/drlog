@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 263 2025-03-03 14:23:07Z  $
+// $Id: bands-modes.cpp 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,9 @@ const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES { { { BAND
                                                                         { { BAND_12,  MODE_CW },  24'890_kHz },
                                                                         { { BAND_12,  MODE_SSB }, 24'940_kHz },
                                                                         { { BAND_10,  MODE_CW },  28'000_kHz },
-                                                                        { { BAND_10,  MODE_SSB }, 28'300_kHz }
+                                                                        { { BAND_10,  MODE_SSB }, 28'300_kHz },
+                                                                        { { BAND_6,   MODE_CW },  50'090_kHz },   // go to a widely-used CW frequency on 6m
+                                                                        { { BAND_6,   MODE_SSB }, 50'100_kHz },
                                                                       };
 
 // ----------------------------------------------------  frequency  -----------------------------------------------
@@ -91,14 +93,15 @@ frequency frequency::lower_band_edge(void) const
                                                { BAND_17,  18.068_MHz },
                                                { BAND_15,  21.0_MHz },
                                                { BAND_12,  24.89_MHz },
-                                               { BAND_10,  28.0_MHz }
+                                               { BAND_10,  28.0_MHz },
+                                               { BAND_6,   50.0_MHz }
                                              };
 
   return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
 }
 
 /// difference in two frequencies, always +ve
-frequency frequency::difference(const frequency& f2) const
+frequency frequency::difference(const frequency f2) const
 { frequency rv;
 
   const int d { ( (hz() > f2.hz()) ? (hz() - f2.hz()) : (f2.hz() - hz()) ) };
@@ -139,7 +142,7 @@ BAND frequency::next_band_up(const set<BAND>& bands) const
 }
 
 /// ostream << frequency
-ostream& operator<<(ostream& ost, const frequency& f)
+ostream& operator<<(ostream& ost, const frequency f)
 { ost << f.hz();
 
   return ost;
@@ -180,6 +183,9 @@ frequency lower_edge(const BAND b)
 
     case BAND_10 :
       return 28'000_kHz;
+
+    case BAND_6 :
+      return 50'000_kHz;
 
     default :
       return 1'800_kHz;
@@ -222,6 +228,9 @@ frequency upper_edge(const BAND b)
     case BAND_10 :
       return 29'700_kHz;
 
+    case BAND_6 :
+      return 54'000_kHz;
+
     default :
       return 1'800_kHz;
   }
@@ -231,7 +240,7 @@ frequency upper_edge(const BAND b)
     \param  f   frequency
     \return     guessed mode for the frequency <i>f</i>
 */
-MODE putative_mode(const frequency& f)
+MODE putative_mode(const frequency f)
 { try
   { const BAND      b           { to_BAND(f) };
     const frequency break_point { MODE_BREAK_POINT.at(b) };

@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: multiplier.cpp 269 2025-05-19 22:42:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

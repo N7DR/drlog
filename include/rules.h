@@ -1,4 +1,4 @@
-// $Id: rules.h 263 2025-03-03 14:23:07Z  $
+// $Id: rules.h 271 2025-06-23 16:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -416,7 +416,7 @@ protected:
   STRING_MAP</* exchange field name */ unsigned int>               _exchange_present_points;       ///< number of points if a particular exchange field is received; only one value for all bands and modes
   std::map<MODE, STRING_MAP</* cp */ std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
-  std::vector<BAND>                                     _permitted_bands;   ///< bands allowed in this contest; use a vector container in order to keep the frequency order
+  std::vector<BAND>                                     _permitted_bands { };   ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   std::set<MODE>                                        _permitted_modes;   ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;            ///< points structure for each band and mode
   
@@ -490,7 +490,6 @@ auto _all_exchange_values(const std::string_view field_name) const -> STYPE
     \param  ch                  whether to expand choices
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-//  std::vector<std::string> _exchange_field_names(const std::string& canonical_prefix, const MODE m, const CHOICES ch) const;
   std::vector<std::string> _exchange_field_names(const std::string_view canonical_prefix, const MODE m, const CHOICES ch) const;
 
 /*! \brief                  Initialize an object that was created from the default constructor
@@ -651,7 +650,6 @@ public:
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-//  inline std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const
   inline std::vector<std::string> unexpanded_exchange_field_names(const std::string_view canonical_prefix, const MODE m) const
     { return _exchange_field_names(canonical_prefix, m, CHOICES::NO_EXPAND); }
 
@@ -690,14 +688,12 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-//  bool country_mults_used(const std::string& cp = std::string { }) const;
   bool country_mults_used(const std::string_view cp = EMPTY_STR) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
 */
-//  inline bool is_country_mult(const std::string& cp) const
   inline bool is_country_mult(const std::string_view cp) const
     { return country_mults_used(cp); }
 
@@ -769,7 +765,6 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized
 */
-//  bool is_canonical_value(const std::string_view field_name, const std::string& putative_canonical_value) const;
   bool is_canonical_value(const std::string_view field_name, const std::string_view putative_canonical_value) const;
 
 /*! \brief                  Is a particular string a legal value for a particular exchange field?
@@ -779,8 +774,6 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
-//  bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
-//  bool is_legal_value(const std::string_view field_name, const std::string& putative_value) const;
   bool is_legal_value(const std::string_view field_name, const std::string_view putative_value) const;
 
 /// number of permitted bands
@@ -828,7 +821,6 @@ public:
 
 /// get the permitted bands as a set
   inline std::set<BAND> permitted_bands_set(void) const
-//    { return std::set<BAND> { _permitted_bands.cbegin(), _permitted_bands.cend() }; }
     { return std::ranges::to<std::set<BAND>> ( _permitted_bands ); }
 
 /*! \brief                      Is a particular field used for QSOs with a particular country?
@@ -836,8 +828,6 @@ public:
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-//  bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
-//  bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string& canonical_prefix) const;
   bool is_exchange_field_used_for_country(const std::string_view field_name, const std::string_view canonical_prefix) const;
 
 /// the names of all the possible exchange fields
@@ -848,7 +838,6 @@ public:
     \param  cp  canonical prefix of country
     \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
 */
-//  choice_equivalents equivalents(const MODE m, const std::string& cp) const;
   choice_equivalents equivalents(const MODE m, const std::string_view cp) const;
 
 /// read from and write to disk

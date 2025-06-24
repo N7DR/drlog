@@ -1,4 +1,4 @@
-// $Id: log.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: log.cpp 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -646,7 +646,8 @@ void log_extract::display(void)
 
     Displayed in order from oldest to newest
 */
-void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
+//void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
+void log_extract::recent_qsos(const logbook& lgbook, const LOG_EXTRACT to_display)
 { const vector<QSO>& vec       { lgbook.as_vector() };
   const size_t       n_to_copy { min(vec.size(), _win_size) };
 
@@ -656,7 +657,7 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
   for (size_t n { 0 }; n < n_to_copy; ++n)
     (*this) += vec.at(vec.size() - n_to_copy + n);
 
-  if (to_display)
+  if (to_display == LOG_EXTRACT::DISPLAY)
     display();
 }
 
@@ -693,17 +694,19 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
     The data for <i>call</i> are created if they don't already exist, and the corresponding iterator returned
 */
-auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
+//auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
+auto old_log::_find_or_create(const string_view call) -> decltype(_olog)::iterator
 { const auto it { _olog.find(call) };
 
-  return ( (it == _olog.end()) ? (_olog[call], _olog.find(call)) : it );    // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
+  return ( (it == _olog.end()) ? (_olog[ string { call } ], _olog.find(call)) : it );    // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
 }
 
 /*! \brief          Return total number of QSLs from a particular callsign
     \param  call    callsign
     \return         the number of QSLs from callsign <i>call</i>
 */
-unsigned int old_log::n_qsls(const string& call) const
+//unsigned int old_log::n_qsls(const string& call) const
+unsigned int old_log::n_qsls(const string_view call) const
 { const auto cit { _olog.find(call) };
 
   return (cit == _olog.cend() ? 0 : get<0>(cit->second));
@@ -713,11 +716,12 @@ unsigned int old_log::n_qsls(const string& call) const
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
 */
-unsigned int old_log::increment_n_qsls(const string& call)
+//unsigned int old_log::increment_n_qsls(const string& call)
+unsigned int old_log::increment_n_qsls(const string_view call)
 { const auto it { _olog.find(call) };
 
-  if (it == _olog.end())    // never worked before; => current number of QSLs must be zero
-  { _olog[call];
+  if (it == _olog.end())        // never worked before; => current number of QSLs must be zero
+  { _olog[ string { call } ];   // create the entry
     n_qsls(call, 1);
 
     return 1;
@@ -744,11 +748,12 @@ unsigned int old_log::n_qsos(const string_view call) const
     \param  call    callsign for which the number of QSOs should be incremented
     \return         number of QSOs associated with with <i>call</i>
 */
-unsigned int old_log::increment_n_qsos(const string& call)
+//unsigned int old_log::increment_n_qsos(const string& call)
+unsigned int old_log::increment_n_qsos(const string_view call)
 { const auto it { _olog.find(call) };
 
   if (it == _olog.end())    // no prior QSOs with this call
-  { _olog[call];
+  { _olog[ string { call } ];
     n_qsos(call, 1);
 
     return 1;
@@ -779,7 +784,8 @@ unsigned int old_log::n_qsos(const string_view call, const BAND b, const MODE m)
     \param  m       target mode
     \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
-unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
+//unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
+unsigned int old_log::increment_n_qsos(const string_view call, const BAND b, const MODE m)
 { get<3>(_find_or_create(call) -> second) += { b, m };
 
   return n_qsos(call, b, m);

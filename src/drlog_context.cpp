@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: drlog_context.cpp 269 2025-05-19 22:42:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -830,7 +830,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 //        const STRING_SET     ss               { values.cbegin(), values.cend() };
 
 //        _qthx += { canonical_prefix, ss };
-        _qthx += { canonical_prefix, STRING_SET { values.cbegin(), values.cend() } };
+//        _qthx += { canonical_prefix, STRING_SET { values.cbegin(), values.cend() } };
+//        _qthx += { canonical_prefix, STRING_SET { values } };
+        _qthx += { canonical_prefix, ranges::to<STRING_SET>(values) };
       }
     }
 
@@ -984,9 +986,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SSB AUDIO
     if (LHS == "SSB AUDIO"sv)
-    { //const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') };
-
-      if (const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') }; cbw.size() == 2)
+    { if (const vector<string_view> cbw { clean_split_string <string_view> (RHS, '/') }; cbw.size() == 2)
       { const vector<string_view> cbw_wide { clean_split_string <string_view> (cbw[0], ':') };
 
         _ssb_centre_wide = from_string<decltype(_ssb_centre_wide)>(cbw_wide[0]);
@@ -1074,17 +1074,11 @@ void drlog_context::_process_configuration_file(const string_view filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
-      { //const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
-
-        if (const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') }; tokens.size() == 2)
+      { if (const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') }; tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-      { //const vector<string_view> mults { clean_split_string <string_view> (RHS) };
-
-        //_remaining_callsign_mults_list = STRING_SET { mults.cbegin(), mults.cend() } ;
         _remaining_callsign_mults_list = ranges::to<STRING_SET>( clean_split_string <string> (RHS) );
-      }
     }
 
 // REMAINING COUNTRY MULTS
@@ -1447,10 +1441,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   }
 
 // now that we've processed the file, set some new defaults if we haven't explicitly set them
-  if (_cabrillo_contest == string { })
+  if (_cabrillo_contest.empty())
     _cabrillo_contest = _contest_name;
 
-  if (_cabrillo_callsign == string { })
+  if (_cabrillo_callsign.empty())
     _cabrillo_callsign = _my_call;
 
   if (_qsl_message.empty())

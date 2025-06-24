@@ -1,4 +1,4 @@
-// $Id: textfile.h 268 2025-05-04 12:31:03Z  $
+// $Id: textfile.h 270 2025-05-26 01:09:07Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -145,7 +145,7 @@ public:
     { rdbuf(ist.rdbuf()); }
 
   void nop(void) const    // used in textstream_iterator end(textstream& tf)
-   { };
+    { };
 
 /// begin() needs access to <i>textstream</i> internals
   friend textstream_iterator begin(textstream& ts);
