@@ -1,4 +1,4 @@
-// $Id: query.h 259 2025-01-19 15:44:33Z  $
+// $Id: query.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,7 +70,8 @@ public:
     
     <i>call<i> is added to the dynamic database iff it is not already present in either database
 */
-  void operator+=(const std::string& call);
+//  void operator+=(const std::string& call);
+  void operator+=(const std::string_view call);
 
 /*! \brief          Return matches
     \param  key     basic call against which to compare
@@ -78,7 +79,8 @@ public:
 
     The returned pair comprises: q1, qn
 */
-  std::pair<STRING_SET /* q1 */, STRING_SET /* qn */> operator[](const std::string& key) const;
+//  std::pair<STRING_SET /* q1 */, STRING_SET /* qn */> operator[](const std::string& key) const;
+  std::pair<STRING_SET /* q1 */, STRING_SET /* qn */> operator[](const std::string_view key) const;
 
 /// clear the dynamic database
   inline void clear_dynamic_database(void)

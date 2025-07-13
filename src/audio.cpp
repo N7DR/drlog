@@ -1,4 +1,4 @@
-// $Id: audio.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: audio.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -30,10 +30,14 @@ extern int              n_running_threads;      ///< the number of running threa
 extern message_stream   ost;                    ///< for debugging and logging
 extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threads
 
-extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
-extern const string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
-extern bool   sending_cw(void);                       ///< am I sending Cw?
-extern void         start_of_thread(const string& name);    ///< increase the counter for the number of running threads
+//extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
+extern void         end_of_thread(const string_view name);      ///< increase the counter for the number of running threads
+
+extern /* const */ string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
+
+extern bool sending_cw(void);                       ///< am I sending Cw?
+//extern void start_of_thread(const string& name);    ///< increase the counter for the number of running threads
+extern void start_of_thread(const string_view name);    ///< increase the counter for the number of running threads
 
 // -----------  audio_recorder  ----------------
 
@@ -347,7 +351,7 @@ void* audio_recorder::_static_capture(void* arg)
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-void audio_recorder::_error_alert(const string& msg)
+void audio_recorder::_error_alert(const string_view msg)
 { if (_error_alert_function)
     (*_error_alert_function)(msg);
 }
@@ -448,7 +452,6 @@ create_file:
     const size_t  f  { c * 8 / _bits_per_frame };
     const ssize_t pr { _pcm_read(_audio_buf) };
 
-//    if (static_cast<decltype(f)>(pr) != f)    // decltype is const
     if (static_cast<size_t>(pr) != f)
     { ost << "WARNING: pr != f" << endl;
         break;
@@ -925,8 +928,8 @@ void data_chunk::write_to_file(FILE* fp) const
 string fmt_chunk::to_string(void) const
 { string rv { "fmt "s + create_string(' ', 20) };
 
-  rv = replace_substring(rv, 4, _subchunk_1_size);
-  rv = replace_substring(rv, 8, _audio_format);
+  rv = replace_substring(rv, 4,  _subchunk_1_size);
+  rv = replace_substring(rv, 8,  _audio_format);
   rv = replace_substring(rv, 10, _num_channels);
   rv = replace_substring(rv, 12, _sample_rate);
   rv = replace_substring(rv, 16, byte_rate());

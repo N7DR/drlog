@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 269 2025-05-19 22:42:59Z  $
+// $Id: socket_support.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,8 @@ using namespace   this_thread;   // std::this_thread
 
 extern message_stream ost;                                              ///< for debugging and logging
 
-extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
+//extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
+extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
 constexpr size_t MIN_IN_BUFFER_SIZE { 4'096 };   // minumum size of a TCP input buffer, in bytes
 //constexpr size_t MAX_IN_BUFFER_SIZE { 8'192 };   // maximum size of a TCP input buffer
@@ -55,12 +56,7 @@ constexpr int SOCKET_ERROR { -1 };            ///< error return from various soc
     NB: a socket is a valid file descriptor
 */
 void fd_set_option(const int opt, const int fd)  // e.g., O_NONBLOCK
-{ //int flags;
-
-  //flags = fcntl(fd, F_GETFL, 0);
-  int flags { fcntl(fd, F_GETFL, 0) };
-
-//  int status = fcntl(fd, F_SETFL, flags | opt);
+{ int flags { fcntl(fd, F_GETFL, 0) };
 
   if (const int status { fcntl(fd, F_SETFL, flags | opt) }; status == -1)
     throw socket_support_error(SOCKET_SUPPORT_FLAG_ERROR);
@@ -97,8 +93,6 @@ void tcp_socket::_create_buffer_if_necessary(void) const  // logically const
 bool tcp_socket::_resize_buffer(void) const  // logically const
 { if (_in_buffer_size < MAX_IN_BUFFER_SIZE)
   { const size_t new_buffer_size { min(MAX_IN_BUFFER_SIZE, _in_buffer_size * 2) };
-
-//    ost << "resizing buffer to " << new_buffer_size << " bytes" << endl;
 
     delete [] _in_buffer_p;
 
@@ -180,8 +174,12 @@ tcp_socket::tcp_socket(SOCKET* sp)
     \param  source_address                  IP address to which the socket is to be bound
     \param  retry_time_in_seconds           time between retries, in seconds
 */
-tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn, 
-                       const unsigned int destination_port, 
+//tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
+//                       const unsigned int destination_port,
+//                       const string& source_address,
+//                       const unsigned int retry_time_in_seconds) :
+tcp_socket::tcp_socket(const string_view destination_ip_address_or_fqdn,
+                       const unsigned int destination_port,
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
@@ -1137,11 +1135,14 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
 
     Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */
-string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
+//string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
+string name_to_dotted_decimal(const string_view fqdn, const unsigned int n_tries)
 { constexpr std::chrono::duration RETRY_TIME { 1s };       // period between retries
 
   if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to look up empty name"s);
+
+  const string fqdn_str { fqdn };
 
   constexpr int BUF_LEN { 2048 };
   
@@ -1157,7 +1158,7 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   bool                              success { false };
 
   while (n_try++ < n_tries and !success)
-  { const int status { gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop) };
+  { const int status { gethostbyname_r(fqdn_str.c_str(), &ret, &buf[0], buflen, &result, &h_errnop) };
 
     success = ( (status == 0) and (result != nullptr) );    // the second test should be redundant
 

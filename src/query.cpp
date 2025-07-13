@@ -1,4 +1,4 @@
-// $Id: query.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: query.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,8 +28,10 @@ using namespace std;
     
     <i>call<i> is added to the dynamic database iff it is not already present in either database
 */
-void query_database::operator+=(const std::string& call)
-{ if (!( _qdb > call))
+//void query_database::operator+=(const std::string& call)
+void query_database::operator+=(const std::string_view call)
+{ //if (!( _qdb > call))
+  if (!_qdb.contains(call))
     _dynamic_qdb += call;
 }
 
@@ -39,7 +41,8 @@ void query_database::operator+=(const std::string& call)
 
     The returned pair comprises: q1, qn
 */
-pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string& key) const
+//pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string& key) const
+pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string_view key) const
 { STRING_SET rv_1 { };
 
   if (!contains(key, '?'))

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 271 2025-06-23 16:32:50Z  $
+// $Id: bandmap.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -928,7 +928,8 @@ public:
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
 //  void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);
-  void not_needed_exchange_mult(const std::string_view mult_name, const std::string& mult_value);
+//  void not_needed_exchange_mult(const std::string_view mult_name, const std::string& mult_value);
+  void not_needed_exchange_mult(const std::string_view mult_name, const std::string_view mult_value);
 
 /// prune the bandmap
   void prune(void);
@@ -937,7 +938,7 @@ public:
 
 /// is the filter enabled?
   inline bool filter_enabled(void) const
-    { return _filter_p->enabled(); }
+    { return _filter_p -> enabled(); }
 
 /*! \brief          Enable or disable the filter
     \param  torf    whether to enable the filter
@@ -948,7 +949,7 @@ public:
 
 /// return all the continents and countries currently in the filter
   inline std::vector<std::string> filter(void) const
-    { return _filter_p->filter(); }
+    { return _filter_p -> filter(); }
 
 /*!  \brief         Add a string to, or remove a string from, the filter associated with this bandmap
      \param str     string to add or subtract
@@ -957,18 +958,19 @@ public:
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
      filter.
 */
-  void filter_add_or_subtract(const std::string& str);
+//  void filter_add_or_subtract(const std::string& str);
+  void filter_add_or_subtract(const std::string_view str);
 
 /// is the filter in hide mode? (as opposed to show)
   inline bool filter_hide(void) const
-    { return _filter_p->hide(); }
+    { return _filter_p -> hide(); }
 
 /// set or unset the filter to hide mode (as opposed to show)
   void filter_hide(const bool torf);
 
 /// is the filter in show mode? (as opposed to hide)
   inline bool filter_show(void) const
-    { return !_filter_p->hide(); }
+    { return !(_filter_p -> hide()); }
 
 /// set or unset the filter to show mode (as opposed to hide)
   void filter_show(const bool torf);
@@ -1005,17 +1007,6 @@ public:
     { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
-     \param target_frequency_in_khz     target frequency, in kHz
-     \param guard_band_in_hz            guard band, in Hz
-     \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
-
-     Applies filtering and the RBN threshold before searching for the station. Returns the
-     empty string if no station was found within the guard band.
-*/
-//  inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-//    { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
-
-/*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
      \param target_frequency_in_khz     target frequency
      \param guard_band_in_hz            guard band
      \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
@@ -1025,16 +1016,6 @@ public:
 */
   inline std::string nearest_rbn_threshold_and_filtered_callsign(const frequency target_frequency, const frequency guard_band)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency, guard_band); }
-
-/*!  \brief                             Find the station in the displayed bandmap that is closest to a target frequency
-     \param target_frequency_in_khz     target frequency, in kHz
-     \param guard_band_in_hz            guard band, in Hz
-     \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
-
-     Returns the empty string if no station was found within the guard band.
-*/
-//  inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-//    { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
 /*!  \brief                   Find the station in the displayed bandmap that is closest to a target frequency
      \param target_frequency  target frequency
@@ -1140,7 +1121,6 @@ public:
      \param callsign    callsign to test
      \return            whether <i>callsign</i> was added since the bandmap was last pruned
 */
-//  inline bool is_recent_call(const std::string& callsign)
   inline bool is_recent_call(const std::string_view callsign)
     { SAFELOCK(_bandmap);
       return _recent_calls.contains(callsign);
@@ -1153,14 +1133,6 @@ public:
 */
 //  void do_not_add(const std::string& callsign);
   void do_not_add(const std::string_view callsign);
-
-/*!  \brief             Add a call or regex to the do-not-add list
-     \param callsign    callsign or regex to add
-
-     Calls in the do-not-add list are never added to the bandmap
-*/
-//  inline void do_not_add(const std::string_view callsign)
-//    { do_not_add(std::string { callsign }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1187,7 +1159,6 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-//  void remove_from_do_not_add(const std::string& callsign);
   void remove_from_do_not_add(const std::string_view callsign);
 
 /*!  \brief                     Is a particular call present?
@@ -1221,7 +1192,7 @@ public:
     \param  win     window to which to write
     \return         the window
 */
-  window& write_to_window(window& win /*, const bool refresh = true */);
+  window& write_to_window(window& win);
 
 /*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
     \param  win         window to which to write
@@ -1233,7 +1204,6 @@ public:
 /*! \brief            Rename the mutex associated with this bandmap
     \param  new_name  the new name of the mutex
 */
-//  inline void rename_mutex(const std::string& new_name)
   inline void rename_mutex(const std::string_view new_name)
     { _bandmap_mutex.rename(new_name); }
 
@@ -1272,7 +1242,6 @@ public:
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);
-//  friend void update_based_on_frequency_change(const frequency& f, const MODE m);
   friend void update_based_on_frequency_change(const frequency f, const MODE m);
 
 /// serialize using boost

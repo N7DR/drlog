@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 271 2025-06-23 16:32:50Z  $
+// $Id: rig_interface.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,7 +41,8 @@ using namespace std::literals::chrono_literals;
 extern bool debug;                             ///< debug frequency changes
 extern bool rig_is_split;
 
-extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
+//extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
+extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
  * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
@@ -96,7 +97,8 @@ extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-void rig_interface::_error_alert(const string& msg) const
+//void rig_interface::_error_alert(const string& msg) const
+void rig_interface::_error_alert(const string_view msg) const
 { if (_error_alert_function)
     (*_error_alert_function)(msg);
 }
@@ -1439,7 +1441,8 @@ void rig_interface::filter(const audio_filter& af) const
 }
 
 /// register a function for alerting the user
-void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
+//void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
+void rig_interface::register_error_alert_function(void (*error_alert_function)(const string_view) )
 { SAFELOCK(_rig);
   _error_alert_function = error_alert_function;
 }

@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 271 2025-06-23 16:32:50Z  $
+// $Id: rig_interface.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -143,7 +143,8 @@ protected:
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
 */
-  void (*_error_alert_function)(const std::string& msg) { nullptr };
+//  void (*_error_alert_function)(const std::string& msg) { nullptr };
+  void (*_error_alert_function)(const std::string_view msg) { nullptr };
 
 // protected functions
 
@@ -152,7 +153,8 @@ protected:
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-  void _error_alert(const std::string& msg) const;
+//  void _error_alert(const std::string& msg) const;
+  void _error_alert(const std::string_view msg) const;
 
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig
@@ -512,7 +514,8 @@ public:
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user
 */
-  void register_error_alert_function(void (*error_alert_function)(const std::string&));
+//  void register_error_alert_function(void (*error_alert_function)(const std::string&));
+  void register_error_alert_function(void (*error_alert_function)(const std::string_view));
 
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
@@ -587,7 +590,6 @@ public:
 
     Works only with K3
 */
-//  bool notch_enabled(const std::string& ds_result = std::string { }) const;
   bool notch_enabled(const std::string_view ds_result = std::string { }) const;
 
 /*! \brief              Toggle the notch status

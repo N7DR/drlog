@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 271 2025-06-23 16:32:50Z  $
+// $Id: drlog.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -128,11 +128,13 @@ deque<memory_entry> memories;
 string active_window_name(void);                                                ///< Return the name of the active window in printable form
 void   add_qso(const QSO& qso);                                                 ///< Add a QSO into the all the objects that need to know about it
 void   adif3_build_old_log(void);                                               ///< build the old log from an ADIF3 file
-void   alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
+//void   alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
+void   alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
 void   allow_for_callsign_mults(QSO& qso);                                      ///< Add info to QSO if callsign mults are in use; may change qso
 QSO    allow_for_callsign_mults(QSO&& qso);
 void   archive_data(void);                                                      ///< Send data to the archive file
-void   audio_error_alert(const string& msg);                                    ///< Alert the user to an audio-related error
+//void   audio_error_alert(const string& msg);                                    ///< Alert the user to an audio-related error
+void   audio_error_alert(const string_view msg);                                    ///< Alert the user to an audio-related error
 
 string bearing(const string_view callsign);   ///< Return the bearing to a station
 
@@ -151,14 +153,19 @@ bool   debug_dump(void);                                                        
 MODE   default_mode(const frequency f);                                                             ///< get the default mode on a frequency
 void   display_bandmap_filter(bandmap& bm);                                                         ///< display the bandmap cull/filter information in win_bandmap_filter
 void   display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);       ///< Display band and mode
-void   display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);     ///< Update several call-related windows
+//void   display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);     ///< Update several call-related windows
+void   display_call_info(const string_view callsign, const bool display_extract = DISPLAY_EXTRACT);     ///< Update several call-related windows
 void   display_memories(void);                                                                      ///< Update MEMORIES window
-void   display_nearby_callsign(const string& callsign);                                             ///< Display a callsign in the NEARBY window, in the correct colour
-void   display_statistics(const string& summary_str);                                               ///< Display the current statistics
+//void   display_nearby_callsign(const string& callsign);                                             ///< Display a callsign in the NEARBY window, in the correct colour
+void   display_nearby_callsign(const string_view callsign);                                             ///< Display a callsign in the NEARBY window, in the correct colour
+//void   display_statistics(const string& summary_str);                                               ///< Display the current statistics
+void   display_statistics(const string_view summary_str);                                               ///< Display the current statistics
 void   do_not_show(const string_view callsign, const BAND b = ALL_BANDS);                           ///< Mark a callsign as not to be shown
-string dump_screen(const string& filename = string());                                              ///< Dump a screen image to PNG file
+//string dump_screen(const string& filename = string());                                              ///< Dump a screen image to PNG file
+string dump_screen(const string_view filename = string { });                                              ///< Dump a screen image to PNG file
 
-void   end_of_thread(const string& name);
+//void   end_of_thread(const string& name);
+void   end_of_thread(const string_view name);
 void   enter_cq_mode(void);                                     ///< Enter CQ mode
 void   enter_cq_or_sap_mode(const DRLOG_MODE new_mode);         ///< enter CQ or SAP mode
 void   enter_sap_mode(void);                                    ///< Enter SAP mode
@@ -171,12 +178,10 @@ bool fast_cw_bandwidth(void);                           ///< set CW bandwidth to
 string hhmmss(void);                                    ///< Obtain the current time in HH:MM:SS format
 
 void insert_memory(void);                                                                               ///< insert an entry into the memories
-//bool is_daylight(const string& sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
-//bool is_daylight(const string_view sunrise_time, const string& sunset_time, const string& current_time);    ///< is it currently daylight?
-//bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string& current_time);    ///< is it currently daylight?
 bool is_daylight(const string_view sunrise_time, const string_view sunset_time, const string_view current_time);    ///< is it currently daylight?
 bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
-bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                                 ///<   Is a callsign needed on a particular band and mode?
+//bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                                 ///<   Is a callsign needed on a particular band and mode?
+bool is_needed_qso(const string_view callsign, const BAND b, const MODE m);                                 ///<   Is a callsign needed on a particular band and mode?
 
 pair<float, float> latitude_and_longitude(const string_view callsign);    ///< obtain latitude and longtide associated with a call
 
@@ -186,7 +191,6 @@ MINUTES_TYPE NOW_MINUTES(void);                                                 
 
 void populate_win_call_history(const string_view str);                                      ///< Populate the QSO/QSL call history window
 void populate_win_info(const string_view str);                                              ///< Populate the information window
-//void possible_mode_change(const frequency& f);                                              ///< possibly change mode in accordance with frequency
 void possible_mode_change(const frequency f);                                              ///< possibly change mode in accordance with frequency
 void print_thread_names(void);                                                              ///< output the names of the currently active threads
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);    ///< process a bandmap function, to jump to the next frequency returned by the function
@@ -194,7 +198,8 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip 
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                      ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                    ///< process backspace
 bool process_keypress_F1(const string_view original_contents);                          ///< process key F1
-bool process_keypress_F2(void);                          ///< process key F2
+bool process_keypress_F2(void);                                                         ///< process key F2
+bool process_keypress_F4(void);                                                         ///< process key F4
 bool process_keypress_F5(void);                                                         ///< process key F5
 bool p3_screenshot(void);                                                               ///< Start a thread to take a snapshot of a P3
 void p3_span(const unsigned int khz_span);                                              ///< set the span of a P3
@@ -208,22 +213,26 @@ void rebuild_history(const logbook& logbk,
 memory_entry recall_memory(const unsigned int n);   ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string_view archive_filename);  ///< Extract the data from the archive file
-void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
-string run_external_command(const string& cmd);     ///< run an external command
+void rig_error_alert(const string_view msg);            ///< Alert the user to a rig-related error
+//string run_external_command(const string& cmd);     ///< run an external command
+string run_external_command(const string_view cmd);     ///< run an external command
 
 void   send_qtc_entry(const qtc_entry& qe, const bool log_it);                  ///< send a single QTC entry (on CW)
-bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
+//bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
+bool   send_to_scratchpad(const string_view str);                                   ///< Send a string to the SCRATCHPAD window
 void   set_active_window(const ACTIVE_WINDOW aw);                               ///< Set the window that is receiving input
 bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
 bool   ssb_toggle_bandwidth(void);                                              ///< Toggle bandwidth and centre frequency if on SSB
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
-void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
+//void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
+void   start_of_thread(const string_view name);                                     ///< Increase the counter for the number of running threads
 void   stop_recording(audio_recorder& audio);                                   ///< stop audio recording
 string sunrise_or_sunset(const string_view callsign, const SRSS srss);              ///< Calculate the sunrise or sunset time for a station
 bool   swap_rit_xit(void);                                                      ///< Swap the states of RIT and XIT
 
 char t_char(const unsigned short long_t);                                           ///< the character used to represent a leading T in a servo
-void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
+//void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
+void test_exchange_templates(const contest_rules&, const string_view test_filename);    ///< Debug exchange templates
 int  time_since_last_qso(const logbook& logbk);                                     ///< time in seconds since the last QSO
 int  time_since_last_qsy(void);                                                     ///< time in seconds since the last QSY
 bool toggle_drlog_mode(void);                                                       ///< Toggle between CQ mode and SAP mode
@@ -233,18 +242,23 @@ bool toggle_recording_status(audio_recorder& audio);                            
 void update_bandmap_size_window(void);                                                                                  ///< update the BANDMAP SIZE window
 void update_bandmap_window(bandmap& bm);                                                                                ///< update the BANDMAP window
 void update_based_on_frequency_change(const frequency f, const MODE m);                                                 ///< Update some windows based on a change in my frequency
-void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
-void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
-void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
+//void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
+void update_batch_messages_window(const string_view callsign = string { });                                                   ///< Update the batch_messages window with the message (if any) associated with a call
+//void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
+void update_best_dx(const grid_square& dx_gs, const string_view callsign);                                                  ///< Update bext DX window, if it exists
+//void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
+void update_individual_messages_window(const string_view callsign = string { });                                              ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);///< Possibly add a new callsign mult
 //bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);   ///< Possibly add a new country to the known country mults
 bool update_known_country_mults(const string_view callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN); ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_pings(window& win, PING_TABLE& table);                                                                      ///< execute pings and update PING window
-void update_query_windows(const string& callsign);                                                                      ///< Update the Q1 and QN windows
+//void update_query_windows(const string& callsign);                                                                      ///< Update the Q1 and QN windows
+void update_query_windows(const string_view callsign);                                                                      ///< Update the Q1 and QN windows
 void update_quick_qsy(void);                                                                                            ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
-void update_qsls_window(const string& = EMPTY_STR);                                                                     ///< QSL information from old QSOs
+//void update_qsls_window(const string& = EMPTY_STR);                                                                     ///< QSL information from old QSOs
+void update_qsls_window(const string_view = string { });                                                                     ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                                                                     ///< the head of the QTC queue
 void update_rate_window(void);                                                                                          ///< Update the QSO and score values in <i>win_rate</i>
 void update_recording_status_window(void);                                                                              ///< update the RECORDING STATUS window
@@ -254,13 +268,14 @@ void update_remaining_country_mults_window(running_statistics&, const BAND b, co
 //void update_remaining_exch_mults_window(const string& mult_name, /* const contest_rules& rules, */
 //                                        running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
 void update_remaining_exch_mults_window(const string_view mult_name, running_statistics& statistics, const BAND b, const MODE m);                    ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
-void update_remaining_exchange_mults_windows(/*const contest_rules&, */running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
+void update_remaining_exchange_mults_windows(running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
 bool update_rx_ant_window(void);                                                                                        ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 void update_score_window(const unsigned int score);                                                                     ///< update the SCORE window
 void update_system_memory(void);                                                                                        ///< update the SYSTEM MEMORY window
 void update_win_posted_by(const vector<dx_post>&);                                                                      ///< update, but do not refresh, the POSTED BY window
 
-bool xscp_order_greater(const string& c1, const string& c2);                                                            ///< is <i>c1</i> before <i>c2</i> in XSCP order?
+//bool xscp_order_greater(const string& c1, const string& c2);                                                            ///< is <i>c1</i> before <i>c2</i> in XSCP order?
+bool xscp_order_greater(const string_view c1, const string_view c2);                                                            ///< is <i>c1</i> before <i>c2</i> in XSCP order?
 
 bool zoomed_xit(void);                                                                                                  ///< zoom P3 and turn off RIT, turn on XIT
 
@@ -272,7 +287,7 @@ void process_QTC_input(window* wp, const keyboard_event& e);                ///<
 
 using BANDMAPS = array<bandmap, NUMBER_OF_BANDS>;
 
-// thread functions
+// thread functions -- don't use string_views here because the underlying string might be deleted before it is used in the thread
 void auto_backup(const string dir, const string log_filename, const string qtc_filename);   ///< Copy a file to a backup directory
 void auto_screenshot(const string filename);                                                ///< Write a screenshot to a file
 void display_rig_status(const milliseconds poll_time, rig_interface* rigp);                 ///< Display status of the rig
@@ -304,7 +319,7 @@ atomic<frequency> cq_mode_frequency;
 pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
 string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
-pt_mutex                      individual_messages_mutex { "INDIVIDUAL MESSAGES"s };   ///< mutex for individual messages
+pt_mutex                     individual_messages_mutex { "INDIVIDUAL MESSAGES"s };   ///< mutex for individual messages
 UNORDERED_STRING_MAP<string> individual_messages;                                     ///< individual messages associated with calls
 
 pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
@@ -327,7 +342,7 @@ bool                auto_remaining_country_mults { false }; ///< whether country
 atomic<BAND>        current_band;                           ///< the current band
 atomic<MODE>        current_mode;                           ///< the current mode
 
-pt_mutex            drlog_mode_mutex { "DRLOG_MODE"s };                       ///< mutex for accessing <i>drlog_mode</i>
+pt_mutex            drlog_mode_mutex { "DRLOG_MODE"s };     ///< mutex for accessing <i>drlog_mode</i>
 DRLOG_MODE          drlog_mode { DRLOG_MODE::SAP };         ///< CQ or SAP
 DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
@@ -651,7 +666,8 @@ bool mm_country_mults    { false };            ///< can /MM stns be country mult
   This has to go before the inline functions that use it
 */
 template <typename T>
-void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
+//void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
+void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string_view callsign)
 { using CALL_AND_COLOURS = pair<string, PAIR_NUMBER_TYPE>;
 
   if (callsign.length() >= context.match_minimum())   // only process if the callsign is sufficiently long
@@ -797,7 +813,8 @@ inline void update_scp_window(const string& callsign)
     \param  c2  second call
     \return     whether the XSCP value for <i>c1</i> is less than the XSCP value for <i>c2</i>
 */
-inline bool xscp_order_greater(const string& c1, const string& c2)
+//inline bool xscp_order_greater(const string& c1, const string& c2)
+inline bool xscp_order_greater(const string_view c1, const string_view c2)
   { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
 #if 0
@@ -4697,64 +4714,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.symbol() == XK_F2))
     processed = process_keypress_F2();
 
-#if 0
-  if (!processed and (e.symbol() == XK_F2))
-  { if (rig.split_enabled())
-    { rig.split_disable();
-      enter_cq_or_sap_mode(a_drlog_mode);
-    }
-    else
-    { rig.split_enable();
-      a_drlog_mode = drlog_mode;
-      enter_sap_mode();
-    }
-
-    processed = true;
-  }
-#endif
-
 // F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
   if (!processed and (e.symbol() == XK_F4))
-  { if (win_bcall.defined())
-    { const string tmp   { win_call.read() };
-      const string tmp_b { win_bcall.read() };
-
-      win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
-      win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
-
-      const string call_contents { tmp_b };
-
-      string exchange_contents;
-
-      if (win_bexchange.defined())
-      { const string tmp   { win_exchange.read() };
-        const string tmp_b { win_bexchange.read() };
-
-        win_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
-
-        exchange_contents = tmp_b;
-
-        win_bexchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
-      }
-
-// put cursor in correct window
-      if (remove_peripheral_spaces <std::string> (win_exchange.read()).empty())        // go to CALL window
-      { win_call.move_cursor(call_contents.find(' '), 0);               // first empty space
-        win_call.refresh();
-        set_active_window(ACTIVE_WINDOW::CALL);
-        win_exchange.move_cursor(0, 0);
-      }
-      else                                                              // go to EXCHANGE window
-      { if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // posn of first empty space
-        { win_exchange.move_cursor(posn + 1, 0);
-          win_exchange.refresh();
-          set_active_window(ACTIVE_WINDOW::EXCHANGE);
-        }
-      }
-    }
-
-    processed = true;
-  }
+    processed = process_keypress_F4();
 
 // F5 -- combine F2 and F4
   if (!processed and (e.symbol() == XK_F5))
@@ -4807,17 +4769,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
   { auto                  [old_frequency, old_mode] { quick_qsy_map.at(current_band) };
-    pair<frequency, MODE> new_quick_qsy_info        { get_frequency_and_mode() };
+//    pair<frequency, MODE> new_quick_qsy_info        { get_frequency_and_mode() };
+
+    const auto [ f, m ] { get_frequency_and_mode() };
 
     rig.rig_frequency(old_frequency);
     rig.rig_mode(old_mode);
 
-    const pair<frequency, MODE>& quick_qsy_info { new_quick_qsy_info };        // where we were, so we can quickly return
+//    const pair<frequency, MODE>& quick_qsy_info { new_quick_qsy_info };        // where we were, so we can quickly return
 
-    quick_qsy_map[current_band] = new_quick_qsy_info;
+//    quick_qsy_map[current_band] = new_quick_qsy_info;
+//    quick_qsy_map[current_band] = tie(f, m);
+    quick_qsy_map[current_band] = pair { f, m };
 
+//    win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+//                  <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                  <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second]; 
+                  <= pad_left(f.display_string(), 7) + SPACE_STR + MODE_NAME[m];
     
 //    update_based_on_frequency_change(old_frequency, old_mode);
     bandmap& bm { bandmaps[current_band] };
@@ -4861,7 +4829,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-G -- display QRG of call
   if (!processed and (e.is_control('g')))
-  { const int  band_nr { static_cast<int>(current_band) };
+  { const int band_nr { static_cast<int>(current_band) };
 
     lock_guard lg(last_posted_qrg_mutex[band_nr]);
 
@@ -5061,13 +5029,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       size_t word_length;
 
       word_length = ( ( (next_space == string::npos) ? exchange_contents.length() : (next_space - 1) ) - last_apostrophe );
-
-//      if (next_space == string::npos)
-//        word_length = exchange_contents.length() - last_apostrophe;
-//      else
-//        word_length = next_space - last_apostrophe - 1;
-
-      new_rst = substring <std::string> (exchange_contents, last_apostrophe + 1, word_length);
+      new_rst     = substring <std::string> (exchange_contents, last_apostrophe + 1, word_length);
 
 // remove all fields containing an apostrophe
       const vector<string> fields { split_string <std::string> (exchange_contents, ' ') };
@@ -5134,9 +5096,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
               else                                                         // SAP exchange
               { if (!send_qtc)
-                { //(*cw_p) << expand_cw_message( e.is_unmodified() ? context.exchange_sap() : context.alternative_exchange_sap()  );   // allow for an alternative SAP exchange
-//                  (*cw_p) << expand_cw_message( e.is_unmodified() ? sap_exchange : context.alternative_exchange_sap()  );   // allow for an alternative SAP exchange
-                  (*cw_p) << expand_cw_message( e.is_unmodified() ? sap_exchange : alternative_sap_exchange );   // allow for an alternative SAP exchange
+                { (*cw_p) << expand_cw_message( e.is_unmodified() ? sap_exchange : alternative_sap_exchange );   // allow for an alternative SAP exchange
                   last_exchange = expand_cw_message(cq_exchange);       // the CQ exchange doesn't have a "TU" in it
                 }
               }
@@ -5233,9 +5193,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             qso.sent_exchange(sent_exchange);
 
 // build name/value pairs for the received exchange
-            vector<received_field>  received_exchange;
-
-            vector<parsed_exchange_field> vec_pef { pexch.chosen_fields(rules) };
+            vector<received_field>        received_exchange { };
+            vector<parsed_exchange_field> vec_pef           { pexch.chosen_fields(rules) };
 
 // keep track of which fields are mults
             FOR_ALL(vec_pef, [] (auto& pef) { pef.is_mult(rules.is_exchange_mult(pef.name())); } );
@@ -5454,7 +5413,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             update_best_dx(grid_square { qso.received_exchange("GRID"sv) }, qso.callsign());
         }                                                     // end pexch.valid()
         else        // unable to parse exchange
-          alert("Unable to parse exchange"s);
+          alert("Unable to parse exchange"sv);
 
         processed = true;
       }
@@ -6739,7 +6698,8 @@ string hhmmss(void)
 
     Also logs the message (always with the time)
 */
-void alert(const string& msg, const SHOW_TIME show_time)
+//void alert(const string& msg, const SHOW_TIME show_time)
+void alert(const string_view msg, const SHOW_TIME show_time)
 {
   { SAFELOCK(alert);
     alert_time = NOW();
@@ -6761,7 +6721,8 @@ void alert(const string& msg, const SHOW_TIME show_time)
 
     Also alerts on the screen if <i>context.display_communication_errors()</i> is <i>true</i>
 */
-void rig_error_alert(const string& msg)
+//void rig_error_alert(const string& msg)
+void rig_error_alert(const string_view msg)
 { ost << "Rig error: " << msg << endl;
 
   if (context.display_communication_errors())
@@ -6903,12 +6864,12 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
       const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
       const string complete_name { dir + "/"s + log_filename + "-"s + suffix };
 
-      ofstream(complete_name) << ifstream(log_filename).rdbuf();          // perform the copy
+      ofstream(complete_name) << ifstream( string { log_filename } ).rdbuf();          // perform the copy
 
       if (!qtc_filename.empty())
       { const string qtc_complete_name { dir + "/"s + qtc_filename + "-"s + suffix };
 
-        ofstream(qtc_complete_name) << ifstream(qtc_filename).rdbuf();  // perform copy of QTC file
+        ofstream(qtc_complete_name) << ifstream( string { qtc_filename } ).rdbuf();  // perform copy of QTC file
       }
     }
 
@@ -6936,19 +6897,22 @@ void update_local_time(void)
 }
 
 /// Increase the counter for the number of running threads
-void start_of_thread(const string& name)
+//void start_of_thread(const string& name)
+void start_of_thread(const string_view name)
 { ost << "thread [" << name  << "] is starting" << endl;
 
   SAFELOCK(thread_check);
 
   n_running_threads++;
 
-  const auto [ it, success ] { thread_names.insert(name) };
+  const string name_str { name };
+
+  const auto [ it, success ] { thread_names.insert(name_str) };
 
   if (!success)
     ost << "failed to insert thread name: " << name << endl;
   else
-    thread_map += { my_thread_id(), name };
+    thread_map += { my_thread_id(), name_str };
 }
 
 /// Cleanup and exit
@@ -7063,7 +7027,8 @@ string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE 
     \param  m           target mode
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
-bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
+//bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
+bool is_needed_qso(const string_view callsign, const BAND b, const MODE m)
 { if (const bool worked_at_all { q_history.worked(callsign) }; !worked_at_all)
     return true;
 
@@ -7196,7 +7161,8 @@ void add_qso(const QSO& qso)
 
     Clears the window if there is no individual message associated with <i>callsign</i>
 */
-void update_individual_messages_window(const string& callsign)
+//void update_individual_messages_window(const string& callsign)
+void update_individual_messages_window(const string_view callsign)
 { bool message_written { false };
 
   if (!callsign.empty())
@@ -7218,7 +7184,8 @@ void update_individual_messages_window(const string& callsign)
     Clears the window if there is no batch message associated with <i>callsign</i>. Reverses the
     colours of the window if there is a message, in order to make it stand out.
 */
-void update_batch_messages_window(const string& callsign)
+//void update_batch_messages_window(const string& callsign)
+void update_batch_messages_window(const string_view callsign)
 { bool message_written { false };
 
   if (!callsign.empty())
@@ -7277,7 +7244,8 @@ string callsign_mult_value(const string_view callsign_mult_name, const string_vi
       extract
       QSLs
  */
-void display_call_info(const string& callsign, const bool display_extract)
+//void display_call_info(const string& callsign, const bool display_extract)
+void display_call_info(const string_view callsign, const bool display_extract)
 { populate_win_info( callsign );
   update_batch_messages_window( callsign );
   update_individual_messages_window( callsign );
@@ -7536,7 +7504,8 @@ bool debug_dump(void)
     If <i>dump_filename</i> is empty, then a base name is taken
     from the context and a string "-<n>" is appended.
 */
-string dump_screen(const string& dump_filename)
+//string dump_screen(const string& dump_filename)
+string dump_screen(const string_view dump_filename)
 { const bool multithreaded { keyboard.x_multithreaded() };
 
   Display* display_p { keyboard.display_p() };
@@ -8092,7 +8061,8 @@ string active_window_name(void)
       log extract data if context.nearby_extract() is true
       QSL information 
 */
-void display_nearby_callsign(const string& callsign)
+//void display_nearby_callsign(const string& callsign)
+void display_nearby_callsign(const string_view callsign)
 { if (callsign.empty())
   { win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
@@ -8136,7 +8106,8 @@ void display_nearby_callsign(const string& callsign)
 
     Prints out which lines in <i>test_filename</i> match the exchange templates defined by <i>rules</i>
 */
-void test_exchange_templates(const contest_rules& rules, const string& test_filename)
+//void test_exchange_templates(const contest_rules& rules, const string& test_filename)
+void test_exchange_templates(const contest_rules& rules, const string_view test_filename)
 { ost << "executing -test-exchanges" << endl;
 
   const STRING_SET field_names { rules.all_known_field_names() };
@@ -8232,7 +8203,8 @@ void auto_screenshot(const string filename)
 /*! \brief                  Display the current statistics
     \param  summary_str     summary string from the global running_statistics object
 */
-void display_statistics(const string& summary_str)
+//void display_statistics(const string& summary_str)
+void display_statistics(const string_view summary_str)
 { static const STRING_SET MODE_STRINGS { "CW"s, "SSB"s, "All"s };
 
 // write the string, but don't refresh the window
@@ -8340,7 +8312,8 @@ MODE default_mode(const frequency f)
     If <i>str</i> contains more than one word (e.g., "G4AMJ DUPE") only the first word
     is used.
 */
-void update_qsls_window(const string& str)
+//void update_qsls_window(const string& str)
+void update_qsls_window(const string_view str)
 { static tuple<string, BAND, MODE> last_target;
 
   const string                    callsign    { nth_word(str, 1, 1) };  // remove "DUPE" if necessary
@@ -8448,6 +8421,48 @@ bool process_keypress_F2(void)
   return true;
 }
 
+bool process_keypress_F4(void)
+{ if (win_bcall.defined())
+  { const string tmp   { win_call.read() };
+    const string tmp_b { win_bcall.read() };
+
+    win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
+    win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
+
+    const string call_contents { tmp_b };
+
+    string exchange_contents;
+
+    if (win_bexchange.defined())
+    { const string tmp   { win_exchange.read() };
+      const string tmp_b { win_bexchange.read() };
+
+      win_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
+
+      exchange_contents = tmp_b;
+
+      win_bexchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
+    }
+
+// put cursor in correct window
+    if (remove_peripheral_spaces <std::string> (win_exchange.read()).empty())        // go to CALL window
+    { win_call.move_cursor(call_contents.find(' '), 0);               // first empty space
+      win_call.refresh();
+      set_active_window(ACTIVE_WINDOW::CALL);
+      win_exchange.move_cursor(0, 0);
+    }
+    else                                                              // go to EXCHANGE window
+    { if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // posn of first empty space
+      { win_exchange.move_cursor(posn + 1, 0);
+        win_exchange.refresh();
+        set_active_window(ACTIVE_WINDOW::EXCHANGE);
+      }
+    }
+  }
+
+    return true;
+}
+
 /*! \brief      Process an F5 keystroke in the CALL or EXCHANGE windows
     \return     always returns <i>true</i>
 */
@@ -8467,6 +8482,7 @@ bool process_keypress_F5(void)
 
   process_keypress_F2();
 
+#if 0
   if (win_bcall.defined())                      // swap contents of CALL and BCALL
   { const string tmp   { win_call.read() };
     const string tmp_b { win_bcall.read() };
@@ -8506,6 +8522,11 @@ bool process_keypress_F5(void)
       }
     }
   }
+
+  return true;
+#endif
+
+  process_keypress_F4();
 
   return true;
 }
@@ -8571,7 +8592,8 @@ bool change_cw_speed(const keyboard_event& e)
     \param  str     string to add
     \return         true
 */
-bool send_to_scratchpad(const string& str)
+//bool send_to_scratchpad(const string& str)
+bool send_to_scratchpad(const string_view str)
 { const string scratchpad_str { substring <std::string> (hhmmss(), 0, 5) + SPACE_STR + rig.rig_frequency().display_string() + SPACE_STR + str };
 
   win_scratchpad < WINDOW_ATTRIBUTES::WINDOW_SCROLL_UP < WINDOW_ATTRIBUTES::WINDOW_BOTTOM_LEFT <= scratchpad_str;
@@ -8589,14 +8611,16 @@ void print_thread_names(void)
 }
 
 /// decrease the counter for the number of running threads
-void end_of_thread(const string& name)
+//void end_of_thread(const string& name)
+void end_of_thread(const string_view name)
 { SAFELOCK(thread_check);
 
   ost << "thread [" << name  << "] is exiting" << endl;
 
   n_running_threads--;
 
-  const auto n_removed { thread_names.erase(name) };
+//  const auto n_removed { thread_names.erase(name) };    // erase does not yet support heterogeneous lookup
+  const auto n_removed { thread_names.erase( string { name } ) };    // erase() does not yet support heterogeneous lookup
 
   if (n_removed)
     ost << "removed: " << name << endl;
@@ -9052,16 +9076,17 @@ bool process_backspace(window& win)
     https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
     note that the code there contains an extra right curly bracket
  */
-string run_external_command(const string& cmd)
+//string run_external_command(const string& cmd)
+string run_external_command(const string_view cmd)
 { constexpr size_t BUFLEN { 128 };      // reasonable size for read buffer
 
   array<char, BUFLEN> buffer;
   string              result { };
 
-  unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose);
 
   if (!pipe)
-    return ( alert("WARNING: Error executing command: "s + cmd), string() );
+    return ( alert("WARNING: Error executing command: "s + cmd), string { } );
 
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
     result += buffer.data();
@@ -9120,7 +9145,8 @@ int time_since_last_qsy(void)
 
     Also updates <i>win_best_dx</i> if necessary
 */
-void update_best_dx(const grid_square& dx_gs, const string& callsign)
+//void update_best_dx(const grid_square& dx_gs, const string& callsign)
+void update_best_dx(const grid_square& dx_gs, const string_view callsign)
 { static const string INVALID_GRID { "AA00"s };                 // the way to mark a bad grid in the log; don't calculate distance to this square
 
   if (win_best_dx.valid())              // check even though it should have been checked before being called
@@ -9528,7 +9554,8 @@ void send_qtc_entry(const qtc_entry& qe, const bool log_it)
 
     Also alerts on the screen
 */
-void audio_error_alert(const string& msg)
+//void audio_error_alert(const string& msg)
+void audio_error_alert(const string_view msg)
 { ost << "Audio error: " << msg << endl;
 
   alert(msg);
@@ -9635,7 +9662,8 @@ void set_active_window(const ACTIVE_WINDOW aw)
     Q1 = each question mark represents a single character
     QN = each question mark represents more than one character
 */
-void update_query_windows(const string& callsign)
+//void update_query_windows(const string& callsign)
+void update_query_windows(const string_view callsign)
 { if (win_query_1 or win_query_n)
   { const auto [ q_1_matches, q_n_matches ] { query_db[callsign] };
 

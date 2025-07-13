@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 265 2025-03-31 01:32:02Z  $
+// $Id: autocorrect.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,7 +22,8 @@ using namespace std;
 extern message_stream ost;          ///< for debugging and logging
 extern MINUTES_TYPE   now_minutes;  ///< access the current time in minutes
 
-void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
+//void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
+void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
 
 busts_database busts_db;
 
@@ -36,10 +37,9 @@ busts_database busts_db;
     \param  str     input call
     \return         <i>str</i> or a corrected version of same
 */
-//string autocorrect_database::corrected_call(const string& str) const
 string autocorrect_database::corrected_call(const string_view str) const
 { if (str.empty())
-    return EMPTY_STR;
+    return string { };
 
 // insert a mapping into the cache
   auto insert = [this] (const string_view input, const auto output)
@@ -327,10 +327,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     { const auto& [ possible_best_match, possible_highest_n ] { *it };
 
       if (possible_highest_n > highest_n)
- //     if (it->second > highest_n)
-      { //best_match = it->first;
-        //highest_n = it->second;
-        best_match = possible_best_match;
+      { best_match = possible_best_match;
         highest_n = possible_highest_n;
       }
     }
@@ -450,7 +447,6 @@ string dynamic_autocorrect_database::to_string(void) const
 
   for (const BAND b : bands)
   { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
-//    rv += _per_band_db.at(b).to_string(2) + EOL;    // the "2" means to prepend each line with two spaces
     rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "N_SPACES" means to prepend each line with N_SPACES spaces
   }
 

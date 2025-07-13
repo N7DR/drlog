@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 271 2025-06-23 16:32:50Z  $
+// $Id: bandmap.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -992,7 +992,8 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "W
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
 //void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
-void bandmap::not_needed_exchange_mult(const string_view mult_name, const string& mult_value)
+//void bandmap::not_needed_exchange_mult(const string_view mult_name, const string& mult_value)
+void bandmap::not_needed_exchange_mult(const string_view mult_name, const string_view mult_value)
 { if (mult_name.empty() or mult_value.empty())
     return;
 
@@ -1028,12 +1029,12 @@ void bandmap::filter_enabled(const bool torf)
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
      filter.
 */
-void bandmap::filter_add_or_subtract(const string& str)
+//void bandmap::filter_add_or_subtract(const string& str)
+void bandmap::filter_add_or_subtract(const string_view str)
 { if (!str.empty())
   { SAFELOCK(_bandmap);
 
-    _filter_p->add_or_subtract(str);
-//    _dirty_entries();
+    _filter_p -> add_or_subtract(str);
     _version++;
   }
 }
@@ -1045,8 +1046,7 @@ void bandmap::filter_hide(const bool torf)
 { if (torf != filter_hide())
   { SAFELOCK(_bandmap);
 
-    _filter_p->hide(torf);
-//    _dirty_entries();
+    _filter_p -> hide(torf);
     _version++;
   }
 }
@@ -1058,8 +1058,7 @@ void bandmap::filter_show(const bool torf)
 { if (torf != filter_show())
   { SAFELOCK(_bandmap);
 
-    _filter_p->hide(!torf);
-//    _dirty_entries();
+    _filter_p -> hide(!torf);
     _version++;
   }
 }
@@ -1071,28 +1070,19 @@ BM_ENTRIES bandmap::filtered_entries(void)
 
   SAFELOCK(_bandmap);
 
-//  if (!_filtered_entries_dirty)
-//    return _filtered_entries;
-
 // whether to include a particular bandmap entry
   auto include_be { [this] (const bandmap_entry& be) { if (be.is_marker())
                                                          return true;
 
-//                                                       const bool display_this_entry { contains(_filter_p->continents(), be.continent()) or contains(_filter_p->prefixes(),  be.canonical_prefix()) };
-                                                       const bool display_this_entry { _filter_p->continents().contains(be.continent()) or _filter_p->prefixes().contains(be.canonical_prefix()) };
+                                                       const bool display_this_entry { (_filter_p -> continents()).contains(be.continent()) or (_filter_p -> prefixes()).contains(be.canonical_prefix()) };
 
                                                        return filter_hide() ? !display_this_entry : display_this_entry;
                                                      }
                   };
 
-//  _filtered_entries = move(RANGE_CONTAINER <BM_ENTRIES> (_entries | SRV::filter(include_be)));
-
-//  _filtered_entries = std::ranges::to<BM_ENTRIES> (_entries | SRV::filter(include_be));
   _filtered_entries = to<BM_ENTRIES> (_entries | SRV::filter(include_be));
 
-//  _filtered_entries_dirty = false;
-
-// is it correct that we don't mark dirty_entries() or _version?
+// is it correct that we don't increment _version?
 
   return _filtered_entries;
 }
@@ -1136,7 +1126,7 @@ BM_ENTRIES bandmap::displayed_entries_no_markers(void)
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
-     \param  f       starting frequency
+     \param f       starting frequency
      \param dirn    direction in which to search
      \param nskip   number of matches to ignore
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
@@ -1427,7 +1417,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
     \param  win     window to which to write
     \return         the window
 */
-window& bandmap::write_to_window(window& win /*, const bool refresh */)
+window& bandmap::write_to_window(window& win)
 { constexpr time_t      GREEN_TIME                 { 120 };             // time in seconds for which calls are marked in green
   constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
@@ -1436,22 +1426,16 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
   constexpr COLOUR_TYPE MARKED_FG_COLOUR           { COLOUR_WHITE };
   constexpr COLOUR_TYPE MARKED_BG_COLOUR           { COLOUR_RED };
 
-//  unsigned int                                 _bandmap_decay_time_local                { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (local entries)
-//  unsigned int                                 _bandmap_decay_time_cluster              { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
-//  unsigned int                                 _bandmap_decay_time_rbn                  { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
-
   static const value_map bandap_vm_cluster { _fade_colours, 0U, context.bandmap_decay_time_cluster() }; // time in minutes
   static const value_map bandap_vm_local   { _fade_colours, 0U, context.bandmap_decay_time_local() };   // time in minutes
   static const value_map bandap_vm_rbn     { _fade_colours, 0U, context.bandmap_decay_time_rbn() };     // time in minutes
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-//  ost << "at time " << NOW_TP() << ": request to display bandmap version: " << static_cast<int>(_version) << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
   ost << "at time " << NOW_TP() << ": request to display bandmap version: " << version_str() << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
-  { //ost << "Attempt to write old version of bandmap: last displayed version = " << static_cast<int>(_last_displayed_version) << "; attempted to display version " << static_cast<int>(_version) << endl;
-    ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
+  { ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
     return win;
   }
 
@@ -1476,7 +1460,6 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
 // debug: write QRG of marker
       if (be.is_my_marker())
-//        ost << "BE OF MY MARKER: "  << be << endl;
         ost << "MY MARKER: " << be.to_brief_string() << endl;
 
       if (!found_my_marker and be.is_my_marker())
@@ -1580,7 +1563,6 @@ window& bandmap::write_to_window(window& win /*, const bool refresh */)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-//void bandmap::do_not_add(const string& callsign)
 void bandmap::do_not_add(const string_view callsign)
 { SAFELOCK(_bandmap);
 
@@ -1597,7 +1579,6 @@ void bandmap::do_not_add(const string_view callsign)
 
      Calls in the do-not-add list are never added to the bandmap
 */
-//void bandmap::remove_from_do_not_add(const string& callsign)
 void bandmap::remove_from_do_not_add(const string_view callsign)
 { SAFELOCK(_bandmap);
 

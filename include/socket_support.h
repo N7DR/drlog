@@ -1,4 +1,4 @@
-// $Id: socket_support.h 265 2025-03-31 01:32:02Z  $
+// $Id: socket_support.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -144,8 +144,10 @@ sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr =
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-inline sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
-  { return socket_address(inet_addr(dotted_decimal_address.c_str()), port_nr); }
+//inline sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
+//  { return socket_address(inet_addr(dotted_decimal_address.c_str()), port_nr); }
+inline sockaddr_storage socket_address(const std::string_view dotted_decimal_address, const short port_nr = 0)
+  { return socket_address(inet_addr(std::string(dotted_decimal_address).c_str()), port_nr); }
 
 /*! \brief          Extract port from a sockaddr_in
     \param  sin     sockaddr_in
@@ -274,8 +276,12 @@ public:
     \param  source_address                  IP address to which the socket is to be bound
     \param  retry_time_in_seconds           time between retries, in seconds
 */
-  tcp_socket(const std::string& destination_ip_address_or_fqdn, 
-             const unsigned int destination_port, 
+//  tcp_socket(const std::string& destination_ip_address_or_fqdn,
+//             const unsigned int destination_port,
+//             const std::string& source_address,
+//             const unsigned int retry_time_in_seconds = 10);
+  tcp_socket(const std::string_view destination_ip_address_or_fqdn,
+             const unsigned int destination_port,
              const std::string& source_address,
              const unsigned int retry_time_in_seconds = 10);
 
@@ -328,7 +334,9 @@ public:
     \param  dotted_ip_address   address of the far end
     \param  port_nr             port of the far end
 */
-  inline void destination(const std::string& dotted_ip_address, const short port_nr)
+//  inline void destination(const std::string& dotted_ip_address, const short port_nr)
+//    { destination(socket_address(dotted_ip_address, port_nr)); }
+  inline void destination(const std::string_view dotted_ip_address, const short port_nr)
     { destination(socket_address(dotted_ip_address, port_nr)); }
 
 /*! \brief          Connect to the far-end
@@ -341,7 +349,9 @@ public:
     \param  port_nr             port of the far end
     \param  timeout_secs        timeout in seconds
 */
-  inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
+//  inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
+//    { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
+  inline void destination(const std::string_view dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
     { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
 
 /*! \brief                  Connect to the far-end, with explicit time-out when trying to make connection
@@ -617,7 +627,8 @@ public:
 
     Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */   
-std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n_tries = 1);
+//std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n_tries = 1);
+std::string name_to_dotted_decimal(const std::string_view fqdn, const unsigned int n_tries = 1);
 
 // ---------------------------------------  Errors  ------------------------------------
 

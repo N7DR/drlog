@@ -1,4 +1,4 @@
-// $Id: string_functions.h 271 2025-06-23 16:32:50Z  $
+// $Id: string_functions.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1298,9 +1298,10 @@ struct CMP
     { return PF(m1, m2); }
 };
 
-//using CALL_SET = std::set<std::string, CMP<compare_calls>>;
+template <class ValueType>
+using CALL_MAP = CUSTOM_STRING_MAP<ValueType, CMP<compare_mults>>;
+
 using CALL_SET = CUSTOM_STRING_SET<CMP<compare_mults>>;
-//using MULT_SET = std::set<std::string, CMP<compare_mults>>;
 using MULT_SET = CUSTOM_STRING_SET<CMP<compare_mults>>;
 
 /*! \brief          Return a number with a particular number of decimal places
@@ -1428,8 +1429,6 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
     \param  delim_2     closing delimiter
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
-//inline std::string delimit(const std::string_view str, const std::string& delim_1, const std::string& delim_2)
-//inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string& delim_2)
 inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string_view delim_2)
   { return (std::string { delim_1 } + str + delim_2); }
 
@@ -1579,6 +1578,13 @@ std::string read_until(std::istream& in, const std::string_view delimiter, const
     \return         <i>str</i> as a series of hex characters
 */
 std::string hex_string(const std::string_view str);
+
+/*! \brief              Add trailing slash to a directory name, if necessary
+    \param  dirname     name of directory
+    \return             <i>dirname</i>, but with a slash appended if it does not have one at the end
+*/
+inline std::string dirname_with_slash(const std::string_view dirname)
+  { return ( dirname + ( (last_char(dirname) == '/') ? std::string { } : "/"s ) ); }
 
 /// a standard hash function for strings (the DJB function)
 //constexpr long unsigned int STR_HASH(const char* str, int off = 0)

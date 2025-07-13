@@ -1,4 +1,4 @@
-// $Id: qso.cpp 269 2025-05-19 22:42:59Z  $
+// $Id: qso.cpp 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,12 +28,13 @@
 
 using namespace std;
 
-extern contest_rules        rules;          ///< rules for this contest
-extern drlog_context        context;        ///< configuration context
-extern location_database    location_db;    ///< location database
-extern message_stream       ost;            ///< for debugging, info
+extern contest_rules     rules;          ///< rules for this contest
+extern drlog_context     context;        ///< configuration context
+extern location_database location_db;    ///< location database
+extern message_stream    ost;            ///< for debugging, info
 
-extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
+//extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
+extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
 bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
 unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult fields in log window
@@ -45,7 +46,8 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
 
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
-bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
+//bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
+bool QSO::_is_received_field_optional(const string_view field_name, const vector<exchange_field>& fields_from_rules) const
 { string_view name_copy { remove_from_start <std::string_view> (field_name, "received-"s) };
 
   for (const auto& ef : fields_from_rules)
@@ -67,9 +69,6 @@ bool QSO::_is_received_field_optional(const string& field_name, const vector<exc
 */
 bool QSO::_process_name_value_pair(const pair<string, string>& nv)
 { bool processed { false };
-
-//  const string& name  { nv.first };
-//  const string& value { nv.second };
 
   const auto& [ name, value ] { nv };
 
@@ -136,8 +135,6 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
 */
-//time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
-//time_t QSO::_to_epoch_time(const string_view date_str, const string& utc_str) const
 time_t QSO::_to_epoch_time(const string_view date_str, const string_view utc_str) const
 { struct tm time_struct;
 
@@ -183,7 +180,6 @@ QSO::QSO(void) :
 
     <i>statistics</i> might be changed by this function
 */
-//QSO::QSO(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 QSO::QSO(const drlog_context& context, const string_view str, const contest_rules& rules, running_statistics& statistics)
 { *this = QSO();
 
@@ -191,7 +187,8 @@ QSO::QSO(const drlog_context& context, const string_view str, const contest_rule
 }
 
 /// set TX frequency and band from a string of the form xxxxx.y
-void QSO::freq_and_band(const decltype(_frequency_tx)& str)
+//void QSO::freq_and_band(const decltype(_frequency_tx)& str)
+void QSO::freq_and_band(const string_view str)
 { freq(str);
 
   const unsigned int qrg      { from_string<unsigned int>(str) };
@@ -212,7 +209,7 @@ void QSO::freq_and_band(const decltype(_frequency_tx)& str)
     <i>statistics</i> might be changed by this function
 */
 //void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
-void QSO::populate_from_verbose_format(const drlog_context& context, string_view str, const contest_rules& rules, running_statistics& statistics)
+void QSO::populate_from_verbose_format(const drlog_context& context, const string_view str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
   size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
@@ -262,8 +259,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, string_view
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
-//void QSO::populate_from_verbose_format(const string& str)
-//void QSO::populate_from_verbose_format(const string& str)
 void QSO::populate_from_verbose_format(const string_view str)
 {
 // build a vector of name/value pairs
@@ -683,17 +678,9 @@ string QSO::verbose_format(void) const
   constexpr int BAND_WIDTH      { 3 };
   constexpr int FREQUENCY_WIDTH { 7 };
 
-//  static const map<string /* tx field name */, pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
-//                                                                                        { "sent-CQZONE"s, { 2, PAD::LEFT } }
-//                                                                                      };
-
   static const STRING_MAP</* tx field name */ pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
                                                                                         { "sent-CQZONE"s, { 2, PAD::LEFT } }
                                                                                       };
-
-//  static const map<string /* tx field name */, pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
-//                                                                                        { "received-CQZONE"s, { 2, PAD::LEFT } }
-//                                                                                      };
 
   static const STRING_MAP</* tx field name */ pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
                                                                                         { "received-CQZONE"s, { 2, PAD::LEFT } }
@@ -745,7 +732,6 @@ string QSO::verbose_format(void) const
 
     I don't think that this is currently used.
 */
-//bool QSO::exchange_match(const string& rule_to_match) const
 bool QSO::exchange_match(const string_view rule_to_match) const
 {
 // remove the [] markers
@@ -764,12 +750,10 @@ bool QSO::exchange_match(const string_view rule_to_match) const
 // now try the various legal operations
 // !=
     if (!remove_leading_spaces <std::string_view> (exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
-    { //const string op { remove_peripheral_spaces <std::string> (tokens[1]) };
-      const string_view op { remove_peripheral_spaces <std::string_view> (tokens[1]) };
+    { const string_view op { remove_peripheral_spaces <std::string_view> (tokens[1]) };
 
       if (op == "!="sv)                                                // precise inequality
-      { //const string target { remove_trailing <std::string> (remove_leading <std::string> (remove_peripheral_spaces <std::string> (tokens[2]), '"'), '"') };  // strip any double quotation marks
-        const string_view target { remove_trailing <std::string_view> (remove_leading <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"'), '"') };  // strip any double quotation marks
+      { const string_view target { remove_trailing <std::string_view> (remove_leading <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"'), '"') };  // strip any double quotation marks
 
         ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;

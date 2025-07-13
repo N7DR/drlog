@@ -1,4 +1,4 @@
-// $Id: qso.h 269 2025-05-19 22:42:59Z  $
+// $Id: qso.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,7 +73,8 @@ protected:
 
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
-  bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
+//  bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
+  bool _is_received_field_optional(const std::string_view field_name, const std::vector<exchange_field>& fields_from_rules) const;
 
 /*! \brief      Process a name/value pair from a drlog log line to insert values in the QSO object
     \param  nv  name and value to be processed
@@ -89,16 +90,15 @@ protected:
 
     Does not process fields whose name begins with "received-"
 */
-  inline bool _process_name_value_pair(const std::string& nm, const std::string& val)
-    { return _process_name_value_pair( { nm, val } ); }
+//  inline bool _process_name_value_pair(const std::string& nm, const std::string& val)
+  inline bool _process_name_value_pair(const std::string_view nm, const std::string_view val)
+    { return _process_name_value_pair( { std::string { nm }, std::string { val } } ); }
 
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
 */
-//  time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
-//  time_t _to_epoch_time(const std::string_view date_str, const std::string& utc_str) const;
   time_t _to_epoch_time(const std::string_view date_str, const std::string_view utc_str) const;
 
 public:
@@ -139,11 +139,13 @@ public:
     { return _frequency_tx; }
 
 /// set TX frequency from a string of the form xxxxx.y
-  inline void freq(const decltype(_frequency_tx)& str)
+//  inline void freq(const decltype(_frequency_tx)& str)
+  inline void freq(const std::string_view str)
     { _frequency_tx = str; }
   
 /// set TX frequency and band from a string of the form xxxxx.y
-  void freq_and_band(const decltype(_frequency_tx)& str);
+//  void freq_and_band(const decltype(_frequency_tx)& str);
+  void freq_and_band(const std::string_view str);
 
   READ_AND_WRITE(epoch_time);           ///< time in seconds since the UNIX epoch
 
@@ -218,7 +220,6 @@ public:
 
     Performs a skeletal setting of values, without using the rules for the contest; used by simulator
 */
-//  void populate_from_verbose_format(const std::string& str);
   void populate_from_verbose_format(const std::string_view str);
 
 /*! \brief                  Does the QSO match an expression for a received exchange field?
@@ -230,14 +231,12 @@ public:
 
     I don't think that this is currently used.
 */
-//  bool exchange_match(const std::string& rule_to_match) const;
   bool exchange_match(const std::string_view rule_to_match) const;
 
 /*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
-//  inline bool exchange_match_string(const std::string& target) const
   inline bool exchange_match_string(const std::string_view target) const
     { return ANY_OF(_received_exchange, [target] (const auto& field) { return (field.value() == target); } ); }
 
@@ -277,7 +276,6 @@ public:
     \param  field_name  name of field to test
     \return             whether the sent exchange includes the field <i>field_name</i>
 */
-//  inline bool sent_exchange_includes(const std::string& field_name) const
   inline bool sent_exchange_includes(const std::string_view field_name) const
     { return ANY_OF(_sent_exchange, [field_name] (const auto& field) { return (field.first == field_name); }); }
 

@@ -1,4 +1,4 @@
-// $Id: audio.h 229 2023-11-19 16:33:50Z  $
+// $Id: audio.h 272 2025-07-13 22:28:31Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -215,17 +215,18 @@ protected:
   uint32_t          _time_reference_high;   // highest 32 bits of the time reference
 #endif
 
-  snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle, void *buffer, snd_pcm_uframes_t size);            ///< function to read interleaved frames
+  snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle,  void *buffer,       snd_pcm_uframes_t size);     ///< function to read interleaved frames
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);     ///< function to write interleaved frames
-  snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);             ///< function to read non-interleaved frames
-  snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
+  snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle,  void **bufs,        snd_pcm_uframes_t size);     ///< function to read non-interleaved frames
+  snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs,        snd_pcm_uframes_t size);     ///< function to write non-interleaved frames
 
 // protected pointers to functions
 
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
 */
-  void (*_error_alert_function)(const std::string& msg) { nullptr };
+//  void (*_error_alert_function)(const std::string& msg) { nullptr };
+  void (*_error_alert_function)(const std::string_view msg) { nullptr };
 
 // protected functions
 
@@ -264,7 +265,8 @@ protected:
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-  void _error_alert(const std::string& msg);
+//  void _error_alert(const std::string& msg);
+  void _error_alert(const std::string_view msg);
 
 public:
 
@@ -319,7 +321,8 @@ public:
   void capture(void);
 
 /// register a function for alerting the user
-  inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
+//  inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
+  inline void register_error_alert_function(void (*error_alert_function)(const std::string_view) )
     { _error_alert_function = error_alert_function; }
 };
 
