@@ -408,6 +408,7 @@ float                   greatest_distance { 0 };                    ///< greates
 
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
+atomic<bool>            ignore_next_poll { false };                 ///< ignore the result of the next poll of the rig... workaround for slow/inconsistent rig state reporting
 int                     inactivity_time;                            ///< max time since the last activity (activity = QSY or QSO)
 bool                    is_ss        { false };                     ///< ss is special
 
@@ -2366,6 +2367,8 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
 //        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
         const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters; currently needed only in SSB
 
+        ost << NOW_TP() << ": polled rig status: " << status_str << endl;
+
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
           const frequency  target             { cq_mode_frequency };                                                    // frequency in CQ mode
@@ -2420,7 +2423,11 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
             }
           }
           else          // we haven't changed band
-            update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
+          { if (ignore_next_poll)
+              ignore_next_poll = false;
+            else
+              update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
+          }
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -4247,6 +4254,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { ost << "UP or DOWN using N7DR criteria" << endl;
+      ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
       update_quick_qsy();
       processed = process_bandmap_function(e.is_char(';') ? DOWN : UP);
     }
@@ -8644,7 +8652,7 @@ void end_of_thread(const string_view name)
 //void update_based_on_frequency_change(const frequency& f, const MODE m)
 void update_based_on_frequency_change(const frequency f, const MODE m)
 { //static frequency last_update_frequency { };
-  ost << "update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
+  ost << NOW_TP() << ": update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
 
  // if (my_thread_id() == display_rig_status_thread_id)
  //   ost << "update_based_on_frequency_change() called from display_rig_status() thread" << endl;
