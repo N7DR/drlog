@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 271 2025-06-23 16:32:50Z  $
+// $Id: string_functions.cpp 273 2025-07-27 13:22:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -597,7 +597,8 @@ string nth_word(const string_view s, const unsigned int n, const unsigned int wr
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-size_t n_chars(const string& str)
+//size_t n_chars(const string& str)
+size_t n_chars(const string_view str)
 { if (const string encoding { nl_langinfo(CODESET) }; encoding != "UTF-8"sv)
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + encoding);
 

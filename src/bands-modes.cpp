@@ -13,27 +13,29 @@
 
 using namespace std;
 
-extern message_stream ost;          ///< for debugging and logging
+extern message_stream ost;              ///< for debugging and logging
 extern string FREQUENCY_STRING_POINT;
 
+constexpr frequency BAND_EDGE_GUARD { 25_Hz };    // just to keep us a bit away from the lower band edge
+
 /// default frequencies for bands and modes
-const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES { { { BAND_160, MODE_CW },  1'800_kHz },
+const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES { { { BAND_160, MODE_CW },  1'800_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_160, MODE_SSB }, 1'900_kHz },
-                                                                        { { BAND_80,  MODE_CW },  3'500_kHz },
+                                                                        { { BAND_80,  MODE_CW },  3'500_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_80,  MODE_SSB }, 3'750_kHz },
-                                                                        { { BAND_40,  MODE_CW },  7'000_kHz },
+                                                                        { { BAND_40,  MODE_CW },  7'000_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_40,  MODE_SSB }, 7'150_kHz },
-                                                                        { { BAND_30,  MODE_CW },  10'100_kHz },
-                                                                        { { BAND_30,  MODE_SSB }, 10'100_kHz },        // just to make things easier if we go to 30m while in SSB mode
-                                                                        { { BAND_20,  MODE_CW },  14'000_kHz },
+                                                                        { { BAND_30,  MODE_CW },  10'100_kHz + BAND_EDGE_GUARD },
+                                                                        { { BAND_30,  MODE_SSB }, 10'100_kHz + BAND_EDGE_GUARD },        // just to make things easier if we go to 30m while in SSB mode
+                                                                        { { BAND_20,  MODE_CW },  14'000_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_20,  MODE_SSB }, 14'150_kHz },
-                                                                        { { BAND_17,  MODE_CW },  18'068_kHz },
+                                                                        { { BAND_17,  MODE_CW },  18'068_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_17,  MODE_SSB }, 18'100_kHz },
-                                                                        { { BAND_15,  MODE_CW },  21'000_kHz },
+                                                                        { { BAND_15,  MODE_CW },  21'000_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_15,  MODE_SSB }, 21'200_kHz },
-                                                                        { { BAND_12,  MODE_CW },  24'890_kHz },
+                                                                        { { BAND_12,  MODE_CW },  24'890_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_12,  MODE_SSB }, 24'940_kHz },
-                                                                        { { BAND_10,  MODE_CW },  28'000_kHz },
+                                                                        { { BAND_10,  MODE_CW },  28'000_kHz + BAND_EDGE_GUARD },
                                                                         { { BAND_10,  MODE_SSB }, 28'300_kHz },
                                                                         { { BAND_6,   MODE_CW },  50'090_kHz },   // go to a widely-used CW frequency on 6m
                                                                         { { BAND_6,   MODE_SSB }, 50'100_kHz },

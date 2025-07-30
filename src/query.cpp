@@ -1,4 +1,4 @@
-// $Id: query.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: query.cpp 273 2025-07-27 13:22:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,8 +30,7 @@ using namespace std;
 */
 //void query_database::operator+=(const std::string& call)
 void query_database::operator+=(const std::string_view call)
-{ //if (!( _qdb > call))
-  if (!_qdb.contains(call))
+{ if (!_qdb.contains(call))
     _dynamic_qdb += call;
 }
 
@@ -41,7 +40,6 @@ void query_database::operator+=(const std::string_view call)
 
     The returned pair comprises: q1, qn
 */
-//pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string& key) const
 pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string_view key) const
 { STRING_SET rv_1 { };
 

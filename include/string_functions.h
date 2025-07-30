@@ -1,4 +1,4 @@
-// $Id: string_functions.h 272 2025-07-13 22:28:31Z  $
+// $Id: string_functions.h 273 2025-07-27 13:22:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1232,7 +1232,8 @@ std::string nth_word(const std::string_view s, const unsigned int n, const unsig
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-size_t n_chars(const std::string& str);
+//size_t n_chars(const std::string& str);
+size_t n_chars(const std::string_view str);
 
 /*! \brief      Does a string contain a legal dotted-decimal IPv4 address
     \param  cs  string to test
@@ -1281,11 +1282,6 @@ bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 // ***** https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator    *****
 
 // *** https://www.fluentcpp.com/2017/06/09/search-set-another-type-key/ see discussion of is_transparent
-
-// the old way:
-// using CALL_SET = set<string, decltype(&compare_calls)>;     // set in callsign order
-// then:
-// CALL SET burble(compare_calls)
 
 /*! \brief  structure to sort strings
     \param  PF  pointer to the function to perform the sorting
@@ -1350,6 +1346,7 @@ std::string longest(T&& strs)
     \param  str   string to erase
 
     This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
+    Still needed in 15.1
 */
 template <typename T>
  requires is_container_of_strings<T>
@@ -1361,6 +1358,7 @@ inline void STRC_ERASE(T& c, const std::string& str)
     \param  str   atring to erase
 
     This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
+    Still needed in 15.1
 */
 template <typename T>
  requires is_container_of_strings<T>

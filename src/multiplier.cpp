@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 269 2025-05-19 22:42:59Z  $
+// $Id: multiplier.cpp 273 2025-07-27 13:22:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,7 +78,7 @@ void multiplier::remove_known(const string_view str)
   if (_used)
   { STRC_ERASE(_known, str);
 
-//    _known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
+    //_known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
                               // still not available: https://gcc.gnu.org/onlinedocs/gcc-15.1.0/libstdc++/manual/manual/status.html#status.iso.2020
   }
 
@@ -112,7 +112,7 @@ bool multiplier::add_worked(const string_view str, const BAND b, const MODE m)
     const int m_nr { static_cast<int>(m) };
 
     auto& pb       { _worked[m_nr] };
-    auto [ _, rv ] { pb[b_nr].insert(string { str }) };  // BAND, MODE
+    auto [ _, rv ] { pb[b_nr].insert(string { str }) };  // BAND, MODE; the return value is required
 
     if (rv)
     { pb[ANY_BAND] += str;        // ANY_BAND, MODE

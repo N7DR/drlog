@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: drlog.cpp 273 2025-07-27 13:22:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -408,9 +408,10 @@ float                   greatest_distance { 0 };                    ///< greates
 
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-atomic<bool>            ignore_next_poll { false };                 ///< ignore the result of the next poll of the rig... workaround for slow/inconsistent rig state reporting
-int                     inactivity_time;                            ///< max time since the last activity (activity = QSY or QSO)
-bool                    is_ss        { false };                     ///< ss is special
+atomic<bool>            ignore_next_poll { false };                     ///< ignore the result of the next poll of the rig... workaround for slow/inconsistent rig state reporting
+atomic<bool>            ignore_next_process_insertion_queue { false };  ///< delay processing of insertion queue of the displayed bandmap
+int                     inactivity_time;                                ///< max time since the last activity (activity = QSY or QSO)
+bool                    is_ss        { false };                         ///< ss is special
 
 atomic<frequency>       last_update_frequency { };                  ///< the frequency of the last bm window update
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -818,41 +819,6 @@ inline void update_scp_window(const string& callsign)
 inline bool xscp_order_greater(const string_view c1, const string_view c2)
   { return (drm_db[c1].xscp() > drm_db[c2].xscp()); }
 
-#if 0
-// OK
-string test_fn(const size_t start_posn, const size_t len)
-{ string str { "1234567890qwertyuiopasdfghjklzxcvbnm"sv };
-
-  string rv;
-
-  rv = substring <string_view> (str, start_posn, len);
-
-  return rv;
-}
-
-// NOT OK
-vector<string_view> test_fn2(void)
-{ string str { "This is a test with several words"sv };
-
-  vector<string_view> rv;
-
-  rv = clean_split_string <string_view> (str);
-
-  return rv;
-}
-
-// NOT OK
-vector<string_view> test_fn3(void)
-{ string str { "This is another test with several words"sv };
-
-  vector<string_view> rv;
-
-  rv = clean_split_string <string_view> (str);
-
-  return rv;
-}
-#endif
-
 int main(int argc, char** argv)
 { 
 // generate version information
@@ -936,6 +902,10 @@ int main(int argc, char** argv)
 // rename the mutexes in the bandmaps and the mutexes in the container of last qrgs
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
      bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+
+// add band info to each bandmap
+  for (size_t n { 0 }; n < NUMBER_OF_BANDS; ++n)
+    bandmaps[n].band( static_cast<BAND>(n) );
 
   const command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string       config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
@@ -1363,6 +1333,8 @@ int main(int argc, char** argv)
       my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
 // add my marker to each bandmap
+      ost << "initialising bandmap with my info" << endl;
+
       for (const auto b : permitted_bands)
       { bandmap&      bm { bandmaps[b] };
         bandmap_entry be { my_bandmap_entry };
@@ -1370,9 +1342,16 @@ int main(int argc, char** argv)
         if (b == current_band)
           be.freq(rig.rig_frequency());
         else
-          be.freq(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
+//          be.freq(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
+          be.freq(DEFAULT_FREQUENCIES.at( { b, current_mode } ));
+
+        ost << "band number: " << b << endl;
+        ost << "band number for bandmap: " << bm.band() << endl;
+        ost << "bandmap for band: " << BAND_NAME[bm.band()] << endl;
 
         bm += be;
+
+        ost << "be: " << be << endl;
       }
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
@@ -2582,8 +2561,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
   start_of_thread(THREAD_NAME);
 
-  constexpr int POLL_INTERVAL { 10 };      // seconds between processing passes
-  constexpr int MAX_FREQ_SKEW { 800 };     // maximum change in frequency considered as NOT a QSY, in Hz
+  constexpr int       POLL_SECS { 10 };         // seconds between the end of one processing pass and the start of the next
+  constexpr frequency MAX_FREQ_SKEW { 800_Hz };     // maximum change in frequency considered as NOT a QSY
 
 // get access to the information that's been passed to the thread
   window&                          cluster_line_win { *wclp };                 // the window to which we will write each line from the cluster/RBN
@@ -2645,9 +2624,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
 
       if (time_since_data_last_received > 60s)
-      { //const string msg       { "NO DATA RECEIVED FOR "s + to_string(duration_cast<seconds>(time_since_data_last_received).count()) + " SECONDS"s };
-        //const int SEC = N_SECONDS(time_since_data_last_received);
-        const string msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
+      { const string msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
         const int    bg_colour { cluster_line_win.bg() };
         const int    fg_colour { cluster_line_win.fg() };
 
@@ -2763,7 +2740,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             }
 
 // Possibly process WICM info
-            { if ( (dx_band == cur_band) and (drlog_mode == DRLOG_MODE::CQ) and (current_mode == MODE_CW) and !is_me and (post.freq().difference(cq_mode_frequency).hz() <= 200) )
+            { if ( (dx_band == cur_band) and (drlog_mode == DRLOG_MODE::CQ) and (current_mode == MODE_CW) and !is_me and (post.freq().difference(cq_mode_frequency) <= 200_Hz) )
               { SAFELOCK(wicm);
 
                 if (!contains(wicm_calls, dx_callsign))
@@ -2811,7 +2788,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
               const vector<string> exch_mults { rules.expanded_exchange_mults() };                                      // the exchange multipliers
 
               for (const auto& exch_mult_name : exch_mults)
-              { if (context.auto_remaining_exchange_mults(exch_mult_name))               // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
+              { if (context.auto_remaining_exchange_mults(exch_mult_name))           // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
                 { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
                   const bool           is_possible_exchange_field { contains(exchange_field_names, exch_mult_name) };
@@ -2819,7 +2796,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                   if (is_possible_exchange_field)
                   { if (const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) }; !guess.empty())
                     { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
-                        update_remaining_exch_mults_window(exch_mult_name, /* rules, */ statistics, current_band, current_mode);    // update if we added a new value of the mult
+                        update_remaining_exch_mults_window(exch_mult_name, statistics, current_band, current_mode);    // update if we added a new value of the mult
                     }
                   }
                 }
@@ -2831,7 +2808,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
               for (const auto& [recent_mult_call, recent_mult_freq] : recent_mult_calls)      // look to see if this is already in the deque
                 if (!is_recent_call)
-                  is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+//                  is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+                  is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq) <= MAX_FREQ_SKEW); // allow for frequency skew
 
               const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };
 
@@ -2909,9 +2887,28 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 // update displayed bandmap if there was a change
     const BAND cur_band { current_band };
 
+/// THINK ABOUT IF WE HAVE CHANGED BANDS WHILE PROCESSING THIS... => DISPLAY DIFFERENT BAND
+
+// perhaps don't display anything if we've changed bands
+        while (ignore_next_process_insertion_queue)
+        { ignore_next_process_insertion_queue = false;
+          ost << NOW_TP() << ": pausing ALL processing insertion queue" << endl;
+          sleep_for(1s);
+        }
+
     for (const BAND b : changed_bands)
     { if (b == cur_band)
+      { ost << NOW_TP() << ": preparing to process insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
+
+        while (ignore_next_process_insertion_queue)
+        { ignore_next_process_insertion_queue = false;
+          ost << NOW_TP() << ": delaying processing insertion queue" << endl;
+          sleep_for(1s);
+        }
+
+        ost << NOW_TP() << ": processing insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
         bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
+      }
       else
         bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
     }
@@ -2955,14 +2952,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
         auto age = [] (const monitored_posts_entry& mpe) { return duration_cast<minutes> (NOW_TP() - (mpe.expiration() - MONITORED_POSTS_DURATION) ); };
 
-//        const auto clr4 { monitored_posts_vm_2[std::chrono::duration_cast<std::chrono::minutes>(NOW_TP() - (entry.expiration() - MONITORED_POSTS_DURATION) )] };
-        const auto clr { monitored_posts_vm[age(entry)] };
-
- //       if (clr4 != clr)
-//        { ost << "COLOUR MISMATCH for " << entry.callsign() << "; clr = " << clr << "; clr4 = " << clr4 << "; idx = " << idx << endl;
-//          ost << "dsec = " << dsec.count() << "; dmin = " << dmin.count() << endl;
- //       }
-
+        const auto             clr { monitored_posts_vm[age(entry)] };
         const PAIR_NUMBER_TYPE cpu { colours.add(clr, win_monitored_posts.bg()) };
 
         win_monitored_posts < colour_pair(cpu)
@@ -2986,7 +2976,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       update_win_posted_by(posted_by_vector);
 
 // see also repeat() suggestion at: https://stackoverflow.com/questions/17711655/c11-range-based-for-loops-without-loop-variable
-    for ( [[maybe_unused]] auto _ : RANGE(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
+    for ( [[maybe_unused]] auto _ : RANGE(1, POLL_SECS) )    // wait POLL_SECS seconds before getting any more unprocessed info
     {
       { SAFELOCK(thread_check);
 
@@ -3008,10 +2998,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 /// thread function to obtain data from the cluster
 void get_cluster_info(dx_cluster* cluster_p)
-{ //constexpr int READ_INTERVAL_SEC { 5 };                  // number of seconds to pause between reads from the socket
-//  constexpr int READ_INTERVAL_SEC { 4 };                  // number of seconds to pause between reads from the socket
-//  constexpr int READ_INTERVAL_SEC { 3 };                  // number of seconds to pause between reads from the socket
-  constexpr int READ_INTERVAL_SEC { 2 };                  // number of seconds to pause between reads from the socket
+{ constexpr int READ_INTERVAL_SEC { 2 };                  // number of seconds to pause between reads from the socket; longer pauses can accumulate large numbers of posts
 
   const string THREAD_NAME { "get cluster info"s };
 
@@ -3039,7 +3026,9 @@ void get_cluster_info(dx_cluster* cluster_p)
 
 /// thread function to prune the bandmaps once per minute
 void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandmaps_p)
-{ const string THREAD_NAME { "prune bandmap"s };
+{ constexpr int PRUNE_INTERVAL_SEC { 60 };
+
+  const string THREAD_NAME { "prune bandmap"s };
 
   start_of_thread(THREAD_NAME);
 
@@ -3051,13 +3040,13 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
 
     bandmap_win <= bandmaps[current_band];
 
-    for ( [[maybe_unused]] auto _ : RANGE(1, 60) )    // check once per second for a minute
+    for ( [[maybe_unused]] auto _ : RANGE(1, PRUNE_INTERVAL_SEC) )    // check once per second for a minute
     {
       { SAFELOCK(thread_check);
 
         if (exiting)
         { end_of_thread(THREAD_NAME);
-          return;    // nullptr;
+          return;
         }
       }
 
@@ -3299,6 +3288,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
     else
     { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems; this method should be good enough
+
+      ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
+      ignore_next_process_insertion_queue = true;
 
       ost << "Band change commanded: BAND " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
 
@@ -3574,7 +3566,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const string log_str           { logbk.cabrillo_log(context, context.cabrillo_include_score() ? statistics.points(rules) : 0) };    // 0 indicates that score is not to be included
 
         write_file(log_str, cabrillo_filename);
-//        alert((string("Cabrillo file "s) + context.cabrillo_filename() + " written"s));
         alert("Cabrillo file "s + context.cabrillo_filename() + " written"s);
       }
 
@@ -3946,14 +3937,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         string             exchange_str;
         STRING_MAP<string> mult_exchange_field_value;                                                 // the values of exchange fields that are mults
 
-        ost << "length of exchange vector = " << expected_exchange.size() << endl;
-//        ost << "canonical prefix = " << canonical_prefix << endl;
+//        ost << "length of exchange vector = " << expected_exchange.size() << endl;
 
         for (const auto& exf : expected_exchange)
-        { //ost << "exf.name() = " << exf.name() << endl;
-          //ost << "no default RST = " << no_default_rst << endl;
-
-           bool processed_field { false };
+        { bool processed_field { false };
 
 // if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
 // need to figure out a way to generalise all this
@@ -3989,8 +3976,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           }
 
           if (!processed_field and !no_default_rst and (exf.name() == "RST"sv) and !exf.is_optional())
-          { //ost << "HERE" << endl;
-            exchange_str += ( (cur_mode == MODE_CW) ? "599 "s : "59 "s );
+          { exchange_str += ( (cur_mode == MODE_CW) ? "599 "s : "59 "s );
             processed_field = true;
           }
 
@@ -4243,7 +4229,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
-    { update_quick_qsy();
+    { ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
+      ignore_next_process_insertion_queue = true;
+      update_quick_qsy();
       processed = process_bandmap_function((e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? DOWN : UP);
     }
     else
@@ -4255,6 +4243,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
     { ost << "UP or DOWN using N7DR criteria" << endl;
       ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
+      ignore_next_process_insertion_queue = true;
       update_quick_qsy();
       processed = process_bandmap_function(e.is_char(';') ? DOWN : UP);
     }
@@ -4265,7 +4254,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CTRL-; and CTRL-' -- up or down to stn that matches the N7DR criteria, in increments of 5 stns
   if (!processed and (e.is_control(';') or e.is_control('\'')))
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
-    { update_quick_qsy();
+    { ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
+      ignore_next_process_insertion_queue = true;
+      update_quick_qsy();
       processed = process_bandmap_function(e.is_control(';') ? DOWN : UP, 4);  // move by 5 stations
     }
     else
@@ -4275,7 +4266,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-; and ALT-' -- up or down to stn that matches the N7DR criteria, in increments of a large number of stns
   if (!processed and (e.is_alt(';') or e.is_alt('\'')))
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
-    { update_quick_qsy();
+    { ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
+      ignore_next_process_insertion_queue = true;
+      update_quick_qsy();
 
       const int16_t nskip { static_cast<int16_t>( (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
 

@@ -719,6 +719,7 @@ class bandmap
 
 protected:
 
+  BAND                              _band                   { };                          ///< the band for which this is the bandmap
   mutable pt_mutex                  _bandmap_mutex          { "DEFAULT BANDMAP"s };       ///< mutex for this bandmap
   
   int16_t                           _column_offset          { 0 };                        ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
@@ -819,6 +820,9 @@ public:
   { SAFELOCK(_bandmap);
     return css(_last_displayed_version);
   }
+
+/// band
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(band, _bandmap);    // don't really need the mutex, since it never changes after being set
 
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);

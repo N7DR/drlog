@@ -1405,7 +1405,9 @@ bool bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
     other threads MUST NOT access biq while this is executing
 */
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-{ if (process_insertion_queue(biq))       // don't need to output if nothing is done
+{ SAFELOCK(_bandmap);
+
+  if (process_insertion_queue(biq))       // don't need to output if nothing is done
   { // could put stuff here to make the following output optional -- if, for example, the bm has been recently written, or the version hasn't been incremented
     // although if we get here, it means that the version must have been incremented, I think
 
@@ -1432,7 +1434,7 @@ window& bandmap::write_to_window(window& win)
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  ost << "at time " << NOW_TP() << ": request to display bandmap version: " << version_str() << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
+  ost << "at time " << NOW_TP() << ": request to display bandmap version " << version_str() << " for band " << BAND_NAME[_band] << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
   { ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
@@ -1443,6 +1445,21 @@ window& bandmap::write_to_window(window& win)
   const size_t     maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
   const BM_ENTRIES entries                               { displayed_entries() };    // automatically filter
   const size_t     start_entry                           { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
+
+  if (!entries.empty())
+  { ost << "lowest frequency in bandmap: " << entries.cbegin() -> frequency_str() << "; band from be = " << entries.cbegin() -> band() << endl;
+
+    auto it = entries.begin();
+
+    for (int entry_nr { 0 }; entry_nr < static_cast<int>(entries.size()); ++entry_nr)
+    { ost << "entry number " << entry_nr << ": " << (it -> frequency_str()) << ": " <<  (it -> callsign()) << endl;
+
+      it = next(it);
+    }
+
+  }
+  else
+    ost << "bandmap is EMPTY" << endl;
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
