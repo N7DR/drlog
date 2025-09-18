@@ -115,7 +115,8 @@ cty_record::cty_record(const string_view record)
 
   _continent = fields[CTY_CONTINENT];
 
-  if ( !(CONTINENT_SET > _continent) )
+//  if ( !(CONTINENT_SET > _continent) )
+  if ( !(CONTINENT_SET.contains(_continent)) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
   auto_from_string(fields[CTY_LAT], _latitude);
@@ -741,7 +742,8 @@ location_info location_database::info(const string_view callpart) const
     static const STRING_SET russian_long_prefixes { "RU4W"s };
 
     if (found_1 and !found_0)                               // second part had an exact match
-    { if (!(russian_long_prefixes > parts[1]))              // the normal case
+    { //if (!(russian_long_prefixes > parts[1]))              // the normal case
+      if (!russian_long_prefixes.contains(parts[1]))              // the normal case
         return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       else                                                  // the pathological case, a call like "K4/RU4W"
         return insert_best_info( info(parts[0]) );
@@ -834,9 +836,6 @@ auto location_database::countries(void) const -> UNORDERED_STRING_SET
 //  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
 //  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
 
-//  FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv += prefix_li.second.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
-// not allowed  FOR_ALL(_db, [&rv] (const auto& [ prefix, li ]) { rv += li.canonical_prefix(); } );  // there are a lot more entries in the db than there are countries
-
   for (const auto& [_, li] : _db)
    { rv += li.canonical_prefix(); }
 
@@ -844,7 +843,6 @@ auto location_database::countries(void) const -> UNORDERED_STRING_SET
 }
 
 /// create a set of all the canonical prefixes for a particular continent
-//UNORDERED_STRING_SET location_database::countries(const string& cont_target) const
 UNORDERED_STRING_SET location_database::countries(const string_view cont_target) const
 { UNORDERED_STRING_SET rv { };
 

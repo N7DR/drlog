@@ -479,7 +479,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
     if (rules.uba_bonus())
-    { if (rules.bonus_countries() > canonical_prefix)
+    { //if (rules.bonus_countries() > canonical_prefix)
+      if ( rules.bonus_countries().contains(canonical_prefix) )
         _n_ON_qsos[mode_nr][band_nr]++;
     }
   }
@@ -490,7 +491,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     \param  value   new legal value for the exchange multiplier <i>name</i>
     \return         whether <i>value</i> was actually added
 */
-//bool running_statistics::add_known_exchange_mult(const string_view name, const string& value)
 bool running_statistics::add_known_exchange_mult(const string_view name, const string_view value)
 { SAFELOCK(statistics);
 
@@ -702,8 +702,6 @@ MULT_SET running_statistics::worked_callsign_mults(const string_view mult_name, 
 
   if (mult_name.empty() and (_callsign_multipliers.size() == 1))
     return _callsign_multipliers.cbegin() -> second.worked(b, m);
-//    _callsign_multipliers | SRV::take(1)
-//    return ( auto [_, mult] { *_callsign_multipliers.cbegin() }, mult.worked(b, m) );
 
   const auto cit { _callsign_multipliers.find(mult_name) };
 
@@ -719,8 +717,6 @@ STRING_MAP<MULT_SET /* values */ > running_statistics::worked_exchange_mults(con
 { STRING_MAP<MULT_SET> rv;     // key = field name
 
   SAFELOCK(statistics);
-
-//  FOR_ALL(_exchange_multipliers, [b, m, &rv] (const auto& psm) { rv += { psm.first, psm.second.worked(b, m) }; } );   // so annoying that can't use [a, b] in lambda
 
   for (const auto& [field_name, mult] : _exchange_multipliers)
     rv += { field_name, mult.worked(b, m) };
@@ -904,10 +900,8 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
 
   SAFELOCK(statistics);
 
-//  for (const auto& em : _exchange_multipliers)
   for (auto& [_, mult] : _exchange_multipliers)
-  { //if (const multiplier& mult { em.second }; mult.per_mode())
-    if (mult.per_mode())
+  { if (mult.per_mode())
     { for (const auto& m : permitted_modes)
       { if (mult.per_band())
           FOR_ALL(permitted_bands, [m, &mult, &rv] (const auto& b) { rv += mult.n_worked(b, m); });
@@ -917,10 +911,7 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
     }
     else
     { if (mult.per_band())
-      { //for (const auto& b : permitted_bands)
-        //  rv += mult.n_worked(b, ANY_MODE);
         FOR_ALL(permitted_bands, [&mult, &rv] (const BAND b) { rv += mult.n_worked(b, ANY_MODE); } );
-      }
       else
         rv += mult.n_worked(ANY_BAND, ANY_MODE);
     }
@@ -1078,7 +1069,7 @@ bool call_history::worked_on_another_band_and_mode(const string_view s, const BA
   for (const auto& [call, sbm] : _history)
   { if (s == call)
     { if (ANY_OF(sbm, [b, m] (const auto& bm) { return ((bm.first != b) and (bm.second != m)); }) )
-      //if (ANY_OF(sbm, [b, m] (const auto& [ban, mod]) { return ((ban != b) and (mod != m)); }) )    // still not valid, even in C++23
+      //if (ANY_OF(sbm, [b, m] (const auto& [ban, mod]) { return ((ban != b) and (mod != m)); }) )    // still not valid, even in C++23. Or C++26.
         return true;
     }
   }

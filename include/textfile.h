@@ -1,4 +1,4 @@
-// $Id: textfile.h 270 2025-05-26 01:09:07Z  $
+// $Id: textfile.h 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -50,12 +50,18 @@ public:
     std::ifstream(filename)
   { }
 
+/*! \brief              Constructor
+    \param  filename    name of the file to be read
+
+    Needed because ifstreams are not constructible from string_views
+*/
   inline explicit textfile(const std::string_view filename) :
     std::ifstream(std::string { filename })
   { }
 
-  void nop(void) const    // used in textfile_iterator end(textfile& tf)
-   { };
+/// a no-op
+  inline void nop(void) const    // used in textfile_iterator end(textfile& tf)
+    { };
 
 /// begin() needs access to <i>textfile</i> internals
   friend textfile_iterator begin(textfile& tf);
@@ -104,8 +110,9 @@ public:
 */
   textfile_iterator operator++(int);
 
-//  void nop(void) const
-//   { };
+/// a no-op
+  void nop(void) const
+   { };
 
 /// begin() needs access to <i>textfile_iterator</i> internals
   friend textfile_iterator begin(textfile& tf);
@@ -123,7 +130,7 @@ textfile_iterator begin(textfile& tf);
 */
 inline textfile_iterator end(textfile& tf)
   { tf.nop();
-    return textfile_iterator();
+    return textfile_iterator { };
   }
 
 // -----------  textstream  ----------------
@@ -144,6 +151,7 @@ public:
   inline explicit textstream(std::istream& ist)
     { rdbuf(ist.rdbuf()); }
 
+/// a no-op
   void nop(void) const    // used in textstream_iterator end(textstream& tf)
     { };
 
@@ -209,7 +217,7 @@ textstream_iterator begin(textstream& tf);
 */
 inline textstream_iterator end(textstream& tf)
   { tf.nop();
-    return textstream_iterator();
+    return textstream_iterator { };
   }
 
 #endif    // TEXTFILE_H

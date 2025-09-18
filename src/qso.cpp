@@ -229,7 +229,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and field_name.starts_with("received-"s))
     { const string name_upper { to_upper(field_name.substr(9)) };
 
-      if (!(rules.all_known_field_names() > name_upper))
+//      if (!(rules.all_known_field_names() > name_upper))
+      if (!rules.all_known_field_names().contains(name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
         alert("Unknown exch field: "s + name_upper);
       }
@@ -403,7 +404,7 @@ void QSO::populate_from_log_line(const string_view str)
            received_index++;
          }
          else
-         { const bool is_legal_value { rules.is_legal_value(substring <std::string> (field, 9), field_value) };
+         { const bool is_legal_value { rules.is_legal_value(substring <std::string_view> (field, 9), field_value) };
 
            if (is_legal_value)
              ost << "field value " << field_value << " is legal" << endl;

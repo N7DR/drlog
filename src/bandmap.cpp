@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: bandmap.cpp 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -283,41 +283,6 @@ void bandmap_filter_type::add_or_subtract(const string_view str)
 #endif
 
 }
-
-#if 0
-void bandmap_filter_type::add_or_subtract(const string_view str)
-{ const bool   is_continent { CONTINENT_SET.contains(str) };
-  const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix
-
-  vector<string>* vs_p { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct vector
-
-#if 1
-  STRING_SET ss1 = SR::to<STRING_SET>(*vs_p);
-
-  if (ss1.contains(str_copy))    // remove a value
-    ss1 -= str_copy;
-  else                          // add a value
-    ss1 += str_copy;
-
-  *vs_p = SR::to<vector<string>>(ss1);
-  SORT(*vs_p, compare_calls);                           // make it easy for humans
-#endif
-
-#if 0
- STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
-
- if (ss.contains(str_copy))    // remove a value
-    ss -= str_copy;
-  else                          // add a value
-    ss += str_copy;
-
-  vs_p -> clear();                                      // empty it
-  copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
-  SORT(*vs_p, compare_calls);                           // make it easy for humans
-#endif
-
-}
-#endif
 
 // -----------  bandmap_entry  ----------------
 
@@ -1434,10 +1399,10 @@ window& bandmap::write_to_window(window& win)
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  ost << "at time " << NOW_TP() << ": request to display bandmap version " << version_str() << " for band " << BAND_NAME[_band] << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
+//  ost << "at time " << NOW_TP() << ": request to display bandmap version " << version_str() << " for band " << BAND_NAME[_band] << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
-  { ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
+  { //ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
     return win;
   }
 
@@ -1446,20 +1411,22 @@ window& bandmap::write_to_window(window& win)
   const BM_ENTRIES entries                               { displayed_entries() };    // automatically filter
   const size_t     start_entry                           { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
 
+#if 0
   if (!entries.empty())
-  { ost << "lowest frequency in bandmap: " << entries.cbegin() -> frequency_str() << "; band from be = " << entries.cbegin() -> band() << endl;
+  { //ost << "lowest frequency in bandmap: " << entries.cbegin() -> frequency_str() << "; band from be = " << entries.cbegin() -> band() << endl;
 
-    auto it = entries.begin();
-
-    for (int entry_nr { 0 }; entry_nr < static_cast<int>(entries.size()); ++entry_nr)
-    { ost << "entry number " << entry_nr << ": " << (it -> frequency_str()) << ": " <<  (it -> callsign()) << endl;
-
-      it = next(it);
-    }
+   // auto it = entries.begin();
+//
+   // for (int entry_nr { 0 }; entry_nr < static_cast<int>(entries.size()); ++entry_nr)
+   // { ost << "entry number " << entry_nr << ": " << (it -> frequency_str()) << ": " <<  (it -> callsign()) << endl;
+//
+    //  it = next(it);
+   // }
 
   }
   else
     ost << "bandmap is EMPTY" << endl;
+#endif
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
@@ -1476,8 +1443,8 @@ window& bandmap::write_to_window(window& win)
       const bool        is_marker     { be.is_marker() };
 
 // debug: write QRG of marker
-      if (be.is_my_marker())
-        ost << "MY MARKER: " << be.to_brief_string() << endl;
+//      if (be.is_my_marker())
+ //       ost << "MY MARKER: " << be.to_brief_string() << endl;
 
       if (!found_my_marker and be.is_my_marker())
       { found_my_marker = true;

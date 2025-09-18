@@ -110,10 +110,9 @@ void rig_interface::_error_alert(const string_view msg) const
     Does nothing if <i>f</i> is not within a ham band.
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
-//void rig_interface::_rig_frequency(const frequency& f, const VFO v)
+
 void rig_interface::_rig_frequency(const frequency f, const VFO v)
-{ //constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(100) };      // period between retries
-  constexpr std::chrono::duration RETRY_TIME { 100ms };      // period between retries
+{ constexpr std::chrono::duration RETRY_TIME { 100ms };      // period between retries
 
   if (f.is_within_ham_band())
   { switch (v)
@@ -129,38 +128,82 @@ void rig_interface::_rig_frequency(const frequency f, const VFO v)
     if (_rig_connected)
     { SAFELOCK(_rig);           // hold the lock until we have received confirmation that the frequency is correct
 
-      bool retry { true };
+      if (_model == RIG_MODEL_K3)
+      { bool retry { true };
 
-      constexpr int MAX_RETRIES { 2 };
+        constexpr int MAX_RETRIES { 2 };
 
-      int n_retries { 0 };
+        int n_retries { 0 };
+
+        while ( (retry) and (n_retries++ <= MAX_RETRIES) )
+        { raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
+
+          const frequency rf { _rig_frequency(v) };
+
+          if (f != rf)
+          { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
+
+            _error_alert(msg);
+            ost << msg << "; retrying" << endl;
+
+
+            if (n_retries <= MAX_RETRIES)
+              sleep_for(RETRY_TIME);
+            else
+            ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
+          }
+          else
+            retry = false;
+        }
+      }
+      else      // not K3
+      { bool retry { true };
+
+        constexpr int MAX_RETRIES { 2 };
+
+        int n_retries { 0 };
 
 // the brain-dead K3 will sometimes infinitely fail to go to the correct frequency
-      while ( (retry) and (n_retries++ <= MAX_RETRIES) )
-      { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
-          _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+        while ( (retry) and (n_retries++ <= MAX_RETRIES) )
+        { //if (_model == RIG_MODEL_K3)
+        //{ //string cmd { (v == VFO::A) ? "FA"s : "FB"s };
+
+          //string hz_freq = pad_leftz(to_string(f.hz()), 11);
+
+          //cmd += hz_freq;
+          //cmd += ';';
+
+//          raw_command(cmd + hz_freq + ";"s);
+        //  raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
+       // }
+        //else    // not K3
+          { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
+              _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
 //        if (debug)
-        { ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
-        }
+            { ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
+            }
 
-        if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
+
+            if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
 // if we use the following line, then sometimes we get trapped and cannot move down in frequency
 // if the band marker is just *above* a bm entry (say, if we have manually moved up slightly in frequency)
 //        if (const auto rf {_rig_frequency(v)}; (abs(rf - f) > MAX_ERROR) )    // explicitly check the frequency
-        { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
+            { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
 
-          _error_alert(msg);
-          ost << msg << "; retrying" << endl;
+              _error_alert(msg);
+              ost << msg << "; retrying" << endl;
 //          ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
 
-          if (n_retries <= MAX_RETRIES)
-            sleep_for(RETRY_TIME);
-          else
-            ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
+              if (n_retries <= MAX_RETRIES)
+                sleep_for(RETRY_TIME);
+              else
+                ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
+            }
+            else
+              retry = false;
+          }
         }
-        else
-          retry = false;
       }
     }
   }
@@ -175,15 +218,23 @@ void rig_interface::_rig_frequency(const frequency f, const VFO v)
 frequency rig_interface::_rig_frequency(const VFO v) const
 { if (!_rig_connected)
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
-  else
+
+  if (_model == RIG_MODEL_K3)
+  { const string response = raw_command( (v == VFO::A) ? "FA;"s : "FB;"s, RESPONSE::EXPECTED);
+
+    return frequency(from_string<uint32_t>(substring <string> (response, 2, 11)));
+  }
+  else          // not K3
   { freq_t hz;
 
     SAFELOCK(_rig);
 
     if (const int status { rig_get_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_CURR : RIG_VFO_B ), &hz) }; status != RIG_OK)
-    { _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+    { _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));             // written to screen and to output file
       return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b) ;
     }
+
+//    _error_alert("DUMMY ERROR ALERT");
 
     return frequency(hz);
   }

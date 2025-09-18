@@ -1,4 +1,4 @@
-// $Id: bandmap.h 272 2025-07-13 22:28:31Z  $
+// $Id: bandmap.h 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -297,8 +297,12 @@ class bandmap_filter_type
 {
 protected:
 
+#if defined(TRIXIE_GCC)
 //  using GROUP_TYPE = std::vector<std::string>;    // container type to hold continents or canonical prefixes
+  using GROUP_TYPE = std::set<std::string>;    // container type to hold continents or canonical prefixes
+#else
   using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixes
+#endif
 
   GROUP_TYPE  _continents  { };           ///< continents to filter
   bool        _enabled     { false };     ///< is bandmap filtering enabled?
@@ -323,7 +327,19 @@ public:
   inline std::vector<std::string> filter(void) const
 //    { return (_continents + _prefixes); }
 //auto con = std::views::concat(v0, v1, a, ie);
+//    { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
+#if defined(TRIXIE_GCC)
+    { std::vector<std::string> rv;
+
+      FOR_ALL (_continents, [&rv] (const std::string con) { rv += con; });
+      FOR_ALL (_prefixes, [&rv] (const std::string pfx) { rv += pfx; });
+
+      return rv;
+    }
+//      return (_continents + _prefixes); }
+#else
     { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
+#endif
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -499,8 +515,6 @@ public:
     \param  value   value of the mult
     \return         whether the mult was actually added
 */
-//  inline bool add_exchange_mult(const std::string& name, const std::string& value)
-//  inline bool add_exchange_mult(const std::string_view name, const std::string& value)
   inline bool add_exchange_mult(const std::string_view name, const std::string_view value)
     { return (_is_needed_exchange_mult.add( { std::string { name }, std::string { value } } ) ); }  // can't use += here because we need the result
 
@@ -910,29 +924,13 @@ public:
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-//  void not_needed_callsign_mult(std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
-//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string& /* callsign */),
-//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
-//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
-//                                  const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
-//  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
-//                                  const std::string_view mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
   void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
                                   const std::string_view mult_type /* e.g., "WPXPX" */ , const std::string_view callsign_mult_string /* e.g., "SM1" */);
-
-/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
-    \param  mult_type               name of mult type
-    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
-*/
-//  void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
     \param  mult_name   name of exchange mult
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
-//  void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);
-//  void not_needed_exchange_mult(const std::string_view mult_name, const std::string& mult_value);
   void not_needed_exchange_mult(const std::string_view mult_name, const std::string_view mult_value);
 
 /// prune the bandmap
@@ -962,7 +960,6 @@ public:
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
      filter.
 */
-//  void filter_add_or_subtract(const std::string& str);
   void filter_add_or_subtract(const std::string_view str);
 
 /// is the filter in hide mode? (as opposed to show)
@@ -1135,7 +1132,6 @@ public:
 
      Calls in the do-not-add list are never added to the bandmap
 */
-//  void do_not_add(const std::string& callsign);
   void do_not_add(const std::string_view callsign);
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
@@ -1144,9 +1140,11 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
   template<typename C>
-    requires (is_string<typename C::value_type>)
+//    requires (is_string<typename C::value_type>)
+    requires (is_ssv<typename C::value_type>)
   inline void do_not_add(const C& calls)
-    { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
+//    { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
+    { FOR_ALL(calls, [this] (const std::string_view s) { do_not_add(s); }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
      \param calls   container of calls to add
@@ -1154,9 +1152,11 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
   template<typename C>
-    requires (is_string<typename C::value_type>)
+//    requires (is_string<typename C::value_type>)
+    requires (is_ssv<typename C::value_type>)
   inline void do_not_add(C&& calls)
-    { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
+//    { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
+    { FOR_ALL(std::forward<C>(calls), [this] (const std::string_view s) { do_not_add(s); }); }
 
 /*!  \brief             Remove a call from the do-not-add list
      \param callsign    callsign or regex to remove
@@ -1197,13 +1197,6 @@ public:
     \return         the window
 */
   window& write_to_window(window& win);
-
-/*! \brief              Write a <i>bandmap</i> object to a window, but only if it's more recent than the last write, and is at least a given period of time after the most recent write
-    \param  win         window to which to write
-    \param  dead_time   time that must have passed for the write to occur
-    \return             the window
-*/
-//  window& protected_write_to_window(window& win, const std::chrono::milliseconds min_delay = 1000ms);
 
 /*! \brief            Rename the mutex associated with this bandmap
     \param  new_name  the new name of the mutex

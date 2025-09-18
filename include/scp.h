@@ -1,4 +1,4 @@
-// $Id: scp.h 259 2025-01-19 15:44:33Z  $
+// $Id: scp.h 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,6 @@
 // forward declaration
 class scp_databases;
 
-//using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
 using SCP_SET = UNORDERED_STRING_SET;    ///< define the type of set used in SCP functions
 
 constexpr int SCP_KEY_SIZE { 2 };         // we index using pairs of characters
@@ -59,7 +58,7 @@ public:
   inline scp_database(void) = default;
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
-  inline explicit scp_database(const std::string& filename)
+  inline explicit scp_database(const std::string_view filename)
     { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
   
 /// construct from vector of calls
@@ -79,18 +78,20 @@ public:
     { FOR_ALL(calls, [this] (const std::string& this_call) { *this += this_call; } ); }
 
 /// add a call to the database
-  void operator+=(const std::string& call);
-  
+  void operator+=(const std::string_view call);
+
 /*! \brief          Remove a call from the database
     \param  call    call to remove
     \return         whether <i>call</i> was actually removed
 */
-  bool remove_call(const std::string& call);
+//  bool remove_call(const std::string& call);
+  bool remove_call(const std::string_view call);
 
 /*! \brief          Remove a call from the database
     \param  call    call to remove
 */
-  void operator-=(const std::string& call);
+//  void operator-=(const std::string& call);
+  void operator-=(const std::string_view call);
 
 /*! \brief        Is a call in the database?
     \param  call  call to test
@@ -98,14 +99,15 @@ public:
 
     Actually tests only the set of calls for the first pair of characters in <i>call</i>
 */
-  inline bool contains(const std::string& call)
+//  inline bool contains(const std::string& call)
+  inline bool contains(const std::string_view call)
     { return (call.empty() ? false : (_db[substring <std::string> (call, 0, SCP_KEY_SIZE)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call
     \return         whether <i>call</i> was actually removed
 */
-  SCP_SET operator[](const std::string& key);
+  SCP_SET operator[](const std::string_view key);
 
 /// empty the database; also clears the cache
   void clear(void);
@@ -149,15 +151,17 @@ public:
     { add_db(db); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
-  inline void remove_call(const std::string& call)
-    { FIND_IF(_vec, [&call] (auto& db) { return (db->remove_call(call)); } ); }
+//  inline void remove_call(const std::string& call)
+  inline void remove_call(const std::string_view call)
+    { FIND_IF(_vec, [&call] (auto& db) { return (db -> remove_call(call)); } ); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
   inline void operator-=(const std::string& call)
     { remove_call(call); }
 
 /// return matches
-  SCP_SET operator[](const std::string& key);
+//  SCP_SET operator[](const std::string& key);
+  SCP_SET operator[](const std::string_view key);
 
 /// clear the cache; also clear the caches of any children
   void clear_cache(void);

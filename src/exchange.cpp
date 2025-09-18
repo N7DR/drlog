@@ -709,7 +709,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         }
 
 // we might revoke the validity flag here, if we spot a problem
-        if (!found_map and !(optional_field_names > name))
+//        if (!found_map and !(optional_field_names > name))
+        if ( !found_map and !optional_field_names.contains(name) )
         { ost << "WARNING: unable to find map assignment for key = " << name << endl;
           _valid = false;
         }
@@ -734,11 +735,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     Returns empty string if <i>field_name</i> does not exist
 */
-//string parsed_exchange::field_value(const string& field_name) const
 string parsed_exchange::field_value(const string_view field_name) const
 { const auto cit { FIND_IF(_fields, [field_name] (const auto& field) { return (field.name() == field_name); } ) };   // returns first match in the vector
 
-  return (cit == _fields.cend()) ? string { } : cit->value();
+  return (cit == _fields.cend()) ? string { } : cit -> value();
 }
 
 /*! \brief          Return the names and values of matched fields
@@ -780,8 +780,6 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-//string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
-//string parsed_exchange::resolve_choice(const string_view field_name, const string& received_value, const contest_rules& rules) const
 string parsed_exchange::resolve_choice(const string_view field_name, const string_view received_value, const contest_rules& rules) const
 { if (field_name.empty())
     return string { };
@@ -789,7 +787,6 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
   if (!contains(field_name, '+'))   // if not a CHOICE
     return string { field_name };
 
-//  const vector<string>   choices_vec        { split_string <std::string> (field_name, '+') };
   const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, '+') };
   const STRING_MAP<EFT>     exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
@@ -852,7 +849,6 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-//string exchange_field_database::guess_value(const string_view callsign, const string& field_name)
 string exchange_field_database::guess_value(const string_view callsign, const string_view field_name)
 { SAFELOCK(exchange_field_database);
 
@@ -1092,12 +1088,15 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
-//  if ( (field_name == "JAPREF"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
-  if ( (field_name == "JAPREF"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+  static const STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
+
+//  if ( (field_name == "JAPREF"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+  if ( (field_name == "JAPREF"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth());
 
 //  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
-  if ( (field_name == "KCJ"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+//  if ( (field_name == "KCJ"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+  if ( (field_name == "KCJ"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth2());    // I think that this should work
 
   if (field_name == "NAME"sv)

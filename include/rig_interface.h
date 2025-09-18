@@ -143,7 +143,6 @@ protected:
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
 */
-//  void (*_error_alert_function)(const std::string& msg) { nullptr };
   void (*_error_alert_function)(const std::string_view msg) { nullptr };
 
 // protected functions
@@ -153,7 +152,6 @@ protected:
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-//  void _error_alert(const std::string& msg) const;
   void _error_alert(const std::string_view msg) const;
 
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig

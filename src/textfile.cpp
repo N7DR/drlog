@@ -65,8 +65,6 @@ textfile_iterator begin(textfile& tf)
   rv._last_line = move(the_line);
   rv._strp = &rv._last_line;
 
-  //ost << "textfile begin() called; last_line = " << rv._last_line << endl;
-
   return rv;
 }
 
@@ -83,7 +81,7 @@ textstream_iterator& textstream_iterator::operator++(void)    // pre-incrementab
 { getline((*_streamp), _last_line);
 
   if (_streamp -> eof())
-  { *this = textstream_iterator();
+  { *this = textstream_iterator { };
 
     return *this;
   }
@@ -99,7 +97,7 @@ textstream_iterator& textstream_iterator::operator++(void)    // pre-incrementab
 */
 textstream_iterator begin(textstream& tf)
 { textstream_iterator rv;
-  string             the_line;
+  string              the_line;
 
   if (tf.eof())
     return rv;
@@ -109,7 +107,7 @@ textstream_iterator begin(textstream& tf)
   std::getline(tf, the_line);
 
   if (rv._streamp -> eof())
-    return textstream_iterator();
+    return textstream_iterator { };
 
   rv._last_line_nr = 0;
   rv._last_line    = move(the_line);

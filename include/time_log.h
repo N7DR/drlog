@@ -1,4 +1,4 @@
-// $Id: time_log.h 259 2025-01-19 15:44:33Z  $
+// $Id: time_log.h 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -31,9 +31,6 @@ class time_log
 {
 protected:
 
-//  std::chrono::time_point<std::chrono::system_clock> _start { std::chrono::system_clock::now() };   ///< starting time point
-//  std::chrono::time_point<std::chrono::system_clock> _end   { };                                    ///< ending time point
-
   TIME_POINT _start { NOW_TP() };   ///< starting time point
   TIME_POINT _end   { };            ///< ending time point
 
@@ -45,20 +42,17 @@ public:
 /*! \brief  Start the timer
 */ 
   inline void start_now(void)
-//    { _start = std::chrono::system_clock::now(); }
     { _start = NOW_TP(); }
 
 /*! \brief  Stop the timer
 */ 
   inline void end_now(void)
-//    { _end = std::chrono::system_clock::now(); }
     { _end = NOW_TP(); }
 
 /*! \brief  Reset the timer to initial state, except that the timer is started at the current time
 */
   void restart(void)
-  { //_start = std::chrono::system_clock::now();
-    _start = NOW_TP();
+  { _start = NOW_TP();
     _end = { };
   }
 
@@ -76,7 +70,6 @@ public:
 */
   template <class U = double, class T = A>
   inline U click(void) const
-//    { return static_cast<U>(duration_cast<T>(std::chrono::system_clock::now() - _start).count()); }
     { return static_cast<U>(duration_cast<T>(NOW_TP() - _start).count()); }
 
 /*! \brief  Return the time between the start time and the end time, in units of the duration template (default microseconds)

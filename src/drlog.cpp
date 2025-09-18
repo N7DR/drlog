@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 273 2025-07-27 13:22:36Z  $
+// $Id: drlog.cpp 274 2025-08-11 20:42:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1089,8 +1089,8 @@ int main(int argc, char** argv)
       drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() };
 
       tl.end_now();
-      ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
 
+      ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
       ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
 
       if (context.xscp_percent_cutoff())                              // prune the database of low XSCP numbers
@@ -1248,13 +1248,94 @@ int main(int argc, char** argv)
           exit(-1);
         }
       }
-    
+
+      if (cl.parameter_present("-RACE"))
+      { ost << "RACE command found" << endl;
+
+        const int n_loops { cl.value_present("-RACE") ? from_string<int>(cl.value("-RACE")) : 10 };
+
+        rig.instrument();
+
+        constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
+
+        const array<frequency, 10> f { 28200_kHz, 28210_kHz, 28220_kHz, 28230_kHz, 28240_kHz,
+                                       28250_kHz, 28260_kHz, 28270_kHz, 28280_kHz, 28290_kHz };
+
+        rig.k3_command_mode(K3_COMMAND_MODE::EXTENDED);
+
+        int attempts    { 0 };
+        int fast_errors { 0 };
+        int slow_errors { 0 };
+
+        for (int loop_nr { 0 }; loop_nr < n_loops; ++loop_nr)
+        { ost << "RACE LOOP NUMBER " << loop_nr << endl;
+
+          for (size_t idx { 0 }; idx < f.size(); ++idx)
+          { const frequency commanded_frequency { f[idx] };
+
+            attempts++;
+
+            rig.rig_frequency(commanded_frequency);
+
+            frequency read_f_frequency { rig.rig_frequency() };
+
+            if (read_f_frequency != commanded_frequency)
+            { ost << "FAST FREQUENCY ERROR: SHOULD BE " << commanded_frequency << ", IS " << read_f_frequency << endl;
+              fast_errors++;
+            }
+
+            ost << NOW_TP() << " about to poll rig" << endl;
+
+            const string status_str { rig.raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
+//        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters;
+
+            ost << NOW_TP() << ": polled rig status: " << status_str << endl;
+
+            if (status_str.length() != STATUS_REPLY_LENGTH)
+              ost << "incorrect status length: " << status_str.length()<< endl;
+            else
+            { const frequency s_f { from_string<double>(substring <std::string> (status_str, 2, 11)) };   // slow frequency
+
+              if (s_f != commanded_frequency)
+              { ost << "SLOW FREQUENCY ERROR: SHOULD BE " << commanded_frequency << ", IS " << s_f << endl;
+                slow_errors++;
+
+                frequency read_f_frequency_2 { rig.rig_frequency() };
+                ost << "SECOND FAST READ RETURNS " << read_f_frequency_2 << endl;
+
+                const string    status_str_2 { rig.raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
+                const frequency s_f_2        { from_string<double>(substring <std::string> (status_str_2, 2, 11)) };   // slow frequency
+
+                ost << "SECOND SLOW READ RETURNS " << s_f_2 << endl;
+
+// now a series of fast reads
+                for (int fast_read_nr { 1 }; fast_read_nr <= 10; ++fast_read_nr)
+
+//                sleep_for(1s);
+
+                { frequency read_f_frequency_3 { rig.rig_frequency() };
+                  ost << fast_read_nr << " IN FAST READ SERIES RETURNS " << read_f_frequency_3 << endl;
+
+                  sleep_for(100ms);
+                }
+
+//                exit(0);      // stop on first slow error
+              }
+            }
+          }
+        }
+
+        ost << "END OF RACE; ATTEMPTS = " << attempts << "; FAST ERRORS = " << fast_errors << "; slow_errors = " << slow_errors << "; total errors = " << fast_errors + slow_errors << endl;
+
+        exit(0);
+      }
+
 // possibly put rig into TEST mode
       if (context.test())
         rig.test(true);
 
 // possibly set up CW buffer
-      if (contains(to_upper(context.modes()), "CW"s) and !context.keyer_port().empty())
+      if (contains(to_upper(context.modes()), "CW"sv) and !context.keyer_port().empty())
       { try
         { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed(), context.cw_priority());
         }
@@ -1319,7 +1400,7 @@ int main(int argc, char** argv)
       }
 
 // set the RBN threshold for each bandmap
-      if (rbn_threshold != 1)               // 1 is the default in a pristine bandmap, so there may be no need to change
+      if (rbn_threshold != 1)                   // 1 is the default in a pristine bandmap, so there may be no need to change
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
@@ -1333,7 +1414,7 @@ int main(int argc, char** argv)
       my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
 // add my marker to each bandmap
-      ost << "initialising bandmap with my info" << endl;
+//      ost << "initialising bandmap with my info" << endl;
 
       for (const auto b : permitted_bands)
       { bandmap&      bm { bandmaps[b] };
@@ -1342,16 +1423,15 @@ int main(int argc, char** argv)
         if (b == current_band)
           be.freq(rig.rig_frequency());
         else
-//          be.freq(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
           be.freq(DEFAULT_FREQUENCIES.at( { b, current_mode } ));
 
-        ost << "band number: " << b << endl;
-        ost << "band number for bandmap: " << bm.band() << endl;
-        ost << "bandmap for band: " << BAND_NAME[bm.band()] << endl;
+//        ost << "band number: " << b << endl;
+//        ost << "band number for bandmap: " << bm.band() << endl;
+//        ost << "bandmap for band: " << BAND_NAME[bm.band()] << endl;
 
         bm += be;
 
-        ost << "be: " << be << endl;
+//        ost << "be: " << be << endl;
       }
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
@@ -1398,13 +1478,10 @@ int main(int argc, char** argv)
 
       if (!context.batch_messages_file().empty())
       { try
-        { //const vector<string> messages { to_lines <std::string> (read_file(context_path, context.batch_messages_file())) };
-
-          string current_message { };
+        { string current_message { };
 
           SAFELOCK(batch_messages);
 
-//          for (const auto& messages_line : messages)
           for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.batch_messages_file())))
           { if (!messages_line.empty())
             { if (contains(messages_line, '['))
@@ -1911,7 +1988,6 @@ int main(int argc, char** argv)
           octothorpe = 1;
 
 // display most-recent lines from log
-//        editable_log.recent_qsos(logbk, true);
         editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
 // correct QSO number (and octothorpe)
@@ -2341,12 +2417,14 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
         if ( is_ssb and ( rigp -> k3_command_mode() == K3_COMMAND_MODE::NORMAL ) )  // NB this is the mode drlog /thinks/ is correct, but it saves time
           rigp -> k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 
+//        ost << NOW_TP() << "about to poll rig" << endl;
+
 //        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };               // K3 returns 38 characters
         const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
 //        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
         const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters; currently needed only in SSB
 
-        ost << NOW_TP() << ": polled rig status: " << status_str << endl;
+//        ost << NOW_TP() << ": polled rig status: " << status_str << endl;
 
         if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
         { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
@@ -2885,20 +2963,22 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     unprocessed_input = unprocessed_input_sv;       // copy to the original owner of the data
 
 // update displayed bandmap if there was a change
-    const BAND cur_band { current_band };
+//    const BAND cur_band { current_band };
 
 /// THINK ABOUT IF WE HAVE CHANGED BANDS WHILE PROCESSING THIS... => DISPLAY DIFFERENT BAND
 
 // perhaps don't display anything if we've changed bands
-        while (ignore_next_process_insertion_queue)
-        { ignore_next_process_insertion_queue = false;
-          ost << NOW_TP() << ": pausing ALL processing insertion queue" << endl;
-          sleep_for(1s);
-        }
+    while (ignore_next_process_insertion_queue)
+    { ignore_next_process_insertion_queue = false;
+      ost << NOW_TP() << ": pausing ALL processing insertion queue" << endl;
+      sleep_for(1s);
+    }
+
+    /* const */BAND cur_band { current_band };
 
     for (const BAND b : changed_bands)
     { if (b == cur_band)
-      { ost << NOW_TP() << ": preparing to process insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
+      { //ost << NOW_TP() << ": preparing to process insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << " for band " << b << endl;
 
         while (ignore_next_process_insertion_queue)
         { ignore_next_process_insertion_queue = false;
@@ -2906,8 +2986,16 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
           sleep_for(1s);
         }
 
-        ost << NOW_TP() << ": processing insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
-        bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
+        //ost << NOW_TP() << ": processing insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
+
+        cur_band = current_band;
+
+        if (b == cur_band)
+          bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
+        else
+        { ost << "Band appears to have changed; not writing to window; cur band now = " << cur_band << endl;
+          bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
+        }
       }
       else
         bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
@@ -3182,7 +3270,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
-  { if (e.is_unmodified() and (keypad_numbers > e.symbol()) )
+  { //if (e.is_unmodified() and (keypad_numbers > e.symbol()) )
+    if ( e.is_unmodified() and keypad_numbers.contains(e.symbol()) )
     { if (original_contents.empty())               // may need to temporarily reduce octothorpe for when SAP asks for repeat of serno
         octothorpe--;
 
@@ -4241,7 +4330,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // and unmodified ; and ': also up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
   { if (drlog_mode == DRLOG_MODE::SAP)                              // do nothing in CQ mode
-    { ost << "UP or DOWN using N7DR criteria" << endl;
+    { //ost << "UP or DOWN using N7DR criteria" << endl;
       ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
       ignore_next_process_insertion_queue = true;
       update_quick_qsy();
@@ -8645,15 +8734,15 @@ void end_of_thread(const string_view name)
 //void update_based_on_frequency_change(const frequency& f, const MODE m)
 void update_based_on_frequency_change(const frequency f, const MODE m)
 { //static frequency last_update_frequency { };
-  ost << NOW_TP() << ": update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
+  //ost << NOW_TP() << ": update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
 
  // if (my_thread_id() == display_rig_status_thread_id)
  //   ost << "update_based_on_frequency_change() called from display_rig_status() thread" << endl;
 
 //  if (debug)
-  { ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
-    ost << "last_update_frequency = " << static_cast<frequency>(last_update_frequency) << endl;
-  }
+  //{ ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
+ //   ost << "last_update_frequency = " << static_cast<frequency>(last_update_frequency) << endl;
+  //}
 
   if (f == last_update_frequency)   // don't update if the frequency hasn't changed
   { //ost << "frequency has not changed: " << f << "; NO UPDATE" << endl;
@@ -8671,8 +8760,8 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 
     return;
   }
-  else
-    ost << "f = mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << "; looks OK; proceeding" << endl;
+//  else
+//    ost << "f = mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << "; looks OK; proceeding" << endl;
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
 
@@ -8897,7 +8986,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     This is the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ ost << endl << endl << "inside process_bandmap_function; dirn = " << ((dirn == BANDMAP_DIRECTION::DOWN) ? "DOWN"s : "UP"s) << endl;
+{ //ost << endl << endl << "inside process_bandmap_function; dirn = " << ((dirn == BANDMAP_DIRECTION::DOWN) ? "DOWN"s : "UP"s) << endl;
 
   constexpr frequency MAX_SKEW { 95_Hz };
 
@@ -8917,23 +9006,23 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
         << "; next bandmap entry: " << be.to_brief_string()
         << endl;
   }
-  else
-  { ost << "inside process_bandmap_function(): " << endl
-        << "f_rig = " << f_rig
-        << "; current actual frequency from rig = " << rig.rig_frequency()
-        << "; bandmap version: " << bm.version_str() << endl
-        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
-        << "; next bandmap entry: " << be.to_brief_string()
-        << endl;
-  }
+//  else
+//  { ost << "inside process_bandmap_function(): " << endl
+//        << "f_rig = " << f_rig
+//        << "; current actual frequency from rig = " << rig.rig_frequency()
+//        << "; bandmap version: " << bm.version_str() << endl
+//        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
+//        << "; next bandmap entry: " << be.to_brief_string()
+//        << endl;
+//  }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function; this tests for non-empty callsign
   { ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
 //if (debug)
 //      ost << "at time " << NOW_TP() << ": " << endl;
-      ost << "moving from: " << f_rig << endl;
-      ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
+   //   ost << "moving from: " << f_rig << endl;
+   //   ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     rig.rig_frequency(be.freq());                                   // QSY to next station
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();    // display call of next station
@@ -8945,7 +9034,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
     //if (debug)
-      ost << "after window update based on frequency change purportedly to " << be.freq() << "; my bandmap entry now: " << bm.my_bandmap_entry().to_brief_string() << endl;
+    //  ost << "after window update based on frequency change purportedly to " << be.freq() << "; my bandmap entry now: " << bm.my_bandmap_entry().to_brief_string() << endl;
 
 //    { const bandmap_entry my_be { bm[MY_MARKER] };
 //
@@ -8958,7 +9047,10 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     last_call_inserted_with_space = be.callsign();
   }
 
-  ost << "end of process_bandmap_function" << endl << endl << endl;
+//  const frequency check { rig.rig_frequency() };
+//  ost << NOW_TP() << ": frequency check read from rig: " << check << endl;
+
+//  ost << "end of process_bandmap_function" << endl << endl << endl;
 
   return true;
 }
@@ -9084,7 +9176,10 @@ string run_external_command(const string_view cmd)
   array<char, BUFLEN> buffer;
   string              result { };
 
-  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose);
+//  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose); // gives warning in trixie gcc
+  unique_ptr<FILE, int(*)(FILE*)> pipe(popen(string(cmd).c_str(), "r"), pclose);    // https://stackoverflow.com/questions/76867698/what-does-ignoring-attributes-on-template-argument-mean-in-this-context
+//   std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd, "r"), &pclose);
+//  auto pipe { popen(string(cmd).c_str(), "r"), pclose) };
 
   if (!pipe)
     return ( alert("WARNING: Error executing command: "s + cmd), string { } );

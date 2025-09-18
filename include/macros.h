@@ -32,6 +32,9 @@
 
 #include <cmath>
 
+
+#define TRIXIE_GCC
+
 // convenient definitions for use with chrono functions
 using centiseconds = std::chrono::duration<long, std::centi>;
 using deciseconds = std::chrono::duration<long, std::deci>;
@@ -874,30 +877,30 @@ public:                                                                         
     \param  e   object to be tested for membership
     \return     Whether <i>e</i> is a member of <i>v</i>
 */
-template <class T, class U>
-  requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
-inline bool operator>(const T& v, const U& e)
-  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
+//template <class T, class U>
+//  requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
+//inline bool operator>(const T& v, const U& e)
+//  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
 
 /*! \brief      Does a set or unordered_set contains a particular member?
     \param  s   set or unordered_set  to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
-template <class T, class U>
-  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
-inline bool operator>(const T& s, const U& v)
-  { return s.contains(v); }
+//template <class T, class U>
+//  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
+//inline bool operator>(const T& s, const U& v)
+//  { return s.contains(v); }
 
 /*! \brief      Is an object a member of a set or unordered_set?
     \param  v   object to be tested for membership
     \param  s   set or unordered_set  to be tested
     \return     Whether <i>v</i> is a member of <i>s</i>
 */
-template <class E, class S>
-  requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
-inline bool operator<(const E& v, const S& s)
-{ return (s > v); }
+//template <class E, class S>
+//  requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
+//inline bool operator<(const E& v, const S& s)
+//  { return (s > v); }
 
 /*! \brief      Union of two sets of the same type
     \param  s1  first set
@@ -1571,7 +1574,7 @@ inline auto ALL_KEYS_USET(const M& m) -> std::unordered_set<typename M::key_type
 
 // *** https://en.cppreference.com/w/cpp/container/map
 
-// need to use this so as to get heterogeneous lookup for string types
+// need to use this special version so as to get heterogeneous lookup for string types
 template <typename M>  // M = map<T, set<T> >
   requires is_mum<M> and is_string<typename M::key_type>
 auto INVERT_MAPPING(const M& original_mapping) -> STRING_MAP<std::string>
@@ -1583,7 +1586,10 @@ auto INVERT_MAPPING(const M& original_mapping) -> STRING_MAP<std::string>
   return rv;
 }
 
-#if 1
+/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, T>, where final keys are the elements of the original set
+    \param  original_mapping    original mapping
+    \return                     inverted mapping
+*/
 template <typename M>  // M = map<T, set<T> >
   requires is_mum<M> and is_sus<typename M::value_type> and std::is_same_v<typename M::key_type, typename M::value_type::value_type>
 auto INVERT_MAPPING(const M& original_mapping) -> M
@@ -1594,7 +1600,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> M
 
   return rv;
 }
-#endif
 
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached

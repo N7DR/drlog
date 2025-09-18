@@ -775,7 +775,7 @@ unsigned int old_log::increment_n_qsos(const string_view call)
 unsigned int old_log::n_qsos(const string_view call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
-  return (cit == _olog.cend() ? 0 : get<3>(cit->second).count( { b, m } ));
+  return (cit == _olog.cend() ? 0 : get<3>(cit -> second).count( { b, m } ));
 }
 
 /*! \brief          Increment the number of QSOs associated with a particular callsign, band and mode
@@ -784,7 +784,6 @@ unsigned int old_log::n_qsos(const string_view call, const BAND b, const MODE m)
     \param  m       target mode
     \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
-//unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
 unsigned int old_log::increment_n_qsos(const string_view call, const BAND b, const MODE m)
 { get<3>(_find_or_create(call) -> second) += { b, m };
 
@@ -800,5 +799,5 @@ unsigned int old_log::increment_n_qsos(const string_view call, const BAND b, con
 bool old_log::confirmed(const string_view call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
-  return ( cit == _olog.cend() ? false : get<2>(cit->second) > pair<BAND, MODE>( { b, m } ) );
+  return ( cit == _olog.cend() ? false : get<2>(cit -> second).contains(pair<BAND, MODE>( { b, m } ) ) );
 }
