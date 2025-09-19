@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: rig_interface.cpp 275 2025-09-19 14:02:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,7 +20,7 @@
 #include "rig_interface.h"
 #include "string_functions.h"
 
-#include "hamlib/serial.h"
+//#include "hamlib/serial.h"
 
 #include <chrono>
 #include <iostream>
@@ -31,6 +31,8 @@
 #include <termios.h>
 #include <cstdio>
 #include <fcntl.h>
+
+#include <hamlib/rig.h>
 
 using namespace std;
 using namespace   chrono;        // std::chrono
@@ -949,14 +951,16 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
   { SAFELOCK(_rig);             // hold lock until we're done
 
-    serial_flush(&rs_p->rigport);
+//    serial_flush(&rs_p->rigport);
+    rig_flush(&rs_p->rigport);
 
     if (_instrumented)
       ost << "sent to rig: " << cmd << endl;
 
     write(fd, cmd.data(), cmd.length());     // send the command
 
-    serial_flush(&rs_p->rigport);
+//    serial_flush(&rs_p->rigport);
+    rig_flush(&rs_p->rigport);
     sleep_for(RETRY_TIME);            // wait for a bit
 
     fd_set set;
