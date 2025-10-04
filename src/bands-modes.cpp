@@ -14,9 +14,10 @@
 using namespace std;
 
 extern message_stream ost;              ///< for debugging and logging
-extern string FREQUENCY_STRING_POINT;
+extern string         FREQUENCY_STRING_POINT;
 
-constexpr frequency BAND_EDGE_GUARD { 25_Hz };    // just to keep us a bit away from the lower band edge
+//constexpr frequency BAND_EDGE_GUARD { 25_Hz };    // just to keep us a bit away from the lower band edge
+constexpr frequency BAND_EDGE_GUARD { 30_Hz };    // just to keep us a bit away from the lower band edge; turns out that it needs to be a multiple of 10 Hz on the K3 in default resolution
 
 /// default frequencies for bands and modes
 const unordered_map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES { { { BAND_160, MODE_CW },  1'800_kHz + BAND_EDGE_GUARD },

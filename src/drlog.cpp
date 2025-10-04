@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: drlog.cpp 276 2025-09-21 15:27:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -209,12 +209,11 @@ void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
                      call_history& q_history,
-                     rate_meter& rate);             ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
-memory_entry recall_memory(const unsigned int n);   ///< recall a memory
-void rescore(const contest_rules& rules);           ///< Rescore the entire contest
+                     rate_meter& rate);                 ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
+memory_entry recall_memory(const unsigned int n = 0);   ///< recall a memory
+void rescore(const contest_rules& rules);               ///< Rescore the entire contest
 void restore_data(const string_view archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string_view msg);            ///< Alert the user to a rig-related error
-//string run_external_command(const string& cmd);     ///< run an external command
 string run_external_command(const string_view cmd);     ///< run an external command
 
 void   send_qtc_entry(const qtc_entry& qe, const bool log_it);                  ///< send a single QTC entry (on CW)
@@ -6040,6 +6039,7 @@ void enter_cq_mode(void)
     }
 
     p3_span(p3_span_cq);
+    insert_memory();            // put the rig state into memory
   }
 
   catch (const rig_interface_error& e)
@@ -8843,7 +8843,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
       const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
 
       if (!nearby_callsign.empty())
-      { ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
+      { //ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
         display_nearby_callsign(nearby_callsign);
       }
       else                                        // no nearby callsign; possibly clear windows
@@ -8883,6 +8883,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
   }                 // end of changed frequency
 }
 
+#if 1
 /*! \brief          Process a bandmap function, to jump to the next frequency returned by the function
     \param  fn_p    pointer to function
     \param  dirn    direction in which the function is to be applied
@@ -8893,9 +8894,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
     This is NOT the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ ost << "explicit process_band_map_function() called" << endl;
-
-  bandmap& bm { bandmaps[current_band] };
+{ bandmap& bm { bandmaps[current_band] };
 
   safelock bm_lock(bm._bandmap_mutex);    // hold the lock for this entire routine; this essentially forces this update to occur on-screen
 
@@ -8976,6 +8975,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
   return true;
 }
+#endif
 
 /*! \brief          Jump to the next frequency up or down on the displayed bandmap, possibly skipping some entries
     \param  dirn    direction in which the function is to be applied
@@ -8986,9 +8986,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     This is the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ //ost << endl << endl << "inside process_bandmap_function; dirn = " << ((dirn == BANDMAP_DIRECTION::DOWN) ? "DOWN"s : "UP"s) << endl;
-
-  constexpr frequency MAX_SKEW { 95_Hz };
+{ constexpr frequency MAX_SKEW { 95_Hz };
 
   bandmap& bm { bandmaps[current_band] };
 
@@ -9006,23 +9004,9 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
         << "; next bandmap entry: " << be.to_brief_string()
         << endl;
   }
-//  else
-//  { ost << "inside process_bandmap_function(): " << endl
-//        << "f_rig = " << f_rig
-//        << "; current actual frequency from rig = " << rig.rig_frequency()
-//        << "; bandmap version: " << bm.version_str() << endl
-//        << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
-//        << "; next bandmap entry: " << be.to_brief_string()
-//        << endl;
-//  }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function; this tests for non-empty callsign
   { ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
-
-//if (debug)
-//      ost << "at time " << NOW_TP() << ": " << endl;
-   //   ost << "moving from: " << f_rig << endl;
-   //   ost << "next bandmap entry: setting frequency to: " << be.freq() << endl;
 
     rig.rig_frequency(be.freq());                                   // QSY to next station
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();    // display call of next station
@@ -9033,24 +9017,11 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     possible_mode_change(be.freq());
     update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
-    //if (debug)
-    //  ost << "after window update based on frequency change purportedly to " << be.freq() << "; my bandmap entry now: " << bm.my_bandmap_entry().to_brief_string() << endl;
-
-//    { const bandmap_entry my_be { bm[MY_MARKER] };
-//
-//      ost << "bandmap_entry at MY_MARKER: " << my_be << endl;
-//    }
-
     ok_to_poll_k3 = true;
 
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
   }
-
-//  const frequency check { rig.rig_frequency() };
-//  ost << NOW_TP() << ": frequency check read from rig: " << check << endl;
-
-//  ost << "end of process_bandmap_function" << endl << endl << endl;
 
   return true;
 }
@@ -9061,7 +9032,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     Changes to the default mode associated with <i>f</i>, if multiple
     modes are supported in this contest
 */
-//void possible_mode_change(const frequency& f)
 void possible_mode_change(const frequency f)
 { if (multiple_modes)
   { if (const MODE m { default_mode(f) }; m != current_mode)
@@ -9169,25 +9139,23 @@ bool process_backspace(window& win)
     https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
     note that the code there contains an extra right curly bracket
  */
-//string run_external_command(const string& cmd)
 string run_external_command(const string_view cmd)
 { constexpr size_t BUFLEN { 128 };      // reasonable size for read buffer
 
   array<char, BUFLEN> buffer;
-  string              result { };
+
+  string rv { };
 
 //  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose); // gives warning in trixie gcc
   unique_ptr<FILE, int(*)(FILE*)> pipe(popen(string(cmd).c_str(), "r"), pclose);    // https://stackoverflow.com/questions/76867698/what-does-ignoring-attributes-on-template-argument-mean-in-this-context
-//   std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd, "r"), &pclose);
-//  auto pipe { popen(string(cmd).c_str(), "r"), pclose) };
 
   if (!pipe)
     return ( alert("WARNING: Error executing command: "s + cmd), string { } );
 
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-    result += buffer.data();
+    rv += buffer.data();
 
-  return result;
+  return rv;
 }
 
 /*! \brief        Thread function to get SFI, A, K indices
@@ -9241,7 +9209,6 @@ int time_since_last_qsy(void)
 
     Also updates <i>win_best_dx</i> if necessary
 */
-//void update_best_dx(const grid_square& dx_gs, const string& callsign)
 void update_best_dx(const grid_square& dx_gs, const string_view callsign)
 { static const string INVALID_GRID { "AA00"s };                 // the way to mark a bad grid in the log; don't calculate distance to this square
 
@@ -9313,7 +9280,8 @@ void populate_win_call_history(const string_view callsign)
       const int  window_colour    { send_qtc ? win_qtc_hint_fg : win_qtc_hint_bg };
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
-      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
+//      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
+      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= SPACE_STR;
     }
   }
 }
@@ -9322,6 +9290,8 @@ void populate_win_call_history(const string_view callsign)
 
     Removes the oldest memory if the memory is full.
     Also displays the (updated) contents of the memories.
+
+    Does not add the current configuration if it's identical to the most recent one that was added to the memories
 */
 void insert_memory(void)
 { if (n_memories)
@@ -9331,7 +9301,18 @@ void insert_memory(void)
     me.mode(current_mode);
     me.drlog_mode(drlog_mode);
 
-    memories.push_front(me);        // NB this deque is pushed to front, popped from back
+// check that the most recent memory value isn't the same as the one we are about to push
+//    if (memories.size())
+//    { const memory_entry old_me { recall_memory() };
+//
+//      if (old_me != me)
+//        memories.push_front(me);        // NB this deque is pushed to front, popped from back
+//    }
+//    else
+//      memories.push_front(me);        // NB this deque is pushed to front, popped from back
+
+    if (memories.empty() or (recall_memory() != me))
+      memories.push_front(me);        // NB this deque is pushed to front, popped from back
 
     while (memories.size() > n_memories)
       memories.pop_back();

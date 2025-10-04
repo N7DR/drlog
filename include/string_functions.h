@@ -1,4 +1,4 @@
-// $Id: string_functions.h 273 2025-07-27 13:22:36Z  $
+// $Id: string_functions.h 276 2025-09-21 15:27:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,9 +45,9 @@ constexpr std::string EOL { "\n"s };            ///< end-of-line marker as strin
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
 constexpr std::string LF     { "\n"s };         ///< LF as string
-constexpr std::string LF_STR { "\n"s };            ///< LF as string
+constexpr std::string LF_STR { "\n"s };         ///< LF as string
 
-constexpr char LF_CHAR { '\n' };                    ///< LF as character
+constexpr char LF_CHAR { '\n' };                ///< LF as character
 
 constexpr std::string CR     { "\r"s };         ///< CR as string
 constexpr std::string CR_STR { "\r"s };            ///< CR as string
@@ -557,7 +557,6 @@ auto remove_from_start(const std::string_view s, const std::string_view ss) -> S
     the empty string is returned.
 */
 template <typename STYPE>
-//inline auto remove_from_end(std::string_view s, const unsigned int n) -> STYPE
 inline auto remove_n_chars_from_end(const std::string_view s, const unsigned int n) -> STYPE
   { return ( (n >= s.length()) ? STYPE { EMPTY_STR } : STYPE { s.substr(0, s.length() - n) } ); }
 
@@ -569,9 +568,7 @@ inline auto remove_n_chars_from_end(const std::string_view s, const unsigned int
     If <i>e</i> is not present, just returns <i>s</i>
 */
 template <typename STYPE>
-//inline auto remove_from_end(std::string_view s, std::string_view e) -> STYPE
 inline auto remove_string_from_end(const std::string_view s, const std::string_view e) -> STYPE
-//  { return ( s.ends_with(e) ? remove_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
   { return ( s.ends_with(e) ? remove_n_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
 
 /*! \brief      Remove character if present at the end of a string
@@ -652,7 +649,6 @@ auto remove_trailing_chars(const T& t, const char c) -> std::vector<STYPE>
     \return     a vector of strings or string_views based on <i>t</i>with all trailing instances of <i>c</i> removed
 */
 template <typename STYPE, typename T>
-//  requires ( is_vector<T> and ((is_string<typename T::value_type>) or (is_string_view<typename T::value_type>)) )
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_trailing(const T& t, const char c) -> std::vector<STYPE>
   { return remove_trailing_chars <STYPE> (t, c); }
@@ -1232,7 +1228,6 @@ std::string nth_word(const std::string_view s, const unsigned int n, const unsig
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-//size_t n_chars(const std::string& str);
 size_t n_chars(const std::string_view str);
 
 /*! \brief      Does a string contain a legal dotted-decimal IPv4 address

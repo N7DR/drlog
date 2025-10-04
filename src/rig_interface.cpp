@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: rig_interface.cpp 276 2025-09-21 15:27:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,6 +45,9 @@ extern bool rig_is_split;
 
 //extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
 extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
+
+constexpr char SEMICOLON { ';' };
+
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
  * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
@@ -641,7 +644,8 @@ void rig_interface::rit(const int hz) const
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
 
-      raw_command("RO"s + hz_str + ";"s);
+//      raw_command("RO"s + hz_str + ";"s);
+      raw_command("RO"s + hz_str + SEMICOLON);
     }
   }
   else
@@ -773,7 +777,8 @@ void rig_interface::xit(const int hz) const
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_leftz(positive_hz, 4) };
 
-      raw_command("RO"s + hz_str + ";"s);
+//      raw_command("RO"s + hz_str + ";"s);
+      raw_command("RO"s + hz_str + SEMICOLON);
     }
   }
   else
@@ -855,7 +860,8 @@ void rig_interface::keyer_speed(const int wpm) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
+  { //const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
+    const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
 
     raw_command(cmd, RESPONSE::NOT_EXPECTED);
   }
@@ -942,7 +948,8 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
   constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
 
 // sanity check ... on K3 all commands end in a ";"
-  if (last_char(cmd) != ';')
+//  if (last_char(cmd) != ';')
+  if (last_char(cmd) != SEMICOLON)
   {  _error_alert("Invalid rig command: "s + cmd);
     return string();
   }
@@ -1183,12 +1190,26 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency f)
     or at least a paper.)
 */
 bool rig_interface::is_transmitting(void) const
-{ if (_rig_connected)
+{ constexpr int MAX_UNREACHABLE { 5 };              // maximum number of attempts before assuming rig is powered down
+
+  static int n_unreachable { 0 };
+
+  if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0))
+    { if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; (contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0)))
+      { n_unreachable = 0;
         return  (response[2] == '1');
+      }
       else
-      { _error_alert("Invalid response getting transmit status: "s + response);
+      { n_unreachable++;
+
+        if (n_unreachable <= MAX_UNREACHABLE)
+          _error_alert("Invalid response getting transmit status: "s + response);
+        else
+        { if (n_unreachable == (MAX_UNREACHABLE + 1))
+            _error_alert("Assuming that rig is no longer physically connected and powered up");
+        }
+
         return true;                // be paranoid
       }
     }
@@ -1268,8 +1289,7 @@ VFO rig_interface::tx_vfo(void) const
     \param  hz  desired bandwidth, in Hz
 */
 void rig_interface::bandwidth_a(const unsigned int hz) const
-{ //constexpr std::chrono::milliseconds RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
-  constexpr std::chrono::duration RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
+{ constexpr std::chrono::duration RETRY_TIME { 100ms };       // period between retries for the brain-dead K3
   constexpr int                   PRECISION  { 50 };          // hertz
 
   if (_rig_connected)
@@ -1277,7 +1297,9 @@ void rig_interface::bandwidth_a(const unsigned int hz) const
     { wait_until_not_busy();
 
       const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
-      const string bw_command  { "BW"s + k3_bw_units + ";"s };
+//      const string bw_command  { "BW"s + k3_bw_units + ";"s };
+//      const string bw_command  { "BW"s + k3_bw_units + ';' };
+      const string bw_command  { "BW"s + k3_bw_units + SEMICOLON };
 
       raw_command(bw_command);
 
@@ -1368,7 +1390,7 @@ void rig_interface::centre_frequency(const unsigned int fc) const
 bool rig_interface::rx_ant(void) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string result { raw_command("AR;", RESPONSE::EXPECTED) };
+    { const string result { raw_command("AR;"s, RESPONSE::EXPECTED) };
 
       if ( (result != "AR0;"sv) and (result != "AR1;"sv) )
         ost << "ERROR in rx_ant(): result = " << result << endl;
@@ -1398,7 +1420,6 @@ void rig_interface::rx_ant(const bool torf) const
 
     Works only with K3
 */
-//bool rig_interface::notch_enabled(const string& ds_result) const
 bool rig_interface::notch_enabled(const string_view ds_result) const
 { if (!_rig_connected)
     return false;
@@ -1427,7 +1448,8 @@ bool rig_interface::notch_enabled(const string_view ds_result) const
 */
 void rig_interface::toggle_notch_status(void) const
 { if (_model == RIG_MODEL_K3)
-    k3_tap(K3_BUTTON::NOTCH);
+//    k3_tap(K3_BUTTON::NOTCH);
+    k3_press(K3_BUTTON_TAP::NOTCH);
 }
 
 /*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
@@ -1471,6 +1493,7 @@ K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
 
     Works only with K3
 */
+/*
 void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh) const
 { if (_model == RIG_MODEL_K3)
   { const string n_str      { pad_leftz(static_cast<int>(n), 2) };    // the cast is necessary
@@ -1478,6 +1501,35 @@ void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh) const
     const string command    { press_code + n_str + ";"s };
 
     raw_command(command);
+  }
+}
+*/
+
+/*! \brief          Emulate the tapping or holding of a K3 button
+    \param  button  the K3 button to tap or hold
+
+    Works only with K3
+*/
+void rig_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const
+{ if (_model == RIG_MODEL_K3)
+  { const int    button_int { std::visit([] (auto&& arg) -> int { return static_cast<int>(arg); }, button) };
+    const string button_str { pad_leftz(button_int, 2) };
+    const string cmd        { (holds_alternative<K3_BUTTON_TAP>(button) ? "SWT"s : "SWH"s) + button_str + SEMICOLON };
+
+    raw_command(cmd);
+  }
+}
+
+/*! \brief          Emulate double-tapping a K3 button
+    \param  button  the K3 button to tap
+
+    Works only with K3 this is CURRENTLY UNUSED
+*/
+void rig_interface::k3_double_tap(const K3_BUTTON_TAP button) const
+{ if (_model == RIG_MODEL_K3)
+  { k3_press(button);
+    sleep_for(50ms);
+    k3_press(button);
   }
 }
 
@@ -1496,7 +1548,6 @@ void rig_interface::filter(const audio_filter& af) const
 }
 
 /// register a function for alerting the user
-//void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
 void rig_interface::register_error_alert_function(void (*error_alert_function)(const string_view) )
 { SAFELOCK(_rig);
   _error_alert_function = error_alert_function;
@@ -1504,25 +1555,23 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 
 /// set RIT, split, sub-rx off
 void rig_interface::base_state(void) const
-{ if (rit_enabled())
-  { rit_disable();
+{ constexpr std::chrono::duration K3_INTERSTITIAL_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
 
-    if (_model == RIG_MODEL_K3)
-      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
+  auto pause { [ K3_INTERSTITIAL_TIME, this] (void) { if (_model == RIG_MODEL_K3) sleep_for(K3_INTERSTITIAL_TIME); } };
+
+  if (rit_enabled())
+  { rit_disable();
+    pause();
   }
 
   if (split_enabled())
   { split_disable();
-
-    if (_model == RIG_MODEL_K3)
-      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
+    pause();
   }
 
   if (sub_receiver_enabled())
   { sub_receiver_disable();
-
-    if (_model == RIG_MODEL_K3)
-      sleep_for(1s);          // the K3 is awfully slow; this should allow plenty of time before the next command
+    pause();
   }
 }
 
@@ -1538,6 +1587,38 @@ void rig_interface::instrument(void)
 void rig_interface::uninstrument(void)
 { if (_rig_connected)
     _instrumented = false;
+}
+
+/*! \brief                  Put the current VFOs into a rig memory
+    \param  rig_memory_nr   the number of the rig memory into which the VFO frequencies are to be stored (0 <= value <= 99)
+
+    This works only on a K3.
+*/
+void rig_interface::set_rig_memory(const int rig_memory_nr) const
+{ if (_model != RIG_MODEL_K3)
+    return;
+
+  const int    memory_nr     { max(min(rig_memory_nr, 99), 0) };
+  const string memory_nr_str { pad_leftz(to_string(memory_nr), 3) };
+  const string cmd           { "MC"s + memory_nr_str + SEMICOLON };
+
+  raw_command(cmd);
+}
+
+/*! \brief                  Set the VFOs from a rig memory
+    \param  rig_memory_nr   the number of the rig memory from which the VFO frequencies are to be (non-destructively) recalled (0 <= value <= 99)
+
+    This works only on a K3.
+*/
+void rig_interface::get_rig_memory(const int rig_memory_nr) const
+{ if (_model != RIG_MODEL_K3)
+    return;
+
+  const int    memory_nr     { max(min(rig_memory_nr, 99), 0) };
+  const string memory_nr_str { pad_leftz(to_string(memory_nr), 3) };
+  const string cmd           { "MC"s + memory_nr_str + SEMICOLON };
+
+  raw_command(cmd);
 }
 
 /*! \brief      Convert a hamlib error code to a printable string

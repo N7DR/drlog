@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 272 2025-07-13 22:28:31Z  $
+// $Id: bands-modes.h 276 2025-09-21 15:27:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -296,7 +296,6 @@ public:
     Returns BAND_160 if the frequency is outside all bands
 */
   BAND next_band_up(const std::set<BAND>& bands) const;
-
 
 // frequency + frequency
   inline frequency operator+(const frequency f) const

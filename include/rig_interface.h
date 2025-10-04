@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 275 2025-09-19 14:02:06Z  $
+// $Id: rig_interface.h 276 2025-09-21 15:27:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,11 +24,12 @@
 #include "pthread_support.h"
 #include "x_error.h"
 
-#include <hamlib/rig.h>
-
 #include <map>
 #include <string>
 #include <utility>
+#include <variant>
+
+#include <hamlib/rig.h>
 
 // Errors
 constexpr int RIG_UNABLE_TO_OPEN       { -1 },    ///< unable to access rig
@@ -51,16 +52,204 @@ enum class VFO { A,                       ///< VFO A
                };
 
 /// tap or hold
-enum class PRESS { TAP,
-                   HOLD
-                 };
+//enum class PRESS { TAP,
+//                   HOLD
+//                 };
 
-enum class K3_BUTTON { NOTCH = 32
-                     };
+//enum class K3_BUTTON { NOTCH = 32
+//                     };
 
 enum class K3_COMMAND_MODE { NORMAL,
                              EXTENDED
                            };
+
+enum class K3_BUTTON_TAP { DISP       = 8,
+                           BAND_MINUS = 9,
+                           BAND_PLUS  = 10,
+                           AB         = 11,
+                           ONE        = 11,
+                           REV        = 12,
+                           TWO        = 12,
+                           A_TO_B     = 13,
+                           THREE      = 13,
+                           MENU       = 14,
+                           V_TO_M     = 15,
+                           XMIT       = 16,
+                           MODE_MINUS = 17,
+                           MODE_PLUS  = 18,
+                           ATU        = 19,
+                           M1         = 21,
+                           M_TO_V     = 23,
+                           PRE        = 24,
+                           FOUR       = 24,
+                           RX_ANT     = 25,
+                           ANT        = 26,
+                           AGC        = 27,
+                           FIVE       = 27,
+                           XFIL       = 29,
+                           SIX        = 29,
+                           M2         = 31,
+                           NTCH       = 32,
+                           NOTCH      = NTCH,
+                           NINE       = 32,
+                           NB         = 33,
+                           SEVEN      = 33,
+                           NR         = 34,
+                           EIGHT      = 34,
+                           M3         = 35,
+                           REC        = 37,
+                           M4         = 39,
+                           CWT        = 40,
+                           ZERO       = 40,
+                           FREQ       = 41,
+                           SPOT       = 42,
+                           DOT        = 42,
+                           AFX        = 43,
+                           LEFT_ARROW = 44,
+                           RIT        = 45,
+                           XIT        = 47,
+                           SUB        = 48,
+                           FINE       = 49,
+                           RATE       = 50,
+                           CLR        = 53,
+                           CMP_PWR    = 56,
+                           SPD_MIC    = 57,
+                           SHIFT_LO   = 58,
+                           WIDTH_Hi   = 59
+                         };
+
+enum class K3_BUTTON_HOLD { METER       = 8,
+                            VOX         = 9,
+                            QSK         = 10,
+                            BSET        = 11,
+                            SPLIT       = 13,
+                            CONFIG      = 14,
+                            AF_REC      = 15,
+                            TUNE        = 16,
+                            ALT         = 17,
+                            TEST        = 18,
+                            TUNE_ATU    = 19,
+                            M1_RPT      = 21,
+                            AF_PLAY     = 23,
+                            ATT         = 24,
+                            ANT_NAME    = 26,
+                            OFF         = 27,
+                            DUAL_PB_APF = 29,
+                            M2_RPT      = 31,
+                            MANUAL      = 32,
+                            LEVEL       = 33,
+                            ADJ         = 34,
+                            M3_RPT      = 35,
+                            MSG_BANK    = 37,
+                            M4_RPT      = 39,
+                            TEXT_DEC    = 40,
+                            ENT_SCAN    = 41,
+                            PITCH       = 42,
+                            DATA_MD     = 43,
+                            PF1         = 45,
+                            PF2         = 47,
+                            DVRSTY      = 48,
+                            DIVERSITY   = DVRSTY,
+                            COARSE      = 49,
+                            LOCK        = 50,
+                            MON         = 56,
+                            DELAY       = 57,
+                            NORM        = 58,
+                            I_II        = 59
+                         };
+
+const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
+                                             { "BAND-"s,           9 },
+                                             { "BAND+"s,          10 },
+                                             { "A/B"s,            11 },
+                                             { "ONE"s,            11 },
+                                             { "1"s,              11 },
+                                             { "REV (FM/rpt)"s,   12 },
+                                             { "TWO"s,            12 },
+                                             { "A->B"s,           13 },
+                                             { "THREE"s,          13 },
+                                             { "MENU"s,           14 },
+                                             { "V->M"s,           15 },
+                                             { "XMIT"s,           16 },
+                                             { "MODE-"s,          17 },
+                                             { "MODE+"s,          18 },
+                                             { "ATU"s,            19 },
+                                             { "M1"s,             21 },
+                                             { "M->V"s,           23 },
+                                             { "PRE"s,            24 },
+                                             { "FOUR"s,           24 },
+                                             { "RX ANT"s,         25 },
+                                             { "ANT"s,            26 },
+                                             { "AGC"s,            27 },
+                                             { "FIVE"s,           27 },
+                                             { "XFIL"s,           29 },
+                                             { "SIX"s,            29 },
+                                             { "M2"s,             31 },
+                                             { "NTCH"s,           32 },
+                                             { "NINE"s,           32 },
+                                             { "NB"s,             33 },
+                                             { "SEVEN"s,          33 },
+                                             { "NR"s,             34 },
+                                             { "EIGHT"s,          34 },
+                                             { "M3"s,             35 },
+                                             { "REC"s,            37 },
+                                             { "M4"s,             39 },
+                                             { "CWT"s,            40 },
+                                             { "ZERO"s,           40 },
+                                             { "FREQ"s,           41 },
+                                             { "SPOT"s,           42 },
+                                             { "DOT"s,            42 },
+                                             { "AFX"s,            43 },
+                                             { "LEFT ARROW"s,     44 },
+                                             { "RIT"s,            45 },
+                                             { "XIT"s,            47 },
+                                             { "SUB"s,            48 },
+                                             { "FINE"s,           49 },
+                                             { "RATE"s,           50 },
+                                             { "CLR"s,            53 },
+                                             { "CMP/PWR"s,        56 },
+                                             { "SPD/MIC"s,        57 },
+                                             { "SHIFT/LO"s,       58 },
+                                             { "WIDTH/HI"s,       59 } };
+#if 0
+const UNORDERED_STRING_MAP<int> hold_key { { "METER"s,              8 },
+                                           { "VOX"s,                9 },
+                                           { "QSK"s,               10 },
+                                           { "BSET"s,              11 },
+                                           { "SPLIT"s,             13 },
+                                           { "CONFIG"s,            14 },
+                                           { "AF REC"s,            15 },
+                                           { "TUNE"s,              16 },
+                                           { "ALT"s,               17 },
+                                           { "TEST"s,              18 },
+                                           { "TUNE ATU"s,          19 },
+                                           { "M1-RPT"s,            21 },
+                                           { "AF PLAY"s,           23 },
+                                           { "ATT"s,               24 },
+                                           { "ANT NAME"s,          26 },
+                                           { "OFF"s,               27 },
+                                           { "DUAL PB/APF"s,       29 },
+                                           { "M2-RPT"s,            31 },
+                                           { "MANUAL"s,            32 },
+                                           { "LEVEL"s,             33 },
+                                           { "ADJ"s,               34 },
+                                           { "M3-RPT"s,            35 },
+                                           { "MSG BANK"s,          37 },
+                                           { "M4-RPT"s,            39 },
+                                           { "TEXT DEC"s,          40 },
+                                           { "ENT SCAN"s,          41 },
+                                           { "PITCH"s,             42 },
+                                           { "DATA MD"s,           43 },
+                                           { "PF1"s,               45 },
+                                           { "PF2"s,               47 },
+                                           { "DVRSTY"s,            48 },
+                                           { "COARSE"s,            49 },
+                                           { "LOCK"s,              50 },
+                                           { "MON"s,               56 },
+                                           { "DELAY"s,             57 },
+                                           { "NORM"s,              58 },
+                                           { "I/II"s,              59 } };
+#endif
 
 using DRLOG_CLOCK = std::chrono::system_clock;
 
@@ -177,7 +366,6 @@ protected:
     Does nothing if <i>f</i> is not within a ham band.
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
-//  void _rig_frequency(const frequency&, const VFO v);
   void _rig_frequency(const frequency, const VFO v);
 
 /*! \brief      Get the frequency of a VFO
@@ -512,7 +700,6 @@ public:
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user
 */
-//  void register_error_alert_function(void (*error_alert_function)(const std::string&));
   void register_error_alert_function(void (*error_alert_function)(const std::string_view));
 
 /*! \brief      Which VFO is currently used for transmitting?
@@ -616,23 +803,44 @@ public:
 
     Works only with K3
 */
-  void k3_press_button(const K3_BUTTON n, const PRESS torh) const;
+//  void k3_press_button(const K3_BUTTON n, const PRESS torh) const;
+
+/*! \brief          Emulate the tapping or holding of a K3 button
+    \param  button  the K3 button to tap or hold
+
+    Works only with K3
+*/
+  void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
+
+/*! \brief          Emulate double-tapping a K3 button
+    \param  button  the K3 button to tap
+
+    Works only with K3
+*/
+  void k3_double_tap(const K3_BUTTON_TAP button) const;
+
+//  void k3_press_button(const K3_BUTTON_TAP n, const PRESS torh) const;
+
+//  void k3_press_button(const K3_BUTTON_HOLD n, const PRESS torh) const;
 
 /*! \brief      Emulate the tapping of a K3 button
     \param  n   the K3 button to tap
 
     Works only with K3
 */
-  inline void k3_tap(const K3_BUTTON n) const
-    { k3_press_button(n, PRESS::TAP); }
+//  inline void k3_tap(const K3_BUTTON n) const
+//    { k3_press_button(n, PRESS::TAP); }
+
+//  inline void k3_tap(const K3_BUTTON_TAP n) const
+//    { k3_press_button(n, PRESS::TAP); }
 
 /*! \brief      Emulate the holding of a K3 button
     \param  n   the K3 button to hold
 
     Works only with K3
 */
-  inline void k3_hold(const K3_BUTTON n) const
-    { k3_press_button(n, PRESS::HOLD); }
+//  inline void k3_hold(const K3_BUTTON n) const
+//    { k3_press_button(n, PRESS::HOLD); }
 
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
@@ -652,6 +860,70 @@ public:
 */
   inline bool instrumented(void)
     { return _instrumented ; }
+
+/*! \brief                  Put the current VFOs into a rig memory
+    \param  rig_memory_nr   the number of the rig memory into which the VFO frequencies are to be stored (0 <= value <= 99)
+
+    This works only on a K3.
+*/
+  void set_rig_memory(const int rig_memory_nr = 0) const;
+
+/*! \brief                  Set the VFOs from a rig memory
+    \param  rig_memory_nr   the number of the rig memory from which the VFO frequencies are to be (non-destructively) recalled (0 <= value <= 99)
+
+    This works only on a K3.
+*/
+  void get_rig_memory(const int rig_memory_nr = 0) const;
+
+/*
+ Table 7 from the K3 Programmers Reference Manual
+
+ This version of the table is re-ordered in increasing value of nn:
+
+TAP              HOLD        nn
+DISP             METER       08
+BAND-            VOX         09
+BAND+            QSK         10
+A/B (1)          BSET        11
+REV (FM/rpt) (2) n/a         12
+A->B (3)         SPLIT       13
+MENU             CONFIG      14
+V->M             AF REC      15
+XMIT             TUNE        16
+MODE-            ALT         17
+MODE+            TEST        18
+ATU              Tune ATU    19
+M1               M1-RPT      21
+M->V             AF PLAY     23
+PRE (4)          ATT         24
+RX ANT           n/a         25
+ANT              ANT Name    26
+AGC (5)          OFF         27
+XFIL (6)         DUAL PB/APF 29
+M2               M2-RPT      31
+NTCH (9)         MANUAL      32
+NB (7)           LEVEL       33
+NR (8)           ADJ         34
+M3               M3-RPT      35
+REC              MSG Bank    37
+M4               M4-RPT      39
+CWT (0)          TEXT Dec    40
+FREQ             ENT SCAN    41
+SPOT (‘.’)       PITCH       42
+AFX (<-)         DATA Md     43
+RIT              PF1         45
+XIT              PF2         47
+SUB              DVRSTY*     48
+FINE             COARSE      49
+RATE             LOCK        50
+CLR              n/a         53
+CMP/PWR          MON         56
+SPD/MIC          DELAY       57
+SHIFT/LO         NORM        58
+WIDTH/HI         I/II        59
+
+*/
+
 };
 
 /*! \brief      Convert a hamlib error code to a printable string
