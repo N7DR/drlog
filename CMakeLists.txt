@@ -64,8 +64,9 @@ set ( SOURCE_FILES
 #set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra" )
 #set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra -pedantic" )
 #set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26" )
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra" )
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror" )
+#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra" )
+#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror" )
 
 #link_directories(/usr/local/programs/gcc-14.2.0/lib64)
 #link_directories(/usr/local/programs/gcc-15.1.0/lib64)
@@ -82,6 +83,8 @@ add_custom_command(
   PRE_BUILD
   COMMAND touch
   ARGS "/home/n7dr/projects/drlog/include/version.h"
+  COMMAND g++
+  ARGS "-v"
   )
 
  set( CMAKE_VERBOSE_MAKEFILE on )

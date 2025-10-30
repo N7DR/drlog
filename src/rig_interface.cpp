@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 276 2025-09-21 15:27:27Z  $
+// $Id: rig_interface.cpp 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -83,6 +83,10 @@ constexpr char SEMICOLON { ';' };
  *   check each time whether a command was executed, because the documentation says that certain commands (which it does not define)
  *   might take as long as half a second to execute if the K3 is "busy".
  *
+ *   Sometimes, there is simply no alternative to sending a command and then getting the value to see if the command has actually
+ *   executed on the rig. This is particularly so for the set/get frequency commands, as drlog requires a correct view of the band,
+ *   including the rig's frequency, in order to build an accurate, stable bandmap.
+ *
  *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
  *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
  *   protocols could be run over, for example, SLIP.
@@ -102,7 +106,6 @@ constexpr char SEMICOLON { ';' };
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-//void rig_interface::_error_alert(const string& msg) const
 void rig_interface::_error_alert(const string_view msg) const
 { if (_error_alert_function)
     (*_error_alert_function)(msg);
@@ -168,46 +171,28 @@ void rig_interface::_rig_frequency(const frequency f, const VFO v)
 
         int n_retries { 0 };
 
-// the brain-dead K3 will sometimes infinitely fail to go to the correct frequency
         while ( (retry) and (n_retries++ <= MAX_RETRIES) )
-        { //if (_model == RIG_MODEL_K3)
-        //{ //string cmd { (v == VFO::A) ? "FA"s : "FB"s };
-
-          //string hz_freq = pad_leftz(to_string(f.hz()), 11);
-
-          //cmd += hz_freq;
-          //cmd += ';';
-
-//          raw_command(cmd + hz_freq + ";"s);
-        //  raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
-       // }
-        //else    // not K3
-          { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
+        { if (const int status { rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz()) }; status != RIG_OK)
               _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
 
-//        if (debug)
-            { ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
-            }
+          if (debug)
+            ost << "commanded frequency = " << to_string(f.hz()) << "; actual frequency = " << to_string(_rig_frequency(v).hz()) << endl;
 
+          if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency -- hamlib, however, will simply assume for a period of one second that the SET worked!!!
 
-            if (const auto rf {_rig_frequency(v)}; rf != f)     // explicitly check the frequency
-// if we use the following line, then sometimes we get trapped and cannot move down in frequency
-// if the band marker is just *above* a bm entry (say, if we have manually moved up slightly in frequency)
-//        if (const auto rf {_rig_frequency(v)}; (abs(rf - f) > MAX_ERROR) )    // explicitly check the frequency
-            { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
+          { const string msg { "frequency mismatch: commanded = "s + to_string(f.hz()) + "; actual = "s + to_string(rf.hz()) };
 
-              _error_alert(msg);
-              ost << msg << "; retrying" << endl;
+            _error_alert(msg);
+            ost << msg << "; retrying" << endl;
 //          ost << "frequency mismatch: commanded = " << f << "; actual = " << rf << "; retrying" << endl;        // DEBUG for when we get stuck
 
-              if (n_retries <= MAX_RETRIES)
-                sleep_for(RETRY_TIME);
-              else
-                ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
-            }
+            if (n_retries <= MAX_RETRIES)
+              sleep_for(RETRY_TIME);
             else
-              retry = false;
+              ost << "Maximum number of retries exceeded; quitting attempt to set frequency" << endl;
           }
+          else
+            retry = false;
         }
       }
     }
@@ -258,8 +243,11 @@ frequency rig_interface::_rig_frequency(const VFO v) const
     \return                 the response from the rig, or the empty string
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
+    C++ does not allow a generic std::chrono::duration to be a parameter
 */
-string rig_interface::_retried_raw_command(const string& cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
+//string rig_interface::_retried_raw_command(const string& cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
+//string rig_interface::_retried_raw_command(const string_view cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
+string rig_interface::_retried_raw_command(const string_view cmd, const milliseconds timeout, const int n_retries)
 { string rv;
 
   int counter    { 0 };
@@ -272,7 +260,8 @@ string rig_interface::_retried_raw_command(const string& cmd, /*const int expect
 
     if (!completed)
     { counter++;
-      sleep_for(milliseconds(timeout_ms));
+//      sleep_for(milliseconds(timeout_ms));
+      sleep_for(timeout);
     }
   }
 
@@ -288,18 +277,23 @@ string rig_interface::_retried_raw_command(const string& cmd, /*const int expect
     \param  context     context for the contest
 */
 void rig_interface::prepare(const drlog_context& context)
-{ _port_name = context.rig1_port();
+{ const STRING_MAP<rig_model_t> type_name_to_hamlib_model { { "K3"s, RIG_MODEL_K3 }
+                                                          };
+
+  _port_name = context.rig1_port();
   rig_set_debug(RIG_DEBUG_NONE);
   rig_load_all_backends();              // this function returns an int -- in true Linux fashion, there is no documentation as to possible values and their meaning
                                         // see: http://hamlib.sourceforge.net/manuals/1.2.15/group__rig.html
 
   const string rig_type { context.rig1_type() };
 
-// ugly map of name to hamlib model number
-  if (rig_type == "K3"sv)
-    _model = RIG_MODEL_K3;
+  _model = MUM_VALUE(type_name_to_hamlib_model, rig_type, RIG_MODEL_DUMMY);
 
-  if (_model == RIG_MODEL_DUMMY and !rig_type.empty())
+// ugly map of name to hamlib model number
+//  if (rig_type == "K3"sv)
+//    _model = RIG_MODEL_K3;
+
+  if ( (_model == RIG_MODEL_DUMMY) and !rig_type.empty())
     _error_alert("Unknown rig type: "s + rig_type);
 
   _rigp = rig_init(_model);
@@ -368,7 +362,8 @@ void rig_interface::rig_mode(const MODE m)
             break;
 
           case MODE_SSB :
-            { const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"sv : "MD2;"sv };
+            { //const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"sv : "MD2;"sv };  // select LSB or USB
+              const string k3_mode_cmd { (rig_frequency() < 10_MHz) ? "MD1;"sv : "MD2;"sv };  // select LSB or USB
 
               raw_command(k3_mode_cmd);
               sleep_for(K3_MODE_CHANGE_TIME);
@@ -391,7 +386,8 @@ void rig_interface::rig_mode(const MODE m)
       rmode_t hamlib_m { RIG_MODE_CW };
 
       if (m == MODE_SSB)
-        hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
+//        hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
+        hamlib_m = ( (rig_frequency() < 10_MHz) ? RIG_MODE_LSB : RIG_MODE_USB );  // select LSB or USB
 
       int status;
 
@@ -465,7 +461,7 @@ void rig_interface::split_enable(void) const
   SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { raw_command("FT1;"s);
+  { raw_command("FT1;"sv);
     rig_is_split = true;
     return;
   }
@@ -485,7 +481,7 @@ void rig_interface::split_disable(void) const
   SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { raw_command("FR0;"s);
+  { raw_command("FR0;"sv);
     rig_is_split = false;
     return;
   }
@@ -512,7 +508,7 @@ bool rig_interface::split_enabled(void) const
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    if ( const string transmit_vfo { raw_command("FT;"s, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"s, 0) )
+    if ( const string transmit_vfo { raw_command("FT;"sv, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"sv, 0) )
       return (transmit_vfo[2] == '1');
 
     _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -597,6 +593,7 @@ void rig_interface::stop_bits(const unsigned int bits)
 */
 unsigned int rig_interface::stop_bits(void) const
 { SAFELOCK(_rig);
+
   return (_rigp ? _rigp->state.rigport.parm.serial.stop_bits : 0);
 }
 
@@ -644,7 +641,6 @@ void rig_interface::rit(const int hz) const
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
 
-//      raw_command("RO"s + hz_str + ";"s);
       raw_command("RO"s + hz_str + SEMICOLON);
     }
   }
@@ -661,7 +657,7 @@ void rig_interface::rit(const int hz) const
 /// get rit offset (in Hz)
 int rig_interface::rit(void) const
 { if (_model == RIG_MODEL_K3)
-  { if ( const string value { raw_command("RO;"s, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"s, 0) )
+  { if ( const string value { raw_command("RO;"sv, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"sv, 0) )
       return from_string<int>(substring <std::string> (value, 2, 5));
     else
     { _error_alert("Invalid rig response in rit(): "s + value);
@@ -688,9 +684,9 @@ int rig_interface::rit(void) const
 */
 void rig_interface::rit_enable(void) const
 { if (_model == RIG_MODEL_K3)
-    raw_command("RT1;"s);           // proper enable for the K3
+    raw_command("RT1;"sv);          // proper enable for the K3
   else
-    rit(1);                         // 1 Hz offset, since a zero offset would disable RIT
+    rit(1);                         // 1 Hz offset, since a zero offset would disable RIT in hamlib
 }
 
 /*! \brief  Turn rit off
@@ -699,16 +695,16 @@ void rig_interface::rit_enable(void) const
 */
 void rig_interface::rit_disable(void) const
 { if (_model == RIG_MODEL_K3)
-    raw_command("RT0;"s); // proper disable for the K3
+    raw_command("RT0;"sv);      // proper disable for the K3
   else
-    rit(0);                         // 0 Hz offset, which hamlib regards as disabling RIT
+    rit(0);                     // 0 Hz offset, which hamlib regards as disabling RIT
 }
 
 /// is rit enabled?
 bool rig_interface::rit_enabled(void) const
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { if ( const string response { raw_command("RT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "RT"s, 0) )
+    { if ( const string response { raw_command("RT;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "RT"sv, 0) )
         return (response[2] == '1');
       else
       { _error_alert("Invalid length in rit_enabled(): "s + response);
@@ -729,7 +725,7 @@ bool rig_interface::rit_enabled(void) const
 */
 void rig_interface::xit_enable(void) const
 { if (_model == RIG_MODEL_K3)
-    raw_command("XT1;"s);
+    raw_command("XT1;"sv);
   else
     xit(1);                 // 1 Hz offset
 }
@@ -740,7 +736,7 @@ void rig_interface::xit_enable(void) const
 */
 void rig_interface::xit_disable(void) const
 { if (_model == RIG_MODEL_K3)
-    raw_command("XT0;"s);
+    raw_command("XT0;"sv);
   else
     xit(1);                 // 1 Hz offset
 }
@@ -749,7 +745,7 @@ void rig_interface::xit_disable(void) const
 bool rig_interface::xit_enabled(void) const
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { if ( const string response { raw_command("XT;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "XT"s, 0) )
+    { if ( const string response { raw_command("XT;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "XT"sv, 0) )
         return (response[2] == '1');
       else
       { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
@@ -772,12 +768,11 @@ bool rig_interface::xit_enabled(void) const
 void rig_interface::xit(const int hz) const
 { if (_model == RIG_MODEL_K3)                   // hamlib's behaviour anent the K3 is not what we want, have K3-specific code
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command("RC;"s);
+      raw_command("RC;"sv);
     else
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_leftz(positive_hz, 4) };
 
-//      raw_command("RO"s + hz_str + ";"s);
       raw_command("RO"s + hz_str + SEMICOLON);
     }
   }
@@ -1555,9 +1550,9 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 
 /// set RIT, split, sub-rx off
 void rig_interface::base_state(void) const
-{ constexpr std::chrono::duration K3_INTERSTITIAL_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
+{ constexpr std::chrono::duration K3_INTERCOMMAND_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
 
-  auto pause { [ K3_INTERSTITIAL_TIME, this] (void) { if (_model == RIG_MODEL_K3) sleep_for(K3_INTERSTITIAL_TIME); } };
+  auto pause { [ K3_INTERCOMMAND_TIME, this] (void) { if (_model == RIG_MODEL_K3) sleep_for(K3_INTERCOMMAND_TIME); } };
 
   if (rit_enabled())
   { rit_disable();
@@ -1593,7 +1588,10 @@ void rig_interface::uninstrument(void)
     \param  rig_memory_nr   the number of the rig memory into which the VFO frequencies are to be stored (0 <= value <= 99)
 
     This works only on a K3.
+
+    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
 */
+#if 0
 void rig_interface::set_rig_memory(const int rig_memory_nr) const
 { if (_model != RIG_MODEL_K3)
     return;
@@ -1604,12 +1602,16 @@ void rig_interface::set_rig_memory(const int rig_memory_nr) const
 
   raw_command(cmd);
 }
+#endif
 
 /*! \brief                  Set the VFOs from a rig memory
     \param  rig_memory_nr   the number of the rig memory from which the VFO frequencies are to be (non-destructively) recalled (0 <= value <= 99)
 
     This works only on a K3.
+
+    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
 */
+#if 0
 void rig_interface::get_rig_memory(const int rig_memory_nr) const
 { if (_model != RIG_MODEL_K3)
     return;
@@ -1620,6 +1622,7 @@ void rig_interface::get_rig_memory(const int rig_memory_nr) const
 
   raw_command(cmd);
 }
+#endif
 
 /*! \brief      Convert a hamlib error code to a printable string
     \param  e   hamlib error code

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: bandmap.cpp 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,8 +52,6 @@ extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency
 
     Returns the empty string if no sensible result can be returned
 */
-//extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
-//extern const string callsign_mult_value(const string_view callsign_mult_name, const string& callsign);
 extern const string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
@@ -122,7 +120,6 @@ set<time_t> n_posters_database::times(void) const
     \param  call    call to test
     \return         whether <i>call</i> is a known good call
 */
-//bool n_posters_database::test_call(const string& call)
 bool n_posters_database::test_call(const string_view call)
 { lock_guard<recursive_mutex> lg(_mtx); 
 
@@ -180,7 +177,7 @@ void n_posters_database::prune(void)
     _known_good_calls.clear();
 
 // rebuild _known_good_calls
-    UNORDERED_STRING_SET all_calls;
+    UNORDERED_STRING_SET all_calls { };
 
     FOR_ALL(all_times, [&all_calls, this] (const time_t t)     { all_calls += move(ALL_KEYS_USET(_data.at(t))); });
     FOR_ALL(all_calls, [this]             (const string& call) { test_call(call); });
@@ -214,7 +211,6 @@ string n_posters_database::to_string(void) const
   else
   { rv += "Known good calls: "s;
 
-//    CALL_SET ordered_known_good_calls(compare_calls);
     CALL_SET ordered_known_good_calls;
 
     FOR_ALL(_known_good_calls,        [&ordered_known_good_calls] (const string& call) { ordered_known_good_calls += call; } );
@@ -240,48 +236,16 @@ string n_posters_database::to_string(void) const
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
 */
-//void bandmap_filter_type::add_or_subtract(const string& str)
-
 void bandmap_filter_type::add_or_subtract(const string_view str)
 { const bool   is_continent { CONTINENT_SET.contains(str) };
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix if necessary
 
-//  using GROUP_PTR = decltype(&_continents);
-//  using GROUP_PTR = GROUP_TYPE*;
+//  GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) };    // create reference to correct group
 
-//  GROUP_PTR g_ptr { ( is_continent ? &_continents : &_prefixes ) };    // create pointer to correct group
-  GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) };    // create reference to correct group
-
-  if (g_ref.contains(str_copy))    // remove a value
+  if (GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) }; g_ref.contains(str_copy))    // // create reference to correct group; remove a value
     g_ref -= str_copy;
   else
     g_ref += str_copy;
-
-#if 0
-  STRING_SET ss1 = SR::to<STRING_SET>(*vs_p);
-
-  if (ss1.contains(str_copy))    // remove a value
-    ss1 -= str_copy;
-  else                          // add a value
-    ss1 += str_copy;
-
-  *vs_p = SR::to<vector<string>>(ss1);
-  SORT(*vs_p, compare_calls);                           // make it easy for humans
-#endif
-
-#if 0
- STRING_SET      ss   { vs_p->begin(), vs_p->end() };                      // create a copy of current values
-
- if (ss.contains(str_copy))    // remove a value
-    ss -= str_copy;
-  else                          // add a value
-    ss += str_copy;
-
-  vs_p -> clear();                                      // empty it
-  copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
-  SORT(*vs_p, compare_calls);                           // make it easy for humans
-#endif
-
 }
 
 // -----------  bandmap_entry  ----------------

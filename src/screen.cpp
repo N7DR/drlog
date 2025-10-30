@@ -1,4 +1,4 @@
-// $Id: screen.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: screen.cpp 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1077,55 +1077,68 @@ bool overlap(const WIN_INT_TYPE x1, const WIN_INT_TYPE y1, const WIN_INT_TYPE w1
   const WIN_INT_TYPE b2 { y2 };
   const WIN_INT_TYPE t2 { static_cast<WIN_INT_TYPE>(y2 + h2 - 1) };
 
-  auto print_corners = [] (const WIN_INT_TYPE l1, const WIN_INT_TYPE b1, const WIN_INT_TYPE r1, const WIN_INT_TYPE t1, const WIN_INT_TYPE l2, const WIN_INT_TYPE b2, const WIN_INT_TYPE r2, const WIN_INT_TYPE t2)
+//  auto print_corners = [] (const WIN_INT_TYPE l1, const WIN_INT_TYPE b1, const WIN_INT_TYPE r1, const WIN_INT_TYPE t1,
+//                           const WIN_INT_TYPE l2, const WIN_INT_TYPE b2, const WIN_INT_TYPE r2, const WIN_INT_TYPE t2)
+//    { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl; };
+
+
+  auto print_corners = [b1, b2, l1, l2, r1, r2, t1, t2] (void)
     { ost << "RECTANGLES: (" << l1 << ", " << b1 << ") , (" << r1 << ", " << t1 << ") and (" << l2 << ", " << b2 << ") , (" << r2 << ", " << t2 << ")" << endl; };
 
 // are any of the corners of w2 inside w1?
-  if (in_range(l2, l1, r1) and in_range(b2, b1, t1))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(l2, l1, r1) and in_range(b2, b1, t1) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 1" << endl;
     return true;
   }
 
-  if (in_range(l2, l1, r1) and in_range(t2, b1, t1))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(l2, l1, r1) and in_range(t2, b1, t1) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 2" << endl;
     return true;
   }
 
-  if (in_range(r2, l1, r1) and in_range(b2, b1, t1))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(r2, l1, r1) and in_range(b2, b1, t1 ))
+  {// print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 3" << endl;
     return true;
   }
 
-  if (in_range(r2, l1, r1) and in_range(t2, b1, t1))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(r2, l1, r1) and in_range(t2, b1, t1) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 4" << endl;
     return true;
   }
 
 // are any of the corners of w1 inside w2?
-  if (in_range(l1, l2, r2) and in_range(b1, b2, t2))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(l1, l2, r2) and in_range(b1, b2, t2) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 5" << endl;
     return true;
   }
 
-  if (in_range(l1, l2, r2) and in_range(t1, b2, t2))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(l1, l2, r2) and in_range(t1, b2, t2) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 6" << endl;
     return true;
   }
 
-  if (in_range(r1, l2, r2) and in_range(b1, b2, t2))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(r1, l2, r2) and in_range(b1, b2, t2) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 7" << endl;
     return true;
   }
 
-  if (in_range(r1, l2, r2) and in_range(t1, b2, t2))
-  { print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+  if ( in_range(r1, l2, r2) and in_range(t1, b2, t2) )
+  { //print_corners(l1, b1, r1, t1, l2, b2, r2, t2);
+    print_corners();
     ost << "OVERLAP 8" << endl;
     return true;
   }

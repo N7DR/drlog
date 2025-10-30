@@ -1,4 +1,4 @@
-// $Id: macros.h 275 2025-09-19 14:02:06Z  $
+// $Id: macros.h 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,14 +32,15 @@
 
 #include <cmath>
 
-
-#define TRIXIE_GCC
+// #define TRIXIE_GCC
 
 // convenient definitions for use with chrono functions
 using centiseconds = std::chrono::duration<long, std::centi>;
 using deciseconds = std::chrono::duration<long, std::deci>;
 
 using TIME_POINT = std::chrono::time_point<std::chrono::system_clock>;
+
+using namespace std::chrono_literals;
 
 // define shorthand namespaces
 namespace SR  = std::ranges;
@@ -1870,9 +1871,9 @@ public:
 };
 
 /// convert a duration to a number of seconds
-  template <typename D>
-    requires is_duration<D>
-  inline int N_SECONDS(const D dur)
-    { return duration_cast<std::chrono::seconds>(dur).count(); }
+template <typename D>
+  requires is_duration<D>
+inline int N_SECONDS(const D dur)
+  { return duration_cast<std::chrono::seconds>(dur).count(); }
 
 #endif    // MACROS_H

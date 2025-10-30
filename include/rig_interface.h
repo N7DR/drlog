@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 276 2025-09-21 15:27:27Z  $
+// $Id: rig_interface.h 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,6 +24,7 @@
 #include "pthread_support.h"
 #include "x_error.h"
 
+#include <chrono>
 #include <map>
 #include <string>
 #include <utility>
@@ -50,14 +51,6 @@ enum class RESPONSE { EXPECTED,
 enum class VFO { A,                       ///< VFO A
                  B                        ///< VFO B
                };
-
-/// tap or hold
-//enum class PRESS { TAP,
-//                   HOLD
-//                 };
-
-//enum class K3_BUTTON { NOTCH = 32
-//                     };
 
 enum class K3_COMMAND_MODE { NORMAL,
                              EXTENDED
@@ -158,6 +151,7 @@ enum class K3_BUTTON_HOLD { METER       = 8,
                             I_II        = 59
                          };
 
+#if 0
 const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
                                              { "BAND-"s,           9 },
                                              { "BAND+"s,          10 },
@@ -211,6 +205,8 @@ const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
                                              { "SPD/MIC"s,        57 },
                                              { "SHIFT/LO"s,       58 },
                                              { "WIDTH/HI"s,       59 } };
+#endif
+
 #if 0
 const UNORDERED_STRING_MAP<int> hold_key { { "METER"s,              8 },
                                            { "VOX"s,                9 },
@@ -356,8 +352,9 @@ protected:
     \return                 the response from the rig, or the empty string
 
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
+    C++ does not allow a generic std::chrono::duration to be a parameter
 */
-  std::string _retried_raw_command(const std::string& cmd, /*const int expected_len = 0, */const int timeout_ms = 250, const int n_retries = 0);
+  std::string _retried_raw_command(const std::string_view cmd, const std::chrono::milliseconds timeout = 250ms, const int n_retries = 0);
 
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
@@ -798,14 +795,6 @@ public:
   K3_COMMAND_MODE k3_command_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button
-    \param  n       the K3 button to tap or hold
-    \param  torh    whether to press or hold
-
-    Works only with K3
-*/
-//  void k3_press_button(const K3_BUTTON n, const PRESS torh) const;
-
-/*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
 
     Works only with K3
@@ -818,29 +807,6 @@ public:
     Works only with K3
 */
   void k3_double_tap(const K3_BUTTON_TAP button) const;
-
-//  void k3_press_button(const K3_BUTTON_TAP n, const PRESS torh) const;
-
-//  void k3_press_button(const K3_BUTTON_HOLD n, const PRESS torh) const;
-
-/*! \brief      Emulate the tapping of a K3 button
-    \param  n   the K3 button to tap
-
-    Works only with K3
-*/
-//  inline void k3_tap(const K3_BUTTON n) const
-//    { k3_press_button(n, PRESS::TAP); }
-
-//  inline void k3_tap(const K3_BUTTON_TAP n) const
-//    { k3_press_button(n, PRESS::TAP); }
-
-/*! \brief      Emulate the holding of a K3 button
-    \param  n   the K3 button to hold
-
-    Works only with K3
-*/
-//  inline void k3_hold(const K3_BUTTON n) const
-//    { k3_press_button(n, PRESS::HOLD); }
 
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
@@ -865,15 +831,19 @@ public:
     \param  rig_memory_nr   the number of the rig memory into which the VFO frequencies are to be stored (0 <= value <= 99)
 
     This works only on a K3.
+
+    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
 */
-  void set_rig_memory(const int rig_memory_nr = 0) const;
+//  void set_rig_memory(const int rig_memory_nr = 0) const;
 
 /*! \brief                  Set the VFOs from a rig memory
     \param  rig_memory_nr   the number of the rig memory from which the VFO frequencies are to be (non-destructively) recalled (0 <= value <= 99)
 
     This works only on a K3.
+
+    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
 */
-  void get_rig_memory(const int rig_memory_nr = 0) const;
+//  void get_rig_memory(const int rig_memory_nr = 0) const;
 
 /*
  Table 7 from the K3 Programmers Reference Manual

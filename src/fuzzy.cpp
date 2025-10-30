@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 237 2024-04-28 17:47:36Z  $
+// $Id: fuzzy.cpp 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,7 +35,8 @@ extern message_stream    ost;       ///< debugging/logging output
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
 */
-FUZZY_SET fuzzy_database::operator[](const string& key) const
+//FUZZY_SET fuzzy_database::operator[](const string& key) const
+FUZZY_SET fuzzy_database::operator[](const string_view key) const
 { FUZZY_SET rv { };
 
   if (key.length() < 3)
@@ -76,7 +77,8 @@ void fuzzy_databases::remove_call(const string& call)
 
     Returns empty set if the call is too short 
 */
-FUZZY_SET fuzzy_databases::operator[](const string& key) const
+//FUZZY_SET fuzzy_databases::operator[](const string& key) const
+FUZZY_SET fuzzy_databases::operator[](const string_view key) const
 { FUZZY_SET rv { };
 
   if (key.length() < 3)

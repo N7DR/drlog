@@ -1,4 +1,4 @@
-// $Id: bandmap.h 275 2025-09-19 14:02:06Z  $
+// $Id: bandmap.h 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,7 +108,6 @@ public:
     \param  call    call to test
     \return         whether <i>call</i> is a known good call
 */
-//  bool test_call(const std::string& call);
   bool test_call(const std::string_view call);
 
 /// Prune the database
@@ -297,7 +296,7 @@ class bandmap_filter_type
 {
 protected:
 
-#if defined(TRIXIE_GCC)
+#if defined(TRIXIE_GCC)                         // temporary check, until I have a more recent version of gcc available
 //  using GROUP_TYPE = std::vector<std::string>;    // container type to hold continents or canonical prefixes
   using GROUP_TYPE = std::set<std::string>;    // container type to hold continents or canonical prefixes
 #else
@@ -328,7 +327,7 @@ public:
 //    { return (_continents + _prefixes); }
 //auto con = std::views::concat(v0, v1, a, ie);
 //    { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
-#if defined(TRIXIE_GCC)
+#if defined(TRIXIE_GCC)                         // temporary check, until I have a more recent version of gcc available
     { std::vector<std::string> rv;
 
       FOR_ALL (_continents, [&rv] (const std::string con) { rv += con; });
@@ -372,7 +371,7 @@ class bandmap_entry
 {
 protected:
 
-  enum BAND                                                 _band;                                  ///< band
+  BAND                                                      _band;                                  ///< band
   std::string                                               _callsign;                              ///< call
   std::string                                               _canonical_prefix;                      ///< canonical prefix corresponding to the call
   std::string                                               _continent;                             ///< continent corresponding to the call
@@ -537,8 +536,6 @@ public:
 
     Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
 */
-//  inline bool remove_callsign_mult(const std::string& name, const std::string& value)
-//  inline bool remove_callsign_mult(const std::string_view name, const std::string& value)
   inline bool remove_callsign_mult(const std::string_view name, const std::string_view value)
     { return _is_needed_callsign_mult.remove( { std::string { name }, std::string { value } } ); }
 
@@ -557,8 +554,6 @@ public:
 
     Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
 */
-//  inline bool remove_exchange_mult(const std::string& name, const std::string& value)
-//  inline bool remove_exchange_mult(const std::string_view name, const std::string& value)
   inline bool remove_exchange_mult(const std::string_view name, const std::string_view value)
     { return _is_needed_exchange_mult.remove( { std::string { name }, std::string { value } } ); }
 
@@ -703,8 +698,8 @@ public:
          & _time;
     }
 
-    inline std::string to_brief_string(void) const
-      { return (_callsign + ": " + to_string(_freq)); }
+  inline std::string to_brief_string(void) const
+    { return (_callsign + ": " + to_string(_freq)); }
 };
 
 /*! \brief          Write a <i>bandmap_entry</i> object to an output stream
@@ -907,7 +902,6 @@ public:
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
-//  void not_needed_country_mult(const std::string& canonical_prefix);
   void not_needed_country_mult(const std::string_view canonical_prefix);
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country and on a particular mode to false

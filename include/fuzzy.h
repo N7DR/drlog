@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 259 2025-01-19 15:44:33Z  $
+// $Id: fuzzy.h 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,7 +61,8 @@ public:
 
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
-  inline explicit fuzzy_database(const std::string& filename)
+//  inline explicit fuzzy_database(const std::string& filename)
+  inline explicit fuzzy_database(const std::string_view filename)
     { FOR_ALL(to_lines <std::string_view> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (auto x) { *this += x; } ); }
 
 /*! \brief          Construct from a <i>drmaster</i> object
@@ -92,25 +93,29 @@ public:
 
     Does nothing and returns <i>false</i> if <i>call</i> is not in the database
 */
-  inline bool remove_call(const std::string& call)
-    { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
+  inline bool remove_call(const std::string& call)                      // erase() does not yet work with string_view
+//  inline bool remove_call(const std::string_view call)
+    { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }          // could use STRC_ERASE here, with some effort
 
 /*! \brief          Is a call in the database?
     \param  call    call to be removed
     \return         whether <i>call</i> is present in the database
 */
-  inline bool contains(const std::string& call) const
+//  inline bool contains(const std::string& call) const
+  inline bool contains(const std::string_view call) const
     { return (_db[ _to_valid_size(call.length()) ].contains(call)); }
   
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
 */
-  FUZZY_SET operator[](const std::string& key) const;
+//  FUZZY_SET operator[](const std::string& key) const;
+  FUZZY_SET operator[](const std::string_view key) const;
 
 /// empty the database
   inline void clear(void)
-    { _db.fill( UNORDERED_STRING_SET { } ); }
+//    { _db.fill( UNORDERED_STRING_SET { } ); }
+    { _db.fill( FUZZY_SET { } ); }
 };
 
 // -----------  fuzzy_databases  ----------------
@@ -145,7 +150,8 @@ public:
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-  FUZZY_SET operator[](const std::string& key) const;
+//  FUZZY_SET operator[](const std::string& key) const;
+  FUZZY_SET operator[](const std::string_view key) const;
 };
 
 #endif    // FUZZY_H

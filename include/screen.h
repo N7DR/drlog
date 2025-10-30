@@ -1,4 +1,4 @@
-// $Id: screen.h 259 2025-01-19 15:44:33Z  $
+// $Id: screen.h 277 2025-10-19 15:57:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,8 +264,9 @@ class window
 {
 protected:
   
-  std::string   _name           { EMPTY_STR };  ///< (optional) name of window
-  
+//  std::string   _name           { EMPTY_STR };  ///< (optional) name of window
+  std::string   _name           { };            ///< (optional) name of window
+
   unsigned int  _column_width   { 0 };          ///< width of columns
   WIN_INT_TYPE  _cursor_x       { 0 };          ///< used to hold x cursor
   WIN_INT_TYPE  _cursor_y       { 0 };          ///< used to hold y cursor
@@ -313,7 +314,8 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-  inline explicit window(const std::string_view win_name = EMPTY_STR, const unsigned int flags = 0) :
+//  inline explicit window(const std::string_view win_name = EMPTY_STR, const unsigned int flags = 0) :
+  inline explicit window(const std::string_view win_name = { }, const unsigned int flags = 0) :
     _name(win_name),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
     _insert(flags bitand WINDOW_INSERT)
@@ -513,7 +515,7 @@ public:
     Also see the function reformat_for_wprintw().
 
     There is no point in supplying operator<(string_view s) because we have
-    to create a std::string anayway, because string_view does not supply c_str().
+    to create a std::string anyway, because string_view does not supply c_str().
 */
   window& operator<(const std::string& s);
 
@@ -696,7 +698,8 @@ public:
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-  std::string properties(const std::string_view name = EMPTY_STR);
+//  std::string properties(const std::string_view name = EMPTY_STR);
+  std::string properties(const std::string_view name = { });
 
 /// convert to bool
   inline operator bool(void) const
