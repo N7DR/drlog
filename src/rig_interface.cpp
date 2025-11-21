@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 277 2025-10-19 15:57:37Z  $
+// $Id: rig_interface.cpp 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,6 +91,205 @@ constexpr char SEMICOLON { ';' };
  *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
  *   protocols could be run over, for example, SLIP.
 */
+
+// --------------------------------------- k3_status ----------------------
+
+/*! \class  k3_status
+    \brief  The status of a K3, as determined by the response from an IF; command
+
+From the K3 Programmer's Manual:
+
+IF (Transceiver Information; GET only)
+RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
+[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
+* represents a space (BLANK, or ASCII 0x20)
++ either "+" or "-" (sign of RIT/XIT offset)
+yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
+r 1 if RIT is on, 0 if off
+x 1 if XIT is on, 0 if off
+t 1 if the K3 is in transmit mode, 0 if receive
+m operating mode (see MD command)
+v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
+s 1 if scan is in progress, 0 otherwise
+p 1 if the transceiver is in split mode, 0 otherwise
+b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
+is due to a band change; 0 otherwise
+d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
+if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
+The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
+
+*/
+
+k3_status::k3_status(const string_view rsp)
+{ constexpr size_t FREQUENCY_POSN    { 2 };
+  constexpr size_t RIT_POSITIVE_POSN { 18 };
+  constexpr size_t ABS_RIT_POSN      { 19 };
+  constexpr size_t RIT_ON_POSN       { 23 };
+  constexpr size_t XIT_ON_POSN       { 24 };
+  constexpr size_t TRANSMIT_POSN     { 28 };
+  constexpr size_t OP_MODE_POSN      { 29 };
+  constexpr size_t RX_VFO_POSN       { 30 };
+  constexpr size_t SCANNING_POSN     { 31 };
+  constexpr size_t SPLIT_POSN        { 32 };
+
+  if (rsp.size() != K3_STATUS_REPLY_LENGTH)
+    return;                                   // invalid
+
+  _freq = frequency { from_string<double>(substring <string_view> (rsp, FREQUENCY_POSN, 11)) };
+
+  if ( (_freq < 1800_kHz) or (_freq > 51_MHz) )
+    return;                                   // invalid
+
+  const char rit_positive_char { rsp[RIT_POSITIVE_POSN] };
+
+  switch (rit_positive_char)
+  { case '+' :
+      _rit_positive = true;   // not actually necessary
+      break;
+
+    case '-' :
+      _rit_positive = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  _abs_rit_offset = frequency { from_string<double>(substring <string_view> (rsp, ABS_RIT_POSN, 4)), FREQUENCY_UNIT::HZ };
+
+  const char rit_on_char { rsp[RIT_ON_POSN] };
+
+  switch (rit_on_char)
+  { case '1' :
+      _rit_is_on = true;
+      break;
+
+    case '0' :
+      _rit_is_on = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char xit_on_char { rsp[XIT_ON_POSN] };
+
+  switch (xit_on_char)
+  { case '1' :
+      _xit_is_on = true;
+      break;
+
+    case '0' :
+      _xit_is_on = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char transmit_char { rsp[TRANSMIT_POSN] };
+
+  switch (transmit_char)
+  { case '1' :
+      _transmit = true;
+      break;
+
+    case '0' :
+      _transmit = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char op_mode_char { rsp[OP_MODE_POSN] };
+
+  switch (op_mode_char)
+  { case '1' :
+      _op_mode = K3_OPERATING_MODE::LSB;
+      break;
+
+    case '2' :
+      _op_mode = K3_OPERATING_MODE::USB;
+      break;
+
+    case '3' :
+      _op_mode = K3_OPERATING_MODE::CW;
+      break;
+
+    case '4' :
+      _op_mode = K3_OPERATING_MODE::FM;
+      break;
+
+    case '5' :
+      _op_mode = K3_OPERATING_MODE::AM;
+      break;
+
+    case '6' :
+      _op_mode = K3_OPERATING_MODE::DATA;
+      break;
+
+    case '7' :
+      _op_mode = K3_OPERATING_MODE::CWREV;
+      break;
+
+    case '9' :                                  // there is no '8'
+      _op_mode = K3_OPERATING_MODE::DATA_REV;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char rx_vfo_char { rsp[RX_VFO_POSN] };
+
+  switch (rx_vfo_char)
+  { case '0' :
+      _rx_vfo = VFO::A;
+      break;
+
+    case '1' :
+      _rx_vfo = VFO::B;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char scanning_char { rsp[SCANNING_POSN] };
+
+  switch (scanning_char)
+  { case '0' :
+      _scanning = false;
+      break;
+
+    case '1' :
+      _scanning = true;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char split_char { rsp[SPLIT_POSN] };
+
+  switch (split_char)
+  { case '0' :
+      _is_split = false;
+      break;
+
+    case '1' :
+      _is_split = true;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+// ignore the last two fields
+
+  _valid = true;
+}
 
 // ---------------------------------------- rig_interface -------------------------
 
@@ -210,9 +409,9 @@ frequency rig_interface::_rig_frequency(const VFO v) const
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
 
   if (_model == RIG_MODEL_K3)
-  { const string response = raw_command( (v == VFO::A) ? "FA;"s : "FB;"s, RESPONSE::EXPECTED);
+  { const string response { raw_command( (v == VFO::A) ? "FA;"sv : "FB;"sv, RESPONSE::EXPECTED) };
 
-    return frequency(from_string<uint32_t>(substring <string> (response, 2, 11)));
+    return frequency(from_string<uint32_t>(substring <string_view> (response, 2, 11)));
   }
   else          // not K3
   { freq_t hz;
@@ -220,13 +419,12 @@ frequency rig_interface::_rig_frequency(const VFO v) const
     SAFELOCK(_rig);
 
     if (const int status { rig_get_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_CURR : RIG_VFO_B ), &hz) }; status != RIG_OK)
-    { _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));             // written to screen and to output file
+    { //_error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));             // written to screen and to output file
+      _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? 'A' : 'B'));             // written to screen and to output file
       return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b) ;
     }
 
-//    _error_alert("DUMMY ERROR ALERT");
-
-    return frequency(hz);
+    return frequency { hz };
   }
 }
 
@@ -245,8 +443,6 @@ frequency rig_interface::_rig_frequency(const VFO v) const
     Currently any expected length is ignored; the routine looks for the concluding ";" instead
     C++ does not allow a generic std::chrono::duration to be a parameter
 */
-//string rig_interface::_retried_raw_command(const string& cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
-//string rig_interface::_retried_raw_command(const string_view cmd, /*const int expected_len, */const int timeout_ms, const int n_retries)
 string rig_interface::_retried_raw_command(const string_view cmd, const milliseconds timeout, const int n_retries)
 { string rv;
 
@@ -260,7 +456,6 @@ string rig_interface::_retried_raw_command(const string_view cmd, const millisec
 
     if (!completed)
     { counter++;
-//      sleep_for(milliseconds(timeout_ms));
       sleep_for(timeout);
     }
   }
@@ -287,11 +482,7 @@ void rig_interface::prepare(const drlog_context& context)
 
   const string rig_type { context.rig1_type() };
 
-  _model = MUM_VALUE(type_name_to_hamlib_model, rig_type, RIG_MODEL_DUMMY);
-
-// ugly map of name to hamlib model number
-//  if (rig_type == "K3"sv)
-//    _model = RIG_MODEL_K3;
+  _model = MUM_VALUE(type_name_to_hamlib_model, rig_type, RIG_MODEL_DUMMY);   // get the hamlib type of rig
 
   if ( (_model == RIG_MODEL_DUMMY) and !rig_type.empty())
     _error_alert("Unknown rig type: "s + rig_type);
@@ -362,8 +553,7 @@ void rig_interface::rig_mode(const MODE m)
             break;
 
           case MODE_SSB :
-            { //const string k3_mode_cmd { (rig_frequency().mhz() < 10) ? "MD1;"sv : "MD2;"sv };  // select LSB or USB
-              const string k3_mode_cmd { (rig_frequency() < 10_MHz) ? "MD1;"sv : "MD2;"sv };  // select LSB or USB
+            { const string k3_mode_cmd { (rig_frequency() < 10_MHz) ? "MD1;"sv : "MD2;"sv };  // select LSB or USB
 
               raw_command(k3_mode_cmd);
               sleep_for(K3_MODE_CHANGE_TIME);
@@ -386,7 +576,6 @@ void rig_interface::rig_mode(const MODE m)
       rmode_t hamlib_m { RIG_MODE_CW };
 
       if (m == MODE_SSB)
-//        hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
         hamlib_m = ( (rig_frequency() < 10_MHz) ? RIG_MODE_LSB : RIG_MODE_USB );  // select LSB or USB
 
       int status;
@@ -837,8 +1026,8 @@ void rig_interface::sub_receiver(const bool torf) const
 /// is sub-receiver on?
 bool rig_interface::sub_receiver(void) const
 { if (_model == RIG_MODEL_K3)
-  { if (const string response { raw_command("SB;"s, RESPONSE::EXPECTED) }; response.length() < 3)
-    { _error_alert("SUBRX Short response"s);
+  { if (const string response { raw_command("SB;"sv, RESPONSE::EXPECTED) }; response.length() < 3)
+    { _error_alert("SUBRX Short response"sv);
       return false;
     }
     else
@@ -855,8 +1044,7 @@ void rig_interface::keyer_speed(const int wpm) const
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { //const string cmd { "KS"s + pad_leftz(wpm, 3) + ";"s };
-    const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
+  { const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
 
     raw_command(cmd, RESPONSE::NOT_EXPECTED);
   }
@@ -877,7 +1065,7 @@ int rig_interface::keyer_speed(void) const
   SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { if ( const string response { raw_command("KS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"s, 0) )
+  { if ( const string response { raw_command("KS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"sv, 0) )
       return from_string<int>(substring <std::string> (response, 2, 3));
     else
     { _error_alert("Invalid response getting keyer_speed: "s + response);
@@ -943,7 +1131,6 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
   constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
 
 // sanity check ... on K3 all commands end in a ";"
-//  if (last_char(cmd) != ';')
   if (last_char(cmd) != SEMICOLON)
   {  _error_alert("Invalid rig command: "s + cmd);
     return string();
@@ -953,7 +1140,6 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
   { SAFELOCK(_rig);             // hold lock until we're done
 
-//    serial_flush(&rs_p->rigport);
     rig_flush(&rs_p->rigport);
 
     if (_instrumented)
@@ -961,7 +1147,6 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
     write(fd, cmd.data(), cmd.length());     // send the command
 
-//    serial_flush(&rs_p->rigport);
     rig_flush(&rs_p->rigport);
     sleep_for(RETRY_TIME);            // wait for a bit
 
@@ -1073,9 +1258,9 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
     }
   }
 
-  if (response_expected and !completed)
-  { // _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
-  }
+//  if (response_expected and !completed)
+//  { // _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
+//  }
 
   if (response_expected and completed)
   { if (_instrumented)
@@ -1094,7 +1279,7 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 /// is the VFO locked?
 bool rig_interface::is_locked(void) const
 { if (_model == RIG_MODEL_K3)
-  { if ( const string response { raw_command("LK;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"s, 0) )
+  { if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"sv, 0) )
       return (response[2] == '1');
     else
     { _error_alert("Invalid response getting locked status: "s + response);
@@ -1122,7 +1307,7 @@ string rig_interface::bandwidth_str(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
   { const string bw_in_tens { remove_leading <std::string> (substring <std::string> (response, 2, 4), '0') };   // returned value is in tens of Hz, so convert to Hz
 
     return (bw_in_tens + '0');   // returned value is in tens of Hz, so convert to Hz
@@ -1142,7 +1327,7 @@ int rig_interface::bandwidth(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
       return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting bandwidth: "s + response);
@@ -1191,7 +1376,7 @@ bool rig_interface::is_transmitting(void) const
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if (const string response { raw_command("TQ;"s, RESPONSE::EXPECTED) }; (contains_at(response, ';', 3) and contains_at(response, "TQ"s, 0)))
+    { if (const string response { raw_command("TQ;"sv, RESPONSE::EXPECTED) }; (contains_at(response, ';', 3) and contains_at(response, "TQ"sv, 0)))
       { n_unreachable = 0;
         return  (response[2] == '1');
       }
@@ -1226,7 +1411,7 @@ bool rig_interface::test(void) const
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if ( const string response { raw_command("IC;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"sv, 0) )
+    { if ( const string response { raw_command("IC;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"sv, 0) )
       { const char c { response[2] };
 
         return (c bitand (1 << 5));
@@ -1250,7 +1435,7 @@ void rig_interface::test(const bool b) const
 { if (test() != b)
   { if (_rig_connected)
     { if (_model == RIG_MODEL_K3)
-        raw_command("SWH18;"s);    // toggles state
+        raw_command("SWH18;"sv);    // toggles state
     }
   }
 }
@@ -1292,8 +1477,6 @@ void rig_interface::bandwidth_a(const unsigned int hz) const
     { wait_until_not_busy();
 
       const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
-//      const string bw_command  { "BW"s + k3_bw_units + ";"s };
-//      const string bw_command  { "BW"s + k3_bw_units + ';' };
       const string bw_command  { "BW"s + k3_bw_units + SEMICOLON };
 
       raw_command(bw_command);
@@ -1314,7 +1497,8 @@ void rig_interface::bandwidth_b(const unsigned int hz) const
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
     { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
-      raw_command("BW$"s + k3_bw_units + ";"s);
+//      raw_command("BW$"s + k3_bw_units + ";"s);
+      raw_command("BW$"s + k3_bw_units + SEMICOLON);
     }
   }
 }
@@ -1330,7 +1514,7 @@ string rig_interface::centre_frequency_str(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("IS;"s, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"s, 0) )
+  if ( const string response { raw_command("IS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"sv, 0) )
     return remove_leading <std::string> (substring <std::string_view> (response, 3, 4), '0');
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
@@ -1374,7 +1558,8 @@ void rig_interface::centre_frequency(const unsigned int fc) const
     return; 
   }
 
-  raw_command( ("IS "s + fc_str + ";"s), RESPONSE::NOT_EXPECTED);
+//  raw_command( ("IS "s + fc_str + ";"s), RESPONSE::NOT_EXPECTED);
+  raw_command( ("IS "s + fc_str + SEMICOLON), RESPONSE::NOT_EXPECTED);
 }
 
 /*! \brief      Is an RX antenna in use?
@@ -1443,7 +1628,6 @@ bool rig_interface::notch_enabled(const string_view ds_result) const
 */
 void rig_interface::toggle_notch_status(void) const
 { if (_model == RIG_MODEL_K3)
-//    k3_tap(K3_BUTTON::NOTCH);
     k3_press(K3_BUTTON_TAP::NOTCH);
 }
 
@@ -1456,11 +1640,11 @@ void rig_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 { if (_model == RIG_MODEL_K3)
   { switch (cm)
     { case K3_COMMAND_MODE::EXTENDED :
-        raw_command("K31;"s);
+        raw_command("K31;"sv);
         break;
 
       case K3_COMMAND_MODE::NORMAL :
-        raw_command("K30;"s);
+        raw_command("K30;"sv);
         break;
     }
   }
@@ -1475,30 +1659,12 @@ K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
 { if (_model == RIG_MODEL_K3)
   { const string result { raw_command("K3;", RESPONSE::EXPECTED) };
 
-    if (result == "K31"s)
+    if (result == "K31"sv)
       return K3_COMMAND_MODE::EXTENDED;
   }
 
   return K3_COMMAND_MODE::NORMAL;
 }
-
-/*! \brief          Emulate the tapping or holding of a K3 button
-    \param  n       the K3 button to tap or hold
-    \param  torh    whether to press or hold
-
-    Works only with K3
-*/
-/*
-void rig_interface::k3_press_button(const K3_BUTTON n, const PRESS torh) const
-{ if (_model == RIG_MODEL_K3)
-  { const string n_str      { pad_leftz(static_cast<int>(n), 2) };    // the cast is necessary
-    const string press_code { (torh == PRESS::TAP) ? "SWT"s : "SWH"s };
-    const string command    { press_code + n_str + ";"s };
-
-    raw_command(command);
-  }
-}
-*/
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold

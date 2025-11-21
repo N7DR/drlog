@@ -132,7 +132,8 @@ public:
 /*! \brief          Construct from name
     \param  nm      name of exchange field
 */
-  explicit inline exchange_field_values(const std::string& nm) :
+//  explicit inline exchange_field_values(const std::string& nm) :
+  explicit inline exchange_field_values(const std::string_view nm) :
     _name(nm)
   { }
 
@@ -140,7 +141,8 @@ public:
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
 */
-  inline exchange_field_values(const std::string& nm, const STRING_MAP<STRING_SET>& mss) :
+//  inline exchange_field_values(const std::string& nm, const STRING_MAP<STRING_SET>& mss) :
+  inline exchange_field_values(const std::string_view nm, const STRING_MAP<STRING_SET>& mss) :
     _name(nm),
     _values(mss)
   { }
@@ -162,7 +164,8 @@ public:
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-  void add_value(const std::string_view cv, const std::string& v);
+//  void add_value(const std::string_view cv, const std::string& v);
+  void add_value(const std::string_view cv, const std::string_view v);
 
 /*! \brief          Add a possible value
     \param  pss     pair to be added, containing: canonical value to which <i>v</i> is to be added, value to be added
@@ -178,7 +181,8 @@ public:
 
     Returns 0 if the canonical value does not exist
 */
-  inline size_t n_values(const std::string& cv) const
+//  inline size_t n_values(const std::string& cv) const
+  inline size_t n_values(const std::string_view cv) const
     { return MUMF_VALUE(_values, cv, &STRING_SET::size); }
 
 /// Get the number of canonical values
@@ -190,7 +194,6 @@ public:
 
     Returns empty set if there are no canonical values
 */
-//  std::set<std::string> canonical_values(void) const;
   STRING_SET canonical_values(void) const;
 
 /*! \brief      Get all the legal values for a single canonical value
@@ -221,7 +224,6 @@ template<typename STYPE>
     \param  putative_cv_value   string to test
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
-//  inline bool canonical_value_present(const std::string& putative_cv_value) const
   inline bool canonical_value_present(const std::string_view putative_cv_value) const
     { return _values.contains(putative_cv_value); }
 
@@ -296,6 +298,10 @@ public:
   READ(is_mult);                       ///< is this field a multiplier?
   READ(is_optional);                   ///< is this an optional field?
   READ_AND_WRITE(choice);              ///< equivalents if this is a choice
+
+/// is this field mandatory?
+  inline bool is_mandatory(void) const
+    { return !_is_optional; }
 
 /// is this field a choice?
   inline bool is_choice(void) const
@@ -431,7 +437,7 @@ protected:
 // structures to hold information about the possible values of exchange fields
 
 /// all the equivalent values for all exchange fields; the enclosed map is empty if there are no canonical values
-// might try this as an unordered map instead, ot make it easier to append to, around line 790 in rules.cpp
+// might try this as an unordered map instead, to make it easier to append to, around line 790 in rules.cpp
   std::vector<exchange_field_values> _exch_values;
 
 /// all the legal values for each exchange field that has defined legal values
@@ -912,7 +918,6 @@ std::string sac_prefix(const std::string_view call);
 
     For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
-//std::string MULT_VALUE(const std::string_view field_name, const std::string& received_value);
 std::string MULT_VALUE(const std::string_view field_name, const std::string_view received_value);
 
 #endif    // RULES_H

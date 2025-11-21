@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 277 2025-10-19 15:57:37Z  $
+// $Id: fuzzy.cpp 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,11 +64,14 @@ FUZZY_SET fuzzy_database::operator[](const string_view key) const
 */
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
-void fuzzy_databases::remove_call(const string& call)
+//void fuzzy_databases::remove_call(const string& call)
+void fuzzy_databases::remove_call(const string_view call)
 { bool removed { false };
 
+  const string call_str { call };   // needed because erase() does not yet work
+
   for (size_t n { 0 }; (!removed and (n < _vec.size())); ++n)
-    removed = ( _vec[ (_vec.size() - 1 - n) ] -> remove_call(call) );
+    removed = ( _vec[ (_vec.size() - 1 - n) ] -> remove_call(call_str) );
 }
 
 /*! \brief          Return matches
@@ -77,19 +80,13 @@ void fuzzy_databases::remove_call(const string& call)
 
     Returns empty set if the call is too short 
 */
-//FUZZY_SET fuzzy_databases::operator[](const string& key) const
 FUZZY_SET fuzzy_databases::operator[](const string_view key) const
 { FUZZY_SET rv { };
 
   if (key.length() < 3)
     return rv;
 
-  for (const auto& db_p : _vec)
-  { //const fuzzy_database& db { *db_p };
-
-    //rv += db[key];
-    rv += (*db_p)[key];
-  }
+  FOR_ALL( _vec, [key, &rv] (const auto& db_p) { rv += (*db_p)[key]; } );
 
   return rv;
 }

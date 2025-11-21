@@ -68,7 +68,6 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-//  inline bool prefill_data_exists(const std::string& field_name) const
   inline bool prefill_data_exists(const std::string_view field_name) const
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
@@ -80,7 +79,6 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-//  std::string prefill_data(const std::string& field_name, const std::string_view callsign) const;
   std::string prefill_data(const std::string_view field_name, const std::string_view callsign) const;
 };
 
@@ -112,8 +110,6 @@ public:
     \param  v   field value
     \param  m   is this field a mult?
 */
-//  inline parsed_exchange_field(const std::string& nm, const std::string& v, const bool m) :
-//  inline parsed_exchange_field(const std::string_view nm, const std::string& v, const bool m) :
   inline parsed_exchange_field(const std::string_view nm, const std::string_view v, const bool m) :
     _name(nm),
     _value(v),
@@ -129,13 +125,13 @@ public:
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name
 */
-//  void name(const std::string& nm);
   void name(const std::string_view nm);
 
 /*! \brief      Set the value and corresponding mult value
     \param  v   new value
 */
-  void value(const std::string& v);
+//  void value(const std::string& v);
+  void value(const std::string_view v);
 };
 
 /*! \brief          Write a <i>parsed_exchange_field</i> object to an output stream
@@ -172,7 +168,6 @@ protected:
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-//  bool _is_possible_serno(const std::string& str) const;
   bool _is_possible_serno(const std::string_view str) const;
 
 /*! \brief          Does a string possibly contain a precedence?
@@ -183,16 +178,13 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-//  inline bool _is_possible_prec(const std::string& str) const
   inline bool _is_possible_prec(const std::string_view str) const
-//    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
     { return ( (str.length() == 1) ? legal_prec.contains(last_char(str)) : (_is_possible_serno(str) and (legal_prec.contains(last_char(str))) ) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-//  inline bool _is_possible_check(const std::string& str) const
   inline bool _is_possible_check(const std::string_view str) const
     { return ( (str.length() == 2) ? ( isdigit(str[0]) and isdigit(str[1]) ) : false ); }
 
@@ -200,7 +192,6 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> is a reasonable callsign
 */
-//  inline bool _is_possible_callsign(const std::string& str) const
   inline bool _is_possible_callsign(const std::string_view str) const
     { return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) ); }
 
@@ -210,7 +201,6 @@ public:
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
 */
-//  parsed_ss_exchange(const std::string& call, const std::vector<std::string>& received_fields);
   parsed_ss_exchange(const std::string_view call, const std::vector<std::string>& received_fields);
 
   READ(serno);          ///< serial number
@@ -269,7 +259,9 @@ public:
     \param  m                           mode
     \param  received_values             the received values, in the order that they were received
 */
-  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
+//  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
+//  parsed_exchange(const std::string_view from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
+  parsed_exchange(const std::string_view from_callsign, const std::string_view canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

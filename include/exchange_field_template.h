@@ -61,7 +61,6 @@ public:
 
     Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
 */
-//  inline explicit EFT(const std::string& nm) :
   inline explicit EFT(const std::string_view nm) :
     _name(nm)
   { }
@@ -75,7 +74,6 @@ public:
 
     Object is fully ready for use after this constructor.
 */
-//  EFT(const std::string& nm, const std::vector<std::string>& path,
   EFT(const std::string_view nm, const std::vector<std::string>& path,
       const std::string_view regex_filename,
       const drlog_context& context, location_database& location_db);
@@ -111,7 +109,6 @@ public:
     \param  str     string to test
     \return         whether <i>str</i> is a canonical value
 */
-//  inline bool is_canonical_value(const std::string& str) const
   inline bool is_canonical_value(const std::string_view str) const
     { return _values.contains(str); }
 
@@ -120,7 +117,6 @@ public:
 
     Does nothing if <i>new_canonical_value</i> is already known
 */
-//  void add_canonical_value(const std::string& new_canonical_value);
   void add_canonical_value(const std::string_view new_canonical_value);
 
 /*! \brief              Add a legal value that corresponds to a canonical value
@@ -130,8 +126,6 @@ public:
     Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
     canonical value if necessary.
 */
-//  void add_legal_value(const std::string& cv, const std::string& new_value);
-//  void add_legal_value(const std::string_view cv, const std::string& new_value);
   void add_legal_value(const std::string_view cv, const std::string_view new_value);
 
 /*! \brief              Add legal values that correspond to a canonical value
@@ -154,7 +148,6 @@ public:
     \param  str     received value
     \return         value to be logged
 */
-//  std::string value_to_log(const std::string& str) const;
   std::string value_to_log(const std::string_view str) const;
 
 /*! \brief          Obtain canonical value corresponding to a given received value
@@ -163,7 +156,6 @@ public:
 
     Returns empty string if no equivalent canonical value can be found
 */
-//  std::string canonical_value(const std::string& str) const;
   std::string canonical_value(const std::string_view sv) const;
 
 /// all the canonical values

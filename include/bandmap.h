@@ -1,4 +1,4 @@
-// $Id: bandmap.h 277 2025-10-19 15:57:37Z  $
+// $Id: bandmap.h 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -296,12 +296,7 @@ class bandmap_filter_type
 {
 protected:
 
-#if defined(TRIXIE_GCC)                         // temporary check, until I have a more recent version of gcc available
-//  using GROUP_TYPE = std::vector<std::string>;    // container type to hold continents or canonical prefixes
-  using GROUP_TYPE = std::set<std::string>;    // container type to hold continents or canonical prefixes
-#else
-  using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixes
-#endif
+  using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixe
 
   GROUP_TYPE  _continents  { };           ///< continents to filter
   bool        _enabled     { false };     ///< is bandmap filtering enabled?
@@ -324,21 +319,7 @@ public:
     The continents precede the canonical prefixes
 */
   inline std::vector<std::string> filter(void) const
-//    { return (_continents + _prefixes); }
-//auto con = std::views::concat(v0, v1, a, ie);
-//    { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
-#if defined(TRIXIE_GCC)                         // temporary check, until I have a more recent version of gcc available
-    { std::vector<std::string> rv;
-
-      FOR_ALL (_continents, [&rv] (const std::string con) { rv += con; });
-      FOR_ALL (_prefixes, [&rv] (const std::string pfx) { rv += pfx; });
-
-      return rv;
-    }
-//      return (_continents + _prefixes); }
-#else
     { return SR::to<std::vector<std::string>>(std::views::concat(_continents, _prefixes)); }   // generalised so as not to require vectors
-#endif
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -699,7 +680,7 @@ public:
     }
 
   inline std::string to_brief_string(void) const
-    { return (_callsign + ": " + to_string(_freq)); }
+    { return (_callsign + ": "sv + to_string(_freq)); }
 };
 
 /*! \brief          Write a <i>bandmap_entry</i> object to an output stream
@@ -910,7 +891,6 @@ public:
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap with the mode <i>m</i>
 */
-//  void not_needed_country_mult(const std::string& canonical_prefix, const MODE m);
   void not_needed_country_mult(const std::string_view canonical_prefix, const MODE m);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
@@ -986,6 +966,9 @@ public:
 
 /// the displayed calls, without any markers
   BM_ENTRIES displayed_entries_no_markers(void);
+
+/// return the number of displayed calls, not counting markers
+  size_t count_displayed_entries_no_markers(void);
 
 /// get the column offset
   inline int column_offset(void) const
@@ -1117,9 +1100,9 @@ public:
      \return            whether <i>callsign</i> was added since the bandmap was last pruned
 */
   inline bool is_recent_call(const std::string_view callsign)
-    { SAFELOCK(_bandmap);
-      return _recent_calls.contains(callsign);
-    }
+  { SAFELOCK(_bandmap);
+    return _recent_calls.contains(callsign);
+  }
 
 /*!  \brief             Add a call or regex to the do-not-add list
      \param callsign    callsign or regex to add
@@ -1134,10 +1117,8 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
   template<typename C>
-//    requires (is_string<typename C::value_type>)
     requires (is_ssv<typename C::value_type>)
   inline void do_not_add(const C& calls)
-//    { FOR_ALL(calls, [this] (const std::string& s) { do_not_add(s); }); }
     { FOR_ALL(calls, [this] (const std::string_view s) { do_not_add(s); }); }
 
 /*!  \brief         Add all the calls in a container to the do-not-add list
@@ -1146,10 +1127,8 @@ public:
      Calls in the do-not-add list are never added to the bandmap
 */
   template<typename C>
-//    requires (is_string<typename C::value_type>)
     requires (is_ssv<typename C::value_type>)
   inline void do_not_add(C&& calls)
-//    { FOR_ALL(std::forward<C>(calls), [this] (const std::string& s) { do_not_add(s); }); }
     { FOR_ALL(std::forward<C>(calls), [this] (const std::string_view s) { do_not_add(s); }); }
 
 /*!  \brief             Remove a call from the do-not-add list
@@ -1217,19 +1196,10 @@ public:
     { _version++; }
 
 /// has the version been changed since the last time the bandmap was displayed?
-  inline bool new_version(void)
+  inline bool new_version(void) const
   { SAFELOCK(_bandmap);
     return (_version > _last_displayed_version);
   }
-
-// provide externally-accessible lock and unlock... be very careful with these
-// these are necessary so that blocks containing several bandmap calls can be protected without leaving unprotected periods
-
-//  inline void lock(void)
-//    { _bandmap_mutex.lock(); }
-
-//  inline void unlock(void)
-//    { _bandmap_mutex.unlock(); }
 
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip);
   friend bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip);

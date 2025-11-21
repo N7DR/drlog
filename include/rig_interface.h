@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 277 2025-10-19 15:57:37Z  $
+// $Id: rig_interface.h 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -151,6 +151,18 @@ enum class K3_BUTTON_HOLD { METER       = 8,
                             I_II        = 59
                          };
 
+enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (FM), 5 (AM), 6 (DATA), 7 (CWREV), 9 (DATA-REV) [there is no 8]
+                               USB = 2,
+                               CW = 3,
+                               FM = 4,
+                               AM = 5,
+                               DATA = 6,
+                               CWREV = 7,
+                               DATA_REV = 9
+                             };
+
+constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
+
 #if 0
 const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
                                              { "BAND-"s,           9 },
@@ -252,6 +264,89 @@ using DRLOG_CLOCK = std::chrono::system_clock;
 // ---------------------------------------- rig_status -------------------------
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig
+
+// --------------------------------------- k3_status ----------------------
+
+/*! \class  k3_status
+    \brief  The status of a K3, as determined by the response from an IF; command
+
+From the K3 Programmer's Manual:
+
+IF (Transceiver Information; GET only)
+RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
+[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
+* represents a space (BLANK, or ASCII 0x20)
++ either "+" or "-" (sign of RIT/XIT offset)
+yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
+r 1 if RIT is on, 0 if off
+x 1 if XIT is on, 0 if off
+t 1 if the K3 is in transmit mode, 0 if receive
+m operating mode (see MD command)
+v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
+s 1 if scan is in progress, 0 otherwise
+p 1 if the transceiver is in split mode, 0 otherwise
+b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
+is due to a band change; 0 otherwise
+d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
+if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
+The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
+
+*/
+
+class k3_status
+{
+protected:
+
+  frequency         _freq           { };                        ///< "operating frequency, excluding any RIT/XIT offset"
+  bool              _rit_positive   { true };                   ///< "(sign of RIT/XIT offset)"
+  frequency         _abs_rit_offset { 0 };                      ///< "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
+  bool              _rit_is_on      { false };                  ///< whether RIT is "on"
+  bool              _xit_is_on      { false };                  ///< whether XIT is "on"
+  bool              _transmit       { false };                  ///< whether rig is "in transmit mode"
+  K3_OPERATING_MODE _op_mode        { K3_OPERATING_MODE::CW };  ///< "operating mode"
+  VFO               _rx_vfo         { VFO::A };                 ///< "receive mode VFO"
+  bool              _scanning       { false };                  ///< whether the rig is performing a scan
+  bool              _is_split       { false };                  ///< whether the rig is split
+
+  bool              _valid          { false };                  ///< only valid if the initialisation data look OK
+
+public:
+
+  explicit k3_status(const std::string_view rsp);
+
+  READ(freq);                 // "operating frequency, excluding any RIT/XIT offset"
+  READ(rit_positive);         // "(sign of RIT/XIT offset)"
+  READ(abs_rit_offset);       // "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
+  READ(rit_is_on);            // whether RIT is "on"
+  READ(xit_is_on);            // whether XIT is "on"
+  READ(transmit);             // whether rig is "in transmit mode"
+  READ(op_mode);              // "operating mode"
+  READ(rx_vfo);               // "receive mode VFO"
+  READ(scanning);             // whether the rig is performing a scan
+  READ(is_split);             // whether the rig is split
+
+  READ(valid);                // only valid if the initialisation data look OK
+
+/// return whether RIT is off
+  inline bool rit_is_off(void) const
+    { return !rit_is_on(); }
+
+/// return whether XIT is off
+  inline bool xit_is_off(void) const
+    { return !xit_is_on(); }
+
+/// return whether the object is valid
+  inline operator bool(void) const
+    { return _valid; }
+
+/// return whether the R/XIT direction is positive or negative
+  inline char rit_dirn_char(void) const
+    { return (_rit_positive ? '+' : '-'); }
+
+/// return R/XIT value in Hz as a string, including the direction
+  inline std::string rit_str(void) const
+    { return rit_dirn_char() + ::to_string(_abs_rit_offset.hz()); }
+};
 
 // ---------------------------------------- audio_filter -------------------------
 
@@ -832,7 +927,7 @@ public:
 
     This works only on a K3.
 
-    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
+    The documentation for the K3 MC command doesn't explain the difference between setting and getting a memory
 */
 //  void set_rig_memory(const int rig_memory_nr = 0) const;
 
@@ -841,7 +936,7 @@ public:
 
     This works only on a K3.
 
-    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
+    The documentation for the K3 MC command doesn't explain the difference between setting and getting a memory
 */
 //  void get_rig_memory(const int rig_memory_nr = 0) const;
 

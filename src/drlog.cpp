@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 277 2025-10-19 15:57:37Z  $
+// $Id: drlog.cpp 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -266,7 +266,7 @@ using BANDMAPS = array<bandmap, NUMBER_OF_BANDS>;
 void auto_backup(const string dir, const string log_filename, const string qtc_filename);   ///< Copy a file to a backup directory
 void auto_screenshot(const string filename);                                                ///< Write a screenshot to a file
 void display_rig_status(const milliseconds poll_time, rig_interface* rigp);                 ///< Display status of the rig
-void display_date_and_time(void);                                                           ///< Thread function to display the date and time
+void display_date_and_time(void);                                                           ///< Thread function to display the date and time, and perform other periodic functions
 void get_cluster_info(dx_cluster* cluster_p);                                               ///< Thread function to obtain data from the cluster
 void get_indices(const string cmd);                                                         ///< Get SFI, A, K
 void keyboard_test(void);                                                                   ///< Thread function to simulate keystrokes
@@ -811,7 +811,6 @@ int main(int argc, char** argv)
     const string date_str { DATE_STR.substr(DATE_STR.length() - 4) + "-"s + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-"s +
                             (DATE_STR[4] == ' ' ? "0"s + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2)) };
 
-//    VERSION = VERSION_TYPE + SPACE_STR + date_str + SPACE_STR + TIME_STR.substr(0, 5);
     VERSION = VERSION_TYPE + ' ' + date_str + ' ' + TIME_STR.substr(0, 5);
 
     ost << "Running drlog version " << VERSION << endl;
@@ -1184,8 +1183,6 @@ int main(int argc, char** argv)
 
         rig.instrument();
 
-        constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
-
         const array<frequency, 10> f { 28200_kHz, 28210_kHz, 28220_kHz, 28230_kHz, 28240_kHz,
                                        28250_kHz, 28260_kHz, 28270_kHz, 28280_kHz, 28290_kHz };
 
@@ -1214,12 +1211,11 @@ int main(int argc, char** argv)
 
             ost << NOW_TP() << " about to poll rig" << endl;
 
-            const string status_str { rig.raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
-//        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters;
+            const string status_str { rig.raw_command("IF;"s, RESPONSE::EXPECTED) };               // K3 returns 38 characters
 
             ost << NOW_TP() << ": polled rig status: " << status_str << endl;
 
-            if (status_str.length() != STATUS_REPLY_LENGTH)
+            if (status_str.length() != K3_STATUS_REPLY_LENGTH)
               ost << "incorrect status length: " << status_str.length()<< endl;
             else
             { const frequency s_f { from_string<double>(substring <std::string> (status_str, 2, 11)) };   // slow frequency
@@ -1342,8 +1338,6 @@ int main(int argc, char** argv)
       my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
 // add my marker to each bandmap
-//      ost << "initialising bandmap with my info" << endl;
-
       for (const auto b : permitted_bands)
       { bandmap&      bm { bandmaps[b] };
         bandmap_entry be { my_bandmap_entry };
@@ -1353,13 +1347,7 @@ int main(int argc, char** argv)
         else
           be.freq(DEFAULT_FREQUENCIES.at( { b, current_mode } ));
 
-//        ost << "band number: " << b << endl;
-//        ost << "band number for bandmap: " << bm.band() << endl;
-//        ost << "bandmap for band: " << BAND_NAME[bm.band()] << endl;
-
         bm += be;
-
-//        ost << "be: " << be << endl;
       }
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
@@ -1635,7 +1623,7 @@ int main(int argc, char** argv)
 
           window* wp { new window() };
 
-          wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+          wp -> init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
           win_remaining_exch_mults_p += { exchange_mult_name, wp };
 
           (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values (which are in alphabetical order)
@@ -1833,10 +1821,10 @@ int main(int argc, char** argv)
       if (const string filename { context.logfile() }; file_exists(filename))
       { int index { 0 };
 
-        while (file_exists(filename + "-"s + to_string(index)))
+        while (file_exists(filename + '-' + to_string(index)))
           index++;
 
-        file_copy(filename, filename + "-"s + to_string(index));
+        file_copy(filename, filename + '-' + to_string(index));
       }
 
       const bool clean   { cl.parameter_present("-clean"s) };
@@ -1903,7 +1891,8 @@ int main(int argc, char** argv)
 
           rebuild_dynamic_call_databases(logbk);
 
-          if (remove_peripheral_spaces <std::string> (win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+//          if (remove_peripheral_spaces <std::string> (win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+          if (remove_peripheral_spaces <std::string_view> (win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
             win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
         }
 
@@ -1994,10 +1983,12 @@ int main(int argc, char** argv)
       if (clean)                                          // start with clean slate
       { int index { 0 };
 
-        const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
+//        const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
+        const string target { OUTPUT_FILENAME + '-' + to_string(index) };
 
         while (file_exists(target))
-          file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
+ //         file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
+          file_delete(OUTPUT_FILENAME + '-' + to_string(index++));
 
         file_truncate(context.logfile());
         file_truncate(context.archive_name());
@@ -2159,7 +2150,7 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
 
 /*! \brief  Thread function to display the date and time, and perform other periodic functions
 
-     CHangename ot "tick"?
+     Change name to "tick"?
 */
 void display_date_and_time(void)
 { const string THREAD_NAME { "display date and time"s };
@@ -2190,7 +2181,7 @@ void display_date_and_time(void)
         if (exiting)
         { end_of_thread(THREAD_NAME);
 
-          return; //nullptr;
+          return;
         }
       }
 
@@ -2200,9 +2191,6 @@ void display_date_and_time(void)
       win_time < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= substring <std::string> (string(buf.data(), 26), 11, 8);  // extract HH:MM:SS and display it
 
       last_second = structured_time.tm_sec;
-
-// check for dirty bandmap?
-
 
 // if a new minute, then update rate window, and do other stuff
       if (last_second % 60 == 0)
@@ -2295,7 +2283,6 @@ void display_date_and_time(void)
     }
 
     sleep_for(new_second ? 800ms : 100ms);
-//    sleep_until();
   }
 }
 
@@ -2333,205 +2320,202 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
         sleep_for(poll_period / 2);                      // wait a (relatively) long time if there was an error
       }
 
-// if it's a K3 we can get a lot of info with just one or two queries -- for now just assume it's a K3
+// if it's a K3 we can get a lot of info with just one or two queries -- *** FOR NOW, JUST ASSUME IT'S A K3 ***
       if (ok_to_poll_k3)
       { const bool is_ssb { current_mode == MODE_SSB };
 
         constexpr size_t DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters
-        constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
 
 // force into extended mode -- it's ridiculous to do this all the time, but there seems to be no way to be sure we haven't turned the rig on/off
 // currently needed in order to obtain notch info, hence only SSB, but force it anyway
         if ( is_ssb and ( rigp -> k3_command_mode() == K3_COMMAND_MODE::NORMAL ) )  // NB this is the mode drlog /thinks/ is correct, but it saves time
           rigp -> k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 
-//        ost << NOW_TP() << "about to poll rig" << endl;
+        const string status_str   { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED) };               // K3 should return 38 characters
+        const string ds_reply_str { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 should return 13 characters; currently needed only in SSB
 
-//        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED, STATUS_REPLY_LENGTH) };               // K3 returns 38 characters
-        const string   status_str    { rigp -> raw_command("IF;"s, RESPONSE::EXPECTED /*, STATUS_REPLY_LENGTH */) };               // K3 returns 38 characters
-//        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED, DS_REPLY_LENGTH) : ""s };  // K3 returns 13 characters; currently needed only in SSB
-        const string   ds_reply_str  { is_ssb ? rigp -> raw_command("DS;"s, RESPONSE::EXPECTED /*, DS_REPLY_LENGTH */) : ""s };  // K3 returns 13 characters; currently needed only in SSB
+        if ( (status_str.length() == K3_STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
+        { if (const k3_status rig_status { status_str }; rig_status)            // only execute all this if the response form the rig is sensible
+          { const frequency  f                  { rig_status.freq() };     // frequency of VFO A
+            const frequency  target             { cq_mode_frequency };                                                    // frequency in CQ mode
+            const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
+            const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
+            const bool       notch              { is_ssb ? rigp -> notch_enabled(ds_reply_str) : false };   // only needed in SSB
 
-//        ost << NOW_TP() << ": polled rig status: " << status_str << endl;
+            if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
+              enter_sap_mode();                                                                   // switch to SAP if we've moved
 
-        if ( (status_str.length() == STATUS_REPLY_LENGTH) and (ds_reply_str.length() == (is_ssb ? DS_REPLY_LENGTH : 0)) )              // do something only if it's the correct length
-        { const frequency  f                  { from_string<double>(substring <std::string> (status_str, 2, 11)) };     // frequency of VFO A
-          const frequency  target             { cq_mode_frequency };                                                    // frequency in CQ mode
-          const frequency  f_b                { rig.rig_frequency_b() };                                                // frequency of VFO B
-          const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };                           // explicitly set to SAP mode if we have QSYed
-          const bool       notch              { is_ssb ? rigp -> notch_enabled(ds_reply_str) : false };   // only needed in SSB
+            last_drlog_mode = current_drlog_mode;                                                 // keep track of drlog mode
 
-          if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
-            enter_sap_mode();                                                                   // switch to SAP if we've moved
+            MODE m { current_mode };                                        // mode as determined by drlog, not by rig
 
-          last_drlog_mode = current_drlog_mode;                                                 // keep track of drlog mode
-
-          MODE m { current_mode };                                        // mode as determined by drlog, not by rig
-
-          m = rigp -> rig_mode();      // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
+            m = rigp -> rig_mode();      // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
 
 // have we changed band (perhaps manually)?
-          if (const BAND sgb { current_band }; sgb != to_BAND(f))
-          { ost << "Band mismatch during poll; sgb (current_band) = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
+            if (const BAND sgb { current_band }; sgb != to_BAND(f))
+            { ost << "Band mismatch during poll; sgb (current_band) = " << sgb << ", f = " << f << ", BAND(f) = " << to_BAND(f) << endl;
 
 // changing bands is ssslllloooowwww, and maybe the rig is in transition in another thread -- holding mutex locks
 // is no good because it's too slow
-            bool need_to_set_band { true };
+              bool need_to_set_band { true };
 
-            frequency new_f;
-            BAND      new_sgb;
+              frequency new_f;
+              BAND      new_sgb;
 
-            for ( [[maybe_unused]] int n { 1 }; need_to_set_band and (n != 5); ++n)
-            { sleep_for(500ms);
+              for ( [[maybe_unused]] int n { 1 }; need_to_set_band and (n != 5); ++n)
+              { sleep_for(500ms);
 
-              new_f = rig.rig_frequency();
+                new_f = rig.rig_frequency();
 
 // 250509
-              new_sgb = to_BAND(new_f);
-              need_to_set_band = (current_band != to_BAND(new_f));
+                new_sgb = to_BAND(new_f);
+                need_to_set_band = (current_band != to_BAND(new_f));
 
-              ost << "  attempt number " << n << ": new_f = " << new_f << "; new_sgb = " << new_sgb << "; current_band = " << static_cast<BAND>(current_band) << endl;
-//              new_sgb = current_band;
-//              need_to_set_band = (new_sgb != to_BAND(new_f));
+                ost << "  attempt number " << n << ": new_f = " << new_f << "; new_sgb = " << new_sgb << "; current_band = " << static_cast<BAND>(current_band) << endl;
+              }
+
+              if (need_to_set_band)               // it looks like this was probably a manual band change
+              { ost << "Consistent band mismatch during poll; new_sgb = " << new_sgb << ", new_f = " << new_f << ", BAND(new_f) = " << to_BAND(new_f) << "; setting band" << endl;
+
+                current_band = to_BAND(new_f);
+
+                update_remaining_callsign_mults_window(statistics, string(), current_band, m);
+                update_remaining_country_mults_window(statistics, current_band, m);
+                update_remaining_exchange_mults_windows(/* rules, */statistics, current_band, m);
+
+                update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+              }
             }
-
-            if (need_to_set_band)               // it looks like this was probably a manual band change
-            { ost << "Consistent band mismatch during poll; new_sgb = " << new_sgb << ", new_f = " << new_f << ", BAND(new_f) = " << to_BAND(new_f) << "; setting band" << endl;
-
-              current_band = to_BAND(new_f);
-
-              update_remaining_callsign_mults_window(statistics, string(), current_band, m);
-              update_remaining_country_mults_window(statistics, current_band, m);
-              update_remaining_exchange_mults_windows(/* rules, */statistics, current_band, m);
-
-              update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+            else          // we haven't changed band
+            { if (ignore_next_poll)
+                ignore_next_poll = false;
+              else
+                update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
             }
-          }
-          else          // we haven't changed band
-          { if (ignore_next_poll)
-              ignore_next_poll = false;
-            else
-              update_based_on_frequency_change(f, m);   // changes windows, including bandmap; NB this is called even if there is no change
-          }
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
 // it seems like the effort of trying to work around the (Yet Another Elecraft) bug is not worth it
-          constexpr unsigned int RIT_XIT_PM_ENTRY  { 18 };      // position of the RIT/XIT +/- indicator; compiler does not allow "±" in variable names
 
-          constexpr unsigned int RIT_XIT_OFFSET_ENTRY  { 19 };  // position of the RIT/XIT offset
-          constexpr unsigned int RIT_XIT_OFFSET_LENGTH { 4 };   // length of the RIT/XIT offset
+            constexpr unsigned int RIT_XIT_DISPLAY_LENGTH  { 7 }; // display length of RIT/XIT info
 
-          constexpr unsigned int RIT_ENTRY   { 23 };             // position of the RIT status byte in the K3 status string
-          constexpr unsigned int XIT_ENTRY   { 24 };             // position of the XIT status byte in the K3 status string
-          constexpr unsigned int MODE_ENTRY  { 29 };             // position of the mode byte in the K3 status string
-          constexpr unsigned int SPLIT_ENTRY { 32 };             // position of the SPLIT status byte in the K3 status string
+            string mode_str { "UNK "s };
 
-          constexpr unsigned int RIT_XIT_DISPLAY_LENGTH  { 7 }; // display length of RIT/XIT info
+            switch (rig_status.op_mode())
+            { case K3_OPERATING_MODE::LSB :
+                mode_str = "LSB "s;
+                break;
 
-          const char   mode_char  { status_str[MODE_ENTRY] };
-          const string mode_str   { ( (mode_char == '1') ? "LSB "s : ( (mode_char == '2') ? "USB "s : ( (mode_char == '3') ? " CW "s : "UNK "s ) ) ) };
-          const bool   rit_is_on  { (status_str[RIT_ENTRY] == '1') };
-          const bool   xit_is_on  { (status_str[XIT_ENTRY] == '1') };
+              case K3_OPERATING_MODE::USB :
+                mode_str = "USB "s;
+                break;
 
-          string rit_xit_str { };
+              case K3_OPERATING_MODE::CW :
+                mode_str = " CW "s;
+                break;
 
-          if (xit_is_on)
-            rit_xit_str += 'X';
+              default :
+                break;
+            }
 
-          if (rit_is_on)
-            rit_xit_str += 'R';
+            string rit_xit_str { };
 
-          if (rit_is_on or xit_is_on)
-          { string rit_xit_value_str { remove_leading <std::string> (substring <std::string_view> (status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH), '0') };  // removes leading zeros
+            if (rig_status.xit_is_on())
+              rit_xit_str += 'X';
 
-            if (rit_xit_value_str.empty())
-              rit_xit_value_str = '0';
+            if (rig_status.rit_is_on())
+              rit_xit_str += 'R';
 
-            rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + rit_xit_value_str);
-            rit_xit_str = pad_left(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
-          }
+            if (rig_status.rit_is_on() or rig_status.xit_is_on())
+              rit_xit_str = pad_left(rit_xit_str + rig_status.rit_str(), RIT_XIT_DISPLAY_LENGTH);
+            else
+              rit_xit_str = space_string(RIT_XIT_DISPLAY_LENGTH);
 
-          if (rit_xit_str.empty())
-            rit_xit_str = space_string(RIT_XIT_DISPLAY_LENGTH);
+            rig_is_split = rig_status.is_split();
 
-          rig_is_split = (status_str[SPLIT_ENTRY] == '1');
-
-          const string bandwidth_str   { rigp -> bandwidth_str() };
-          const string frequency_b_str { f_b.display_string() };
-          const string centre_str      { rigp -> centre_frequency_str() };
+            const string bandwidth_str   { rigp -> bandwidth_str() };
+            const string frequency_b_str { f_b.display_string() };
+            const string centre_str      { rigp -> centre_frequency_str() };
 
 // now display the status
-          win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if the contest doesn't want us to be on this QRG
+            win_rig.default_colours(win_rig.fg(), is_marked_frequency(marked_frequency_ranges, m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if the contest doesn't want us to be on this QRG
 
-          const bool is_locked { rigp -> is_locked() };
+            const bool is_locked { rigp -> is_locked() };
 
-          if (xit_is_on and is_locked and !locked_warning)
-          { locked_warning = true;
+            if (rig_status.xit_is_on() and is_locked and !locked_warning)
+            { locked_warning = true;
 
-            alert("XIT ENABLED WHILE LOCKED; DISABLING");
+              alert("XIT ENABLED WHILE LOCKED; DISABLING");
 
-            rigp -> xit_disable();
-          }
+              rigp -> xit_disable();
+            }
 
-          if (locked_warning)
-          { if (!xit_is_on or !is_locked)
-            { locked_warning = false;
+            if (locked_warning)
+            { if (rig_status.xit_is_off() or !is_locked)
+              { locked_warning = false;
 
-              win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;       // clear the MESSAGE window
+                win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;       // clear the MESSAGE window
 
 // force RIT to be enabled if we are locked
-              if (is_locked and !(rigp -> rit_enabled()) )
-                rigp -> rit_enable();
+                if (is_locked and !(rigp -> rit_enabled()) )
+                  rigp -> rit_enable();
+              }
             }
-          }
 
-          const bool sub_rx    { rigp -> sub_receiver_enabled() };
-          const auto fg        { win_rig.fg() };                                          // original foreground colour
+            const bool sub_rx    { rigp -> sub_receiver_enabled() };
+            const auto fg        { win_rig.fg() };                                          // original foreground colour
 
-          win_rig < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT
-                  < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_BOLD)
-                  < pad_left(f.display_string(), 7)
-                  < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_NORMAL)
-                  < ( is_locked ? "L "s : "  "s )
-                  < mode_str
-                  < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_BOLD : WINDOW_ATTRIBUTES::WINDOW_NORMAL);
+            win_rig < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT
+                    < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_BOLD)
+                    < pad_left(f.display_string(), 7)
+                    < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_NORMAL)
+                    < ( is_locked ? "L "s : "  "s )
+                    < mode_str
+                    < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_BOLD : WINDOW_ATTRIBUTES::WINDOW_NORMAL);
 
-          if (sub_rx)
-            win_rig < COLOURS(COLOUR_GREEN, win_rig.bg());
+            if (sub_rx)
+             win_rig < COLOURS(COLOUR_GREEN, win_rig.bg());
 
-          win_rig < frequency_b_str
-                  < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NORMAL : WINDOW_ATTRIBUTES::WINDOW_NOP);
+            win_rig < frequency_b_str
+                    < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NORMAL : WINDOW_ATTRIBUTES::WINDOW_NOP);
 
-          if (sub_rx)
-            win_rig < COLOURS(fg, win_rig.bg());
+            if (sub_rx)
+              win_rig < COLOURS(fg, win_rig.bg());
 
-          win_rig < WINDOW_ATTRIBUTES::CURSOR_DOWN
-                  < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+            win_rig < WINDOW_ATTRIBUTES::CURSOR_DOWN
+                    < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
-          if (rigp -> test())
-            win_rig < "T ";
+            if (rigp -> test())
+              win_rig < "T ";
 
-          if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)
-            win_rig < rit_xit_str < "  ";
-          else
-            win_rig < substring <std::string> (rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s
-                    < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring <std::string> (rit_xit_str, x_posn + 1) < "  ";
+            if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)
+              win_rig < rit_xit_str < "  ";
+            else
+              win_rig < substring <std::string> (rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s
+                      < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring <std::string> (rit_xit_str, x_posn + 1) < "  ";
 
-           win_rig < centre_str;
+             win_rig < centre_str;
 
 // don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
-          if (bandwidth_str.size() <= 4)
-          { win_rig < ":"s < bandwidth_str;
+            if (bandwidth_str.size() <= 4)
+            { win_rig < ':' < bandwidth_str;
 
-            if (notch)
-              win_rig < " N"s;    // effectively, the notch status is part of the bandwidth; we can't just write the N, because we might not have written a bandwidth
-          }
+              if (notch)
+                win_rig < " N"s;    // effectively, the notch status is part of the bandwidth; we can't just write the N, because we might not have written a bandwidth
+            }
 
-          win_rig.refresh();
+            win_rig.refresh();
 
-          SAFELOCK(last_polled_frequency);
-          last_polled_frequency = f.display_string();   // store for quick lookup without interrogating the rig
+            SAFELOCK(last_polled_frequency);
+            last_polled_frequency = f.display_string();   // store for quick lookup without interrogating the rig
+          }                                               // end block that is executed only of the status lookup was valid
+        }
+        else
+        { if (status_str.length() != K3_STATUS_REPLY_LENGTH)
+            ost << "invalid response to IF command: " << status_str << endl;
+
+          if (is_ssb and (ds_reply_str.length() != DS_REPLY_LENGTH))
+            ost << "invalid response to DS command: " << ds_reply_str << endl;
         }
 
 // possibly check the RX ANT status
@@ -2560,15 +2544,15 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
 /*! \brief  Thread to process data from the cluster or the RBN.
 
     Must start the thread to obtain data before trying to process it with this one;
-    pulls the data from the cluster object [and removes the data from it]
+    pulls the data from the cluster object [and removes those data from it]
 */
 void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_statistics* statistics_p, location_database* location_database_p, window* win_bandmap_p, BANDMAPS* bandmaps_p)
 { const string THREAD_NAME { "process rbn info"s };
 
   start_of_thread(THREAD_NAME);
 
-  constexpr int       POLL_SECS { 10 };         // seconds between the end of one processing pass and the start of the next
-  constexpr frequency MAX_FREQ_SKEW { 800_Hz };     // maximum change in frequency considered as NOT a QSY
+  constexpr int       POLL_SECS     { 10 };       // seconds between the end of one processing pass and the start of the next
+  constexpr frequency MAX_FREQ_SKEW { 800_Hz };   // maximum change in frequency considered as NOT a QSY
 
 // get access to the information that's been passed to the thread
   window&                          cluster_line_win { *wclp };                 // the window to which we will write each line from the cluster/RBN
@@ -2814,7 +2798,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
               for (const auto& [recent_mult_call, recent_mult_freq] : recent_mult_calls)      // look to see if this is already in the deque
                 if (!is_recent_call)
-//                  is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
                   is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq) <= MAX_FREQ_SKEW); // allow for frequency skew
 
               const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };
@@ -6021,7 +6004,6 @@ void enter_cq_or_sap_mode(const DRLOG_MODE new_mode)
     \param  b           current band
     \param  m           current mode
 */
-//void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string_view mult_name, const BAND b, const MODE m)
 { const MULT_SET worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
 
@@ -6037,14 +6019,8 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     erase_if(original, [&worked_callsign_mults] (const string& s) { return (worked_callsign_mults.contains(s)); } );
 
 // put in right order and get the colours right
-//  vector<string> vec_str(original.begin(), original.end());
-
-//  vector<string> vec_str { SR::to<vector<string>>(original) };
-//  SORT(vec_str, compare_calls);
-
   vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
-//  for (const auto& canonical_prefix : vec_str)
   for (const auto& canonical_prefix : SR::to<CALL_SET>(original))
   { const bool             is_needed          { !worked_callsign_mults.contains(canonical_prefix) };
     const PAIR_NUMBER_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
@@ -9354,8 +9330,11 @@ void update_bandmap_size_window(void)
     for (const auto b : permitted_bands)
     { const cursor c_posn { 0, line_nr++ };
 
+//      win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)                    // low band is on bottom
+//                       < pad_left(bandmaps[b].displayed_entries().size(), 5);
+
       win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)                    // low band is on bottom
-                       < pad_left(bandmaps[b].displayed_entries().size(), 5);
+                       < pad_left(bandmaps[b].count_displayed_entries_no_markers(), 5);
     }
 
     win_bandmap_size.refresh();
@@ -9369,7 +9348,7 @@ void update_bandmap_size_window(void)
     Returns (0, 0) if latitude or longitude cannot be calculated
 */
 pair<float, float> latitude_and_longitude(const string_view callsign)
-{ if (const string grid_name { exchange_db.guess_value(callsign, "GRID"s) }; is_valid_grid_designation(grid_name))
+{ if (const string grid_name { exchange_db.guess_value(callsign, "GRID"sv) }; is_valid_grid_designation(grid_name))
     return grid_square(grid_name).latitude_and_longitude();
 
   return (location_db.info(callsign) == location_info { }) ? pair<float, float> { }
@@ -9384,30 +9363,19 @@ pair<float, float> latitude_and_longitude(const string_view callsign)
     appends it to the do-not-show file if one has been defined
 */
 void do_not_show(const string_view callsign, const BAND b)
-{ auto dns { [callsign] (bandmap& bm) { bm -= callsign;
+{
+// remove call from bandmap, and add it to the do_not_add list for that bandmap
+  auto dns { [callsign] (bandmap& bm) { bm -= callsign;
                                         bm.do_not_add(callsign);
                                       } };
 
   if (b == ALL_BANDS)
-  { for (bandmap& bm : bandmaps)
-      dns(bm);
+  { //for (bandmap& bm : bandmaps)
+    //  dns(bm);
+    FOR_ALL(bandmaps, [&dns] (bandmap& bm) { dns(bm); });
   }
   else                          // single band
     dns(bandmaps[b]);
-
-#if 0
-  if (b == ALL_BANDS)
-  { FOR_ALL(bandmaps, [&callsign] (bandmap& bm) { bm -= callsign;
-                                                  bm.do_not_add(callsign);
-                                                } );
-  }
-  else                          // single band
-  { bandmap& bm = bandmaps[b];
-
-    bm -= callsign;
-    bm.do_not_add(callsign);
-  }
-#endif
 
   calls_to_do_not_show_file(calls_from_do_not_show_file(b) + callsign, b);
 }
@@ -9423,9 +9391,23 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
 { for (int n { 0 }; n < static_cast<int>(vqsos.size()); ++n)
     if (vqsos[n].idate() >= target_idate)
       return { vqsos[n], n };
-      
+
   return { adif3_record { }, -1 };
 };
+
+#if 0
+// too much trouble
+pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const int target_idate)
+{ const auto it { FIND_IF(vqsos, [target_idate] (const adif3_record& rec) { return (rec.idate() >= target_idate); } ) };
+
+  if (it == vqsos.end())
+    return { adif3_record { }, -1 };
+
+  const size_t idx { static_cast<size_t>(distance(vqsos.begin(), it)) };
+
+  return { vqsos[idx], idx };
+};
+#endif
 
 /*! \brief                          Find the first QSO in a chronological vector of ADIF3 records that occurs on or after a target date; or the first confirmed QSO after a given index number
     \param  vqsos                   chronological vector of QSOs
@@ -9458,7 +9440,7 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
 
 
  How about the case where we received a QSL for a non-marked QSO? Maybe make that marked? After all,
-if we received a QSL -- even if I didn't send one -- that should count for something.
+ if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
 { time_log <std::chrono::milliseconds> tl;
@@ -9731,7 +9713,8 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
 // use the current time rather than relying on any timestamp in the data -- 
 // this should be roughly the same time as the timestamp we've put in the dx_post
-    new_contents += substring <std::string> (hhmmss(), 0, 5) + " "s + post.frequency_str() + "  "s + post.poster();
+//    new_contents += substring <std::string> (hhmmss(), 0, 5) + " "s + post.frequency_str() + "  "s + post.poster();
+    new_contents += substring <std::string> (hhmmss(), 0, 5) + ' ' + post.frequency_str() + "  "s + post.poster();
   }
 
   if (static_cast<int>(new_contents.size()) < win_height)
@@ -9863,10 +9846,10 @@ string expected_received_exchange(const string_view callsign)
 // need to figure out a way to generalise all this
     if (exf.is_choice())
     { if (exf.name() == "ITUZONE+SOCIETY"sv)
-      { string iaru_guess { exchange_db.guess_value(callsign, "SOCIETY"s) };      // start with guessing it's a society
+      { string iaru_guess { exchange_db.guess_value(callsign, "SOCIETY"sv) };      // start with guessing it's a society
 
         if (iaru_guess.empty())
-          iaru_guess = exchange_db.guess_value(callsign, "ITUZONE"s);   // try ITU zone if no society
+          iaru_guess = exchange_db.guess_value(callsign, "ITUZONE"sv);   // try ITU zone if no society
 
         return iaru_guess;
       }
@@ -9875,28 +9858,31 @@ string expected_received_exchange(const string_view callsign)
       { static const STRING_SET state_multiplier_countries { "K"s, "VE"s, "XE"s };
 
         const string canonical_prefix { location_db.canonical_prefix(callsign) };
-        const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(callsign, "10MSTATE"s) : string { } };
+        const string state_guess      { state_multiplier_countries.contains(canonical_prefix) ? exchange_db.guess_value(callsign, "10MSTATE"sv) : string { } };
 
         return state_guess;
       }
     }
 
     if (exf.name() == "DOK"sv)
-    { const string guess { exchange_db.guess_value(callsign, "DOK"s) };
+    { //const string guess { exchange_db.guess_value(callsign, "DOK"sv) };
 
-      return guess;
+      //return guess;
+      return exchange_db.guess_value(callsign, "DOK"sv);
     }
 
-    if (!no_default_rst and (exf.name() == "RST"sv) and !exf.is_optional())
+//    if (!no_default_rst and (exf.name() == "RST"sv) and !exf.is_optional())
+    if (!no_default_rst and (exf.name() == "RST"sv) and exf.is_mandatory())
       continue;
 
     if (exf.name() == "RS"sv)
       continue;
 
     if ((exf.name() == "GRID"sv))
-    { const string guess { exchange_db.guess_value(callsign, "GRID"s) };
+    { //const string guess { exchange_db.guess_value(callsign, "GRID"s) };
 
-      return guess;
+      //return guess;
+      return exchange_db.guess_value(callsign, "GRID"sv);
     }
 
     { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field (i.e., currently, not SERNO)

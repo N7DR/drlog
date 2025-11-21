@@ -83,8 +83,8 @@ add_custom_command(
   PRE_BUILD
   COMMAND touch
   ARGS "/home/n7dr/projects/drlog/include/version.h"
-  COMMAND g++
-  ARGS "-v"
+#  COMMAND g++
+#  ARGS "-v"
   )
 
  set( CMAKE_VERBOSE_MAKEFILE on )

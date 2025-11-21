@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 277 2025-10-19 15:57:37Z  $
+// $Id: fuzzy.h 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -93,7 +93,7 @@ public:
 
     Does nothing and returns <i>false</i> if <i>call</i> is not in the database
 */
-  inline bool remove_call(const std::string& call)                      // erase() does not yet work with string_view
+  inline bool remove_call(const std::string& call)                      // erase() does not yet work with string_view (checked in gcc 15.2)
 //  inline bool remove_call(const std::string_view call)
     { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }          // could use STRC_ERASE here, with some effort
 
@@ -101,7 +101,6 @@ public:
     \param  call    call to be removed
     \return         whether <i>call</i> is present in the database
 */
-//  inline bool contains(const std::string& call) const
   inline bool contains(const std::string_view call) const
     { return (_db[ _to_valid_size(call.length()) ].contains(call)); }
   
@@ -109,12 +108,10 @@ public:
     \param  key     basic call against which to compare
     \return         fuzzy matches for <i>key</i>
 */
-//  FUZZY_SET operator[](const std::string& key) const;
   FUZZY_SET operator[](const std::string_view key) const;
 
 /// empty the database
   inline void clear(void)
-//    { _db.fill( UNORDERED_STRING_SET { } ); }
     { _db.fill( FUZZY_SET { } ); }
 };
 
@@ -140,17 +137,18 @@ public:
     { _vec += &db; }
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
-  void remove_call(const std::string& call);
+//  void remove_call(const std::string& call);
+  void remove_call(const std::string_view call);
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
-  inline void operator-=(const std::string& call)
+//  inline void operator-=(const std::string& call)
+  inline void operator-=(const std::string_view call)
     { remove_call(call); }
 
 /*! \brief          Return matches
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-//  FUZZY_SET operator[](const std::string& key) const;
   FUZZY_SET operator[](const std::string_view key) const;
 };
 

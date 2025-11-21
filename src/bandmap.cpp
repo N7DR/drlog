@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 277 2025-10-19 15:57:37Z  $
+// $Id: bandmap.cpp 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,7 +52,7 @@ extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency
 
     Returns the empty string if no sensible result can be returned
 */
-extern const string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);
+extern string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr frequency     MAX_FREQUENCY_SKEW { 250_Hz };       ///< maximum separation to be treated as same frequency
@@ -240,8 +240,6 @@ void bandmap_filter_type::add_or_subtract(const string_view str)
 { const bool   is_continent { CONTINENT_SET.contains(str) };
   const string str_copy     { is_continent ? str : location_db.info(str).canonical_prefix() };  // convert to canonical prefix if necessary
 
-//  GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) };    // create reference to correct group
-
   if (GROUP_TYPE& g_ref { ( is_continent ? _continents : _prefixes ) }; g_ref.contains(str_copy))    // // create reference to correct group; remove a value
     g_ref -= str_copy;
   else
@@ -290,7 +288,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // callsign mult
   clear_callsign_mult();
 
-//  for ( const auto& callsign_mult_name : rules.callsign_mults() )
   for ( string_view callsign_mult_name : rules.callsign_mults() )
   { if (const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) }; !callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
@@ -462,28 +459,10 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "is needed country mult: " << be.is_needed_country_mult_details() << endl
       << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
 
+  ost << "mult status is known: " << be.mult_status_is_known() << endl;
 
-
-//      try
-//      { ost << "mode: " << MODE_NAME[be.mode()] << endl;
-//      }
-
-//      catch (...)
-//      { ost << "mode cannot be mapped to mode name: mode = " << be.mode() << endl;
-//      }
-
-      ost << "mult status is known: " << be.mult_status_is_known() << endl;
-
-//      try
-//      { ost << "putative mode: " << MODE_NAME[be.putative_mode()] << endl;
-//      }
-
-//      catch (...)
-//      { ost << "putative mode cannot be mapped to mode name: putative mode = " << be.putative_mode() << endl;
-//      }
-
-      ost << "source: " << to_string(be.source()) << endl
-          << "time: " << be.time() << endl;
+  ost << "source: " << to_string(be.source()) << endl
+      << "time: " << be.time() << endl;
 
   return ost;
 }
@@ -516,19 +495,17 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const frequency target_
 
   string rv { };
 
-//  bandmap_entry tmp_be { };
+  for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; ( !finish_looking and (cit != bme.cend()) ); ++cit)
+  { const frequency Δf { target_frequency.difference(cit -> freq()) };
 
-  for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
-  { const frequency Δf { target_frequency.difference(cit->freq()) };
-
-    if ( (Δf <= guard_band) and (!cit -> is_marker()))
+    if ( (Δf <= guard_band) and (!(cit -> is_marker())) )
     { if (Δf < smallest_difference)
       { smallest_difference = Δf;
         rv = cit -> callsign();
       }
     }
 
-    if ( (cit->freq() > target_frequency) and (Δf > guard_band) )  // no need to keep looking we if are past the allowed guard band
+    if ( (cit -> freq() > target_frequency) and (Δf > guard_band) )  // no need to keep looking we if are past the allowed guard band
       finish_looking = true;
   }
 
@@ -557,7 +534,8 @@ void bandmap::_insert(const bandmap_entry& be)
 
 // insert it in the right place in the list
   for (BM_ENTRIES::iterator it { _entries.begin() }; (!inserted and (it != _entries.end())); ++it)
-  { if (it->freq().hz() > ber.freq().hz())
+  { //if (it->freq().hz() > ber.freq().hz())
+    if (it -> freq() > ber.freq())
       inserted = ( _entries += { it, ber }, true );
   }
 
@@ -879,18 +857,6 @@ void bandmap::not_needed_country_mult(const string_view canonical_prefix, const 
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-//void bandmap::not_needed_callsign_mult(string (*pf)(const string& /* e.g. "WPXPX" */, const string& /* callsign */),
-//                                       const string& mult_type /* e.g., "WPXPX" */,
-//                                       const string& callsign_mult_string /* e.g., SM1 */)
-//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string& /* callsign */),
-//                                       const string& mult_type /* e.g., "WPXPX" */,
-//                                       const string& callsign_mult_string /* e.g., SM1 */)
-//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
-//                                       const string& mult_type /* e.g., "WPXPX" */,
-//                                       const string& callsign_mult_string /* e.g., SM1 */)
-//void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
-//                                       const string_view mult_type /* e.g., "WPXPX" */,
-//                                       const string& callsign_mult_string /* e.g., SM1 */)
 void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "WPXPX" */, const string_view /* callsign */),
                                        const string_view mult_type /* e.g., "WPXPX" */,
                                        const string_view callsign_mult_string /* e.g., SM1 */)
@@ -920,8 +886,6 @@ void bandmap::not_needed_callsign_mult(string (*pf)(const string_view /* e.g. "W
     \param  mult_name   name of exchange mult
     \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
-//void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
-//void bandmap::not_needed_exchange_mult(const string_view mult_name, const string& mult_value)
 void bandmap::not_needed_exchange_mult(const string_view mult_name, const string_view mult_value)
 { if (mult_name.empty() or mult_value.empty())
     return;
@@ -930,7 +894,6 @@ void bandmap::not_needed_exchange_mult(const string_view mult_name, const string
 
   SAFELOCK(_bandmap);
 
-//  FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed = (be.remove_exchange_mult(mult_name, mult_value) or changed); } );
   FOR_ALL(_entries, [mult_name, mult_value, &changed] (bandmap_entry& be) { changed |= be.remove_exchange_mult(mult_name, mult_value); } );
 
   if (changed)
@@ -958,7 +921,6 @@ void bandmap::filter_enabled(const bool torf)
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
      filter.
 */
-//void bandmap::filter_add_or_subtract(const string& str)
 void bandmap::filter_add_or_subtract(const string_view str)
 { if (!str.empty())
   { SAFELOCK(_bandmap);
@@ -1053,6 +1015,19 @@ BM_ENTRIES bandmap::displayed_entries_no_markers(void)
   return SR::to<BM_ENTRIES> ( displayed_entries() | SRV::filter([] (const bandmap_entry& be) { return !be.is_marker(); }) );
 }
 
+/// return the number of displayed calls, not counting markers
+size_t bandmap::count_displayed_entries_no_markers(void)
+{ SAFELOCK (_bandmap);
+
+  size_t rv { 0 };
+
+  FOR_ALL(displayed_entries(), [&rv] (const bandmap_entry& be) { if (!be.is_marker())
+                                                                   rv++;
+                                                               } );
+
+  return rv;
+}
+
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param f       starting frequency
@@ -1067,7 +1042,7 @@ BM_ENTRIES bandmap::displayed_entries_no_markers(void)
      Should perhaps use guard band instead of MAX_FREQUENCY_SKEW
 */
 bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const frequency f, const enum BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ static const frequency MAX_PERMITTED_SKEW { 95_Hz };
+{ constexpr frequency MAX_PERMITTED_SKEW { 95_Hz };
 
   SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
@@ -1363,34 +1338,13 @@ window& bandmap::write_to_window(window& win)
 
   SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-//  ost << "at time " << NOW_TP() << ": request to display bandmap version " << version_str() << " for band " << BAND_NAME[_band] << "; bandmap::write_to_window backtrace: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
-
   if (_version <= _last_displayed_version)    // not an error, but indicate that it happened, and then do nothing
-  { //ost << "Attempt to write old version of bandmap: last displayed version = " << last_version_str() << "; attempted to display version " << version_str() << endl;
     return win;
-  }
 
 // we are a more recent version, so display it
   const size_t     maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
   const BM_ENTRIES entries                               { displayed_entries() };    // automatically filter
   const size_t     start_entry                           { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
-
-#if 0
-  if (!entries.empty())
-  { //ost << "lowest frequency in bandmap: " << entries.cbegin() -> frequency_str() << "; band from be = " << entries.cbegin() -> band() << endl;
-
-   // auto it = entries.begin();
-//
-   // for (int entry_nr { 0 }; entry_nr < static_cast<int>(entries.size()); ++entry_nr)
-   // { ost << "entry number " << entry_nr << ": " << (it -> frequency_str()) << ": " <<  (it -> callsign()) << endl;
-//
-    //  it = next(it);
-   // }
-
-  }
-  else
-    ost << "bandmap is EMPTY" << endl;
-#endif
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
@@ -1405,10 +1359,6 @@ window& bandmap::write_to_window(window& win)
       const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
       const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
       const bool        is_marker     { be.is_marker() };
-
-// debug: write QRG of marker
-//      if (be.is_my_marker())
- //       ost << "MY MARKER: " << be.to_brief_string() << endl;
 
       if (!found_my_marker and be.is_my_marker())
       { found_my_marker = true;

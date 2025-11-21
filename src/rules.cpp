@@ -102,7 +102,8 @@ void exchange_field_values::add_canonical_value(const string_view cv)
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-void exchange_field_values::add_value(const string_view cv, const string& v)
+//void exchange_field_values::add_value(const string_view cv, const string& v)
+void exchange_field_values::add_value(const string_view cv, const string_view v)
 { const string cvs { cv };
 
   add_canonical_value(cvs);
@@ -129,17 +130,13 @@ STRING_SET exchange_field_values::canonical_values(void) const
     \param  putative_value  value to test
     \return                 whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-//bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
-//bool exchange_field_values::is_legal_value(const string_view cv, const string& putative_value) const
 bool exchange_field_values::is_legal_value(const string_view cv, const string_view putative_value) const
 { if (!is_legal_canonical_value(cv))
     return false;
 
-//  const auto        posn { _values.find(cv) };               // must be != cend() if we get here
-//  const STRING_SET& ss   { posn->second };
-  const auto& [ _, values ] { *(_values.find(cv)) };            // must be != cend() if we get here; heterogenous lookup not yet supported
+  const auto& [ _, values ] { *(_values.find(cv)) };            // must be != cend() if we get here; at() not yet supported for heterogeneous lookup
+//  const auto values { _values.at(cv) };
 
-//  return ss.contains(putative_value);
   return values.contains(putative_value);
 }
 

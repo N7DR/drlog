@@ -140,7 +140,8 @@ void parsed_exchange_field::name(const string_view nm)
 /*! \brief      Set the value and corresponding mult value
     \param  v   new value
 */
-void parsed_exchange_field::value(const string& v)
+//void parsed_exchange_field::value(const string& v)
+void parsed_exchange_field::value(const string_view v)
 { _value = v;
   _mult_value = MULT_VALUE(_name, _value);
 }
@@ -189,7 +190,6 @@ bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
   if (rv)
   { const char lchar { last_char(str) };
 
-//    rv = isdigit(lchar) or (legal_prec > lchar);
     rv = isdigit(lchar) or legal_prec.contains(lchar);
   }
 
@@ -200,7 +200,6 @@ bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
 */
-//parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
 parsed_ss_exchange::parsed_ss_exchange(const string_view call, const vector<string>& received_fields) :
   _callsign(call)
 { using INDEX_TYPE = uint8_t;
@@ -513,8 +512,10 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     \param  received_values             the received values, in the order that they were received
     \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED? ***
 */
-parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
-  _replacement_call(),
+//parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
+//parsed_exchange::parsed_exchange(const string_view from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
+parsed_exchange::parsed_exchange(const string_view from_callsign, const string_view canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
+_replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING { };
 
@@ -578,10 +579,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
         try
         { if (contains(field_name, '+'))                                           // if it's a CHOICE
-          { //const vector<string> choices_vec { split_string <std::string> (field_name, '+') };
-
-//            STRING_SET choices(choices_vec.cbegin(), choices_vec.cend());
-            const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, '+') ) };
+          { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, '+') ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -633,7 +631,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       if (cit != exchange_template.cend())
       { processed_field_on_last_pass = true;
 
-        const string& field_name { cit->name() };    // syntactic sugar
+        const string& field_name { cit -> name() };    // syntactic sugar
         const bool    inserted   { (tuple_map_assignments.insert( { field_name, t } )).second };
 
         if (!inserted)
@@ -665,10 +663,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
         if (cit == exchange_template.cend())
         { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
-          { //const bool replace_callsign { CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) };
-
-//            if (replace_callsign)
-            if ( CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) )
+          { if ( CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) )
             { _replacement_call = RECEIVED_VALUE(t);
 
               if (tuple_deque.size() == 1)
@@ -709,7 +704,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         }
 
 // we might revoke the validity flag here, if we spot a problem
-//        if (!found_map and !(optional_field_names > name))
         if ( !found_map and !optional_field_names.contains(name) )
         { ost << "WARNING: unable to find map assignment for key = " << name << endl;
           _valid = false;
@@ -866,7 +860,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
 // if it's a QTHX, then don't go any further if the country doesn't match
-  if (field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv))
+  if ( field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv) )
   { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -927,7 +921,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
+    if ( rv.empty() and (location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
       rv = value_from_ve_prefix(wpx_prefix(callsign));
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);
@@ -943,7 +937,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
+    if ( rv.empty() and (location_db.canonical_prefix(callsign) == "VE"sv) )  // can often guess province for VEs
       rv = value_from_ve_prefix(wpx_prefix(callsign));
 
     return insert_value(rv, INSERT_CANONICAL_VALUE);
@@ -960,7 +954,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
       { const string_view current_year   { substring <string_view> (dts, 0, 4) };
         const string_view year_from_file { substring <string_view> (encoded_age_from_file, 0, 4) };
         const string_view age_from_file  { substring <string_view> (encoded_age_from_file, 9) };
-        const string      current_age    { ((age_from_file == "00"sv) or (age_from_file == "01"sv))   // don't change if [old, YL] 00 or [new, anyone] 01
+        const string      current_age    { ( (age_from_file == "00"sv) or (age_from_file == "01"sv) )   // don't change if [old, YL] 00 or [new, anyone] 01
                                              ? age_from_file
                                              : ::to_string( from_string<int>(age_from_file) + from_string<int>(current_year) - from_string<int>(year_from_file) )
                                          };
@@ -1090,7 +1084,6 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 
   static const STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
 
-//  if ( (field_name == "JAPREF"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
   if ( (field_name == "JAPREF"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth());
 

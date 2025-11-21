@@ -1,4 +1,4 @@
-// $Id: macros.h 277 2025-10-19 15:57:37Z  $
+// $Id: macros.h 278 2025-11-09 14:35:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,8 +31,6 @@
 #include <unordered_set>
 
 #include <cmath>
-
-// #define TRIXIE_GCC
 
 // convenient definitions for use with chrono functions
 using centiseconds = std::chrono::duration<long, std::centi>;
@@ -257,24 +255,19 @@ template <class T> concept is_ssv   = is_string<T>   or is_string_view<T>;
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
 
-//template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_string<typename T::value_type>;
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
 // chrono durations
 // https://www.reddit.com/r/cpp_questions/comments/mqx6jo/c_constraints_testing_for_stdchronoduration/
 
+// define trait and concept for durations
 template <class A>
 inline constexpr bool is_duration_trait = false;
 
 template <class Rep, class Period>
 inline constexpr bool is_duration_trait<std::chrono::duration<Rep, Period>> = true;
 
-template <class T> concept is_duration              = is_duration_trait<T>;
-
-//template <class T> struct is_duration_trait : std::false_type {};
-//template <class Rep, class Period> struct is_duration_trait<std::chrono::duration<Rep, Period>> : std::true_type {};
-
-//template <class T> concept is_duration = is_duration_trait<T>;
+template <class T> concept is_duration = is_duration_trait<T>;
 
 // heterogeneous lookup for strings
 // https://schneide.blog/2024/10/23/heterogeneous-lookup-in-unordered-c-containers/
@@ -872,36 +865,6 @@ public:                                                                         
   inline void h1(h0 var)                                                                    \
     { std::get<7>(*this) = var; }                                                           \
 }
-
-/*! \brief      Does a vector contain a particular member?
-    \param  v   vector to be tested
-    \param  e   object to be tested for membership
-    \return     Whether <i>e</i> is a member of <i>v</i>
-*/
-//template <class T, class U>
-//  requires (is_vector<T>) and (std::is_same_v<typename T::value_type, U>)
-//inline bool operator>(const T& v, const U& e)
-//  { return (std::find(v.cbegin(), v.cend(), e) != v.cend() ); }
-
-/*! \brief      Does a set or unordered_set contains a particular member?
-    \param  s   set or unordered_set  to be tested
-    \param  v   object to be tested for membership
-    \return     Whether <i>v</i> is a member of <i>s</i>
-*/
-//template <class T, class U>
-//  requires (is_sus<T>) and (std::is_same_v<typename T::value_type, U>)
-//inline bool operator>(const T& s, const U& v)
-//  { return s.contains(v); }
-
-/*! \brief      Is an object a member of a set or unordered_set?
-    \param  v   object to be tested for membership
-    \param  s   set or unordered_set  to be tested
-    \return     Whether <i>v</i> is a member of <i>s</i>
-*/
-//template <class E, class S>
-//  requires (is_sus<S>) and (std::is_same_v<typename S::value_type, E>)
-//inline bool operator<(const E& v, const S& s)
-//  { return (s > v); }
 
 /*! \brief      Union of two sets of the same type
     \param  s1  first set
@@ -1875,5 +1838,28 @@ template <typename D>
   requires is_duration<D>
 inline int N_SECONDS(const D dur)
   { return duration_cast<std::chrono::seconds>(dur).count(); }
+
+
+#if 0
+// not used
+/*! \brief          Return the first element number of a span with a given value
+    \param  idx     sp the target span
+    \param  val     the target value
+    \return         the first element number of <i>sp</i> with the value <i>val</i>, or an unset optional
+*/
+template <typename T>
+std::optional<size_t> SPAN_IDX(const std::span<T> sp, const T& val)
+{ std::optional<size_t> rv { };
+
+  const auto it { FIND_IF(sp, [&val] (const T& t) { return (t == val); } ) };
+
+  if (it == sp.end())
+    return rv;
+
+  rv = distance(sp.begin(), it);
+
+  return rv;
+}
+#endif
 
 #endif    // MACROS_H
