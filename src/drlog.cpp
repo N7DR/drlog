@@ -855,6 +855,11 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;   // we no longer need this
 
+    if (context.windows().empty())
+    { ost << "No windows defined in configuration file " << config_filename << endl;
+      exit(-1);
+    }
+
 // do any windows overlap?
     for (const auto& [win_name_1, win_name_2] : window_overlaps(context.windows()))
     { windows_overlap = true;   // mark that we have overlapping windows
