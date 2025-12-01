@@ -1,4 +1,4 @@
-// $Id: exchange_field_template.cpp 270 2025-05-26 01:09:07Z  $
+// $Id: exchange_field_template.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -98,7 +98,8 @@ bool EFT::read_values_file(const vector<string>& path, const string_view filenam
     { STRING_SET equivalent_values { };                    // will include the canonical value
 
       if (!line.empty() and (line[0] != ';') and !line.starts_with("//"s)) // ";" and "//" introduce comments
-      { if (contains(line, '=') )
+      { //if (contains(line, '=') )
+        if (line.contains('='))
         { const vector<string_view> lhsrhs { split_string <std::string_view> (line, '=') };
           const string              lhs    { remove_peripheral_spaces <std::string> (lhsrhs[0]) };  // can't be string_view
 
@@ -148,7 +149,8 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 
     if (canonical_prefix == location_db.canonical_prefix(delimited_substring <std::string> (_name, '[', ']', DELIMITERS::DROP)))
     { for (const string& this_value : legal_values)
-      { if (!contains(this_value, '|'))
+      { //if (!contains(this_value, '|'))
+        if (!this_value.contains('|'))
           add_canonical_value(this_value);
         else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
         { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };

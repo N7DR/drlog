@@ -1,4 +1,4 @@
-// $Id: rules.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: rules.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -234,7 +234,8 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
       qthx.name("QTHX["s + canonical_prefix + "]"s);
 
       for (const auto& this_value : ss)
-      { if (!contains(this_value, '|'))
+      { //if (!contains(this_value, '|'))
+        if (!this_value.contains('|'))
           qthx.add_canonical_value(this_value);
         else
         { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
@@ -305,8 +306,10 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 { vector<exchange_field> rv;
 
   for (const auto& field_name : exchange_fields)
-  { const bool is_choice { contains(field_name, "CHOICE:"sv) };
-    const bool is_opt    { contains(field_name, "OPT:"sv) };
+  { //const bool is_choice { contains(field_name, "CHOICE:"sv) };
+    //const bool is_opt    { contains(field_name, "OPT:"sv) };
+    const bool is_choice { field_name.contains("CHOICE:"sv) };
+    const bool is_opt    { field_name.contains("OPT:"sv) };
 
     if (is_choice)
     { const vector<string> choice_vec { split_string <std::string> (field_name, ':') };
@@ -480,13 +483,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // add the permitted modes
   const string modes { context.modes() };
 
-  if (contains(modes, "CW"s))
+//  if (contains(modes, "CW"s))
+  if (modes.contains("CW"sv))
     add_permitted_mode(MODE_CW);
 
 //  if (contains(modes, "DIGI"))
 //    add_permitted_mode(MODE_DIGI);
 
-  if (contains(modes, "SSB"s))
+//  if (contains(modes, "SSB"s))
+  if (modes.contains("SSB"sv))
     add_permitted_mode(MODE_SSB);
 
 // the sent exchange
@@ -625,7 +630,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // country
               if (!processed and !fields[1].empty())
-              { if (contains(fields[1], '['))    // possible multiple countries
+              { //if (contains(fields[1], '['))    // possible multiple countries
+                if (fields[1].contains('['))    // possible multiple countries
                 { const string countries { delimited_substring <std::string> (fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
@@ -719,7 +725,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         STRING_SET equivalent_values;    // includes the canonical
 
         if (!line.empty() and (line[0] != ';') and !line.starts_with("//"sv)) // ";" and "//" introduce comments
-        { if (contains(line, '=') )
+        { //if (contains(line, '=') )
+          if (line.contains('=') )
           { const vector<string_view> lhsrhs { split_string <std::string_view> (line, '=') };
 
             lhs = remove_peripheral_spaces <std::string> (lhsrhs[0]);

@@ -1,4 +1,4 @@
-// $Id: query.cpp 273 2025-07-27 13:22:36Z  $
+// $Id: query.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,7 +43,8 @@ void query_database::operator+=(const std::string_view call)
 pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string_view key) const
 { STRING_SET rv_1 { };
 
-  if (!contains(key, '?'))
+//  if (!contains(key, '?'))
+  if (!key.contains('?'))
     return { rv_1, rv_1 };
 
   rv_1 = _query(replace_char(key, '?', '.'));

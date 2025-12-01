@@ -1,4 +1,4 @@
-// $Id: scp.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: scp.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -83,11 +83,13 @@ SCP_SET scp_database::operator[](const string_view key)
   }
 
 // key length is > 2, look to the cache first
-  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
+//  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
+  if (!_last_key.empty() and key.contains(_last_key))    // cache hit
   { SCP_SET rv;
   
     for (const auto& cache_callsign : _last_result)
-      if (::contains(cache_callsign, key))
+//      if (::contains(cache_callsign, key))
+      if (cache_callsign.contains(key))
         rv += cache_callsign;
       
     _last_key = key_str;
@@ -102,7 +104,8 @@ SCP_SET scp_database::operator[](const string_view key)
   SCP_SET rv;
 
   for (const auto& callsign : calls)
-    if (::contains(callsign, key))
+//    if (::contains(callsign, key))
+    if (callsign.contains(key))
       rv += callsign;
     
   _last_key = key_str;
@@ -154,11 +157,13 @@ SCP_SET scp_databases::operator[](const string_view key)
   }
 
 // key length is > 2; look to the cache first
-  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
+//  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
+  if (!_last_key.empty() and key.contains(_last_key))    // cache hit
   { SCP_SET rv;
 
     for (const auto& cache_callsign : _last_result)
-      if (::contains(cache_callsign, key))
+//      if (::contains(cache_callsign, key))
+      if (cache_callsign.contains(key))
         rv += cache_callsign;
 
     _last_key = key;
@@ -176,7 +181,8 @@ SCP_SET scp_databases::operator[](const string_view key)
     const SCP_SET& calls { db[substring <std::string> (key, 0, 2)] };
 
     for (const auto& callsign : calls)
-      if (::contains(callsign, key))
+//      if (::contains(callsign, key))
+      if (callsign.contains(key))
         rv += callsign;
   }
 

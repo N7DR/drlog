@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: drmaster.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -129,7 +129,8 @@ master_dta::master_dta(const string_view filename)
     Returns empty string if there is no value associated with <i>param</i>
 */
 string __extract_value(const string_view line, const string& param)
-{ if (!contains(line, param))
+{ //if (!contains(line, param))
+  if (line.contains(param))
     return string { };
 
   const size_t      start_position { line.find(param) };
@@ -185,7 +186,8 @@ trmaster_line::trmaster_line(const string_view line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-  const size_t length_of_call { (contains(line, ' ') ? line.find(' ') : line.length()) };
+//  const size_t length_of_call { (contains(line, ' ') ? line.find(' ') : line.length()) };
+  const size_t length_of_call { (line.contains(' ') ? line.find(' ') : line.length()) };
 
   _call = to_upper(substring <std::string> (line, 0, length_of_call));
 
@@ -531,7 +533,8 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 */
 trmaster::trmaster(const string& filename)
 { const string contents  { read_file(filename) };      // throws exception if fails
-  const bool   is_binary { contains(contents, create_string(static_cast<char>(0))) };
+//  const bool   is_binary { contains(contents, create_string(static_cast<char>(0))) };
+  const bool   is_binary { contents.contains(create_string(static_cast<char>(0))) };
 
   if (is_binary)
   { if (contents.length() < sizeof(uint32_t))
@@ -965,7 +968,8 @@ string drmaster::to_string(void) const
 */
 //void drmaster::operator+=(const string& call)
 void drmaster::operator+=(const string_view call)
-{ if (!::contains(call, ' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
+{ //if (!::contains(call, ' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
+  if (!call.contains(' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
   { const string call_str { call };
 
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use

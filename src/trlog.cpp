@@ -1,4 +1,4 @@
-// $Id: trlog.cpp 259 2025-01-19 15:44:33Z  $
+// $Id: trlog.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,7 +133,8 @@ string tr_record::frequency(void) const
 // the kHz portion of the frequency might be elsewhere in the record
   const string qso_number_str { substring <std::string> (_record, 23, 4) };
 
-  if (contains(qso_number_str, "."s))
+//  if (contains(qso_number_str, "."s))
+  if (qso_number_str.contains('.'))
   { float to_add { from_string<float>(qso_number_str) };
 
     switch (band())

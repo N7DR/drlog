@@ -249,6 +249,7 @@ protected:
   unsigned int                                 _rbn_port                                { 7000 };                       ///< port number on the RBN server
   std::string                                  _rbn_server                              { "telnet.reversebeacon.net"s };///< hostname or IP address of RBN server
   unsigned int                                 _rbn_threshold                           { 1 };                          ///< number of different stations that have to post a station to the RBN before it appears on the bandmap
+  std::chrono::seconds                         _rbn_timeout                             { 300 };                        ///< five-minute timeout
   std::string                                  _rbn_username                            { };                            ///< username to use on the RBN server
   int                                          _reject_colour                           { COLOUR_RED };                 ///< colour for calls that are dupes
   STRING_SET                                   _remaining_callsign_mults_list           { };                            ///< callsign mults to display
@@ -576,6 +577,7 @@ public:
   CONTEXTREAD(rbn_port);                         ///< port number on the RBN server
   CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
   CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
+  CONTEXTREAD(rbn_timeout);                      ///< RBN timeout in seconds
   CONTEXTREAD(rbn_username);                     ///< username to use on the RBN server
   CONTEXTREAD(reject_colour);                    ///< colour for calls that are dupes
   CONTEXTREAD(remaining_callsign_mults_list);    ///< callsign mults to display

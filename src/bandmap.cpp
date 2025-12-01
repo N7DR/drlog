@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 278 2025-11-09 14:35:25Z  $
+// $Id: bandmap.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -783,7 +783,8 @@ bandmap_entry bandmap::operator[](const string_view str) const
 bandmap_entry bandmap::substr(const string_view pcall) const
 { SAFELOCK(_bandmap);
 
-  return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return contains(be.callsign(), pcall); });
+//  return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return contains(be.callsign(), pcall); });
+  return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return be.callsign().contains(pcall); });
 }
 
 /*! \brief              Remove a call from the bandmap

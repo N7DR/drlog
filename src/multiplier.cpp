@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 273 2025-07-27 13:22:36Z  $
+// $Id: multiplier.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,8 +30,8 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
 MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
-{ return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !contains(str, '*'); }));
-
+{ //return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !contains(str, '*'); }));
+  return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !str.contains('*'); }));
 
 //  MULT_SET rv { mv };
 
@@ -56,7 +56,8 @@ bool multiplier::add_known(const string_view str)
  // const string s       { str };
   const auto [_, rv] { _known.insert(string { str }) };
 
-  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
+//  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
+  if (rv and _all_values_are_mults and str.contains('*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
 
 //  const auto [_, rv] { _known.insert(str) };
@@ -82,7 +83,8 @@ void multiplier::remove_known(const string_view str)
                               // still not available: https://gcc.gnu.org/onlinedocs/gcc-15.1.0/libstdc++/manual/manual/status.html#status.iso.2020
   }
 
-  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !contains(known_value, '*'); } );
+//  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !contains(known_value, '*'); } );
+  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !known_value.contains('*'); } );
 }
 
 /*! \brief          Is a particular value a known multiplier value?

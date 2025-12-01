@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: cty_data.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -157,7 +157,8 @@ cty_record::cty_record(const string_view record)
   
 //  for (const auto& candidate : presumptive_prefixes)
   for (auto candidate : clean_split_string <string_view> (fields[CTY_ALTS]))
-  { vector<string>* vsp { ( contains(candidate, '=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
+  { //vector<string>* vsp { ( contains(candidate, '=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
+    vector<string>* vsp { (candidate.contains('=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
     (*vsp) += candidate;
   }
@@ -623,7 +624,8 @@ location_info location_database::info(const string_view callpart) const
     return insert_best_info(location_info());
   
 // try to determine the canonical prefix
-  if (!contains(callsign, '/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
+//  if (!contains(callsign, '/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
+  if (!callsign.contains('/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).

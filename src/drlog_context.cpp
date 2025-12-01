@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 272 2025-07-13 22:28:31Z  $
+// $Id: drlog_context.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -82,7 +82,8 @@ void drlog_context::_set_points(const string_view command, const MODE m)
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
 
-    if (auto& pbb { _per_band_points[m] }; !contains(lhs, '[') or contains(lhs, "[*]"s))            // for all bands
+//    if (auto& pbb { _per_band_points[m] }; !contains(lhs, '[') or contains(lhs, "[*]"s))            // for all bands
+    if (auto& pbb { _per_band_points[m] }; (!lhs.contains('[') or lhs.contains("[*]"s)))            // for all bands
     { for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
         pbb += { static_cast<BAND>(n), RHS };
     }
@@ -372,7 +373,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
         const string lhs { str_vec[0] };
 
-        if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
+//        if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
+        if (!lhs.contains('[') or lhs.contains("[*]"s))             // for all bands
         { string new_str;
 
           for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -502,7 +504,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "EXCHANGE MULTS"sv)
     { _exchange_mults = RHS;
 
-      if (contains(_exchange_mults, ','))      // if there is more than one exchange mult
+//      if (contains(_exchange_mults, ','))      // if there is more than one exchange mult
+      if (_exchange_mults.contains(','))      // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
 
@@ -637,7 +640,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "MODES"sv)
     { _modes = RHS;
 
-      if (contains(_modes, ','))        // if more than one mode
+//      if (contains(_modes, ','))        // if more than one mode
+      if (_modes.contains(','))        // if more than one mode
         _mark_mode_break_points = true;
       else
       { if (_modes == "SSB"sv)
@@ -869,6 +873,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "RBN THRESHOLD"sv)
       _rbn_threshold = from_string<decltype(_rbn_threshold)>(rhs);
 
+// RBN TIMEOUT
+    if (LHS == "RBN TIMEOUT"sv)
+      _rbn_timeout = static_cast<decltype(_rbn_timeout)>(from_string<unsigned int>(rhs));
+
 // RBN USERNAME
     if (LHS == "RBN USERNAME"sv)
       _rbn_username = rhs;
@@ -927,10 +935,12 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SCORE MODES
     if (testline.starts_with("SCORE MODES"sv))
-    { if (contains(testline, "CW"sv))
+    { //if (contains(testline, "CW"sv))
+      if (testline.contains("CW"sv))
         _score_modes += MODE_CW;
 
-      if (contains(testline, "SSB"sv) or contains(testline, "PH"sv))
+//      if (contains(testline, "SSB"sv) or contains(testline, "PH"sv))
+      if (testline.contains("SSB"sv) or testline.contains("PH"sv))
         _score_modes += MODE_SSB;
     }
 
@@ -1083,7 +1093,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // REMAINING COUNTRY MULTS
     if (LHS == "REMAINING COUNTRY MULTS"sv)
-    { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
+    { //_auto_remaining_country_mults = contains(RHS, "AUTO"s);
+      _auto_remaining_country_mults = RHS.contains("AUTO"s);
 
       if (_auto_remaining_country_mults)
       { const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
@@ -1242,7 +1253,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (LHS == "CABRILLO QSO"sv)
     { _cabrillo_qso_template = RHS;
 
-      if (contains(RHS, "TEMPLATE"sv))
+//      if (contains(RHS, "TEMPLATE"sv))
+      if (RHS.contains("TEMPLATE"sv))
       { try
         { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string <string> (RHS, ':')[1] );
         }
@@ -1287,7 +1299,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
         string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
 
-        verbatim[name] = contains(fields[1], '"');     // verbatim if contains quotation mark; operator [] does not yet support heterogeneous lookup
+//        verbatim[name] = contains(fields[1], '"');     // verbatim if contains quotation mark; operator [] does not yet support heterogeneous lookup
+        verbatim[name] = fields[1].contains('"');     // verbatim if contains quotation mark; operator [] does not yet support heterogeneous lookup
 
         if (file_exists(contents))
           contents = read_file(contents);
@@ -1375,7 +1388,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (testline.starts_with("MESSAGE KEY"sv))
     { const vector<string_view> message_info { split_string <std::string_view> (testline, ' ') };
 
-      if ( (message_info.size() >= 5) and contains(testline, '=') )
+//      if ( (message_info.size() >= 5) and contains(testline, '=') )
+      if ( (message_info.size() >= 5) and testline.contains('=') )
       {
 // a big switch to convert from text in the configuration file to a KeySym, which is what we use as the key in the message map
 // this could be more efficient by generating a container of all the legal keysym names and then comparing the target to all those.
@@ -1533,7 +1547,8 @@ vector<string> drlog_context::window_name_contains(const string_view substr) con
 { vector<string> rv;
 
   for (const auto& [ name, _ ] : _windows)
-    if (contains(name, substr))
+//    if (contains(name, substr))
+    if (name.contains(substr))
       rv += name;
 
   return rv;

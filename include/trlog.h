@@ -1,4 +1,4 @@
-// $Id: trlog.h 223 2023-07-30 13:37:25Z  $
+// $Id: trlog.h 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -120,7 +120,8 @@ public:
     { return _record; }
 
   inline bool sap_mode(void) const            ///< was this a SAP-mode QSO?
-    { return contains(_record, "$"s); }
+//    { return contains(_record, "$"s); }
+    { return _record.contains('$'); }
 
   inline bool cq_mode(void) const             ///< was this a CQ-mode QSO?
     { return !sap_mode(); }

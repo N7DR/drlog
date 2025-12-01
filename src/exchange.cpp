@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: exchange.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -57,7 +57,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
-      if (contains(this_pair.second, ':'))
+//      if (contains(this_pair.second, ':'))
+      if (this_pair.second.contains(':'))
       { const vector<string_view> fields { split_string <std::string_view> (this_pair.second, ':') };
 
         if (fields.size() != 3)
@@ -554,13 +555,15 @@ _replacement_call(),
   FOR_ALL(exchange_template, [this] (const exchange_field& ef) { _fields += { ef.name(), EMPTY_STRING, ef.is_mult() }; } );
 
 // if there's an explicit . field, use it to replace the call
-  FOR_ALL(received_values, [this] (const auto& received_value) { if (contains(received_value, '.'))
+  FOR_ALL(received_values, [this] (const auto& received_value) { //if (contains(received_value, '.'))
+                                                                 if (received_value.contains('.'))
                                                                    _replacement_call = remove_char(received_value, '.');
                                                                });
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
   { copy_received_values.clear();
-    ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !contains(str, '.'); } );
+    //ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !contains(str, '.'); } );
+    ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !str.contains('.'); } );
   }
 
   {
@@ -578,7 +581,8 @@ _replacement_call(),
       { const string& field_name { field.name() };
 
         try
-        { if (contains(field_name, '+'))                                           // if it's a CHOICE
+        { //if (contains(field_name, '+'))                                           // if it's a CHOICE
+          if (field_name.contains('+'))                                           // if it's a CHOICE
           { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, '+') ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
@@ -688,7 +692,8 @@ _replacement_call(),
       catch (...)
       { bool found_map { false };
 
-        if (contains(name, '+'))                                         // if it's a CHOICE
+//        if (contains(name, '+'))                                         // if it's a CHOICE
+        if (name.contains('+'))                                         // if it's a CHOICE
         { const vector<string> choices_vec { split_string <std::string> (name, '+') };
 
           for (unsigned int n { 0 }; n < choices_vec.size() and !found_map; ++n)    // typically just a choice of 2
@@ -745,7 +750,8 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
 { vector<parsed_exchange_field> rv;
 
   for (const auto& pef : _fields)
-  { if (!contains(pef.name(), '+'))             // not a CHOICE
+  { //if (!contains(pef.name(), '+'))             // not a CHOICE
+    if (!pef.name().contains('+'))             // not a CHOICE
       rv += pef;
     else                                        // is a CHOICE
     { parsed_exchange_field pef_chosen { pef };
@@ -778,7 +784,8 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
 { if (field_name.empty())
     return string { };
 
-  if (!contains(field_name, '+'))   // if not a CHOICE
+//  if (!contains(field_name, '+'))   // if not a CHOICE
+  if (!field_name.contains('+'))   // if not a CHOICE
     return string { field_name };
 
   const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, '+') };

@@ -1,4 +1,4 @@
-// $Id: qso.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: qso.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -626,7 +626,8 @@ specification tells us otherwise, that's what we do.
     if (name.starts_with("TEXCH-"sv))
     { const string field_name { name.substr(6) };
     
-      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
+//      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
+      if (field_name.contains('+'))                        // "+" indicates a CHOICE
       { for (const auto& name : clean_split_string <string> (field_name, '+'))
         { for (const auto& [nm, val] : _sent_exchange)
             if (nm == name)
@@ -644,7 +645,8 @@ specification tells us otherwise, that's what we do.
     if (name.starts_with("REXCH-"sv))
     { const string field_name { remove_from_start <std::string> (name, "REXCH-"sv) };
 
-      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
+//      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
+      if (field_name.contains('+'))                        // "+" indicates a CHOICE
       { for (const auto& name : clean_split_string <string> (field_name, '+'))
         { if (!received_exchange(name).empty())
             value = received_exchange(name);
@@ -1006,7 +1008,8 @@ pair<string, string> next_name_value_pair(const string_view str, size_t& posn)
                                                          : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };
 
 // handle "frequency_rx=     mycall=N7DR"
-  if (contains(value, '='))
+//  if (contains(value, '='))
+  if (value.contains('='))
   { posn = value_first_char_posn;
     return { name, string { } };
   }

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 277 2025-10-19 15:57:37Z  $
+// $Id: string_functions.h 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -319,8 +319,8 @@ std::string replace_substring(const std::string_view s, const size_t start_posn,
     \param  ss  substring for which to search
     \return     whether <i>s</i> contains the substring <i>ss</i>
 */
-inline bool contains(const std::string_view s, const std::string_view ss)
-  { return s.find(ss) != std::string_view::npos; }
+//inline bool contains(const std::string_view s, const std::string_view ss)
+//  { return s.find(ss) != std::string_view::npos; }
 
 /*! \brief          Does a string contain a particular substring at a particular location?
     \param  s       string to test
@@ -336,8 +336,8 @@ inline bool contains_at(std::string_view s, std::string_view ss, const size_t po
     \param  c   character for which to search
     \return     whether <i>s</i> contains the character <i>c</i>
 */
-inline bool contains(const std::string_view s, const char c)
-  { return s.find(c) != std::string_view::npos; }
+//inline bool contains(const std::string_view s, const char c)
+//  { return s.find(c) != std::string_view::npos; }
 
 /*! \brief          Does a vector of strings contain an element that is equivalent to a particular string_view?
     \param  strvec  vector of strings to test
@@ -1386,7 +1386,8 @@ std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& ve
     \return     <i>cs</i>, with all instances of <i>ss</i> removed
 */
 inline std::string remove_substring(const std::string_view cs, const std::string_view ss)
-  { return ( contains(cs, ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
+//  { return ( contains(cs, ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
+  { return ( cs.contains(ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
 
 /*! \brief      Create a string of spaces
     \param  n   length of string to be created

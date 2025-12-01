@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 273 2025-07-27 13:22:36Z  $
+// $Id: string_functions.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -415,7 +415,8 @@ string remove_char_from_delimited_substrings(const string_view cs, const char ch
 string remove_chars(const string_view s, const string_view chars_to_remove)
 { string rv { s };                      // create a copy
 
-  erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
+//  erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
+  erase_if(rv, [&chars_to_remove] (const char& c) { return chars_to_remove.contains(c); } );
 
   return rv;
 }
@@ -850,7 +851,8 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
 string base_call(const string_view callsign)
-{ if (!contains(callsign, '/'))
+{ //if (!contains(callsign, '/'))
+  if (!callsign.contains('/'))
     return string { callsign };
 
   return longest( split_string <std::string_view> (callsign, '/') );
@@ -918,7 +920,8 @@ bool is_bust_call(const string_view call1, const string_view call2) noexcept
   { const string_view longer  { (call1.length() > call2.length() ? call1 : call2) };
     const string_view shorter { (call1.length() > call2.length() ? call2 : call1) };
 
-    if (contains(longer, shorter))
+//    if (contains(longer, shorter))
+    if (longer.contains(shorter))
       return true;
 
 // is the bust in the form of an additional character somewhere in the call?

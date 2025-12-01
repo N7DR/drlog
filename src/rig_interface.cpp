@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 278 2025-11-09 14:35:25Z  $
+// $Id: rig_interface.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1246,7 +1246,8 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
                 rcvd += string(c_in.data());
 
-                if (contains(rcvd, ';'))
+//                if (contains(rcvd, ';'))
+                if (rcvd.contains(';'))
                   completed = true;
               }
             }

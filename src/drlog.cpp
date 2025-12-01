@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 278 2025-11-09 14:35:25Z  $
+// $Id: drlog.cpp 279 2025-12-01 15:09:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1264,7 +1264,8 @@ int main(int argc, char** argv)
         rig.test(true);
 
 // possibly set up CW buffer
-      if (contains(to_upper(context.modes()), "CW"sv) and !context.keyer_port().empty())
+//      if (contains(to_upper(context.modes()), "CW"sv) and !context.keyer_port().empty())
+      if (to_upper(context.modes()).contains("CW"sv) and !context.keyer_port().empty())
       { try
         { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed(), context.cw_priority());
         }
@@ -1405,7 +1406,8 @@ int main(int argc, char** argv)
 
           for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.batch_messages_file())))
           { if (!messages_line.empty())
-            { if (contains(messages_line, '['))
+            { //if (contains(messages_line, '['))
+              if (messages_line.contains('['))
                 current_message = delimited_substring <std::string> (messages_line, '[', ']', DELIMITERS::DROP);       // extract this batch message
               else
                 batch_messages += { remove_peripheral_spaces <std::string> (messages_line) /* callsign */, current_message };       // associate this message with the callsign on the line
@@ -2568,10 +2570,11 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
   window&                          bandmap_win      { *win_bandmap_p };        // bandmap window
   array<bandmap, NUMBER_OF_BANDS>& bandmaps         { *bandmaps_p };           // bandmaps
 
-  const bool is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
-  const bool is_cluster             { !is_rbn };
-  const bool rbn_beacons            { context.rbn_beacons() };
-  const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"sv) }; // the colour of my call in the CLUSTER MULT window
+  const bool   is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
+  const bool   is_cluster             { !is_rbn };
+  const bool   rbn_beacons            { context.rbn_beacons() };
+  const int    my_cluster_mult_colour { string_to_colour("COLOUR_17"sv) }; // the colour of my call in the CLUSTER MULT window
+  const string type_str               { is_rbn ? "RBN" : "cluster" };
 
   string                         unprocessed_input;     // data from the cluster that have not yet been processed by this thread
   deque<pair<string, frequency>> recent_mult_calls;     // the queue of recent calls posted to the mult window (can't be a std::queue)
@@ -2619,30 +2622,32 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
 
       if (time_since_data_last_received > 60s)
-      { const string msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
-        const int    bg_colour { cluster_line_win.bg() };
-        const int    fg_colour { cluster_line_win.fg() };
+      { const string  msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
+        const int     bg_colour { cluster_line_win.bg() };
+        const int     fg_colour { cluster_line_win.fg() };
+        const seconds timeout   { is_rbn ? context.rbn_timeout() : context.cluster_timeout() };
 
-        ost << (is_cluster ? "CLUSTER" : "RBN") << ": " << msg << endl;
+        ost << to_upper(type_str) << ": " << msg << endl;
 
         cluster_line_win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < COLOURS(COLOUR_RED, COLOUR_BLACK) < centre(msg, 0) <= COLOURS(fg_colour, bg_colour);
 
 // insert connection reset here if time_since_data_last_received.count() is "too large"
-        if (time_since_data_last_received > context.cluster_timeout())
-        { ost << "WARNING: cluster timeout exceeded; connection status = " << endl
+//        if (time_since_data_last_received > context.cluster_timeout())
+        if (time_since_data_last_received > timeout)
+        { ost << "WARNING: " << type_str << " timeout exceeded; connection status = " << endl
                                                                            << "----------" << endl
                                                                            << rbn.connection_status()
                                                                            << "----------" << endl;
 
           rbn.reset_connection();
 
-          ost << "attempted to reset connection; connection_status = " << endl
+          ost << "attempted to reset " << type_str << " connection; connection_status = " << endl
                                                                        << "----------" << endl
                                                                        << rbn.connection_status()
                                                                        << "----------" << endl;
         }
         else
-          ost << "cluster timeout of " << context.cluster_timeout() << " seconds not yet exceeded; reset not attempted" <<  endl;
+          ost << type_str << " timeout of " << timeout.count() << " seconds not yet exceeded; reset not attempted" <<  endl;
       }
     }
 
@@ -2650,7 +2655,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     string_view unprocessed_input_sv { unprocessed_input };
 
-    while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
+//    while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
+    while (unprocessed_input_sv.contains(CRLF))                               // look for EOL markers
     { const size_t      posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
       const string_view line { substring <std::string_view> (unprocessed_input_sv, 0, posn) };      // store the next unprocessed line
 
@@ -2667,7 +2673,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         if (rbn_file.is_open())
           rbn_file << line << endl;
 
-        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return contains(line, sv); }))   // if beacon and we don't want it
+//        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return contains(line, sv); }))   // if beacon and we don't want it
+        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return line.contains(sv); }))   // if beacon and we don't want it
         { rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
           continue;                       // go to end of while loop; these are not counted as posts
         }
@@ -3090,7 +3097,8 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     ALT-->        -- VFO A -> VFO B
     BACKSLASH     -- send to the scratchpad
     CTRL-A        -- immediate termination, if enabled
-    CTRL-B        -- fast bandwidth
+    CTRL-B        -- fast bandwidth *** CHANGED
+    CTRL-B        -- clear BCALL window
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
     CTRL-G        -- display QRG of call
@@ -3238,7 +3246,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // if call window is not empty and we are in SAP mode, send the contents of the call window, which is expected to be "call qrg"
     if ((drlog_mode == DRLOG_MODE::SAP) and !call_contents.empty())
-    { if (contains(call_contents, ' '))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
+    { //if (contains(call_contents, ' '))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
+      if (call_contents.contains(' '))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
       { const bool spot_status { cluster_p -> spot(call_contents) };
 
         if (spot_status)
@@ -3561,7 +3570,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .ADD <call> -- remove call from the do-not-show list
       if ( command.starts_with("ADD"sv) or command.starts_with("SHOW"sv) )
-      { if (contains(command, ' '))
+      { //if (contains(command, ' '))
+        if (command.contains(' '))
           FOR_ALL(bandmaps, [callsign = remove_peripheral_spaces <std::string> (substring <std::string> (command, command.find(' ')))] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
       }
 
@@ -3756,7 +3766,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
 // BACKSLASH -- send to the scratchpad
-    if (!processed and contains(contents, '\\'))
+//    if (!processed and contains(contents, '\\'))
+    if (!processed and contents.contains('\\'))
     { processed = send_to_scratchpad(remove_char(contents, '\\'));
       win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
@@ -4083,7 +4094,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       ctrl_enter_actions(be);
     }
     else    // didn't find an exact match; try a substring search
-    { if (const auto cit { FIND_IF(entries, [&original_contents] (const bandmap_entry& be) { return contains(be.callsign(), original_contents); }) }; cit != entries.cend())     // if we found a match
+    { //if (const auto cit { FIND_IF(entries, [&original_contents] (const bandmap_entry& be) { return contains(be.callsign(), original_contents); }) }; cit != entries.cend())     // if we found a match
+      if (const auto cit { FIND_IF(entries, [&original_contents] (const bandmap_entry& be) { return be.callsign().contains(original_contents); }) }; cit != entries.cend())     // if we found a match
       { found_call = true;
         be = *cit;
         win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
@@ -4139,7 +4151,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_char(' '))
   {
 // if we're inside a command, just insert a space in the window; also if we are writing a comment
-    if ( ((original_contents.size() > 1) and (original_contents[0] == '.')) or contains(original_contents, "\\"s))
+//    if ( ((original_contents.size() > 1) and (original_contents[0] == '.')) or contains(original_contents, "\\"s))
+    if ( ((original_contents.size() > 1) and (original_contents[0] == '.')) or original_contents.contains('\\'))
       win <= ' ';
     else        // not inside a command
     {
@@ -4156,7 +4169,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       const string current_contents { remove_peripheral_spaces <std::string> (win.read()) };    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
 
 // dupe check; put call into bandmap
-      if (!current_contents.empty() and (drlog_mode == DRLOG_MODE::SAP) and !contains(current_contents, " DUPE"sv))
+//      if (!current_contents.empty() and (drlog_mode == DRLOG_MODE::SAP) and !contains(current_contents, " DUPE"sv))
+      if (!current_contents.empty() and (drlog_mode == DRLOG_MODE::SAP) and !current_contents.contains(" DUPE"sv))
       {
 // possibly add the call to known mults
         update_known_callsign_mults(current_contents);
@@ -4667,8 +4681,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // CTRL-B -- fast CW bandwidth
+//  if (!processed and (e.is_control('b')))
+//    processed = fast_cw_bandwidth();
+
+// CTRL-B -- clear BCALL window
   if (!processed and (e.is_control('b')))
-    processed = fast_cw_bandwidth();
+  { win_bcall <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+    processed = true;
+  }
 
 // F1 -- first step in SAP QSO during run
 //    turn on sub-receiver, put sub-receiver on frequency of call (or substring of call)
@@ -5028,7 +5049,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // figure out whether we have sent a different RST (in SKCC)
     constexpr char rst_character { '\'' };    // apostrophe
 
-    if (contains(exchange_contents, rst_character))
+//    if (contains(exchange_contents, rst_character))
+    if (exchange_contents.contains(rst_character))
     { const size_t last_apostrophe { exchange_contents.find_last_of(rst_character) };
       const size_t next_space      { exchange_contents.find_first_of(' ', last_apostrophe + 1) };
 
@@ -5043,7 +5065,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       vector<string> new_fields;
 
       for (const string& str : exchange_field_values)
-        if (!contains(str, '\''))
+//        if (!contains(str, '\''))
+        if (!str.contains('\''))
           new_fields += str;
 
       exchange_field_values = new_fields;
@@ -5054,7 +5077,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
-      if ( contains(value, '.') and (value.size() != 1) )    // ignore a field that is just "."
+//      if ( contains(value, '.') and (value.size() != 1) )    // ignore a field that is just "."
+      if ( value.contains('.') and (value.size() != 1) )    // ignore a field that is just "."
         from_callsign = remove_char(value, '.');
 
     const string                 canonical_prefix  { location_db.canonical_prefix(from_callsign) };
@@ -5072,7 +5096,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     { size_t n_fields_without_new_callsign { 0 };
 
       for (const auto& values : exchange_field_values)
-        if (!contains(values, '.'))
+//        if (!contains(values, '.'))
+        if (!values.contains('.'))
           n_fields_without_new_callsign++;
 
       if ( (!is_ss and (exchange_template.size() - n_optional_fields) > n_fields_without_new_callsign) )
@@ -6320,7 +6345,8 @@ void populate_win_info(const string_view callsign)
 string expand_cw_message(const string_view msg)
 { string octothorpe_replaced;
 
-  if (contains(msg, '#'))
+//  if (contains(msg, '#'))
+  if (msg.contains('#'))
   { string octothorpe_str { to_string(octothorpe) };
 
     if (!context.short_serno())
@@ -8405,7 +8431,7 @@ bool process_keypress_F1(const string_view original_contents)
 
       rig.sub_receiver_enable();
 
-// move contents of CALL to BCALL, clear CALL
+// clear CALL
       if (win_bcall.defined() and !win_call.empty())
         win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }

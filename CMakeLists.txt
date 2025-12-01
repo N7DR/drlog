@@ -5,6 +5,8 @@ if(CCACHE_PROGRAM)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+#set (CMAKE_CXX_COMPILER "g++")
+
 project(drlog)
 
 set (CMAKE_CXX_COMPILER "g++")
