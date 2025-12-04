@@ -29,16 +29,9 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
     \param  mv  multiplier values
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
-MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
-{ //return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !contains(str, '*'); }));
-  return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !str.contains('*'); }));
-
-//  MULT_SET rv { mv };
-
-//  erase_if(rv, [] (const string& str) { return contains(str, '*'); } );
-
-//  return rv;
-}
+//MULT_SET multiplier::_filter_asterisks(const MULT_SET& mv) const
+//{ return SR::to<MULT_SET>(mv | SRV::filter([] (const string& str) { return !str.contains('*'); }));
+//}
 
 /*! \brief          Add a value to the set of known values
     \param  str     value to add
@@ -53,17 +46,10 @@ bool multiplier::add_known(const string_view str)
   if (!_used)
     return false;
 
- // const string s       { str };
-  const auto [_, rv] { _known.insert(string { str }) };
+  const auto [_, rv] { _known.insert(string { str }) };       // .insert() returns whether it was successful in second parameter
 
-//  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
   if (rv and _all_values_are_mults and str.contains('*'))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
-
-//  const auto [_, rv] { _known.insert(str) };
-//
-//  if (rv and _all_values_are_mults and contains(str, '*'))        // did we just add the first non-mult value?
-//    _all_values_are_mults = false;
 
   return rv;
 }

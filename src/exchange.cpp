@@ -792,7 +792,7 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
   const STRING_MAP<EFT>     exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
-  { try
+  { //try
     { //if (exchange_field_eft.at(choice).is_legal_value(received_value))   // heterogeneous lookup doesn't support at()!!!
       //  return choice;
 
@@ -802,9 +802,9 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
       }
     }
 
-    catch (...)
-    { ost << "Cannot find EFT for choice: " << choice << endl;
-    }
+    //catch (...)
+    //{ ost << "Cannot find EFT for choice: " << choice << endl;
+    //}
   }
 
   return string { };
@@ -1169,7 +1169,6 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
 // give up
-//  _db += { { string { callsign }, field_name }, EMPTY_STR };  // so we find it next time
   _db += { { string { callsign }, string { field_name } }, EMPTY_STR };  // so we find it next time
 
   return EMPTY_STR;
@@ -1180,8 +1179,6 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     \param  field_name  name of the field for the new entry
     \param  value       the new entry
 */
-//void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
-//void exchange_field_database::set_value(const string_view callsign, const string& field_name, const string& value)
 void exchange_field_database::set_value(const string_view callsign, const string_view field_name, const string_view value)
 { SAFELOCK(exchange_field_database);
 
@@ -1198,7 +1195,6 @@ void exchange_field_database::set_value(const string_view callsign, const string
     Ignores the first line if the upper case version of the call in the first line is "CALL"
     Creates a database entry for calls as necessary
 */
-//void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string& field_name)
 void exchange_field_database::set_values_from_file(const vector<string>& path, const string_view filename, const string_view field_name)
 { try
   { const string contents { read_file(path, filename) };
@@ -1224,13 +1220,15 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   }
 }
 
+#if 0
 /*! \brief          Replace cut numbers with real numbers
     \param  input   string possibly containing cut numbers
     \return         <i>input</i> but with cut numbers replaced by actual digits
 
     Replaces [aA], [nN], [tT]
 */
-string process_cut_digits(const string& input)
+//string process_cut_digits(const string& input)
+string process_cut_digits(const string_view input)
 { string rv { input };
 
   for (char& c : rv)  // must use reference, as we want to be able to change the value
@@ -1254,6 +1252,7 @@ string process_cut_digits(const string& input)
 
   return rv;
 }
+#endif
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 
@@ -1269,24 +1268,7 @@ string process_cut_digits(const string& input)
 //sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string_view callsign, const string& received_exchange) :
 sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string_view callsign, const string_view received_exchange) :
   _call(callsign)
-{
-/*
-  static EFT  check_eft;
-  static EFT  serno_eft;
-  static EFT  prec_eft;
-  static EFT  section_eft;
-  static bool first_time { true };
-
-  if (first_time)
-  { check_eft = rules.exchange_field_eft("CHECK"s);
-    serno_eft = rules.exchange_field_eft("SERNO"s);
-    prec_eft = rules.exchange_field_eft("PREC"s);
-    section_eft = rules.exchange_field_eft("SECTION"s);
-
-    first_time = false;
-  }
-*/
-  static const EFT check_eft   { rules.exchange_field_eft("CHECK"sv) };
+{ static const EFT check_eft   { rules.exchange_field_eft("CHECK"sv) };
   static const EFT serno_eft   { rules.exchange_field_eft("SERNO"sv) };
   static const EFT prec_eft    { rules.exchange_field_eft("PREC"sv) };
   static const EFT section_eft { rules.exchange_field_eft("SECTION"sv) };

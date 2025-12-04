@@ -175,7 +175,7 @@ inline int _compare_calls(const void* a, const void* b)
 /*! \brief  Construct from a TRLOG file
     \param  filename  name of a TRLOG file
 */
-tr_log::tr_log(const std::string& filename)
+tr_log::tr_log(const std::string_view filename)
 { const string         contents { remove_char(read_file(filename), '$') };  // remove any dollar signs as we import file
   const vector<string> lines    { to_lines <std::string> (contents) };
   const string         title    { lines.empty() ? EMPTY_STR : remove_peripheral_spaces <std::string> (lines[0]) };

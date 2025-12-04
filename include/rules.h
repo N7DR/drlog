@@ -231,7 +231,6 @@ template<typename STYPE>
     \param  putative_cv_value   string to test
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
-//  inline bool is_legal_canonical_value(const std::string& putative_cv_value) const
   inline bool is_legal_canonical_value(const std::string_view putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
@@ -239,8 +238,8 @@ template<typename STYPE>
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-  inline bool is_legal_value(const std::string& value) const
-//  inline bool is_legal_value(const std::string_view value) const
+//  inline bool is_legal_value(const std::string& value) const
+  inline bool is_legal_value(const std::string_view value) const
     { return ANY_OF(canonical_values(), [value, this] (const auto& cv) { return is_legal_value(cv, value); }); }
 
 /*! \brief                  Is a particular value legal for a given canonical value?
@@ -248,8 +247,6 @@ template<typename STYPE>
     \param  putative_value  value to test
     \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-//  bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
-//  bool is_legal_value(const std::string_view cv, const std::string& putative_value) const;
   bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const;
 
 /// serialise

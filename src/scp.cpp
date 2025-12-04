@@ -28,7 +28,6 @@ using namespace      placeholders;
 extern message_stream ost;
 
 /// add a call
-//void scp_database::operator+=(const string& call)
 void scp_database::operator+=(const string_view call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
@@ -39,7 +38,6 @@ void scp_database::operator+=(const string_view call)
     \param  call    call to remove
     \return         whether <i>call</i> was actually removed
 */
-//bool scp_database::remove_call(const std::string& call)
 bool scp_database::remove_call(const std::string_view call)
 { bool rv { false };
 
@@ -57,7 +55,6 @@ bool scp_database::remove_call(const std::string_view call)
 /*! \brief          Remove a call from the database
     \param  call    call to remove
 */
-//void scp_database::operator-=(const std::string& call)
 void scp_database::operator-=(const std::string_view call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
@@ -68,7 +65,6 @@ void scp_database::operator-=(const std::string_view call)
     \param  key     partial call
     \return         whether <i>call</i> was actually removed
 */
-//SCP_SET scp_database::operator[](const string& key)
 SCP_SET scp_database::operator[](const string_view key)
 { if (key.length() < 2)
     return SCP_SET { };
@@ -83,12 +79,10 @@ SCP_SET scp_database::operator[](const string_view key)
   }
 
 // key length is > 2, look to the cache first
-//  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
   if (!_last_key.empty() and key.contains(_last_key))    // cache hit
   { SCP_SET rv;
   
     for (const auto& cache_callsign : _last_result)
-//      if (::contains(cache_callsign, key))
       if (cache_callsign.contains(key))
         rv += cache_callsign;
       
@@ -104,7 +98,6 @@ SCP_SET scp_database::operator[](const string_view key)
   SCP_SET rv;
 
   for (const auto& callsign : calls)
-//    if (::contains(callsign, key))
     if (callsign.contains(key))
       rv += callsign;
     
@@ -138,7 +131,6 @@ void scp_databases::add_db(scp_database& db)
 }
 
 /// return matches
-//SCP_SET scp_databases::operator[](const string& key)
 SCP_SET scp_databases::operator[](const string_view key)
 { if (key.length() < 2)
     return SCP_SET();
@@ -157,12 +149,10 @@ SCP_SET scp_databases::operator[](const string_view key)
   }
 
 // key length is > 2; look to the cache first
-//  if (::contains(key, _last_key) and !_last_key.empty())    // cache hit
   if (!_last_key.empty() and key.contains(_last_key))    // cache hit
   { SCP_SET rv;
 
     for (const auto& cache_callsign : _last_result)
-//      if (::contains(cache_callsign, key))
       if (cache_callsign.contains(key))
         rv += cache_callsign;
 

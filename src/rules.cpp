@@ -1326,17 +1326,13 @@ string wpx_prefix(const string_view call)
   if (call.length() < 3)
     return string { };
 
-  string callsign          { call };    // see bleow as to why this can't be a string_view
-//  string_view callsign          { call };
+  string callsign          { call };    // see below as to why this can't be a string_view
   char   portable_district { 0 } ;   // portable call district
-
-//  using CALL_TYPE = decltype(callsign);
 
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
   callsign = remove_string_from_end <std::string> (callsign, "/QRP"sv);
-//  callsign = remove_string_from_end <CALL_TYPE> (callsign, "/QRP"sv);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
@@ -1344,7 +1340,6 @@ string wpx_prefix(const string_view call)
 
     if (portables.find(last_char(callsign)) != string::npos)
       callsign = remove_n_chars_from_end <std::string> (callsign, 2u);
-//      callsign = remove_n_chars_from_end <CALL_TYPE> (callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];

@@ -32,13 +32,87 @@ class running_statistics;
 
 // fundamental types are initialized with zero Josuttis, 2nd ed. p. 69
 // (We need the is_possible mult field so that things align correctly on the log line)
-WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
+// WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
+
+// -----------  received_field  ----------------
+
+/*! \class  received_field
+    \brief  A single field received from the other party
+
+    Originally a WRAPPER_4_SERIALIZE; changed because of the interplay of string and string_view
+    A kind of WRAPPER-4_SERIALIZE could be implemented as a template, but I don't think it's worth it
+*/
+class received_field : public std::tuple < std::string, std::string, bool, bool  >
+{
+protected:
+
+public:
+
+  received_field(void) = default;
+
+  inline received_field(const std::string_view nm, const std::string_view val, const bool ipm = false, const bool im = false)
+  { std::get<0>(*this) = nm;
+    std::get<1>(*this) = val;
+    std::get<2>(*this) = ipm;
+    std::get<3>(*this) = im;
+  }
+
+  inline std::string name(void) const
+    { return std::get<0>(*this); }
+
+  inline void name(const std::string_view nm)
+    { std::get<0>(*this) = nm; }
+
+  inline std::string value(void) const
+    { return std::get<1>(*this); }
+
+  inline void value(const std::string_view val)
+    { std::get<1>(*this) = val; }
+
+
+  inline bool is_possible_mult(void) const
+    { return std::get<2>(*this); }
+
+  inline void is_possible_mult(const bool ipm)
+    { std::get<2>(*this) = ipm; }
+
+  inline bool is_mult(void) const
+    { return std::get<3>(*this); }
+
+  inline void is_mult(const bool im)
+    { std::get<3>(*this) = im; }
+
+
+template<typename Archive>
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version }; /* dummy; for now, version isn't used */
+      v = v + 0;
+
+      ar & std::get<0>(*this)
+         & std::get<1>(*this)
+         & std::get<2>(*this)
+         & std::get<3>(*this);
+    }
+};
+
+inline std::ostream& operator<<(std::ostream& ost, const received_field& rf)
+{ ost << "received_field: " << std::endl
+      << "name: " << rf.name() << std::endl
+      << "value: " << rf.value() << std::endl
+      << "is_possible_mult: " << rf.is_possible_mult() << std::endl
+      << "is_mult: " << rf.is_mult();
+
+  return ost;
+}
 
 // -----------  QSO  ----------------
 
 /*! \class  QSO
     \brief  The details of a single QSO
 */
+
+
+// ***** TODO ADD sap_mode
 
 class QSO
 {
@@ -63,6 +137,7 @@ protected:
   unsigned int                                      _points          { 1 };         ///< points for this QSO (unused)
   std::string                                       _prefix;                        ///< prefix, according to the contest's definition
   std::vector<received_field>                       _received_exchange;             ///< names do not include the REXCH-
+  bool                                              _is_sap        { true };        ///< whether QSO is in SAP mode
   std::vector<std::pair<std::string, std::string> > _sent_exchange;                 ///< vector<pair<name, value>>; names do not include the TEXCH-
   std::string                                       _utc;                           ///< hh:mm:ss
   
@@ -122,17 +197,26 @@ public:
   READ_AND_WRITE(band);                   ///< band
   READ_AND_WRITE_STR(callsign);           ///< call
   READ_AND_WRITE_STR(canonical_prefix);   ///< canonical prefix for the country
-  READ_AND_WRITE(comment);                ///< comment to be carried with QSO
-  READ_AND_WRITE(continent);              ///< continent
-  READ_AND_WRITE(date);                   ///< yyyy-mm-dd
-  READ_AND_WRITE(frequency_rx);           ///< RX frequency in form xxxxx.y (kHz)
+  READ_AND_WRITE_STR(comment);                ///< comment to be carried with QSO
+  READ_AND_WRITE_STR(continent);              ///< continent
+  READ_AND_WRITE_STR(date);                   ///< yyyy-mm-dd
+  READ_AND_WRITE_STR(frequency_rx);           ///< RX frequency in form xxxxx.y (kHz)
   READ_AND_WRITE(mode);                   ///< mode
-  READ_AND_WRITE(my_call);                ///< my call
+  READ_AND_WRITE_STR(my_call);                ///< my call
   READ_AND_WRITE(number);                 ///< qso number
   READ_AND_WRITE(points);                 ///< points for this QSO
-  READ_AND_WRITE(prefix);                 ///< prefix, according to the contest's definition
+  READ_AND_WRITE_STR(prefix);                 ///< prefix, according to the contest's definition
+  READ_AND_WRITE(is_sap);                 ///< whether QSO is in SAP mode
   READ_AND_WRITE(sent_exchange);          ///< vector<pair<name, value>>; names do not include the TEXCH-
-  READ_AND_WRITE(utc);                    ///< hh:mm:ss
+  READ_AND_WRITE_STR(utc);                    ///< hh:mm:ss
+
+/// return whether the QSO is in CQ mode
+  inline bool cq_mode(void) const
+    { return !_is_sap; }
+
+/// return whether the QSO is in SAP mode
+  inline bool sap_mode(void) const
+    { return _is_sap; }
 
 /// get TX frequency as a string
   inline decltype(_frequency_tx) freq(void) const

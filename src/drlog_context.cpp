@@ -1388,7 +1388,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (testline.starts_with("MESSAGE KEY"sv))
     { const vector<string_view> message_info { split_string <std::string_view> (testline, ' ') };
 
-//      if ( (message_info.size() >= 5) and contains(testline, '=') )
       if ( (message_info.size() >= 5) and testline.contains('=') )
       {
 // a big switch to convert from text in the configuration file to a KeySym, which is what we use as the key in the message map
@@ -1491,7 +1490,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (actual_modes.size() == 1)
     { try
       { if (STRING_SET( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
-        {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
+        {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"sv) ?  " CW"sv : " SSB"sv) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1547,7 +1546,6 @@ vector<string> drlog_context::window_name_contains(const string_view substr) con
 { vector<string> rv;
 
   for (const auto& [ name, _ ] : _windows)
-//    if (contains(name, substr))
     if (name.contains(substr))
       rv += name;
 

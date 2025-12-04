@@ -57,14 +57,15 @@ protected:
 // use in a multi station
 
   STRING_MULTIMAP<QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap because we need call ordering
-  std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
+  std::vector<QSO>      _log_vec;    ///< vector (chronological) version of log
 
 /*! \brief          Modify a passed QSO with a new value for a named field
     \param  qso     QSO to modify
     \param  name    name of the field to modify
     \param  value   the new value to give to field <i>name</i>
 */
-  void _modify_qso_with_name_and_value(QSO& qso, const std::string_view name, const std::string& value);
+//  void _modify_qso_with_name_and_value(QSO& qso, const std::string_view name, const std::string& value);
+  void _modify_qso_with_name_and_value(QSO& qso, const std::string_view name, const std::string_view value);
 
 /*! \brief          Obtain iterator to the first location of QSOs with a given call
     \param  call    target callsign

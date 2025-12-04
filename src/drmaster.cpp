@@ -37,6 +37,7 @@ typename C::value_type value_line(const C& values, const int pc)
 { if (values.empty())
     return std::numeric_limits<typename C::value_type>::max();
 
+// put the values in the container into a vector that can be sorted
   std::vector<typename C::value_type> ordered_vector;
   ordered_vector.reserve(values.size());
 
@@ -95,7 +96,7 @@ string master_dta::_get_call(const string_view contents, uint32_t& posn) const
 master_dta::master_dta(const string_view filename)
 { const string contents { read_file(filename) };                // throws exception if there's a problem
 
-  if (contents.length() < sizeof(uint32_t))
+  if (contents.length() < sizeof(uint32_t))       // do nothing if the file is too short
     return;
 
 // point to the start of the calls
@@ -128,9 +129,9 @@ master_dta::master_dta(const string_view filename)
 
     Returns empty string if there is no value associated with <i>param</i>
 */
-string __extract_value(const string_view line, const string& param)
-{ //if (!contains(line, param))
-  if (line.contains(param))
+//string __extract_value(const string_view line, const string& param)
+string __extract_value(const string_view line, const string_view param)
+{ if (!line.contains(param))
     return string { };
 
   const size_t      start_position { line.find(param) };
@@ -186,17 +187,16 @@ trmaster_line::trmaster_line(const string_view line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-//  const size_t length_of_call { (contains(line, ' ') ? line.find(' ') : line.length()) };
   const size_t length_of_call { (line.contains(' ') ? line.find(' ') : line.length()) };
 
   _call = to_upper(substring <std::string> (line, 0, length_of_call));
 
-  _check     = from_string<int>( __extract_value(line, "=K"s) );
-  _cq_zone   = from_string<int>( __extract_value(line, "=C"s) );
-  _foc       = from_string<int>( __extract_value(line, "=F"s) );
-  _grid      = __extract_value(line, "=G"s);
-  _hit_count = from_string<int>( __extract_value(line, "=H"s) );
-  _itu_zone  = __extract_value(line, "=I"s);
+  _check     = from_string<int>( __extract_value(line, "=K"sv) );
+  _cq_zone   = from_string<int>( __extract_value(line, "=C"sv) );
+  _foc       = from_string<int>( __extract_value(line, "=F"sv) );
+  _grid      = __extract_value(line, "=G"sv);
+  _hit_count = from_string<int>( __extract_value(line, "=H"sv) );
+  _itu_zone  = __extract_value(line, "=I"sv);
   _name      = __extract_value(line, "=N"s);
   _qth       = __extract_value(line, "=Q"s);
   _section   = __extract_value(line, "=A"s);
@@ -531,7 +531,8 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 
     The file <i>filename</i> may be either an ASCII or a binary file
 */
-trmaster::trmaster(const string& filename)
+//trmaster::trmaster(const string& filename)
+trmaster::trmaster(const string_view filename)
 { const string contents  { read_file(filename) };      // throws exception if fails
 //  const bool   is_binary { contains(contents, create_string(static_cast<char>(0))) };
   const bool   is_binary { contents.contains(create_string(static_cast<char>(0))) };
@@ -987,11 +988,11 @@ void drmaster::operator+=(const drmaster_line& drml)
   if (!_records.contains(call))
     _records += { call, drml };
   else
-  { drmaster_line old_drml { _records[call] };
+  { drmaster_line new_drml { _records[call] };
 
-    old_drml += drml;
+    new_drml += drml;
     _records -= call;
-    _records += { call, old_drml };
+    _records += { call, new_drml };
   }
 }
 

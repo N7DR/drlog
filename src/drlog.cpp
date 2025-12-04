@@ -211,8 +211,10 @@ void   set_active_window(const ACTIVE_WINDOW aw);                               
 bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
 bool   ssb_toggle_bandwidth(void);                                              ///< Toggle bandwidth and centre frequency if on SSB
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
+void   start_recording_rbn(void);                                               ///< start recording the RBN to a file
 void   start_of_thread(const string_view name);                                 ///< Increase the counter for the number of running threads
 void   stop_recording(audio_recorder& audio);                                   ///< stop audio recording
+void   stop_recording_rbn(void);                                                ///< stop recording the RBN to a file
 string sunrise_or_sunset(const string_view callsign, const SRSS srss);          ///< Calculate the sunrise or sunset time for a station
 bool   swap_rit_xit(void);                                                      ///< Swap the states of RIT and XIT
 
@@ -1848,7 +1850,8 @@ int main(int argc, char** argv)
 //        alert("No archive data present"s);
 //    }
 //    else     // rebuild
-      if (rebuild)
+//      if (rebuild)
+      if (rebuild and !cl.value_present("-sim"s))
       { ost << "rebuilding from: " << context.logfile() << endl;
 
         string file;
@@ -2655,7 +2658,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     string_view unprocessed_input_sv { unprocessed_input };
 
-//    while (contains(unprocessed_input_sv, CRLF))                               // look for EOL markers
     while (unprocessed_input_sv.contains(CRLF))                               // look for EOL markers
     { const size_t      posn { unprocessed_input_sv.find(CRLF) };                   // guaranteed to succeed
       const string_view line { substring <std::string_view> (unprocessed_input_sv, 0, posn) };      // store the next unprocessed line
@@ -2673,7 +2675,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         if (rbn_file.is_open())
           rbn_file << line << endl;
 
-//        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return contains(line, sv); }))   // if beacon and we don't want it
         if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return line.contains(sv); }))   // if beacon and we don't want it
         { rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
           continue;                       // go to end of while loop; these are not counted as posts
@@ -2992,8 +2993,9 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { if (rbn_file.is_open())
-            rbn_file.close();
+        { //if (rbn_file.is_open())
+          //  rbn_file.close();
+          stop_recording_rbn();
 
           ost << "Number of posts processed by " << ( (rbn.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " in processing pass = " << css(rbn.n_posts()) << endl;
 
@@ -3558,14 +3560,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (words.size() == 2)
         { if (words[1] == "ON"sv)
           { autocorrect_rbn = true;
-            ost << "AUTOCORRECT RBN turned ON" << endl;
+//            ost << "AUTOCORRECT RBN turned ON" << endl;
+            alert("AUTOCORRECT RBN turned ON");
           }
 
           if (words[1] == "OFF"sv)
           { autocorrect_rbn = false;
-            ost << "AUTOCORRECT RBN turned OFF" << endl;
+//            ost << "AUTOCORRECT RBN turned OFF" << endl;
+            alert("AUTOCORRECT RBN turned OFF");
           }
         }
+
+        goto FINISHED_PROCESSING_COMMAND;       // C++ has no good way for building despatch tables in this kind of circumstance
       }
 
 // .ADD <call> -- remove call from the do-not-show list
@@ -3573,6 +3579,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { //if (contains(command, ' '))
         if (command.contains(' '))
           FOR_ALL(bandmaps, [callsign = remove_peripheral_spaces <std::string> (substring <std::string> (command, command.find(' ')))] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .CABRILLO
@@ -3582,13 +3590,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         write_file(log_str, cabrillo_filename);
         alert("Cabrillo file "s + context.cabrillo_filename() + " written"s);
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
-      win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+//      win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
 // .CLEAR
       if (command == "CLEAR"sv)
-        win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      { win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
 
 // .CULL <n>
       if (command.starts_with("CULL"sv))
@@ -3599,18 +3612,24 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         win_bandmap <= bm;
         display_bandmap_filter(bm);
-        win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .INST
       if (command == "INST"sv)
       { rig.instrument();
         alert("rig exchanges now instrumented");
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .M : insert memory
       if (command == "M"sv)
-        insert_memory();
+      { insert_memory();
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
 
 // .MONITOR <call> -- add <call> to those being monitored
       if (command.starts_with("MON"sv))
@@ -3620,6 +3639,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           mp += callsign;
 
           alert("MONITORING: "s + callsign);
+          goto FINISHED_PROCESSING_COMMAND;
         }
       }
 
@@ -3629,6 +3649,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         context.qtc_qrs(new_qrs);
         alert((string)"QTC QRS set to: "s + to_string(new_qrs), SHOW_TIME::NO_SHOW);
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .QUIT
@@ -3641,7 +3663,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const memory_entry me     { recall_memory(number) };
         const frequency&   freq   { me.freq() };
 
-        if (freq.hz())    // if valid
+        if (freq.hz())                  // if valid
         { ok_to_poll_k3 = false;        // we might be partway through a poll, but that should be OK
 
           rig.rig_frequency(freq);
@@ -3656,17 +3678,54 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           ok_to_poll_k3 = true;
         }
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
+
+// .RBNREC OFF : stop recording RBN posts to disk
+      if (command == "RBNREC OFF"sv)
+      { if (!rbn_file.is_open())
+          alert("RBN RECORDING IS ALREADY OFF"sv);
+        else
+        { stop_recording_rbn();
+
+          if (rbn_file.is_open())
+            alert("Unable to stop RBN recording"sv);
+          else
+            alert("RBN RECORDING IS NOW ON"sv);
+        }
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
+
+// .RBNREC ON : start recording RBN posts to disk
+      if (command == "RBNREC ON"sv)
+      { if (rbn_file.is_open())
+          alert("RBN RECORDING IS ALREADY ON"sv);
+        else
+        { start_recording_rbn();
+
+          if (rbn_file.is_open())
+            alert("RBN RECORDING IS NOW ON"sv);
+          else
+            alert("Unable to start RBN recording"sv);
+        }
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
       if ( command.starts_with("REMOVE"sv) or command.starts_with("RM"sv))
       { if (const auto posn { command.find(' ') }; posn != string_view::npos)
-        { const string callsign { remove_peripheral_spaces <std::string> (substring <std::string> (command, posn)) };
-          
+        { //const string callsign { remove_peripheral_spaces <std::string> (substring <std::string> (command, posn)) };
+          const string_view callsign { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, posn)) };
+
           do_not_show(callsign);
 
           win_bandmap <= bandmaps[current_band];
         }
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .RESCOREB or .SCOREB
@@ -3704,6 +3763,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         update_rate_window();
         display_statistics(statistics.summary_string(rules));
         update_score_window(statistics.points(rules));
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .RESCOREM or .SCOREM
@@ -3739,16 +3800,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         update_rate_window();
         display_statistics(statistics.summary_string(rules));
         update_score_window(statistics.points(rules));
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .RESET RBN -- get a new connection
       if (command == "RESET RBN"sv)
-        jthread(reset_connection, rbn_p).detach();
+      { jthread(reset_connection, rbn_p).detach();
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
 
 // .UNINST
       if (command == "UNINST"sv)
       { rig.uninstrument();
         alert("rig exchanges now uninstrumented");
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
 // .UNMONITOR <call> -- remove <call> from those being monitored
@@ -3760,8 +3828,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           alert("UNMONITORING: "s + callsign);
         }
+
+        goto FINISHED_PROCESSING_COMMAND;
       }
 
+FINISHED_PROCESSING_COMMAND:
+
+      win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       processed = true;
     }
 
@@ -5280,6 +5353,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
             }
 
+// mark whether SAP or CQ mode
+            qso.is_sap(drlog_mode == DRLOG_MODE::SAP);
+
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
 
 // write the log line
@@ -5722,6 +5798,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
     processed = (win <= cursor_relative(-1, 0), true);
 
+// .
+  if (!processed and e.is_char('.'))    // to permit editing of frequency
+    processed = (win <= e.str(), true);
+
 // SPACE
   if (!processed and e.is_char(' '))
     processed = (win <= e.str(), true);
@@ -5764,7 +5844,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
         for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
         { if (remove_peripheral_spaces <std::string_view> (win_log_snapshot[win_log_snapshot.size() - 1 - n]).empty())
-            original_qsos.push_front(QSO());
+            original_qsos.push_front(QSO { });
           else
           { ost << "adding original QSO: " << "----------" << endl << logbk[qso_number] << endl;
             ost << "----------" << endl;
@@ -5876,7 +5956,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         rebuild_dynamic_call_databases(logbk);
 
 // all the QSOs are added; now display the last few in the log window
-//        editable_log.recent_qsos(logbk, true);
         editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
         display_statistics(statistics.summary_string(rules));   // display the current statistics
@@ -6419,14 +6498,45 @@ void keyboard_test(void)
 void simulator_thread(string filename, int max_n_qsos)
 { start_of_thread("simulator thread"s);
 
-  tr_log trl(filename);
-  string last_frequency;
+  string file;
 
-  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : trl.number_of_qsos()) };    // either apply a limit or run them all
+  ost << "simulator about to read log from file: " << filename << endl;
 
-  for (unsigned int n { 0 }; n < n_qso_limit; ++n)
-  { const tr_record& rec           { trl.read(n) };
-    const string     str_frequency { rec.frequency() };
+  try
+  { file = read_file(filename);
+  }
+
+  catch (...)
+  { ost << "Error in simulator, unable to read log from file: " << filename << endl;
+    exit(-1);
+  }
+
+//  for (auto line : to_lines <std::string_view> (file))
+//  { QSO qso { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
+//
+//    logbk += qso;
+//  }
+
+  const vector<string> qso_lines { to_lines <std::string> (file) };
+
+//  tr_log trl(filename);
+  string last_frequency { };
+
+//  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : trl.number_of_qsos()) };    // either apply a limit or run them all
+//  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : logbk.size()) };    // either apply a limit or run them all
+  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : qso_lines.size()) };    // either apply a limit or run them all
+
+//  for (unsigned int n { 0 }; n < n_qso_limit; ++n)
+  for (unsigned int n { 1 }; n <= n_qso_limit; ++n)
+  { //const tr_record& rec           { trl.read(n) };
+    //const QSO&       rec   { logbk[n] };
+    const string& line = qso_lines[n - 1];
+
+    const QSO qso { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
+
+    const QSO& rec = qso;
+
+    const string     str_frequency { rec.freq() };
 
     if (str_frequency != last_frequency)
     { rig.rig_frequency(frequency(str_frequency));
@@ -7492,8 +7602,23 @@ void spawn_rbn(void)
 
   win_rbn_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
 
-  if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )
-    rbn_file.open(rbn_filename, std::ofstream::app);
+  start_recording_rbn();
+#if 0
+  if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )    // append "-" and a number to the given filename
+  { int    counter       { 0 };
+    string this_filename { rbn_filename + '-' + to_string(counter++) };
+
+//    this_filename = rbn_filename + '-' + to_string(counter++);
+
+    while (file_exists(this_filename))
+      this_filename = rbn_filename + '-' + to_string(counter++);
+
+    rbn_file.open(this_filename, std::ofstream::app);     // open in append mode (although this should probably be changed now that we have "-n" naming)
+
+
+//    rbn_file.open(rbn_filename, std::ofstream::app);
+  }
+#endif
 
   jthread(get_cluster_info, rbn_p).detach();
   jthread(process_rbn_info, &win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps).detach();
@@ -9965,4 +10090,31 @@ bool zoomed_xit(void)
   rig.enable_xit();
 
   return true;
+}
+
+/*! \brief  Start recording the RBN stream
+
+    Does nothing if the stream is already being recorded.
+*/
+void start_recording_rbn(void)
+{ if (!rbn_file.is_open())
+  { if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )    // append "-" and a number to the given filename
+    { int    counter       { 0 };
+      string this_filename { rbn_filename + '-' + to_string(counter++) };
+
+      while (file_exists(this_filename))
+        this_filename = rbn_filename + '-' + to_string(counter++);
+
+      rbn_file.open(this_filename, std::ofstream::app);     // open in append mode (although this should probably be changed now that we have "-n" naming)
+    }
+  }
+}
+
+/*! \brief  Stop recording the RBN stream
+
+    Does nothing if the stream is not being recorded.
+*/
+void stop_recording_rbn(void)
+{ if (rbn_file.is_open())
+    rbn_file.close();
 }

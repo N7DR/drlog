@@ -191,7 +191,8 @@ public:
 
     The file <i>filename</i> may be either an ASCII or a binary file
 */
-  explicit trmaster(const std::string& filename = "trmaster.asc"s);
+//  explicit trmaster(const std::string& filename = "trmaster.asc"s);
+  explicit trmaster(const std::string_view filename = "trmaster.asc"sv);
 
 /// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;
@@ -287,7 +288,8 @@ public:
   READ_AND_WRITE(ten_ten);                                         ///< 10-10 number
 
 /// set user parameters; wrt 1
-  inline void user(const int n, const std::string& v)
+//  inline void user(const int n, const std::string& v)
+  inline void user(const int n, const std::string_view v)
     { _user.at(n - 1) = v; }
 
 /// get user parameters; wrt 1
@@ -390,7 +392,6 @@ public:
 
     If there's already an entry for <i>call</i>, then does nothing
 */
-//  void operator+=(const std::string& call);
   void operator+=(const std::string_view call);
 
 /*! \brief          Add a drmaster_line

@@ -171,7 +171,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 
     Does nothing if <i>new_canonical_value</i> is already known
 */
-//void EFT::add_canonical_value(const string& new_canonical_value)
 void EFT::add_canonical_value(const string_view new_canonical_value)
 { const string str { new_canonical_value };
 
@@ -189,8 +188,6 @@ void EFT::add_canonical_value(const string_view new_canonical_value)
     Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
     canonical value if necessary.
 */
-//void EFT::add_legal_value(const string& cv, const string& new_value)
-//void EFT::add_legal_value(const string_view cv, const string& new_value)
 void EFT::add_legal_value(const string_view cv, const string_view new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
@@ -207,7 +204,6 @@ void EFT::add_legal_value(const string_view cv, const string_view new_value)
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-//bool EFT::is_legal_value(const string& str) const
 bool EFT::is_legal_value(const string_view str) const
 { if (!_regex_str.empty() and regex_match( string { str }, regex(_regex_str)))
     return true;

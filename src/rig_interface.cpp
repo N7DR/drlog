@@ -1259,10 +1259,6 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
     }
   }
 
-//  if (response_expected and !completed)
-//  { // _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
-//  }
-
   if (response_expected and completed)
   { if (_instrumented)
     { if (is_p3_screenshot)
@@ -1498,7 +1494,6 @@ void rig_interface::bandwidth_b(const unsigned int hz) const
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
     { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
-//      raw_command("BW$"s + k3_bw_units + ";"s);
       raw_command("BW$"s + k3_bw_units + SEMICOLON);
     }
   }

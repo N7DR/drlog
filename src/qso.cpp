@@ -33,7 +33,6 @@ extern drlog_context     context;        ///< configuration context
 extern location_database location_db;    ///< location database
 extern message_stream    ost;            ///< for debugging, info
 
-//extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
 bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
@@ -46,7 +45,6 @@ unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult
 
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
-//bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
 bool QSO::_is_received_field_optional(const string_view field_name, const vector<exchange_field>& fields_from_rules) const
 { string_view name_copy { remove_from_start <std::string_view> (field_name, "received-"s) };
 
@@ -127,6 +125,9 @@ bool QSO::_process_name_value_pair(const pair<string, string>& nv)
   if (!processed and name.starts_with("sent-"sv))
     processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
 
+  if (!processed and (name == "sap"sv))
+    processed = ( _is_sap = ((value == "true") ? true : false), true );
+
   return processed;
 }
 
@@ -187,7 +188,6 @@ QSO::QSO(const drlog_context& context, const string_view str, const contest_rule
 }
 
 /// set TX frequency and band from a string of the form xxxxx.y
-//void QSO::freq_and_band(const decltype(_frequency_tx)& str)
 void QSO::freq_and_band(const string_view str)
 { freq(str);
 
@@ -208,7 +208,6 @@ void QSO::freq_and_band(const string_view str)
 
     <i>statistics</i> might be changed by this function
 */
-//void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 void QSO::populate_from_verbose_format(const drlog_context& context, const string_view str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
@@ -216,7 +215,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
   vector<pair<string, string> > name_values;
 
-//  while (cur_posn != string::npos)
   while (cur_posn != string_view::npos)
     name_values += next_name_value_pair( string { str }, cur_posn);
 
@@ -229,7 +227,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and field_name.starts_with("received-"s))
     { const string name_upper { to_upper(field_name.substr(9)) };
 
-//      if (!(rules.all_known_field_names() > name_upper))
       if (!rules.all_known_field_names().contains(name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
         alert("Unknown exch field: "s + name_upper);
@@ -290,6 +287,8 @@ void QSO::populate_from_verbose_format(const string_view str)
 
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
+
+    Note: this might result in an incorrect value for _is_sap
 */
 void QSO::populate_from_log_line(const string_view str)
 { ost << "Inside populate_from_log_line(); input string is:" << *this << endl;
@@ -626,7 +625,6 @@ specification tells us otherwise, that's what we do.
     if (name.starts_with("TEXCH-"sv))
     { const string field_name { name.substr(6) };
     
-//      if (contains(field_name, '+'))                        // "+" indicates a CHOICE
       if (field_name.contains('+'))                        // "+" indicates a CHOICE
       { for (const auto& name : clean_split_string <string> (field_name, '+'))
         { for (const auto& [nm, val] : _sent_exchange)
@@ -720,7 +718,8 @@ string QSO::verbose_format(void) const
   }
 
   rv += " points="s + to_string(_points);
-  rv += " dupe="s + (_is_dupe ? "true "s : "false"s);
+  rv += " dupe="s + (_is_dupe ? "true"s : "false"s);
+  rv += " sap="s + (_is_sap ? "true"s : "false"s);
   rv += " comment="s + _comment;
     
   return rv; 
@@ -963,6 +962,8 @@ ostream& operator<<(ostream& ost, const QSO& q)
 
   for (const auto& received_exchange_field : q.received_exchange())
     ost << received_exchange_field << "  ";
+
+  ost << ", SAP: " << (q.is_sap() ? "true" : "false");
 
   ost << ", Comment: " << q.comment()
       << ", Points: " << q.points();

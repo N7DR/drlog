@@ -130,7 +130,6 @@ public:
 /*! \brief      Set the value and corresponding mult value
     \param  v   new value
 */
-//  void value(const std::string& v);
   void value(const std::string_view v);
 };
 
@@ -259,7 +258,6 @@ public:
     \param  m                           mode
     \param  received_values             the received values, in the order that they were received
 */
-//  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 //  parsed_exchange(const std::string_view from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
   parsed_exchange(const std::string_view from_callsign, const std::string_view canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
@@ -281,7 +279,6 @@ public:
 
     Returns empty string if <i>field_name</i> does not exist
 */
-//  std::string field_value(const std::string& field_name) const;
   std::string field_value(const std::string_view field_name) const;
 
 /// the number of fields
@@ -341,8 +338,6 @@ public:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-//  std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
-//  std::string resolve_choice(const std::string_view choice_name, const std::string& received_field,  const contest_rules& rules) const;
   std::string resolve_choice(const std::string_view choice_name, const std::string_view received_field,  const contest_rules& rules) const;
 };
 
@@ -378,7 +373,6 @@ public:
     Returns empty string if no sensible guess can be made.
     The returned value is inserted into the database.
 */
-//  std::string guess_value(const std::string_view callsign, const std::string& field_name);
   std::string guess_value(const std::string_view callsign, const std::string_view field_name);
 
 /*! \brief              Set a value in the database
@@ -386,9 +380,6 @@ public:
     \param  field_name  name of the field for the new entry
     \param  value       the new entry
 */
-//  void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
-//  void set_value(const std::string_view callsign, const std::string& field_name, const std::string& value);
-//  void set_value(const std::string_view callsign, const std::string_view field_name, const std::string& value);
   void set_value(const std::string_view callsign, const std::string_view field_name, const std::string_view value);
 
 /*! \brief              Set value of a field for multiple calls using a file
@@ -436,7 +427,6 @@ public:
     \param  callsign            callsign to which the exchange is to be attributed
     \param  received_exchange   exchange as received
 */
-//  sweepstakes_exchange(const contest_rules& rules, const std::string& callsign, const std::string& received_exchange);
 //  sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string& received_exchange);
   sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string_view received_exchange);
 

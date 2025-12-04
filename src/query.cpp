@@ -43,7 +43,6 @@ void query_database::operator+=(const std::string_view call)
 pair<STRING_SET /* q1 */, STRING_SET /* qn */> query_database::operator[](const string_view key) const
 { STRING_SET rv_1 { };
 
-//  if (!contains(key, '?'))
   if (!key.contains('?'))
     return { rv_1, rv_1 };
 

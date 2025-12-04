@@ -146,7 +146,7 @@ public:
 /*! \brief  Construct from a TRLOG file
     \param  filename  name of a TRLOG file
 */
-  explicit tr_log(const std::string& filename);
+  explicit tr_log(const std::string_view filename);
 
 /// destructor
   inline ~tr_log(void)

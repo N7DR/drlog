@@ -61,7 +61,8 @@ protected:
     \param  mv  multiplier values
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
-  MULT_SET _filter_asterisks(const MULT_SET& mv) const;
+  inline MULT_SET _filter_asterisks(const MULT_SET& mv) const
+    { return SR::to<MULT_SET>(mv | SRV::filter([] (const std::string& str) { return !str.contains('*'); })); }
 
 public:
 
@@ -130,7 +131,6 @@ public:
     Returns false if the value <i>str</i> is not known.
     Adds even if it's NOT a mult value.
 */
-//  bool add_worked(const std::string& str, const BAND b, const MODE m);
   bool add_worked(const std::string_view str, const BAND b, const MODE m);
 
 /*! \brief          Add a worked multiplier, even if it is unknown
@@ -141,7 +141,6 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-//  bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
   bool unconditional_add_worked(const std::string_view str, const BAND b, const MODE m);
 
 /*! \brief          Remove a worked multiplier

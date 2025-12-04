@@ -39,7 +39,8 @@ extern string VERSION;          ///< version string
     \param  name    name of the field to modify
     \param  value   the new value to give to field <i>name</i>
 */
-void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, const string& value)
+//void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, const string& value)
+void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, const string_view value)
 { 
 // frequency
   if (name == "FREQ"sv)
@@ -78,7 +79,8 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, 
 
 // received exchange
   if (const string_view str { "REXCH-"sv }; name.starts_with(str))
-    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string> (name, str), value, false, false });    // remove "REXCH-" before adding the field and value
+//    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string_view> (name, str), value, false, false });    // remove "REXCH-" before adding the field and value
+    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string_view> (name, str), value });    // remove "REXCH-" before adding the field and value
 }
 
 /*! \brief      Add a QSO to the logbook

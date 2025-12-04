@@ -241,7 +241,7 @@ protected:
   std::string                                  _qtc_filename                            { "QTCs"s };                    ///< name of file where QTCs are stored
   unsigned int                                 _qtc_long_t                              { 0 };                          ///< whether and amount to extend length of initial Ts in serial number in QTCs
   unsigned int                                 _qtc_qrs                                 { 0 };                          ///< WPM decrease when sending QTC
-  STRING_MAP<STRING_SET> _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
+  STRING_MAP<STRING_SET>                       _qthx                                    { };                            ///< allowed exchange values as a function of country; set with qthx
 
   std::vector<unsigned int>                    _rate_periods                            { 15, 30, 60 } ;                ///< periods (in minutes) over which rates should be calculated
   bool                                         _rbn_beacons                             { false };                      ///< whether to place RBN posts identified as from beacons on the bandmap
