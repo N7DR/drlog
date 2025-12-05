@@ -45,7 +45,7 @@
 #include "statistics.h"
 #include "string_functions.h"
 #include "time_log.h"
-#include "trlog.h"
+//#include "trlog.h"
 #include "version.h"
 
 //import <chrono>;  // not yet supported
@@ -6521,6 +6521,7 @@ void simulator_thread(string filename, int max_n_qsos)
 
 //  tr_log trl(filename);
   string last_frequency { };
+  bool   last_was_sap   { true };
 
 //  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : trl.number_of_qsos()) };    // either apply a limit or run them all
 //  const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : logbk.size()) };    // either apply a limit or run them all
@@ -6556,10 +6557,14 @@ void simulator_thread(string filename, int max_n_qsos)
       last_frequency = str_frequency;
     }
 
-    if (rec.sap_mode())
-      enter_sap_mode();
-    else
-      enter_cq_mode();
+    if (rec.sap_mode() != last_was_sap)
+    { if (rec.sap_mode())
+        enter_sap_mode();
+      else
+        enter_cq_mode();
+
+      last_was_sap = rec.sap_mode();
+    }
 
     keyboard.push_key_press(rec.call(), 1000);
 

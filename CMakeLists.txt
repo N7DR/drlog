@@ -55,7 +55,7 @@ set ( SOURCE_FILES
                    src/statistics.cpp
                    src/string_functions.cpp
                    src/textfile.cpp
-                   src/trlog.cpp
+#                   src/trlog.cpp
                    src/version.cpp
                    src/x_error.cpp
     )

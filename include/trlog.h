@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-#if 1
+#if 0
 
 /*! \file   trlog.h
 
