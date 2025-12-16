@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: drlog.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,7 +45,6 @@
 #include "statistics.h"
 #include "string_functions.h"
 #include "time_log.h"
-//#include "trlog.h"
 #include "version.h"
 
 //import <chrono>;  // not yet supported
@@ -269,7 +268,7 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
 void auto_screenshot(const string filename);                                                ///< Write a screenshot to a file
 void display_rig_status(const milliseconds poll_time, rig_interface* rigp);                 ///< Display status of the rig
 void display_date_and_time(void);                                                           ///< Thread function to display the date and time, and perform other periodic functions
-void get_cluster_info(dx_cluster* cluster_p);                                               ///< Thread function to obtain data from the cluster
+void get_cluster_info(dx_cluster* cluster_p);                                               ///< Thread function to obtain data from the cluster or RBN
 void get_indices(const string cmd);                                                         ///< Get SFI, A, K
 void keyboard_test(void);                                                                   ///< Thread function to simulate keystrokes
 void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_statistics* statistics_p,
@@ -288,25 +287,25 @@ void spawn_rbn(void);                                                           
 pt_mutex alert_mutex { "USER ALERT"s };     ///< mutex for the user alert
 time_t   alert_time  { 0 };                 ///< time of last alert
 
-pt_mutex                     batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
-UNORDERED_STRING_MAP<string> batch_messages;         ///< batch messages associated with calls
+pt_mutex                     batch_messages_mutex { "BATCH MESSAGES"s };  ///< mutex for batch messages
+UNORDERED_STRING_MAP<string> batch_messages;                              ///< batch messages associated with calls
 
 atomic<frequency> cq_mode_frequency;
 
-pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
-string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
+pt_mutex dupe_check_mutex { "DUPE CHECK"s };              ///< mutex for <i>last_call_inserted_with_space</i>
+string   last_call_inserted_with_space;                   ///< call inserted in bandmap by hitting the space bar; probably should be per band; can't be ataomic as string is not trivially copyable
 
 pt_mutex                     individual_messages_mutex { "INDIVIDUAL MESSAGES"s };   ///< mutex for individual messages
-UNORDERED_STRING_MAP<string> individual_messages;                                     ///< individual messages associated with calls
+UNORDERED_STRING_MAP<string> individual_messages;                                    ///< individual messages associated with calls
 
-pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
-string    last_exchange;                    ///< the last sent exchange
+pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };             ///< mutex for getting and setting the last sent exchange
+string    last_exchange;                                        ///< the last sent exchange
 
 COLOUR_TYPE log_extract_fg;                 ///< foreground colour of LOG EXTRACT window (used to restore colours after QTC)
 COLOUR_TYPE log_extract_bg;                 ///< background colour of LOG EXTRACT window (used to restore colours after QTC)
 
 pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
-time_t    time_last_qsy          { time_t(NULL) };      ///< time of last QSY
+time_t    time_last_qsy          { time_t(NULL) };              ///< time of last QSY
 
 pt_mutex            thread_check_mutex { "THREAD CHECK"s };   ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads { 0 };                  ///< how many additional threads are running?
@@ -329,7 +328,7 @@ STRING_SET          known_callsign_mults;                                       
 pt_mutex            last_polled_frequency_mutex { "LAST POLLED FREQUENCY"s }; ///< mutex for accessing <i>drlog_mode</i>
 string              last_polled_frequency { };                                ///< frequency string from the most recent poll of the rig
 
-pt_mutex            wicm_mutex {"WICM" };
+pt_mutex            wicm_mutex {"WICM"s };              ///< mutex for the WICM information
 deque<string>       wicm_calls;                         ///< calls in the WICM window
 
 map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges { };  ///< frequency ranges to be marked on-screen
@@ -352,6 +351,7 @@ AUDIO_RECORDING                 audio_recording_mode { AUDIO_RECORDING::DO_NOT_S
 atomic<bool>                    autocorrect_rbn { false };                              ///< whether to try to autocorrect posts from the RBN
 string                          auto_backup_directory { };                              ///< directory into which backup log and QTC files are to be written
 
+atomic<BAND>            bandmap_display_band;                       ///< the bandmap to display
 unsigned int            bandmap_decay_time_cluster_secs { };        ///< time in seconds for an entry to age off the bandmap (cluster entries)
 unsigned int            bandmap_decay_time_rbn_secs { };            ///< time in seconds for an entry to age off the bandmap (RBN entries)
 bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
@@ -1297,6 +1297,11 @@ int main(int argc, char** argv)
       else                // do not QSY on startup
       { current_band = to_BAND(rig.rig_frequency());
         current_mode = ( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
+      }
+
+      { const BAND b { current_band };
+
+        bandmap_display_band = b;
       }
 
 // the rig might have changed mode if we just changed bands
@@ -2387,7 +2392,11 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
               if (need_to_set_band)               // it looks like this was probably a manual band change
               { ost << "Consistent band mismatch during poll; new_sgb = " << new_sgb << ", new_f = " << new_f << ", BAND(new_f) = " << to_BAND(new_f) << "; setting band" << endl;
 
-                current_band = to_BAND(new_f);
+                { const BAND b { to_BAND(new_f) };
+
+                  current_band = b;
+                  bandmap_display_band = b;
+                }
 
                 update_remaining_callsign_mults_window(statistics, string(), current_band, m);
                 update_remaining_country_mults_window(statistics, current_band, m);
@@ -2639,15 +2648,18 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         if (time_since_data_last_received > timeout)
         { ost << "WARNING: " << type_str << " timeout exceeded; connection status = " << endl
                                                                            << "----------" << endl
-                                                                           << rbn.connection_status()
+                                                                           << rbn.connection_status() << endl
                                                                            << "----------" << endl;
+          ost << "dx_cluster object details: " << rbn.to_string() << endl;
 
           rbn.reset_connection();
 
           ost << "attempted to reset " << type_str << " connection; connection_status = " << endl
                                                                        << "----------" << endl
-                                                                       << rbn.connection_status()
+                                                                       << rbn.connection_status() << endl
                                                                        << "----------" << endl;
+
+          ost << "dx_cluster object new details following reset: " << rbn.to_string() << endl;
         }
         else
           ost << type_str << " timeout of " << timeout.count() << " seconds not yet exceeded; reset not attempted" <<  endl;
@@ -2898,13 +2910,12 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       sleep_for(1s);
     }
 
-    /* const */BAND cur_band { current_band };
+//    BAND cur_band { current_band };
+    BAND cur_band { bandmap_display_band };
 
     for (const BAND b : changed_bands)
     { if (b == cur_band)
-      { //ost << NOW_TP() << ": preparing to process insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << " for band " << b << endl;
-
-        while (ignore_next_process_insertion_queue)
+      { while (ignore_next_process_insertion_queue)
         { ignore_next_process_insertion_queue = false;
           ost << NOW_TP() << ": delaying processing insertion queue" << endl;
           sleep_for(1s);
@@ -2912,12 +2923,13 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
         //ost << NOW_TP() << ": processing insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
 
-        cur_band = current_band;
+//        cur_band = current_band;
+        cur_band = bandmap_display_band;
 
         if (b == cur_band)
           bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
         else
-        { ost << "Band appears to have changed; not writing to window; cur band now = " << cur_band << endl;
+        { ost << "Displayed band appears to have changed; not writing to window; displayed band now = " << cur_band << endl;
           bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
         }
       }
@@ -3009,7 +3021,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
   }
 }
 
-/// thread function to obtain data from the cluster
+/// thread function to obtain data from the cluster or RBN
 void get_cluster_info(dx_cluster* cluster_p)
 { constexpr int READ_INTERVAL_SEC { 2 };                  // number of seconds to pause between reads from the socket; longer pauses can accumulate large numbers of posts
 
@@ -3051,7 +3063,8 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );
 
-    bandmap_win <= bandmaps[current_band];
+//    bandmap_win <= bandmaps[current_band];
+    bandmap_win <= bandmaps[bandmap_display_band];
 
     for ( [[maybe_unused]] auto _ : RANGE(1, PRUNE_INTERVAL_SEC) )    // check once per second for a minute
     {
@@ -3375,6 +3388,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         ost << "displaying band map for band: " << BAND_NAME[new_band] << "m" << endl;
 
+        bandmap_display_band = new_band;
+
         time_log <std::chrono::milliseconds> t2;
 
         win_bandmap <= bm;
@@ -3583,6 +3598,44 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         goto FINISHED_PROCESSING_COMMAND;
       }
 
+// .BM [band] e.g., .BM 15 or .BM15
+      if ( command.starts_with("BM"sv) )
+      { if (command.contains(' '))
+        { const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, command.find(' '))) };
+
+          try
+          { const BAND b { BAND_FROM_NAME.at(string { bandname }) };     // at() does not yet support heterogeneous lookup
+
+            bandmap_display_band = b;
+          }
+
+          catch (...)
+          { alert("Unable to switch to bandmap: "s + bandname);
+          }
+        }
+        else
+        { if (command == "BM"sv)
+            bandmap_display_band = cur_band;
+          else
+          { const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, 2)) };
+
+            try
+            { const BAND b { BAND_FROM_NAME.at(string { bandname }) };     // at() does not yet support heterogeneous lookup
+
+              bandmap_display_band = b;
+            }
+
+            catch (...)
+            { alert("Unable to switch to bandmap: "s + bandname);
+            }
+          }
+        }
+
+        win_bandmap <= bandmaps[bandmap_display_band];
+
+        goto FINISHED_PROCESSING_COMMAND;
+      }
+
 // .CABRILLO
       if (command == "CABRILLO"sv)
       { const string cabrillo_filename { context.cabrillo_filename().empty() ? "cabrillo"s : context.cabrillo_filename() };
@@ -3683,7 +3736,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // .RBNREC OFF : stop recording RBN posts to disk
-      if (command == "RBNREC OFF"sv)
+//      if (command == "RBNREC OFF"sv)
+      if ( (command == "RBNREC OFF"sv) or (command == "RECRBN OFF"sv) )
       { if (!rbn_file.is_open())
           alert("RBN RECORDING IS ALREADY OFF"sv);
         else
@@ -3699,7 +3753,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // .RBNREC ON : start recording RBN posts to disk
-      if (command == "RBNREC ON"sv)
+//      if (command == "RBNREC ON"sv)
+      if ( (command == "RBNREC ON"sv) or (command == "RECRBN ON"sv) )
       { if (rbn_file.is_open())
           alert("RBN RECORDING IS ALREADY ON"sv);
         else
@@ -5061,6 +5116,22 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// F1 -- abort first step in SAP QSO during run
+  if (!processed and (e.symbol() == XK_F1))
+  { const string call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
+
+    win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= call_contents;
+
+    win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    win_exchange <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    rig.split_disable();
+
+    set_active_window(ACTIVE_WINDOW::CALL);
+    enter_cq_mode();
+
+    processed = true;
+  }
+
 // ALT-X -- possibly enter zoomed XIT mode
   if (!processed and e.is_alt('x') and (drlog_mode == DRLOG_MODE::SAP))
     processed = zoomed_xit();
@@ -5122,7 +5193,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // figure out whether we have sent a different RST (in SKCC)
     constexpr char rst_character { '\'' };    // apostrophe
 
-//    if (contains(exchange_contents, rst_character))
     if (exchange_contents.contains(rst_character))
     { const size_t last_apostrophe { exchange_contents.find_last_of(rst_character) };
       const size_t next_space      { exchange_contents.find_first_of(' ', last_apostrophe + 1) };
@@ -5138,7 +5208,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       vector<string> new_fields;
 
       for (const string& str : exchange_field_values)
-//        if (!contains(str, '\''))
         if (!str.contains('\''))
           new_fields += str;
 
@@ -5150,7 +5219,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
-//      if ( contains(value, '.') and (value.size() != 1) )    // ignore a field that is just "."
       if ( value.contains('.') and (value.size() != 1) )    // ignore a field that is just "."
         from_callsign = remove_char(value, '.');
 
@@ -5169,7 +5237,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     { size_t n_fields_without_new_callsign { 0 };
 
       for (const auto& values : exchange_field_values)
-//        if (!contains(values, '.'))
         if (!values.contains('.'))
           n_fields_without_new_callsign++;
 
@@ -5204,6 +5271,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                   last_exchange = expand_cw_message(cq_exchange);       // the CQ exchange doesn't have a "TU" in it
                 }
               }
+
               sent_acknowledgement = true;  // should rename this variable now that we've added QTC processing here
             }
           }
@@ -5262,7 +5330,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             qso.mode(cur_mode);
             qso.band(cur_band);
             qso.my_call(context.my_call());
-            qso.freq( frequency( rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency() ).display_string() );    // in kHz; 1dp
+            qso.freq( frequency( rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency() ).display_string() );    // in kHz; 1dp   // *** HERE
 
 // build name/value pairs for the sent exchange
             vector<pair<string, string> > sent_exchange { context.sent_exchange(qso.mode()) };
@@ -5338,7 +5406,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // and any exchange multipliers
             const STRING_MAP<MULT_SET /* values */ > old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
-            const vector<exchange_field>                                        exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
+            const vector<exchange_field>             exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
 
             for (const auto& exch_field : exchange_fields)
             { const string& name  { exch_field.name() };
@@ -5390,11 +5458,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
             bool no_exchange_mults_this_qso { true };
 
-            for (STRING_MAP<MULT_SET>::const_iterator cit { old_worked_exchange_mults.cbegin() }; cit != old_worked_exchange_mults.cend() and no_exchange_mults_this_qso; ++cit)
-            { const size_t old_size { (cit->second).size() };
+            for (STRING_MAP<MULT_SET>::const_iterator cit { old_worked_exchange_mults.cbegin() }; (cit != old_worked_exchange_mults.cend()) and no_exchange_mults_this_qso; ++cit)
+            { const size_t old_size { (cit -> second).size() };
 
-              if (const auto ncit { new_worked_exchange_mults.find(cit->first) }; ncit != new_worked_exchange_mults.cend())    // should never be equal
-              { no_exchange_mults_this_qso = ( old_size == ncit->second.size() );   // has the size changed?
+              if (const auto ncit { new_worked_exchange_mults.find(cit -> first) }; ncit != new_worked_exchange_mults.cend())    // should never be equal
+              { no_exchange_mults_this_qso = ( old_size == (ncit -> second).size() );   // has the size changed?
 
                 if (!no_exchange_mults_this_qso)
                   update_remaining_exchange_mults_windows(/* rules, */ statistics, cur_band, cur_mode);
@@ -5795,16 +5863,22 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   bool processed { win.common_processing(e) };
 
 // BACKSPACE -- just move cursor to left
-  if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
-    processed = (win <= cursor_relative(-1, 0), true);
+  if (e.is_unmodified() and e.symbol() == XK_BackSpace)
+//    processed = (win <= cursor_relative(-1, 0), true);
+  { win <= cursor_relative(-1, 0);
+    goto FINISHED_PROCESSING_LOG_WINDOW;    // could just return
+  }
 
 // .
-  if (!processed and e.is_char('.'))    // to permit editing of frequency
-    processed = (win <= e.str(), true);
+  if ( e.is_char('.') or e.is_char(' ') )    // to permit editing of frequency
+  //  processed = (win <= e.str(), true);
+  { win <= e.str();
+    goto FINISHED_PROCESSING_LOG_WINDOW;    // could just return
+  }
 
 // SPACE
-  if (!processed and e.is_char(' '))
-    processed = (win <= e.str(), true);
+//  if (!processed and e.is_char(' '))
+//    processed = (win <= e.str(), true);
 
 // CURSOR UP
   if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
@@ -6020,7 +6094,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
     set_active_window(ACTIVE_WINDOW::CALL);
 
     win_log.hide_cursor();
-//    editable_log.recent_qsos(logbk, true);
     editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
     processed = (win_call < WINDOW_ATTRIBUTES::WINDOW_REFRESH, true);
@@ -6033,6 +6106,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
     processed = (dump_screen(), true);
+
+  FINISHED_PROCESSING_LOG_WINDOW:
 }
 
 // functions that include thread safety
@@ -8546,10 +8621,12 @@ bool process_keypress_F1(const string_view original_contents)
     //else
     {
 // assume it's a call -- look for the same call in the current bandmap
-      bandmap_entry be { bandmaps[current_band][original_contents] };
+//      bandmap_entry be { bandmaps[current_band][original_contents] };
+      bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
 
       if (be.callsign().empty())          // didn't find an exact match; try a substring search
-        be = bandmaps[current_band].substr(original_contents);
+//        be = bandmaps[current_band].substr(original_contents);
+        be = bandmaps[bandmap_display_band].substr(original_contents);
 
       const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
 
@@ -8913,7 +8990,10 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
         my_bandmap_entry = mbe_copy;
       }
 
-      update_bandmap_window(bm /*, bm_version */);    // really shouldn't do this if there's been a manual change via, for example, ; or '
+      bandmap& displayed_bm { bandmaps[bandmap_display_band] };
+      update_bandmap_window(displayed_bm);
+
+//      update_bandmap_window(bm /*, bm_version */);    // really shouldn't do this if there's been a manual change via, for example, ; or '
       display_bandmap_filter(bm);
 
 // is there a station close to our frequency?

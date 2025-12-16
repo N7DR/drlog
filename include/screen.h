@@ -1,4 +1,4 @@
-// $Id: screen.h 277 2025-10-19 15:57:37Z  $
+// $Id: screen.h 281 2025-12-07 20:02:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -698,7 +698,6 @@ public:
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-//  std::string properties(const std::string_view name = EMPTY_STR);
   std::string properties(const std::string_view name = { });
 
 /// convert to bool

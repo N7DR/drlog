@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: rig_interface.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -409,9 +409,25 @@ frequency rig_interface::_rig_frequency(const VFO v) const
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
 
   if (_model == RIG_MODEL_K3)
-  { const string response { raw_command( (v == VFO::A) ? "FA;"sv : "FB;"sv, RESPONSE::EXPECTED) };
+  { constexpr int                   MAX_RETRIES { 2 };
+    constexpr std::chrono::duration RETRY_TIME  { 100ms };      // period between retries
 
-    return frequency(from_string<uint32_t>(substring <string_view> (response, 2, 11)));
+    int       counter { 0 };
+    frequency rv      { };
+
+    while ( (counter++ < MAX_RETRIES) and (rv == 0) )
+    { const string response { raw_command( (v == VFO::A) ? "FA;"sv : "FB;"sv, RESPONSE::EXPECTED) };
+
+      rv = frequency(from_string<uint32_t>(substring <string_view> (response, 2, 11)));
+
+      if (rv == 0)
+        sleep_for(RETRY_TIME);
+    }
+
+    if (rv == 0)
+      ost << "Warning: returning 0 from _rig_frequency, VFO " << ((v == VFO::A) ? "A" : "B") << endl;
+
+    return rv;
   }
   else          // not K3
   { freq_t hz;
@@ -825,7 +841,7 @@ void rig_interface::rit(const int hz) const
 // hamlib's behaviour anent the K3 is brain dead if hz == 0
   if (_model == RIG_MODEL_K3)
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command("RC;"s);
+      raw_command("RC;"sv);
     else
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
@@ -893,7 +909,7 @@ void rig_interface::rit_disable(void) const
 bool rig_interface::rit_enabled(void) const
 { switch (_model)
   { case RIG_MODEL_K3 :
-    { if ( const string response { raw_command("RT;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "RT"sv, 0) )
+    { if ( const string response { raw_command("RT;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 3) and contains_at(response, "RT"sv, 0) )
         return (response[2] == '1');
       else
       { _error_alert("Invalid length in rit_enabled(): "s + response);
@@ -1246,8 +1262,7 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 
                 rcvd += string(c_in.data());
 
-//                if (contains(rcvd, ';'))
-                if (rcvd.contains(';'))
+                if (rcvd.contains(SEMICOLON))
                   completed = true;
               }
             }
@@ -1276,7 +1291,8 @@ string rig_interface::raw_command(const string_view cmd, const RESPONSE expectat
 /// is the VFO locked?
 bool rig_interface::is_locked(void) const
 { if (_model == RIG_MODEL_K3)
-  { if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"sv, 0) )
+  { //if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "LK"sv, 0) )
+    if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 3) and contains_at(response, "LK"sv, 0) )
       return (response[2] == '1');
     else
     { _error_alert("Invalid response getting locked status: "s + response);
@@ -1304,7 +1320,8 @@ string rig_interface::bandwidth_str(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+//  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
+  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 6) and contains_at(response, "BW"sv, 0) )
   { const string bw_in_tens { remove_leading <std::string> (substring <std::string> (response, 2, 4), '0') };   // returned value is in tens of Hz, so convert to Hz
 
     return (bw_in_tens + '0');   // returned value is in tens of Hz, so convert to Hz
@@ -1324,8 +1341,8 @@ int rig_interface::bandwidth(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 6) and contains_at(response, "BW"sv, 0) )
-      return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
+  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 6) and contains_at(response, "BW"sv, 0) )
+    return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting bandwidth: "s + response);
     return 0;
@@ -1373,7 +1390,7 @@ bool rig_interface::is_transmitting(void) const
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if (const string response { raw_command("TQ;"sv, RESPONSE::EXPECTED) }; (contains_at(response, ';', 3) and contains_at(response, "TQ"sv, 0)))
+    { if (const string response { raw_command("TQ;"sv, RESPONSE::EXPECTED) }; (contains_at(response, SEMICOLON, 3) and contains_at(response, "TQ"sv, 0)))
       { n_unreachable = 0;
         return  (response[2] == '1');
       }
@@ -1510,7 +1527,7 @@ string rig_interface::centre_frequency_str(void) const
 
   SAFELOCK(_rig);
 
-  if ( const string response { raw_command("IS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IS"sv, 0) )
+  if ( const string response { raw_command("IS;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 7) and contains_at(response, "IS"sv, 0) )
     return remove_leading <std::string> (substring <std::string_view> (response, 3, 4), '0');
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
@@ -1554,7 +1571,6 @@ void rig_interface::centre_frequency(const unsigned int fc) const
     return; 
   }
 
-//  raw_command( ("IS "s + fc_str + ";"s), RESPONSE::NOT_EXPECTED);
   raw_command( ("IS "s + fc_str + SEMICOLON), RESPONSE::NOT_EXPECTED);
 }
 
@@ -1586,7 +1602,7 @@ bool rig_interface::rx_ant(void) const
 void rig_interface::rx_ant(const bool torf) const
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-      raw_command( torf ? "AR1;"s : "AR0;"s );
+      raw_command( torf ? "AR1;"sv : "AR0;"sv );
   }
 }
 
@@ -1597,7 +1613,10 @@ void rig_interface::rx_ant(const bool torf) const
     Works only with K3
 */
 bool rig_interface::notch_enabled(const string_view ds_result) const
-{ if (!_rig_connected)
+{ //constexpr char K3_NOTCH_BIT { 0x02 };
+  constexpr char K3_NOTCH_BIT { 0b00000010 };
+
+  if (!_rig_connected)
     return false;
 
   if (_model != RIG_MODEL_K3)
@@ -1606,11 +1625,12 @@ bool rig_interface::notch_enabled(const string_view ds_result) const
 // it's a K3
   const string result { ds_result.empty() ? raw_command("DS;"sv, RESPONSE::EXPECTED) : ds_result };
 
-  if ( (result.size() != 13) or (result[12] != ';') )
+  if ( (result.size() != 13) or (result[12] != SEMICOLON) )
     ost << "ERROR in notch_enabled(); result = " << result << endl;
   else
   { const char c         { result[11] };    // icon flash data
-    const bool notch_bit { (c bitand 0x02) == 0x02 };
+//    const bool notch_bit { (c bitand 0x02) == 0x02 };
+    const bool notch_bit { (c bitand K3_NOTCH_BIT) == K3_NOTCH_BIT };
 
     return notch_bit;
   }

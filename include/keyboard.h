@@ -1,4 +1,4 @@
-// $Id: keyboard.h 259 2025-01-19 15:44:33Z  $
+// $Id: keyboard.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,8 +29,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-extern const UNORDERED_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
-extern const UNORDERED_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
+//extern const UNORDERED_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
+extern const FLAT_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
+//extern const UNORDERED_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
+extern const FLAT_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
 extern const std::unordered_set<KeySym>        keypad_numbers;         ///< the keypad numbers and their equivalents
 
 extern message_stream ost;                  ///< for debugging, info

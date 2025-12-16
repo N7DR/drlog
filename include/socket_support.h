@@ -264,6 +264,13 @@ protected:
 */
   bool _resize_buffer(const size_t new_size) const;   // logically const
 
+/*! \brief          Set or unset the re-use of the socket
+    \param  torf    whether to allow re-use
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  void _reuse(const bool torf);
+
 public:
 
 /*! \brief  Default constructor
@@ -470,13 +477,6 @@ public:
 */
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
 
-/*! \brief          Set or unset the re-use of the socket
-    \param  torf    whether to allow re-use
-
-    Throws a tcp_socket_error if an error occurs
-*/
-  void reuse(const bool torf = true);
-
 /*! \brief          Set or unset lingering of the socket
     \param  torf    whether to allow lingering
     \param  secs    linger time in seconds
@@ -512,7 +512,27 @@ public:
 
     Throws a tcp_socket_error if an error occurs
 */
-  void enable_reuse(void);
+//  void enable_reuse(void);
+
+/*! \brief  Enable reuse of the socket
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  inline void allow_reuse(void)
+    { _reuse(true); }
+
+  inline void enable_reuse(void)
+    { allow_reuse(); }
+
+/*! \brief  Disable reuse of the socket
+
+    Throws a tcp_socket_error if an error occurs
+*/
+  inline void disallow_reuse(void)
+    { _reuse(false); }
+
+  inline void disable_reuse(void)
+    { disallow_reuse(); }
 };
 
 // ------------------------------------  icmp_socket  ----------------------------------

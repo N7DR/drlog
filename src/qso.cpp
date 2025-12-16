@@ -1,4 +1,4 @@
-// $Id: qso.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: qso.cpp 281 2025-12-07 20:02:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -743,8 +743,7 @@ bool QSO::exchange_match(const string_view rule_to_match) const
   if (tokens.size() != 3)
     ost << "Number of tokens = " << tokens.size() << endl;
   else                          // three tokens
-  { //const string exchange_field_name { remove_peripheral_spaces <std::string> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
-    const string_view exchange_field_name { remove_peripheral_spaces <std::string_view> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+  { const string_view exchange_field_name { remove_peripheral_spaces <std::string_view> (tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
 // is this field present?
     const string exchange_field_value { received_exchange(exchange_field_name) };   // default is empty field
@@ -755,7 +754,8 @@ bool QSO::exchange_match(const string_view rule_to_match) const
     { const string_view op { remove_peripheral_spaces <std::string_view> (tokens[1]) };
 
       if (op == "!="sv)                                                // precise inequality
-      { const string_view target { remove_trailing <std::string_view> (remove_leading <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"'), '"') };  // strip any double quotation marks
+      { //const string_view target { remove_trailing <std::string_view> (remove_leading <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"'), '"') };  // strip any double quotation marks
+        const string_view target { remove_peripheral_chars <std::string_view> (remove_peripheral_spaces <std::string_view> (tokens[2]), '"') };  // strip any double quotation marks
 
         ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
@@ -963,9 +963,8 @@ ostream& operator<<(ostream& ost, const QSO& q)
   for (const auto& received_exchange_field : q.received_exchange())
     ost << received_exchange_field << "  ";
 
-  ost << ", SAP: " << (q.is_sap() ? "true" : "false");
-
-  ost << ", Comment: " << q.comment()
+  ost << ", SAP: " << (q.is_sap() ? "true" : "false")
+      << ", Comment: " << q.comment()
       << ", Points: " << q.points();
   
   return ost;
@@ -1009,7 +1008,6 @@ pair<string, string> next_name_value_pair(const string_view str, size_t& posn)
                                                          : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };
 
 // handle "frequency_rx=     mycall=N7DR"
-//  if (contains(value, '='))
   if (value.contains('='))
   { posn = value_first_char_posn;
     return { name, string { } };

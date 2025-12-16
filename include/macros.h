@@ -1,4 +1,4 @@
-// $Id: macros.h 279 2025-12-01 15:09:34Z  $
+// $Id: macros.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,6 +22,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <flat_map>
+#include <flat_set>
 #include <iostream>
 #include <queue>
 #include <map>
@@ -233,6 +235,7 @@ template <class T> concept is_string_view = std::is_same_v<base_type<T>, std::st
 // standard containers
 template <class T> concept is_array              = is_stdarray<T>;
 template <class T> concept is_deque              = is_specialization<T, std::deque>;
+template <class T> concept is_flat_map           = is_specialization<T, std::flat_map>;
 template <class T> concept is_list               = is_specialization<T, std::list>;
 template <class T> concept is_map                = is_specialization<T, std::map>;
 template <class T> concept is_multimap           = is_specialization<T, std::multimap>;
@@ -246,11 +249,12 @@ template <class T> concept is_unordered_set      = is_specialization<T, std::uno
 template <class T> concept is_vector             = is_specialization<T, std::vector>;
 
 // combination concepts
-template <class T> concept is_mum   = is_map<T>      or is_unordered_map<T>;
-template <class T> concept is_mmumm = is_multimap<T> or is_unordered_multimap<T>;
-template <class T> concept is_sus   = is_set<T>      or is_unordered_set<T>;
-template <class T> concept is_ssuss = is_multiset<T> or is_unordered_multiset<T>;
-template <class T> concept is_ssv   = is_string<T>   or is_string_view<T>;
+template <class T> concept is_mum    = is_map<T>      or is_unordered_map<T>;
+template <class T> concept is_anymap = is_map<T>      or is_flat_map<T>             or is_unordered_map<T>;
+template <class T> concept is_mmumm  = is_multimap<T> or is_unordered_multimap<T>;
+template <class T> concept is_sus    = is_set<T>      or is_unordered_set<T>;
+template <class T> concept is_ssuss  = is_multiset<T> or is_unordered_multiset<T>;
+template <class T> concept is_ssv    = is_string<T>   or is_string_view<T>;
 
 // combinations of combinations
 template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
@@ -315,6 +319,13 @@ using STRING_SET = std::set<std::string, std::less<>>;
 // heterogenous lookup for ordered sets of strings with custom ordering
 template <typename Comparison>
 using CUSTOM_STRING_SET = std::set<std::string, Comparison>;
+
+// heterogenous lookup for flat sets of strings
+using FLAT_STRING_SET = std::flat_set<std::string, std::less<>>;
+
+// heterogenous lookup for flat maps with string keys
+template <typename ValueType>
+using FLAT_STRING_MAP = std::flat_map<std::string, ValueType, std::less<>>;
 
 // should try to create a string set with custom comparator (CMP) that supports heterogeneous lookup; see string_functions.h for defn of CMP; perhaps CMP() is the right syntax??
 
@@ -909,7 +920,7 @@ template <class C, class K, class PF, class MT = typename C::mapped_type, class 
 auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
 { const auto cit { m.find(k) };
 
-  return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
+  return ( (cit == m.cend()) ? d : (cit -> second.*pf)() );
 } 
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value in an optional, otherwise return an empty optional
@@ -923,7 +934,23 @@ std::optional<typename C::mapped_type> OPT_MUM_VALUE(const C& m, const K& k)
 { std::optional<typename C::mapped_type> rv { };
 
   if (const auto cit { m.find(k) }; cit != m.cend())
-    rv = cit->second;
+    rv = cit -> second;
+
+  return rv;
+}
+
+/*! \brief      Is an object a key of a map, flat map or unordered map; if so return the value in an optional, otherwise return an empty optional
+    \param  m   map, flat map or unordered map to be searched
+    \param  k   target key
+    \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise an empty optional
+*/
+template <class C, class K>
+  requires (is_anymap<C>) and (std::is_constructible_v<typename C::key_type, K>)
+std::optional<typename C::mapped_type> OPT_ANYMAP_VALUE(const C& m, const K& k)
+{ std::optional<typename C::mapped_type> rv { };
+
+  if (const auto cit { m.find(k) }; cit != m.cend())
+    rv = cit -> second;
 
   return rv;
 }
@@ -997,7 +1024,24 @@ template <class T>
   requires is_unordered_map<T>
 std::ostream& operator<<(std::ostream& ost, const T& mp)
 { for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
-    ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
+    ost << "unordered_map[" << cit -> first << "]: " << cit -> second << std::endl;
+
+  return ost;
+}
+
+
+/*! \brief          Write a flat map to an output stream
+    \param  ost     output stream
+    \param  mp      object to write
+    \return         the output stream
+
+    This should work with flat maps that support heterogeneous lookup
+*/
+template <class T>
+  requires is_flat_map<T>
+std::ostream& operator<<(std::ostream& ost, const T& mp)
+{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
+    ost << "flat_map[" << cit -> first << "]: " << cit -> second << std::endl;
 
   return ost;
 }
@@ -1655,7 +1699,7 @@ auto VALUES(const S& s) -> std::vector<typename S::value_type>
   return rv;
 }
 
-/*! \brief          Given a container of values and a corresponding pseudo-index, return the calue corresponding to a particular pseudo-index
+/*! \brief          Given a container of values and a corresponding pseudo-index, return the value corresponding to a particular pseudo-index
     \param  values  the allowed different values
     \param  idx_1   one of the extremum values of index
     \param  idx_2   the other of the extremum values of index
@@ -1859,6 +1903,16 @@ std::optional<size_t> SPAN_IDX(const std::span<T> sp, const T& val)
   rv = distance(sp.begin(), it);
 
   return rv;
+}
+#endif
+
+#if 0
+// illegal; operator= must be a member function
+template <typename T>
+void operator=(std::atomic<T>& v1, const std::atomic<T>& v2)
+{ const T tmp { v2 };
+
+  v1 = tmp;
 }
 #endif
 

@@ -48,10 +48,10 @@ protected:
   TIME_POINT          _last_data_received { };      ///< time point of last data received
   std::string         _login_id;                    ///< my login identifier
   std::string         _my_ip;                       ///< my IP address
-  int                 _n_posts { 0 };               ///< number of posts that have read from this cluster
+  int                 _n_posts { 0 };               ///< number of posts that have been read from this cluster
   unsigned int        _port;                        ///< server port
   std::string         _server;                      ///< name or IP address of the server
-  enum POSTING_SOURCE _source;                      ///< source for postings
+  POSTING_SOURCE      _source;                      ///< source for postings
   bool                _test_spots { false };        ///< whether sent spots are sent in test (DXT) mode
   unsigned int        _timeout;                     ///< timeout in seconds (defaults to 2)
   std::string         _unprocessed_input;           ///< buffer for messages from the network
@@ -126,7 +126,20 @@ public:
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
     { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _last_data_received); }
+
+  std::string to_string(void) const;
 };
+
+/*! \brief          Write a <i>dx_cluster</i> object to an output stream
+    \param  ost     output stream
+    \param  dxp     object to write
+    \return         the output stream
+*/
+inline std::ostream& operator<<(std::ostream& ost, const dx_cluster& dxc)
+{ ost << dxc.to_string();
+
+  return ost;
+}
 
 // -----------  dx_post  ----------------
 

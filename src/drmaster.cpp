@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: drmaster.cpp 281 2025-12-07 20:02:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -534,7 +534,6 @@ trmaster_line trmaster::_get_binary_record(const string_view contents, uint32_t&
 //trmaster::trmaster(const string& filename)
 trmaster::trmaster(const string_view filename)
 { const string contents  { read_file(filename) };      // throws exception if fails
-//  const bool   is_binary { contains(contents, create_string(static_cast<char>(0))) };
   const bool   is_binary { contents.contains(create_string(static_cast<char>(0))) };
 
   if (is_binary)
@@ -612,7 +611,7 @@ TODO: make this a template that works on a vector of strings or a vector of stri
 string drmaster_line::_extract_field(const vector<string>& fields, const string_view field_indicator)
 { const auto it { FIND_IF(fields, [field_indicator] (const auto& field) { return field.starts_with(field_indicator); }) };
 
-  return ( (it == fields.end()) ? string { } : it->substr(field_indicator.length()));
+  return ( (it == fields.end()) ? string { } : it -> substr(field_indicator.length()));
 }
 
 /*! \brief      Process a single field (such as: "=Xabc")
@@ -967,10 +966,8 @@ string drmaster::to_string(void) const
 
     If there's already an entry for <i>call</i>, then does nothing
 */
-//void drmaster::operator+=(const string& call)
 void drmaster::operator+=(const string_view call)
-{ //if (!::contains(call, ' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
-  if (!call.contains(' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
+{ if (!call.contains(' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
   { const string call_str { call };
 
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use

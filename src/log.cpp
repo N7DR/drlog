@@ -1,4 +1,4 @@
-// $Id: log.cpp 275 2025-09-19 14:02:06Z  $
+// $Id: log.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,7 +39,6 @@ extern string VERSION;          ///< version string
     \param  name    name of the field to modify
     \param  value   the new value to give to field <i>name</i>
 */
-//void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, const string& value)
 void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, const string_view value)
 { 
 // frequency
@@ -79,7 +78,6 @@ void logbook::_modify_qso_with_name_and_value(QSO& qso, const string_view name, 
 
 // received exchange
   if (const string_view str { "REXCH-"sv }; name.starts_with(str))
-//    qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string_view> (name, str), value, false, false });    // remove "REXCH-" before adding the field and value
     qso.received_exchange(qso.received_exchange() + received_field { remove_from_start <std::string_view> (name, str), value });    // remove "REXCH-" before adding the field and value
 }
 
@@ -118,8 +116,8 @@ void logbook::operator-=(const unsigned int n)
   if (_log.empty() or (_log.size() < n))
     return;
 
-  const size_t index { n - 1 };    // because the interface is wrt 1
-  auto  it           { _log_vec.begin() + index };     // move to the correct QSO
+  const size_t index { n - 1 };                      // because the interface is wrt 1
+  auto  it           { _log_vec.begin() + index };   // move to the correct QSO
 
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
@@ -440,10 +438,10 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
   
 // go through the fields
       for (const vector<string>& vec : individual_values)
-      { const string&         name  { vec[0] };
-        const unsigned int    posn  { from_string<unsigned int>(vec[1]) - 1 };
-        const unsigned int    len   { from_string<unsigned int>(vec[2]) };
-        const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string()) };
+      { const string&      name  { vec[0] };
+        const unsigned int posn  { from_string<unsigned int>(vec[1]) - 1 };
+        const unsigned int len   { from_string<unsigned int>(vec[2]) };
+        const string       value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string()) };
       
         _modify_qso_with_name_and_value(qso, name, value);
 
@@ -497,7 +495,7 @@ void logbook::read_cabrillo(const string_view filename, const vector<string>& ca
 
     Returns empty string if no returnable instance can be found
 */
-string logbook::exchange_field_value(const string& callsign, const string& exchange_field_name)
+string logbook::exchange_field_value(const string_view callsign, const string_view exchange_field_name)
 { const vector<QSO> qsos { worked(callsign) };
 
   if (!qsos.empty())
@@ -517,7 +515,7 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
 
     If <i>n</i> is out of range, then returns an empty vector
 */
-vector<QSO> logbook::match_exchange(const string& target) const
+vector<QSO> logbook::match_exchange(const string_view target) const
 { vector<QSO> rv;
 
   FOR_ALL(_log_vec, [&rv, &target] (const auto& qso) { if (qso.exchange_match_string(target)) rv += qso; });
@@ -563,7 +561,7 @@ STRING_SET logbook::calls(void) const
   STRING_SET rv { };
 
 // https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
-  for (auto it { _log.cbegin() }; it != _log.cend(); it = _log.upper_bound(it->first))
+  for (auto it { _log.cbegin() }; it != _log.cend(); it = _log.upper_bound(it -> first))
     rv += it->first;
 
   return rv;
@@ -581,7 +579,7 @@ string logbook::last_worked_eu_call(void) const
 
   const auto cit { find_if(_log_vec.rbegin(), _log_vec.rend(), [] (const QSO& q) { return (q.continent() == EU); } ) };
 
-  return ( (cit == _log_vec.rend()) ? string { } : cit->callsign() );
+  return ( (cit == _log_vec.rend()) ? string { } : cit -> callsign() );
 }
 
 // -----------  log_extract  ----------------
@@ -648,7 +646,6 @@ void log_extract::display(void)
 
     Displayed in order from oldest to newest
 */
-//void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
 void log_extract::recent_qsos(const logbook& lgbook, const LOG_EXTRACT to_display)
 { const vector<QSO>& vec       { lgbook.as_vector() };
   const size_t       n_to_copy { min(vec.size(), _win_size) };
@@ -670,7 +667,8 @@ void log_extract::recent_qsos(const logbook& lgbook, const LOG_EXTRACT to_displa
     Displayed in order from oldest to newest. If the extract contains more QSOs than the window
     allows, only the most recent QSOs are displayed.
 */
-void log_extract::match_exchange(const logbook& lgbook, const string& target)
+//void log_extract::match_exchange(const logbook& lgbook, const string& target)
+void log_extract::match_exchange(const logbook& lgbook, const string_view target)
 { const vector<QSO> vec       { lgbook.match_exchange(target) };
   const size_t      n_to_copy { min(vec.size(), _win_size) };
 
@@ -696,7 +694,6 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
     The data for <i>call</i> are created if they don't already exist, and the corresponding iterator returned
 */
-//auto old_log::_find_or_create(const string& call) -> decltype(_olog)::iterator
 auto old_log::_find_or_create(const string_view call) -> decltype(_olog)::iterator
 { const auto it { _olog.find(call) };
 
@@ -707,7 +704,6 @@ auto old_log::_find_or_create(const string_view call) -> decltype(_olog)::iterat
     \param  call    callsign
     \return         the number of QSLs from callsign <i>call</i>
 */
-//unsigned int old_log::n_qsls(const string& call) const
 unsigned int old_log::n_qsls(const string_view call) const
 { const auto cit { _olog.find(call) };
 
@@ -718,7 +714,6 @@ unsigned int old_log::n_qsls(const string_view call) const
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
 */
-//unsigned int old_log::increment_n_qsls(const string& call)
 unsigned int old_log::increment_n_qsls(const string_view call)
 { const auto it { _olog.find(call) };
 
@@ -750,7 +745,6 @@ unsigned int old_log::n_qsos(const string_view call) const
     \param  call    callsign for which the number of QSOs should be incremented
     \return         number of QSOs associated with with <i>call</i>
 */
-//unsigned int old_log::increment_n_qsos(const string& call)
 unsigned int old_log::increment_n_qsos(const string_view call)
 { const auto it { _olog.find(call) };
 

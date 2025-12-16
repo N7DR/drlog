@@ -1,4 +1,4 @@
-// $Id: rules.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: rules.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1344,7 +1344,6 @@ string wpx_prefix(const string_view call)
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
         callsign = remove_n_chars_from_end <std::string> (callsign, 2u);
-//        callsign = remove_n_chars_from_end <CALL_TYPE> (callsign, 2u);
       }
   }
 
@@ -1352,10 +1351,8 @@ string wpx_prefix(const string_view call)
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
-//    if (mobiles.contains(last <std::string> (callsign, 2)))
     if (mobiles.contains(last <string_view> (callsign, 2)))
       callsign = remove_n_chars_from_end <std::string> (callsign, 3u);
-//      callsign = remove_n_chars_from_end <CALL_TYPE> (callsign, 3u);
   }
 
 // trivial -- and almost unknown -- case first: no digits
@@ -1425,7 +1422,8 @@ From SAC rules, the relevant countries are:
   Iceland TF
 */
 string sac_prefix(const string_view call)
-{ static const UNORDERED_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
+{ //static const UNORDERED_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
+  static const FLAT_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 

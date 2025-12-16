@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 268 2025-05-04 12:31:03Z  $
+// $Id: keyboard.cpp 282 2025-12-15 20:55:01Z  $
 
 /*! \file 	keyboard.cpp
 
@@ -418,7 +418,8 @@ void keyboard_queue::push_key_press(const string_view str, const int ms_delay)
     This is used to decode access to the correct CW messages when a key is pressed
     See the file drlog_context.cpp to see this in use
 */
-const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
+//const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
+const FLAT_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
                                               { "kp_1"s,      XK_KP_1 },
                                               { "kp_2"s,      XK_KP_2 },
                                               { "kp_3"s,      XK_KP_3 },
@@ -441,7 +442,8 @@ const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
                                             };
 
 /// key names that are equivalent to one another
-const UNORDERED_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
+//const UNORDERED_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
+const FLAT_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
                                                             { "kp_1"s, "kp_end"s },
                                                             { "kp_2"s, "kp_down"s },
                                                             { "kp_3"s, "kp_next"s },

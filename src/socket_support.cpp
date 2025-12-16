@@ -44,7 +44,8 @@ extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::
 constexpr size_t MIN_IN_BUFFER_SIZE { 4'096 };   // minumum size of a TCP input buffer, in bytes
 //constexpr size_t MAX_IN_BUFFER_SIZE { 8'192 };   // maximum size of a TCP input buffer
 //constexpr size_t MAX_IN_BUFFER_SIZE { 16'384 };   // maximum size of a TCP input buffer
-constexpr size_t MAX_IN_BUFFER_SIZE { 32'768 };   // maximum size of a TCP input buffer, in bytes
+//constexpr size_t MAX_IN_BUFFER_SIZE { 32'768 };   // maximum size of a TCP input buffer, in bytes
+constexpr size_t MAX_IN_BUFFER_SIZE { 65'536 };   // maximum size of a TCP input buffer, in bytes
 
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
@@ -129,11 +130,25 @@ bool tcp_socket::_resize_buffer(const size_t new_size) const   // logically cons
   return false;
 }
 
+/*! \brief          Set or unset the re-use of the socket
+    \param  torf    whether to allow re-use
+
+    Throws a tcp_socket_error if an error occurs
+*/
+void tcp_socket::_reuse(const bool torf)
+{ const int optval { torf ? 1 : 0 };
+
+  SAFELOCK(_tcp_socket);
+
+  if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+}
+
 /// default constructor
 tcp_socket::tcp_socket(void) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
-  { reuse();    // enable re-use
+  { disallow_reuse();    // disable re-use
     linger(DEFAULT_TCP_LINGER);
   }
 
@@ -157,7 +172,7 @@ tcp_socket::tcp_socket(SOCKET* sp)
   { try
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-      reuse();            // enable re-use
+      disable_reuse();
       linger(DEFAULT_TCP_LINGER);
     }
 
@@ -184,7 +199,7 @@ tcp_socket::tcp_socket(const string_view destination_ip_address_or_fqdn,
                        const unsigned int retry_time_in_seconds) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
 { try
-  { reuse();                        // enable re-use
+  { disable_reuse();
     linger(DEFAULT_TCP_LINGER);
 
     bind(source_address);
@@ -278,9 +293,11 @@ void tcp_socket::new_socket(void)
 { try
   { SAFELOCK(_tcp_socket);
 
+    _close_the_socket();      // does nothing if there is no socket
+
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    reuse();    // enable re-use
+    disable_reuse();
     linger(DEFAULT_TCP_LINGER);
 
 // probably should clear out pre-existing information; but we keep the old data buffer (that is removed only by the destructor)
@@ -442,10 +459,14 @@ string tcp_socket::read(void) const
   { status = ::recv(_sock, (char*)cp, _in_buffer_size, 0);      // status is the number of bytes received; waits for at least some data to be present
 
     if (status == -1)
+    { ost << "Error in tcp_socket::read(); status = -1; errno = " << errno << endl;
+
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
+    }
 
     if (status == 0)
-      throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);    
+    { throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
+    }
     
     if (status == static_cast<int>(_in_buffer_size))
     { ost << "Informative: TCP buffer (size = " << _in_buffer_size << ") filled in read without timeout" << endl;  // if this happens often, then should probably read more often or increase size of buffer
@@ -700,14 +721,24 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 
     Throws a tcp_socket_error if an error occurs
 */
-void tcp_socket::reuse(const bool torf)
-{ const int optval { torf ? 1 : 0 };
-  
-  SAFELOCK(_tcp_socket);
+//void tcp_socket::reuse(const bool torf)
+//{ const int optval { torf ? 1 : 0 };
+//
+//  SAFELOCK(_tcp_socket);
+//
+//  if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
+//    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+//}
 
-  if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
-}
+//void tcp_socket::allow_reuse(void)
+//{ _reuse(true);
+//  const int optval { torf ? 1 : 0 };
+//
+//  SAFELOCK(_tcp_socket);
+//
+//  if ( setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) )
+//    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
+//}
 
 /*! \brief    Get the lingering state of the socket
     \return   whether linger is enabled and, if so, the value in seconds

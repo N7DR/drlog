@@ -1,4 +1,4 @@
-// $Id: scp.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: scp.cpp 281 2025-12-07 20:02:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -171,7 +171,6 @@ SCP_SET scp_databases::operator[](const string_view key)
     const SCP_SET& calls { db[substring <std::string> (key, 0, 2)] };
 
     for (const auto& callsign : calls)
-//      if (::contains(callsign, key))
       if (callsign.contains(key))
         rv += callsign;
   }

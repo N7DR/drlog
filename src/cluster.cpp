@@ -143,7 +143,7 @@ reconnect:
 */
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _connection(src == POSTING_SOURCE::CLUSTER ? context.cluster_server() : context.rbn_server(),     // create the connection
-              src == POSTING_SOURCE::CLUSTER ? context.cluster_port() :  context.rbn_port(),
+              src == POSTING_SOURCE::CLUSTER ? context.cluster_port()   : context.rbn_port(),
               context.my_ip()),
   _login_id(src == POSTING_SOURCE::CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
   _my_ip(context.my_ip()),                                                                          // set my IP address
@@ -321,6 +321,30 @@ string dx_cluster::get_unprocessed_input(void)
   
   return rv;
 }
+
+string dx_cluster::to_string(void) const
+{ string rv { };
+
+  rv += "  connection status: " + connection_status() + EOL
+        +  "  number of posts: " + ::to_string(_n_posts) + EOL
+        +  "  source: " + ( (_source == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBNs"s );
+
+  return rv;
+}
+
+/*! \brief          Write a <i>dx_cluster</i> object to an output stream
+    \param  ost     output stream
+    \param  dxp     object to write
+    \return         the output stream
+*/
+//ostream& operator<<(ostream& ost, const dx_cluster& dxc)
+//{ ost << "Cluster object: " << endl
+//      << "  connection status: " << dxc.connection_status() << endl
+//      << "  number of posts: " << dxc.n_posts() << endl
+//      << "  source: " << ( (dxc.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER" : "RBN" );
+//
+//  return ost;
+//}
 
 // -----------  dx_post  ----------------
 

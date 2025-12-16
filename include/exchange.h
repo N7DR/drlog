@@ -1,4 +1,4 @@
-// $Id: exchange.h 279 2025-12-01 15:09:34Z  $
+// $Id: exchange.h 281 2025-12-07 20:02:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,7 +258,6 @@ public:
     \param  m                           mode
     \param  received_values             the received values, in the order that they were received
 */
-//  parsed_exchange(const std::string_view from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
   parsed_exchange(const std::string_view from_callsign, const std::string_view canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
@@ -427,7 +426,6 @@ public:
     \param  callsign            callsign to which the exchange is to be attributed
     \param  received_exchange   exchange as received
 */
-//  sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string& received_exchange);
   sweepstakes_exchange(const contest_rules& rules, const std::string_view callsign, const std::string_view received_exchange);
 
   READ(serno);    ///< serial number

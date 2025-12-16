@@ -1,4 +1,4 @@
-// $Id: rules.h 279 2025-12-01 15:09:34Z  $
+// $Id: rules.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -284,8 +284,7 @@ public:
 
     Also the default constructor
 */
-//  inline explicit exchange_field(const std::string& nm = std::string { }, const bool mult = false, const bool opt = false) :
-  inline explicit exchange_field(const std::string_view nm = ""sv, const bool mult = false, const bool opt = false) :
+  inline explicit exchange_field(const std::string_view nm = { }, const bool mult = false, const bool opt = false) :
     _name(nm),
     _is_mult(mult),
     _is_optional(opt)
@@ -691,7 +690,8 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-  bool country_mults_used(const std::string_view cp = EMPTY_STR) const;
+//  bool country_mults_used(const std::string_view cp = EMPTY_STR) const;
+  bool country_mults_used(const std::string_view cp = { }) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test

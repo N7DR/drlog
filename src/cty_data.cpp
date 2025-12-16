@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: cty_data.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -662,7 +662,6 @@ location_info location_database::info(const string_view callpart) const
       len++;
     }
 
-//   auto redefine_best = [this] (const string& cp) { return pair { cp, _db.find(cp) -> second }; };
    auto redefine_best = [this] (const string_view cp) { return pair { string { cp }, _db.find(cp) -> second }; };
 
 // Guantanamo Bay is a mess
@@ -713,16 +712,17 @@ location_info location_database::info(const string_view callpart) const
     }
 
 // we get here if there were never any hits
-    return location_info();
+    return location_info { };
   }  // end no portable indicator
 
 // it looks like maybe it's a reciprocal license
 
   if (callsign.starts_with('/') or callsign.ends_with('/'))   // slash is first or last character
-    return location_info();
+    return location_info { };
 
 // how many slashes are there?
-  const vector<string> parts { split_string <std::string> (callsign, '/') };
+//  const vector<string> parts { split_string <std::string> (callsign, '/') };
+  const vector<string_view> parts { split_string <std::string_view> (callsign, '/') };
 
   if (parts.size() > 3)
     throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: "s + callsign);
@@ -768,7 +768,8 @@ location_info location_database::info(const string_view callpart) const
     if (!found_0 and !found_1)    // neither matched exactly; use the one with the longest match
     {
 // length of match for part 0
-      auto match_info = [this] (const string& part)
+//      auto match_info = [this] (const string& part)
+      auto match_info = [this] (const string_view part)
         { unsigned int return_len { 0 };
 
           LOCATION_DBTYPE::const_iterator return_posn;
@@ -811,7 +812,6 @@ location_info location_database::info(const string_view callpart) const
   if (parts.size() == 3)        // two slashes
   {
 // ignore the second slash and everything after it (assume W0/G4AMJ/P or G4AMJ/VP9/M)
-
     const string        target    { (parts[2].length() == 1) ? (parts[0] + '/' + parts[1]) : parts[0] };
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
@@ -884,12 +884,12 @@ russian_data_per_substring::russian_data_per_substring(const string_view ss, con
 
   try
   { _region_abbreviation = fields.at(0);
-    _cq_zone = from_string<unsigned int>(fields.at(1));
-    _itu_zone = from_string<unsigned int>(fields.at(2));
-    _continent = fields.at(3);
-    _utc_offset = from_string<int>(fields.at(4));
-    _latitude = from_string<float>(fields.at(5));
-    _longitude = from_string<float>(fields.at(6));
+    _cq_zone             = from_string<unsigned int>(fields.at(1));
+    _itu_zone            = from_string<unsigned int>(fields.at(2));
+    _continent           = fields.at(3);
+    _utc_offset          = from_string<int>(fields.at(4));
+    _latitude            = from_string<float>(fields.at(5));
+    _longitude           = from_string<float>(fields.at(6));
   }
 
   catch (...)
@@ -903,15 +903,15 @@ russian_data_per_substring::russian_data_per_substring(const string_view ss, con
     \return         the output stream
 */
 ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
-{ ost << "substring: " << info.sstring() << endl
-      << "region name: " << info.region_name() << endl
+{ ost << "substring: "           << info.sstring()             << endl
+      << "region name: "         << info.region_name()         << endl
       << "region abbreviation: " << info.region_abbreviation() << endl
-      << "cq zone: " << info.cq_zone() << endl
-      << "itu zone: " << info.itu_zone() << endl
-      << "continent: " << info.continent() << endl
-      << "utc offset: " << info.utc_offset() << endl
-      << "latitude: " << info.latitude() << endl
-      << "longitude: " << info.longitude();
+      << "cq zone: "             << info.cq_zone()             << endl
+      << "itu zone: "            << info.itu_zone()            << endl
+      << "continent: "           << info.continent()           << endl
+      << "utc offset: "          << info.utc_offset()          << endl
+      << "latitude: "            << info.latitude()            << endl
+      << "longitude: "           << info.longitude();
 
   return ost;
 }

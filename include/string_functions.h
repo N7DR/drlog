@@ -1,4 +1,4 @@
-// $Id: string_functions.h 279 2025-12-01 15:09:34Z  $
+// $Id: string_functions.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1066,7 +1066,7 @@ std::string join(const T& ct, const U sep)
 { std::string rv { };
 
   for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)
-  { if (cit != ct.cbegin())
+  { if (cit != ct.cbegin())               // add separator before all elements except the first
       rv += sep;
 
     rv += (*cit);
@@ -1165,7 +1165,7 @@ std::string separated_string(const T n, const char sep = ',')
   std::string rv  { };
 
   while (!tmp.empty())
-  { for (unsigned int N { 0 }; N < 3 and !tmp.empty(); ++N)
+  { for (unsigned int N { 0 }; ((N < 3) and !tmp.empty()); ++N)
     { rv = std::string(1, last_char(tmp)) + rv;
       tmp = tmp.substr(0, tmp.length() - 1);
     }
@@ -1386,7 +1386,6 @@ std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& ve
     \return     <i>cs</i>, with all instances of <i>ss</i> removed
 */
 inline std::string remove_substring(const std::string_view cs, const std::string_view ss)
-//  { return ( contains(cs, ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
   { return ( cs.contains(ss) ? replace(cs, ss, std::string { }) : std::string { cs } ); }
 
 /*! \brief      Create a string of spaces

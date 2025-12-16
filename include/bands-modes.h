@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 276 2025-09-21 15:27:27Z  $
+// $Id: bands-modes.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,31 +62,33 @@ static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
                                                                     "6"s
                                                                  } };         ///< names of bands
 
-static STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
-                                         { "80"s,  BAND_80 },
-                                         { "60"s,  BAND_60 },
-                                         { "40"s,  BAND_40 },
-                                         { "30"s,  BAND_30 },
-                                         { "20"s,  BAND_20 },
-                                         { "17"s,  BAND_17 },
-                                         { "15"s,  BAND_15 },
-                                         { "12"s,  BAND_12 },
-                                         { "10"s,  BAND_10 },
-                                         { "6"s,   BAND_6 }
-                                      };                    ///< map a band name to a band
+//static STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
+static FLAT_STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
+                                              { "80"s,  BAND_80 },
+                                              { "60"s,  BAND_60 },
+                                              { "40"s,  BAND_40 },
+                                              { "30"s,  BAND_30 },
+                                              { "20"s,  BAND_20 },
+                                              { "17"s,  BAND_17 },
+                                              { "15"s,  BAND_15 },
+                                              { "12"s,  BAND_12 },
+                                              { "10"s,  BAND_10 },
+                                              { "6"s,   BAND_6 }
+                                            };                    ///< map a band name to a band
 
-static STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
-                                               { "80m"s,  BAND_80 },
-                                               { "60m"s,  BAND_60 },
-                                               { "40m"s,  BAND_40 },
-                                               { "30m"s,  BAND_30 },
-                                               { "20m"s,  BAND_20 },
-                                               { "17m"s,  BAND_17 },
-                                               { "15m"s,  BAND_15 },
-                                               { "12m"s,  BAND_12 },
-                                               { "10m"s,  BAND_10 },
-                                               { "6m"s,   BAND_6 }
-                                            };                    ///< map an ADIF3 band to a band
+//static STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
+static FLAT_STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },       // [] is used, so can't be const
+                                                    { "80m"s,  BAND_80 },
+                                                    { "60m"s,  BAND_60 },
+                                                    { "40m"s,  BAND_40 },
+                                                    { "30m"s,  BAND_30 },
+                                                    { "20m"s,  BAND_20 },
+                                                    { "17m"s,  BAND_17 },
+                                                    { "15m"s,  BAND_15 },
+                                                    { "12m"s,  BAND_12 },
+                                                    { "10m"s,  BAND_10 },
+                                                    { "6m"s,   BAND_6 }
+                                                  };                    ///< map an ADIF3 band to a band
 
 /// modes that drlog knows about
 enum MODE { MODE_CW = 0,
@@ -108,24 +110,26 @@ static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
                                                                   };
 
 /// generate the mode from a name
-static const STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
-                                               { "SSB"s,  MODE_SSB },
-                                               { "RTTY"s, MODE_RTTY }
-                                             };
+//static const STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
+static const FLAT_STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
+                                                    { "SSB"s,  MODE_SSB },
+                                                    { "RTTY"s, MODE_RTTY }
+                                                  };
 
 // the bottoms of bands, as strings
-static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
-                                                          { BAND_80,  "3500"s },
-                                                          { BAND_60,  "5330.5"s },
-                                                          { BAND_40,  "7100"s },
-                                                          { BAND_30,  "10100"s },
-                                                          { BAND_20,  "14000"s },
-                                                          { BAND_17,  "18068"s },
-                                                          { BAND_15,  "21000"s },
-                                                          { BAND_12,  "24890"s },
-                                                          { BAND_10,  "28000"s },
-                                                          { BAND_6,   "50000"s }
-                                                        };
+//static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
+static const std::flat_map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
+                                                               { BAND_80,  "3500"s },
+                                                               { BAND_60,  "5330.5"s },
+                                                               { BAND_40,  "7100"s },
+                                                               { BAND_30,  "10100"s },
+                                                               { BAND_20,  "14000"s },
+                                                               { BAND_17,  "18068"s },
+                                                               { BAND_15,  "21000"s },
+                                                               { BAND_12,  "24890"s },
+                                                               { BAND_10,  "28000"s },
+                                                               { BAND_6,   "50000"s }
+                                                             };
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
 

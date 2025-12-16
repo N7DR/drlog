@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 279 2025-12-01 15:09:34Z  $
+// $Id: drlog_context.cpp 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1023,7 +1023,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // START BAND
     if (LHS == "START BAND"sv)
-    { if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
+    { //if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
+      if (const auto opt { OPT_ANYMAP_VALUE(BAND_FROM_NAME, RHS) }; opt)
         _start_band = opt.value();
     }
 
@@ -1093,8 +1094,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // REMAINING COUNTRY MULTS
     if (LHS == "REMAINING COUNTRY MULTS"sv)
-    { //_auto_remaining_country_mults = contains(RHS, "AUTO"s);
-      _auto_remaining_country_mults = RHS.contains("AUTO"s);
+    { _auto_remaining_country_mults = RHS.contains("AUTO"sv);
 
       if (_auto_remaining_country_mults)
       { const vector<string_view> tokens { split_string <std::string_view> (RHS, ' ') };
@@ -1485,11 +1485,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
-  { const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
+  { static const FLAT_STRING_SET cabrillo_templated_contests { "ARRL DX"s, "CQ WW"s, "JIDX"s};
+
+    const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
 
     if (actual_modes.size() == 1)
     { try
-      { if (STRING_SET( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
+      { //if (STRING_SET( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ).contains(_cabrillo_qso_template))
+        if (cabrillo_templated_contests.contains(_cabrillo_qso_template))
         {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"sv) ?  " CW"sv : " SSB"sv) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);

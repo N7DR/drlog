@@ -1,4 +1,4 @@
-// $Id: bandmap.h 279 2025-12-01 15:09:34Z  $
+// $Id: bandmap.h 282 2025-12-15 20:55:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -730,7 +730,7 @@ protected:
   int                               _last_displayed_version { -1 };
   std::atomic<int>                  _version                { 0 };                        ///< used for debugging; strictly monotonically increases with each change
 
-  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { NOW_TP() };
+//  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { NOW_TP() };
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
@@ -898,7 +898,7 @@ public:
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(std::string (*pf)(const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
+  void not_needed_callsign_mult(std::string (*pf) (const std::string_view /* e.g., "WPXPX" */, const std::string_view /* callsign */),
                                   const std::string_view mult_type /* e.g., "WPXPX" */ , const std::string_view callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
