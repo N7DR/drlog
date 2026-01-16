@@ -22,6 +22,135 @@ using namespace   this_thread;   // std::this_thread
 
 extern message_stream           ost;    ///< for debugging, info
 
+const map<int, string> request_code_map {
+  { 1,    "CreateWindow"s },
+  { 2,    "ChangeWindowAttributes"s },
+  { 3,    "GetWindowAttributes"s },
+  { 4,    "DestroyWindow"s },
+  { 5,    "DestroySubwindows"s },
+  { 6,    "ChangeSaveSet"s },
+  { 7,    "ReparentWindow"s },
+  { 8,    "MapWindow"s },
+  { 9,    "MapSubwindows"s },
+  { 10,    "UnmapWindow"s },
+  { 11,    "UnmapSubwindows"s },
+  { 12,    "ConfigureWindow"s },
+  { 13,    "CirculateWindow"s },
+  { 14,    "GetGeometry"s },
+  { 15,    "QueryTree"s },
+  { 16,    "InternAtom"s },
+  { 17,    "GetAtomName"s },
+  { 18,    "ChangeProperty"s },
+  { 19,    "DeleteProperty"s },
+  { 20,    "GetProperty"s },
+  { 21,    "ListProperties"s },
+  { 22,    "SetSelectionOwner"s },
+  { 23,    "GetSelectionOwner"s },
+  { 24,    "ConvertSelection"s },
+  { 25,    "SendEvent"s },
+  { 26,    "GrabPointer"s },
+  { 27,    "UngrabPointer"s },
+  { 28,    "GrabButton"s },
+  { 29,    "UngrabButton"s },
+  { 30,    "ChangeActivePointerGrab"s },
+  { 31,    "GrabKeyboard"s },
+  { 32,    "UngrabKeyboard"s },
+  { 33,    "GrabKey"s },
+  { 34,    "UngrabKey"s },
+  { 35,    "AllowEvents"s },
+  { 36,    "GrabServer"s },
+  { 37,    "UngrabServer"s },
+  { 38,    "QueryPointer"s },
+  { 39,    "GetMotionEvents"s },
+  { 40,    "TranslateCoords"s },
+  { 41,    "WarpPointer"s },
+  { 42,    "SetInputFocus"s },
+  { 43,    "GetInputFocus"s },
+  { 44,    "QueryKeymap"s },
+  { 45,    "OpenFont"s },
+  { 46,    "CloseFont"s },
+  { 47,    "QueryFont"s },
+  { 48,    "QueryTextExtents"s },
+  { 49,    "ListFonts"s },
+  { 50,    "ListFontsWithInfo"s },
+  { 51,    "SetFontPath"s },
+  { 52,    "GetFontPath"s },
+  { 53,    "CreatePixmap"s },
+  { 54,    "FreePixmap"s },
+  { 55,    "CreateGC"s },
+  { 56,    "ChangeGC"s },
+  { 57,    "CopyGC"s },
+  { 58,    "SetDashes"s },
+  { 59,    "SetClipRectangles"s },
+  { 60,    "FreeGC"s },
+  { 61,    "ClearArea"s },
+  { 62,    "CopyArea"s },
+  { 63,    "CopyPlane"s },
+  { 64,    "PolyPoint"s },
+  { 65,    "PolyLine"s },
+  { 66,    "PolySegment"s },
+  { 67,    "PolyRectangle"s },
+  { 68,    "PolyArc"s },
+  { 69,    "FillPoly"s },
+  { 70,    "PolyFillRectangle"s },
+  { 71,    "PolyFillArc"s },
+  { 72,    "PutImage"s },
+  { 73,    "GetImage"s },
+  { 74,    "PolyText8"s },
+  { 75,    "PolyText16"s },
+  { 76,    "ImageText8"s },
+  { 77,    "ImageText16"s },
+  { 78,    "CreateColormap"s },
+  { 79,    "FreeColormap"s },
+  { 80,    "CopyColormapAndFree"s },
+  { 81,    "InstallColormap"s },
+  { 82,    "UninstallColormap"s },
+  { 83,    "ListInstalledColormaps"s },
+  { 84,    "AllocColor"s },
+  { 85,    "AllocNamedColor"s },
+  { 86,    "AllocColorCells"s },
+  { 87,    "AllocColorPlanes"s },
+  { 88,    "FreeColors"s },
+  { 89,    "StoreColors"s },
+  { 90,    "StoreNamedColor"s },
+  { 91,    "QueryColors"s },
+  { 92,    "LookupColor"s },
+  { 93,    "CreateCursor"s },
+  { 94,    "CreateGlyphCursor"s },
+  { 95,    "FreeCursor"s },
+  { 96,    "RecolorCursor"s },
+  { 97,    "QueryBestSize"s },
+  { 98,    "QueryExtension"s },
+  { 99,    "ListExtensions"s },
+  { 100,   "ChangeKeyboardMapping"s },
+  { 101,   "GetKeyboardMapping"s },
+  { 102,   "ChangeKeyboardControl"s },
+  { 103,   "GetKeyboardControl"s },
+  { 104,   "Bell"s },
+  { 105,   "ChangePointerControl"s },
+  { 106,   "GetPointerControl"s },
+  { 107,   "SetScreenSaver"s },
+  { 108,   "GetScreenSaver"s },
+  { 109,   "ChangeHosts"s },
+  { 110,   "ListHosts"s },
+  { 111,   "SetAccessControl"s },
+  { 112,   "SetCloseDownMode"s },
+  { 113,   "KillClient"s },
+  { 114,   "RotateProperties"s },
+  { 115,   "ForceScreenSaver"s },
+  { 116,   "SetPointerMapping"s },
+  { 117,   "GetPointerMapping"s },
+  { 118,   "SetModifierMapping"s },
+  { 119,   "GetModifierMapping"s },
+  { 127,   "NoOperation"s }
+};
+
+
+//string request_code_text(const int rc)
+//{ return MUM_VALUE(request_code_map, rc, "Unknown Request Code: "s + to_string(rc));
+//}
+
+
 // -------------------------------------------------  keyboard_event  -----------------------------------
 
 /*! \class  keyboard_event
@@ -66,7 +195,7 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
       return 0;
   }
   
-  ost << "X Error" << endl;
+  ost << "X Error handler called" << endl;
 
 /* from man XErrorEvent:
 
@@ -86,22 +215,37 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
 
 */
 
+//  constexpr int BUF_SIZE { 4096 };
+
+//  char buf[BUF_SIZE];
+
+//  XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
+
   ost << "XErrorEvent: " << endl
-      << "  type         : " << error_event_p->type << endl
+      << "  type         : " << error_event_p->type << /* " (should be " << X_ERROR << ")" << */ endl
       << "  display ptr  : " << error_event_p->display << endl
       << "  resourceid   : " << error_event_p->resourceid << endl
       << "  serial       : " << error_event_p->serial << endl
-      << "  error code   : " << static_cast<int>(error_event_p->error_code) << endl
+      << "  error code   : " << static_cast<int>(error_event_p->error_code) << endl;
+
+      constexpr int BUF_SIZE { 4096 };
+
+      char buf[BUF_SIZE];
+
+      XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
+
+  ost << "  error code text: " << buf << endl
       << "  request code : " << static_cast<int>(error_event_p->request_code) << endl
+      << "  request code text : " << request_code_text(static_cast<int>(error_event_p->request_code)) << endl
       << "  minor code   : " << static_cast<int>(error_event_p->minor_code) << endl;
 
-  constexpr int BUF_SIZE { 4096 };
+//  constexpr int BUF_SIZE { 4096 };
 
-  char buf[BUF_SIZE];
+//  char buf[BUF_SIZE];
 
-  XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
+//  XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
     
-  ost << "Error text : " << buf << endl;
+//  ost << "Error text : " << buf << endl;
 
   sleep(2);
   exit(-1);
@@ -413,47 +557,61 @@ void keyboard_queue::push_key_press(const string_view str, const int ms_delay)
   }
 }
 
+
+/*! \brief              Emulate the pressing of a sequence of characters
+    \param  str         pressed string
+    \param  ms_delay    delay between each character in <i>str</i>
+*/
+void keyboard_queue::push_key_press(const string_view str, const std::chrono::milliseconds delay)
+{ for (size_t n { 0 }; n < str.length(); ++n)
+  { push_key_press(str[n]);
+
+    if (n != str.length() - 1)
+      sleep_for(delay);
+  }
+}
+
 /*! \brief  Map key names in the config file to KeySym numbers (which are integers)
 
     This is used to decode access to the correct CW messages when a key is pressed
     See the file drlog_context.cpp to see this in use
 */
 //const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
-const FLAT_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
-                                              { "kp_1"s,      XK_KP_1 },
-                                              { "kp_2"s,      XK_KP_2 },
-                                              { "kp_3"s,      XK_KP_3 },
-                                              { "kp_4"s,      XK_KP_4 },
-                                              { "kp_5"s,      XK_KP_5 },
-                                              { "kp_6"s,      XK_KP_6 },
-                                              { "kp_7"s,      XK_KP_7 },
-                                              { "kp_8"s,      XK_KP_8 },
-                                              { "kp_9"s,      XK_KP_9 },
-                                              { "kp_insert"s, XK_KP_Insert },
-                                              { "kp_end"s,    XK_KP_End },
-                                              { "kp_down"s,   XK_KP_Down },
-                                              { "kp_next"s,   XK_KP_Next },
-                                              { "kp_left"s,   XK_KP_Left },
-                                              { "kp_begin"s,  XK_KP_Begin },
-                                              { "kp_right"s,  XK_KP_Right },
-                                              { "kp_home"s,   XK_KP_Home },
-                                              { "kp_up"s,     XK_KP_Up },
-                                              { "kp_prior"s,  XK_KP_Prior }
-                                            };
+const FLAT_STRING_MAP<int> key_names { { "kp_0"s,      XK_KP_0 },
+                                       { "kp_1"s,      XK_KP_1 },
+                                       { "kp_2"s,      XK_KP_2 },
+                                       { "kp_3"s,      XK_KP_3 },
+                                       { "kp_4"s,      XK_KP_4 },
+                                       { "kp_5"s,      XK_KP_5 },
+                                       { "kp_6"s,      XK_KP_6 },
+                                       { "kp_7"s,      XK_KP_7 },
+                                       { "kp_8"s,      XK_KP_8 },
+                                       { "kp_9"s,      XK_KP_9 },
+                                       { "kp_insert"s, XK_KP_Insert },
+                                       { "kp_end"s,    XK_KP_End },
+                                       { "kp_down"s,   XK_KP_Down },
+                                       { "kp_next"s,   XK_KP_Next },
+                                       { "kp_left"s,   XK_KP_Left },
+                                       { "kp_begin"s,  XK_KP_Begin },
+                                       { "kp_right"s,  XK_KP_Right },
+                                       { "kp_home"s,   XK_KP_Home },
+                                       { "kp_up"s,     XK_KP_Up },
+                                       { "kp_prior"s,  XK_KP_Prior }
+                                     };
 
 /// key names that are equivalent to one another
 //const UNORDERED_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
-const FLAT_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
-                                                            { "kp_1"s, "kp_end"s },
-                                                            { "kp_2"s, "kp_down"s },
-                                                            { "kp_3"s, "kp_next"s },
-                                                            { "kp_4"s, "kp_left"s },
-                                                            { "kp_5"s, "kp_begin"s },
-                                                            { "kp_6"s, "kp_right"s },
-                                                            { "kp_7"s, "kp_home"s },
-                                                            { "kp_8"s, "kp_up"s },
-                                                            { "kp_9"s, "kp_prior"s }
-                                                          };
+const FLAT_STRING_MAP<string> equivalent_key_names { { "kp_0"s, "kp_insert"s },
+                                                     { "kp_1"s, "kp_end"s },
+                                                     { "kp_2"s, "kp_down"s },
+                                                     { "kp_3"s, "kp_next"s },
+                                                     { "kp_4"s, "kp_left"s },
+                                                     { "kp_5"s, "kp_begin"s },
+                                                     { "kp_6"s, "kp_right"s },
+                                                     { "kp_7"s, "kp_home"s },
+                                                     { "kp_8"s, "kp_up"s },
+                                                     { "kp_9"s, "kp_prior"s }
+                                                   };
 
 /// names of keys on the keypad
 const unordered_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,

@@ -44,17 +44,17 @@ class dx_cluster
 
 protected:
 
-  tcp_socket          _connection;                  ///< TCP socket for communication with the network
-  TIME_POINT          _last_data_received { };      ///< time point of last data received
-  std::string         _login_id;                    ///< my login identifier
-  std::string         _my_ip;                       ///< my IP address
-  int                 _n_posts { 0 };               ///< number of posts that have been read from this cluster
-  unsigned int        _port;                        ///< server port
-  std::string         _server;                      ///< name or IP address of the server
-  POSTING_SOURCE      _source;                      ///< source for postings
-  bool                _test_spots { false };        ///< whether sent spots are sent in test (DXT) mode
-  unsigned int        _timeout;                     ///< timeout in seconds (defaults to 2)
-  std::string         _unprocessed_input;           ///< buffer for messages from the network
+  tcp_socket     _connection;                   ///< TCP socket for communication with the network
+  TIME_POINT     _time_last_data_received { };  ///< time point of last data received
+  std::string    _login_id;                     ///< my login identifier
+  std::string    _my_ip;                        ///< my IP address
+  int            _n_posts { 0 };                ///< number of posts that have been read from this cluster
+  unsigned int   _port;                         ///< server port
+  std::string    _server;                       ///< name or IP address of the server
+  POSTING_SOURCE _source;                        ///< source for postings
+  bool           _test_spots { false };         ///< whether sent spots are sent in test (DXT) mode
+  unsigned int   _timeout;                      ///< timeout in seconds (defaults to 2)
+  std::string    _unprocessed_input;            ///< buffer for messages from the network
 
 /// process a read error
   void _process_error(void);
@@ -125,8 +125,9 @@ public:
     \return     the time since the last data were received on the connection
 */
   inline std::chrono::seconds time_since_data_last_received(void) const
-    { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _last_data_received); }
+    { return std::chrono::duration_cast<std::chrono::seconds>(NOW_TP() - _time_last_data_received); }
 
+/// convert to a human-readable string
   std::string to_string(void) const;
 };
 
@@ -284,9 +285,15 @@ public:
 
   SAFE_READ_AND_WRITE(callsigns, monitored_posts);      ///< monitored calls
 
+/*! \brief      Set the maximum number of entries
+    \param  v   maximum number of entries
+*/
   inline void max_entries(const unsigned int v)
     { _max_entries = v; }
 
+/*! \brief    Get the maximum number of entries
+    \return   the maximum number of entries
+*/
   inline unsigned int max_entries(void) const
     { return _max_entries; }
 
@@ -315,7 +322,10 @@ public:
   void prune(void);
 
 /// convert to strings suitable for display in a window
-  std::vector<std::string> to_strings(void) const;
+  inline std::vector<std::string> to_strings(void) const
+    { SAFELOCK(monitored_posts);
+      return SR::to<std::vector<std::string>>( _entries | std::views::transform(&monitored_posts_entry::to_string) );
+    }
 
 /// return the current number of entries found within the past MONITORED_POSTS_DURATION seconds
   inline size_t size(void) const

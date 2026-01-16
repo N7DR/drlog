@@ -1425,7 +1425,7 @@ bool rig_interface::test(void) const
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { if ( const string response { raw_command("IC;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 7) and contains_at(response, "IC"sv, 0) )
+    { if ( const string response { raw_command("IC;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 7) and contains_at(response, "IC"sv, 0) )
       { const char c { response[2] };
 
         return (c bitand (1 << 5));
@@ -1613,8 +1613,7 @@ void rig_interface::rx_ant(const bool torf) const
     Works only with K3
 */
 bool rig_interface::notch_enabled(const string_view ds_result) const
-{ //constexpr char K3_NOTCH_BIT { 0x02 };
-  constexpr char K3_NOTCH_BIT { 0b00000010 };
+{ constexpr char K3_NOTCH_BIT { 0b00000010 };
 
   if (!_rig_connected)
     return false;
@@ -1629,7 +1628,6 @@ bool rig_interface::notch_enabled(const string_view ds_result) const
     ost << "ERROR in notch_enabled(); result = " << result << endl;
   else
   { const char c         { result[11] };    // icon flash data
-//    const bool notch_bit { (c bitand 0x02) == 0x02 };
     const bool notch_bit { (c bitand K3_NOTCH_BIT) == K3_NOTCH_BIT };
 
     return notch_bit;
@@ -1704,8 +1702,10 @@ void rig_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& butto
 */
 void rig_interface::k3_double_tap(const K3_BUTTON_TAP button) const
 { if (_model == RIG_MODEL_K3)
-  { k3_press(button);
-    sleep_for(50ms);
+  { constexpr std::chrono::duration K3_TIME_BETWEEN_TAPS { 50ms };
+
+    k3_press(button);
+    sleep_for(K3_TIME_BETWEEN_TAPS);
     k3_press(button);
   }
 }
@@ -1714,13 +1714,13 @@ void rig_interface::k3_double_tap(const K3_BUTTON_TAP button) const
     \param  af  the characteristics to set 
 */
 void rig_interface::filter(const audio_filter& af) const
-{ const int bw { af.bandwidth() };
-  const int cf { af.centre() };
+{ //const int bw { af.bandwidth() };
+  //const int cf { af.centre() };
 
-  if (bw)
+  if (const int bw { af.bandwidth() }; bw)
     bandwidth(bw);
 
-  if (cf)
+  if (const int cf { af.centre() }; cf)
     centre_frequency(cf);
 }
 

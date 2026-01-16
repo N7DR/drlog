@@ -1045,16 +1045,12 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
 
     default:                   // response is waiting to be read
-    { //char socket_buffer[4096];
-//      char socket_buffer[buffer_length_for_reply];
-//      array<char, buffer_length_for_reply> socket_buffer;
-      vector<char> socket_buffer(buffer_length_for_reply);
+    { vector<char> socket_buffer(buffer_length_for_reply);
 
       socklen_t from_length { sizeof(sockaddr_storage) };
 
       sockaddr_storage ps_sockaddr;                    // unused but needed in recvfrom
 
-//      socket_status = recvfrom(in_socket, socket_buffer, buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
       socket_status = recvfrom(in_socket, &(socket_buffer[0]), buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
 
       if (socket_status == SOCKET_ERROR)
@@ -1090,7 +1086,9 @@ void fd_set_value(fd_set& fds, const int fd)
     \param  sock    socket to flush
 */
 void flush_read_socket(SOCKET& sock)
-{ char socket_buffer[1024];                           // read 1024 octets at a time
+{ constexpr int BUFFER_SIZE { 1'024 };    // the size of the buffer into which values are going to be read
+
+  char socket_buffer[BUFFER_SIZE];                           // read 1024 octets at a time
 
   struct timeval timeout { 0, 0 };
 
@@ -1105,7 +1103,8 @@ void flush_read_socket(SOCKET& sock)
   sockaddr_storage ps_sockaddr;                                // unused but needed in recvfrom
 
   while (select(max_socket_number, &ps_set, NULL, NULL, &timeout) == 1)
-  { recvfrom(sock, socket_buffer, 1024, 0, (sockaddr*)&ps_sockaddr, &from_length); 
+  { //recvfrom(sock, socket_buffer, 1024, 0, (sockaddr*)&ps_sockaddr, &from_length); // socket_status = recvfrom(in_socket, &(socket_buffer[0]), buffer_length_for_reply, 0, (sockaddr*)&ps_sockaddr, &from_length);
+    recvfrom(sock, &(socket_buffer[0]), BUFFER_SIZE, 0, (sockaddr*)&ps_sockaddr, &from_length);
 
 // reset the timeout
     timeout = { 0, 0 };
@@ -1166,18 +1165,15 @@ sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
 
     Cannot use string_view because gethostbyname_r() requires a null-terminated C-string
 */
-//string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
 string name_to_dotted_decimal(const string_view fqdn, const unsigned int n_tries)
 { constexpr std::chrono::duration RETRY_TIME { 1s };       // period between retries
+  constexpr int                   BUF_LEN    { 2048 };
 
   if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to look up empty name"s);
 
   const string fqdn_str { fqdn };
-
-  constexpr int BUF_LEN { 2048 };
-  
-  const size_t buflen { BUF_LEN };
+  const size_t buflen   { BUF_LEN };
 
   struct hostent ret;
   char           buf[BUF_LEN];

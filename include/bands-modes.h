@@ -378,18 +378,19 @@ inline std::string to_string(const frequency f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it; see http://www.arrl.org/images/view//Charts/Band_Chart_Image_for_ARRL_Web.jpg
-static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
-                                                    { BAND_80,  3'600_kHz },
-                                                    { BAND_60,  5'500_kHz },
-                                                    { BAND_40,  7'125_kHz },
-                                                    { BAND_30,  10'150_kHz },
-                                                    { BAND_20,  14'150_kHz },
-                                                    { BAND_17,  18'110_kHz },
-                                                    { BAND_15,  21'200_kHz },
-                                                    { BAND_12,  24'930_kHz },
-                                                    { BAND_10,  28'300_kHz },
-                                                    { BAND_6,   50'100_kHz }
-                                                  };
+//static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
+static std::flat_map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
+                                                         { BAND_80,  3'600_kHz },
+                                                         { BAND_60,  5'500_kHz },
+                                                         { BAND_40,  7'125_kHz },
+                                                         { BAND_30,  10'150_kHz },
+                                                         { BAND_20,  14'150_kHz },
+                                                         { BAND_17,  18'110_kHz },
+                                                         { BAND_15,  21'200_kHz },
+                                                         { BAND_12,  24'930_kHz },
+                                                         { BAND_10,  28'300_kHz },
+                                                         { BAND_6,   50'100_kHz }
+                                                       };
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency

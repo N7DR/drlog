@@ -35,7 +35,7 @@ class autocorrect_database
 {
 protected:
 
-  UNORDERED_STRING_SET _calls { };                                 ///< known good calls
+  UNORDERED_STRING_SET _calls { };                              ///< known good calls
 
   mutable STRING_MAP<std::string /* output call */> _cache { }; ///< cache of input to output call mapping; key = input call; value = output call
 
@@ -48,14 +48,12 @@ public:
     \param  callsigns   vector of known-good calls
 */
   inline void init_from_calls(const std::vector<std::string>& callsigns)
-//    { FOR_ALL(callsigns, [this] (const std::string& str) { _calls += str; } ); }
     { _calls += callsigns; }
 
 /*! \brief                  Is a call a known-good call?
     \param  putative_call   target call
     \return                 whether <i>putative_call</i> is a known-good call
 */
-//  inline bool contains(const std::string& putative_call) const
   inline bool contains(const std::string_view putative_call) const
     { return _calls.contains(putative_call); }
 

@@ -667,7 +667,6 @@ void log_extract::recent_qsos(const logbook& lgbook, const LOG_EXTRACT to_displa
     Displayed in order from oldest to newest. If the extract contains more QSOs than the window
     allows, only the most recent QSOs are displayed.
 */
-//void log_extract::match_exchange(const logbook& lgbook, const string& target)
 void log_extract::match_exchange(const logbook& lgbook, const string_view target)
 { const vector<QSO> vec       { lgbook.match_exchange(target) };
   const size_t      n_to_copy { min(vec.size(), _win_size) };
@@ -726,7 +725,7 @@ unsigned int old_log::increment_n_qsls(const string_view call)
 
   const unsigned int rv { n_qsls(call) + 1 };
 
-  get<0>(it->second) = rv;
+  get<0>(it -> second) = rv;
 
   return rv;
 }
@@ -738,7 +737,7 @@ unsigned int old_log::increment_n_qsls(const string_view call)
 unsigned int old_log::n_qsos(const string_view call) const
 { const auto cit { _olog.find(call) };
 
-  return (cit == _olog.cend() ? 0 : get<1>(cit->second));
+  return (cit == _olog.cend() ? 0 : get<1>(cit -> second));
 }
 
 /*! \brief          increment the number of QSOs associated with a particular callsign

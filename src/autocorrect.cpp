@@ -67,7 +67,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-  static const STRING_SET broken_TEST { "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+  static const STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };
@@ -109,7 +109,7 @@ string autocorrect_database::corrected_call(const string_view str) const
     }
   }
 
-// initial K or initial W copied as an initial M; note that if both K and W are valid, then we simply choose K
+// initial K or initial W copied as an initial M; if both K and W are valid, then we simply choose K
   if (str.starts_with('M'))
   { if (absent)
     { const string sub { substring <std::string> (str, 1) };
@@ -282,7 +282,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     const auto ub { freq_map.upper_bound(high_target) };
 
     for (auto f_it { lb }; f_it != ub; ++f_it)
-    { for (const auto& [c, n] : f_it->second)     // callsign, number of appearances
+    { for (const auto& [c, n] : f_it -> second)     // callsign, number of appearances
       {
 // check it if it's a match or a bust of a match
         if (post_call != c)
@@ -292,9 +292,10 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
             hits[c] += n;
           else
           { if (!busts_db.is_known_non_bust(calls))    // if neither known bust nor known non-bust
-            { const bool bust { is_bust_call(post_call, c) };
+            { //const bool bust { is_bust_call(post_call, c) };
 
-              if (bust)
+//             if (bust)
+              if (is_bust_call(post_call, c))
               { busts_db.known_bust(calls);
                 hits[c] += n;
               }

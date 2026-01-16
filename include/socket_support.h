@@ -512,15 +512,13 @@ public:
 
     Throws a tcp_socket_error if an error occurs
 */
-//  void enable_reuse(void);
+  inline void allow_reuse(void)
+    { _reuse(true); }
 
 /*! \brief  Enable reuse of the socket
 
     Throws a tcp_socket_error if an error occurs
 */
-  inline void allow_reuse(void)
-    { _reuse(true); }
-
   inline void enable_reuse(void)
     { allow_reuse(); }
 
@@ -531,6 +529,10 @@ public:
   inline void disallow_reuse(void)
     { _reuse(false); }
 
+/*! \brief  Disable reuse of the socket
+
+    Throws a tcp_socket_error if an error occurs
+*/
   inline void disable_reuse(void)
     { disallow_reuse(); }
 };

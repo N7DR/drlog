@@ -21,6 +21,7 @@
 #include "pthread_support.h"
 #include "string_functions.h"
 
+#include <chrono>
 #include <deque>
 #include <string>
 #include <unordered_set>
@@ -36,6 +37,8 @@ extern const FLAT_STRING_MAP<std::string> equivalent_key_names;   ///< names tha
 extern const std::unordered_set<KeySym>        keypad_numbers;         ///< the keypad numbers and their equivalents
 
 extern message_stream ost;                  ///< for debugging, info
+
+extern const std::map<int, std::string> request_code_map ;
 
 /// key events
 enum class KEY_EVENT { PRESS,
@@ -270,8 +273,17 @@ public:
     \param  str         pressed string
     \param  ms_delay    delay in milliseconds between each character in <i>str</i>
 */
-//  void push_key_press(const std::string& str, const int ms_delay = 0);
   void push_key_press(const std::string_view str, const int ms_delay = 0);
+
+/*! \brief              Emulate the pressing of a sequence of characters
+    \param  str         pressed string
+    \param  ms_delay    delay between each character in <i>str</i>
+*/
+  void push_key_press(const std::string_view str, const std::chrono::milliseconds delay = 0ms);
 };
+
+inline std::string request_code_text(const int rc)
+  { return MUM_VALUE(request_code_map, rc, "Unknown Request Code: "s + to_string(rc)); }
+
 
 # endif    // KEYBOARD_H

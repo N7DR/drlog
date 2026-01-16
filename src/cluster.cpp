@@ -134,7 +134,7 @@ reconnect:
     goto new_socket;
   }
 
-  _last_data_received = NOW_TP();  // reset the reception timer
+  _time_last_data_received = NOW_TP();  // reset the reception timer
 }
 
 /*! \brief              Constructor
@@ -303,7 +303,7 @@ void dx_cluster::read(void)
   { SAFELOCK(rbn_buffer);
 
     _unprocessed_input += buf;
-    _last_data_received = NOW_TP();
+    _time_last_data_received = NOW_TP();
   }
 }
 
@@ -322,6 +322,7 @@ string dx_cluster::get_unprocessed_input(void)
   return rv;
 }
 
+/// convert to a human-readable string
 string dx_cluster::to_string(void) const
 { string rv { };
 
@@ -331,20 +332,6 @@ string dx_cluster::to_string(void) const
 
   return rv;
 }
-
-/*! \brief          Write a <i>dx_cluster</i> object to an output stream
-    \param  ost     output stream
-    \param  dxp     object to write
-    \return         the output stream
-*/
-//ostream& operator<<(ostream& ost, const dx_cluster& dxc)
-//{ ost << "Cluster object: " << endl
-//      << "  connection status: " << dxc.connection_status() << endl
-//      << "  number of posts: " << dxc.n_posts() << endl
-//      << "  source: " << ( (dxc.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER" : "RBN" );
-//
-//  return ost;
-//}
 
 // -----------  dx_post  ----------------
 
@@ -649,6 +636,7 @@ void monitored_posts::prune(void)
   _is_dirty |= (original_size != _entries.size());
 }
 
+#if 0
 /// convert to a vector of strings suitable for display in a window
 vector<string> monitored_posts::to_strings(void) const
 { //    std::ranges::for_each(in | std::views::transform(rot13), show);
@@ -666,3 +654,4 @@ vector<string> monitored_posts::to_strings(void) const
 
 //  return rv;
 }
+#endif

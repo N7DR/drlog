@@ -2677,17 +2677,18 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
 
       if (!line.empty())
-      { static const vector<string_view> beacon_markers { " BCN ",
-                                                          " BEACON ",
-                                                          "/B ",
-                                                          "/B2 ",
-                                                          " NCDXF "
-                                                        };
+      { //static const vector<string> beacon_markers { " BCN "s,
+        static const FLAT_STRING_SET beacon_markers { " BCN "s,
+                                                      " BEACON "s,
+                                                      "/B "s,
+                                                      "/B2 "s,
+                                                      " NCDXF "s
+                                                    };
 
         if (rbn_file.is_open())
           rbn_file << line << endl;
 
-        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string_view sv) { return line.contains(sv); }))   // if beacon and we don't want it
+        if (!rbn_beacons and ANY_OF(beacon_markers, [&line] (const string& str) { return line.contains(str); }))   // if beacon and we don't want it
         { rbn.increment_n_posts();        // keep track of the number of posts processed from the cluster/rbn
           continue;                       // go to end of while loop; these are not counted as posts
         }
@@ -2825,7 +2826,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                 if (!is_recent_call)
                   is_recent_call = (recent_mult_call == target_call) and (target_freq.difference(recent_mult_freq) <= MAX_FREQ_SKEW); // allow for frequency skew
 
-              const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };
+              const bool is_interesting_mode { (rules.score_modes().contains(be.mode())) };   // is the mode one that we are following?
 
 // CLUSTER MULT window
               if (cluster_mult_win.defined())
@@ -2921,8 +2922,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
           sleep_for(1s);
         }
 
-        //ost << NOW_TP() << ": processing insertion queue for " << (is_rbn ? "RBN"sv : "CLUSTER"sv) << endl;
-
 //        cur_band = current_band;
         cur_band = bandmap_display_band;
 
@@ -2974,7 +2973,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
         static const value_map monitored_posts_vm(fade_colours, minutes { 0 }, duration_cast<minutes> (MONITORED_POSTS_DURATION));
 
-        auto age = [] (const monitored_posts_entry& mpe) { return duration_cast<minutes> (NOW_TP() - (mpe.expiration() - MONITORED_POSTS_DURATION) ); };
+        auto age { [] (const monitored_posts_entry& mpe) { return duration_cast<minutes> (NOW_TP() - (mpe.expiration() - MONITORED_POSTS_DURATION) ); } };
 
         const auto             clr { monitored_posts_vm[age(entry)] };
         const PAIR_NUMBER_TYPE cpu { colours.add(clr, win_monitored_posts.bg()) };
@@ -3005,9 +3004,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { //if (rbn_file.is_open())
-          //  rbn_file.close();
-          stop_recording_rbn();
+        { stop_recording_rbn();
 
           ost << "Number of posts processed by " << ( (rbn.source() == POSTING_SOURCE::CLUSTER) ? "CLUSTER"s : "RBN"s ) << " in processing pass = " << css(rbn.n_posts()) << endl;
 
