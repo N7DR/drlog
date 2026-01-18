@@ -5,6 +5,7 @@
     Classes and functions related to obtaining and processing keyboard input
 */
 
+#include "internals.h"
 #include "keyboard.h"
 #include "log_message.h"
 #include "string_functions.h"
@@ -22,127 +23,126 @@ using namespace   this_thread;   // std::this_thread
 
 extern message_stream           ost;    ///< for debugging, info
 
-const map<int, string> request_code_map {
-  { 1,    "CreateWindow"s },
-  { 2,    "ChangeWindowAttributes"s },
-  { 3,    "GetWindowAttributes"s },
-  { 4,    "DestroyWindow"s },
-  { 5,    "DestroySubwindows"s },
-  { 6,    "ChangeSaveSet"s },
-  { 7,    "ReparentWindow"s },
-  { 8,    "MapWindow"s },
-  { 9,    "MapSubwindows"s },
-  { 10,    "UnmapWindow"s },
-  { 11,    "UnmapSubwindows"s },
-  { 12,    "ConfigureWindow"s },
-  { 13,    "CirculateWindow"s },
-  { 14,    "GetGeometry"s },
-  { 15,    "QueryTree"s },
-  { 16,    "InternAtom"s },
-  { 17,    "GetAtomName"s },
-  { 18,    "ChangeProperty"s },
-  { 19,    "DeleteProperty"s },
-  { 20,    "GetProperty"s },
-  { 21,    "ListProperties"s },
-  { 22,    "SetSelectionOwner"s },
-  { 23,    "GetSelectionOwner"s },
-  { 24,    "ConvertSelection"s },
-  { 25,    "SendEvent"s },
-  { 26,    "GrabPointer"s },
-  { 27,    "UngrabPointer"s },
-  { 28,    "GrabButton"s },
-  { 29,    "UngrabButton"s },
-  { 30,    "ChangeActivePointerGrab"s },
-  { 31,    "GrabKeyboard"s },
-  { 32,    "UngrabKeyboard"s },
-  { 33,    "GrabKey"s },
-  { 34,    "UngrabKey"s },
-  { 35,    "AllowEvents"s },
-  { 36,    "GrabServer"s },
-  { 37,    "UngrabServer"s },
-  { 38,    "QueryPointer"s },
-  { 39,    "GetMotionEvents"s },
-  { 40,    "TranslateCoords"s },
-  { 41,    "WarpPointer"s },
-  { 42,    "SetInputFocus"s },
-  { 43,    "GetInputFocus"s },
-  { 44,    "QueryKeymap"s },
-  { 45,    "OpenFont"s },
-  { 46,    "CloseFont"s },
-  { 47,    "QueryFont"s },
-  { 48,    "QueryTextExtents"s },
-  { 49,    "ListFonts"s },
-  { 50,    "ListFontsWithInfo"s },
-  { 51,    "SetFontPath"s },
-  { 52,    "GetFontPath"s },
-  { 53,    "CreatePixmap"s },
-  { 54,    "FreePixmap"s },
-  { 55,    "CreateGC"s },
-  { 56,    "ChangeGC"s },
-  { 57,    "CopyGC"s },
-  { 58,    "SetDashes"s },
-  { 59,    "SetClipRectangles"s },
-  { 60,    "FreeGC"s },
-  { 61,    "ClearArea"s },
-  { 62,    "CopyArea"s },
-  { 63,    "CopyPlane"s },
-  { 64,    "PolyPoint"s },
-  { 65,    "PolyLine"s },
-  { 66,    "PolySegment"s },
-  { 67,    "PolyRectangle"s },
-  { 68,    "PolyArc"s },
-  { 69,    "FillPoly"s },
-  { 70,    "PolyFillRectangle"s },
-  { 71,    "PolyFillArc"s },
-  { 72,    "PutImage"s },
-  { 73,    "GetImage"s },
-  { 74,    "PolyText8"s },
-  { 75,    "PolyText16"s },
-  { 76,    "ImageText8"s },
-  { 77,    "ImageText16"s },
-  { 78,    "CreateColormap"s },
-  { 79,    "FreeColormap"s },
-  { 80,    "CopyColormapAndFree"s },
-  { 81,    "InstallColormap"s },
-  { 82,    "UninstallColormap"s },
-  { 83,    "ListInstalledColormaps"s },
-  { 84,    "AllocColor"s },
-  { 85,    "AllocNamedColor"s },
-  { 86,    "AllocColorCells"s },
-  { 87,    "AllocColorPlanes"s },
-  { 88,    "FreeColors"s },
-  { 89,    "StoreColors"s },
-  { 90,    "StoreNamedColor"s },
-  { 91,    "QueryColors"s },
-  { 92,    "LookupColor"s },
-  { 93,    "CreateCursor"s },
-  { 94,    "CreateGlyphCursor"s },
-  { 95,    "FreeCursor"s },
-  { 96,    "RecolorCursor"s },
-  { 97,    "QueryBestSize"s },
-  { 98,    "QueryExtension"s },
-  { 99,    "ListExtensions"s },
-  { 100,   "ChangeKeyboardMapping"s },
-  { 101,   "GetKeyboardMapping"s },
-  { 102,   "ChangeKeyboardControl"s },
-  { 103,   "GetKeyboardControl"s },
-  { 104,   "Bell"s },
-  { 105,   "ChangePointerControl"s },
-  { 106,   "GetPointerControl"s },
-  { 107,   "SetScreenSaver"s },
-  { 108,   "GetScreenSaver"s },
-  { 109,   "ChangeHosts"s },
-  { 110,   "ListHosts"s },
-  { 111,   "SetAccessControl"s },
-  { 112,   "SetCloseDownMode"s },
-  { 113,   "KillClient"s },
-  { 114,   "RotateProperties"s },
-  { 115,   "ForceScreenSaver"s },
-  { 116,   "SetPointerMapping"s },
-  { 117,   "GetPointerMapping"s },
-  { 118,   "SetModifierMapping"s },
-  { 119,   "GetModifierMapping"s },
-  { 127,   "NoOperation"s }
+const map<int, string> request_code_map { { 1,    "CreateWindow"s },
+                                          { 2,    "ChangeWindowAttributes"s },
+                                          { 3,    "GetWindowAttributes"s },
+                                          { 4,    "DestroyWindow"s },
+                                          { 5,    "DestroySubwindows"s },
+                                          { 6,    "ChangeSaveSet"s },
+                                          { 7,    "ReparentWindow"s },
+                                          { 8,    "MapWindow"s },
+                                          { 9,    "MapSubwindows"s },
+                                          { 10,    "UnmapWindow"s },
+                                          { 11,    "UnmapSubwindows"s },
+                                          { 12,    "ConfigureWindow"s },
+                                          { 13,    "CirculateWindow"s },
+                                          { 14,    "GetGeometry"s },
+                                          { 15,    "QueryTree"s },
+                                          { 16,    "InternAtom"s },
+                                          { 17,    "GetAtomName"s },
+                                          { 18,    "ChangeProperty"s },
+                                          { 19,    "DeleteProperty"s },
+                                          { 20,    "GetProperty"s },
+                                          { 21,    "ListProperties"s },
+                                          { 22,    "SetSelectionOwner"s },
+                                          { 23,    "GetSelectionOwner"s },
+                                          { 24,    "ConvertSelection"s },
+                                          { 25,    "SendEvent"s },
+                                          { 26,    "GrabPointer"s },
+                                          { 27,    "UngrabPointer"s },
+                                          { 28,    "GrabButton"s },
+                                          { 29,    "UngrabButton"s },
+                                          { 30,    "ChangeActivePointerGrab"s },
+                                          { 31,    "GrabKeyboard"s },
+                                          { 32,    "UngrabKeyboard"s },
+                                          { 33,    "GrabKey"s },
+                                          { 34,    "UngrabKey"s },
+                                          { 35,    "AllowEvents"s },
+                                          { 36,    "GrabServer"s },
+                                          { 37,    "UngrabServer"s },
+                                          { 38,    "QueryPointer"s },
+                                          { 39,    "GetMotionEvents"s },
+                                          { 40,    "TranslateCoords"s },
+                                          { 41,    "WarpPointer"s },
+                                          { 42,    "SetInputFocus"s },
+                                          { 43,    "GetInputFocus"s },
+                                          { 44,    "QueryKeymap"s },
+                                          { 45,    "OpenFont"s },
+                                          { 46,    "CloseFont"s },
+                                          { 47,    "QueryFont"s },
+                                          { 48,    "QueryTextExtents"s },
+                                          { 49,    "ListFonts"s },
+                                          { 50,    "ListFontsWithInfo"s },
+                                          { 51,    "SetFontPath"s },
+                                          { 52,    "GetFontPath"s },
+                                          { 53,    "CreatePixmap"s },
+                                          { 54,    "FreePixmap"s },
+                                          { 55,    "CreateGC"s },
+                                          { 56,    "ChangeGC"s },
+                                          { 57,    "CopyGC"s },
+                                          { 58,    "SetDashes"s },
+                                          { 59,    "SetClipRectangles"s },
+                                          { 60,    "FreeGC"s },
+                                          { 61,    "ClearArea"s },
+                                          { 62,    "CopyArea"s },
+                                          { 63,    "CopyPlane"s },
+                                          { 64,    "PolyPoint"s },
+                                          { 65,    "PolyLine"s },
+                                          { 66,    "PolySegment"s },
+                                          { 67,    "PolyRectangle"s },
+                                          { 68,    "PolyArc"s },
+                                          { 69,    "FillPoly"s },
+                                          { 70,    "PolyFillRectangle"s },
+                                          { 71,    "PolyFillArc"s },
+                                          { 72,    "PutImage"s },
+                                          { 73,    "GetImage"s },
+                                          { 74,    "PolyText8"s },
+                                          { 75,    "PolyText16"s },
+                                          { 76,    "ImageText8"s },
+                                          { 77,    "ImageText16"s },
+                                          { 78,    "CreateColormap"s },
+                                          { 79,    "FreeColormap"s },
+                                          { 80,    "CopyColormapAndFree"s },
+                                          { 81,    "InstallColormap"s },
+                                          { 82,    "UninstallColormap"s },
+                                          { 83,    "ListInstalledColormaps"s },
+                                          { 84,    "AllocColor"s },
+                                          { 85,    "AllocNamedColor"s },
+                                          { 86,    "AllocColorCells"s },
+                                          { 87,    "AllocColorPlanes"s },
+                                          { 88,    "FreeColors"s },
+                                          { 89,    "StoreColors"s },
+                                          { 90,    "StoreNamedColor"s },
+                                          { 91,    "QueryColors"s },
+                                          { 92,    "LookupColor"s },
+                                          { 93,    "CreateCursor"s },
+                                          { 94,    "CreateGlyphCursor"s },
+                                          { 95,    "FreeCursor"s },
+                                          { 96,    "RecolorCursor"s },
+                                          { 97,    "QueryBestSize"s },
+                                          { 98,    "QueryExtension"s },
+                                          { 99,    "ListExtensions"s },
+                                          { 100,   "ChangeKeyboardMapping"s },
+                                          { 101,   "GetKeyboardMapping"s },
+                                          { 102,   "ChangeKeyboardControl"s },
+                                          { 103,   "GetKeyboardControl"s },
+                                          { 104,   "Bell"s },
+                                          { 105,   "ChangePointerControl"s },
+                                          { 106,   "GetPointerControl"s },
+                                          { 107,   "SetScreenSaver"s },
+                                          { 108,   "GetScreenSaver"s },
+                                          { 109,   "ChangeHosts"s },
+                                          { 110,   "ListHosts"s },
+                                          { 111,   "SetAccessControl"s },
+                                          { 112,   "SetCloseDownMode"s },
+                                          { 113,   "KillClient"s },
+                                          { 114,   "RotateProperties"s },
+                                          { 115,   "ForceScreenSaver"s },
+                                          { 116,   "SetPointerMapping"s },
+                                          { 117,   "GetPointerMapping"s },
+                                          { 118,   "SetModifierMapping"s },
+                                          { 119,   "GetModifierMapping"s },
+                                          { 127,   "NoOperation"s }
 };
 
 
@@ -195,7 +195,7 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
       return 0;
   }
   
-  ost << "X Error handler called" << endl;
+  ost << "X Error handler called; program will exit" << endl;
 
 /* from man XErrorEvent:
 
@@ -239,13 +239,7 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
       << "  request code text : " << request_code_text(static_cast<int>(error_event_p->request_code)) << endl
       << "  minor code   : " << static_cast<int>(error_event_p->minor_code) << endl;
 
-//  constexpr int BUF_SIZE { 4096 };
-
-//  char buf[BUF_SIZE];
-
-//  XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
-    
-//  ost << "Error text : " << buf << endl;
+  ost << "backtrace in X error handler call: " << endl << std_backtrace(BACKTRACE::ACQUIRE) << endl;
 
   sleep(2);
   exit(-1);
@@ -319,12 +313,14 @@ keyboard_queue::keyboard_queue(void)
 
   XLockDisplay(_display_p);     // overkill, but do it anyway
 
-  int istatus = XGrabKey(_display_p, AnyKey, AnyModifier, _window_id, false, GrabModeAsync, GrabModeAsync);
+//   XGrabKey() always returns 1: https://github.com/mirror/libX11/blob/master/src/GrKey.c
+
+  /* int istatus = */ XGrabKey(_display_p, AnyKey, AnyModifier, _window_id, false, GrabModeAsync, GrabModeAsync);
   
-  ost << "Returned from XGrabKey: " << istatus << endl;
+//  ost << "Returned from XGrabKey: " << istatus << endl;
 
 // we are interested only in key events
-  istatus = XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
+  int istatus = XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
 
   XUnlockDisplay(_display_p);
 

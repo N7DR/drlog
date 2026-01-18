@@ -3611,7 +3611,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           }
         }
         else
-        { if (command == "BM"sv)
+        { if (command == "BM"sv)                // switch to current band
             bandmap_display_band = cur_band;
           else
           { const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, 2)) };
@@ -3990,7 +3990,9 @@ FINISHED_PROCESSING_COMMAND:
             display_band_mode(win_band_mode, new_band, m);
 
             if (new_band != cur_band)
-            { current_band = new_band;
+            { bandmap_display_band = new_band;
+
+              current_band = new_band;
 
               bandmap& bm { bandmaps[new_band] };
               win_bandmap <= bm;
