@@ -5,8 +5,6 @@ if(CCACHE_PROGRAM)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
-#set (CMAKE_CXX_COMPILER "g++")
-
 project(drlog)
 
 set (CMAKE_CXX_COMPILER "g++")
@@ -78,14 +76,20 @@ target_include_directories (drlog PUBLIC include)
 
 target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284 stdc++exp)
 
+# https://stackoverflow.com/questions/61203555/can-cmake-always-force-the-compilation-build-of-a-specific-file
 add_custom_command(
-  TARGET drlog
-  PRE_BUILD
-  COMMAND touch
-  ARGS "/home/n7dr/projects/drlog/include/version.h"
-#  COMMAND g++
-#  ARGS "-v"
-  )
+        TARGET ${PROJECT_NAME}
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp
+        )
+
+
+#add_custom_command(
+#  TARGET drlog
+#  PRE_BUILD
+#  COMMAND touch
+#  ARGS "/home/n7dr/projects/drlog/include/version.h"
+#  )
 
  set( CMAKE_VERBOSE_MAKEFILE on )
 
