@@ -34,6 +34,13 @@
 
 #include <hamlib/rig.h>
 
+// Hamlib changed the macro FILPATHLEN to HAMLIB_FILPATHLEN at some point
+#if (!defined(HAMLIB_FILPATHLEN))
+
+#define HAMLIB_FILPATHLEN FILPATHLEN
+
+#endif
+
 using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
@@ -513,7 +520,8 @@ void rig_interface::prepare(const drlog_context& context)
     data_bits(context.rig1_data_bits());
     stop_bits(context.rig1_stop_bits());
 
-    if (_port_name.size() >= (FILPATHLEN - 2))                        // ridiculous C-ism
+//    if (_port_name.size() >= (FILPATHLEN - 2))                        // ridiculous C-ism
+    if (_port_name.size() >= (HAMLIB_FILPATHLEN - 2))                        // ridiculous C-ism
     { const string msg { "Port name is too long: "s + _port_name };
 
       _error_alert(msg);
@@ -521,7 +529,8 @@ void rig_interface::prepare(const drlog_context& context)
       exit(-1);
     }
 
-    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN - 1);     // !! -1 to remove compiler warning about length
+//    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN - 1);     // !! -1 to remove compiler warning about length
+    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), HAMLIB_FILPATHLEN - 1);     // !! -1 to remove compiler warning about length
   }
 
   const int status { rig_open(_rigp) };
