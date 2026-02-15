@@ -7075,7 +7075,10 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
   { start_of_thread("auto backup"s);
 
     try
-    { const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
+    { if (directory_create_if_necessary(dir))                                 // create the named directory if necessary
+        ost << "directory " << dir << " created" << endl;
+
+      const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
       const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
       const string complete_name { dir + "/"s + log_filename + "-"s + suffix };
 

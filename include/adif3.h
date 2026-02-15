@@ -41,10 +41,9 @@ constexpr int ADIF3_INVALID_VALUE       { -1 },    ///< Invalid value
               ADIF3_UNKNOWN_TYPE        { -5 },    ///< unable to determine type
               ADIF3_DUPLICATE_FIELD     { -6 };    ///< duplicate field name
 
-// should really be ADIF3_COUNTRY_STATUS, but that's too verbose until g++ supports "using enum", which is in g++ 11
-enum class COUNTRY_STATUS { CURRENT,
-                            DELETED
-                          };
+enum class ADIF3_COUNTRY_STATUS { CURRENT,
+                                  DELETED
+                                };
 
 enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              BOOLEAN,
@@ -121,10 +120,10 @@ protected:
   const static UNORDERED_STRING_SET _ENUMERATION_BAND;     ///< band values
   const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, 
                                                             std::string /* canonical prefix */, 
-                                                            COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+                                                            ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
-  static UNORDERED_STRING_SET _ENUMERATION_MODE;     ///< mode values
-  static STRING_SET _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
+  static UNORDERED_STRING_SET _ENUMERATION_MODE;            ///< mode values
+  static STRING_SET           _ENUMERATION_QSL_RECEIVED;    ///< legal values of QSL_RCVD
 
 public:
 
@@ -150,9 +149,11 @@ public:
 
     Returns empty string if either the name or the value is empty
 */
-  inline std::string to_string(const std::string& append_str = "\n"s) const
-    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
-    
+//  inline std::string to_string(const std::string& append_str = "\n"s) const
+//    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
+  inline std::string to_string(const std::string_view append_str = "\n"sv) const
+    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ':' + ::to_string(_value.length()) +'>' + _value + append_str) ); }
+
 /*! \brief                  Import name and value from string, and return location past the end of the used part of the string
     \param  str             string from which to read
     \param  start_posn      position in <i>str</i> at which to start parsing

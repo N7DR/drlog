@@ -8,7 +8,6 @@ endif()
 project(drlog)
 
 set (CMAKE_CXX_COMPILER "g++")
-#set (CMAKE_CXX_COMPILER "/usr/local/programs/gcc-14.2.0/bin/g++-14")
 #set (CMAKE_CXX_COMPILER "/usr/local/programs/gcc-15.1.0/bin/g++-15")
 
 set ( SOURCE_FILES

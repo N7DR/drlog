@@ -101,8 +101,8 @@ class wav_file
 {
 protected:
 
-  bool _is_buffered;            ///< whether to use buffering to avoid writing when sending CW (not yet supported)
-  std::string   _name;          ///< name of file
+  bool        _is_buffered;   ///< whether to use buffering to avoid writing when sending CW (not yet supported)
+  std::string _name;          ///< name of file
 
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
 // because:
@@ -225,7 +225,6 @@ protected:
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
 */
-//  void (*_error_alert_function)(const std::string& msg) { nullptr };
   void (*_error_alert_function)(const std::string_view msg) { nullptr };
 
 // protected functions
@@ -265,7 +264,6 @@ protected:
 
     Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-//  void _error_alert(const std::string& msg);
   void _error_alert(const std::string_view msg);
 
 public:

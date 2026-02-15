@@ -719,8 +719,9 @@ const UNORDERED_STRING_SET adif3_field::_ENUMERATION_BAND
 };
 
 /// mapping between country code and country info
-using enum COUNTRY_STATUS; //not supported in g++ 10
-const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
+using enum ADIF3_COUNTRY_STATUS;
+
+const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 { {  1  , { "CANADA"s,                                  "VE"s,    CURRENT } },
   {  2  , { "ABU AIL IS."s,                             ""s,      DELETED } },
   {  3  , { "AFGHANISTAN"s,                             "YA"s,    CURRENT } },

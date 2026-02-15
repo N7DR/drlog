@@ -30,7 +30,8 @@
 #include <tuple>
 #include <vector>
 
-#include <ncursesw/ncurses.h>
+//#include <ncursesw/ncurses.h>
+#include <ncurses.h>            // ncursesw now just links to ordinary ncurses files
 #include <panel.h>
 
 extern message_stream ost;                  ///< for debugging, info
