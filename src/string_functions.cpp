@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 281 2025-12-07 20:02:13Z  $
+// $Id: string_functions.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -415,7 +415,6 @@ string remove_char_from_delimited_substrings(const string_view cs, const char ch
 string remove_chars(const string_view s, const string_view chars_to_remove)
 { string rv { s };                      // create a copy
 
-//  erase_if(rv, [&chars_to_remove] (const char& c) { return contains(chars_to_remove, c); } );
   erase_if(rv, [&chars_to_remove] (const char& c) { return chars_to_remove.contains(c); } );
 
   return rv;
@@ -598,7 +597,6 @@ string nth_word(const string_view s, const unsigned int n, const unsigned int wr
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-//size_t n_chars(const string& str)
 size_t n_chars(const string_view str)
 { if (const string encoding { nl_langinfo(CODESET) }; encoding != "UTF-8"sv)
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + encoding);

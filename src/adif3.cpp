@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 271 2025-06-23 16:32:50Z  $
+// $Id: adif3.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -245,7 +245,8 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 adif3_field::adif3_field(const string_view field_name, const string_view field_value)
 { _name = to_upper(field_name);
   
-  const auto opt { OPT_MUM_VALUE(_element_type, _name) };
+//  const auto opt { OPT_MUM_VALUE(_element_type, _name) };
+  const auto opt { OPT_ANYMAP_VALUE(_element_type, _name) };
 
   if (!opt)
     throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name + " when creating ADIF3_FIELD with value: "s + field_value);
@@ -300,7 +301,8 @@ size_t adif3_field::import_and_eat(const string_view str, const size_t start_pos
       _name = uc_name;                                // force name to UC
 
     const string contents { str.substr(posn_2 + 1, n_chars) };
-    const auto   atype    { OPT_MUM_VALUE(_element_type, _name) };
+//    const auto   atype    { OPT_MUM_VALUE(_element_type, _name) };
+    const auto   atype    { OPT_ANYMAP_VALUE(_element_type, _name) };
 
     if (!atype)
       throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
@@ -551,7 +553,8 @@ size_t skip_adif3_header(const std::string_view str)
 using enum ADIF3_DATA_TYPE;
 
 /// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
-const UNORDERED_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
+//const UNORDERED_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
+const FLAT_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
 { { "ADDRESS"s,                   MULTILINE_STRING },
   { "AGE"s,                       NUMBER },
   { "A_INDEX"s,                   NUMBER },

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 282 2025-12-15 20:55:01Z  $
+// $Id: cty_data.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,9 @@
 
 using namespace std;
 
-extern const STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+//extern const STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+extern const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+//constinit const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };  ///< abbreviations for continents;
 
 constexpr unsigned int   CTY_FIELDS_PER_RECORD { 9 };                                                           ///< Number of fields in a single CTY record
 constexpr array<int, 10> VE_CQ                 { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 };     ///< default CQ zones for VE call areas; 0 to 9

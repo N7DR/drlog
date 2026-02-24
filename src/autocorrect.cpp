@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 283 2026-01-18 16:41:22Z  $
+// $Id: autocorrect.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,7 +22,6 @@ using namespace std;
 extern message_stream ost;          ///< for debugging and logging
 extern MINUTES_TYPE   now_minutes;  ///< access the current time in minutes
 
-//void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
 void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);   ///< Alert the user
 
 busts_database busts_db;
@@ -67,7 +66,8 @@ string autocorrect_database::corrected_call(const string_view str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-  static const STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+//  static const STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
+  static const FLAT_STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };

@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 254 2024-10-20 15:53:54Z  $
+// $Id: diskfile.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,68 +41,65 @@ namespace fs = std::filesystem;
 
     Returns 0 if the file does not exist or is not readable.
 */
-//unsigned long file_size(const string& filename)
 unsigned long file_size(const string_view filename)
 { ifstream in(string { filename }, ifstream::in bitor ifstream::binary);
 
-if (in)
-{ in.seekg(0, ifstream::end);
-  return in.tellg();
-}
+  if (in)
+  { in.seekg(0, ifstream::end);
+    return in.tellg();
+  }
 
-return 0;
+  return 0;
 }
 
 /*! \brief              Delete a file
     \param  filename    name of file
 */
-//void file_delete(const string& filename)
 void file_delete(const string_view filename)
 { const string fn { filename };
 
-if (file_exists(fn))
-  unlink(fn.c_str());
+  if (file_exists(fn))
+    unlink(fn.c_str());
 }
 
 /*! \brief                          Copy a file
- *    \param  source_filename         name of the source file
- *    \param  destination_filename    name of the destination file
- *
- *    Does nothing if the source file does not exist
- */
+    \param  source_filename         name of the source file
+    \param  destination_filename    name of the destination file
+
+    Does nothing if the source file does not exist
+*/
 void file_copy(const string& source_filename, const string& destination_filename)
 { if (file_exists(source_filename))
-  ofstream(destination_filename) << ifstream(source_filename).rdbuf();  // perform the copy
+    ofstream(destination_filename) << ifstream(source_filename).rdbuf();  // perform the copy
 }
 
 /*! \brief                          Rename a file
- *    \param  source_filename         original name of file
- *    \param  destination_filename    final name of file
- *
- *    Does nothing if the source file does not exist
- */
+    \param  source_filename         original name of file
+    \param  destination_filename    final name of file
+
+    Does nothing if the source file does not exist
+*/
 void file_rename(const string& source_filename, const string& destination_filename)
 { if (file_exists(source_filename))
   { if (const int status { rename(source_filename.c_str(), destination_filename.c_str()) }; status)
-  throw exception();
+      throw exception();
   }
 }
 
 /*! \brief              Create a directory
- *    \param  dirname     name of the directory to create
- *
- *    Throws exception if the directory already exists
- */
+    \param  dirname     name of the directory to create
+
+    Throws exception if the directory already exists
+*/
 void directory_create(const string& dirname)
 { if (const int status { mkdir(dirname.c_str(), 0x1ed) }; status)  // rwxrxrx
-throw exception();
+    throw exception();
 }
 
 /*! \brief              Does a (regular) file exist?
- *    \param  filename    name of file
- *    \return             whether file <i>filename</i> exists and is a regular file
- */
-//bool file_exists(const string& filename)
+    \param  filename    name of file
+    \return             whether file <i>filename</i> exists and is a regular file
+*/
 bool file_exists(const string_view filename)
 { struct stat stat_buffer;
 
@@ -119,10 +116,10 @@ bool file_exists(const string_view filename)
 }
 
 /*! \brief              Does a directory exist?
- *    \param  dirname     name of the directory to test for existence
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             whether <i>dirname</i> exists
- */
+    \param  dirname     name of the directory to test for existence
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             whether <i>dirname</i> exists
+*/
 bool directory_exists(const string_view filename, const enum LINKS link, const FSID fsid)
 { const string fn { filename };
 
@@ -133,13 +130,13 @@ bool directory_exists(const string_view filename, const enum LINKS link, const F
   if (status)
     return false;
 
-  // if LINKS::NO_INCLUDE, return false if it's a link
+// if LINKS::NO_INCLUDE, return false if it's a link
   if (link == LINKS::NO_INCLUDE)
   { if (is_link(fn))
-    return false;
+      return false;
   }
 
-  // if it's a link, follow it
+// if it's a link, follow it
   bool rv { false };
 
   if ( (fsid == MAX_FSID) or (filesystem_id(fn) == fsid) )
@@ -151,17 +148,10 @@ bool directory_exists(const string_view filename, const enum LINKS link, const F
   return rv;
 }
 
-
 /*! \brief            Create a directory if it does not already exist
     \param  dirname   name of the directory to create
     \return           Whether directory was created
 */
-
-/*! \brief            Create a directory if it does not already exist
- *  \param  dirname   name of the directory to create
- *  \return           Whether directory was created
- */
-
 bool directory_create_if_necessary(const string_view dirname)
 { if (!directory_exists(dirname, LINKS::INCLUDE))
   { fs::create_directories(dirname);
@@ -172,13 +162,13 @@ bool directory_create_if_necessary(const string_view dirname)
 }
 
 /*! \brief              What files (including directories) does a directory contain?
- *    \param  dirname     name of the directory to examine
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of filenames, in alphabetical order
- *
- *    The returned vector does not include "." or "..".
- *    Returns empty vector if the directory <i>dirname</i> does not exist
- */
+    \param  dirname     name of the directory to examine
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of filenames, in alphabetical order
+
+    The returned vector does not include "." or "..".
+    Returns empty vector if the directory <i>dirname</i> does not exist
+*/
 vector<string> directory_contents(const string& dirname, const FSID fsid)
 { vector<string> rv { };
 
@@ -209,14 +199,14 @@ vector<string> directory_contents(const string& dirname, const FSID fsid)
 }
 
 /*! \brief              What files does a directory contain?
- *    \param  dirname     name of the directory to examine
- *    \param  links       whether to include links in the output
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of files, in alphabetical order
- *
- *    Returns empty vector if the directory <i>dirname</i> does not exist
- *    Returns only regular files
- */
+    \param  dirname     name of the directory to examine
+    \param  links       whether to include links in the output
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of files, in alphabetical order
+
+    Returns empty vector if the directory <i>dirname</i> does not exist
+    Returns only regular files
+*/
 vector<string> files_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv { };
 
@@ -265,28 +255,26 @@ vector<string> files_in_directory(const string& dirname, const enum LINKS links,
 }
 
 /*! \brief              What files does a vector of directories contain?
- *    \param  dirnames    names of the directories to examine
- *    \param  links       whether to include links in the output
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of files contained in all the directories in <i>dirnames</i>
- */
+    \param  dirnames    names of the directories to examine
+    \param  links       whether to include links in the output
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of files contained in all the directories in <i>dirnames</i>
+*/
 vector<string> files_in_directories(const vector<string>& dirnames, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
-  //  for (const string& dirname : dirnames)
-  //    rv += files_in_directory(dirname, links, fsid);
   FOR_ALL(dirnames, [fsid, links, &rv] (const string& dirname) { rv += files_in_directory(dirname, links, fsid); });
 
   return rv;
 }
 
 /*! \brief              What directories does a directory contain?
- *    \param  dirname     name of the directory to examine
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of directories
- *
- *    Returns empty vector if the directory <i>dirname</i> does not exist
- */
+    \param  dirname     name of the directory to examine
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of directories
+
+    Returns empty vector if the directory <i>dirname</i> does not exist
+*/
 vector<string> directories_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
@@ -318,14 +306,14 @@ vector<string> directories_in_directory(const string& dirname, const enum LINKS 
 }
 
 /*! \brief              What directories does a directory contain, recursively?
- *    \param  dirname     name of the directory to examine
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of directories
- *
- *    Returns empty vector if the directory <i>dirname</i> does not exist.
- *    Returned vector is unsorted.
- *    Returned vector includes <i>dirname</i>
- */
+    \param  dirname     name of the directory to examine
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of directories
+
+    Returns empty vector if the directory <i>dirname</i> does not exist.
+    Returned vector is unsorted.
+    Returned vector includes <i>dirname</i>
+*/
 vector<string> directories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
@@ -338,14 +326,14 @@ vector<string> directories_in_hierarchy(const string& dirname, const enum LINKS 
 }
 
 /*! \brief              What directories does a directory contain, recursively?
- *    \param  dirname     name of the directory to examine
- *    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
- *    \return             vector of directories
- *
- *    Returns empty vector if the directory <i>dirname</i> does not exist.
- *    Returned vector is unsorted.
- *    Returned vector does not include <i>dirname</i>
- */
+    \param  dirname     name of the directory to examine
+    \param  fsid        limit filesystems to this fsid, if not MAX_FSID
+    \return             vector of directories
+
+    Returns empty vector if the directory <i>dirname</i> does not exist.
+    Returned vector is unsorted.
+    Returned vector does not include <i>dirname</i>
+*/
 vector<string> subdirectories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
@@ -362,19 +350,19 @@ vector<string> subdirectories_in_hierarchy(const string& dirname, const enum LIN
 }
 
 /*! \brief              What files does a directory contain, recursively?
- *    \param  rootname    name of the directory to examine
- *    \param  links       whether to include links in the output
- *    \return             vector of files
- *
- *    Returns empty vector if the directory <i>dirname</i> does not exist
- *    Returned vector is unsorted.
- */
+    \param  rootname    name of the directory to examine
+    \param  links       whether to include links in the output
+    \return             vector of files
+
+    Returns empty vector if the directory <i>dirname</i> does not exist
+    Returned vector is unsorted.
+*/
 vector<string> files_in_hierarchy(const string& rootname, const enum LINKS links, const FSID fsid)
 {
-  // build a container of all the directory names (except . and ..) in the tree
+// build a container of all the directory names (except . and ..) in the tree
   const vector<string> vec { directories_in_hierarchy(rootname, links, fsid) };       // includes root
 
-  // now create a container of all the file names
+// now create a container of all the file names
   vector<string> rv;
 
   for (const auto& dirname : vec)
@@ -384,8 +372,8 @@ vector<string> files_in_hierarchy(const string& rootname, const enum LINKS links
 }
 
 /*! \brief              mtime associated with a file or directory
- *    \param  filename    name of file or directory
- */
+    \param  filename    name of file or directory
+*/
 time_t atime(const string& filename)
 { struct stat stat_buffer;
 
@@ -396,8 +384,8 @@ time_t atime(const string& filename)
 }
 
 /*! \brief              ctime associated with a file or directory
- *    \param  filename    name of file or directory
- */
+    \param  filename    name of file or directory
+*/
 time_t ctime(const string& filename)
 { struct stat stat_buffer;
 
@@ -408,8 +396,8 @@ time_t ctime(const string& filename)
 }
 
 /*! \brief              mtime associated with a file or directory
- *    \param  filename    name of file or directory
- */
+    \param  filename    name of file or directory
+*/
 time_t mtime(const string& filename)
 { struct stat stat_buffer;
 
@@ -420,18 +408,18 @@ time_t mtime(const string& filename)
 }
 
 /*! \brief              base name of a file
- *    \param  filename    name of file or directory
- *    \return             the base name of the file
- *
- *    Returns empty string if <i>filename</i> ends in a "/"
- */
+    \param  filename    name of file or directory
+    \return             the base name of the file
+
+    Returns empty string if <i>filename</i> ends in a "/"
+*/
 string base_name(const string& filename)
 { string rv;
 
   if (filename.empty())
     return rv;
 
-  // if last character is a "/" then it's a directory, so return empty string
+// if last character is a "/" then it's a directory, so return empty string
   if (filename[filename.length() - 1] == '/')
     return rv;
 
@@ -444,9 +432,9 @@ string base_name(const string& filename)
 }
 
 /*! \brief          is a file a link?
- *    \param  name    name of file
- *    \return         whether <i>name</i> is a link
- */
+    \param  name    name of file
+    \return         whether <i>name</i> is a link
+*/
 bool is_link(const string& name)
 { struct stat stat_buffer;
 
@@ -462,8 +450,8 @@ bool is_link(const string& name)
 }
 
 /*! \brief          write the status of a file to certr
- *    \param  name    name of file
- */
+    \param  name    name of file
+*/
 void file_status(const string& name)
 { struct stat stat_buffer;
 
@@ -484,13 +472,12 @@ void file_status(const string& name)
 }
 
 /*! \brief              directory in which a file is located
- *    \param  file_name   full or relative name of file
- *    \return             name of directory in which <i>file_name</i> is located
- *
- *    Returns <i>file_name</i> if <i>file_name</i> is a directory
- *    Returns "." if <i>file_name</i> does not contain a directory name
- */
-//string directory_name(const string& file_name)
+    \param  file_name   full or relative name of file
+    \return             name of directory in which <i>file_name</i> is located
+
+    Returns <i>file_name</i> if <i>file_name</i> is a directory
+    Returns "." if <i>file_name</i> does not contain a directory name
+*/
 string directory_name(const string_view file_name)
 { if (directory_exists(file_name, LINKS::INCLUDE))
   return string { file_name };
@@ -504,12 +491,12 @@ string directory_name(const string_view file_name)
 }
 
 /*! \brief              Does a directory contain one or more subdirectories?
- *    \param  dirname     name of directory
- *    \param  links       whether to include links in the output
- *    \return             whether <i>dirname</i> has any subdirectories
- *
- *    Returns <i>false</i> if <i>dirname</i> is not a directory
- */
+    \param  dirname     name of directory
+    \param  links       whether to include links in the output
+    \return             whether <i>dirname</i> has any subdirectories
+
+    Returns <i>false</i> if <i>dirname</i> is not a directory
+*/
 bool has_subdirectory(const std::string& dirname, const enum LINKS links)
 { if (!is_directory(dirname, LINKS::INCLUDE))   // linked directory is allowed for base
   return false;
@@ -538,27 +525,26 @@ bool has_subdirectory(const std::string& dirname, const enum LINKS links)
 }
 
 /*! \brief              Is a directory a direct ancestor of a particular directory?
- *    \param  dir1        first directory
- *    \param  dir2        second directory
- *    \return             whether <i>dir2</i> is a direct ancestor of <i>dir1</i>
- */
+    \param  dir1        first directory
+    \param  dir2        second directory
+    \return             whether <i>dir2</i> is a direct ancestor of <i>dir1</i>
+*/
 bool is_ancestor_directory_of_directory(const string& dir1, const string& dir2)
 { if (!is_directory(dir1, LINKS::NO_INCLUDE) or !is_directory(dir2, LINKS::NO_INCLUDE))
   return false;
 
-//  return ( (dir2.size() < dir1.size()) and starts_with(dir1, dir2) );
   return ( (dir2.size() < dir1.size()) and dir1.starts_with(dir2) );
 }
 
 /*! \brief              Get the filesystem ID of a file or directory
- *    \param  filename    name of file or directory
- *    \return             the file system ID of <i>filename</i>
- *
- *    https://stackoverflow.com/questions/59687286/how-to-check-if-a-directory-is-on-a-local-disk-or-a-remote-disk-in-c-or-fortran
- */
+    \param  filename    name of file or directory
+    \return             the file system ID of <i>filename</i>
+
+    https://stackoverflow.com/questions/59687286/how-to-check-if-a-directory-is-on-a-local-disk-or-a-remote-disk-in-c-or-fortran
+*/
 FSID filesystem_id(const string& filename)
 { if (!file_exists(filename) and !directory_exists(filename, LINKS::NO_INCLUDE))
-  return MAX_FSID;
+    return MAX_FSID;
 
   struct statvfs fs_buf;
 
@@ -569,14 +555,14 @@ FSID filesystem_id(const string& filename)
 }
 
 /*! \brief              Find the location of a file in a path
- *   \param  path        directories in which to look (with or without trailing "/"), in order
- *   \param  filename    name of file
- *   \return             full filename if a file is found, otherwise the empty string
- *
- *   Actually checks for existence AND readability, which is much simpler
- *   than checking for existence. See:
- *     https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
- */
+    \param  path        directories in which to look (with or without trailing "/"), in order
+    \param  filename    name of file
+    \return             full filename if a file is found, otherwise the empty string
+
+    Actually checks for existence AND readability, which is much simpler
+  than checking for existence. See:
+      https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+*/
 string find_file(const vector<string>& path, const string_view filename)
 { for (const auto& dir : path)
   { const string sep { dir.ends_with('/') ? ""s : "/"s };     // put a "/" at the end, if necessary

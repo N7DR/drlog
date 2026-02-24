@@ -45,7 +45,8 @@ constexpr size_t MIN_IN_BUFFER_SIZE { 4'096 };   // minumum size of a TCP input 
 //constexpr size_t MAX_IN_BUFFER_SIZE { 8'192 };   // maximum size of a TCP input buffer
 //constexpr size_t MAX_IN_BUFFER_SIZE { 16'384 };   // maximum size of a TCP input buffer
 //constexpr size_t MAX_IN_BUFFER_SIZE { 32'768 };   // maximum size of a TCP input buffer, in bytes
-constexpr size_t MAX_IN_BUFFER_SIZE { 65'536 };   // maximum size of a TCP input buffer, in bytes
+//constexpr size_t MAX_IN_BUFFER_SIZE { 65'536 };   // maximum size of a TCP input buffer, in bytes
+constexpr size_t MAX_IN_BUFFER_SIZE { 131'072 };   // maximum size of a TCP input buffer, in bytes
 
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
@@ -70,10 +71,35 @@ constexpr struct linger DEFAULT_TCP_LINGER { false, 0 };      // the default is 
 /// close the socket
 void tcp_socket::_close_the_socket(void)
 { if (_sock)
-  { SAFELOCK(_tcp_socket);
+  { ost << "in _close_the_socket for socket number: " << _sock << endl;
+
+    SAFELOCK(_tcp_socket);
   
     if (const int status { ::close(_sock) }; status == -1)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_CLOSE, strerror(errno));
+    { ost << "ERROR STATUS FROM CLOSE; THROWING TCP_SOCKET_ERROR" << endl;
+
+      switch (errno)
+      { case EBADF :  // fd isn't a valid open file descriptor.
+          ost << "Error EBADF; not a valid open file descriptor" << endl;
+          break;
+
+        case EINTR :  // The close() call was interrupted by a signal; see signal(7).
+          ost << "Error EINTR; The close() call was interrupted by a signal" << endl;
+          break;
+
+        case EIO :    // An I/O error occurred.
+          ost << "Error EIO; An I/O error occurred" << endl;
+          break;
+
+        case ENOSPC :
+        case EDQUOT : //On NFS, these errors are not normally reported against the first write which exceeds the available storage space, but instead against a subsequent write(2), fsync(2), or close().
+          ost << "Out of space" << endl;
+          break;
+      }
+
+      if (errno != EBADF)       // it's not an error to use a file descriptor that appears to be open
+        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_CLOSE, strerror(errno));
+    }
   }
 }
 
@@ -290,12 +316,20 @@ tcp_socket::~tcp_socket(void)
 /*! \brief  Create and use a different underlying socket
 */
 void tcp_socket::new_socket(void)
-{ try
+{ ost << "inside tcp::socket::new_socket()" << endl;
+
+  try
   { SAFELOCK(_tcp_socket);
+
+    ost << "about to close socket" << endl;
 
     _close_the_socket();      // does nothing if there is no socket
 
+    ost << "about to create low-level socket" << endl;
+
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ost << "socket created, number: " << _sock << endl;
 
     disable_reuse();
     linger(DEFAULT_TCP_LINGER);
@@ -310,6 +344,8 @@ void tcp_socket::new_socket(void)
   catch (...)
   { throw;           // placeholder
   }
+
+  ost << "exiting tcp::socket::new_socket()" << endl;
 }
 
 /*! \brief                  Bind the socket to a local address
@@ -791,8 +827,13 @@ void tcp_socket::linger(const bool torf, const int secs)
 }
 
 /// Human-readable string description of the status of the socket
-string tcp_socket::to_string(void) const
-{ string rv { };
+//string tcp_socket::to_string(void) const
+/*! \brief        Human-readable string description of the status of the socket
+    \param  pre   string to prepend
+    \param  post  string to append
+*/
+string tcp_socket::to_string(const string_view pre, const string_view post) const
+{ string rv { pre };
 
   rv += "bound address: "s + dotted_decimal_address(_bound_address) + EOL;
 
@@ -822,7 +863,7 @@ string tcp_socket::to_string(void) const
   else
     rv += "linger is not set"s;
 
-  return rv;
+  return (rv + post);
 }
 
 // ---------------------------------  icmp_socket  -------------------------------

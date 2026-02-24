@@ -1,4 +1,4 @@
-// $Id: adif3.h 259 2025-01-19 15:44:33Z  $
+// $Id: adif3.h 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -112,7 +112,8 @@ protected:
 
 // private objects and collections providing legal values
 
-  const static UNORDERED_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
+//  const static UNORDERED_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
+  const static FLAT_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
 
   static STRING_MAP<std::pair<int, int> /* minimum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
@@ -234,11 +235,11 @@ public:
 
 /// return the ADIF3 value of the band (empty string if none) 
   inline std::string band(void) const
-    { return value("BAND"s); }
+    { return value("BAND"sv); }
 
 /// return the ADIF3 value of the other station's callsign (empty string if none)
   inline std::string callsign(void) const
-    { return value("CALL"s); }
+    { return value("CALL"sv); }
     
 /// return whether a QSL card is known to have been received
   inline bool confirmed(void) const

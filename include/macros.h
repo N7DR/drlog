@@ -1,4 +1,4 @@
-// $Id: macros.h 282 2025-12-15 20:55:01Z  $
+// $Id: macros.h 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1659,6 +1659,12 @@ inline time_t NOW(void)
 // current time, as a TIME_POINT
 inline TIME_POINT NOW_TP(void)
   { return std::chrono::system_clock::now(); }
+
+using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes (since the epoch)
+
+// current time (in minutes since the epoch)
+inline MINUTES_TYPE NOW_MINUTES(void)
+  { return static_cast<MINUTES_TYPE>(NOW() / 60); }
 
 /*! \brief        Create a reverse iterator from a bidirectional iterator, pointing to the same element
     \param  it    bidirectional iterator

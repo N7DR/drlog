@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 283 2026-01-18 16:41:22Z  $
+// $Id: autocorrect.h 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
-using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
+//using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
 
 // -----------  autocorrect_database  ----------------
 
@@ -69,7 +69,6 @@ public:
     \param  str     input call
     \return         <i>str</i> or a corrected version of same
 */
-//  std::string corrected_call(const std::string& str) const;
   std::string corrected_call(const std::string_view str) const;
 };
 
@@ -217,8 +216,9 @@ public:
 
     Returns the same string for (call1, call2) and (call2, call1)
 */
-inline std::string pair_index(const std::string& call1, const std::string& call2)
-  { return (call1 < call2) ? (call1 + "+"s + call2) : (call2 + "+"s + call1); }
+//inline std::string pair_index(const std::string& call1, const std::string& call2)
+inline std::string pair_index(const std::string_view call1, const std::string& call2)
+  { return (call1 < call2) ? (call1 + '+' + call2) : (call2 + '+' + call1); }
 
 class busts_database
 {

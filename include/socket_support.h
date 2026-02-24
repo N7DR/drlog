@@ -505,8 +505,12 @@ public:
   inline void rename_mutex(const std::string& new_name)
     { _tcp_socket_mutex.rename(new_name); }
 
-/// Human-readable string description of the status of the socket
-  std::string to_string(void) const;
+/*! \brief        Human-readable string description of the status of the socket
+    \param  pre   string to prepend
+    \param  post  string to append
+*/
+//  std::string to_string(void) const;
+  std::string to_string(const std::string_view pre = { }, const std::string_view post = { }) const;
 
 /*! \brief  Enable reuse of the socket
 

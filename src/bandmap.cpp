@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 281 2025-12-07 20:02:13Z  $
+// $Id: bandmap.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,7 +42,8 @@ extern MINUTES_TYPE                  now_minutes;                               
 extern map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges;   ///< the ranges of frequencies to be marked as red (i.e., not to be used in the ocntest)
 extern message_stream                ost;                                       ///< debugging/logging output
 
-extern const STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
+//extern const STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
+extern const FLAT_STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 
 extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
 

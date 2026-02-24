@@ -1,4 +1,4 @@
-// $Id: rules.cpp 282 2025-12-15 20:55:01Z  $
+// $Id: rules.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,7 +27,8 @@ using namespace std;
 
 pt_mutex rules_mutex { "RULES"s };      ///< mutex for the contest_rules object
 
-extern const STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
+//extern const STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
+extern const FLAT_STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
 
 extern message_stream    ost;           ///< for debugging and logging
 extern location_database location_db;   ///< location information

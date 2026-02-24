@@ -57,16 +57,24 @@ new_socket:
   try
   { try
     { _connection.close();                     // releases the file descriptor, closes the fundamental TCP connection
-      ost << "TCP connection closed OK" << endl;
+      ost << "old TCP connection closed OK" << endl;
     }
 
     catch (...)
     { ost << "Error closing socket" << endl;
     }
 
+    ost << "about to attempt to create new socket in cluster.cpp" << endl;
+
     _connection.new_socket();                                       // get a new socket
+
+    ost << "created new socket; about to set keep_alive" << endl;
+
     _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);     // set the keepalive option
-    _connection.bind(_my_ip);                                       // bind it to the correct IP address  *** THIS IS FAILING
+
+    ost << "about to bind new socket" << endl;
+
+    _connection.bind(_my_ip);                                       // bind it to the correct IP address
 
     ost << "New TCP socket: " << _connection.to_string() << endl;
 
@@ -274,7 +282,7 @@ void dx_cluster::reset_connection(void)
   ost << "Completed reset of connection" << endl;
 }
 
-/*! \brief      Read from the cluster socket
+/*! \brief  Read from the cluster socket
 
     Any data read from the socket are appended to <i>_unprocessed_input</i>
 */
@@ -289,14 +297,16 @@ void dx_cluster::read(void)
   { if (e.code() != SOCKET_SUPPORT_TIMEOUT)    // an error that is not a timeout has to be handled
     {
 // error reading; try to reconnect
-      ost << "Error reading from socket; attempting reconnection" << endl;
+      ost << "Error reading from socket; socket_support_error code = " << e.code() << " reason = " << e.reason() << "; attempting reconnection" << endl;
 
       _process_error();
     }  // be silent if it's just a timeout
   }
 
-  catch (const tcp_socket_error&)
-  { _process_error();
+  catch (const tcp_socket_error& e)
+  { ost << "TCP socket error in read(); tcp_socket_error code = " << e.code() << " reason = " << e.reason() << "; attempting reconnection" << endl;
+
+    _process_error();
   }
   
   if (!buf.empty())

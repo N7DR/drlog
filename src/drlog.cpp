@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 283 2026-01-18 16:41:22Z  $
+// $Id: drlog.cpp 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,7 +69,8 @@ using namespace   this_thread;   // std::this_thread
 using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;    // label, pointer to ICMP socket
 using PING_TABLE         = vector<PING_TABLE_ELEMENT>;
 
-extern const STRING_SET CONTINENT_SET;     ///< two-letter abbreviations of continents
+//extern const STRING_SET CONTINENT_SET;     ///< two-letter abbreviations of continents
+extern const FLAT_STRING_SET CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 /// active window
 enum class ACTIVE_WINDOW { CALL,
@@ -717,8 +718,8 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 // simple inline functions
 
 // current time (in minutes since the epoch)
-inline MINUTES_TYPE NOW_MINUTES(void)
-  { return static_cast<MINUTES_TYPE>(NOW() / 60); }
+//inline MINUTES_TYPE NOW_MINUTES(void)
+//  { return static_cast<MINUTES_TYPE>(NOW() / 60); }
 
 /// recall a memory
 inline memory_entry recall_memory(const unsigned int n)
@@ -933,6 +934,10 @@ int main(int argc, char** argv)
 
     no_default_rst                  = context.no_default_rst();
     n_memories                      = context.n_memories();
+
+    if (!auto_backup_directory.empty())
+      if (directory_create_if_necessary(auto_backup_directory))               // create the backup directory if necessary
+        ost << "auto backup directory " << auto_backup_directory << " created" << endl;
 
 // configure table for checking connectivity to other machines
     if (const auto& targets { context.ping_targets() }; !targets.empty())
@@ -1183,7 +1188,7 @@ int main(int argc, char** argv)
         }
       }
 
-      if (cl.parameter_present("-RACE"))
+      if (cl.parameter_present("-RACE"))        // undocumented command to exercise K3 race condition
       { ost << "RACE command found" << endl;
 
         const int n_loops { cl.value_present("-RACE") ? from_string<int>(cl.value("-RACE")) : 10 };
@@ -2585,8 +2590,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
   const bool   is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
   const bool   is_cluster             { !is_rbn };
   const bool   rbn_beacons            { context.rbn_beacons() };
-  const int    my_cluster_mult_colour { string_to_colour("COLOUR_17"sv) }; // the colour of my call in the CLUSTER MULT window
-  const string type_str               { is_rbn ? "RBN" : "cluster" };
+  const int    my_cluster_mult_colour { string_to_colour("COLOUR_17"sv) }; // the colour of my call in the CLUSTER MULT window (window is misnamed, as it also displays RBN data)
+  const string type_str               { is_rbn ? "RBN"s : "cluster"s };
 
   string                         unprocessed_input;     // data from the cluster that have not yet been processed by this thread
   deque<pair<string, frequency>> recent_mult_calls;     // the queue of recent calls posted to the mult window (can't be a std::queue)
@@ -2644,7 +2649,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         cluster_line_win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < COLOURS(COLOUR_RED, COLOUR_BLACK) < centre(msg, 0) <= COLOURS(fg_colour, bg_colour);
 
 // insert connection reset here if time_since_data_last_received.count() is "too large"
-//        if (time_since_data_last_received > context.cluster_timeout())
         if (time_since_data_last_received > timeout)
         { ost << "WARNING: " << type_str << " timeout exceeded; connection status = " << endl
                                                                            << "----------" << endl
@@ -2677,8 +2681,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
       unprocessed_input_sv = substring <std::string_view> (unprocessed_input_sv, line.length() + 2);  // delete the line (including the CRLF) from the unprocessed buffer
 
       if (!line.empty())
-      { //static const vector<string> beacon_markers { " BCN "s,
-        static const FLAT_STRING_SET beacon_markers { " BCN "s,
+      { static const FLAT_STRING_SET beacon_markers { " BCN "s,
                                                       " BEACON "s,
                                                       "/B "s,
                                                       "/B2 "s,
@@ -7075,8 +7078,8 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
   { start_of_thread("auto backup"s);
 
     try
-    { if (directory_create_if_necessary(dir))                                 // create the named directory if necessary
-        ost << "directory " << dir << " created" << endl;
+    { //if (directory_create_if_necessary(dir))                                 // create the named directory if necessary
+      //  ost << "directory " << dir << " created" << endl;
 
       const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
       const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -

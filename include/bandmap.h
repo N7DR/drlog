@@ -1,4 +1,4 @@
-// $Id: bandmap.h 282 2025-12-15 20:55:01Z  $
+// $Id: bandmap.h 284 2026-02-23 20:25:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,7 @@ enum class BANDMAP_DIRECTION { DOWN,
 
 using namespace std::chrono_literals;
 
-using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
+//using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
 
 // forward declarations
 class bandmap_entry;
@@ -729,8 +729,6 @@ protected:
 
   int                               _last_displayed_version { -1 };
   std::atomic<int>                  _version                { 0 };                        ///< used for debugging; strictly monotonically increases with each change
-
-//  std::chrono::time_point<std::chrono::system_clock> _time_last_displayed { NOW_TP() };
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
