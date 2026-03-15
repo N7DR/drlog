@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 287 2026-03-14 16:15:22Z  $
+// $Id: diskfile.cpp 289 2026-03-15 19:15:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -278,7 +278,8 @@ vector<string> files_in_directories(const vector<string>& dirnames, const enum L
 
     Returns empty vector if the directory <i>dirname</i> does not exist
 */
-vector<string> directories_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
+//vector<string> directories_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
+vector<string> directories_in_directory(const string_view dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
   if (!directory_exists(dirname, LINKS::INCLUDE, fsid))   // linked directory is allowed for base
@@ -294,9 +295,9 @@ vector<string> directories_in_directory(const string& dirname, const enum LINKS 
     return rv;                                  // shouldn't happen
 
   for (int n { 0 }; n < status; n++)
-  { const string tail_name { namelist[n]->d_name };
+  { const string tail_name { namelist[n] -> d_name };
 
-    if (tail_name != "."s and tail_name != ".."s)
+    if ( (tail_name != "."sv) and (tail_name != ".."sv) )
     { const string name { dirname_slash + namelist[n]->d_name };
 
       if ( (fsid == MAX_FSID) or (filesystem_id(name) == fsid) )
@@ -317,7 +318,8 @@ vector<string> directories_in_directory(const string& dirname, const enum LINKS 
     Returned vector is unsorted.
     Returned vector includes <i>dirname</i>
 */
-vector<string> directories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
+//vector<string> directories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
+vector<string> directories_in_hierarchy(const string_view dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
   if (directory_exists(dirname, links, fsid))
@@ -337,7 +339,8 @@ vector<string> directories_in_hierarchy(const string& dirname, const enum LINKS 
     Returned vector is unsorted.
     Returned vector does not include <i>dirname</i>
 */
-vector<string> subdirectories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
+//vector<string> subdirectories_in_hierarchy(const string& dirname, const enum LINKS links, const FSID fsid)
+vector<string> subdirectories_in_hierarchy(const string_view dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv;
 
   if (directory_exists(dirname, links, fsid))

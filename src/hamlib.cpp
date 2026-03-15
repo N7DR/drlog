@@ -1,5 +1,5 @@
  
-// $Id: hamlib.cpp 288 2026-03-14 19:49:46Z  $
+// $Id: hamlib.cpp 289 2026-03-15 19:15:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

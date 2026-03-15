@@ -1,4 +1,4 @@
-// $Id: diskfile.h 287 2026-03-14 16:15:22Z  $
+// $Id: diskfile.h 289 2026-03-15 19:15:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -183,7 +183,8 @@ std::vector<std::string> directory_contents(const std::string_view dirname, cons
 
     Returns empty vector if the directory <i>dirname</i> does not exist
 */
-std::vector<std::string> directories_in_directory(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+//std::vector<std::string> directories_in_directory(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+std::vector<std::string> directories_in_directory(const std::string_view dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
 
 /*! \brief              What directories does a directory contain, recursively?
     \param  dirname     name of the directory to examine
@@ -195,7 +196,8 @@ std::vector<std::string> directories_in_directory(const std::string& dirname, co
     Returned vector includes <i>dirname</i>
     Searches across filesystems
 */
-std::vector<std::string> directories_in_hierarchy(const std::string& rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
+//std::vector<std::string> directories_in_hierarchy(const std::string& rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
+std::vector<std::string> directories_in_hierarchy(const std::string_view rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
 
 /*! \brief              What directories does a directory contain, recursively?
     \param  dirname     name of the directory to examine
@@ -206,7 +208,8 @@ std::vector<std::string> directories_in_hierarchy(const std::string& rootname, c
     Returned vector is unsorted.
     Returned vector does not include <i>dirname</i>
 */
-std::vector<std::string> subdirectories_in_hierarchy(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+//std::vector<std::string> subdirectories_in_hierarchy(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+std::vector<std::string> subdirectories_in_hierarchy(const std::string_view dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
 
 /*! \brief              What files does a directory contain?
     \param  dirname     name of the directory to examine
@@ -348,22 +351,3 @@ FSID filesystem_id(const std::string& filename);
 std::string find_file(const std::vector<std::string>& path, const std::string_view filename);
 
 #endif    // DISKFILE_H
-
-
-
-
-
-#if 0
-
-OLD FILE
-
-#ifndef DISKFILE_H
-#define DISKFILE_H
-
-#include <fstream>
-#include <string>
-#include <vector>
-
-#endif    // DISKFILE_H
-
-#endif    // 0  OLD FILE

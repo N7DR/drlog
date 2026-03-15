@@ -1,4 +1,4 @@
-// $Id: drlog_error.h 270 2025-05-26 01:09:07Z  $
+// $Id: drlog_error.h 289 2026-03-15 19:15:54Z  $
 
 #ifndef DRLOG_ERROR_H
 #define DRLOG_ERROR_H
@@ -19,7 +19,7 @@ class drlog_error : public std::exception
 protected:
 
   int         _code;      ///< Error code
-  std::string _reason;      ///< Error reason
+  std::string _reason;    ///< Error reason
 
 public:
 
@@ -27,15 +27,14 @@ public:
     \param  n Error code
     \param  s Reason
 */
-//  drlog_error(const int n, const std::string& s);
   inline drlog_error(const int n, const std::string_view s) :
-   _code(n),
-  _reason(s)
+    _code(n),
+    _reason(s)
   { }
 
 /*! \brief  Destructor
 */
-  inline virtual ~drlog_error(void) = default; /* throw() */
+  inline virtual ~drlog_error(void) = default;
 
 /*! \brief  RO access to _code
 */

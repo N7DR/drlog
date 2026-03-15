@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 287 2026-03-14 16:15:22Z  $
+// $Id: rig_interface.h 289 2026-03-15 19:15:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,7 @@
 #include "bands-modes.h"
 #include "diskfile.h"
 #include "drlog_context.h"
+#include "hamlib.h"
 #include "macros.h"
 #include "pthread_support.h"
 #include "string_functions.h"
@@ -546,6 +547,7 @@ class rig_interface
 {
 protected:
 
+  hamlib_capabilities                     _hcaps                       { };                             ///< capabilities from hamlib (which may or may not be populated and used)
   bool                                    _instrumented                { false };                       ///< whether to record all exchanges with rig
   frequency                               _last_commanded_frequency    { 14_MHz };                      ///< last frequency to which the rig was commanded to QSY
   frequency                               _last_commanded_frequency_b  { 14_MHz };                      ///< last frequency to which VFO B was commanded to QSY
@@ -652,6 +654,12 @@ public:
   HAS_CAPABILITY(AUDIO_CENTRE);
 
 #undef HAS_CAPABILITY
+
+/*! \brief    Populate the hamlib capabilities, according to hamlib
+    \return
+*/
+  inline void get_hamlib_capabilities(void)
+    { _hcaps.get_capabilities(_rigp); }
 
 /*! \brief      Is a rig ready for use?
     \return     whether a rig is available

@@ -1,4 +1,4 @@
- // $Id: hamlib.h 288 2026-03-14 19:49:46Z  $
+ // $Id: hamlib.h 289 2026-03-15 19:15:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,5 +87,41 @@ enum class HAMLIB_CAPABILITY : HAMLIB_CAPABILITIES_TYPE { FAGC           = RIG_F
                                                         };
 
 HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp);    // NB hamlib requires a non-const pointer
+
+class hamlib_capabilities
+{
+protected:
+
+  HAMLIB_CAPABILITIES_TYPE _caps { 0 };        // uint64_t mask of capabilities
+
+public:
+
+  inline void get_capabilities(RIG* rp)
+    { _caps = hamlib_get_capabilities(rp); }
+
+  inline bool empty(void) const
+    { return ( _caps == static_cast<HAMLIB_CAPABILITIES_TYPE>(0) ); }
+
+#define HAS_CAPABILITY(y) \
+  inline bool y(void) const \
+    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::y) ); }
+
+  HAS_CAPABILITY(FAGC);
+  HAS_CAPABILITY(NB);
+  HAS_CAPABILITY(COMP);
+  HAS_CAPABILITY(VOX);
+  HAS_CAPABILITY(TONE);
+  HAS_CAPABILITY(TSQL);
+  HAS_CAPABILITY(SBKIN);
+  HAS_CAPABILITY(FBKIN);
+  HAS_CAPABILITY(ANF);
+  HAS_CAPABILITY(NR);
+
+//  inline bool FAGC(void) const
+//    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::FAGC) ); }
+
+#undef HAS_CAPABILITY
+
+};
 
 #endif    // DRLOG_HAMLIB_H
