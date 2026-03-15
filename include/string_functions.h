@@ -1,4 +1,4 @@
-// $Id: string_functions.h 282 2025-12-15 20:55:01Z  $
+// $Id: string_functions.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -314,14 +314,6 @@ std::string replace_substring(const std::string_view s, const size_t start_posn,
   return rv;
 }
 
-/*! \brief      Does a string contain a particular substring?
-    \param  s   string to test
-    \param  ss  substring for which to search
-    \return     whether <i>s</i> contains the substring <i>ss</i>
-*/
-//inline bool contains(const std::string_view s, const std::string_view ss)
-//  { return s.find(ss) != std::string_view::npos; }
-
 /*! \brief          Does a string contain a particular substring at a particular location?
     \param  s       string to test
     \param  ss      substring for which to search
@@ -330,14 +322,6 @@ std::string replace_substring(const std::string_view s, const size_t start_posn,
 */
 inline bool contains_at(std::string_view s, std::string_view ss, const size_t posn)
   { return (s.length() >= posn + ss.length()) and (substring <std::string_view> (s, posn, ss.length()) == ss); }
-
-/*! \brief      Does a string contain a particular character?
-    \param  s   string to test
-    \param  c   character for which to search
-    \return     whether <i>s</i> contains the character <i>c</i>
-*/
-//inline bool contains(const std::string_view s, const char c)
-//  { return s.find(c) != std::string_view::npos; }
 
 /*! \brief          Does a vector of strings contain an element that is equivalent to a particular string_view?
     \param  strvec  vector of strings to test
@@ -779,7 +763,6 @@ auto split_string(const std::string_view cs, const char separator = ',') -> std:
 
     start_posn = posns[posn_nr] + 1;
   }
-
 
   rv += substring <STYPE> (cs, posns[posns.size() - 1] + 1);   // all the text after the last separator
 
@@ -1283,7 +1266,7 @@ bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 */
 template<bool (*PF)(const std::string_view, const std::string_view)>    // (sv, sv) => heterogeneous lookup automatically supported
 struct CMP
-{ using is_transparent = void;      // the magic incantation
+{ using is_transparent = void;      // the magic incantation to support heterogeneous lookup
 
   inline bool operator() (const std::string_view m1, const std::string_view m2) const
     { return PF(m1, m2); }

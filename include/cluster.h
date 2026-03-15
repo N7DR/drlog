@@ -1,4 +1,4 @@
-// $Id: cluster.h 283 2026-01-18 16:41:22Z  $
+// $Id: cluster.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -101,9 +101,6 @@ public:
     \param  comment   comment to add to the post
     \return           whether the attemnpt to post was successful
 */
-//  bool spot(const std::string& dx, const std::string& freq, const std::string& comment = EMPTY_STR);
-//  bool spot(const std::string_view dx, const std::string& freq, const std::string& comment = EMPTY_STR);
-//  bool spot(const std::string_view dx, const std::string_view freq, const std::string& comment = EMPTY_STR);
   bool spot(const std::string_view dx, const std::string_view freq, const std::string_view comment = EMPTY_STR);
 
 /*! \brief        Send a spot to the cluster

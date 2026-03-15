@@ -1,4 +1,4 @@
-// $Id: rules.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: rules.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -103,7 +103,6 @@ void exchange_field_values::add_canonical_value(const string_view cv)
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-//void exchange_field_values::add_value(const string_view cv, const string& v)
 void exchange_field_values::add_value(const string_view cv, const string_view v)
 { const string cvs { cv };
 
@@ -162,6 +161,7 @@ vector<exchange_field> exchange_field::expand(void) const
   return rv;
 }
 
+/// convert to human-readable string
 string exchange_field::to_string(void) const
 { string rv { };
 
@@ -232,11 +232,11 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
       exchange_field_values qthx;
 
  //     qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
-      qthx.name("QTHX["s + canonical_prefix + "]"s);
+ //     qthx.name("QTHX["s + canonical_prefix + "]"s);
+      qthx.name("QTHX["s + canonical_prefix + ']');
 
       for (const auto& this_value : ss)
-      { //if (!contains(this_value, '|'))
-        if (!this_value.contains('|'))
+      { if (!this_value.contains('|'))
           qthx.add_canonical_value(this_value);
         else
         { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
@@ -244,7 +244,6 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
           if (!equivalent_values.empty())
             qthx.add_canonical_value(equivalent_values[0]);
 
-//          for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [cp = equivalent_values[0], &qthx] (const string& equivalent_value) { qthx += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
           FOR_ALL(equivalent_values | SRV::drop(1), [cp = equivalent_values[0], &qthx] (const string& equivalent_value) { qthx += { cp, equivalent_value }; } ); // cbegin() corresponds to the canonical value
         }
       }
@@ -275,19 +274,18 @@ vector<string> contest_rules::_exchange_field_names(const string_view canonical_
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
 vector<exchange_field> contest_rules::_exchange_fields(const string_view canonical_prefix, const MODE m, const CHOICES expand_choices) const
-{ //ost << "inside _exchange_fields()" << endl;
-
-  if (canonical_prefix.empty())
+{ if (canonical_prefix.empty())
     return vector<exchange_field>();
 
   SAFELOCK(rules);
 
   try
-  { const STRING_MAP<vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) }; // this can throw exception if rig has been set to a mode that is not supported by the contest
+  { // the next line can throw an exception if rig has been set to a mode that is not supported by the contest
+    const STRING_MAP<vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) };
 
     auto cit { exchange.find(canonical_prefix) };
 
-    return ( (cit == exchange.cend()) ? MUM_VALUE(exchange, string { }) : cit->second );  // NOT the same as:   return MUM_VALUE(exchange, canonical_prefix);
+    return ( (cit == exchange.cend()) ? MUM_VALUE(exchange, string { }) : cit -> second );  // NOT the same as:   return MUM_VALUE(exchange, canonical_prefix);
   }
 
   catch (std::out_of_range& oor)
@@ -307,9 +305,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 { vector<exchange_field> rv;
 
   for (const auto& field_name : exchange_fields)
-  { //const bool is_choice { contains(field_name, "CHOICE:"sv) };
-    //const bool is_opt    { contains(field_name, "OPT:"sv) };
-    const bool is_choice { field_name.contains("CHOICE:"sv) };
+  { const bool is_choice { field_name.contains("CHOICE:"sv) };
     const bool is_opt    { field_name.contains("OPT:"sv) };
 
     if (is_choice)
@@ -714,20 +710,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // parse file
     if (read_file_ok)
-    { //const vector<string> lines { split_string <std::string> (entire_file, EOL_CHAR) };
-      //const vector<string_view> lines { split_string <std::string_view> (entire_file, EOL_CHAR) };
+    { STRING_MAP<STRING_SET> map_canonical_to_all;    // key = canonical value; value = all the equivaletn values; perhaps make this an unordered map?
 
-      STRING_MAP<STRING_SET> map_canonical_to_all;    // key = canonical value; value = all the equivalet values
-
-//      for (const auto& line : lines)
-//
       for ( const auto line : split_string <std::string_view> (entire_file, EOL_CHAR) )
       { string     lhs;
         STRING_SET equivalent_values;    // includes the canonical
 
         if (!line.empty() and (line[0] != ';') and !line.starts_with("//"sv)) // ";" and "//" introduce comments
-        { //if (contains(line, '=') )
-          if (line.contains('=') )
+        { if (line.contains('=') )
           { const vector<string_view> lhsrhs { split_string <std::string_view> (line, '=') };
 
             lhs = remove_peripheral_spaces <std::string> (lhsrhs[0]);
@@ -1350,7 +1340,8 @@ string wpx_prefix(const string_view call)
 
 // /MM, /MA, /AM
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
-  { static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
+  { //static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
+    static const FLAT_STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last <string_view> (callsign, 2)))
       callsign = remove_n_chars_from_end <std::string> (callsign, 3u);
@@ -1423,8 +1414,7 @@ From SAC rules, the relevant countries are:
   Iceland TF
 */
 string sac_prefix(const string_view call)
-{ //static const UNORDERED_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
-  static const FLAT_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
+{ static const FLAT_STRING_SET scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
 

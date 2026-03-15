@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: string_functions.cpp 285 2026-03-01 13:54:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -301,7 +301,7 @@ string read_file(const string_view filename)
 
 // now perform the actual read
   ifstream file { filename_str };
-  string   str  {std::istreambuf_iterator<char>(file), { } };
+  string   str  { std::istreambuf_iterator<char>(file), { } };
 
   return str;
 }
@@ -1017,7 +1017,7 @@ string read_until(istream& in, const string_view delimiter, const DELIMITERS kee
     getline(in, temp, delim);
     cr += temp + delim;
     tot = cr.size();
-  } while ((tot < sz) or (cr.substr(tot - sz, sz) != delimiter));
+  } while ( (tot < sz) or (cr.substr(tot - sz, sz) != delimiter) );
 
   return ((keep_or_drop == DELIMITERS::DROP) ? cr.substr(0, tot - sz) : cr);
 }

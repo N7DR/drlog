@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 283 2026-01-18 16:41:22Z  $
+// $Id: cluster.cpp 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,6 +32,8 @@ using namespace   this_thread;      // std::this_thread
 extern bool           exiting;              ///< is the program exiting?
 extern message_stream ost;                  ///< for debugging and logging
 extern pt_mutex       thread_check_mutex;   ///< mutex for controlling threads
+extern int            type_1_post_counter;          ///< counter for type 1 posts
+extern int            type_2_post_counter;          ///< counter for type 1 posts
 
 pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
@@ -250,9 +252,6 @@ bool dx_cluster::send(const std::string_view msg)
     \return           whether the attemnpt to post was successful
 
 */
-//bool dx_cluster::spot(const string& dx, const string& freq, const string& comment)
-//bool dx_cluster::spot(const string_view dx, const string& freq, const string& comment)
-//bool dx_cluster::spot(const string_view dx, const string_view freq, const string& comment)
 bool dx_cluster::spot(const string_view dx, const string_view freq, const string_view comment)
 { const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
   const string msg    { dx_cmd + " "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
@@ -366,7 +365,9 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
   
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
-    { try
+    { type_1_post_counter++;
+
+      try
       { size_t char_posn  { copy.find(' ') };
         size_t space_posn { };
 
@@ -427,7 +428,9 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
       ost << "received short post: " << received_info << endl;
 
     if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
-    { try
+    { type_2_post_counter++;
+
+      try
       { if (post_source == POSTING_SOURCE::RBN)
         { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
 
@@ -645,23 +648,3 @@ void monitored_posts::prune(void)
 
   _is_dirty |= (original_size != _entries.size());
 }
-
-#if 0
-/// convert to a vector of strings suitable for display in a window
-vector<string> monitored_posts::to_strings(void) const
-{ //    std::ranges::for_each(in | std::views::transform(rot13), show);
-
-  SAFELOCK(monitored_posts);
-
-//  return SR::to<vector<string>>(_entries | std::views::transform([] (const monitored_posts_entry& mpe) { return mpe.to_string(); }) );
-  return SR::to<vector<string>>( _entries | std::views::transform(&monitored_posts_entry::to_string) );
-//  vector<string> rv;
-//  rv.reserve(_entries.size());
-
-//  SAFELOCK(monitored_posts);
-
-//  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv += (mpe.to_string()); } );
-
-//  return rv;
-}
-#endif

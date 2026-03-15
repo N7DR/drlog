@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 278 2025-11-09 14:35:25Z  $
+// $Id: rig_interface.h 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -19,9 +19,11 @@
 #define RIG_INTERFACE_H
 
 #include "bands-modes.h"
+#include "diskfile.h"
 #include "drlog_context.h"
 #include "macros.h"
 #include "pthread_support.h"
+#include "string_functions.h"
 #include "x_error.h"
 
 #include <chrono>
@@ -51,6 +53,24 @@ enum class RESPONSE { EXPECTED,
 enum class VFO { A,                       ///< VFO A
                  B                        ///< VFO B
                };
+
+/// rig capabilities
+enum class RIG_CAPABILITIES { VFO_A = 0,          ///< has VFO A
+                              VFO_B,              ///< has VFO B
+                              RIT,                ///< has RIT
+                              XIT,                ///< has XIT
+                              EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
+                              SPLIT,              ///< can split; TX is VFO B; RX is VFO A
+                              REVERSE_SPLIT,      ///< can split; TX is VFO A; RX is VFO B
+                              LOCK_A,             ///< VFO A can be locked
+                              LOCK_B,             ///< VFO B can be locked
+                              SUB_RX,             ///< has a sub-receiver
+                              TEST,               ///< has a TEST mode that inhibits transmission
+                              RX_ANT,             ///< has a receive antenna
+                              AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
+                              AUDIO_BW,           ///< audio bandwidth can be controlled
+                              AUDIO_CENTRE        ///< centre frequency of audio can be controlled
+                            };
 
 enum class K3_COMMAND_MODE { NORMAL,
                              EXTENDED
@@ -162,6 +182,7 @@ enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (
                              };
 
 constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
+constexpr size_t K3_DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters in response to "DS;" request
 
 #if 0
 const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
@@ -264,6 +285,127 @@ using DRLOG_CLOCK = std::chrono::system_clock;
 // ---------------------------------------- rig_status -------------------------
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig
+
+// --------------------------------------- rig_capabilities ----------------------
+
+/*! \class  rig_capabilities
+    \brief  The capabilities of a rig
+
+    All of this will greatly benefit from reflection when that is available (which should be gcc 16)
+*/
+class rig_capabilities
+{ using INT_TYPE = uint32_t;    // 32 capabilities; could rework to use std::bitset if we ever need >64 capabilities
+
+protected:
+
+  INT_TYPE _caps { 0 };         // the capabilities as a mask
+
+public:
+
+  rig_capabilities(void) = default;
+
+  rig_capabilities(const std::vector<std::string>& path, const std::string& fn);
+
+  explicit rig_capabilities(const std::string& fn);
+
+//  template <typename T>
+//    requires std::is_same_v<T, RIG_CAPABILITIES>
+  explicit rig_capabilities(const std::set<RIG_CAPABILITIES>& s)
+    { FOR_ALL(s, [this] (const RIG_CAPABILITIES rc) { set(rc); }); }
+
+#define FNS(y)  \
+  inline bool y(void) const \
+    { return ( _caps bitand (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)) ); } \
+\
+  inline void y##_set(void) \
+    { _caps = _caps bitor (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)); } \
+\
+  inline void y##_clear(void) \
+    { _caps = _caps ^ (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)); }   // ^ is bitwise XOR
+
+    FNS(VFO_A);
+    FNS(VFO_B);
+    FNS(RIT);
+    FNS(XIT);
+    FNS(EQUAL_RIT_XIT_QRG);
+    FNS(SPLIT);
+    FNS(REVERSE_SPLIT);
+    FNS(LOCK_A);
+    FNS(LOCK_B);
+    FNS(SUB_RX);
+    FNS(TEST);
+    FNS(RX_ANT);
+    FNS(AUTO_NOTCH);
+    FNS(AUDIO_BW);
+    FNS(AUDIO_CENTRE);
+
+#undef FNS
+
+  void set(const RIG_CAPABILITIES rc);
+
+  void clear(const RIG_CAPABILITIES rc);
+
+  inline bool empty(void) const
+    { return !_caps; }
+
+  std::string to_string(void) const;
+};
+
+// --------------------------------------- polled_status ----------------------
+
+/*! \class  polled_status
+    \brief  The required status information for a rig, polled once per second in drlog.cpp
+*/
+
+class polled_status
+{
+protected:
+
+  frequency _f_a { };      ///< frequency of VFO A
+  frequency _f_b { };      ///< frequency of VFO B
+
+  bool      _rit_enabled { false };
+  bool      _xit_enabled { false };
+
+  int       _rit_offset { 0 };
+  int       _xit_offset { 0 };
+
+  bool      _split_enabled  { false };
+  bool      _is_locked      { false };
+  bool      _sub_rx_enabled { false };
+  bool      _test_mode      { false };
+  bool      _rx_ant         { false };
+
+  std::string _mode_str { "UNK"s };
+
+  MODE      _m;            ///< mode
+
+  bool _notch { false };
+
+  std::string _bw_str { };
+  std::string _centre_str { };
+
+public:
+
+  READ_AND_WRITE(f_a);
+  READ_AND_WRITE(f_b);
+  READ_AND_WRITE(m);
+  READ_AND_WRITE(notch);
+  READ_AND_WRITE(mode_str);
+  READ_AND_WRITE(rit_enabled);
+  READ_AND_WRITE(xit_enabled);
+  READ_AND_WRITE(rit_offset);
+  READ_AND_WRITE(xit_offset);
+  READ_AND_WRITE(split_enabled);
+  READ_AND_WRITE(bw_str);
+  READ_AND_WRITE(centre_str);
+  READ_AND_WRITE(is_locked);
+  READ_AND_WRITE(sub_rx_enabled);
+  READ_AND_WRITE(test_mode);
+  READ_AND_WRITE(rx_ant);
+
+  std::string to_string(void) const;
+};
 
 // --------------------------------------- k3_status ----------------------
 
@@ -412,11 +554,14 @@ protected:
   rig_model_t                             _model                       { RIG_MODEL_DUMMY };             ///< hamlib model
   hamlib_port_t                           _port;                                                        ///< hamlib port
   std::string                             _port_name                   { };                             ///< name of port
+  rig_capabilities                        _rcaps                       { };                             ///< rig capabiliies
   RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
   bool                                    _rig_connected               { false };                       ///< is a rig connected?
   pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
 
   mutable pt_mutex                        _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
+
+  polled_status                           _status                      { };                             ///< most recent result from a poll of the rig
 
 // protected pointers to functions
 
@@ -438,7 +583,7 @@ protected:
     \return     the file descriptor associated with the rig
 */
   inline int _file_descriptor(void) const
-    { return (_rigp->state.rigport.fd); }
+    { return (_rigp -> state.rigport.fd); }
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
@@ -458,13 +603,13 @@ protected:
     Does nothing if <i>f</i> is not within a ham band.
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
-  void _rig_frequency(const frequency, const VFO v);
+  virtual void _rig_frequency(const frequency, const VFO v);
 
 /*! \brief      Get the frequency of a VFO
     \param  v   VFO
     \return     frequency of v
 */
-  frequency _rig_frequency(const VFO v) const;
+  virtual frequency _rig_frequency(const VFO v) const;
 
 public:
 
@@ -474,10 +619,39 @@ public:
 // no copy constructor
   rig_interface(const rig_interface&) = delete;
 
+// destructor
+  inline virtual ~rig_interface(void)
+    { }
+
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
-  void prepare(const drlog_context& context);
+  virtual void prepare(const drlog_context& context);
+
+  SAFE_READ_AND_WRITE(rcaps, _rig);
+
+// note that this does not lock the object, because there really doesn't seem to be any need for that
+#define HAS_CAPABILITY(y) \
+  inline bool y(void) const \
+    { return _rcaps.y(); }
+
+  HAS_CAPABILITY(VFO_A);
+  HAS_CAPABILITY(VFO_B);
+  HAS_CAPABILITY(RIT);
+  HAS_CAPABILITY(XIT);
+  HAS_CAPABILITY(EQUAL_RIT_XIT_QRG);
+  HAS_CAPABILITY(SPLIT);
+  HAS_CAPABILITY(REVERSE_SPLIT);
+  HAS_CAPABILITY(LOCK_A);
+  HAS_CAPABILITY(LOCK_B);
+  HAS_CAPABILITY(SUB_RX);
+  HAS_CAPABILITY(TEST);
+  HAS_CAPABILITY(RX_ANT);
+  HAS_CAPABILITY(AUTO_NOTCH);
+  HAS_CAPABILITY(AUDIO_BW);
+  HAS_CAPABILITY(AUDIO_CENTRE);
+
+#undef HAS_CAPABILITY
 
 /*! \brief      Is a rig ready for use?
     \return     whether a rig is available
@@ -989,6 +1163,57 @@ WIDTH/HI         I/II        59
 
 */
 
+/// Poll the rig for the important status information
+  polled_status poll(void);
+
+};
+
+// ---------------------------------------- elecraft_k3_interface -------------------------
+
+/*! \class  elecraft_k3_interface
+    \brief  The interface to a K3 rig
+*/
+
+class elecraft_k3_interface : public rig_interface
+{
+protected:
+
+/*! \brief      Set frequency of a VFO
+    \param  f   new frequency
+    \param  v   VFO
+
+    Does nothing if <i>f</i> is not within a ham band.
+    Attempts to confirm that the frequency was actually set to <i>f</i>.
+*/
+  void _rig_frequency(const frequency f, const VFO v);
+
+/*! \brief      Get the frequency of a VFO
+    \param  v   VFO
+    \return     frequency of v
+*/
+  frequency _rig_frequency(const VFO v) const;
+
+public:
+
+  inline virtual ~elecraft_k3_interface(void)
+    { }
+
+/*! \brief              Prepare rig for use
+    \param  context     context for the contest
+*/
+  void prepare(const drlog_context& context);
+//  { rig_interface::prepare(context);
+//
+//    { using enum RIG_CAPABILITIES;
+//
+//      _rcaps = rig_capabilities(std::set<RIG_CAPABILITIES> { VFO_A, VFO_B,    RIT,    XIT,  EQUAL_RIT_XIT_QRG,
+//                                                             SPLIT, LOCK_A,   SUB_RX, TEST, RX_ANT,
+//                                                             NOTCH, AUDIO_BW, AUDIO_CENTRE
+//                                                           });
+//    }
+//
+//    k3_command_mode(K3_COMMAND_MODE::EXTENDED);
+//  }
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

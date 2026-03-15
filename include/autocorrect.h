@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 284 2026-02-23 20:25:50Z  $
+// $Id: autocorrect.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,8 +22,6 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-//using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
 
 // -----------  autocorrect_database  ----------------
 
@@ -216,7 +214,6 @@ public:
 
     Returns the same string for (call1, call2) and (call2, call1)
 */
-//inline std::string pair_index(const std::string& call1, const std::string& call2)
 inline std::string pair_index(const std::string_view call1, const std::string& call2)
   { return (call1 < call2) ? (call1 + '+' + call2) : (call2 + '+' + call1); }
 

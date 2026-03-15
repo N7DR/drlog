@@ -12,7 +12,7 @@
 #include <string>
 
 /*! \class  drlog_error
-  \brief  Trivial base class for drlog errors 
+    \brief  Trivial base class for drlog errors
 */
 class drlog_error : public std::exception
 {
@@ -24,10 +24,14 @@ protected:
 public:
 
 /*! \brief  Constructor from code and reason
-  \param  n Error code
-  \param  s Reason
+    \param  n Error code
+    \param  s Reason
 */
-  drlog_error(const int n, const std::string& s);
+//  drlog_error(const int n, const std::string& s);
+  inline drlog_error(const int n, const std::string_view s) :
+   _code(n),
+  _reason(s)
+  { }
 
 /*! \brief  Destructor
 */

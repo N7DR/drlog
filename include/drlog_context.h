@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 280 2025-12-05 16:40:32Z  $
+// $Id: drlog_context.h 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,6 +261,7 @@ protected:
   std::string                                  _rig1_port                               { "/dev/ttyS0"s };              ///< port over which to communicate with rig
   unsigned int                                 _rig1_stop_bits                          { 1 };                          ///< number of stop bits for rig
   std::string                                  _rig1_type                               { };                            ///< model name of rig
+  std::string                                  _rig_capabilities_filename               { };                            ///< name of file defining rig capabilities
   std::string                                  _russian_filename                        { "russian-data"s };            ///< name of russian location file
 
   std::set<BAND>                               _score_bands                             { };                                ///< which bands are going to be scored?
@@ -589,6 +590,7 @@ public:
   CONTEXTREAD(rig1_port);                        ///< port over which to communicate with rig
   CONTEXTREAD(rig1_stop_bits);                   ///< number of stop bits for rig
   CONTEXTREAD(rig1_type);                        ///< model name of rig
+  CONTEXTREAD(rig_capabilities_filename)         ///< name of file defining rig capabilities
   CONTEXTREAD(russian_filename);                 ///< filename of russian location file (default = "russian-data")
 
   CONTEXTREAD(score_bands);                      ///< which bands are going to be scored?

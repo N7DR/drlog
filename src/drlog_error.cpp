@@ -1,3 +1,4 @@
+#if 0
 #include "drlog_error.h"
 
 using namespace std;
@@ -11,3 +12,4 @@ drlog_error::drlog_error(const int n, const string& s) :
   _reason(s)
 {
 }
+#endif

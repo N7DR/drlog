@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 283 2026-01-18 16:41:22Z  $
+// $Id: bands-modes.h 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -218,9 +218,8 @@ public:
 
     Sets the frequency to the low edge of the band <i>b</i>
 */
-  inline explicit frequency(const enum BAND b) :
-    _hz { lower_edge(b) }
-  { }
+ inline explicit frequency(const enum BAND b)
+   { *this = lower_edge(b); }
 
 /// set frequency in Hz
   inline void hz(const decltype(_hz) n)
@@ -301,13 +300,17 @@ public:
 */
   BAND next_band_up(const std::set<BAND>& bands) const;
 
-// frequency + frequency
+/// frequency + frequency
   inline frequency operator+(const frequency f) const
     { return frequency(hz() + f.hz(), FREQUENCY_UNIT::HZ); }
 
-// frequency - frequency
+/// frequency - frequency
   inline frequency operator-(const frequency f) const      // param must be < value of this object
     { return frequency( ((hz() > f.hz()) ? (hz() - f.hz()) : 0), FREQUENCY_UNIT::HZ); }
+
+/// convert to bool
+  inline operator bool(void) const
+    { return (_hz != 0); }
 
 /// serialise
   template<typename Archive>
@@ -378,7 +381,6 @@ inline std::string to_string(const frequency f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it; see http://www.arrl.org/images/view//Charts/Band_Chart_Image_for_ARRL_Web.jpg
-//static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
 static std::flat_map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, 1'900_kHz },    // can't be const because operator[] is used
                                                          { BAND_80,  3'600_kHz },
                                                          { BAND_60,  5'500_kHz },

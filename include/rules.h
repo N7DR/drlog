@@ -1,4 +1,4 @@
-// $Id: rules.h 282 2025-12-15 20:55:01Z  $
+// $Id: rules.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,7 +122,7 @@ protected:
 
   std::string _name;                           ///< name of the exchange field
 
-  STRING_MAP<STRING_SET> _values;   ///< associate legal values with a canonical value
+  STRING_MAP<STRING_SET> _values;   ///< associate a set of legal values with a canonical value
 
 public:
 
@@ -141,7 +141,6 @@ public:
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
 */
-//  inline exchange_field_values(const std::string& nm, const STRING_MAP<STRING_SET>& mss) :
   inline exchange_field_values(const std::string_view nm, const STRING_MAP<STRING_SET>& mss) :
     _name(nm),
     _values(mss)
@@ -164,7 +163,6 @@ public:
 
     Also adds <i>cv</i> as a canonical value if it does not already exist
 */
-//  void add_value(const std::string_view cv, const std::string& v);
   void add_value(const std::string_view cv, const std::string_view v);
 
 /*! \brief          Add a possible value
@@ -181,7 +179,6 @@ public:
 
     Returns 0 if the canonical value does not exist
 */
-//  inline size_t n_values(const std::string& cv) const
   inline size_t n_values(const std::string_view cv) const
     { return MUMF_VALUE(_values, cv, &STRING_SET::size); }
 
@@ -238,7 +235,6 @@ template<typename STYPE>
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-//  inline bool is_legal_value(const std::string& value) const
   inline bool is_legal_value(const std::string_view value) const
     { return ANY_OF(canonical_values(), [value, this] (const auto& cv) { return is_legal_value(cv, value); }); }
 
@@ -316,6 +312,7 @@ public:
   inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to be valid
     { return (_name < ef.name()); }
 
+/// convert to human-readable string
   std::string to_string(void) const;
 
 /// serialise
@@ -690,7 +687,6 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-//  bool country_mults_used(const std::string_view cp = EMPTY_STR) const;
   bool country_mults_used(const std::string_view cp = { }) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?

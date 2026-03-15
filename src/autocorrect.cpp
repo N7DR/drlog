@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: autocorrect.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -292,10 +292,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
             hits[c] += n;
           else
           { if (!busts_db.is_known_non_bust(calls))    // if neither known bust nor known non-bust
-            { //const bool bust { is_bust_call(post_call, c) };
-
-//             if (bust)
-              if (is_bust_call(post_call, c))
+            { if (is_bust_call(post_call, c))
               { busts_db.known_bust(calls);
                 hits[c] += n;
               }
@@ -315,7 +312,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
   { alert("ERROR: hits is EMPTY");
 
     ost << "ERROR: hits is EMPTY" << endl;
-    ost << this->to_string() << endl;
+    ost << this -> to_string() << endl;
   }
   else
   { string best_match; // { hits.begin()->first };
@@ -352,7 +349,8 @@ string band_dynamic_autocorrect_database::to_string(const int n_spaces) const
   lock_guard<recursive_mutex> lg(_mtx);
 
   for (const auto& [t, fcn] : _data_map_map_map)
-  { rv += leading_spaces + ::to_string(t) + ":"s + EOL;
+  { //rv += leading_spaces + ::to_string(t) + ":"s + EOL;
+    rv += leading_spaces + ::to_string(t) + ':' + EOL;
 
     for (const auto& [f, cn] : fcn)
     { rv += leading_spaces + "  "s + ::to_string(f) + "  :"s + EOL;
@@ -447,7 +445,8 @@ string dynamic_autocorrect_database::to_string(void) const
   const set<BAND> bands { _known_bands() };
 
   for (const BAND b : bands)
-  { rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
+  { // rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
+    rv += "band: "s + BAND_NAME.at(b) + 'm' + EOL;
     rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "N_SPACES" means to prepend each line with N_SPACES spaces
   }
 

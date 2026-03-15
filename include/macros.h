@@ -1,4 +1,4 @@
-// $Id: macros.h 284 2026-02-23 20:25:50Z  $
+// $Id: macros.h 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -236,6 +236,7 @@ template <class T> concept is_string_view = std::is_same_v<base_type<T>, std::st
 template <class T> concept is_array              = is_stdarray<T>;
 template <class T> concept is_deque              = is_specialization<T, std::deque>;
 template <class T> concept is_flat_map           = is_specialization<T, std::flat_map>;
+template <class T> concept is_flat_set           = is_specialization<T, std::flat_set>;
 template <class T> concept is_list               = is_specialization<T, std::list>;
 template <class T> concept is_map                = is_specialization<T, std::map>;
 template <class T> concept is_multimap           = is_specialization<T, std::multimap>;
@@ -253,11 +254,12 @@ template <class T> concept is_mum    = is_map<T>      or is_unordered_map<T>;
 template <class T> concept is_anymap = is_map<T>      or is_flat_map<T>             or is_unordered_map<T>;
 template <class T> concept is_mmumm  = is_multimap<T> or is_unordered_multimap<T>;
 template <class T> concept is_sus    = is_set<T>      or is_unordered_set<T>;
+template <class T> concept is_anyset = is_set<T>      or is_flat_set<T>             or is_unordered_set<T>;
 template <class T> concept is_ssuss  = is_multiset<T> or is_unordered_multiset<T>;
 template <class T> concept is_ssv    = is_string<T>   or is_string_view<T>;
 
-// combinations of combinations
-template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
+//template <class T> concept ANYSET = is_sus<T> or is_ssuss<T>;
+template <class T> concept ANYSET = is_anyset<T>;
 
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
@@ -906,6 +908,22 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
+}
+
+/*! \brief      Is an object a key of a map, unordered map or flat map; if so return the value, otherwise return a provided default
+    \param  m   map, unordered map or flat map to be searched
+    \param  k   target key
+    \param  d   default
+    \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise the default
+
+    The difference between this and ">" is that this does not tell you whether the key was found
+*/
+template <class C, class K>
+  requires (is_anymap<C>) and (std::is_constructible_v<typename C::key_type, K>)
+typename C::mapped_type ANYMAP_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
+{ const auto cit { m.find(k) };
+
+  return ( (cit == m.cend()) ? d : cit -> second );
 }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the result of executing a member function on the value, otherwise return a provided default
@@ -1912,14 +1930,5 @@ std::optional<size_t> SPAN_IDX(const std::span<T> sp, const T& val)
 }
 #endif
 
-#if 0
-// illegal; operator= must be a member function
-template <typename T>
-void operator=(std::atomic<T>& v1, const std::atomic<T>& v2)
-{ const T tmp { v2 };
-
-  v1 = tmp;
-}
-#endif
 
 #endif    // MACROS_H

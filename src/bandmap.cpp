@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: bandmap.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1451,7 +1451,6 @@ window& bandmap::write_to_window(window& win)
   win.refresh();    // force the visual update ... do we really want this?
 
   _last_displayed_version = static_cast<int>(_version);    // operator= is deleted
-//  _time_last_displayed = NOW_TP();
 
   last_update_frequency = (my_marker_qrg + MY_MARKER_BIAS);    // store as actual QRG rather than the marker QRG
 

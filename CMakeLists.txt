@@ -30,6 +30,7 @@ set ( SOURCE_FILES
                    src/functions.cpp
                    src/fuzzy.cpp
                    src/grid.cpp
+                   src/hamlib.cpp
                    src/internals.cpp
                    src/keyboard.cpp
                    src/log.cpp
@@ -55,20 +56,13 @@ set ( SOURCE_FILES
                    src/x_error.cpp
     )
 
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra" )
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++23 -Wextra -pedantic" )
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26" )
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra" )
-#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic" )
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror" )
 
-#link_directories(/usr/local/programs/gcc-14.2.0/lib64)
 #link_directories(/usr/local/programs/gcc-15.1.0/lib64)
 
 add_executable(drlog ${SOURCE_FILES})
 
 target_include_directories (drlog PUBLIC include)
-#target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284)
 
 target_link_libraries (drlog X11 pthread boost_serialization asound ncursesw png hamlib panel ieee1284 stdc++exp)
 

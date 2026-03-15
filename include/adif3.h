@@ -1,4 +1,4 @@
-// $Id: adif3.h 284 2026-02-23 20:25:50Z  $
+// $Id: adif3.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -118,9 +118,13 @@ protected:
   static STRING_MAP<std::pair<int, int> /* minimum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
 // soi-disant "enumeration" values (actually typically strings)
-  const static UNORDERED_STRING_SET _ENUMERATION_BAND;     ///< band values
-  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, 
-                                                            std::string /* canonical prefix */, 
+//  const static UNORDERED_STRING_SET _ENUMERATION_BAND;     ///< band values
+  const static FLAT_STRING_SET _ENUMERATION_BAND;     ///< band values
+//  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */,
+//                                                            std::string /* canonical prefix */,
+//                                                            ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+  const static std::flat_map<int /* country number */, std::tuple<std::string /*country name */,
+                                                            std::string /* canonical prefix */,
                                                             ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
   static UNORDERED_STRING_SET _ENUMERATION_MODE;            ///< mode values
@@ -150,8 +154,6 @@ public:
 
     Returns empty string if either the name or the value is empty
 */
-//  inline std::string to_string(const std::string& append_str = "\n"s) const
-//    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
   inline std::string to_string(const std::string_view append_str = "\n"sv) const
     { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ':' + ::to_string(_value.length()) +'>' + _value + append_str) ); }
 
@@ -243,11 +245,11 @@ public:
     
 /// return whether a QSL card is known to have been received
   inline bool confirmed(void) const
-    { return (value("QSL_RCVD"s) == "Y"s); }
+    { return (value("QSL_RCVD"sv) == "Y"s); }
 
  /// return the ADIF3 value of the date [YYYYMMDD] (empty string if none)   
   inline std::string date(void) const
-    { return value("QSO_DATE"s); }
+    { return value("QSO_DATE"sv); }
 
 /// return the ADIF3 value of the date [YYYYMMDD] (zero if none)
   inline int idate(void) const                                  // YYYYMMDD
@@ -255,11 +257,11 @@ public:
 
 /// return the ADIF3 value of the band (empty string if none)
   inline std::string mode(void) const
-    { return value("MODE"s); }
+    { return value("MODE"sv); }
 
 /// return the ADIF3 value of the time (empty string if none)
   inline std::string time(void) const
-    { return value("TIME_ON"s); }
+    { return value("TIME_ON"sv); }
 
 /// return whether the record is empty    
   inline bool empty(void) const

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: cty_data.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -89,11 +89,23 @@ cty_record::cty_record(const string_view record)
   constexpr int CTY_PREFIX     { 7 };
   constexpr int CTY_ALTS       { 8 };
 
+/*
+  enum class CTY_FIELD { NAME = 0,
+                         CQZ,
+                         ITUZ,
+                         CONTINENT,
+                         LAT,
+                         LONG,
+                         UTC_OFFSET,
+                         PREFIX,
+                         ALTS
+                      };
+*/
+
 // map prefixes if they collide with a continent
   static const STRING_MAP<string> map_prefix { { "EU"s, "EW"s } };
 
   const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
-//  const vector<string_view> fields { remove_peripheral_spaces <std::string_view> (split_string <std::string_view> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
   { ost << " Error constructing cty_record; record = " << remove_chars(record, CRLF) << endl
@@ -108,25 +120,24 @@ cty_record::cty_record(const string_view record)
   _country_name = fields[CTY_NAME];
 
   auto_from_string(fields[CTY_CQZ], _cq_zone);
-  if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
+  if ( (_cq_zone < MIN_CQ_ZONE) or (_cq_zone > MAX_CQ_ZONE) )
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
   auto_from_string(fields[CTY_ITUZ], _itu_zone);
-  if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
+  if ( (_itu_zone < MIN_ITU_ZONE) or (_itu_zone > MAX_ITU_ZONE) )
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
   _continent = fields[CTY_CONTINENT];
 
-//  if ( !(CONTINENT_SET > _continent) )
   if ( !(CONTINENT_SET.contains(_continent)) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
   auto_from_string(fields[CTY_LAT], _latitude);
-  if (_latitude < -90 or _latitude > 90)
+  if ( (_latitude < -90) or (_latitude > 90) )
     throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[CTY_LAT] + " in record for "s + _country_name);
 
   auto_from_string(fields[CTY_LONG], _longitude);
-  if (_longitude < -180 or _longitude > 180)
+  if ( (_longitude < -180) or (_longitude > 180) )
     throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[CTY_LONG] + " in record for "s + _country_name);
   
 // map to (0, 360)
@@ -159,14 +170,13 @@ cty_record::cty_record(const string_view record)
   
 //  for (const auto& candidate : presumptive_prefixes)
   for (auto candidate : clean_split_string <string_view> (fields[CTY_ALTS]))
-  { //vector<string>* vsp { ( contains(candidate, '=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
-    vector<string>* vsp { (candidate.contains('=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
+  { vector<string>* vsp { (candidate.contains('=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
     (*vsp) += candidate;
   }
 
 // set the zone info for an aci 
-  auto set_zone_info = [](alternative_country_info& aci, const auto cq_info, const auto itu_info)
+  auto set_zone_info = [] (alternative_country_info& aci, const auto cq_info, const auto itu_info)
     { if (!aci.cq_zone())
         aci.cq_zone(cq_info);
     
@@ -723,7 +733,6 @@ location_info location_database::info(const string_view callpart) const
     return location_info { };
 
 // how many slashes are there?
-//  const vector<string> parts { split_string <std::string> (callsign, '/') };
   const vector<string_view> parts { split_string <std::string_view> (callsign, '/') };
 
   if (parts.size() > 3)
@@ -746,8 +755,7 @@ location_info location_database::info(const string_view callpart) const
     static const STRING_SET russian_long_prefixes { "RU4W"s };
 
     if (found_1 and !found_0)                               // second part had an exact match
-    { //if (!(russian_long_prefixes > parts[1]))              // the normal case
-      if (!russian_long_prefixes.contains(parts[1]))              // the normal case
+    { if (!russian_long_prefixes.contains(parts[1]))              // the normal case
         return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       else                                                  // the pathological case, a call like "K4/RU4W"
         return insert_best_info( info(parts[0]) );
@@ -770,7 +778,6 @@ location_info location_database::info(const string_view callpart) const
     if (!found_0 and !found_1)    // neither matched exactly; use the one with the longest match
     {
 // length of match for part 0
-//      auto match_info = [this] (const string& part)
       auto match_info = [this] (const string_view part)
         { unsigned int return_len { 0 };
 

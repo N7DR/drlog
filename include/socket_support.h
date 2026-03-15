@@ -1,4 +1,4 @@
-// $Id: socket_support.h 283 2026-01-18 16:41:22Z  $
+// $Id: socket_support.h 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -509,7 +509,6 @@ public:
     \param  pre   string to prepend
     \param  post  string to append
 */
-//  std::string to_string(void) const;
   std::string to_string(const std::string_view pre = { }, const std::string_view post = { }) const;
 
 /*! \brief  Enable reuse of the socket

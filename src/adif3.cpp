@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 284 2026-02-23 20:25:50Z  $
+// $Id: adif3.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -495,7 +495,7 @@ adif3_file::adif3_file(const string_view filename, const STRING_SET& accept_fiel
 adif3_file::adif3_file(const vector<string>& path, const string_view filename, const STRING_SET& accept_fields)
 { for (const auto& this_path : path)
   { try
-    { *this = adif3_file { this_path + "/"s + filename, accept_fields };
+    { *this = adif3_file { this_path + '/' + filename, accept_fields };
       return;
     }
 
@@ -517,7 +517,8 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string_view callsign, 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
   FOR_ALL(begin_it, end_it, [b, m, &rv] (const auto& map_entry)
-    { const adif3_record& rec { map_entry.second };
+    { //const adif3_record& rec { map_entry.second };
+      const auto& [_, rec] { map_entry };
 
       if ( (rec.band() == b) and (rec.mode() == m) )
         rv += rec;
@@ -547,13 +548,12 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string_view callsign) 
 size_t skip_adif3_header(const std::string_view str)
 { const auto posn_1 { case_insensitive_find(str, "<EOH>"sv) };
 
-  return ( (posn_1 == string::npos) ? 0 : (str.find('<', posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
+  return ( (posn_1 == string_view::npos) ? 0 : (str.find('<', posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
 }
 
 using enum ADIF3_DATA_TYPE;
 
 /// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
-//const UNORDERED_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
 const FLAT_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
 { { "ADDRESS"s,                   MULTILINE_STRING },
   { "AGE"s,                       NUMBER },
@@ -715,7 +715,8 @@ STRING_MAP<pair<int, int>> adif3_field::_positive_integer_range
 };
 
 /// band values
-const UNORDERED_STRING_SET adif3_field::_ENUMERATION_BAND
+//const UNORDERED_STRING_SET adif3_field::_ENUMERATION_BAND
+const FLAT_STRING_SET adif3_field::_ENUMERATION_BAND
 { "2190m"s, "630m"s, "560m"s, "160m"s, "80m"s,    "60m"s, "40m"s,   "30m"s,   "20m"s,  "17m"s,
   "15m"s,   "12m"s,  "10m"s,  "6m"s,   "4m"s,     "2m"s,  "1.25m"s, "70cm"s,  "33cm"s, "23cm"s,
   "13cm"s,  "9cm"s,  "6cm"s,  "3cm"s,  "1.25cm"s, "6mm"s, "4mm"s,   "2.5mm"s, "2mm"s,  "1mm"s
@@ -724,7 +725,8 @@ const UNORDERED_STRING_SET adif3_field::_ENUMERATION_BAND
 /// mapping between country code and country info
 using enum ADIF3_COUNTRY_STATUS;
 
-const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
+//const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
+const flat_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 { {  1  , { "CANADA"s,                                  "VE"s,    CURRENT } },
   {  2  , { "ABU AIL IS."s,                             ""s,      DELETED } },
   {  3  , { "AFGHANISTAN"s,                             "YA"s,    CURRENT } },

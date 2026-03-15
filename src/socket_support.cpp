@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 283 2026-01-18 16:41:22Z  $
+// $Id: socket_support.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1169,9 +1169,9 @@ sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
 
   sockaddr_in* sinp { (sockaddr_in*)(&rv) };    // static_cast results in compiler error
 
-  sinp->sin_family = AF_INET;
-  sinp->sin_port = htons(port_nr);
-  sinp->sin_addr.s_addr = ip_address;
+  sinp -> sin_family = AF_INET;
+  sinp -> sin_port = htons(port_nr);
+  sinp -> sin_addr.s_addr = ip_address;
 
   return rv;
 }

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 283 2026-01-18 16:41:22Z  $
+// $Id: drlog_context.cpp 287 2026-03-14 16:15:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -889,6 +889,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "REQUIRE DOT IN REPLACEMENT CALL"sv)
       _require_dot_in_replacement_call = is_true;
 
+// RIG CAPABILITIES FILE
+    if (LHS == "RIG CAPABILITIES FILE"sv)
+      _rig_capabilities_filename = rhs;
+
 // RIG 1 BAUD
     if ( (LHS == "RIG 1 BAUD"sv) or (LHS == "RIG BAUD"sv) )
       _rig1_baud = from_string<decltype(_rig1_baud)>(rhs);
@@ -898,11 +902,11 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _rig1_data_bits = from_string<decltype(_rig1_data_bits)>(rhs);
 
 // RIG 1 NAME
-    if ( (LHS == "RIG 1 NAME"sv) or (LHS == "RADIO ONE NAME"sv) )
+    if ( (LHS == "RIG 1 NAME"sv) or (LHS == "RADIO ONE NAME"sv) or (LHS == "RIG NAME"sv))
       _rig1_name = rhs;
 
 // RIG 1 PORT
-    if ( (LHS == "RIG 1 PORT"sv) or (LHS == "RADIO ONE CONTROL PORT"sv) )
+    if ( (LHS == "RIG 1 PORT"sv) or (LHS == "RADIO ONE CONTROL PORT"sv) or (LHS == "RIG PORT"sv))
       _rig1_port = rhs;
 
 // RIG 1 STOP BITS
@@ -910,7 +914,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _rig1_stop_bits = from_string<decltype(_rig1_stop_bits)>(rhs);
 
 // RIG 1 TYPE
-    if (LHS == "RIG 1 TYPE"sv)
+    if ( (LHS == "RIG 1 TYPE"sv) or (LHS == "RIG TYPE"sv) )
       _rig1_type = RHS;
 
 // RULES
@@ -935,11 +939,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SCORE MODES
     if (testline.starts_with("SCORE MODES"sv))
-    { //if (contains(testline, "CW"sv))
-      if (testline.contains("CW"sv))
+    { if (testline.contains("CW"sv))
         _score_modes += MODE_CW;
 
-//      if (contains(testline, "SSB"sv) or contains(testline, "PH"sv))
       if (testline.contains("SSB"sv) or testline.contains("PH"sv))
         _score_modes += MODE_SSB;
     }
@@ -1023,8 +1025,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // START BAND
     if (LHS == "START BAND"sv)
-    { //if (const auto opt { OPT_MUM_VALUE(BAND_FROM_NAME, RHS) }; opt)
-      if (const auto opt { OPT_ANYMAP_VALUE(BAND_FROM_NAME, RHS) }; opt)
+    { if (const auto opt { OPT_ANYMAP_VALUE(BAND_FROM_NAME, RHS) }; opt)
         _start_band = opt.value();
     }
 
@@ -1253,7 +1254,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (LHS == "CABRILLO QSO"sv)
     { _cabrillo_qso_template = RHS;
 
-//      if (contains(RHS, "TEMPLATE"sv))
       if (RHS.contains("TEMPLATE"sv))
       { try
         { _cabrillo_qso_template = cabrillo_qso_templates.at( clean_split_string <string> (RHS, ':')[1] );

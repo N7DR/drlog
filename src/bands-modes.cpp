@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 277 2025-10-19 15:57:37Z  $
+// $Id: bands-modes.cpp 286 2026-03-09 00:55:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,20 +87,21 @@ string frequency::display_string_MHz(void) const
 
 /// return lower band edge that corresponds to frequency
 frequency frequency::lower_band_edge(void) const
-{ const static map<BAND, frequency> edge_map { { BAND_160, 1.8_MHz },
-                                               { BAND_80,  3.5_MHz },
-                                               { BAND_60,  frequency(0.0) },  // dunno where band edge is;
-                                               { BAND_40,  7.0_MHz },
-                                               { BAND_30,  10.1_MHz },
-                                               { BAND_20,  14.0_MHz },
-                                               { BAND_17,  18.068_MHz },
-                                               { BAND_15,  21.0_MHz },
-                                               { BAND_12,  24.89_MHz },
-                                               { BAND_10,  28.0_MHz },
-                                               { BAND_6,   50.0_MHz }
-                                             };
+{ const static flat_map<BAND, frequency> edge_map { { BAND_160, 1.8_MHz },
+                                                    { BAND_80,  3.5_MHz },
+                                                    { BAND_60,  frequency(0.0) },  // dunno where band edge is;
+                                                    { BAND_40,  7.0_MHz },
+                                                    { BAND_30,  10.1_MHz },
+                                                    { BAND_20,  14.0_MHz },
+                                                    { BAND_17,  18.068_MHz },
+                                                    { BAND_15,  21.0_MHz },
+                                                    { BAND_12,  24.89_MHz },
+                                                    { BAND_10,  28.0_MHz },
+                                                    { BAND_6,   50.0_MHz }
+                                                  };
 
-  return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
+//  return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
+  return ANYMAP_VALUE(edge_map, BAND(*this), frequency { });
 }
 
 /// difference in two frequencies, always +ve
