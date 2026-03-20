@@ -30,11 +30,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-//extern const UNORDERED_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
 extern const FLAT_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
-//extern const UNORDERED_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
 extern const FLAT_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
-extern const std::unordered_set<KeySym>        keypad_numbers;         ///< the keypad numbers and their equivalents
+extern const std::unordered_set<KeySym>   keypad_numbers;         ///< the keypad numbers and their equivalents
 
 extern message_stream ost;                  ///< for debugging, info
 
@@ -284,6 +282,5 @@ public:
 
 inline std::string request_code_text(const int rc)
   { return MUM_VALUE(request_code_map, rc, "Unknown Request Code: "s + to_string(rc)); }
-
 
 # endif    // KEYBOARD_H

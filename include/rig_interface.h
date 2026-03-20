@@ -56,7 +56,7 @@ enum class VFO { A,                       ///< VFO A
                };
 
 /// rig capabilities
-enum class RIG_CAPABILITIES { VFO_A = 0,          ///< has VFO A
+enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A
                               VFO_B,              ///< has VFO B
                               RIT,                ///< has RIT
                               XIT,                ///< has XIT
@@ -299,11 +299,28 @@ class rig_capabilities
 
 protected:
 
-  INT_TYPE _caps { 0 };         // the capabilities as a mask
+  INT_TYPE _caps { 0 };         // the capabilities as a mask; default to no capabilities
 
 public:
 
   rig_capabilities(void) = default;
+
+/*  \brief          Construct from Hamlib capabilities
+    \param  hcaps   Hamlib capabilities
+
+
+    There are several useful capabilities that Hamlib appears not to support:
+      SPLIT
+      RX_ANT
+      TEST
+      AUDIO_BW
+      AUDIO_CENTRE
+
+    I could well be wrong about some or all of these, however. I find much of the hamlib code to be, at best arcane,
+    at worst incomprehensible to this non-C programmer. (The last C program I wrote would have been in 1988, immediately
+    before I acquired a copy of the cfront (v 1.2) C++-to-C translator.
+*/
+  explicit rig_capabilities(const hamlib_capabilities& hcaps);
 
   rig_capabilities(const std::vector<std::string>& path, const std::string& fn);
 
@@ -311,18 +328,18 @@ public:
 
 //  template <typename T>
 //    requires std::is_same_v<T, RIG_CAPABILITIES>
-  explicit rig_capabilities(const std::set<RIG_CAPABILITIES>& s)
-    { FOR_ALL(s, [this] (const RIG_CAPABILITIES rc) { set(rc); }); }
+  explicit rig_capabilities(const std::set<RIG_CAPABILITY>& s)
+    { FOR_ALL(s, [this] (const RIG_CAPABILITY rc) { set(rc); }); }
 
 #define FNS(y)  \
   inline bool y(void) const \
-    { return ( _caps bitand (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)) ); } \
+    { return ( _caps bitand (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITY::y)) ); } \
 \
   inline void y##_set(void) \
-    { _caps = _caps bitor (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)); } \
+    { _caps = _caps bitor (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITY::y)); } \
 \
   inline void y##_clear(void) \
-    { _caps = _caps ^ (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITIES::y)); }   // ^ is bitwise XOR
+    { _caps = _caps ^ (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITY::y)); }   // ^ is bitwise XOR
 
     FNS(VFO_A);
     FNS(VFO_B);
@@ -342,9 +359,12 @@ public:
 
 #undef FNS
 
-  void set(const RIG_CAPABILITIES rc);
+/*  \brief      Set a single capability
+    \param  rc  capability to set
+*/
+  void set(const RIG_CAPABILITY rc);
 
-  void clear(const RIG_CAPABILITIES rc);
+  void clear(const RIG_CAPABILITY rc);
 
   inline bool empty(void) const
     { return !_caps; }
@@ -547,6 +567,7 @@ class rig_interface
 {
 protected:
 
+//  bool                                    _force_hamlib                { false };                       ///< force use of hamlib even if something better is available
   hamlib_capabilities                     _hcaps                       { };                             ///< capabilities from hamlib (which may or may not be populated and used)
   bool                                    _instrumented                { false };                       ///< whether to record all exchanges with rig
   frequency                               _last_commanded_frequency    { 14_MHz };                      ///< last frequency to which the rig was commanded to QSY
@@ -630,6 +651,8 @@ public:
 */
   virtual void prepare(const drlog_context& context);
 
+//  SAFE_READ_AND_WRITE(force_hamlib, _rig);
+  SAFE_READ_AND_WRITE(hcaps, _rig);
   SAFE_READ_AND_WRITE(rcaps, _rig);
 
 // note that this does not lock the object, because there really doesn't seem to be any need for that
@@ -757,80 +780,85 @@ public:
             (With the caveat that, because there is no proper transactional processing of K3 commands, any or all of
             this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
 */
-  void split_enable(void) const;
+  virtual void split_enable(void) const;
 
 /// disable split operation; see caveats under split_enable()
-  void split_disable(void) const;
+  virtual void split_disable(void) const;
 
 /*! \brief      Is split enabled?
     \return     whether split is enabled on the rig
 
     This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-  bool split_enabled(void) const;
+  virtual bool split_enabled(void) const;
 
 /// get mode
-  MODE rig_mode(void) const;
+  virtual MODE rig_mode(void) const;
 
 /*! \brief      Set mode
     \param  m   new mode
 
     If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
-  void rig_mode(const MODE m);
+  virtual void rig_mode(const MODE m);
 
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
-  bool test(void) const;
+  virtual bool test(void) const;
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
 
     This works only with the K3.
 */
-  void test(const bool) const;
+  virtual void test(const bool) const;
 
 /*! \brief      Set rit offset (in Hz)
     \param  hz  offset in Hz
 */
-  void rit(const int hz) const;
+  virtual void rit(const int hz) const;
 
 /// get rit offset (in Hz)
-  int rit(void) const;
+  virtual int rit(void) const;
 
 /*! \brief  Turn rit on
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  void rit_enable(void) const;
+  inline virtual void rit_enable(void) const
+    { rit(1); }                      // 1 Hz offset, since a zero offset would disable RIT in hamlib [!]
 
 /*! \brief  Turn rit off
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  void rit_disable(void) const;
+  inline virtual void rit_disable(void) const
+    { rit(0); }                     // 0 Hz offset, which hamlib regards as disabling RIT [!]
 
 /*! \brief  Turn rit off
 
     This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
-  inline void disable_rit(void) const
+  inline virtual void disable_rit(void) const
     { rit_disable(); }
 
 /// turn rit on
-  inline void enable_rit(void) const
+  inline virtual void enable_rit(void) const
     { rit_enable(); }
 
 /// is rit enabled?
-  bool rit_enabled(void) const;
+//  virtual bool rit_enabled(void) const;
+  /// is rit enabled? -- hamlib equates this to non-zero RIT offset
+  inline virtual bool rit_enabled(void) const
+    { return ( rit() != 0 ); }
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
 
     On the K3 this also sets the RIT (!)
 */
-  void xit(const int hz) const;
+  virtual void xit(const int hz) const;
 
 /// get xit offset (in Hz)
   int xit(void) const;
@@ -839,13 +867,15 @@ public:
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  void xit_enable(void) const;
+  inline virtual void xit_enable(void) const
+    { xit(1); }                 // 1 Hz offset
 
 /*! \brief  Turn xit off
 
     This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
-  void xit_disable(void) const;
+  inline virtual void xit_disable(void) const
+    { xit(0); }
 
 /*! \brief  Turn xit off
 
@@ -854,8 +884,9 @@ public:
   inline void disable_xit(void) const
     { xit_disable(); }
 
-/// is xit enabled?
-  bool xit_enabled(void) const;
+/// is xit enabled? -- hamlib equates this to non-zero XIT offset
+  inline virtual bool xit_enabled(void) const
+    { return ( xit() != 0 ); }
 
 /*! \brief  Turn xit on
 
@@ -868,21 +899,21 @@ public:
   rig_status status(void);                              // most recent rig status
 
 /// is the VFO locked?
-  bool is_locked(void) const;
+  virtual bool is_locked(void) const;
 
 /// lock the VFO
-  void lock(void) const;
+  virtual void lock(void) const;
 
 /// unlock the VFO
-  void unlock(void) const;
+  virtual void unlock(void) const;
 
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
-  void sub_receiver(const bool torf) const;
+  virtual void sub_receiver(const bool torf) const;
 
 /// is sub-receiver on?
-  bool sub_receiver(void) const;
+  virtual bool sub_receiver(void) const;
 
 /// is sub-receiver on?
   inline bool sub_receiver_enabled(void) const
@@ -905,18 +936,19 @@ public:
     { sub_receiver_toggle(); }
 
 /// get the bandwidth in Hz
-  int bandwidth(void) const;
+  virtual int bandwidth(void) const;
 
 /// get the bandwidth as a string, in Hz
-  std::string bandwidth_str(void) const;
+  virtual inline std::string bandwidth_str(void) const
+   { return ::to_string(bandwidth()); }
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
-  void keyer_speed(const int wpm) const;
+  virtual void keyer_speed(const int wpm) const;
 
 /// get the keyer speed in WPM
-  int keyer_speed(void) const;
+  virtual int keyer_speed(void) const;
 
 // explicit K3 commands
 /*! \brief                  Send a raw command to the rig
@@ -966,7 +998,7 @@ public:
     With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
     (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
 */
-  bool is_transmitting(void) const;
+  virtual bool is_transmitting(void) const;
 
 /// pause until the rig is no longer transmitting
   void wait_until_not_busy(void) const;
@@ -984,7 +1016,7 @@ public:
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
 */
-  void bandwidth_a(const unsigned int hz) const;
+  virtual void bandwidth_a(const unsigned int hz) const;
 
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
@@ -995,24 +1027,24 @@ public:
 /*! \brief      Set the bandwidth of VFO B
     \param  hz  desired bandwidth, in Hz
 */
-  void bandwidth_b(const unsigned int hz) const;
+  virtual void bandwidth_b(const unsigned int hz) const;
 
 /// set RIT, split, sub-rx off
-  void base_state(void) const;
+  virtual void base_state(void) const;
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
 
     Works only with K3
 */
-  bool rx_ant(void) const;
+  virtual bool rx_ant(void) const;
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
 
     Works only with K3
 */
-  void rx_ant(const bool torf) const;
+  virtual void rx_ant(const bool torf) const;
 
 /// toggle whether the RX antenna is in use
   inline void rx_ant_toggle(void) const
@@ -1027,21 +1059,21 @@ public:
 
     Works only with K3
 */
-  std::string centre_frequency_str(void) const;
+  virtual std::string centre_frequency_str(void) const;
 
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
 
     Works only with K3
 */
-  unsigned int centre_frequency(void) const;
+  virtual unsigned int centre_frequency(void) const;
 
 /*! \brief      Set audio centre frequency
     \param  fc  the audio centre frequency, in Hz
 
     Works only with K3
 */
-  void centre_frequency(const unsigned int fc) const;
+  virtual void centre_frequency(const unsigned int fc) const;
 
 /*! \brief              Is notch enabled?
     \param  ds_result   previously-obtained result of a DS command, or empty string
@@ -1049,41 +1081,41 @@ public:
 
     Works only with K3
 */
-  bool notch_enabled(const std::string_view ds_result = std::string { }) const;
+  virtual bool notch_enabled(const std::string_view ds_result = std::string { }) const;
 
 /*! \brief              Toggle the notch status
 
     Works only with K3
 */
-  void toggle_notch_status(void) const;
+  virtual void toggle_notch_status(void) const;
 
 /*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
     \param  cm  command mode
 
     Works only with K3
 */
-  void k3_command_mode(const K3_COMMAND_MODE cm);
+//  void k3_command_mode(const K3_COMMAND_MODE cm);
 
 /*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
     \return     the K3 command mode
 
     Works only with K3
 */
-  K3_COMMAND_MODE k3_command_mode(void) const;
+//  K3_COMMAND_MODE k3_command_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
 
     Works only with K3
 */
-  void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
+//  void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
 
 /*! \brief          Emulate double-tapping a K3 button
     \param  button  the K3 button to tap
 
     Works only with K3
 */
-  void k3_double_tap(const K3_BUTTON_TAP button) const;
+//  void k3_double_tap(const K3_BUTTON_TAP button) const;
 
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
@@ -1172,7 +1204,7 @@ WIDTH/HI         I/II        59
 */
 
 /// Poll the rig for the important status information
-  polled_status poll(void);
+  virtual polled_status poll(void);
 
 };
 
@@ -1203,25 +1235,243 @@ protected:
 
 public:
 
-  inline virtual ~elecraft_k3_interface(void)
+/// destructor
+  inline ~elecraft_k3_interface(void)
     { }
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
   void prepare(const drlog_context& context);
-//  { rig_interface::prepare(context);
-//
-//    { using enum RIG_CAPABILITIES;
-//
-//      _rcaps = rig_capabilities(std::set<RIG_CAPABILITIES> { VFO_A, VFO_B,    RIT,    XIT,  EQUAL_RIT_XIT_QRG,
-//                                                             SPLIT, LOCK_A,   SUB_RX, TEST, RX_ANT,
-//                                                             NOTCH, AUDIO_BW, AUDIO_CENTRE
-//                                                           });
-//    }
-//
-//    k3_command_mode(K3_COMMAND_MODE::EXTENDED);
-//  }
+
+/*! \brief      Set mode
+    \param  m   new mode
+
+    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
+*/
+  void rig_mode(const MODE m);
+
+/*! \brief  Enable split operation
+
+            hamlib has no good definition of exactly what split operation really means, and, hence,
+            has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
+            to do for various values of the permitted parameters. There is general agreement on the reflector
+            that the call contained herein *should* do the "right" thing -- but since there's no precise definition
+            of any of this, not all backends are guaranteed to behave the same.
+
+            Hence we use the explicit K3 command, since at least we know what that is supposed to do on that rig.
+            (With the caveat that, because there is no proper transactional processing of K3 commands, any or all of
+            this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
+*/
+  void split_enable(void) const;
+
+/// disable split operation; see caveats under split_enable()
+  void split_disable(void) const;
+
+/*! \brief      Is split enabled?
+    \return     whether split is enabled on the rig
+
+    This interrogates the rig; it neither reads not writes the variable rig_is_split
+*/
+  bool split_enabled(void) const;
+
+/*! \brief      Set rit offset (in Hz)
+    \param  hz  offset in Hz
+*/
+  void rit(const int hz) const;
+
+/// get rit offset (in Hz)
+  int rit(void) const;
+
+/*! \brief  Turn rit on
+
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
+*/
+  inline void rit_enable(void) const
+    { raw_command("RT1;"sv); }          // proper enable for the K3
+
+/*! \brief  Turn rit off
+
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
+*/
+  inline void rit_disable(void) const
+    { raw_command("RT0;"sv); }      // proper disable for the K3
+
+/// is rit enabled?
+  bool rit_enabled(void) const;
+
+/*! \brief  Turn xit on
+
+    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
+*/
+  inline void xit_enable(void) const
+    { raw_command("XT1;"sv); }
+
+/*! \brief  Turn xit off
+
+    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
+*/
+  inline void xit_disable(void) const
+    { raw_command("XT0;"sv); }
+
+/// is xit enabled?
+  bool xit_enabled(void) const;
+
+/*! \brief      Set xit offset (in Hz)
+    \param  hz  offset in Hz
+
+    On the K3 this also sets the RIT (!)
+*/
+  void xit(const int hz) const;
+
+/// lock the VFO
+  inline void lock(void) const
+  { SAFELOCK(_rig);
+
+    raw_command("LK1;"s, RESPONSE::NOT_EXPECTED);
+  }
+
+/// unlock the VFO
+  inline void unlock(void) const
+  { SAFELOCK(_rig);
+
+    raw_command("LK0;"s, RESPONSE::NOT_EXPECTED);
+  }
+
+/*! \brief      Turn sub-receiver on/off
+    \param  b   turn sub-receiver on if TRUE, otherwise turn off
+*/
+  inline void sub_receiver(const bool torf) const
+    { raw_command( (torf ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED); }
+
+/// is sub-receiver on?
+  bool sub_receiver(void) const;
+
+/*! \brief          Set the keyer speed
+    \param  wpm     keyer speed in WPM
+*/
+  void keyer_speed(const int wpm) const;
+
+/// get the keyer speed in WPM
+  int keyer_speed(void) const;
+
+/// lock the VFO
+  bool is_locked(void) const;
+
+/// get the bandwidth in Hz
+  int bandwidth(void) const;
+
+/*! \brief Is the rig transmitting?
+
+    With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
+    (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
+*/
+  bool is_transmitting(void) const;
+
+/*! \brief      Is the rig in TEST mode?
+    \return     whether the rig is currently in TEST mode
+*/
+  bool test(void) const;
+
+/*! \brief      Explicitly put the rig into or out of TEST mode
+    \param  b   whether to enter TEST mode
+
+    This works only with the K3.
+*/
+  void test(const bool) const;
+
+/*! \brief      Set the bandwidth of VFO A
+    \param  hz  desired bandwidth, in Hz
+*/
+  void bandwidth_a(const unsigned int hz) const;
+
+/*! \brief      Set the bandwidth of VFO B
+    \param  hz  desired bandwidth, in Hz
+*/
+  void bandwidth_b(const unsigned int hz) const;
+
+/*! \brief      Get audio centre frequency, in Hz, as a printable string
+    \return     The audio centre frequency, in Hz, as a printable string
+
+    Works only with K3
+*/
+  std::string centre_frequency_str(void) const;
+
+/*! \brief      Get audio centre frequency, in Hz
+    \return     The audio centre frequency, in Hz
+
+    Works only with K3
+*/
+  unsigned int centre_frequency(void) const;
+
+/*! \brief      Set audio centre frequency
+    \param  fc  the audio centre frequency, in Hz
+
+    Works only with K3
+*/
+  void centre_frequency(const unsigned int fc) const;
+
+/*! \brief      Is an RX antenna in use?
+    \return     whether an RX antenna is in use
+
+    Works only with K3
+*/
+  bool rx_ant(void) const;
+
+/*! \brief          Control use of the RX antenna
+    \param  torf    whether to use the RX antenna
+
+    Works only with K3
+*/
+  void rx_ant(const bool torf) const;
+
+/*! \brief              Is notch enabled?
+    \param  ds_result   previously-obtained result of a DS command, or empty string
+    \return             whether notch is currently enabled
+
+    Works only with K3
+*/
+  bool notch_enabled(const std::string_view ds_result = std::string { }) const;
+
+/*! \brief              Toggle the notch status
+
+    Works only with K3
+*/
+  void toggle_notch_status(void) const;
+
+/*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
+    \param  cm  command mode
+
+    Works only with K3
+*/
+  void k3_command_mode(const K3_COMMAND_MODE cm);
+
+/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
+    \return     the K3 command mode
+
+    Works only with K3
+*/
+  K3_COMMAND_MODE k3_command_mode(void) const;
+
+/*! \brief          Emulate the tapping or holding of a K3 button
+    \param  button  the K3 button to tap or hold
+
+    Works only with K3
+*/
+  void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
+
+/*! \brief          Emulate double-tapping a K3 button
+    \param  button  the K3 button to tap
+
+    Works only with K3
+*/
+  void k3_double_tap(const K3_BUTTON_TAP button) const;
+
+/// set RIT, split, sub-rx off
+  void base_state(void) const;
+
+/// Poll the rig for the important status information
+  polled_status poll(void);
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

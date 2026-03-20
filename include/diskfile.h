@@ -148,8 +148,9 @@ bool directory_exists(const std::string_view dirname, const enum LINKS link, con
     \param  fsid        limit filesystems to this fsid, if not MAX_FSID
     \return             whether <i>dirname</i> exists
 */
-inline bool is_directory(const std::string& dirname, const enum LINKS link, const FSID fsid = MAX_FSID)
-  { return directory_exists(dirname, link, fsid); }
+//inline bool is_directory(const std::string& dirname, const enum LINKS link, const FSID fsid = MAX_FSID)
+inline bool is_directory(const std::string_view dirname, const enum LINKS link, const FSID fsid = MAX_FSID)
+{ return directory_exists(dirname, link, fsid); }
 
 /*! \brief            Create a directory if it does not already exist
     \param  dirname   name of the directory to create
@@ -220,7 +221,8 @@ std::vector<std::string> subdirectories_in_hierarchy(const std::string_view dirn
     Returns empty vector if the directory <i>dirname</i> does not exist
     Returns only regular files, in alphabetical order
 */
-std::vector<std::string> files_in_directory(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+//std::vector<std::string> files_in_directory(const std::string& dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
+std::vector<std::string> files_in_directory(const std::string_view dirname, const enum LINKS links, const FSID fsid = MAX_FSID);
 
 /*! \brief              What files does a vector of directories contain?
     \param  dirnames    names of the directories to examine
@@ -239,7 +241,8 @@ std::vector<std::string> files_in_directories(const std::vector<std::string>& di
     Returns empty vector if the directory <i>dirname</i> does not exist
     Returned vector is unsorted.
 */
-std::vector<std::string> files_in_hierarchy(const std::string& rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
+//std::vector<std::string> files_in_hierarchy(const std::string& rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
+std::vector<std::string> files_in_hierarchy(const std::string_view rootname, const enum LINKS links, const FSID fsid = MAX_FSID);
 
 /*! \brief              Truncate a file
     \param  filename    name of file to truncate
@@ -248,23 +251,24 @@ std::vector<std::string> files_in_hierarchy(const std::string& rootname, const e
 */
 inline void file_truncate(const std::string_view filename)
   { std::ofstream(std::string { filename }, std::ios_base::trunc); }
-//inline void file_truncate(const std::string& filename)
-//  { std::ofstream(filename, std::ios_base::trunc); }
 
 /*! \brief              atime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t atime(const std::string& filename);
+//time_t atime(const std::string& filename);
+time_t atime(const std::string_view filename);
 
 /*! \brief              ctime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t ctime(const std::string& filename);
+//time_t ctime(const std::string& filename);
+time_t ctime(const std::string_view filename);
 
 /*! \brief              mtime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t mtime(const std::string& filename);
+//time_t mtime(const std::string& filename);
+time_t mtime(const std::string_view filename);
 
 /*! \brief              base name of a file
     \param  filename    name of file or directory
@@ -272,7 +276,8 @@ time_t mtime(const std::string& filename);
 
     Returns empty string if <i>filename</i> ends in a "/"
 */
-std::string base_name(const std::string& filename);
+//std::string base_name(const std::string& filename);
+std::string base_name(const std::string_view filename);
 
 /*! \brief              base name of a file
     \param  filename    name of file or directory
@@ -280,7 +285,8 @@ std::string base_name(const std::string& filename);
 
     Returns empty string if <i>filename</i> ends in a "/"
 */
-inline std::string basename(const std::string& filename)
+//inline std::string basename(const std::string& filename)
+inline std::string basename(const std::string_view filename)
   { return base_name(filename); }
 
 /*! \brief      Base name of files in a container
@@ -300,12 +306,14 @@ T base_name(const T& t)
     \param  name    name of file
     \return         whether <i>name</i> is a link
 */
-bool is_link(const std::string& name);
+//bool is_link(const std::string& name);
+bool is_link(const std::string_view name);
 
-/*! \brief          write the status of a file to certr
+/*! \brief          write the status of a file to cerr
     \param  name    name of file
 */
-void file_status(const std::string& name);
+//void file_status(const std::string& name);
+void file_status(const std::string_view name);
 
 /*! \brief              Does a directory contain one or more subdirectories?
     \param  dirname     name of directory
@@ -314,21 +322,24 @@ void file_status(const std::string& name);
 
     Returns <i>false</i> if <i>dirname</i> is not a directory
 */
-bool has_subdirectory(const std::string& dirname, const enum LINKS links);
+//bool has_subdirectory(const std::string& dirname, const enum LINKS links);
+bool has_subdirectory(const std::string_view dirname, const enum LINKS links);
 
 /*! \brief              Is a directory a direct ancestor of a particular directory?
     \param  dir1        first directory
     \param  dir2        second directory
     \return             whether <i>dir2</i> is a direct ancestor of <i>dir1</i>
 */
-bool is_ancestor_directory_of_directory(const std::string& dir1, const std::string& dir2);
+//bool is_ancestor_directory_of_directory(const std::string& dir1, const std::string& dir2);
+bool is_ancestor_directory_of_directory(const std::string_view dir1, const std::string_view dir2);
 
 /*! \brief              Is a directory a direct descendent of a particular directory?
     \param  dir1        first directory
     \param  dir2        second directory
     \return             whether <i>dir2</i> is a direct descendent of <i>dir1</i>
 */
-inline bool is_descendent_directory_of_directory(const std::string& dir1, const std::string& dir2)
+//inline bool is_descendent_directory_of_directory(const std::string& dir1, const std::string& dir2)
+inline bool is_descendent_directory_of_directory(const std::string_view dir1, const std::string_view dir2)
   { return is_ancestor_directory_of_directory(dir2, dir1); }
 
 /*! \brief              Get the filesystem ID of a file or directory
@@ -337,7 +348,8 @@ inline bool is_descendent_directory_of_directory(const std::string& dir1, const 
 
     https://stackoverflow.com/questions/59687286/how-to-check-if-a-directory-is-on-a-local-disk-or-a-remote-disk-in-c-or-fortran
 */
-FSID filesystem_id(const std::string& filename);
+//FSID filesystem_id(const std::string& filename);
+FSID filesystem_id(const std::string_view filename);
 
 /*! \brief              Find the location of a file in a path
     \param  path        directories in which to look (with or without trailing "/"), in order*

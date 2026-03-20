@@ -210,7 +210,8 @@ vector<string> directory_contents(const string_view dirname, const FSID fsid)
     Returns empty vector if the directory <i>dirname</i> does not exist
     Returns only regular files
 */
-vector<string> files_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
+//vector<string> files_in_directory(const string& dirname, const enum LINKS links, const FSID fsid)
+vector<string> files_in_directory(const string_view dirname, const enum LINKS links, const FSID fsid)
 { vector<string> rv { };
 
   if (!directory_exists(dirname, LINKS::INCLUDE, fsid))   // linked directory is allowed for base
@@ -363,7 +364,8 @@ vector<string> subdirectories_in_hierarchy(const string_view dirname, const enum
     Returns empty vector if the directory <i>dirname</i> does not exist
     Returned vector is unsorted.
 */
-vector<string> files_in_hierarchy(const string& rootname, const enum LINKS links, const FSID fsid)
+//vector<string> files_in_hierarchy(const string& rootname, const enum LINKS links, const FSID fsid)
+vector<string> files_in_hierarchy(const string_view rootname, const enum LINKS links, const FSID fsid)
 {
 // build a container of all the directory names (except . and ..) in the tree
   const vector<string> vec { directories_in_hierarchy(rootname, links, fsid) };       // includes root
@@ -380,10 +382,12 @@ vector<string> files_in_hierarchy(const string& rootname, const enum LINKS links
 /*! \brief              mtime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t atime(const string& filename)
+//time_t atime(const string& filename)
+time_t atime(const string_view filename)
 { struct stat stat_buffer;
 
-  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+//  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+  if ( stat(string { filename }.c_str(), &stat_buffer) )
     throw diskfile_exception("Error finding atime for: "s + filename);
 
   return static_cast<time_t>(stat_buffer.st_atime);
@@ -392,10 +396,12 @@ time_t atime(const string& filename)
 /*! \brief              ctime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t ctime(const string& filename)
+//time_t ctime(const string& filename)
+time_t ctime(const string_view filename)
 { struct stat stat_buffer;
 
-  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+//  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+  if ( stat(string { filename }.c_str(), &stat_buffer) )
     throw diskfile_exception("Error finding ctime for: "s + filename);
 
   return static_cast<time_t>(stat_buffer.st_ctime);
@@ -404,10 +410,12 @@ time_t ctime(const string& filename)
 /*! \brief              mtime associated with a file or directory
     \param  filename    name of file or directory
 */
-time_t mtime(const string& filename)
+//time_t mtime(const string& filename)
+time_t mtime(const string_view filename)
 { struct stat stat_buffer;
 
-  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+//  if (const int status { stat((filename).c_str(), &stat_buffer) }; status)
+  if ( stat(string { filename }.c_str(), &stat_buffer) )
     throw diskfile_exception("Error finding mtime for: "s + filename);
 
   return static_cast<time_t>(stat_buffer.st_mtime);
@@ -419,8 +427,9 @@ time_t mtime(const string& filename)
 
     Returns empty string if <i>filename</i> ends in a "/"
 */
-string base_name(const string& filename)
-{ string rv;
+//string base_name(const string& filename)
+string base_name(const string_view filename)
+{ string rv { };
 
   if (filename.empty())
     return rv;
@@ -429,23 +438,25 @@ string base_name(const string& filename)
   if (filename[filename.length() - 1] == '/')
     return rv;
 
-  const size_t posn { filename.find_last_of("/"s) };
+//  const size_t posn { filename.find_last_of("/"s) };
+  const size_t posn { filename.find_last_of('/') };
 
   if (posn == string::npos)     // no "/"
-    return filename;
+    return string { filename };
 
-  return filename.substr(posn + 1);
+  return string { filename.substr(posn + 1) };
 }
 
 /*! \brief          is a file a link?
     \param  name    name of file
     \return         whether <i>name</i> is a link
 */
-bool is_link(const string& name)
+//bool is_link(const string& name)
+bool is_link(const string_view name)
 { struct stat stat_buffer;
 
-  if (const int status { lstat(name.c_str(), &stat_buffer) }; status)
-  { cerr << "stat status is non-zero for: " << name << endl;
+  if ( lstat( string { name }.c_str(), &stat_buffer ) )
+  { cerr << "lstat returned error for: " << name << endl;
     return false;
   }
 
@@ -455,26 +466,27 @@ bool is_link(const string& name)
   return rv;
 }
 
-/*! \brief          write the status of a file to certr
+/*! \brief          write the status of a file to cerr
     \param  name    name of file
 */
-void file_status(const string& name)
+//void file_status(const string& name)
+void file_status(const string_view name)
 { struct stat stat_buffer;
 
-  if (const int status { lstat(name.c_str(), &stat_buffer) }; status)
+  if ( lstat( string { name }.c_str(), &stat_buffer) )
     cerr << "ERROR running lstat on " << name << endl;
-    else
-    { const mode_t& entry_mode { stat_buffer.st_mode };
+  else
+  { const mode_t& entry_mode { stat_buffer.st_mode };
 
-  cerr << "ENTRY: " << name << endl
-  << "  " << (S_ISREG(entry_mode) ? "regular file" : "NOT regular file") << endl
-  << "  " << (S_ISDIR(entry_mode) ? "directory file" : "NOT directory file") << endl
-  << "  " << (S_ISCHR(entry_mode) ? "character device" : "NOT character device") << endl
-  << "  " << (S_ISBLK(entry_mode) ? "block device" : "NOT block device") << endl
-  << "  " << (S_ISFIFO(entry_mode) ? "FIFO" : "NOT FIFO") << endl
-  << "  " << (S_ISLNK(entry_mode) ? "symbolic link" : "NOT symbolic link") << endl
-  << "  " << (S_ISSOCK(entry_mode) ? "socket" : "NOT socket") << endl;
-    }
+    cerr << "ENTRY: " << name << endl
+         << "  " << (S_ISREG(entry_mode)  ? "regular file"     : "NOT regular file")     << endl
+         << "  " << (S_ISDIR(entry_mode)  ? "directory file"   : "NOT directory file")   << endl
+         << "  " << (S_ISCHR(entry_mode)  ? "character device" : "NOT character device") << endl
+         << "  " << (S_ISBLK(entry_mode)  ? "block device"     : "NOT block device")     << endl
+         << "  " << (S_ISFIFO(entry_mode) ? "FIFO"             : "NOT FIFO")             << endl
+         << "  " << (S_ISLNK(entry_mode)  ? "symbolic link"    : "NOT symbolic link")    << endl
+         << "  " << (S_ISSOCK(entry_mode) ? "socket"           : "NOT socket")           << endl;
+  }
 }
 
 /*! \brief              directory in which a file is located
@@ -503,11 +515,12 @@ string directory_name(const string_view file_name)
 
     Returns <i>false</i> if <i>dirname</i> is not a directory
 */
-bool has_subdirectory(const std::string& dirname, const enum LINKS links)
+//bool has_subdirectory(const std::string& dirname, const enum LINKS links)
+bool has_subdirectory(const std::string_view dirname, const enum LINKS links)
 { if (!is_directory(dirname, LINKS::INCLUDE))   // linked directory is allowed for base
-  return false;
+    return false;
 
-  const string dirname_slash { dirname + "/"s };
+  const string dirname_slash { dirname + '/' };
 
   struct dirent** namelist;
 
@@ -519,7 +532,7 @@ bool has_subdirectory(const std::string& dirname, const enum LINKS links)
   for (int n { 0 }; n < status; n++)
   { const string tail_name { namelist[n]->d_name };
 
-    if (tail_name != "."s and tail_name != ".."s)
+    if (tail_name != "."sv and tail_name != ".."sv)
     { const string name { dirname_slash + namelist[n]->d_name };
 
       if (directory_exists(name, links))
@@ -535,9 +548,10 @@ bool has_subdirectory(const std::string& dirname, const enum LINKS links)
     \param  dir2        second directory
     \return             whether <i>dir2</i> is a direct ancestor of <i>dir1</i>
 */
-bool is_ancestor_directory_of_directory(const string& dir1, const string& dir2)
+//bool is_ancestor_directory_of_directory(const string& dir1, const string& dir2)
+bool is_ancestor_directory_of_directory(const string_view dir1, const string_view dir2)
 { if (!is_directory(dir1, LINKS::NO_INCLUDE) or !is_directory(dir2, LINKS::NO_INCLUDE))
-  return false;
+    return false;
 
   return ( (dir2.size() < dir1.size()) and dir1.starts_with(dir2) );
 }
@@ -548,13 +562,14 @@ bool is_ancestor_directory_of_directory(const string& dir1, const string& dir2)
 
     https://stackoverflow.com/questions/59687286/how-to-check-if-a-directory-is-on-a-local-disk-or-a-remote-disk-in-c-or-fortran
 */
-FSID filesystem_id(const string& filename)
+//FSID filesystem_id(const string& filename)
+FSID filesystem_id(const string_view filename)
 { if (!file_exists(filename) and !directory_exists(filename, LINKS::NO_INCLUDE))
     return MAX_FSID;
 
   struct statvfs fs_buf;
 
-  if (const int status { statvfs(filename.c_str(), &fs_buf) }; status == -1)
+  if (const int status { statvfs( string { filename }.c_str(), &fs_buf) }; status == -1)
     return MAX_FSID;
 
   return fs_buf.f_fsid;

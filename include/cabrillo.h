@@ -73,8 +73,9 @@ public:
 /*! \brief          Add a legal value
     \param  val     value to add
 */
-  inline void add_legal_value(const std::string& val)
-    { _legal_values += val; }
+//  inline void add_legal_value(const std::string& val)
+  inline void add_legal_value(const std::string_view val)
+    { _legal_values += std::string { val }; }
 };
 
 // -----------  cabrillo_tag_templatess  ----------------
@@ -92,7 +93,8 @@ protected:
 /*! \brief          Add a tag name
     \param  str     name of tag to add
 */
-  inline void _add(const std::string& str)
+//  inline void _add(const std::string& str)
+  inline void _add(const std::string_view str)
     { _templates += cabrillo_tag_template(str); }
   
 public:

@@ -1,4 +1,4 @@
- // $Id: hamlib.h 289 2026-03-15 19:15:54Z  $
+ // $Id: hamlib.h 288 2026-03-14 19:49:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,8 @@
 
 #ifndef DRLOG_HAMLIB_H
 #define DRLOG_HAMLIB_H
+
+#include "string_functions.h"
 
 #include <hamlib/rig.h>
 
@@ -94,10 +96,12 @@ protected:
 
   HAMLIB_CAPABILITIES_TYPE _caps { 0 };        // uint64_t mask of capabilities
 
+  std::string              _vfos { };          // output from rig_get_vfo_list()
+
 public:
 
-  inline void get_capabilities(RIG* rp)
-    { _caps = hamlib_get_capabilities(rp); }
+  void get_capabilities(RIG* rp);
+//    { _caps = hamlib_get_capabilities(rp); }
 
   inline bool empty(void) const
     { return ( _caps == static_cast<HAMLIB_CAPABILITIES_TYPE>(0) ); }
@@ -117,11 +121,66 @@ public:
   HAS_CAPABILITY(ANF);
   HAS_CAPABILITY(NR);
 
+  HAS_CAPABILITY(AIP);
+  HAS_CAPABILITY(APF);
+  HAS_CAPABILITY(MON);
+  HAS_CAPABILITY(MN);
+  HAS_CAPABILITY(RF);
+
+  HAS_CAPABILITY(ARO);
+
+#pragma push_macro("LOCK")    // there's a LOCK macro defined in pthread_support.h
+#undef LOCK
+
+  HAS_CAPABILITY(LOCK);
+
+#pragma pop_macro("LOCK")
+
+//  inline bool LOCK(void) const
+//    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::LOCK) ); }
+
+  HAS_CAPABILITY(MUTE);
+  HAS_CAPABILITY(VSC);
+  HAS_CAPABILITY(REV);
+  HAS_CAPABILITY(SQL);
+  HAS_CAPABILITY(ABM);
+  HAS_CAPABILITY(BC);
+  HAS_CAPABILITY(MBC);
+  HAS_CAPABILITY(RIT);
+  HAS_CAPABILITY(AFC);
+  HAS_CAPABILITY(SATMODE);
+  HAS_CAPABILITY(SCOPE);
+  HAS_CAPABILITY(RESUME);
+  HAS_CAPABILITY(TBURST);
+  HAS_CAPABILITY(TUNER);
+  HAS_CAPABILITY(XIT);
+  HAS_CAPABILITY(NB2);
+  HAS_CAPABILITY(CSQL);
+  HAS_CAPABILITY(AFLT);
+  HAS_CAPABILITY(ANL);
+  HAS_CAPABILITY(BC2);
+  HAS_CAPABILITY(DUAL_WATCH);
+  HAS_CAPABILITY(DIVERSITY);
+  HAS_CAPABILITY(DSQL);
+  HAS_CAPABILITY(SCEN);
+  HAS_CAPABILITY(SLICE);
+  HAS_CAPABILITY(TRANSCEIVE);
+  HAS_CAPABILITY(SPECTRUM);
+  HAS_CAPABILITY(SPECTRUM_HOLD);
+  HAS_CAPABILITY(SEND_MORSE);
+  HAS_CAPABILITY(SEND_VOICE_MEM);
+  HAS_CAPABILITY(OVF_STATUS);
+  HAS_CAPABILITY(SYNC);
+
+
 //  inline bool FAGC(void) const
 //    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::FAGC) ); }
 
 #undef HAS_CAPABILITY
 
+  READ(vfos);
+
+  std::string to_string(void) const;
 };
 
 #endif    // DRLOG_HAMLIB_H

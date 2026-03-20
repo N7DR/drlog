@@ -75,7 +75,7 @@ class riff_header
 {
 protected:
 
-  uint32_t  _chunk_size { 0 };                ///< file size - 8 (bytes)
+  uint32_t _chunk_size { 0 };                ///< file size - 8 (bytes)
 
 public:
 

@@ -46,8 +46,6 @@ enum class BANDMAP_DIRECTION { DOWN,
 
 using namespace std::chrono_literals;
 
-//using MINUTES_TYPE = int64_t;                               // type for holding absolute minutes
-
 // forward declarations
 class bandmap_entry;
 class bandmap_filter_type;
@@ -166,7 +164,6 @@ public:
 */
   bool add(const T& v)
   { _is_needed = true;
-
     return (_values.insert(v)).second;
   }
 

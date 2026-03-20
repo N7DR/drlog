@@ -23,7 +23,6 @@ set ( SOURCE_FILES
                    src/cw_buffer.cpp
                    src/diskfile.cpp
                    src/drlog_context.cpp
-                   src/drlog_error.cpp
                    src/drmaster.cpp
                    src/exchange.cpp
                    src/exchange_field_template.cpp

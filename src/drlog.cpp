@@ -1011,7 +1011,9 @@ int main(int argc, char** argv)
         exit(-1);
       }
       else
-        rcaps = rig_capabilities { actual_name };
+      { rcaps = rig_capabilities { actual_name };
+        ost << "set rig capabilities from file: " << fn << endl;
+      }
     }
 
     sap_exchange                    = context.exchange_sap();
@@ -1229,6 +1231,8 @@ int main(int argc, char** argv)
 // can't use strings in switch statements!
           const string rig1_type { context.rig1_type() };
 
+          ost << "rig type: " << rig1_type << endl;
+
           if (rig1_type == "K3"sv)
           { rig_ptr = new elecraft_k3_interface;
             ost << "rig interface set to K3" << endl;
@@ -1247,6 +1251,15 @@ int main(int argc, char** argv)
 
           ost << "Rig capabilities: " << rig_ptr -> rcaps().to_string() << endl;
 
+          const hamlib_capabilities hcaps { rig_ptr -> hcaps() };
+
+          ost << "Hamlib capabilities: " << endl << hcaps.to_string() << endl;
+
+          if ( (rig_ptr -> rcaps().empty()) and !(rig_ptr -> hcaps()).empty() )
+            rig_ptr -> rcaps( rig_capabilities { hcaps } );
+
+          ost << "Rig capabilities after hamlib capabilities: " << endl << rig_ptr -> rcaps().to_string() << endl;
+
 // test HAS_CAPABILITY
  //         ost << "VFO_A capability: " << rig_ptr -> VFO_A() << endl;
 
@@ -1262,6 +1275,7 @@ int main(int argc, char** argv)
         }
       }
 
+#if 0
       if (cl.parameter_present("-RACE"))        // undocumented command to exercise K3 race condition
       { ost << "RACE command found" << endl;
 
@@ -1347,6 +1361,7 @@ int main(int argc, char** argv)
 
         exit(0);
       }
+#endif
 
 // possibly put rig into TEST mode
       if (context.test())

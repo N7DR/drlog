@@ -191,7 +191,6 @@ public:
 
     The file <i>filename</i> may be either an ASCII or a binary file
 */
-//  explicit trmaster(const std::string& filename = "trmaster.asc"s);
   explicit trmaster(const std::string_view filename = "trmaster.asc"sv);
 
 /// all the calls (in callsign order)
@@ -288,9 +287,8 @@ public:
   READ_AND_WRITE(ten_ten);                                         ///< 10-10 number
 
 /// set user parameters; wrt 1
-//  inline void user(const int n, const std::string& v)
-  inline void user(const int n, const std::string_view v)
-    { _user.at(n - 1) = v; }
+  inline void user(const int n, const std::string_view sv)
+    { _user.at(n - 1) = sv; }
 
 /// get user parameters; wrt 1
   inline std::string user(const int n) const

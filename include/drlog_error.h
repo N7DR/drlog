@@ -8,6 +8,8 @@
     A simple base error class
 */
 
+#include "macros.h"
+
 #include <exception>
 #include <string>
 
@@ -36,15 +38,8 @@ public:
 */
   inline virtual ~drlog_error(void) = default;
 
-/*! \brief  RO access to _code
-*/
-  inline int code(void) const
-    { return _code; }
-
-/*! \brief  RO access to _reason
-*/
-  inline const std::string reason(void) const
-    { return _reason; }
+  READ(code);      ///< Error code
+  READ(reason);    ///< Error reason
 };
 
 #endif    // DRLOG_ERROR_H

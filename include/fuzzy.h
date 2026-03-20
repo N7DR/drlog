@@ -61,7 +61,6 @@ public:
 
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC, with one call per line
 */
-//  inline explicit fuzzy_database(const std::string& filename)
   inline explicit fuzzy_database(const std::string_view filename)
     { FOR_ALL(to_lines <std::string_view> (to_upper(remove_chars(read_file(filename), CR_STR + SPACE_STR))), [this] (auto x) { *this += x; } ); }
 
@@ -137,7 +136,6 @@ public:
     { _vec += &db; }
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
-//  void remove_call(const std::string& call);
   void remove_call(const std::string_view call);
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
