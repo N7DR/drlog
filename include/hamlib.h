@@ -19,7 +19,7 @@
    So the default behaviour for a rig is to use hamlib. One can then replace the less-than-useful aspects of hamlib
    on an ad-hoc basis for a rig by using a separate derived class for the rig (as the K3 does).
 
-   I note that there is an official C++ wrapper for hamlib. But that seems to be both primitive, and thin, so we don't
+   I note that there is an official C++ wrapper for hamlib. But that seems to be both primitive and thin, so we don't
    even try to use it.
 
    I also note that the documentation for hamlib is quite poor, and there is a lot about which one has to guess. It is
@@ -35,7 +35,12 @@
 
 using HAMLIB_CAPABILITIES_TYPE = uint64_t;
 
-// these are the RIG_FUNC macros from the hamligb rig.h file, along with the descriptions therefrom.
+/// the two VFOs
+enum class VFO { A,                       ///< VFO A
+                 B                        ///< VFO B
+               };
+
+// these are the RIG_FUNC macros from the hamlib rig.h file, along with the descriptions therefrom.
 // Most of them are unused in drlog.
 enum class HAMLIB_CAPABILITY : HAMLIB_CAPABILITIES_TYPE { FAGC           = RIG_FUNC_FAGC,           // Fast AGC
                                                           NB             = RIG_FUNC_NB,             // Noise Blanker
@@ -96,7 +101,8 @@ protected:
 
   HAMLIB_CAPABILITIES_TYPE _caps { 0 };        // uint64_t mask of capabilities
 
-  std::string              _vfos { };          // output from rig_get_vfo_list()
+  std::string              _vfos_str { };      // output from rig_get_vfo_list()
+  std::set<VFO>            _vfos     { };
 
 public:
 
@@ -179,6 +185,7 @@ public:
 #undef HAS_CAPABILITY
 
   READ(vfos);
+  READ(vfos_str);
 
   std::string to_string(void) const;
 };

@@ -116,10 +116,21 @@ void hamlib_capabilities::get_capabilities(RIG* rp)
 
   if (status == RIG_OK)
   { ost << "output from rig_get_vfo_list() in hamlib_capabilities::get_capabilities: " << buf << endl;
-    _vfos = string { buf };
+    _vfos_str = to_upper(string { buf });   // force upper case
   }
   else
     ost << "Error return from rig_get_vfo_list() in hamlib_capabilities::get_capabilities" << endl;
+
+  if (!_vfos_str.empty())
+  { static const FLAT_STRING_SET VFOAs { "VFOA"s, "MAIN"s };
+    static const FLAT_STRING_SET VFOBs { "VFOB"s, "SUB"s  };
+
+    if (ANY_OF(VFOAs, [this] (const string& str) { return _vfos_str.contains(str); }))
+      _vfos += VFO::A;
+
+    if (ANY_OF(VFOBs, [this] (const string& str) { return _vfos_str.contains(str); }))
+      _vfos += VFO::B;
+  }
 }
 
 string hamlib_capabilities::to_string(void) const

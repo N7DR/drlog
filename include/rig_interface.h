@@ -51,27 +51,27 @@ enum class RESPONSE { EXPECTED,
                     };
 
 /// the two VFOs
-enum class VFO { A,                       ///< VFO A
-                 B                        ///< VFO B
-               };
+//enum class VFO { A,                       ///< VFO A
+//                 B                        ///< VFO B
+//               };
 
 /// rig capabilities
-enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A
-                              VFO_B,              ///< has VFO B
-                              RIT,                ///< has RIT
-                              XIT,                ///< has XIT
-                              EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
-                              SPLIT,              ///< can split; TX is VFO B; RX is VFO A
-                              REVERSE_SPLIT,      ///< can split; TX is VFO A; RX is VFO B
-                              LOCK_A,             ///< VFO A can be locked
-                              LOCK_B,             ///< VFO B can be locked
-                              SUB_RX,             ///< has a sub-receiver
-                              TEST,               ///< has a TEST mode that inhibits transmission
-                              RX_ANT,             ///< has a receive antenna
-                              AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
-                              AUDIO_BW,           ///< audio bandwidth can be controlled
-                              AUDIO_CENTRE        ///< centre frequency of audio can be controlled
-                            };
+enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievably, hamlib doesn't have standard naming; it calls this "Main" on some rigs
+                            VFO_B,              ///< has VFO B    // unbelievably, hamlib doesn't have standard naming; it calls this "Sub" on some rigs
+                            RIT,                ///< has RIT
+                            XIT,                ///< has XIT
+                            EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
+                            SPLIT,              ///< can split; TX is VFO B; RX is VFO A
+                            REVERSE_SPLIT,      ///< can split; TX is VFO A; RX is VFO B
+                            LOCK_A,             ///< VFO A can be locked
+                            LOCK_B,             ///< VFO B can be locked
+                            SUB_RX,             ///< has a sub-receiver
+                            TEST,               ///< has a TEST mode that inhibits transmission
+                            RX_ANT,             ///< has a receive antenna
+                            AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
+                            AUDIO_BW,           ///< audio bandwidth can be controlled
+                            AUDIO_CENTRE        ///< centre frequency of audio can be controlled
+                          };
 
 enum class K3_COMMAND_MODE { NORMAL,
                              EXTENDED

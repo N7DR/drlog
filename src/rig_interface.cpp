@@ -2767,15 +2767,25 @@ end_test:
     before I acquired a copy of the cfront (v 1.2) C++-to-C translator.
 */
 rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
-{ static constexpr string_view VFOA { "VFOA" };
-  static constexpr string_view VFOB { "VFOB" };
+{ //static constexpr string_view VFOA { "VFOA" };
+  //static constexpr string_view VFOB { "VFOB" };
+// neded because hamlib doesn't standardise names of VFOs as returned by rigs
+//  static const FLAT_STRING_SET VFOAs { "VFOA", "MAIN" };
+//  static const FLAT_STRING_SET VFOBs { "VFOB", "SUB"  };
 
-  const string vfos { hcaps.vfos() };
+//  const string vfos { to_upper(hcaps.vfos_str()) };
 
-  if (vfos.contains(VFOA))
+//  if (vfos.contains(VFOA))
+//    VFO_A_set();
+
+//  if (vfos.contains(VFOB))
+//    VFO_B_set();
+//  if (ANY_OF(VFOAs, [&vfos] (const string& str) { return vfos.contains(str); }))
+  if (hcaps.vfos().contains(VFO::A))
     VFO_A_set();
 
-  if (vfos.contains(VFOB))
+//  if (ANY_OF(VFOBs, [&vfos] (const string& str) { return vfos.contains(str); }))
+  if (hcaps.vfos().contains(VFO::B))
     VFO_B_set();
 
   if (hcaps.RIT())
@@ -2795,10 +2805,14 @@ rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
 //    LOCK_A_set();
 
   if (hcaps.LOCK())
-  { if (vfos.contains(VFOA))
+  { //if (vfos.contains(VFOA))
+    //if (ANY_OF(VFOAs, [&vfos] (const string& str) { return vfos.contains(str); }))
+    if (hcaps.vfos().contains(VFO::A))
       LOCK_A_set();
 
-    if (vfos.contains(VFOB))
+    //if (vfos.contains(VFOB))
+    //if (ANY_OF(VFOBs, [&vfos] (const string& str) { return vfos.contains(str); }))
+    if (hcaps.vfos().contains(VFO::B))
       LOCK_B_set();
   }
 
