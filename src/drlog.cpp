@@ -483,7 +483,7 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
    there is a perceptible pause in the RIT adjustment if we happen to poll the
    rig while adjusting RIT (shaking head)
 */
-bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
+bool ok_to_poll_rig { true };                  ///< is it safe to poll the K3?
 
 cpair colours;  // must be declared before windows
 
@@ -840,6 +840,10 @@ int main(int argc, char** argv)
                                                      { "Nov"s, "11"s },
                                                      { "Dec"s, "12"s }
                                                    } );
+
+    const string compilation_date { __DATE__ };
+
+    ost << "compilation date string: " << compilation_date << endl;
 
     const string date_str { DATE_STR.substr(DATE_STR.length() - 4) + "-"s + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-"s +
                             (DATE_STR[4] == ' ' ? "0"s + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2)) };
@@ -1220,12 +1224,9 @@ int main(int argc, char** argv)
       }
 
 // possibly open communication with the rig
-//      rig.register_error_alert_function(rig_error_alert);
-
       if (!context.rig1_port().empty() and !context.rig1_type().empty())
       { try
-        { //rig.prepare(context);
-
+        {
 // OK; so we need to think quite carefully about this.
 // Start with trying to make this work for an Elecraft K3
 // can't use strings in switch statements!
@@ -1259,9 +1260,6 @@ int main(int argc, char** argv)
             rig_ptr -> rcaps( rig_capabilities { hcaps } );
 
           ost << "Rig capabilities after hamlib capabilities: " << endl << rig_ptr -> rcaps().to_string() << endl;
-
-// test HAS_CAPABILITY
- //         ost << "VFO_A capability: " << rig_ptr -> VFO_A() << endl;
 
           rig_ptr -> register_error_alert_function(rig_error_alert);
         }
@@ -1364,13 +1362,8 @@ int main(int argc, char** argv)
 #endif
 
 // possibly put rig into TEST mode
-      if (context.test())
+      if (context.test() and (rig_ptr -> TEST()))
         rig_ptr -> test(true);
-//      { if (rig_ptr -> TEST())
-//          rig_ptr -> test(true);
-//        else
-//          ost << "Warning: attempt to put rig that does not support TEST capability into TEST mode" << endl;
-//      }
 
 // possibly set up CW buffer
       if (to_upper(context.modes()).contains("CW"sv) and !context.keyer_port().empty())
@@ -1383,8 +1376,6 @@ int main(int argc, char** argv)
           exit(-1);
         }
 
-//        if (rig.valid())
- //         cw_p->associate_rig(&rig);
         if (rig_ptr -> valid())
           cw_p->associate_rig(rig_ptr);
 
@@ -1397,16 +1388,13 @@ int main(int argc, char** argv)
         current_mode = ( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
 
 // see whether the rig is on the right band and mode (as defined in the configuration file); if not, then move it
-//        if (current_band != static_cast<BAND>(rig.rig_frequency()))
         if (current_band != static_cast<BAND>(rig_ptr -> rig_frequency()))
-        { //rig.rig_frequency(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
-          rig_ptr -> rig_frequency(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
+        { rig_ptr -> rig_frequency(DEFAULT_FREQUENCIES.at( { current_band, current_mode } ));
           sleep_for(2s);                                                       // give things time to settle on the rig
         }
       }
       else                // do not QSY on startup
-      { //current_band = to_BAND(rig.rig_frequency());
-        current_band = to_BAND(rig_ptr -> rig_frequency());
+      { current_band = to_BAND(rig_ptr -> rig_frequency());
         current_mode = ( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
       }
 
@@ -2456,10 +2444,16 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
       }
 
 #if 1
-      if (ok_to_poll_k3)
-      { const polled_status status { rigp -> poll() };
+      if (ok_to_poll_rig)
+      { static polled_status last_status { };
 
-        ost << "Polled status:" << endl << status.to_string() << endl << endl;
+        const polled_status status { rigp -> poll() };
+
+        if (status != last_status)
+        { ost << "not equal; last status = " << endl << last_status.to_string() << endl;
+          ost << "Polled status:" << endl << status.to_string() << endl << endl;
+          last_status = status;
+        }
 
         { const frequency  f                  { status.f_a() };                                   // frequency of VFO A
           const frequency  target             { cq_mode_frequency };                              // frequency in CQ mode
@@ -3583,7 +3577,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else
-    { ok_to_poll_k3 = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems; this method should be good enough
+    { ok_to_poll_rig = false;          // halt polling; this is a lot cleaner, although less certain, than trying to use a mutex with its attendant nesting problems; this method should be good enough
 
       ignore_next_poll = true;                                      // briefly inhibit window updates from rig polling; possibly move this into process_bandmap_function()
       ignore_next_process_insertion_queue = true;
@@ -3693,11 +3687,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
       catch (const rig_interface_error& e)
-      { ok_to_poll_k3 = true;
+      { ok_to_poll_rig = true;
         alert(e.reason());
       }
 
-      ok_to_poll_k3 = true;       // this is the only reasonable exit, so OK to do this here
+      ok_to_poll_rig = true;       // this is the only reasonable exit, so OK to do this here
       processed = true;
     }
   }
@@ -3994,7 +3988,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         const frequency&   freq   { me.freq() };
 
         if (freq.hz())                  // if valid
-        { ok_to_poll_k3 = false;        // we might be partway through a poll, but that should be OK
+        { ok_to_poll_rig = false;        // we might be partway through a poll, but that should be OK
 
 //          rig.rig_frequency(freq);
           rig_ptr -> rig_frequency(freq);
@@ -4008,7 +4002,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           enter_cq_or_sap_mode(me.drlog_mode());
           update_based_on_frequency_change(freq, me.mode());
 
-          ok_to_poll_k3 = true;
+          ok_to_poll_rig = true;
         }
 
         goto FINISHED_PROCESSING_COMMAND;
@@ -4255,7 +4249,7 @@ FINISHED_PROCESSING_COMMAND:
             valid = ( (new_frequency >= 1'800_kHz) and (new_frequency <= 2'000_kHz) );
 
           if (valid)
-          { ok_to_poll_k3 = false;
+          { ok_to_poll_rig = false;
             
             const BAND cur_band { to_BAND(cur_rig_frequency) };                     // hide old cur_band
 
@@ -4294,7 +4288,7 @@ FINISHED_PROCESSING_COMMAND:
 
             win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-            ok_to_poll_k3 = true;
+            ok_to_poll_rig = true;
           }
           else // not valid frequency
             alert("Invalid frequency: "s + to_string(new_frequency.hz()) + " Hz"s);
@@ -7611,7 +7605,7 @@ bool shift_control(const keyboard_event& e)
     { //int last_rit { rig.rit() };
       int last_rit { rig_ptr -> rit() };
 
-      ok_to_poll_k3 = false;                // stop polling a K3
+      ok_to_poll_rig = false;                // stop polling a K3
 
       do
       { //rig.rit(last_rit + change);                 // this takes forever through hamlib
@@ -7622,14 +7616,14 @@ bool shift_control(const keyboard_event& e)
           sleep_for(milliseconds(shift_poll));
       } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
 
-      ok_to_poll_k3 = true;             // restart polling a K3
+      ok_to_poll_rig = true;             // restart polling a K3
     }
     else  // main frequency, not RIT
     { if (active_window == ACTIVE_WINDOW::CALL)         // don't do anything if we aren't in the CALL window
       { //frequency last_qrg { rig.rig_frequency() };
         frequency last_qrg { rig_ptr -> rig_frequency() };
 
-        ok_to_poll_k3 = false;                // stop polling a K3
+        ok_to_poll_rig = false;                // stop polling a K3
 
         do
         { const frequency new_qrg { static_cast<double>(last_qrg.hz() + change) };
@@ -7642,14 +7636,14 @@ bool shift_control(const keyboard_event& e)
             sleep_for(milliseconds(shift_poll));
         } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
 
-        ok_to_poll_k3 = true;             // restart polling a K3
+        ok_to_poll_rig = true;             // restart polling a K3
       }
     }
   }
 
   catch (const rig_interface_error& e)
   { alert("Error in rig communication while setting RIT offset"s);
-    ok_to_poll_k3 = true;             // restart polling a K3
+    ok_to_poll_rig = true;             // restart polling a K3
   }
 
   return true;
@@ -9420,7 +9414,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
   { if (debug)
       ost << "forcing bm change to frequency: " << f_rig << "; bm says freq is: " << bm.my_bandmap_entry().freq() << endl;
 
-    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+    ok_to_poll_rig = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
     bandmap_entry my_be { bm.my_bandmap_entry() };
 
@@ -9432,14 +9426,14 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     if (debug)
       ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
 
-    ok_to_poll_k3 = true;
+    ok_to_poll_rig = true;
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function
   { if (debug)
       ost << "Setting frequency to: " << be.freq() << endl;
 
-    ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+    ok_to_poll_rig = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
 //    rig.rig_frequency(be.freq());
     rig_ptr -> rig_frequency(be.freq());
@@ -9455,7 +9449,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     if (debug)
       ost << "after update: my bandmap entry now: " << bm.my_bandmap_entry() << endl;
 
-    ok_to_poll_k3 = true;
+    ok_to_poll_rig = true;
 
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();
@@ -9519,7 +9513,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   }
 
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function; this tests for non-empty callsign
-  { ok_to_poll_k3 = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
+  { ok_to_poll_rig = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
 //    rig.rig_frequency(be.freq());                                   // QSY to next station
     rig_ptr -> rig_frequency(be.freq());                                   // QSY to next station
@@ -9531,7 +9525,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     possible_mode_change(be.freq());
     update_based_on_frequency_change(be.freq(), current_mode);   // update win_bandmap, and other windows
 
-    ok_to_poll_k3 = true;
+    ok_to_poll_rig = true;
 
     SAFELOCK(dupe_check);                                   // nested w/ bm_lock
     last_call_inserted_with_space = be.callsign();

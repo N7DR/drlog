@@ -766,7 +766,7 @@ contest_rules::contest_rules(void) :        // can't go in rules.h because the d
 */
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _callsign_mults_used(false),
-  _countries(location_db.countries()),    // default is ALL countries
+  _countries(location_db.countries<UNORDERED_STRING_SET>()),    // default is ALL countries
   _exchange_mults_used(false),
   _uba_bonus(false),
   _work_if_different_band(context.qso_multiple_bands()),
@@ -781,7 +781,7 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 void contest_rules::prepare(const drlog_context& context, location_database& location_db)
 { _work_if_different_band = context.qso_multiple_bands();
   _work_if_different_mode = context.qso_multiple_modes();
-  _countries = location_db.countries();
+  _countries = location_db.countries<UNORDERED_STRING_SET>();
 
   _init(context, location_db);
 }

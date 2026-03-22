@@ -73,65 +73,7 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
                             AUDIO_CENTRE        ///< centre frequency of audio can be controlled
                           };
 
-enum class K3_COMMAND_MODE { NORMAL,
-                             EXTENDED
-                           };
-
-enum class K3_BUTTON_TAP { DISP       = 8,
-                           BAND_MINUS = 9,
-                           BAND_PLUS  = 10,
-                           AB         = 11,
-                           ONE        = 11,
-                           REV        = 12,
-                           TWO        = 12,
-                           A_TO_B     = 13,
-                           THREE      = 13,
-                           MENU       = 14,
-                           V_TO_M     = 15,
-                           XMIT       = 16,
-                           MODE_MINUS = 17,
-                           MODE_PLUS  = 18,
-                           ATU        = 19,
-                           M1         = 21,
-                           M_TO_V     = 23,
-                           PRE        = 24,
-                           FOUR       = 24,
-                           RX_ANT     = 25,
-                           ANT        = 26,
-                           AGC        = 27,
-                           FIVE       = 27,
-                           XFIL       = 29,
-                           SIX        = 29,
-                           M2         = 31,
-                           NTCH       = 32,
-                           NOTCH      = NTCH,
-                           NINE       = 32,
-                           NB         = 33,
-                           SEVEN      = 33,
-                           NR         = 34,
-                           EIGHT      = 34,
-                           M3         = 35,
-                           REC        = 37,
-                           M4         = 39,
-                           CWT        = 40,
-                           ZERO       = 40,
-                           FREQ       = 41,
-                           SPOT       = 42,
-                           DOT        = 42,
-                           AFX        = 43,
-                           LEFT_ARROW = 44,
-                           RIT        = 45,
-                           XIT        = 47,
-                           SUB        = 48,
-                           FINE       = 49,
-                           RATE       = 50,
-                           CLR        = 53,
-                           CMP_PWR    = 56,
-                           SPD_MIC    = 57,
-                           SHIFT_LO   = 58,
-                           WIDTH_Hi   = 59
-                         };
-
+#if 0
 enum class K3_BUTTON_HOLD { METER       = 8,
                             VOX         = 9,
                             QSK         = 10,
@@ -171,7 +113,9 @@ enum class K3_BUTTON_HOLD { METER       = 8,
                             NORM        = 58,
                             I_II        = 59
                          };
+#endif
 
+#if 0
 enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (FM), 5 (AM), 6 (DATA), 7 (CWREV), 9 (DATA-REV) [there is no 8]
                                USB = 2,
                                CW = 3,
@@ -181,9 +125,10 @@ enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (
                                CWREV = 7,
                                DATA_REV = 9
                              };
+#endif
 
-constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
-constexpr size_t K3_DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters in response to "DS;" request
+//constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
+//constexpr size_t K3_DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters in response to "DS;" request
 
 #if 0
 const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
@@ -403,7 +348,7 @@ protected:
 
   bool _notch { false };
 
-  std::string _bw_str { };
+  std::string _bw_str     { };
   std::string _centre_str { };
 
 public:
@@ -425,90 +370,10 @@ public:
   READ_AND_WRITE(test_mode);
   READ_AND_WRITE(rx_ant);
 
+  bool operator==(const polled_status& ps)  const = default;
+  bool operator<=>(const polled_status& ps) const = default;
+
   std::string to_string(void) const;
-};
-
-// --------------------------------------- k3_status ----------------------
-
-/*! \class  k3_status
-    \brief  The status of a K3, as determined by the response from an IF; command
-
-From the K3 Programmer's Manual:
-
-IF (Transceiver Information; GET only)
-RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
-[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
-* represents a space (BLANK, or ASCII 0x20)
-+ either "+" or "-" (sign of RIT/XIT offset)
-yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
-r 1 if RIT is on, 0 if off
-x 1 if XIT is on, 0 if off
-t 1 if the K3 is in transmit mode, 0 if receive
-m operating mode (see MD command)
-v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
-s 1 if scan is in progress, 0 otherwise
-p 1 if the transceiver is in split mode, 0 otherwise
-b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
-is due to a band change; 0 otherwise
-d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
-if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
-The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
-
-*/
-
-class k3_status
-{
-protected:
-
-  frequency         _freq           { };                        ///< "operating frequency, excluding any RIT/XIT offset"
-  bool              _rit_positive   { true };                   ///< "(sign of RIT/XIT offset)"
-  frequency         _abs_rit_offset { 0 };                      ///< "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
-  bool              _rit_is_on      { false };                  ///< whether RIT is "on"
-  bool              _xit_is_on      { false };                  ///< whether XIT is "on"
-  bool              _transmit       { false };                  ///< whether rig is "in transmit mode"
-  K3_OPERATING_MODE _op_mode        { K3_OPERATING_MODE::CW };  ///< "operating mode"
-  VFO               _rx_vfo         { VFO::A };                 ///< "receive mode VFO"
-  bool              _scanning       { false };                  ///< whether the rig is performing a scan
-  bool              _is_split       { false };                  ///< whether the rig is split
-
-  bool              _valid          { false };                  ///< only valid if the initialisation data look OK
-
-public:
-
-  explicit k3_status(const std::string_view rsp);
-
-  READ(freq);                 // "operating frequency, excluding any RIT/XIT offset"
-  READ(rit_positive);         // "(sign of RIT/XIT offset)"
-  READ(abs_rit_offset);       // "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
-  READ(rit_is_on);            // whether RIT is "on"
-  READ(xit_is_on);            // whether XIT is "on"
-  READ(transmit);             // whether rig is "in transmit mode"
-  READ(op_mode);              // "operating mode"
-  READ(rx_vfo);               // "receive mode VFO"
-  READ(scanning);             // whether the rig is performing a scan
-  READ(is_split);             // whether the rig is split
-
-  READ(valid);                // only valid if the initialisation data look OK
-
-/// return whether RIT is off
-  inline bool rit_is_off(void) const
-    { return !rit_is_on(); }
-
-/// return whether XIT is off
-  inline bool xit_is_off(void) const
-    { return !xit_is_on(); }
-
-/// return whether the object is valid
-  inline operator bool(void) const
-    { return _valid; }
-
-/// return whether the R/XIT direction is positive or negative
-  inline char rit_dirn_char(void) const
-    { return (_rit_positive ? '+' : '-'); }
-
-/// return R/XIT value in Hz as a string, including the direction
-  inline std::string rit_str(void) const
-    { return rit_dirn_char() + ::to_string(_abs_rit_offset.hz()); }
 };
 
 // ---------------------------------------- audio_filter -------------------------
@@ -1206,6 +1071,200 @@ WIDTH/HI         I/II        59
 /// Poll the rig for the important status information
   virtual polled_status poll(void);
 
+};
+
+// ---------------------------------------- Elecraft K3 -------------------------
+
+enum class K3_COMMAND_MODE { NORMAL,
+                             EXTENDED
+                           };
+
+enum class K3_BUTTON_TAP { DISP       = 8,
+                           BAND_MINUS = 9,
+                           BAND_PLUS  = 10,
+                           AB         = 11,
+                           ONE        = 11,
+                           REV        = 12,
+                           TWO        = 12,
+                           A_TO_B     = 13,
+                           THREE      = 13,
+                           MENU       = 14,
+                           V_TO_M     = 15,
+                           XMIT       = 16,
+                           MODE_MINUS = 17,
+                           MODE_PLUS  = 18,
+                           ATU        = 19,
+                           M1         = 21,
+                           M_TO_V     = 23,
+                           PRE        = 24,
+                           FOUR       = 24,
+                           RX_ANT     = 25,
+                           ANT        = 26,
+                           AGC        = 27,
+                           FIVE       = 27,
+                           XFIL       = 29,
+                           SIX        = 29,
+                           M2         = 31,
+                           NTCH       = 32,
+                           NOTCH      = NTCH,
+                           NINE       = 32,
+                           NB         = 33,
+                           SEVEN      = 33,
+                           NR         = 34,
+                           EIGHT      = 34,
+                           M3         = 35,
+                           REC        = 37,
+                           M4         = 39,
+                           CWT        = 40,
+                           ZERO       = 40,
+                           FREQ       = 41,
+                           SPOT       = 42,
+                           DOT        = 42,
+                           AFX        = 43,
+                           LEFT_ARROW = 44,
+                           RIT        = 45,
+                           XIT        = 47,
+                           SUB        = 48,
+                           FINE       = 49,
+                           RATE       = 50,
+                           CLR        = 53,
+                           CMP_PWR    = 56,
+                           SPD_MIC    = 57,
+                           SHIFT_LO   = 58,
+                           WIDTH_Hi   = 59
+                         };
+
+enum class K3_BUTTON_HOLD { METER       = 8,
+                            VOX         = 9,
+                            QSK         = 10,
+                            BSET        = 11,
+                            SPLIT       = 13,
+                            CONFIG      = 14,
+                            AF_REC      = 15,
+                            TUNE        = 16,
+                            ALT         = 17,
+                            TEST        = 18,
+                            TUNE_ATU    = 19,
+                            M1_RPT      = 21,
+                            AF_PLAY     = 23,
+                            ATT         = 24,
+                            ANT_NAME    = 26,
+                            OFF         = 27,
+                            DUAL_PB_APF = 29,
+                            M2_RPT      = 31,
+                            MANUAL      = 32,
+                            LEVEL       = 33,
+                            ADJ         = 34,
+                            M3_RPT      = 35,
+                            MSG_BANK    = 37,
+                            M4_RPT      = 39,
+                            TEXT_DEC    = 40,
+                            ENT_SCAN    = 41,
+                            PITCH       = 42,
+                            DATA_MD     = 43,
+                            PF1         = 45,
+                            PF2         = 47,
+                            DVRSTY      = 48,
+                            DIVERSITY   = DVRSTY,
+                            COARSE      = 49,
+                            LOCK        = 50,
+                            MON         = 56,
+                            DELAY       = 57,
+                            NORM        = 58,
+                            I_II        = 59
+                         };
+
+enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (FM), 5 (AM), 6 (DATA), 7 (CWREV), 9 (DATA-REV) [there is no 8]
+                               USB = 2,
+                               CW = 3,
+                               FM = 4,
+                               AM = 5,
+                               DATA = 6,
+                               CWREV = 7,
+                               DATA_REV = 9
+                             };
+
+// --------------------------------------- k3_status ----------------------
+
+/*! \class  k3_status
+    \brief  The status of a K3, as determined by the response from an IF; command
+
+From the K3 Programmer's Manual:
+
+IF (Transceiver Information; GET only)
+RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
+[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
+* represents a space (BLANK, or ASCII 0x20)
++ either "+" or "-" (sign of RIT/XIT offset)
+yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
+r 1 if RIT is on, 0 if off
+x 1 if XIT is on, 0 if off
+t 1 if the K3 is in transmit mode, 0 if receive
+m operating mode (see MD command)
+v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
+s 1 if scan is in progress, 0 otherwise
+p 1 if the transceiver is in split mode, 0 otherwise
+b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
+is due to a band change; 0 otherwise
+d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
+if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
+The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
+
+*/
+
+class k3_status
+{
+protected:
+
+  frequency         _freq           { };                        ///< "operating frequency, excluding any RIT/XIT offset"
+  bool              _rit_positive   { true };                   ///< "(sign of RIT/XIT offset)"
+  frequency         _abs_rit_offset { 0 };                      ///< "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
+  bool              _rit_is_on      { false };                  ///< whether RIT is "on"
+  bool              _xit_is_on      { false };                  ///< whether XIT is "on"
+  bool              _transmit       { false };                  ///< whether rig is "in transmit mode"
+  K3_OPERATING_MODE _op_mode        { K3_OPERATING_MODE::CW };  ///< "operating mode"
+  VFO               _rx_vfo         { VFO::A };                 ///< "receive mode VFO"
+  bool              _scanning       { false };                  ///< whether the rig is performing a scan
+  bool              _is_split       { false };                  ///< whether the rig is split
+
+  bool              _valid          { false };                  ///< only valid if the initialisation data look OK
+
+public:
+
+  explicit k3_status(const std::string_view rsp);
+
+  READ(freq);                 // "operating frequency, excluding any RIT/XIT offset"
+  READ(rit_positive);         // "(sign of RIT/XIT offset)"
+  READ(abs_rit_offset);       // "RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)"
+  READ(rit_is_on);            // whether RIT is "on"
+  READ(xit_is_on);            // whether XIT is "on"
+  READ(transmit);             // whether rig is "in transmit mode"
+  READ(op_mode);              // "operating mode"
+  READ(rx_vfo);               // "receive mode VFO"
+  READ(scanning);             // whether the rig is performing a scan
+  READ(is_split);             // whether the rig is split
+
+  READ(valid);                // only valid if the initialisation data look OK
+
+/// return whether RIT is off
+  inline bool rit_is_off(void) const
+    { return !rit_is_on(); }
+
+/// return whether XIT is off
+  inline bool xit_is_off(void) const
+    { return !xit_is_on(); }
+
+/// return whether the object is valid
+  inline operator bool(void) const
+    { return _valid; }
+
+/// return whether the R/XIT direction is positive or negative
+  inline char rit_dirn_char(void) const
+    { return (_rit_positive ? '+' : '-'); }
+
+/// return R/XIT value in Hz as a string, including the direction
+  inline std::string rit_str(void) const
+    { return rit_dirn_char() + ::to_string(_abs_rit_offset.hz()); }
 };
 
 // ---------------------------------------- elecraft_k3_interface -------------------------

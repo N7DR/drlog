@@ -834,6 +834,7 @@ location_info location_database::info(const string_view callpart) const
 }
 
 /// get a set of all the canonical prefixes for all countries
+#if 0
 auto location_database::countries(void) const -> UNORDERED_STRING_SET
 { std::lock_guard lg(_location_database_mutex);
 
@@ -852,12 +853,13 @@ auto location_database::countries(void) const -> UNORDERED_STRING_SET
 
   return rv;
 }
+#endif
 
 /// create a set of all the canonical prefixes for a particular continent
 UNORDERED_STRING_SET location_database::countries(const string_view cont_target) const
 { UNORDERED_STRING_SET rv { };
 
-  ranges::copy_if(countries(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+  ranges::copy_if(countries<UNORDERED_STRING_SET>(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
 }

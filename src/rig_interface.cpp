@@ -20,8 +20,6 @@
 #include "rig_interface.h"
 #include "string_functions.h"
 
-//#include "hamlib/serial.h"
-
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -35,11 +33,11 @@
 #include <hamlib/rig.h>
 
 // Hamlib changed the macro FILPATHLEN to HAMLIB_FILPATHLEN at some point
-#if (!defined(HAMLIB_FILPATHLEN))
-
-#define HAMLIB_FILPATHLEN FILPATHLEN
-
-#endif
+//#if (!defined(HAMLIB_FILPATHLEN))
+//
+//#define HAMLIB_FILPATHLEN FILPATHLEN
+//
+//#endif
 
 using namespace std;
 using namespace   chrono;        // std::chrono
@@ -83,252 +81,7 @@ string polled_status::to_string(void) const
   rv += "  bw: " + _bw_str + EOL;
   rv += "  centre: " + _centre_str + EOL;
 
-
-
   return rv;
-}
-
-
-/* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
- * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
- *
- * Anyway, as a result of this, we use explicit K3 control commands where appropriate. This may be changed if/when hamlib proves
- * itself sufficiently robust.
- *
- * Another issue is that there is simply no good detailed description of the expected behaviour corresponding to many hamlib
- * functions (for example, the split-related functions -- e.g., CURR_VFO is defined simply as "the current VFO", but it plainly is not,
- * as a few test function calls quickly demonstrate); nor, indeed, is there even a description of the theoretical transceiver that is modelled by
- * hamlib. There doesn't even appear to be a guarantee that if a function is "successful" (i.e., does not return an error), it
- * will behave identically on all rigs.
- *
- * There are other weirdnesses: polling the split status on the K3 actually SWAPS the frequencies of the two VFOs, even though
- * it is a *get* function. Life is too short to try to sort out all this stuff and to get it to work correctly, if that's even possible,
- * even just for the K3 -- especially as there is no guarantee that other rigs will respond the same way to the same (successful) calls.
- *
- * So, unfortunately, we end up using a lot of K3-specific calls. This was not my desire. But I got fed up of trying to make sense
- * of the current implementation of hamlib.
- */
-
-/* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
- * issues (at least) remain (after incorporating the Elecraft responses, which mostly did not address the questions I asked):
- *
- *   1. Which commands might cause a "?;" response if the K3 is "busy"?
- *   2. Do these include commands that don't normally return a response?
- *   3. Which commands do eventually get executed even if the K3 is "busy"?
- *   4. How long might one have to wait for some commands to execute if the K3 is "busy"?
- *   5. Which commands are subject to delay if the K3 is "busy"?
- *   6. What is the precise definition of "busy"?
- *
- *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
- *   check each time whether a command was executed, because the documentation says that certain commands (which it does not define)
- *   might take as long as half a second to execute if the K3 is "busy".
- *
- *   Sometimes, there is simply no alternative to sending a command and then getting the value to see if the command has actually
- *   executed on the rig. This is particularly so for the set/get frequency commands, as drlog requires a correct view of the band,
- *   including the rig's frequency, in order to build an accurate, stable bandmap.
- *
- *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
- *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
- *   protocols could be run over, for example, SLIP.
-*/
-
-// --------------------------------------- k3_status ----------------------
-
-/*! \class  k3_status
-    \brief  The status of a K3, as determined by the response from an IF; command
-
-From the K3 Programmer's Manual:
-
-IF (Transceiver Information; GET only)
-RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
-[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
-* represents a space (BLANK, or ASCII 0x20)
-+ either "+" or "-" (sign of RIT/XIT offset)
-yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
-r 1 if RIT is on, 0 if off
-x 1 if XIT is on, 0 if off
-t 1 if the K3 is in transmit mode, 0 if receive
-m operating mode (see MD command)
-v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
-s 1 if scan is in progress, 0 otherwise
-p 1 if the transceiver is in split mode, 0 otherwise
-b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
-is due to a band change; 0 otherwise
-d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
-if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
-The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
-
-*/
-
-k3_status::k3_status(const string_view rsp)
-{ constexpr size_t FREQUENCY_POSN    { 2 };
-  constexpr size_t RIT_POSITIVE_POSN { 18 };
-  constexpr size_t ABS_RIT_POSN      { 19 };
-  constexpr size_t RIT_ON_POSN       { 23 };
-  constexpr size_t XIT_ON_POSN       { 24 };
-  constexpr size_t TRANSMIT_POSN     { 28 };
-  constexpr size_t OP_MODE_POSN      { 29 };
-  constexpr size_t RX_VFO_POSN       { 30 };
-  constexpr size_t SCANNING_POSN     { 31 };
-  constexpr size_t SPLIT_POSN        { 32 };
-
-  if (rsp.size() != K3_STATUS_REPLY_LENGTH)
-    return;                                   // invalid
-
-  _freq = frequency { from_string<double>(substring <string_view> (rsp, FREQUENCY_POSN, 11)) };
-
-  if ( (_freq < 1800_kHz) or (_freq > 51_MHz) )
-    return;                                   // invalid
-
-  const char rit_positive_char { rsp[RIT_POSITIVE_POSN] };
-
-  switch (rit_positive_char)
-  { case '+' :
-      _rit_positive = true;   // not actually necessary
-      break;
-
-    case '-' :
-      _rit_positive = false;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  _abs_rit_offset = frequency { from_string<double>(substring <string_view> (rsp, ABS_RIT_POSN, 4)), FREQUENCY_UNIT::HZ };
-
-  const char rit_on_char { rsp[RIT_ON_POSN] };
-
-  switch (rit_on_char)
-  { case '1' :
-      _rit_is_on = true;
-      break;
-
-    case '0' :
-      _rit_is_on = false;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char xit_on_char { rsp[XIT_ON_POSN] };
-
-  switch (xit_on_char)
-  { case '1' :
-      _xit_is_on = true;
-      break;
-
-    case '0' :
-      _xit_is_on = false;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char transmit_char { rsp[TRANSMIT_POSN] };
-
-  switch (transmit_char)
-  { case '1' :
-      _transmit = true;
-      break;
-
-    case '0' :
-      _transmit = false;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char op_mode_char { rsp[OP_MODE_POSN] };
-
-  switch (op_mode_char)
-  { case '1' :
-      _op_mode = K3_OPERATING_MODE::LSB;
-      break;
-
-    case '2' :
-      _op_mode = K3_OPERATING_MODE::USB;
-      break;
-
-    case '3' :
-      _op_mode = K3_OPERATING_MODE::CW;
-      break;
-
-    case '4' :
-      _op_mode = K3_OPERATING_MODE::FM;
-      break;
-
-    case '5' :
-      _op_mode = K3_OPERATING_MODE::AM;
-      break;
-
-    case '6' :
-      _op_mode = K3_OPERATING_MODE::DATA;
-      break;
-
-    case '7' :
-      _op_mode = K3_OPERATING_MODE::CWREV;
-      break;
-
-    case '9' :                                  // there is no '8'
-      _op_mode = K3_OPERATING_MODE::DATA_REV;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char rx_vfo_char { rsp[RX_VFO_POSN] };
-
-  switch (rx_vfo_char)
-  { case '0' :
-      _rx_vfo = VFO::A;
-      break;
-
-    case '1' :
-      _rx_vfo = VFO::B;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char scanning_char { rsp[SCANNING_POSN] };
-
-  switch (scanning_char)
-  { case '0' :
-      _scanning = false;
-      break;
-
-    case '1' :
-      _scanning = true;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-  const char split_char { rsp[SPLIT_POSN] };
-
-  switch (split_char)
-  { case '0' :
-      _is_split = false;
-      break;
-
-    case '1' :
-      _is_split = true;
-      break;
-
-    default :
-      return;                                   // invalid
-  }
-
-// ignore the last two fields
-
-  _valid = true;
 }
 
 // ---------------------------------------- rig_interface -------------------------
@@ -420,7 +173,7 @@ frequency rig_interface::_rig_frequency(const VFO v) const
 
   SAFELOCK(_rig);
 
-  if (const int status { rig_get_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_CURR : RIG_VFO_B ), &hz) }; status != RIG_OK)
+  if (rig_get_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_CURR : RIG_VFO_B ), &hz) != RIG_OK)
   { _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? 'A' : 'B'));             // written to screen and to output file
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b) ;
   }
@@ -468,7 +221,6 @@ string rig_interface::_retried_raw_command(const string_view cmd, const millisec
 void rig_interface::prepare(const drlog_context& context)
 { const STRING_MAP<rig_model_t> type_name_to_hamlib_model { { "K3"s, RIG_MODEL_K3 }
                                                           };
-
   _port_name = context.rig1_port();
   rig_set_debug(RIG_DEBUG_NONE);
   rig_load_all_backends();              // this function returns an int -- in true Linux fashion, there is no documentation as to possible values and their meaning
@@ -479,27 +231,27 @@ void rig_interface::prepare(const drlog_context& context)
 #define       STR_TO_MODEL(y) \
   { #y, y }
 
-    const STRING_MAP<rig_model_t> tmap
-    { STR_TO_MODEL(RIG_MODEL_NETRIGCTL),
-      STR_TO_MODEL(RIG_MODEL_ARMSTRONG),
-      STR_TO_MODEL(RIG_MODEL_FLRIG),
-      STR_TO_MODEL(RIG_MODEL_TRXMANAGER_RIG),
-      STR_TO_MODEL(RIG_MODEL_DUMMY_NOVFO),
-      STR_TO_MODEL(RIG_MODEL_TCI1X),
-      STR_TO_MODEL(RIG_MODEL_ACLOG),
-      STR_TO_MODEL(RIG_MODEL_SDRSHARP),
-      STR_TO_MODEL(RIG_MODEL_QUISK),
-      STR_TO_MODEL(RIG_MODEL_FT847),
-      STR_TO_MODEL(RIG_MODEL_FT1000),
-      STR_TO_MODEL(RIG_MODEL_FT1000D),
-      STR_TO_MODEL(RIG_MODEL_FT1000MPMKV),
-      STR_TO_MODEL(RIG_MODEL_FT747),
-      STR_TO_MODEL(RIG_MODEL_FT757),
-      STR_TO_MODEL(RIG_MODEL_FT757GXII),
-      STR_TO_MODEL(RIG_MODEL_FT575),
-      STR_TO_MODEL(RIG_MODEL_FT767),
-      STR_TO_MODEL(RIG_MODEL_FT736R),
-      STR_TO_MODEL(RIG_MODEL_FT840),
+  const STRING_MAP<rig_model_t> tmap
+  { STR_TO_MODEL(RIG_MODEL_NETRIGCTL),
+    STR_TO_MODEL(RIG_MODEL_ARMSTRONG),
+    STR_TO_MODEL(RIG_MODEL_FLRIG),
+    STR_TO_MODEL(RIG_MODEL_TRXMANAGER_RIG),
+    STR_TO_MODEL(RIG_MODEL_DUMMY_NOVFO),
+    STR_TO_MODEL(RIG_MODEL_TCI1X),
+    STR_TO_MODEL(RIG_MODEL_ACLOG),
+    STR_TO_MODEL(RIG_MODEL_SDRSHARP),
+    STR_TO_MODEL(RIG_MODEL_QUISK),
+    STR_TO_MODEL(RIG_MODEL_FT847),
+    STR_TO_MODEL(RIG_MODEL_FT1000),
+    STR_TO_MODEL(RIG_MODEL_FT1000D),
+    STR_TO_MODEL(RIG_MODEL_FT1000MPMKV),
+    STR_TO_MODEL(RIG_MODEL_FT747),
+    STR_TO_MODEL(RIG_MODEL_FT757),
+    STR_TO_MODEL(RIG_MODEL_FT757GXII),
+    STR_TO_MODEL(RIG_MODEL_FT575),
+    STR_TO_MODEL(RIG_MODEL_FT767),
+    STR_TO_MODEL(RIG_MODEL_FT736R),
+    STR_TO_MODEL(RIG_MODEL_FT840),
       STR_TO_MODEL(RIG_MODEL_FT820),
       STR_TO_MODEL(RIG_MODEL_FT900),
       STR_TO_MODEL(RIG_MODEL_FT920),
@@ -869,8 +621,6 @@ void rig_interface::prepare(const drlog_context& context)
       _model = MUM_VALUE(tmap, hamlib_name, RIG_MODEL_DUMMY);
 
       ost << "HAMLIB _model = " << _model << endl;
-
-//      _force_hamlib = true;
       ost << "Forcing HAMLIB interface" << endl;
     }
   }
@@ -901,7 +651,7 @@ void rig_interface::prepare(const drlog_context& context)
       exit(-1);
     }
 
-    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), HAMLIB_FILPATHLEN - 1);     // !! -1 to remove compiler warning about length
+    strncpy(_rigp -> state.rigport.pathname, _port_name.c_str(), HAMLIB_FILPATHLEN - 1);     // !! -1 to remove compiler warning about length; there has to be a better way to do this
   }
 
   const int status { rig_open(_rigp) };
@@ -921,31 +671,12 @@ void rig_interface::prepare(const drlog_context& context)
 
   if (rig_type.starts_with("HAMLIB_"sv))
     _hcaps.get_capabilities(_rigp);
-
-#if 0
-  if (rig_has_get_func(_rigp, RIG_FUNC_RIT))
-  { ost << "rig has get function for RIT" << endl;
-    ost << "RIG_FUNC_RIT = " << RIG_FUNC_RIT << endl;
-    ost << std::bitset<8*sizeof(RIG_FUNC_RIT)>(RIG_FUNC_RIT) << endl;
-
-    int rit = 0;
-
-    int retcode = rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_RIT, &rit);
-
-    if (retcode != RIG_OK) { ost << "Bad return code" << endl; }
-
-    ost << "rig_get_func: RIT: " << rit << endl;
-  }
-#endif
-
-// if it's a K3, enable extended mode
-//  k3_command_mode(K3_COMMAND_MODE::EXTENDED);
 }
 
 /*! \brief      Set mode
     \param  m   new mode
 
-    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
 { constexpr chrono::duration RETRY_TIME          { 10ms };   // wait time if a retry is necessary; decreasing this makes little difference
@@ -1023,8 +754,6 @@ void rig_interface::rig_mode(const MODE m)
     to do for various values of the permitted parameters. There is general agreement on the reflector
     that the call contained herein *should* do the "right" thing -- but since there's no precise definition
     of any of this, not all backends are guaranteed to behave the same.
-
-    Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
 void rig_interface::split_enable(void) const
 { if (!_rig_connected)
@@ -1981,6 +1710,253 @@ polled_status rig_interface::poll(void)
   }
 
   return _status;
+}
+
+// ---------------------------------------- Elecraft K3 -------------------------
+
+/* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
+ * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
+ *
+ * Anyway, as a result of this, we use explicit K3 control commands where appropriate. This may be changed if/when hamlib proves
+ * itself sufficiently robust.
+ *
+ * Another issue is that there is simply no good detailed description of the expected behaviour corresponding to many hamlib
+ * functions (for example, the split-related functions -- e.g., CURR_VFO is defined simply as "the current VFO", but it plainly is not,
+ * as a few test function calls quickly demonstrate); nor, indeed, is there even a description of the theoretical transceiver that is modelled by
+ * hamlib. There doesn't even appear to be a guarantee that if a function is "successful" (i.e., does not return an error), it
+ * will behave identically on all rigs.
+ *
+ * There are other weirdnesses: polling the split status on the K3 actually SWAPS the frequencies of the two VFOs, even though
+ * it is a *get* function. Life is too short to try to sort out all this stuff and to get it to work correctly, if that's even possible,
+ * even just for the K3 -- especially as there is no guarantee that other rigs will respond the same way to the same (successful) calls.
+ *
+ * So, unfortunately, we end up using a lot of K3-specific calls. This was not my desire. But I got fed up of trying to make sense
+ * of the current implementation of hamlib.
+ */
+
+/* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
+ * issues (at least) remain (after incorporating the Elecraft responses, which mostly did not address the questions I asked):
+ *
+ *   1. Which commands might cause a "?;" response if the K3 is "busy"?
+ *   2. Do these include commands that don't normally return a response?
+ *   3. Which commands do eventually get executed even if the K3 is "busy"?
+ *   4. How long might one have to wait for some commands to execute if the K3 is "busy"?
+ *   5. Which commands are subject to delay if the K3 is "busy"?
+ *   6. What is the precise definition of "busy"?
+ *
+ *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
+ *   check each time whether a command was executed, because the documentation says that certain commands (which it does not define)
+ *   might take as long as half a second to execute if the K3 is "busy".
+ *
+ *   Sometimes, there is simply no alternative to sending a command and then getting the value to see if the command has actually
+ *   executed on the rig. This is particularly so for the set/get frequency commands, as drlog requires a correct view of the band,
+ *   including the rig's frequency, in order to build an accurate, stable bandmap.
+ *
+ *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
+ *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
+ *   protocols could be run over, for example, SLIP.
+*/
+
+constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
+constexpr size_t K3_DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters in response to "DS;" request
+
+// --------------------------------------- k3_status ----------------------
+
+/*! \class  k3_status
+    \brief  The status of a K3, as determined by the response from an IF; command
+
+From the K3 Programmer's Manual:
+
+IF (Transceiver Information; GET only)
+RSP format: IF[f]*****+yyyyrx*00tmvspbd1*; where the fields are defined as follows:
+[f] Operating frequency, excluding any RIT/XIT offset (11 digits; see FA command format)
+* represents a space (BLANK, or ASCII 0x20)
++ either "+" or "-" (sign of RIT/XIT offset)
+yyyy RIT/XIT offset in Hz (range is -9999 to +9999 Hz when computer-controlled)
+r 1 if RIT is on, 0 if off
+x 1 if XIT is on, 0 if off
+t 1 if the K3 is in transmit mode, 0 if receive
+m operating mode (see MD command)
+v receive-mode VFO selection, 0 for VFO A, 1 for VFO B
+s 1 if scan is in progress, 0 otherwise
+p 1 if the transceiver is in split mode, 0 otherwise
+b Basic RSP format: always 0; K2 Extended RSP format (K22): 1 if present IF response
+is due to a band change; 0 otherwise
+d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
+if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
+The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
+
+*/
+
+k3_status::k3_status(const string_view rsp)
+{ constexpr size_t FREQUENCY_POSN    { 2 };
+  constexpr size_t RIT_POSITIVE_POSN { 18 };
+  constexpr size_t ABS_RIT_POSN      { 19 };
+  constexpr size_t RIT_ON_POSN       { 23 };
+  constexpr size_t XIT_ON_POSN       { 24 };
+  constexpr size_t TRANSMIT_POSN     { 28 };
+  constexpr size_t OP_MODE_POSN      { 29 };
+  constexpr size_t RX_VFO_POSN       { 30 };
+  constexpr size_t SCANNING_POSN     { 31 };
+  constexpr size_t SPLIT_POSN        { 32 };
+
+  if (rsp.size() != K3_STATUS_REPLY_LENGTH)
+    return;                                   // invalid
+
+  _freq = frequency { from_string<double>(substring <string_view> (rsp, FREQUENCY_POSN, 11)) };
+
+  if ( (_freq < 1800_kHz) or (_freq > 51_MHz) )
+    return;                                   // invalid
+
+  const char rit_positive_char { rsp[RIT_POSITIVE_POSN] };
+
+  switch (rit_positive_char)
+  { case '+' :
+      _rit_positive = true;   // not actually necessary
+      break;
+
+    case '-' :
+      _rit_positive = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  _abs_rit_offset = frequency { from_string<double>(substring <string_view> (rsp, ABS_RIT_POSN, 4)), FREQUENCY_UNIT::HZ };
+
+  const char rit_on_char { rsp[RIT_ON_POSN] };
+
+  switch (rit_on_char)
+  { case '1' :
+      _rit_is_on = true;
+      break;
+
+    case '0' :
+      _rit_is_on = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char xit_on_char { rsp[XIT_ON_POSN] };
+
+  switch (xit_on_char)
+  { case '1' :
+      _xit_is_on = true;
+      break;
+
+    case '0' :
+      _xit_is_on = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char transmit_char { rsp[TRANSMIT_POSN] };
+
+  switch (transmit_char)
+  { case '1' :
+      _transmit = true;
+      break;
+
+    case '0' :
+      _transmit = false;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char op_mode_char { rsp[OP_MODE_POSN] };
+
+  switch (op_mode_char)
+  { case '1' :
+      _op_mode = K3_OPERATING_MODE::LSB;
+      break;
+
+    case '2' :
+      _op_mode = K3_OPERATING_MODE::USB;
+      break;
+
+    case '3' :
+      _op_mode = K3_OPERATING_MODE::CW;
+      break;
+
+    case '4' :
+      _op_mode = K3_OPERATING_MODE::FM;
+      break;
+
+    case '5' :
+      _op_mode = K3_OPERATING_MODE::AM;
+      break;
+
+    case '6' :
+      _op_mode = K3_OPERATING_MODE::DATA;
+      break;
+
+    case '7' :
+      _op_mode = K3_OPERATING_MODE::CWREV;
+      break;
+
+    case '9' :                                  // there is no '8'
+      _op_mode = K3_OPERATING_MODE::DATA_REV;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char rx_vfo_char { rsp[RX_VFO_POSN] };
+
+  switch (rx_vfo_char)
+  { case '0' :
+      _rx_vfo = VFO::A;
+      break;
+
+    case '1' :
+      _rx_vfo = VFO::B;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char scanning_char { rsp[SCANNING_POSN] };
+
+  switch (scanning_char)
+  { case '0' :
+      _scanning = false;
+      break;
+
+    case '1' :
+      _scanning = true;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+  const char split_char { rsp[SPLIT_POSN] };
+
+  switch (split_char)
+  { case '0' :
+      _is_split = false;
+      break;
+
+    case '1' :
+      _is_split = true;
+      break;
+
+    default :
+      return;                                   // invalid
+  }
+
+// ignore the last two fields
+
+  _valid = true;
 }
 
 // ---------------------------------------- elecraft_k3_interface -------------------------

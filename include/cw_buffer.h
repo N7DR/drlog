@@ -148,7 +148,6 @@ public:
     Special characters and commands embedded in <i>str</i> are expanded and/or processed
     prior to transmission
 */
-//  void operator<<(const std::string& str);
   void operator<<(const std::string_view str);
 
 /*! \brief          Send a string
@@ -231,7 +230,7 @@ public:
 */
   inline explicit cw_messages(const std::map<int /* message number */, std::string >& m) :
     _messages(m)
-    { }
+  { }
 
 /*! \brief      Initialise [default-constructed object] with a pre-existing map of message numbers and message contents
     \param  m   map of message numbers and message contents

@@ -180,7 +180,8 @@ public:
         
     It is not an error to attempt to remove a call that does not exist
 */
-  inline void remove_alternative_callsign(const std::string& call)
+//  inline void remove_alternative_callsign(const std::string& call)
+  inline void remove_alternative_callsign(const std::string_view call)
     { _alt_callsigns -= call; }
 
 /*! \brief          Remove an alternative prefix
@@ -188,21 +189,24 @@ public:
         
     It is not an error to attempt to remove a prefix that does not exist
 */
-  inline void remove_alternative_prefix(const std::string& prefix)
+//  inline void remove_alternative_prefix(const std::string& prefix)
+  inline void remove_alternative_prefix(const std::string_view prefix)
     { _alt_prefixes -= prefix; }   
 
 /*! \brief          Is a string an alternative callsign?
     \param  call    string to check
     \return         whether <i>call</i> is an alternative callsign
 */
-  inline bool is_alternative_callsign(const std::string& call) const
+//  inline bool is_alternative_callsign(const std::string& call) const
+  inline bool is_alternative_callsign(const std::string_view call) const
     { return _alt_callsigns.contains(call); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
-  inline bool is_alternative_prefix(const std::string& pfx) const
+//  inline bool is_alternative_prefix(const std::string& pfx) const
+  inline bool is_alternative_prefix(const std::string_view pfx) const
     { return _alt_prefixes.contains(pfx); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
@@ -516,11 +520,29 @@ public:
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
-  UNORDERED_STRING_SET countries(void) const;
+//  UNORDERED_STRING_SET countries(void) const;
+
+  template <typename T>
+  auto countries(void) const -> T
+  { std::lock_guard lg(_location_database_mutex);
+
+//  using RT = std::invoke_result_t<decltype(&location_database::countries())>;
+
+//  RT rv1;
+
+//  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
+    T rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
+
+//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
+//  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
+
+    for (const auto& [_, li] : _db)
+      { rv += li.canonical_prefix(); }
+
+    return rv;
+  }
 
 /// create a set of all the canonical prefixes for a particular continent
-//  std::unordered_set<std::string> countries(const std::string& cont_target) const;
-//  UNORDERED_STRING_SET countries(const std::string& cont_target) const;
   UNORDERED_STRING_SET countries(const std::string_view cont_target) const;
 
 /*! \brief              Get official name of the country associated with a call or partial call
