@@ -1,4 +1,4 @@
-// $Id: rules.cpp 286 2026-03-09 00:55:25Z  $
+// $Id: rules.cpp 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1000,6 +1000,7 @@ void contest_rules::add_permitted_band(const BAND b)
 }
 
 /// get the next band up
+#if 0
 BAND contest_rules::next_band_up(const BAND current_band) const
 { SAFELOCK(rules);
 
@@ -1025,7 +1026,9 @@ BAND contest_rules::next_band_up(const BAND current_band) const
 
   return (++cit == _permitted_bands.cend() ? *(_permitted_bands.cbegin()) : *cit);
 }
+#endif
 
+#if 0
 /// get the next band down
 BAND contest_rules::next_band_down(const BAND current_band) const
 { SAFELOCK(rules);
@@ -1052,6 +1055,7 @@ BAND contest_rules::next_band_down(const BAND current_band) const
 
   return ( (cit == _permitted_bands.begin()) ? _permitted_bands[_permitted_bands.size() - 1] : *(--cit));
 }
+#endif
 
 /*! \brief                  Points for a particular QSO
     \param  qso             QSO for which the points are to be calculated
@@ -1123,7 +1127,7 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
         rv = 5;
 
 // is it an HQ station?
-      const string society_value { qso.received_exchange("SOCIETY"s) };
+      const string society_value { qso.received_exchange("SOCIETY"sv) };
 
       if (!society_value.empty())
         rv = 1;
@@ -1134,7 +1138,7 @@ unsigned int contest_rules::points(const QSO& qso, location_database& location_d
     case POINTS::STEW :
     { constexpr int STEW_PERRY_BONUS_DISTANCE { 500 };  // distance for bonus point(s) in Stew Perry, in km
 
-      const string       grid_value { qso.received_exchange("GRID"s) };
+      const string       grid_value { qso.received_exchange("GRID"sv) };
       const unsigned int distance   { static_cast<unsigned int>( (grid_square(grid_value) - _my_grid) / STEW_PERRY_BONUS_DISTANCE ) + 1 };
 
       return distance;
@@ -1340,8 +1344,7 @@ string wpx_prefix(const string_view call)
 
 // /MM, /MA, /AM
   if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
-  { //static const STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
-    static const FLAT_STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
+  { static const FLAT_STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last <string_view> (callsign, 2)))
       callsign = remove_n_chars_from_end <std::string> (callsign, 3u);

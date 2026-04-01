@@ -1,4 +1,4 @@
- // $Id: hamlib.h 288 2026-03-14 19:49:46Z  $
+ // $Id: hamlib.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -106,9 +106,12 @@ protected:
 
 public:
 
+/*! \brief      get a rig's capabilities
+    \param  rp  pointer to a hamlib RIG object
+*/
   void get_capabilities(RIG* rp);
-//    { _caps = hamlib_get_capabilities(rp); }
 
+/// are the capabilities uninitialised?
   inline bool empty(void) const
     { return ( _caps == static_cast<HAMLIB_CAPABILITIES_TYPE>(0) ); }
 

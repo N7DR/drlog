@@ -1,4 +1,4 @@
-// $Id: rules.h 286 2026-03-09 00:55:25Z  $
+// $Id: rules.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -565,11 +565,8 @@ public:
 */
   void add_permitted_band(const BAND b);
 
-/// get the next band that is higher in frequency than a given band
-  BAND next_band_up(const BAND current_band) const;
-
 /// get the next band that is lower in frequency than a given band
-  BAND next_band_down(const BAND current_band) const;
+//  BAND next_band_down(const BAND current_band) const;
   
   RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
 

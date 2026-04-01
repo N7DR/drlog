@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 286 2026-03-09 00:55:25Z  $
+// $Id: cty_data.cpp 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,6 @@
 
 using namespace std;
 
-//extern const STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 extern const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 //constinit const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };  ///< abbreviations for continents;
 
@@ -312,7 +311,7 @@ cty_data::cty_data(const string_view filename)
     This is basically just a simple tuple
 */
 
-/// location_info == location_info
+/// location_info == location_info; do not bother to compare the Russian information
 bool location_info::operator==(const location_info& li) const
 { return ( (_canonical_prefix == li._canonical_prefix) and
            (_continent == li._continent) and
@@ -417,7 +416,11 @@ location_info guess_zones(const string_view call, const location_info& li)
 
 // lat/long for VEs; for now, assume VE, not VY or VO
     switch (call_digit)
-    { case 2 :
+    { case 1 :
+        rv.latitude_longitude(44.63, 63.58);              // Halifax
+        break;
+
+      case 2 :
         rv.latitude_longitude(45.57, 73.62);              // Montreal
         break;
 
@@ -439,6 +442,10 @@ location_info guess_zones(const string_view call, const location_info& li)
 
       case 7 :
         rv.latitude_longitude(49.31, 123.04);             // Vancouver
+        break;
+
+      case 9 :
+        rv.latitude_longitude(45.27, 66.07);              // St. John
         break;
     }
   }
@@ -636,7 +643,6 @@ location_info location_database::info(const string_view callpart) const
     return insert_best_info(location_info());
   
 // try to determine the canonical prefix
-//  if (!contains(callsign, '/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
   if (!callsign.contains('/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
@@ -814,7 +820,7 @@ location_info location_database::info(const string_view callpart) const
         return insert_best_info( guess_zones(callsign, ((parts[0].length() < parts[1].length()) ? db_posn_0 : db_posn_1) -> second) );
  
 // same length; arbitrarily choose the first
-      return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+      return insert_best_info( guess_zones(callsign, db_posn_0 -> second) );
     }
   }
   
@@ -831,37 +837,6 @@ location_info location_database::info(const string_view callpart) const
   }
 
   throw exception();
-}
-
-/// get a set of all the canonical prefixes for all countries
-#if 0
-auto location_database::countries(void) const -> UNORDERED_STRING_SET
-{ std::lock_guard lg(_location_database_mutex);
-
-//  using RT = std::invoke_result_t<decltype(&location_database::countries())>;
-
-//  RT rv1;
-
-//  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
-  UNORDERED_STRING_SET rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
-
-//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
-//  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
-
-  for (const auto& [_, li] : _db)
-   { rv += li.canonical_prefix(); }
-
-  return rv;
-}
-#endif
-
-/// create a set of all the canonical prefixes for a particular continent
-UNORDERED_STRING_SET location_database::countries(const string_view cont_target) const
-{ UNORDERED_STRING_SET rv { };
-
-  ranges::copy_if(countries<UNORDERED_STRING_SET>(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
-
-  return rv;
 }
 
 // -----------  russian_data_per_substring  ----------------

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 286 2026-03-09 00:55:25Z  $
+// $Id: string_functions.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -10,7 +10,7 @@
 
 /*! \file   string_functions.h
 
-    Functions related to the manipulation of strings
+    Functions related to the manipulation of strings and characters
 */
 
 #ifndef STRING_FUNCTIONS_H
@@ -67,6 +67,10 @@ constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRST
 
 constexpr char BACKSLASH_CHAR { '\\' };
 constexpr char SPACE_CHAR     { ' ' };
+
+constexpr char APOSTROPHE { '\'' };
+constexpr char DOT        { '.' };
+constexpr char SEMICOLON  { ';' };
   
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left

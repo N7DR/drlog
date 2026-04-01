@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 289 2026-03-15 19:15:54Z  $
+// $Id: rig_interface.cpp 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,13 +32,6 @@
 
 #include <hamlib/rig.h>
 
-// Hamlib changed the macro FILPATHLEN to HAMLIB_FILPATHLEN at some point
-//#if (!defined(HAMLIB_FILPATHLEN))
-//
-//#define HAMLIB_FILPATHLEN FILPATHLEN
-//
-//#endif
-
 using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
@@ -49,8 +42,6 @@ extern bool debug;                             ///< debug frequency changes
 extern bool rig_is_split;
 
 extern void alert(const string_view msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
-
-constexpr char SEMICOLON { ';' };
 
 // --------------------------------------- polled_status ----------------------
 
@@ -89,8 +80,12 @@ string polled_status::to_string(void) const
 /*! \class  rig_interface
     \brief  The interface to a rig
 
-    A good argument can be made that this should be a base class, with specialisations occurring
-    in derived classes. For now, that's not done.
+    This is a base class for interacting with rigs. It uses hamlib, despite
+    my grave reservations about the quality of that library, as hamlib "supports" a vast number
+    of different rigs. This allows at least basic control for those rigs.
+
+    Derived classes with better implementations of various functions can then be used for particular rigs as
+    the need arises (currently just the Elecraft K3, as that is the rig that I have).
 */
 
 /*! \brief       Alert the user with a message
@@ -181,40 +176,6 @@ frequency rig_interface::_rig_frequency(const VFO v) const
   return frequency { hz };
 }
 
-/*! \brief                  Send a raw command to the rig
-    \param  cmd             the command to send
-    \param  expectation     whether a response is expected
-    \param  expected_len    expected length of response
-    \return                 the response from the rig, or the empty string
-
-    Currently any expected length is ignored; the routine looks for the concluding ";" instead
-    C++ does not allow a generic std::chrono::duration to be a parameter
-*/
-string rig_interface::_retried_raw_command(const string_view cmd, const milliseconds timeout, const int n_retries)
-{ string rv;
-
-  int counter    { 0 };
-  bool completed { false };
-
-  while (!completed and (counter != n_retries))  
-  { rv = raw_command(cmd, RESPONSE::EXPECTED/*, expected_len*/);    // issue the command each time
-
-    completed = (rv.empty() ? false : last_char(rv) == ';');
-
-    if (!completed)
-    { counter++;
-      sleep_for(timeout);
-    }
-  }
-
-  if (!completed)
-  { ost << "no response from command: " << cmd << endl;
-    rv.clear();             // don't give a partial reponse
-  }
-
-  return rv;
-}
-
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
@@ -252,362 +213,362 @@ void rig_interface::prepare(const drlog_context& context)
     STR_TO_MODEL(RIG_MODEL_FT767),
     STR_TO_MODEL(RIG_MODEL_FT736R),
     STR_TO_MODEL(RIG_MODEL_FT840),
-      STR_TO_MODEL(RIG_MODEL_FT820),
-      STR_TO_MODEL(RIG_MODEL_FT900),
-      STR_TO_MODEL(RIG_MODEL_FT920),
-      STR_TO_MODEL(RIG_MODEL_FT890),
-      STR_TO_MODEL(RIG_MODEL_FT990),
-      STR_TO_MODEL(RIG_MODEL_FRG100),
-      STR_TO_MODEL(RIG_MODEL_FRG9600),
-      STR_TO_MODEL(RIG_MODEL_FRG8800),
-      STR_TO_MODEL(RIG_MODEL_FT817),
-      STR_TO_MODEL(RIG_MODEL_FT100),
-      STR_TO_MODEL(RIG_MODEL_FT857),
-      STR_TO_MODEL(RIG_MODEL_FT897),
-      STR_TO_MODEL(RIG_MODEL_FT1000MP),
-      STR_TO_MODEL(RIG_MODEL_FT1000MPMKVFLD),
-      STR_TO_MODEL(RIG_MODEL_VR5000),
-      STR_TO_MODEL(RIG_MODEL_FT450),
-      STR_TO_MODEL(RIG_MODEL_FT950),
-      STR_TO_MODEL(RIG_MODEL_FT2000),
-      STR_TO_MODEL(RIG_MODEL_FT9000),
-      STR_TO_MODEL(RIG_MODEL_FT980),
-      STR_TO_MODEL(RIG_MODEL_FTDX5000),
-      STR_TO_MODEL(RIG_MODEL_VX1700),
-      STR_TO_MODEL(RIG_MODEL_FTDX1200),
-      STR_TO_MODEL(RIG_MODEL_FT991),
-      STR_TO_MODEL(RIG_MODEL_FT891),
-      STR_TO_MODEL(RIG_MODEL_FTDX3000),
-      STR_TO_MODEL(RIG_MODEL_FT847UNI),
-      STR_TO_MODEL(RIG_MODEL_FT600),
-      STR_TO_MODEL(RIG_MODEL_FTDX101D),
-      STR_TO_MODEL(RIG_MODEL_FT818),
-      STR_TO_MODEL(RIG_MODEL_FTDX10),
-      STR_TO_MODEL(RIG_MODEL_FT897D),
-      STR_TO_MODEL(RIG_MODEL_FTDX101MP),
-      STR_TO_MODEL(RIG_MODEL_MCHFQRP),
-      STR_TO_MODEL(RIG_MODEL_FT450D),
-      STR_TO_MODEL(RIG_MODEL_FT650),
-      STR_TO_MODEL(RIG_MODEL_FT990UNI),
-      STR_TO_MODEL(RIG_MODEL_FT710),
-      STR_TO_MODEL(RIG_MODEL_FT9000OLD),
-      STR_TO_MODEL(RIG_MODEL_Q900),
-      STR_TO_MODEL(RIG_MODEL_PMR171),
-      STR_TO_MODEL(RIG_MODEL_TS50),
-      STR_TO_MODEL(RIG_MODEL_TS440),
-      STR_TO_MODEL(RIG_MODEL_TS450S),
-      STR_TO_MODEL(RIG_MODEL_TS570D),
-      STR_TO_MODEL(RIG_MODEL_TS690S),
-      STR_TO_MODEL(RIG_MODEL_TS711),
-      STR_TO_MODEL(RIG_MODEL_TS790),
-      STR_TO_MODEL(RIG_MODEL_TS811),
-      STR_TO_MODEL(RIG_MODEL_TS850),
-      STR_TO_MODEL(RIG_MODEL_TS870S),
-      STR_TO_MODEL(RIG_MODEL_TS940),
-      STR_TO_MODEL(RIG_MODEL_TS950S),
-      STR_TO_MODEL(RIG_MODEL_TS950SDX),
-      STR_TO_MODEL(RIG_MODEL_TS2000),
-      STR_TO_MODEL(RIG_MODEL_R5000),
-      STR_TO_MODEL(RIG_MODEL_TS570S),
-      STR_TO_MODEL(RIG_MODEL_THD7A),
-      STR_TO_MODEL(RIG_MODEL_THD7AG),
-      STR_TO_MODEL(RIG_MODEL_THF6A),
-      STR_TO_MODEL(RIG_MODEL_THF7E),
-      STR_TO_MODEL(RIG_MODEL_K2),
-      STR_TO_MODEL(RIG_MODEL_TS930),
-      STR_TO_MODEL(RIG_MODEL_THG71),
-      STR_TO_MODEL(RIG_MODEL_TS680S),
-      STR_TO_MODEL(RIG_MODEL_TS140S),
-      STR_TO_MODEL(RIG_MODEL_TMD700),
-      STR_TO_MODEL(RIG_MODEL_TMV7),
-      STR_TO_MODEL(RIG_MODEL_TS480),
-      STR_TO_MODEL(RIG_MODEL_K3),
-      STR_TO_MODEL(RIG_MODEL_TRC80),
-      STR_TO_MODEL(RIG_MODEL_TS590S),
-      STR_TO_MODEL(RIG_MODEL_TRANSFOX),
-      STR_TO_MODEL(RIG_MODEL_THD72A),
-      STR_TO_MODEL(RIG_MODEL_TMD710),
-      STR_TO_MODEL(RIG_MODEL_TMV71),
-      STR_TO_MODEL(RIG_MODEL_F6K),
-      STR_TO_MODEL(RIG_MODEL_TS590SG),
-      STR_TO_MODEL(RIG_MODEL_XG3),
-      STR_TO_MODEL(RIG_MODEL_TS990S),
-      STR_TO_MODEL(RIG_MODEL_HPSDR),
-      STR_TO_MODEL(RIG_MODEL_TS890S),
-      STR_TO_MODEL(RIG_MODEL_THD74),
-      STR_TO_MODEL(RIG_MODEL_K3S),
-      STR_TO_MODEL(RIG_MODEL_KX2),
-      STR_TO_MODEL(RIG_MODEL_KX3),
-      STR_TO_MODEL(RIG_MODEL_PT8000A),
-      STR_TO_MODEL(RIG_MODEL_K4),
-      STR_TO_MODEL(RIG_MODEL_POWERSDR),
-      STR_TO_MODEL(RIG_MODEL_MALACHITE),
-      STR_TO_MODEL(RIG_MODEL_LAB599_TX500),
-      STR_TO_MODEL(RIG_MODEL_SDRUNO),
-      STR_TO_MODEL(RIG_MODEL_QRPLABS),
-      STR_TO_MODEL(RIG_MODEL_FX4),
-      STR_TO_MODEL(RIG_MODEL_THETIS),
-      STR_TO_MODEL(RIG_MODEL_TRUSDX),
-      STR_TO_MODEL(RIG_MODEL_SDRCONSOLE),
-      STR_TO_MODEL(RIG_MODEL_QRPLABS_QMX),
-      STR_TO_MODEL(RIG_MODEL_IC1271),
-      STR_TO_MODEL(RIG_MODEL_IC1275),
-      STR_TO_MODEL(RIG_MODEL_IC271),
-      STR_TO_MODEL(RIG_MODEL_IC275),
-      STR_TO_MODEL(RIG_MODEL_IC375),
-      STR_TO_MODEL(RIG_MODEL_IC471),
-      STR_TO_MODEL(RIG_MODEL_IC475),
-      STR_TO_MODEL(RIG_MODEL_IC575),
-      STR_TO_MODEL(RIG_MODEL_IC706),
-      STR_TO_MODEL(RIG_MODEL_IC706MKII),
-      STR_TO_MODEL(RIG_MODEL_IC706MKIIG),
-      STR_TO_MODEL(RIG_MODEL_IC707),
-      STR_TO_MODEL(RIG_MODEL_IC718),
-      STR_TO_MODEL(RIG_MODEL_IC725),
-      STR_TO_MODEL(RIG_MODEL_IC726),
-      STR_TO_MODEL(RIG_MODEL_IC728),
-      STR_TO_MODEL(RIG_MODEL_IC729),
-      STR_TO_MODEL(RIG_MODEL_IC731),
-      STR_TO_MODEL(RIG_MODEL_IC735),
-      STR_TO_MODEL(RIG_MODEL_IC736),
-      STR_TO_MODEL(RIG_MODEL_IC737),
-      STR_TO_MODEL(RIG_MODEL_IC738),
-      STR_TO_MODEL(RIG_MODEL_IC746),
-      STR_TO_MODEL(RIG_MODEL_IC751),
-      STR_TO_MODEL(RIG_MODEL_IC751A),
-      STR_TO_MODEL(RIG_MODEL_IC756),
-      STR_TO_MODEL(RIG_MODEL_IC756PRO),
-      STR_TO_MODEL(RIG_MODEL_IC761),
-      STR_TO_MODEL(RIG_MODEL_IC765),
-      STR_TO_MODEL(RIG_MODEL_IC775),
-      STR_TO_MODEL(RIG_MODEL_IC781),
-      STR_TO_MODEL(RIG_MODEL_IC820),
-      STR_TO_MODEL(RIG_MODEL_IC821H),
-      STR_TO_MODEL(RIG_MODEL_IC970),
-      STR_TO_MODEL(RIG_MODEL_ICR10),
-      STR_TO_MODEL(RIG_MODEL_ICR71),
-      STR_TO_MODEL(RIG_MODEL_ICR72),
-      STR_TO_MODEL(RIG_MODEL_ICR75),
-      STR_TO_MODEL(RIG_MODEL_ICR7000),
-      STR_TO_MODEL(RIG_MODEL_ICR7100),
-      STR_TO_MODEL(RIG_MODEL_ICR8500),
-      STR_TO_MODEL(RIG_MODEL_ICR9000),
-      STR_TO_MODEL(RIG_MODEL_IC910),
-      STR_TO_MODEL(RIG_MODEL_IC78),
-      STR_TO_MODEL(RIG_MODEL_IC746PRO),
-      STR_TO_MODEL(RIG_MODEL_IC756PROII),
-      STR_TO_MODEL(RIG_MODEL_ICID1),
-      STR_TO_MODEL(RIG_MODEL_IC703),
-      STR_TO_MODEL(RIG_MODEL_IC7800),
-      STR_TO_MODEL(RIG_MODEL_IC756PROIII),
-      STR_TO_MODEL(RIG_MODEL_ICR20),
-      STR_TO_MODEL(RIG_MODEL_IC7000),
-      STR_TO_MODEL(RIG_MODEL_IC7200),
-      STR_TO_MODEL(RIG_MODEL_IC7700),
-      STR_TO_MODEL(RIG_MODEL_IC7600),
-      STR_TO_MODEL(RIG_MODEL_IC92D),
-      STR_TO_MODEL(RIG_MODEL_ICR9500),
-      STR_TO_MODEL(RIG_MODEL_IC7410),
-      STR_TO_MODEL(RIG_MODEL_IC9100),
-      STR_TO_MODEL(RIG_MODEL_ICRX7),
-      STR_TO_MODEL(RIG_MODEL_IC7100),
-      STR_TO_MODEL(RIG_MODEL_ID5100),
-      STR_TO_MODEL(RIG_MODEL_IC2730),
-      STR_TO_MODEL(RIG_MODEL_IC7300),
-      STR_TO_MODEL(RIG_MODEL_PERSEUS),
-      STR_TO_MODEL(RIG_MODEL_IC785x),
-      STR_TO_MODEL(RIG_MODEL_X108G),
-      STR_TO_MODEL(RIG_MODEL_ICR6),
-      STR_TO_MODEL(RIG_MODEL_IC7610),
-      STR_TO_MODEL(RIG_MODEL_ICR8600),
-      STR_TO_MODEL(RIG_MODEL_ICR30),
-      STR_TO_MODEL(RIG_MODEL_IC9700),
-      STR_TO_MODEL(RIG_MODEL_ID4100),
-      STR_TO_MODEL(RIG_MODEL_ID31),
-      STR_TO_MODEL(RIG_MODEL_ID51),
-      STR_TO_MODEL(RIG_MODEL_IC705),
-      STR_TO_MODEL(RIG_MODEL_ICF8101),
-      STR_TO_MODEL(RIG_MODEL_X6100),
-      STR_TO_MODEL(RIG_MODEL_G90),
-      STR_TO_MODEL(RIG_MODEL_X5105),
-      STR_TO_MODEL(RIG_MODEL_IC905),
-      STR_TO_MODEL(RIG_MODEL_X6200),
-      STR_TO_MODEL(RIG_MODEL_IC7760),
-      STR_TO_MODEL(RIG_MODEL_MINISCOUT),
-      STR_TO_MODEL(RIG_MODEL_XPLORER),
-      STR_TO_MODEL(RIG_MODEL_OS535),
-      STR_TO_MODEL(RIG_MODEL_OS456),
-      STR_TO_MODEL(RIG_MODEL_OMNIVI),
-      STR_TO_MODEL(RIG_MODEL_OMNIVIP),
-      STR_TO_MODEL(RIG_MODEL_PARAGON2),
-      STR_TO_MODEL(RIG_MODEL_DELTAII),
-      STR_TO_MODEL(RIG_MODEL_PCR1000),
-      STR_TO_MODEL(RIG_MODEL_PCR100),
-      STR_TO_MODEL(RIG_MODEL_PCR1500),
-      STR_TO_MODEL(RIG_MODEL_PCR2500),
-      STR_TO_MODEL(RIG_MODEL_AR8200),
-      STR_TO_MODEL(RIG_MODEL_AR8000),
-      STR_TO_MODEL(RIG_MODEL_AR7030),
-      STR_TO_MODEL(RIG_MODEL_AR5000),
-      STR_TO_MODEL(RIG_MODEL_AR3030),
-      STR_TO_MODEL(RIG_MODEL_AR3000A),
-      STR_TO_MODEL(RIG_MODEL_AR3000),
-      STR_TO_MODEL(RIG_MODEL_AR2700),
-      STR_TO_MODEL(RIG_MODEL_AR2500),
-      STR_TO_MODEL(RIG_MODEL_AR16),
-      STR_TO_MODEL(RIG_MODEL_SDU5500),
-      STR_TO_MODEL(RIG_MODEL_SDU5000),
-      STR_TO_MODEL(RIG_MODEL_AR8600),
-      STR_TO_MODEL(RIG_MODEL_AR5000A),
-      STR_TO_MODEL(RIG_MODEL_AR7030P),
-      STR_TO_MODEL(RIG_MODEL_SR2200),
-      STR_TO_MODEL(RIG_MODEL_JST145),
-      STR_TO_MODEL(RIG_MODEL_JST245),
-      STR_TO_MODEL(RIG_MODEL_CMH530),
-      STR_TO_MODEL(RIG_MODEL_NRD345),
-      STR_TO_MODEL(RIG_MODEL_NRD525),
-      STR_TO_MODEL(RIG_MODEL_NRD535),
-      STR_TO_MODEL(RIG_MODEL_NRD545),
-      STR_TO_MODEL(RIG_MODEL_RS64),
-      STR_TO_MODEL(RIG_MODEL_RS2005),
-      STR_TO_MODEL(RIG_MODEL_RS2006),
-      STR_TO_MODEL(RIG_MODEL_RS2035),
-      STR_TO_MODEL(RIG_MODEL_RS2042),
-      STR_TO_MODEL(RIG_MODEL_RS2041),
-      STR_TO_MODEL(RIG_MODEL_BC780),
-      STR_TO_MODEL(RIG_MODEL_BC245),
-      STR_TO_MODEL(RIG_MODEL_BC895),
-      STR_TO_MODEL(RIG_MODEL_PRO2052),
-      STR_TO_MODEL(RIG_MODEL_BC235),
-      STR_TO_MODEL(RIG_MODEL_BC250),
-      STR_TO_MODEL(RIG_MODEL_BC785),
-      STR_TO_MODEL(RIG_MODEL_BC786),
-      STR_TO_MODEL(RIG_MODEL_BCT8),
-      STR_TO_MODEL(RIG_MODEL_BCD396T),
-      STR_TO_MODEL(RIG_MODEL_BCD996T),
-      STR_TO_MODEL(RIG_MODEL_BC898),
-      STR_TO_MODEL(RIG_MODEL_DKR8),
-      STR_TO_MODEL(RIG_MODEL_DKR8A),
-      STR_TO_MODEL(RIG_MODEL_DKR8B),
-      STR_TO_MODEL(RIG_MODEL_HF150),
-      STR_TO_MODEL(RIG_MODEL_HF225),
-      STR_TO_MODEL(RIG_MODEL_HF250),
-      STR_TO_MODEL(RIG_MODEL_HF235),
-      STR_TO_MODEL(RIG_MODEL_RA3790),
-      STR_TO_MODEL(RIG_MODEL_RA3720),
-      STR_TO_MODEL(RIG_MODEL_RA6790),
-      STR_TO_MODEL(RIG_MODEL_RA3710),
-      STR_TO_MODEL(RIG_MODEL_RA3702),
-      STR_TO_MODEL(RIG_MODEL_HF1000),
-      STR_TO_MODEL(RIG_MODEL_HF1000A),
-      STR_TO_MODEL(RIG_MODEL_WJ8711),
-      STR_TO_MODEL(RIG_MODEL_WJ8888),
-      STR_TO_MODEL(RIG_MODEL_ESM500),
-      STR_TO_MODEL(RIG_MODEL_EK890),
-      STR_TO_MODEL(RIG_MODEL_EK891),
-      STR_TO_MODEL(RIG_MODEL_EK895),
-      STR_TO_MODEL(RIG_MODEL_EK070),
-      STR_TO_MODEL(RIG_MODEL_TRP7000),
-      STR_TO_MODEL(RIG_MODEL_TRP8000),
-      STR_TO_MODEL(RIG_MODEL_TRP9000),
-      STR_TO_MODEL(RIG_MODEL_TRP8255),
-      STR_TO_MODEL(RIG_MODEL_WR1000),
-      STR_TO_MODEL(RIG_MODEL_WR1500),
-      STR_TO_MODEL(RIG_MODEL_WR1550),
-      STR_TO_MODEL(RIG_MODEL_WR3100),
-      STR_TO_MODEL(RIG_MODEL_WR3150),
-      STR_TO_MODEL(RIG_MODEL_WR3500),
-      STR_TO_MODEL(RIG_MODEL_WR3700),
-      STR_TO_MODEL(RIG_MODEL_G303),
-      STR_TO_MODEL(RIG_MODEL_G313),
-      STR_TO_MODEL(RIG_MODEL_G305),
-      STR_TO_MODEL(RIG_MODEL_G315),
-      STR_TO_MODEL(RIG_MODEL_TT550),
-      STR_TO_MODEL(RIG_MODEL_TT538),
-      STR_TO_MODEL(RIG_MODEL_RX320),
-      STR_TO_MODEL(RIG_MODEL_RX340),
-      STR_TO_MODEL(RIG_MODEL_RX350),
-      STR_TO_MODEL(RIG_MODEL_TT526),
-      STR_TO_MODEL(RIG_MODEL_TT516),
-      STR_TO_MODEL(RIG_MODEL_TT565),
-      STR_TO_MODEL(RIG_MODEL_TT585),
-      STR_TO_MODEL(RIG_MODEL_TT588),
-      STR_TO_MODEL(RIG_MODEL_RX331),
-      STR_TO_MODEL(RIG_MODEL_TT599),
-      STR_TO_MODEL(RIG_MODEL_DX77),
-      STR_TO_MODEL(RIG_MODEL_DXSR8),
-      STR_TO_MODEL(RIG_MODEL_505DSP),
-      STR_TO_MODEL(RIG_MODEL_GNURADIO),
-      STR_TO_MODEL(RIG_MODEL_MC4020),
-      STR_TO_MODEL(RIG_MODEL_GRAUDIO),
-      STR_TO_MODEL(RIG_MODEL_GRAUDIOIQ),
-      STR_TO_MODEL(RIG_MODEL_USRP_G),
-      STR_TO_MODEL(RIG_MODEL_MICROTUNE_4937),
-      STR_TO_MODEL(RIG_MODEL_MICROTUNE_4702),
-      STR_TO_MODEL(RIG_MODEL_MICROTUNE_4707),
-      STR_TO_MODEL(RIG_MODEL_DSP10),
-      STR_TO_MODEL(RIG_MODEL_SDR1000),
-      STR_TO_MODEL(RIG_MODEL_SDR1000RFE),
-      STR_TO_MODEL(RIG_MODEL_DTTSP),
-      STR_TO_MODEL(RIG_MODEL_DTTSP_UDP),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_A),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_B),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_C),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_D),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_E),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_F),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_G),
-      STR_TO_MODEL(RIG_MODEL_SMARTSDR_H),
-      STR_TO_MODEL(RIG_MODEL_EKD500),
-      STR_TO_MODEL(RIG_MODEL_ELEKTOR304),
-      STR_TO_MODEL(RIG_MODEL_DRT1),
-      STR_TO_MODEL(RIG_MODEL_DWT),
-      STR_TO_MODEL(RIG_MODEL_USRP0),
-      STR_TO_MODEL(RIG_MODEL_USRP),
-      STR_TO_MODEL(RIG_MODEL_DDS60),
-      STR_TO_MODEL(RIG_MODEL_ELEKTOR507),
-      STR_TO_MODEL(RIG_MODEL_MINIVNA),
-      STR_TO_MODEL(RIG_MODEL_SI570AVRUSB),
-      STR_TO_MODEL(RIG_MODEL_PMSDR),
-      STR_TO_MODEL(RIG_MODEL_SI570PICUSB),
-      STR_TO_MODEL(RIG_MODEL_FIFISDR),
-      STR_TO_MODEL(RIG_MODEL_FUNCUBEDONGLE),
-      STR_TO_MODEL(RIG_MODEL_HIQSDR),
-      STR_TO_MODEL(RIG_MODEL_FASDR),
-      STR_TO_MODEL(RIG_MODEL_SI570PEABERRY1),
-      STR_TO_MODEL(RIG_MODEL_SI570PEABERRY2),
-      STR_TO_MODEL(RIG_MODEL_FUNCUBEDONGLEPLUS),
-      STR_TO_MODEL(RIG_MODEL_RSHFIQ),
-      STR_TO_MODEL(RIG_MODEL_V4L),
-      STR_TO_MODEL(RIG_MODEL_V4L2),
-      STR_TO_MODEL(RIG_MODEL_ESMC),
-      STR_TO_MODEL(RIG_MODEL_EB200),
-      STR_TO_MODEL(RIG_MODEL_XK2100),
-      STR_TO_MODEL(RIG_MODEL_EK89X),
-      STR_TO_MODEL(RIG_MODEL_XK852),
-      STR_TO_MODEL(RIG_MODEL_PRM8060),
-      STR_TO_MODEL(RIG_MODEL_PRM8070),
-      STR_TO_MODEL(RIG_MODEL_ADT_200A),
-      STR_TO_MODEL(RIG_MODEL_IC_M700PRO),
-      STR_TO_MODEL(RIG_MODEL_IC_M802),
-      STR_TO_MODEL(RIG_MODEL_IC_M710),
-      STR_TO_MODEL(RIG_MODEL_IC_M803),
-      STR_TO_MODEL(RIG_MODEL_DORJI_DRA818V),
-      STR_TO_MODEL(RIG_MODEL_DORJI_DRA818U),
-      STR_TO_MODEL(RIG_MODEL_BARRETT_2050),
-      STR_TO_MODEL(RIG_MODEL_BARRETT_950),
-      STR_TO_MODEL(RIG_MODEL_BARRETT_4050),
-      STR_TO_MODEL(RIG_MODEL_BARRETT_4100),
-      STR_TO_MODEL(RIG_MODEL_ELAD_FDM_DUO),
-      STR_TO_MODEL(RIG_MODEL_CODAN_ENVOY),
-      STR_TO_MODEL(RIG_MODEL_CODAN_NGT),
-      STR_TO_MODEL(RIG_MODEL_GS100),
-      STR_TO_MODEL(RIG_MODEL_MDS4710),
-      STR_TO_MODEL(RIG_MODEL_MDS9710),
-      STR_TO_MODEL(RIG_MODEL_ATD578UVIII),
-      STR_TO_MODEL(RIG_MODEL_MICOM2),
-      STR_TO_MODEL(RIG_MODEL_CTX10)
-    };
+    STR_TO_MODEL(RIG_MODEL_FT820),
+    STR_TO_MODEL(RIG_MODEL_FT900),
+    STR_TO_MODEL(RIG_MODEL_FT920),
+    STR_TO_MODEL(RIG_MODEL_FT890),
+    STR_TO_MODEL(RIG_MODEL_FT990),
+    STR_TO_MODEL(RIG_MODEL_FRG100),
+    STR_TO_MODEL(RIG_MODEL_FRG9600),
+    STR_TO_MODEL(RIG_MODEL_FRG8800),
+    STR_TO_MODEL(RIG_MODEL_FT817),
+    STR_TO_MODEL(RIG_MODEL_FT100),
+    STR_TO_MODEL(RIG_MODEL_FT857),
+    STR_TO_MODEL(RIG_MODEL_FT897),
+    STR_TO_MODEL(RIG_MODEL_FT1000MP),
+    STR_TO_MODEL(RIG_MODEL_FT1000MPMKVFLD),
+    STR_TO_MODEL(RIG_MODEL_VR5000),
+    STR_TO_MODEL(RIG_MODEL_FT450),
+    STR_TO_MODEL(RIG_MODEL_FT950),
+    STR_TO_MODEL(RIG_MODEL_FT2000),
+    STR_TO_MODEL(RIG_MODEL_FT9000),
+    STR_TO_MODEL(RIG_MODEL_FT980),
+    STR_TO_MODEL(RIG_MODEL_FTDX5000),
+    STR_TO_MODEL(RIG_MODEL_VX1700),
+    STR_TO_MODEL(RIG_MODEL_FTDX1200),
+    STR_TO_MODEL(RIG_MODEL_FT991),
+    STR_TO_MODEL(RIG_MODEL_FT891),
+    STR_TO_MODEL(RIG_MODEL_FTDX3000),
+    STR_TO_MODEL(RIG_MODEL_FT847UNI),
+    STR_TO_MODEL(RIG_MODEL_FT600),
+    STR_TO_MODEL(RIG_MODEL_FTDX101D),
+    STR_TO_MODEL(RIG_MODEL_FT818),
+    STR_TO_MODEL(RIG_MODEL_FTDX10),
+    STR_TO_MODEL(RIG_MODEL_FT897D),
+    STR_TO_MODEL(RIG_MODEL_FTDX101MP),
+    STR_TO_MODEL(RIG_MODEL_MCHFQRP),
+    STR_TO_MODEL(RIG_MODEL_FT450D),
+    STR_TO_MODEL(RIG_MODEL_FT650),
+    STR_TO_MODEL(RIG_MODEL_FT990UNI),
+    STR_TO_MODEL(RIG_MODEL_FT710),
+    STR_TO_MODEL(RIG_MODEL_FT9000OLD),
+    STR_TO_MODEL(RIG_MODEL_Q900),
+    STR_TO_MODEL(RIG_MODEL_PMR171),
+    STR_TO_MODEL(RIG_MODEL_TS50),
+    STR_TO_MODEL(RIG_MODEL_TS440),
+    STR_TO_MODEL(RIG_MODEL_TS450S),
+    STR_TO_MODEL(RIG_MODEL_TS570D),
+    STR_TO_MODEL(RIG_MODEL_TS690S),
+    STR_TO_MODEL(RIG_MODEL_TS711),
+    STR_TO_MODEL(RIG_MODEL_TS790),
+    STR_TO_MODEL(RIG_MODEL_TS811),
+    STR_TO_MODEL(RIG_MODEL_TS850),
+    STR_TO_MODEL(RIG_MODEL_TS870S),
+    STR_TO_MODEL(RIG_MODEL_TS940),
+    STR_TO_MODEL(RIG_MODEL_TS950S),
+    STR_TO_MODEL(RIG_MODEL_TS950SDX),
+    STR_TO_MODEL(RIG_MODEL_TS2000),
+    STR_TO_MODEL(RIG_MODEL_R5000),
+    STR_TO_MODEL(RIG_MODEL_TS570S),
+    STR_TO_MODEL(RIG_MODEL_THD7A),
+    STR_TO_MODEL(RIG_MODEL_THD7AG),
+    STR_TO_MODEL(RIG_MODEL_THF6A),
+    STR_TO_MODEL(RIG_MODEL_THF7E),
+    STR_TO_MODEL(RIG_MODEL_K2),
+    STR_TO_MODEL(RIG_MODEL_TS930),
+    STR_TO_MODEL(RIG_MODEL_THG71),
+    STR_TO_MODEL(RIG_MODEL_TS680S),
+    STR_TO_MODEL(RIG_MODEL_TS140S),
+    STR_TO_MODEL(RIG_MODEL_TMD700),
+    STR_TO_MODEL(RIG_MODEL_TMV7),
+    STR_TO_MODEL(RIG_MODEL_TS480),
+    STR_TO_MODEL(RIG_MODEL_K3),
+    STR_TO_MODEL(RIG_MODEL_TRC80),
+    STR_TO_MODEL(RIG_MODEL_TS590S),
+    STR_TO_MODEL(RIG_MODEL_TRANSFOX),
+    STR_TO_MODEL(RIG_MODEL_THD72A),
+    STR_TO_MODEL(RIG_MODEL_TMD710),
+    STR_TO_MODEL(RIG_MODEL_TMV71),
+    STR_TO_MODEL(RIG_MODEL_F6K),
+    STR_TO_MODEL(RIG_MODEL_TS590SG),
+    STR_TO_MODEL(RIG_MODEL_XG3),
+    STR_TO_MODEL(RIG_MODEL_TS990S),
+    STR_TO_MODEL(RIG_MODEL_HPSDR),
+    STR_TO_MODEL(RIG_MODEL_TS890S),
+    STR_TO_MODEL(RIG_MODEL_THD74),
+    STR_TO_MODEL(RIG_MODEL_K3S),
+    STR_TO_MODEL(RIG_MODEL_KX2),
+    STR_TO_MODEL(RIG_MODEL_KX3),
+    STR_TO_MODEL(RIG_MODEL_PT8000A),
+    STR_TO_MODEL(RIG_MODEL_K4),
+    STR_TO_MODEL(RIG_MODEL_POWERSDR),
+    STR_TO_MODEL(RIG_MODEL_MALACHITE),
+    STR_TO_MODEL(RIG_MODEL_LAB599_TX500),
+    STR_TO_MODEL(RIG_MODEL_SDRUNO),
+    STR_TO_MODEL(RIG_MODEL_QRPLABS),
+    STR_TO_MODEL(RIG_MODEL_FX4),
+    STR_TO_MODEL(RIG_MODEL_THETIS),
+    STR_TO_MODEL(RIG_MODEL_TRUSDX),
+    STR_TO_MODEL(RIG_MODEL_SDRCONSOLE),
+    STR_TO_MODEL(RIG_MODEL_QRPLABS_QMX),
+    STR_TO_MODEL(RIG_MODEL_IC1271),
+    STR_TO_MODEL(RIG_MODEL_IC1275),
+    STR_TO_MODEL(RIG_MODEL_IC271),
+    STR_TO_MODEL(RIG_MODEL_IC275),
+    STR_TO_MODEL(RIG_MODEL_IC375),
+    STR_TO_MODEL(RIG_MODEL_IC471),
+    STR_TO_MODEL(RIG_MODEL_IC475),
+    STR_TO_MODEL(RIG_MODEL_IC575),
+    STR_TO_MODEL(RIG_MODEL_IC706),
+    STR_TO_MODEL(RIG_MODEL_IC706MKII),
+    STR_TO_MODEL(RIG_MODEL_IC706MKIIG),
+    STR_TO_MODEL(RIG_MODEL_IC707),
+    STR_TO_MODEL(RIG_MODEL_IC718),
+    STR_TO_MODEL(RIG_MODEL_IC725),
+    STR_TO_MODEL(RIG_MODEL_IC726),
+    STR_TO_MODEL(RIG_MODEL_IC728),
+    STR_TO_MODEL(RIG_MODEL_IC729),
+    STR_TO_MODEL(RIG_MODEL_IC731),
+    STR_TO_MODEL(RIG_MODEL_IC735),
+    STR_TO_MODEL(RIG_MODEL_IC736),
+    STR_TO_MODEL(RIG_MODEL_IC737),
+    STR_TO_MODEL(RIG_MODEL_IC738),
+    STR_TO_MODEL(RIG_MODEL_IC746),
+    STR_TO_MODEL(RIG_MODEL_IC751),
+    STR_TO_MODEL(RIG_MODEL_IC751A),
+    STR_TO_MODEL(RIG_MODEL_IC756),
+    STR_TO_MODEL(RIG_MODEL_IC756PRO),
+    STR_TO_MODEL(RIG_MODEL_IC761),
+    STR_TO_MODEL(RIG_MODEL_IC765),
+    STR_TO_MODEL(RIG_MODEL_IC775),
+    STR_TO_MODEL(RIG_MODEL_IC781),
+    STR_TO_MODEL(RIG_MODEL_IC820),
+    STR_TO_MODEL(RIG_MODEL_IC821H),
+    STR_TO_MODEL(RIG_MODEL_IC970),
+    STR_TO_MODEL(RIG_MODEL_ICR10),
+    STR_TO_MODEL(RIG_MODEL_ICR71),
+    STR_TO_MODEL(RIG_MODEL_ICR72),
+    STR_TO_MODEL(RIG_MODEL_ICR75),
+    STR_TO_MODEL(RIG_MODEL_ICR7000),
+    STR_TO_MODEL(RIG_MODEL_ICR7100),
+    STR_TO_MODEL(RIG_MODEL_ICR8500),
+    STR_TO_MODEL(RIG_MODEL_ICR9000),
+    STR_TO_MODEL(RIG_MODEL_IC910),
+    STR_TO_MODEL(RIG_MODEL_IC78),
+    STR_TO_MODEL(RIG_MODEL_IC746PRO),
+    STR_TO_MODEL(RIG_MODEL_IC756PROII),
+    STR_TO_MODEL(RIG_MODEL_ICID1),
+    STR_TO_MODEL(RIG_MODEL_IC703),
+    STR_TO_MODEL(RIG_MODEL_IC7800),
+    STR_TO_MODEL(RIG_MODEL_IC756PROIII),
+    STR_TO_MODEL(RIG_MODEL_ICR20),
+    STR_TO_MODEL(RIG_MODEL_IC7000),
+    STR_TO_MODEL(RIG_MODEL_IC7200),
+    STR_TO_MODEL(RIG_MODEL_IC7700),
+    STR_TO_MODEL(RIG_MODEL_IC7600),
+    STR_TO_MODEL(RIG_MODEL_IC92D),
+    STR_TO_MODEL(RIG_MODEL_ICR9500),
+    STR_TO_MODEL(RIG_MODEL_IC7410),
+    STR_TO_MODEL(RIG_MODEL_IC9100),
+    STR_TO_MODEL(RIG_MODEL_ICRX7),
+    STR_TO_MODEL(RIG_MODEL_IC7100),
+    STR_TO_MODEL(RIG_MODEL_ID5100),
+    STR_TO_MODEL(RIG_MODEL_IC2730),
+    STR_TO_MODEL(RIG_MODEL_IC7300),
+    STR_TO_MODEL(RIG_MODEL_PERSEUS),
+    STR_TO_MODEL(RIG_MODEL_IC785x),
+    STR_TO_MODEL(RIG_MODEL_X108G),
+    STR_TO_MODEL(RIG_MODEL_ICR6),
+    STR_TO_MODEL(RIG_MODEL_IC7610),
+    STR_TO_MODEL(RIG_MODEL_ICR8600),
+    STR_TO_MODEL(RIG_MODEL_ICR30),
+    STR_TO_MODEL(RIG_MODEL_IC9700),
+    STR_TO_MODEL(RIG_MODEL_ID4100),
+    STR_TO_MODEL(RIG_MODEL_ID31),
+    STR_TO_MODEL(RIG_MODEL_ID51),
+    STR_TO_MODEL(RIG_MODEL_IC705),
+    STR_TO_MODEL(RIG_MODEL_ICF8101),
+    STR_TO_MODEL(RIG_MODEL_X6100),
+    STR_TO_MODEL(RIG_MODEL_G90),
+    STR_TO_MODEL(RIG_MODEL_X5105),
+    STR_TO_MODEL(RIG_MODEL_IC905),
+    STR_TO_MODEL(RIG_MODEL_X6200),
+    STR_TO_MODEL(RIG_MODEL_IC7760),
+    STR_TO_MODEL(RIG_MODEL_MINISCOUT),
+    STR_TO_MODEL(RIG_MODEL_XPLORER),
+    STR_TO_MODEL(RIG_MODEL_OS535),
+    STR_TO_MODEL(RIG_MODEL_OS456),
+    STR_TO_MODEL(RIG_MODEL_OMNIVI),
+    STR_TO_MODEL(RIG_MODEL_OMNIVIP),
+    STR_TO_MODEL(RIG_MODEL_PARAGON2),
+    STR_TO_MODEL(RIG_MODEL_DELTAII),
+    STR_TO_MODEL(RIG_MODEL_PCR1000),
+    STR_TO_MODEL(RIG_MODEL_PCR100),
+    STR_TO_MODEL(RIG_MODEL_PCR1500),
+    STR_TO_MODEL(RIG_MODEL_PCR2500),
+    STR_TO_MODEL(RIG_MODEL_AR8200),
+    STR_TO_MODEL(RIG_MODEL_AR8000),
+    STR_TO_MODEL(RIG_MODEL_AR7030),
+    STR_TO_MODEL(RIG_MODEL_AR5000),
+    STR_TO_MODEL(RIG_MODEL_AR3030),
+    STR_TO_MODEL(RIG_MODEL_AR3000A),
+    STR_TO_MODEL(RIG_MODEL_AR3000),
+    STR_TO_MODEL(RIG_MODEL_AR2700),
+    STR_TO_MODEL(RIG_MODEL_AR2500),
+    STR_TO_MODEL(RIG_MODEL_AR16),
+    STR_TO_MODEL(RIG_MODEL_SDU5500),
+    STR_TO_MODEL(RIG_MODEL_SDU5000),
+    STR_TO_MODEL(RIG_MODEL_AR8600),
+    STR_TO_MODEL(RIG_MODEL_AR5000A),
+    STR_TO_MODEL(RIG_MODEL_AR7030P),
+    STR_TO_MODEL(RIG_MODEL_SR2200),
+    STR_TO_MODEL(RIG_MODEL_JST145),
+    STR_TO_MODEL(RIG_MODEL_JST245),
+    STR_TO_MODEL(RIG_MODEL_CMH530),
+    STR_TO_MODEL(RIG_MODEL_NRD345),
+    STR_TO_MODEL(RIG_MODEL_NRD525),
+    STR_TO_MODEL(RIG_MODEL_NRD535),
+    STR_TO_MODEL(RIG_MODEL_NRD545),
+    STR_TO_MODEL(RIG_MODEL_RS64),
+    STR_TO_MODEL(RIG_MODEL_RS2005),
+    STR_TO_MODEL(RIG_MODEL_RS2006),
+    STR_TO_MODEL(RIG_MODEL_RS2035),
+    STR_TO_MODEL(RIG_MODEL_RS2042),
+    STR_TO_MODEL(RIG_MODEL_RS2041),
+    STR_TO_MODEL(RIG_MODEL_BC780),
+    STR_TO_MODEL(RIG_MODEL_BC245),
+    STR_TO_MODEL(RIG_MODEL_BC895),
+    STR_TO_MODEL(RIG_MODEL_PRO2052),
+    STR_TO_MODEL(RIG_MODEL_BC235),
+    STR_TO_MODEL(RIG_MODEL_BC250),
+    STR_TO_MODEL(RIG_MODEL_BC785),
+    STR_TO_MODEL(RIG_MODEL_BC786),
+    STR_TO_MODEL(RIG_MODEL_BCT8),
+    STR_TO_MODEL(RIG_MODEL_BCD396T),
+    STR_TO_MODEL(RIG_MODEL_BCD996T),
+    STR_TO_MODEL(RIG_MODEL_BC898),
+    STR_TO_MODEL(RIG_MODEL_DKR8),
+    STR_TO_MODEL(RIG_MODEL_DKR8A),
+    STR_TO_MODEL(RIG_MODEL_DKR8B),
+    STR_TO_MODEL(RIG_MODEL_HF150),
+    STR_TO_MODEL(RIG_MODEL_HF225),
+    STR_TO_MODEL(RIG_MODEL_HF250),
+    STR_TO_MODEL(RIG_MODEL_HF235),
+    STR_TO_MODEL(RIG_MODEL_RA3790),
+    STR_TO_MODEL(RIG_MODEL_RA3720),
+    STR_TO_MODEL(RIG_MODEL_RA6790),
+    STR_TO_MODEL(RIG_MODEL_RA3710),
+    STR_TO_MODEL(RIG_MODEL_RA3702),
+    STR_TO_MODEL(RIG_MODEL_HF1000),
+    STR_TO_MODEL(RIG_MODEL_HF1000A),
+    STR_TO_MODEL(RIG_MODEL_WJ8711),
+    STR_TO_MODEL(RIG_MODEL_WJ8888),
+    STR_TO_MODEL(RIG_MODEL_ESM500),
+    STR_TO_MODEL(RIG_MODEL_EK890),
+    STR_TO_MODEL(RIG_MODEL_EK891),
+    STR_TO_MODEL(RIG_MODEL_EK895),
+    STR_TO_MODEL(RIG_MODEL_EK070),
+    STR_TO_MODEL(RIG_MODEL_TRP7000),
+    STR_TO_MODEL(RIG_MODEL_TRP8000),
+    STR_TO_MODEL(RIG_MODEL_TRP9000),
+    STR_TO_MODEL(RIG_MODEL_TRP8255),
+    STR_TO_MODEL(RIG_MODEL_WR1000),
+    STR_TO_MODEL(RIG_MODEL_WR1500),
+    STR_TO_MODEL(RIG_MODEL_WR1550),
+    STR_TO_MODEL(RIG_MODEL_WR3100),
+    STR_TO_MODEL(RIG_MODEL_WR3150),
+    STR_TO_MODEL(RIG_MODEL_WR3500),
+    STR_TO_MODEL(RIG_MODEL_WR3700),
+    STR_TO_MODEL(RIG_MODEL_G303),
+    STR_TO_MODEL(RIG_MODEL_G313),
+    STR_TO_MODEL(RIG_MODEL_G305),
+    STR_TO_MODEL(RIG_MODEL_G315),
+    STR_TO_MODEL(RIG_MODEL_TT550),
+    STR_TO_MODEL(RIG_MODEL_TT538),
+    STR_TO_MODEL(RIG_MODEL_RX320),
+    STR_TO_MODEL(RIG_MODEL_RX340),
+    STR_TO_MODEL(RIG_MODEL_RX350),
+    STR_TO_MODEL(RIG_MODEL_TT526),
+    STR_TO_MODEL(RIG_MODEL_TT516),
+    STR_TO_MODEL(RIG_MODEL_TT565),
+    STR_TO_MODEL(RIG_MODEL_TT585),
+    STR_TO_MODEL(RIG_MODEL_TT588),
+    STR_TO_MODEL(RIG_MODEL_RX331),
+    STR_TO_MODEL(RIG_MODEL_TT599),
+    STR_TO_MODEL(RIG_MODEL_DX77),
+    STR_TO_MODEL(RIG_MODEL_DXSR8),
+    STR_TO_MODEL(RIG_MODEL_505DSP),
+    STR_TO_MODEL(RIG_MODEL_GNURADIO),
+    STR_TO_MODEL(RIG_MODEL_MC4020),
+    STR_TO_MODEL(RIG_MODEL_GRAUDIO),
+    STR_TO_MODEL(RIG_MODEL_GRAUDIOIQ),
+    STR_TO_MODEL(RIG_MODEL_USRP_G),
+    STR_TO_MODEL(RIG_MODEL_MICROTUNE_4937),
+    STR_TO_MODEL(RIG_MODEL_MICROTUNE_4702),
+    STR_TO_MODEL(RIG_MODEL_MICROTUNE_4707),
+    STR_TO_MODEL(RIG_MODEL_DSP10),
+    STR_TO_MODEL(RIG_MODEL_SDR1000),
+    STR_TO_MODEL(RIG_MODEL_SDR1000RFE),
+    STR_TO_MODEL(RIG_MODEL_DTTSP),
+    STR_TO_MODEL(RIG_MODEL_DTTSP_UDP),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_A),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_B),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_C),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_D),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_E),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_F),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_G),
+    STR_TO_MODEL(RIG_MODEL_SMARTSDR_H),
+    STR_TO_MODEL(RIG_MODEL_EKD500),
+    STR_TO_MODEL(RIG_MODEL_ELEKTOR304),
+    STR_TO_MODEL(RIG_MODEL_DRT1),
+    STR_TO_MODEL(RIG_MODEL_DWT),
+    STR_TO_MODEL(RIG_MODEL_USRP0),
+    STR_TO_MODEL(RIG_MODEL_USRP),
+    STR_TO_MODEL(RIG_MODEL_DDS60),
+    STR_TO_MODEL(RIG_MODEL_ELEKTOR507),
+    STR_TO_MODEL(RIG_MODEL_MINIVNA),
+    STR_TO_MODEL(RIG_MODEL_SI570AVRUSB),
+    STR_TO_MODEL(RIG_MODEL_PMSDR),
+    STR_TO_MODEL(RIG_MODEL_SI570PICUSB),
+    STR_TO_MODEL(RIG_MODEL_FIFISDR),
+    STR_TO_MODEL(RIG_MODEL_FUNCUBEDONGLE),
+    STR_TO_MODEL(RIG_MODEL_HIQSDR),
+    STR_TO_MODEL(RIG_MODEL_FASDR),
+    STR_TO_MODEL(RIG_MODEL_SI570PEABERRY1),
+    STR_TO_MODEL(RIG_MODEL_SI570PEABERRY2),
+    STR_TO_MODEL(RIG_MODEL_FUNCUBEDONGLEPLUS),
+    STR_TO_MODEL(RIG_MODEL_RSHFIQ),
+    STR_TO_MODEL(RIG_MODEL_V4L),
+    STR_TO_MODEL(RIG_MODEL_V4L2),
+    STR_TO_MODEL(RIG_MODEL_ESMC),
+    STR_TO_MODEL(RIG_MODEL_EB200),
+    STR_TO_MODEL(RIG_MODEL_XK2100),
+    STR_TO_MODEL(RIG_MODEL_EK89X),
+    STR_TO_MODEL(RIG_MODEL_XK852),
+    STR_TO_MODEL(RIG_MODEL_PRM8060),
+    STR_TO_MODEL(RIG_MODEL_PRM8070),
+    STR_TO_MODEL(RIG_MODEL_ADT_200A),
+    STR_TO_MODEL(RIG_MODEL_IC_M700PRO),
+    STR_TO_MODEL(RIG_MODEL_IC_M802),
+    STR_TO_MODEL(RIG_MODEL_IC_M710),
+    STR_TO_MODEL(RIG_MODEL_IC_M803),
+    STR_TO_MODEL(RIG_MODEL_DORJI_DRA818V),
+    STR_TO_MODEL(RIG_MODEL_DORJI_DRA818U),
+    STR_TO_MODEL(RIG_MODEL_BARRETT_2050),
+    STR_TO_MODEL(RIG_MODEL_BARRETT_950),
+    STR_TO_MODEL(RIG_MODEL_BARRETT_4050),
+    STR_TO_MODEL(RIG_MODEL_BARRETT_4100),
+    STR_TO_MODEL(RIG_MODEL_ELAD_FDM_DUO),
+    STR_TO_MODEL(RIG_MODEL_CODAN_ENVOY),
+    STR_TO_MODEL(RIG_MODEL_CODAN_NGT),
+    STR_TO_MODEL(RIG_MODEL_GS100),
+    STR_TO_MODEL(RIG_MODEL_MDS4710),
+    STR_TO_MODEL(RIG_MODEL_MDS9710),
+    STR_TO_MODEL(RIG_MODEL_ATD578UVIII),
+    STR_TO_MODEL(RIG_MODEL_MICOM2),
+    STR_TO_MODEL(RIG_MODEL_CTX10)
+  };
 
 #undef STR_TO_MODEL
 
@@ -669,6 +630,7 @@ void rig_interface::prepare(const drlog_context& context)
     ost << "Connected to rig OK" << endl;
   }
 
+// if we're going to use hamlib, get the rig capabilities from hamlib (or what passes for them, anyway)
   if (rig_type.starts_with("HAMLIB_"sv))
     _hcaps.get_capabilities(_rigp);
 }
@@ -693,7 +655,7 @@ void rig_interface::rig_mode(const MODE m)
     if (m == MODE_SSB)
       hamlib_m = ( (rig_frequency() < 10_MHz) ? RIG_MODE_LSB : RIG_MODE_USB );  // select LSB or USB
 
-    int status;
+    int status { };
 
 // hamlib, for reasons I can't guess, sets both the mode and the bandwidth in a single command
     pbwidth_t tmp_bandwidth;
@@ -753,7 +715,7 @@ void rig_interface::rig_mode(const MODE m)
     has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
     to do for various values of the permitted parameters. There is general agreement on the reflector
     that the call contained herein *should* do the "right" thing -- but since there's no precise definition
-    of any of this, not all backends are guaranteed to behave the same.
+    of any of this in hamlib, not all rigs are guaranteed to behave the same.
 */
 void rig_interface::split_enable(void) const
 { if (!_rig_connected)
@@ -812,7 +774,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
   { SAFELOCK(_rig);
 
-    _rigp->state.rigport.parm.serial.rate = rate;
+    (_rigp -> state.rigport.parm.serial.rate) = rate;
   }
 }
 
@@ -822,7 +784,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 unsigned int rig_interface::baud_rate(void) const
 { SAFELOCK(_rig);
 
-  return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
+  return (_rigp ? _rigp -> state.rigport.parm.serial.rate : 0);
 }
 
 /*! \brief          Set the number of data bits (7 or 8)
@@ -837,7 +799,7 @@ void rig_interface::data_bits(const unsigned int bits)
   SAFELOCK(_rig);
 
   if (_rigp)
-    _rigp->state.rigport.parm.serial.data_bits = bits;
+    _rigp -> state.rigport.parm.serial.data_bits = bits;
 }
 
 /*! \brief      Get the number of data bits
@@ -846,7 +808,7 @@ void rig_interface::data_bits(const unsigned int bits)
 unsigned int rig_interface::data_bits(void) const
 { SAFELOCK(_rig);
 
-  return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
+  return (_rigp ? _rigp -> state.rigport.parm.serial.data_bits : 0);
 }
 
 /*! \brief          Set the number of stop bits (1 or 2)
@@ -861,7 +823,7 @@ void rig_interface::stop_bits(const unsigned int bits)
   SAFELOCK(_rig);
 
   if (_rigp)
-    _rigp->state.rigport.parm.serial.stop_bits = bits;
+    (_rigp -> state.rigport.parm.serial.stop_bits) = bits;
 }
 
 /*! \brief      Get the number of stop bits
@@ -870,7 +832,7 @@ void rig_interface::stop_bits(const unsigned int bits)
 unsigned int rig_interface::stop_bits(void) const
 { SAFELOCK(_rig);
 
-  return (_rigp ? _rigp->state.rigport.parm.serial.stop_bits : 0);
+  return (_rigp ? _rigp -> state.rigport.parm.serial.stop_bits : 0);
 }
 
 /// get the rig's mode
@@ -883,7 +845,7 @@ MODE rig_interface::rig_mode(void) const
 
     SAFELOCK(_rig);
 
-    if (const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) }; status != RIG_OK)
+    if (rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) != RIG_OK)
     { _error_alert("Error getting mode"s);
       return _last_commanded_mode;
     }
@@ -931,8 +893,6 @@ int rig_interface::rit(void) const
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
-
-    On the K3 this also sets the RIT offset
 */
 void rig_interface::xit(const int hz) const
 { SAFELOCK(_rig);
@@ -947,7 +907,7 @@ int rig_interface::xit(void) const
 
   SAFELOCK(_rig);
 
-  if (const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) }; status != RIG_OK)
+  if (rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) != RIG_OK)
   {  _error_alert("Hamlib error obtaining XIT offset"s);
      return 0;
   }
@@ -980,7 +940,6 @@ void rig_interface::unlock(void) const
 */
 void rig_interface::sub_receiver(const bool torf) const
 { if (SUB_RX())
- //   ost << "Currently unsupported function: attempt to control sub-receiver" << endl;
   { if (torf)
       _error_alert("Unsupported function: sub-receiver on");
     else
@@ -1030,188 +989,6 @@ void rig_interface::wait_until_not_busy(void) const
     sleep_for(100ms);
 }
 
-// explicit K3 commands
-
-/*! \brief                  Send a raw command to the rig
-    \param  cmd             the command to send
-    \param  expectation     whether a response is expected
-    \param  expected_len    expected length of response
-    \return                 the response from the rig, or the empty string
-
-    Currently any expected length is ignored; the routine looks for the concluding ";" instead
-*/
-string rig_interface::raw_command(const string_view cmd, const RESPONSE expectation/*, const int expected_len */) const
-{ constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
-
-  const bool response_expected { expectation == RESPONSE::EXPECTED };
-
-  struct rig_state* rs_p { &(_rigp->state) };
-
-  const int fd { _file_descriptor() };
-
-  constexpr int INBUF_SIZE { 1000 };        // size of input buffer
-
-  static array<char, INBUF_SIZE> c_in;
-
-  unsigned int total_read { 0 };
-
-  string rcvd { };
-
-  static string rcvd_buf { };
-
-  const bool is_p3_screenshot { (cmd == "#BMP;"sv) };   // this has to be treated differently: the response is long and has no concluding semicolon
-
-  if (!_rig_connected)
-    return string { };
-
-  if (cmd.empty())
-    return string { };
-
-  constexpr int MAX_ATTEMPTS         { 10 };
-  constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
-
-// sanity check ... on K3 all commands end in a ";"
-  if (last_char(cmd) != SEMICOLON)
-  {  _error_alert("Invalid rig command: "s + cmd);
-    return string();
-  }
-
-  bool completed { false };
-
-  { SAFELOCK(_rig);             // hold lock until we're done
-
-    rig_flush(&rs_p->rigport);
-
-    if (_instrumented)
-      ost << "sent to rig: " << cmd << endl;
-
-    write(fd, cmd.data(), cmd.length());     // send the command
-
-    rig_flush(&rs_p->rigport);
-    sleep_for(RETRY_TIME);            // wait for a bit
-
-    fd_set set;
-    struct timeval timeout;  // time_t (seconds), long (microseconds)
-
-    auto set_timeout = [fd, &set, &timeout] (const time_t sec, const long usec)
-      { FD_ZERO(&set);        // clear the set
-        FD_SET(fd, &set);     // add the file descriptor to the set
-        //fd_set_value(set, fd);    // requires socket support
-
-        timeout.tv_sec = sec;
-        timeout.tv_usec = usec;
-      };
-
-    int counter { 0 };
-
-    constexpr int SCREEN_BITS { 131'640 };
-
-    if (response_expected)
-    { if (is_p3_screenshot)
-      { array<char, SCREEN_BITS> c_in;    // hide the static array
-
-        const int n_bits { SCREEN_BITS * 10 };
-        const int n_secs { n_bits / static_cast<int>(baud_rate() )};
-
-        while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
-        { set_timeout(1, 0);
-
-          if (int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
-            ost << "Error in select() in raw_command()" << endl;
-          else
-          { if (status == 0)
-             ost << "timeout in select() in raw_command: " << cmd << endl;
-            else
-            { const ssize_t n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
-
-              if (n_read > 0)                      // should always be true
-              { total_read += n_read;
-                rcvd.append(c_in.data(), n_read);
-
-                if (rcvd.length() == SCREEN_BITS)
-                  completed = true;
-              }
-            }
-          }
-
-          counter++;
-
-          if (!completed)
-          { static const string percent_str { "%%"s };
-
-            const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
-
-            alert("P3 screendump progress: "s + to_string(percent) + percent_str);
-            sleep_for(1s);      // we have the lock for all this time
-          }
-        }
-      }
-      else                                              // not a P3 screenshot; keep reading until we receive at least one ";"
-      { static int rig_communication_failures { 0 };
-
-        while (!completed and (counter < MAX_ATTEMPTS) )
-        { set_timeout(0, TIMEOUT_MICROSECONDS);
-
-          if (counter)                          // we've already slept the first time through
-            sleep_for(RETRY_TIME);
-
-          if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
-            ost << "Error in select() in raw_command()" << endl;
-          else
-          { if (status == 0)                // possibly a timeout error
-            { if (counter == MAX_ATTEMPTS - 1)
-              { if (cmd == "TQ;"sv)       // transmit query
-                { rig_communication_failures++;
-
-                  if (rig_communication_failures == 1)
-                    ost << "status communication with rig failed" << endl;
-                }
-                else
-                  ost << "last-attempt timeout (" << (TIMEOUT_MICROSECONDS * MAX_ATTEMPTS) << " microseconds) in select() in raw_command: " << cmd << endl;
-              }
-            }
-            else
-            { if (cmd == "TQ;"sv)       // was this a transmit query?
-              { if (rig_communication_failures != 0)
-                { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
-                  rig_communication_failures = 0;
-                }
-              }
-
-              const ssize_t n_read { read(fd, c_in.data(), INBUF_SIZE / 2) };   // read a maximum of 500 characters into the static array; halve to provide margin of error
-
-              if (n_read > 0)                      // should always be true
-              { total_read += n_read;
-                c_in[n_read] = static_cast<char>(0);    // append a null byte
-
-                rcvd += string(c_in.data());
-
-                if (rcvd.contains(SEMICOLON))
-                  completed = true;
-              }
-            }
-          }
-
-          counter++;
-        }
-      }
-    }
-  }
-
-  if (response_expected and completed)
-  { if (_instrumented)
-    { if (is_p3_screenshot)
-        ost << "screenshot received from rig" << endl;
-      else
-        ost << "received from rig: " << to_printable_string(rcvd) << endl;
-    }
-
-    return rcvd;
-  }
-
-  return string { };
-}
-
 /// is the VFO locked?
 bool rig_interface::is_locked(void) const
 { SAFELOCK(_rig);
@@ -1224,14 +1001,6 @@ bool rig_interface::is_locked(void) const
   }
 
   return (v == 1);
-}
-
-/*! \brief      Get the bandwidth in Hz
-    \return     the current audio bandwidth, in hertz
-*/
-int rig_interface::bandwidth(void) const
-{ _error_alert("Unimplemented function: rig_interface::bandwidth()"sv);
-  return 0;
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1261,42 +1030,23 @@ void rig_interface::set_last_frequency(const bandmode bm, const frequency f)
     _last_frequency[bm] = f;
 }
 
-/*! \brief      Is the rig transmitting?
-    \return     whether the rig is currently transmitting
-
-    With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
-    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands. I could write a book;
-    or at least a paper.)
-*/
-bool rig_interface::is_transmitting(void) const
-{ _error_alert("Unimplemented function: rig_interface::is_transmitting()"sv);
-  return false;
-}
-
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
 bool rig_interface::test(void) const
 { if (TEST())
-  { _error_alert("Unimplemented function: rig_interface::test()"sv);
-    return false;
-  }
+    _error_alert("Unimplemented function: rig_interface::test()"sv);
+  else
+    _error_alert("No TEST capability for rig"sv);
 
-  _error_alert("No TEST capability for rig"sv);
   return false;
 }
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
-
-    This works only with the K3.
 */
-void rig_interface::test(const bool b) const
-{ bool tmp { b };
-
-  tmp = !tmp;         // use the function parameter to avoid compiler warning
-
-  if (TEST())
+void rig_interface::test([[maybe_unused]] const bool b) const
+{ if (TEST())
     _error_alert("Unimplemented function: rig_interface::test(const bool)"sv);
   else
     _error_alert("No TEST capability for rig"sv);
@@ -1327,104 +1077,7 @@ VFO rig_interface::tx_vfo(void) const
 */
 }
 
-/*! \brief      Set the bandwidth of VFO A
-    \param  hz  desired bandwidth, in Hz
-*/
-void rig_interface::bandwidth_a(const unsigned int hz) const
-{ unsigned int tmp { hz };
-
-  tmp++;         // use the function parameter to avoid compiler warning
-
-  _error_alert("Unimplemented function: rig_interface::bandwidth_a(const unsigned int)"sv);
-}
-
-/*! \brief      Set the bandwidth of VFO B
-    \param  hz  desired bandwidth, in Hz
-*/
-void rig_interface::bandwidth_b(const unsigned int hz) const
-{ unsigned int tmp { hz };
-
-  tmp++;         // use the function parameter to avoid compiler warning
-
-  _error_alert("Unimplemented function: rig_interface::bandwidth_b(const unsigned int)"sv);
-}
-
-/*! \brief      Get audio centre frequency, in Hz, as a printable string
-    \return     The audio centre frequency, in Hz, as a printable string
-
-    Works only with K3
-*/
-string rig_interface::centre_frequency_str(void) const
-{ _error_alert("Unimplemented function: rig_interface::centre_frequency_str()"sv);
-  return string { "0"s };
-}
-
-/*! \brief      Get audio centre frequency, in Hz
-    \return     The audio centre frequency, in Hz
-
-    Works only with K3
-*/
-unsigned int rig_interface::centre_frequency(void) const
-{ _error_alert("Unimplemented function: rig_interface::centre_frequency()"sv);
-  return 0;
-}
-
-/*! \brief      Set audio centre frequency
-    \patam  fc  the audio centre frequency, in Hz
-
-    Works only with K3
-*/
-void rig_interface::centre_frequency(const unsigned int fc) const
-{ unsigned int tmp { fc };
-
-  tmp++;         // use the function parameter to avoid compiler warning
-
-  _error_alert("Unimplemented function: rig_interface::centre_frequency(const unsigned int)"sv);
-}
-
-/*! \brief      Is an RX antenna in use?
-    \return     whether an RX antenna is in use
-
-    Works only with K3
-*/
-bool rig_interface::rx_ant(void) const
-{ _error_alert("Unimplemented function: rig_interface::rx_ant()"sv);
-
-  return false;
-}
-
-/*! \brief          Control use of the RX antenna
-    \param  torf    whether to use the RX antenna
-
-    Works only with K3
-*/
-void rig_interface::rx_ant(const bool torf) const
-{ bool tmp { torf };
-
-  tmp = !tmp;         // use the function parameter to avoid compiler warning
-
-  _error_alert("Unimplemented function: rig_interface::rx_ant(const bool)"sv);
-}
-
-/*! \brief              Is notch enabled?
-    \param  ds_result   previously-obtained result of a DS command, or empty string
-    \return             whether notch is currently enabled
-
-    Works only with K3
-*/
-bool rig_interface::notch_enabled(const string_view ds_result) const
-{ string tmp { ds_result };
-
-  tmp = tmp + '0';         // use the function parameter to avoid compiler warning
-
-  _error_alert("Unimplemented function: rig_interface::notch_enabled(const string_view)"sv);
-
-  return false;
-}
-
 /*! \brief  Toggle the notch status
-
-    Works only with K3
 */
 void rig_interface::toggle_notch_status(void) const
 { if (AUTO_NOTCH())
@@ -1433,87 +1086,11 @@ void rig_interface::toggle_notch_status(void) const
    _error_alert("Rig has no AUTO_NOTCH capability"sv);
 }
 
-/*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
-    \param  cm  command mode
-
-    Works only with K3
-*/
-#if 0
-void rig_interface::k3_command_mode(const K3_COMMAND_MODE cm)
-{ if (_model == RIG_MODEL_K3)
-  { switch (cm)
-    { case K3_COMMAND_MODE::EXTENDED :
-        raw_command("K31;"sv);
-        break;
-
-      case K3_COMMAND_MODE::NORMAL :
-        raw_command("K30;"sv);
-        break;
-    }
-  }
-}
-#endif
-
-/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
-    \return     the K3 command mode
-
-    Works only with K3
-*/
-#if 0
-K3_COMMAND_MODE rig_interface::k3_command_mode(void) const
-{ if (_model == RIG_MODEL_K3)
-  { const string result { raw_command("K3;", RESPONSE::EXPECTED) };
-
-    if (result == "K31"sv)
-      return K3_COMMAND_MODE::EXTENDED;
-  }
-
-  return K3_COMMAND_MODE::NORMAL;
-}
-#endif
-
-/*! \brief          Emulate the tapping or holding of a K3 button
-    \param  button  the K3 button to tap or hold
-
-    Works only with K3
-*/
-#if 0
-void rig_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const
-{ if (_model == RIG_MODEL_K3)
-  { const int    button_int { std::visit([] (auto&& arg) -> int { return static_cast<int>(arg); }, button) };
-    const string button_str { pad_leftz(button_int, 2) };
-    const string cmd        { (holds_alternative<K3_BUTTON_TAP>(button) ? "SWT"s : "SWH"s) + button_str + SEMICOLON };
-
-    raw_command(cmd);
-  }
-}
-#endif
-
-/*! \brief          Emulate double-tapping a K3 button
-    \param  button  the K3 button to tap
-
-    Works only with K3 this is CURRENTLY UNUSED
-*/
-#if 0
-void rig_interface::k3_double_tap(const K3_BUTTON_TAP button) const
-{ if (_model == RIG_MODEL_K3)
-  { constexpr std::chrono::duration K3_TIME_BETWEEN_TAPS { 50ms };
-
-    k3_press(button);
-    sleep_for(K3_TIME_BETWEEN_TAPS);
-    k3_press(button);
-  }
-}
-#endif
-
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
 */
 void rig_interface::filter(const audio_filter& af) const
-{ //const int bw { af.bandwidth() };
-  //const int cf { af.centre() };
-
-  if (const int bw { af.bandwidth() }; bw)
+{ if (const int bw { af.bandwidth() }; bw)
     bandwidth(bw);
 
   if (const int cf { af.centre() }; cf)
@@ -1526,25 +1103,17 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
   _error_alert_function = error_alert_function;
 }
 
-/// set RIT, split, sub-rx off
+/// set RIT, split and sub-rx off
 void rig_interface::base_state(void) const
-{ //constexpr std::chrono::duration K3_INTERCOMMAND_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
-
-  //auto pause { [ K3_INTERCOMMAND_TIME, this] (void) { if (_model == RIG_MODEL_K3) sleep_for(K3_INTERCOMMAND_TIME); } };
-
-  if (rit_enabled())
-  { rit_disable();
-    //pause();
-  }
+{ if (rit_enabled())
+    rit_disable();
 
   if (split_enabled())
-  { split_disable();
-    //pause();
-  }
+    split_disable();
 
-  if (sub_receiver_enabled())
-  { sub_receiver_disable();
-    //pause();
+  if (SUB_RX())
+  { if (sub_receiver_enabled())
+      sub_receiver_disable();
   }
 }
 
@@ -1567,7 +1136,7 @@ void rig_interface::uninstrument(void)
 
     This works only on a K3.
 
-    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
+    The "documentation" for the K3 MC command doesn't explain the difference between setting and getting a memory
 */
 #if 0
 void rig_interface::set_rig_memory(const int rig_memory_nr) const
@@ -1587,7 +1156,7 @@ void rig_interface::set_rig_memory(const int rig_memory_nr) const
 
     This works only on a K3.
 
-    The documentation for the K3 MC command doesn't explain th edifference between setting and getting a memory
+    The "documentation" for the K3 MC command doesn't explain the difference between setting and getting a memory
 */
 #if 0
 void rig_interface::get_rig_memory(const int rig_memory_nr) const
@@ -1675,9 +1244,6 @@ polled_status rig_interface::poll(void)
 
     SAFELOCK(_rig);
 
-//    int status { rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth) };
-
-//    if (status != RIG_OK)
     if (rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth) != RIG_OK)
       _error_alert("Error getting mode prior to setting mode");
     else
@@ -1699,9 +1265,6 @@ polled_status rig_interface::poll(void)
 
       SAFELOCK(_rig);
 
-//      int retcode { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_DUAL_WATCH, &value) };
-
-//      if (retcode != RIG_OK)
       if (const int retcode { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_DUAL_WATCH, &value) }; retcode != RIG_OK)
         ost << "rig_get_func_dual_watch error: %s\n" << rigerror(retcode) << endl;
       else
@@ -1965,6 +1528,142 @@ k3_status::k3_status(const string_view rsp)
     \brief  The interface to a K3 rig
 */
 
+/*! \brief      Thread function to record an image of the bandscope
+    \param  fn  name of the image file
+
+    #BMP (Bitmap upload, GET only)
+    RSP format: [bmp]cc where [bmp] is 131,638 bytes of binary image data in standard .BMP file format
+    and cc is a two-byte checksum. Note that the response does not include the command name and has no
+    terminating semicolon. The checksum is the modulo-65,536 sum of all 131,638 bytes, sent least significant
+    byte first.
+*/
+void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
+{ alert("Dumping P3 image"s);
+
+//  const string image { rig.raw_command("#BMP;"s, RESPONSE::EXPECTED) };
+  const string image { raw_command("#BMP;"s, RESPONSE::EXPECTED) };
+
+//  write_file(image, "complete-response");
+
+//  const string checksum_str { image.substr(image.length() - 2, 2) };
+  const string checksum_str { substring <string> (image, image.length() - 2, 2) };
+
+//  ost << "image length with checksum = " << image.length() << endl;
+//  ost << "image length without checksum = " << image.length() - 2 << endl;
+
+//  const unsigned char c0 = static_cast<unsigned char>(checksum_str[0]);
+//  const unsigned char c1 = static_cast<unsigned char>(checksum_str[1]);
+
+//  ost << "chars as numbers: " << dec << static_cast<unsigned int>(static_cast<uint8_t>(c0)) << " " << static_cast<unsigned int>(static_cast<uint8_t>(c1)) << endl;
+
+//  ost << "chars: " << hex << static_cast<uint8_t>(c0) << " " << static_cast<uint8_t>(c1) << dec << endl;
+
+// print most significant byte first
+//  const uint16_t received_checksum = (static_cast<uint8_t>(checksum_str[1]) << 8) + static_cast<uint8_t>(checksum_str[0]);
+//  ost << "received checksum = " << hex << received_checksum << dec << endl;
+
+//  ost << "components = " << hex << (static_cast<uint8_t>(checksum_str[1]) << 8) << " " << static_cast<uint8_t>(checksum_str[0]) << endl;
+
+  const char c1 { checksum_str[1] };
+  const char c0 { checksum_str[0] };
+
+//  const uint16_t ui1 { static_cast<uint16_t>(c1 << 8) };
+//  const uint16_t ui0 { static_cast<uint16_t>(c0) };
+
+//  uint16_t ui1 { static_cast<unsigned char>(checksum_str[1]) };
+//  uint16_t ui0 { checksum_str[0] };
+
+//  ui1 <<= 8;
+
+// the messy casts are needed because bitor by definition converts parameters to int
+  const int      ui1               { static_cast<int>(c1 << 8) };
+  const int      ui0               { static_cast<int>(c0) };
+  const uint16_t received_checksum { static_cast<uint16_t>(ui1 bitor ui0) };
+
+//  const uint16_t received_checksum { (static_cast<uint16_t>(checksum_str[1]) << 8) bitor static_cast<uint16_t>(checksum_str[0]) };
+
+
+//  ost << "received checksum bitor = " << hex << received_checksum_bitor << dec << endl;
+
+  uint16_t calculated_checksum { 0 };
+  long     tmp                 { 0 };
+
+  for (size_t n = 0; n < image.length() - 2; ++n)
+    tmp += static_cast<int>(static_cast<unsigned char>(image[n]));
+
+  calculated_checksum = static_cast<uint16_t>(tmp % 65536);
+//  ost << "tmp: " << tmp << " " << hex << tmp << " " << dec << tmp % 65536 << " " << hex << tmp % 65536 << dec << endl;
+
+#if 0
+  uint16_t received_checksum { 0 };
+
+  for (size_t n = 0; n < checksum_str.length(); ++n)
+  { const size_t        index { 2 - n - 1 };
+    const unsigned char uch   { static_cast<unsigned char>(checksum_str[index]) };
+    const uint16_t      uint  { static_cast<uint16_t>(uch) };
+
+    ost << n << ": " << hex << uint << endl;
+
+    received_checksum = (received_checksum << 8) + uint;  // 256 == << 8
+  }
+#endif
+
+//  ost << "calculated checksum = " << hex << calculated_checksum << dec << endl;
+//  ost << "received checksum = " << hex << received_checksum << dec << endl;
+
+//  const string base_filename { context.p3_snapshot_file() + (((calculated_checksum == received_checksum) or context.p3_ignore_checksum_error()) ? ""s : "-error"s) };
+  const string base_filename { fn + (((calculated_checksum == received_checksum) /* or context.p3_ignore_checksum_error() */) ? ""s : "-error"s) };
+
+  int  index        { 0 };
+  bool file_written { false };
+
+  while (!file_written)
+  { if (const string filename { base_filename + "-"s + to_string(index) }; !file_exists(filename))
+    { //write_file(image.substr(0, image.length() - 2), filename);
+      write_file(substring <string> (image, 0, image.length() - 2), filename);
+      file_written = true;
+
+      alert("P3 image file "s + filename + " written"s);
+    }
+    else
+      ++index;
+  }
+}
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \param  expected_len    expected length of response
+    \return                 the response from the rig, or the empty string
+
+    Currently any expected length is ignored; the routine looks for the concluding ";" instead
+    C++ does not allow a generic std::chrono::duration to be a parameter
+*/
+string elecraft_k3_interface::_retried_raw_command(const string_view cmd, const milliseconds timeout, const int n_retries)
+{ string rv;
+
+  int counter    { 0 };
+  bool completed { false };
+
+  while (!completed and (counter != n_retries))
+  { rv = raw_command(cmd, RESPONSE::EXPECTED/*, expected_len*/);    // issue the command each time
+
+    completed = (rv.empty() ? false : last_char(rv) == ';');
+
+    if (!completed)
+    { counter++;
+      sleep_for(timeout);
+    }
+  }
+
+  if (!completed)
+  { ost << "no response from command: " << cmd << endl;
+    rv.clear();             // don't give a partial reponse
+  }
+
+  return rv;
+}
+
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
     \param  v   VFO
@@ -2065,17 +1764,19 @@ void elecraft_k3_interface::prepare(const drlog_context& context)
                                                        AUTO_NOTCH, AUDIO_BW, AUDIO_CENTRE
                                                      });
 
+  if (context.bandscope())
+    _rcaps.BANDSCOPE_set();
+
   k3_command_mode(K3_COMMAND_MODE::EXTENDED);   // enable extended mode
 }
 
 /*! \brief      Set mode
     \param  m   new mode
-
-    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void elecraft_k3_interface::rig_mode(const MODE m)
 { constexpr chrono::duration RETRY_TIME          { 10ms };   // wait time if a retry is necessary; decreasing this makes little difference
   constexpr chrono::duration K3_MODE_CHANGE_TIME { 500ms };  // time for a K3 to change mode
+  constexpr int              MAX_ATTEMPTS        { 10 };     // maximum number of attempts
 
   _last_commanded_mode = m;
 
@@ -2084,8 +1785,7 @@ void elecraft_k3_interface::rig_mode(const MODE m)
 
     MODE last_tested_mode;
 
-    while ( (counter++ <= 10) and (last_tested_mode = rig_interface::rig_mode(), last_tested_mode != m) ) // don't change mode if we're already in the correct mode
-//    while ( (counter++ <= 10) and (last_tested_mode = rig_mode(), last_tested_mode != m) ) // don't change mode if we're already in the correct mode
+    while ( (counter++ <= MAX_ATTEMPTS) and (last_tested_mode = rig_interface::rig_mode(), last_tested_mode != m) ) // don't change mode if we're already in the correct mode
     { if (counter != 1)                               // no pause the first time through
         sleep_for(RETRY_TIME);
 
@@ -2108,9 +1808,195 @@ void elecraft_k3_interface::rig_mode(const MODE m)
       }
     }
 
-    if (counter > 10)
+    if (counter > MAX_ATTEMPTS)
       _error_alert("Error setting mode: commanded mode = "s + MODE_NAME[m] + "; but rig is in mode: " + MODE_NAME[last_tested_mode]);
   }
+}
+
+/*! \brief              Set the span of a P3
+    \param  khz_span    span in kHz
+*/
+void elecraft_k3_interface::bandscope_span(const unsigned int khz_span) const
+{ if ( (khz_span >= 2) and (khz_span <= 200) )
+  { //const string span_str { pad_leftz((khz_span * 10), 6) };
+
+    //raw_command("#SPN"s + span_str + SEMICOLON);
+    raw_command("#SPN"s + pad_leftz((khz_span * 10), 6) + SEMICOLON);
+  }
+}
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \return                 the response from the rig, or the empty string
+*/
+string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE expectation) const
+{ constexpr chrono::duration RETRY_TIME { 10ms };  // wait time if a retry is necessary
+
+  const bool response_expected { expectation == RESPONSE::EXPECTED };
+
+  struct rig_state* rs_p { &(_rigp -> state) };
+
+  const int fd { _file_descriptor() };
+
+  constexpr int INBUF_SIZE { 1000 };        // size of input buffer
+
+  static array<char, INBUF_SIZE> c_in;
+
+  unsigned int total_read { 0 };
+
+  string rcvd { };
+
+  static string rcvd_buf { };
+
+  const bool is_p3_screenshot { (cmd == "#BMP;"sv) };   // this has to be treated differently: the response is long and has no concluding semicolon
+
+  if (!_rig_connected)
+    return string { };
+
+  if (cmd.empty())
+    return string { };
+
+  constexpr int MAX_ATTEMPTS         { 10 };
+  constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
+
+// sanity check ... on K3 all commands end in a ";"
+  if (last_char(cmd) != SEMICOLON)
+  {  _error_alert("Invalid rig command: "s + cmd);
+    return string();
+  }
+
+  bool completed { false };
+
+  { SAFELOCK(_rig);             // hold lock until we're done
+
+    rig_flush(&rs_p->rigport);
+
+    if (_instrumented)
+      ost << "sent to rig: " << cmd << endl;
+
+    write(fd, cmd.data(), cmd.length());     // send the command
+
+    rig_flush(&rs_p->rigport);
+    sleep_for(RETRY_TIME);            // wait for a bit
+
+    fd_set set;
+    struct timeval timeout;  // time_t (seconds), long (microseconds)
+
+    auto set_timeout = [fd, &set, &timeout] (const time_t sec, const long usec)
+      { FD_ZERO(&set);        // clear the set
+        FD_SET(fd, &set);     // add the file descriptor to the set
+
+        timeout.tv_sec = sec;
+        timeout.tv_usec = usec;
+      };
+
+    int counter { 0 };
+
+    constexpr int SCREEN_BITS { 131'640 };
+
+    if (response_expected)
+    { if (is_p3_screenshot)
+      { array<char, SCREEN_BITS> c_in;    // hide the static array
+
+        const int n_bits { SCREEN_BITS * 10 };
+        const int n_secs { n_bits / static_cast<int>(baud_rate() )};
+
+        while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
+        { set_timeout(1, 0);
+
+          if (int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
+            ost << "Error in select() in raw_command()" << endl;
+          else
+          { if (status == 0)
+             ost << "timeout in select() in raw_command: " << cmd << endl;
+            else
+            { const ssize_t n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
+
+              if (n_read > 0)                      // should always be true
+              { total_read += n_read;
+                rcvd.append(c_in.data(), n_read);
+
+                if (rcvd.length() == SCREEN_BITS)
+                  completed = true;
+              }
+            }
+          }
+
+          counter++;
+
+          if (!completed)
+          { const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
+
+            alert("P3 screendump progress: "s + to_string(percent) + '%');
+            sleep_for(1s);      // we have the lock for all this time
+          }
+        }
+      }
+      else                                              // not a P3 screenshot; keep reading until we receive at least one ";"
+      { static int rig_communication_failures { 0 };
+
+        while (!completed and (counter < MAX_ATTEMPTS) )
+        { set_timeout(0, TIMEOUT_MICROSECONDS);
+
+          if (counter)                          // we've already slept the first time through
+            sleep_for(RETRY_TIME);
+
+          if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
+            ost << "Error in select() in raw_command()" << endl;
+          else
+          { if (status == 0)                // possibly a timeout error
+            { if (counter == MAX_ATTEMPTS - 1)
+              { if (cmd == "TQ;"sv)       // transmit query
+                { rig_communication_failures++;
+
+                  if (rig_communication_failures == 1)
+                    ost << "status communication with rig failed" << endl;
+                }
+                else
+                  ost << "last-attempt timeout (" << (TIMEOUT_MICROSECONDS * MAX_ATTEMPTS) << " microseconds) in select() in raw_command: " << cmd << endl;
+              }
+            }
+            else
+            { if (cmd == "TQ;"sv)       // was this a transmit query?
+              { if (rig_communication_failures != 0)
+                { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
+                  rig_communication_failures = 0;
+                }
+              }
+
+              const ssize_t n_read { read(fd, c_in.data(), INBUF_SIZE / 2) };   // read a maximum of 500 characters into the static array; halve to provide margin of error
+
+              if (n_read > 0)                      // should always be true
+              { total_read += n_read;
+                c_in[n_read] = static_cast<char>(0);    // append a null byte
+
+                rcvd += string(c_in.data());
+
+                if (rcvd.contains(SEMICOLON))
+                  completed = true;
+              }
+            }
+          }
+
+          counter++;
+        }
+      }
+    }
+  }
+
+  if (response_expected and completed)
+  { if (_instrumented)
+    { if (is_p3_screenshot)
+        ost << "screenshot received from rig" << endl;
+      else
+        ost << "received from rig: " << to_printable_string(rcvd) << endl;
+    }
+
+    return rcvd;
+  }
+
+  return string { };
 }
 
 /*! \brief  Enable split operation
@@ -2124,25 +2010,18 @@ void elecraft_k3_interface::rig_mode(const MODE m)
     Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
 void elecraft_k3_interface::split_enable(void) const
-{ if (!_rig_connected)
-    return;
-
-  SAFELOCK(_rig);
-
-  raw_command("FT1;"sv);
-  rig_is_split = true;
+{ if (_rig_connected)
+  { raw_command("FT1;"sv);
+    rig_is_split = true;
+  }
 }
 
 /// disable split operation; see caveats under split_enable()
 void elecraft_k3_interface::split_disable(void) const
-{ if (!_rig_connected)
-    return;
-
-  SAFELOCK(_rig);
-
-  raw_command("FR0;"sv);
-  rig_is_split = false;
-  return;
+{ if (_rig_connected)
+  { raw_command("FR0;"sv);
+    rig_is_split = false;
+  }
 }
 
 /*! \brief      Is split enabled?
@@ -2154,7 +2033,7 @@ bool elecraft_k3_interface::split_enabled(void) const
 { if (!_rig_connected)
     return false;
 
-  SAFELOCK(_rig);
+//  SAFELOCK(_rig);
 
   if ( const string transmit_vfo { raw_command("FT;"sv, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"sv, 0) )
     return (transmit_vfo[2] == '1');
@@ -2174,11 +2053,7 @@ void elecraft_k3_interface::rit(const int hz) const
   if (hz == 0)                                // just clear the RIT/XIT
     raw_command("RC;"sv);
   else
-  { const int    positive_hz { abs(hz) };
-    const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_leftz(positive_hz, 4) };
-
-    raw_command("RO"s + hz_str + SEMICOLON);
-  }
+    raw_command("RO"s + ((hz > 0) ? '+' : '-') + pad_leftz(abs(hz), 4) + SEMICOLON);
 }
 
 /// get rit offset (in Hz)
@@ -2237,22 +2112,20 @@ bool elecraft_k3_interface::sub_receiver(void) const
     return (response[2] == '1');
 }
 
+#if 0
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
 void elecraft_k3_interface::keyer_speed(const int wpm) const
-{ SAFELOCK(_rig);
+{ //const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
 
-  const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
-
-  raw_command(cmd, RESPONSE::NOT_EXPECTED);
+  raw_command("KS"s + pad_leftz(wpm, 3) + SEMICOLON);
 }
+#endif
 
 /// get the keyer speed in WPM
 int elecraft_k3_interface::keyer_speed(void) const
-{ SAFELOCK(_rig);
-
-  if ( const string response { raw_command("KS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"sv, 0) )
+{ if ( const string response { raw_command("KS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"sv, 0) )
     return from_string<int>(substring <std::string> (response, 2, 3));
   else
   { _error_alert("Invalid response getting keyer_speed: "s + response);
@@ -2262,9 +2135,7 @@ int elecraft_k3_interface::keyer_speed(void) const
 
 /// is the VFO locked?
 bool elecraft_k3_interface::is_locked(void) const
-{ SAFELOCK(_rig);
-
-  if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 3) and contains_at(response, "LK"sv, 0) )
+{ if ( const string response { raw_command("LK;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 3) and contains_at(response, "LK"sv, 0) )
     return (response[2] == '1');
   else
   { _error_alert("Invalid response getting locked status: "s + response);
@@ -2276,9 +2147,7 @@ bool elecraft_k3_interface::is_locked(void) const
     \return     the current audio bandwidth, in hertz
 */
 int elecraft_k3_interface::bandwidth(void) const
-{ SAFELOCK(_rig);
-
-  if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 6) and contains_at(response, "BW"sv, 0) )
+{ if ( const string response { raw_command("BW;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 6) and contains_at(response, "BW"sv, 0) )
     return from_string<int>(substring <std::string> (response, 2, 4)) * 10;
   else
   { _error_alert("Invalid response getting bandwidth: "s + response);
@@ -2325,10 +2194,8 @@ bool elecraft_k3_interface::is_transmitting(void) const
 */
 bool elecraft_k3_interface::test(void) const
 { if (_rig_connected)
-  { if (TEST())
-    { SAFELOCK(_rig);
-
-      if ( const string response { raw_command("IC;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 7) and contains_at(response, "IC"sv, 0) )
+  { if (TEST())         // should always be true on the K3
+    { if ( const string response { raw_command("IC;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 7) and contains_at(response, "IC"sv, 0) )
       { const char c { response[2] };
 
         return (c bitand (1 << 5));
@@ -2345,17 +2212,12 @@ bool elecraft_k3_interface::test(void) const
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
-
-    This works only with the K3.
 */
 void elecraft_k3_interface::test(const bool b) const
-{ if (TEST())
+{ if (TEST())         // should always be true on the K3
   { if (test() != b)
     { if (_rig_connected)
-      { SAFELOCK(_rig);
-
         raw_command("SWH18;"sv);    // toggles state
-      }
     }
   }
 }
@@ -2389,9 +2251,7 @@ void elecraft_k3_interface::bandwidth_a(const unsigned int hz) const
 */
 void elecraft_k3_interface::bandwidth_b(const unsigned int hz) const
 { if (_rig_connected)
-  { SAFELOCK(_rig);
-
-    const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
+  { const string k3_bw_units { pad_leftz(((hz + 5) / 10), 4) };
 
     raw_command("BW$"s + k3_bw_units + SEMICOLON);
   }
@@ -2399,8 +2259,6 @@ void elecraft_k3_interface::bandwidth_b(const unsigned int hz) const
 
 /*! \brief      Get audio centre frequency, in Hz, as a printable string
     \return     The audio centre frequency, in Hz, as a printable string
-
-    Works only with K3
 */
 string elecraft_k3_interface::centre_frequency_str(void) const
 { if  (!_rig_connected)
@@ -2418,8 +2276,6 @@ string elecraft_k3_interface::centre_frequency_str(void) const
 
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
-
-    Works only with K3
 */
 unsigned int elecraft_k3_interface::centre_frequency(void) const
 { if (!_rig_connected)
@@ -2432,14 +2288,12 @@ unsigned int elecraft_k3_interface::centre_frequency(void) const
 
 /*! \brief      Set audio centre frequency
     \patam  fc  the audio centre frequency, in Hz
-
-    Works only with K3
 */
 void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 { if (!_rig_connected)
     return;
 
-  SAFELOCK(_rig);
+//  SAFELOCK(_rig);
 
   const string fc_str { pad_leftz(fc, 4) };
 
@@ -2452,7 +2306,7 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
     return;
   }
 
-  raw_command( ("IS "s + fc_str + SEMICOLON), RESPONSE::NOT_EXPECTED);
+  raw_command( ("IS "s + fc_str + SEMICOLON));
 }
 
 /*! \brief      Is an RX antenna in use?
@@ -2687,6 +2541,16 @@ polled_status elecraft_k3_interface::poll(void)
     \brief  The capabilities of a rig
 */
 
+/*! \brief        Construct from a file
+    \param  fn    filename containing capabilities
+
+    The file <i>fn</i> should contain named rig capabilities, one per line: something like:
+      VFO_A
+      VFO_B
+      LOCK_A
+      LOCK_B
+      etc.
+*/
 rig_capabilities::rig_capabilities(const std::string& fn)
 {
 #define READ_CAPABILITY(y) \
@@ -2718,6 +2582,7 @@ rig_capabilities::rig_capabilities(const std::string& fn)
         READ_CAPABILITY(AUTO_NOTCH);
         READ_CAPABILITY(AUDIO_BW);
         READ_CAPABILITY(AUDIO_CENTRE);
+        READ_CAPABILITY(BANDSCOPE);
 
 end_test:
       }
@@ -2743,24 +2608,9 @@ end_test:
     before I acquired a copy of the cfront (v 1.2) C++-to-C translator.
 */
 rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
-{ //static constexpr string_view VFOA { "VFOA" };
-  //static constexpr string_view VFOB { "VFOB" };
-// neded because hamlib doesn't standardise names of VFOs as returned by rigs
-//  static const FLAT_STRING_SET VFOAs { "VFOA", "MAIN" };
-//  static const FLAT_STRING_SET VFOBs { "VFOB", "SUB"  };
-
-//  const string vfos { to_upper(hcaps.vfos_str()) };
-
-//  if (vfos.contains(VFOA))
-//    VFO_A_set();
-
-//  if (vfos.contains(VFOB))
-//    VFO_B_set();
-//  if (ANY_OF(VFOAs, [&vfos] (const string& str) { return vfos.contains(str); }))
-  if (hcaps.vfos().contains(VFO::A))
+{ if (hcaps.vfos().contains(VFO::A))
     VFO_A_set();
 
-//  if (ANY_OF(VFOBs, [&vfos] (const string& str) { return vfos.contains(str); }))
   if (hcaps.vfos().contains(VFO::B))
     VFO_B_set();
 
@@ -2772,22 +2622,16 @@ rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
 
 // for now, simply assume SPLIT capability, as I have been unable to get a comprehensible answer from the hamlib folk
 // (or the hamlib code) as to how to query hamlib for it. I would welcome an explanation if someone knows how to do it.
+// Or, even better, working code.
   SPLIT_set();
 
 #pragma push_macro("LOCK")    // there's a LOCK macro defined in pthread_support.h
 #undef LOCK
 
-//  if ( hcaps.LOCK() and vfos.contains(VFOA) )
-//    LOCK_A_set();
-
   if (hcaps.LOCK())
-  { //if (vfos.contains(VFOA))
-    //if (ANY_OF(VFOAs, [&vfos] (const string& str) { return vfos.contains(str); }))
-    if (hcaps.vfos().contains(VFO::A))
+  { if (hcaps.vfos().contains(VFO::A))
       LOCK_A_set();
 
-    //if (vfos.contains(VFOB))
-    //if (ANY_OF(VFOBs, [&vfos] (const string& str) { return vfos.contains(str); }))
     if (hcaps.vfos().contains(VFO::B))
       LOCK_B_set();
   }
@@ -2807,8 +2651,21 @@ rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
 // hamlib seems to have no way to change the bandwidth of the receiver audio
 
 // hamlib seems to have no way to change the centre frequency of the receiver audio
+
+// TODO: look to see whether hamlib knows about bandscopes
 }
 
+/*! \brief        Construct from a file
+    \param  path  path(s) to search for the file <i>fn</i>
+    \param  fn    filename containing capabilities
+
+    The file <i>fn</i> should contain named rig capabilities, one per line: something like:
+      VFO_A
+      VFO_B
+      LOCK_A
+      LOCK_B
+      etc.
+*/
 rig_capabilities::rig_capabilities(const std::vector<std::string>& path, const std::string& fn)
 { const string valid_filename { find_file(path, fn) };
 
@@ -2842,14 +2699,7 @@ void rig_capabilities::set(const RIG_CAPABILITY rc)
     SET_CAPABILITY(AUTO_NOTCH);
     SET_CAPABILITY(AUDIO_BW);
     SET_CAPABILITY(AUDIO_CENTRE);
-
-    //case RIG_CAPABILITIES::VFO_A :
-    //  VFO_A_set();
-    //  break;
-
-    //case RIG_CAPABILITIES::VFO_B :
-    //  VFO_B_set();
-    //  break;
+    SET_CAPABILITY(BANDSCOPE);
 
     default :
       break;
@@ -2858,6 +2708,9 @@ void rig_capabilities::set(const RIG_CAPABILITY rc)
 #undef SET_CAPABILITY
 }
 
+/*  \brief      Clear a single capability
+    \param  rc  capability to clear
+*/
 void rig_capabilities::clear(const RIG_CAPABILITY rc)
 {
 #define CLEAR_CAPABILITY(y) \
@@ -2881,13 +2734,7 @@ void rig_capabilities::clear(const RIG_CAPABILITY rc)
     CLEAR_CAPABILITY(AUTO_NOTCH);
     CLEAR_CAPABILITY(AUDIO_BW);
     CLEAR_CAPABILITY(AUDIO_CENTRE);
-//    case RIG_CAPABILITIES::VFO_A :
-//      VFO_A_clear();
-//      break;
-
-//    case RIG_CAPABILITIES::VFO_B :
-//      VFO_B_clear();
-//      break;
+    CLEAR_CAPABILITY(BANDSCOPE);
 
     default :
       break;
@@ -2897,13 +2744,12 @@ void rig_capabilities::clear(const RIG_CAPABILITY rc)
 
 }
 
+/// convert to a human-readbale string
 string rig_capabilities::to_string(void) const
 { string rv { };
 
 #define WRITE_OUT(y) rv += ""s #y " IS "s + (y() ? ""s : "NOT "s) + "set"s + EOL;
 
-//  rv += "VFO_A IS "s + (VFO_A() ? ""s : "NOT "s) + "set"s + EOL;
-//  rv += "VFO_B IS "s + (VFO_B() ? ""s : "NOT "s) + "set"s + EOL;
   WRITE_OUT(VFO_A);
   WRITE_OUT(VFO_B);
   WRITE_OUT(RIT);
@@ -2919,6 +2765,7 @@ string rig_capabilities::to_string(void) const
   WRITE_OUT(AUTO_NOTCH);
   WRITE_OUT(AUDIO_BW);
   WRITE_OUT(AUDIO_CENTRE);
+  WRITE_OUT(BANDSCOPE);
 
 #undef WRITE_OUT
 

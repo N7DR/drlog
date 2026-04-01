@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 289 2026-03-15 19:15:54Z  $
+// $Id: rig_interface.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -50,11 +50,6 @@ enum class RESPONSE { EXPECTED,
                       NOT_EXPECTED
                     };
 
-/// the two VFOs
-//enum class VFO { A,                       ///< VFO A
-//                 B                        ///< VFO B
-//               };
-
 /// rig capabilities
 enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievably, hamlib doesn't have standard naming; it calls this "Main" on some rigs
                             VFO_B,              ///< has VFO B    // unbelievably, hamlib doesn't have standard naming; it calls this "Sub" on some rigs
@@ -70,161 +65,9 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
                             RX_ANT,             ///< has a receive antenna
                             AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
                             AUDIO_BW,           ///< audio bandwidth can be controlled
-                            AUDIO_CENTRE        ///< centre frequency of audio can be controlled
+                            AUDIO_CENTRE,       ///< centre frequency of audio can be controlled
+                            BANDSCOPE           ///< has a controllable band scope
                           };
-
-#if 0
-enum class K3_BUTTON_HOLD { METER       = 8,
-                            VOX         = 9,
-                            QSK         = 10,
-                            BSET        = 11,
-                            SPLIT       = 13,
-                            CONFIG      = 14,
-                            AF_REC      = 15,
-                            TUNE        = 16,
-                            ALT         = 17,
-                            TEST        = 18,
-                            TUNE_ATU    = 19,
-                            M1_RPT      = 21,
-                            AF_PLAY     = 23,
-                            ATT         = 24,
-                            ANT_NAME    = 26,
-                            OFF         = 27,
-                            DUAL_PB_APF = 29,
-                            M2_RPT      = 31,
-                            MANUAL      = 32,
-                            LEVEL       = 33,
-                            ADJ         = 34,
-                            M3_RPT      = 35,
-                            MSG_BANK    = 37,
-                            M4_RPT      = 39,
-                            TEXT_DEC    = 40,
-                            ENT_SCAN    = 41,
-                            PITCH       = 42,
-                            DATA_MD     = 43,
-                            PF1         = 45,
-                            PF2         = 47,
-                            DVRSTY      = 48,
-                            DIVERSITY   = DVRSTY,
-                            COARSE      = 49,
-                            LOCK        = 50,
-                            MON         = 56,
-                            DELAY       = 57,
-                            NORM        = 58,
-                            I_II        = 59
-                         };
-#endif
-
-#if 0
-enum class K3_OPERATING_MODE { LSB = 1,         // 1 (LSB), 2 (USB), 3 (CW), 4 (FM), 5 (AM), 6 (DATA), 7 (CWREV), 9 (DATA-REV) [there is no 8]
-                               USB = 2,
-                               CW = 3,
-                               FM = 4,
-                               AM = 5,
-                               DATA = 6,
-                               CWREV = 7,
-                               DATA_REV = 9
-                             };
-#endif
-
-//constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
-//constexpr size_t K3_DS_REPLY_LENGTH     { 13 };          // K3 returns 13 characters in response to "DS;" request
-
-#if 0
-const UNORDERED_STRING_MAP<int> k3_tap_key { { "DISP"s,            8 },
-                                             { "BAND-"s,           9 },
-                                             { "BAND+"s,          10 },
-                                             { "A/B"s,            11 },
-                                             { "ONE"s,            11 },
-                                             { "1"s,              11 },
-                                             { "REV (FM/rpt)"s,   12 },
-                                             { "TWO"s,            12 },
-                                             { "A->B"s,           13 },
-                                             { "THREE"s,          13 },
-                                             { "MENU"s,           14 },
-                                             { "V->M"s,           15 },
-                                             { "XMIT"s,           16 },
-                                             { "MODE-"s,          17 },
-                                             { "MODE+"s,          18 },
-                                             { "ATU"s,            19 },
-                                             { "M1"s,             21 },
-                                             { "M->V"s,           23 },
-                                             { "PRE"s,            24 },
-                                             { "FOUR"s,           24 },
-                                             { "RX ANT"s,         25 },
-                                             { "ANT"s,            26 },
-                                             { "AGC"s,            27 },
-                                             { "FIVE"s,           27 },
-                                             { "XFIL"s,           29 },
-                                             { "SIX"s,            29 },
-                                             { "M2"s,             31 },
-                                             { "NTCH"s,           32 },
-                                             { "NINE"s,           32 },
-                                             { "NB"s,             33 },
-                                             { "SEVEN"s,          33 },
-                                             { "NR"s,             34 },
-                                             { "EIGHT"s,          34 },
-                                             { "M3"s,             35 },
-                                             { "REC"s,            37 },
-                                             { "M4"s,             39 },
-                                             { "CWT"s,            40 },
-                                             { "ZERO"s,           40 },
-                                             { "FREQ"s,           41 },
-                                             { "SPOT"s,           42 },
-                                             { "DOT"s,            42 },
-                                             { "AFX"s,            43 },
-                                             { "LEFT ARROW"s,     44 },
-                                             { "RIT"s,            45 },
-                                             { "XIT"s,            47 },
-                                             { "SUB"s,            48 },
-                                             { "FINE"s,           49 },
-                                             { "RATE"s,           50 },
-                                             { "CLR"s,            53 },
-                                             { "CMP/PWR"s,        56 },
-                                             { "SPD/MIC"s,        57 },
-                                             { "SHIFT/LO"s,       58 },
-                                             { "WIDTH/HI"s,       59 } };
-#endif
-
-#if 0
-const UNORDERED_STRING_MAP<int> hold_key { { "METER"s,              8 },
-                                           { "VOX"s,                9 },
-                                           { "QSK"s,               10 },
-                                           { "BSET"s,              11 },
-                                           { "SPLIT"s,             13 },
-                                           { "CONFIG"s,            14 },
-                                           { "AF REC"s,            15 },
-                                           { "TUNE"s,              16 },
-                                           { "ALT"s,               17 },
-                                           { "TEST"s,              18 },
-                                           { "TUNE ATU"s,          19 },
-                                           { "M1-RPT"s,            21 },
-                                           { "AF PLAY"s,           23 },
-                                           { "ATT"s,               24 },
-                                           { "ANT NAME"s,          26 },
-                                           { "OFF"s,               27 },
-                                           { "DUAL PB/APF"s,       29 },
-                                           { "M2-RPT"s,            31 },
-                                           { "MANUAL"s,            32 },
-                                           { "LEVEL"s,             33 },
-                                           { "ADJ"s,               34 },
-                                           { "M3-RPT"s,            35 },
-                                           { "MSG BANK"s,          37 },
-                                           { "M4-RPT"s,            39 },
-                                           { "TEXT DEC"s,          40 },
-                                           { "ENT SCAN"s,          41 },
-                                           { "PITCH"s,             42 },
-                                           { "DATA MD"s,           43 },
-                                           { "PF1"s,               45 },
-                                           { "PF2"s,               47 },
-                                           { "DVRSTY"s,            48 },
-                                           { "COARSE"s,            49 },
-                                           { "LOCK"s,              50 },
-                                           { "MON"s,               56 },
-                                           { "DELAY"s,             57 },
-                                           { "NORM"s,              58 },
-                                           { "I/II"s,              59 } };
-#endif
 
 using DRLOG_CLOCK = std::chrono::system_clock;
 
@@ -267,13 +110,37 @@ public:
 */
   explicit rig_capabilities(const hamlib_capabilities& hcaps);
 
+/*! \brief        Construct from a file
+    \param  path  path(s) to search for the file <i>fn</i>
+    \param  fn    filename containing capabilities
+
+    The file <i>fn</i> should contain named rig capabilities, one per line: something like:
+      VFO_A
+      VFO_B
+      LOCK_A
+      LOCK_B
+      etc.
+*/
   rig_capabilities(const std::vector<std::string>& path, const std::string& fn);
 
+/*! \brief        Construct from a file
+    \param  fn    filename containing capabilities
+
+    The file <i>fn</i> should contain named rig capabilities, one per line: something like:
+      VFO_A
+      VFO_B
+      LOCK_A
+      LOCK_B
+      etc.
+*/
   explicit rig_capabilities(const std::string& fn);
 
-//  template <typename T>
-//    requires std::is_same_v<T, RIG_CAPABILITIES>
-  explicit rig_capabilities(const std::set<RIG_CAPABILITY>& s)
+/*! \brief      Construct from a container of rig capabilities
+    \param  s   container of capabilities
+*/
+  template <typename C>
+    requires std::is_same_v<typename C::value_type, RIG_CAPABILITY>
+  explicit inline rig_capabilities(const C& s)
     { FOR_ALL(s, [this] (const RIG_CAPABILITY rc) { set(rc); }); }
 
 #define FNS(y)  \
@@ -301,6 +168,7 @@ public:
     FNS(AUTO_NOTCH);
     FNS(AUDIO_BW);
     FNS(AUDIO_CENTRE);
+    FNS(BANDSCOPE);
 
 #undef FNS
 
@@ -330,8 +198,8 @@ protected:
   frequency _f_a { };      ///< frequency of VFO A
   frequency _f_b { };      ///< frequency of VFO B
 
-  bool      _rit_enabled { false };
-  bool      _xit_enabled { false };
+  bool      _rit_enabled { false };   ///< whether RIT is enabled
+  bool      _xit_enabled { false };   ///< whether XIT is enabled
 
   int       _rit_offset { 0 };
   int       _xit_offset { 0 };
@@ -424,15 +292,18 @@ public:
 /*! \class  rig_interface
     \brief  The interface to a rig
 
-    A good argument can be made that this should be a base class, with specialisations occurring
-    in derived classes. For now, that's not done.
+    This is a base class for interacting with rigs. It uses hamlib, despite
+    my grave reservations about the quality of that library, as hamlib "supports" a vast number
+    of different rigs. This allows at least basic control for those rigs.
+
+    Derived classes with better implementations of various functions can then be used for particular rigs as
+    the need arises (currently just the Elecraft K3, as that is the rig that I have).
 */
 
 class rig_interface
 {
 protected:
 
-//  bool                                    _force_hamlib                { false };                       ///< force use of hamlib even if something better is available
   hamlib_capabilities                     _hcaps                       { };                             ///< capabilities from hamlib (which may or may not be populated and used)
   bool                                    _instrumented                { false };                       ///< whether to record all exchanges with rig
   frequency                               _last_commanded_frequency    { 14_MHz };                      ///< last frequency to which the rig was commanded to QSY
@@ -473,17 +344,6 @@ protected:
   inline int _file_descriptor(void) const
     { return (_rigp -> state.rigport.fd); }
 
-/*! \brief                  Send a raw command to the rig
-    \param  cmd             the command to send
-    \param  expectation     whether a response is expected
-    \param  expected_len    expected length of response
-    \return                 the response from the rig, or the empty string
-
-    Currently any expected length is ignored; the routine looks for the concluding ";" instead
-    C++ does not allow a generic std::chrono::duration to be a parameter
-*/
-  std::string _retried_raw_command(const std::string_view cmd, const std::chrono::milliseconds timeout = 250ms, const int n_retries = 0);
-
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
     \param  v   VFO
@@ -516,7 +376,6 @@ public:
 */
   virtual void prepare(const drlog_context& context);
 
-//  SAFE_READ_AND_WRITE(force_hamlib, _rig);
   SAFE_READ_AND_WRITE(hcaps, _rig);
   SAFE_READ_AND_WRITE(rcaps, _rig);
 
@@ -540,6 +399,7 @@ public:
   HAS_CAPABILITY(AUTO_NOTCH);
   HAS_CAPABILITY(AUDIO_BW);
   HAS_CAPABILITY(AUDIO_CENTRE);
+  HAS_CAPABILITY(BANDSCOPE);
 
 #undef HAS_CAPABILITY
 
@@ -633,6 +493,22 @@ public:
   inline void rig_frequency_a_to_b(void)
     { rig_frequency_b(rig_frequency()); }
 
+/*! \brief            Set the span of the bandscope
+    \param  khz_span  bandscope span, in kHz
+*/
+  inline virtual void bandscope_span([[maybe_unused]] const unsigned int khz_span) const
+    { if (BANDSCOPE())                                                // do nothing if we don't have a bandscope
+        _error_alert("Unimplemented function: rig_interface::bandscope_span(const unsigned int)"sv);
+    }
+
+/*! \brief      Record an image of the bandscope
+    \param  fn  name of the image file
+*/
+  inline virtual void bandscope_screenshot([[maybe_unused]] const std::string fn)
+    { if (BANDSCOPE())                                                // do nothing if we don't have a bandscope
+        _error_alert("Unimplemented function: rig_interface::bandscope_screenshot(const string)"sv);
+    }
+
 /*! \brief  Enable split operation
 
             hamlib has no good definition of exactly what split operation really means, and, hence,
@@ -663,7 +539,7 @@ public:
 /*! \brief      Set mode
     \param  m   new mode
 
-    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
   virtual void rig_mode(const MODE m);
 
@@ -674,8 +550,6 @@ public:
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
-
-    This works only with the K3.
 */
   virtual void test(const bool) const;
 
@@ -712,16 +586,12 @@ public:
   inline virtual void enable_rit(void) const
     { rit_enable(); }
 
-/// is rit enabled?
-//  virtual bool rit_enabled(void) const;
-  /// is rit enabled? -- hamlib equates this to non-zero RIT offset
+/// is rit enabled? -- hamlib equates this to non-zero RIT offset
   inline virtual bool rit_enabled(void) const
     { return ( rit() != 0 ); }
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
-
-    On the K3 this also sets the RIT (!)
 */
   virtual void xit(const int hz) const;
 
@@ -754,14 +624,12 @@ public:
     { return ( xit() != 0 ); }
 
 /*! \brief  Turn xit on
-
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   inline void enable_xit(void) const
     { xit_enable(); }
 
 /// get the rig's frequency and mode
-  rig_status status(void);                              // most recent rig status
+//  rig_status status(void);                              // most recent rig status
 
 /// is the VFO locked?
   virtual bool is_locked(void) const;
@@ -800,11 +668,12 @@ public:
   inline void toggle_sub_receiver(void) const
     { sub_receiver_toggle(); }
 
-/// get the bandwidth in Hz
-  virtual int bandwidth(void) const;
+/// get the audio bandwidth in Hz
+  virtual inline int bandwidth(void) const
+    { return ( _error_alert("Unimplemented function: rig_interface::bandwidth()"sv), 0 ); }
 
-/// get the bandwidth as a string, in Hz
-  virtual inline std::string bandwidth_str(void) const
+/// get the audio bandwidth in hertz as a string
+  inline std::string bandwidth_str(void) const
    { return ::to_string(bandwidth()); }
 
 /*! \brief          Set the keyer speed
@@ -814,17 +683,6 @@ public:
 
 /// get the keyer speed in WPM
   virtual int keyer_speed(void) const;
-
-// explicit K3 commands
-/*! \brief                  Send a raw command to the rig
-    \param  cmd             the command to send
-    \param  expectation     whether a response is expected
-    \param  expected_len    expected length of response
-    \return                 the response from the rig, or the empty string
-
-    Currently any expected length is ignored; the routine looks for the concluding ";" instead
-*/
-  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED) const;
 
 /*! \brief      Get the most recent frequency for a particular band and mode
     \param  bm  band and mode
@@ -859,11 +717,10 @@ public:
     { set_last_frequency( { b, m }, f ); }
 
 /*! \brief Is the rig transmitting?
-
-    With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
-    (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
 */
-  virtual bool is_transmitting(void) const;
+  inline virtual bool is_transmitting(void) const
+//    { return ( _error_alert("Unimplemented function: rig_interface::is_transmitting()"sv), false ); }
+    { return false; }   // don't write anything, because this can get called a lot
 
 /// pause until the rig is no longer transmitting
   void wait_until_not_busy(void) const;
@@ -871,45 +728,45 @@ public:
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user
 */
-  void register_error_alert_function(void (*error_alert_function)(const std::string_view));
+  void register_error_alert_function(void (*error_alert_function) (const std::string_view));
 
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
 */
   VFO tx_vfo(void) const;
 
-/*! \brief      Set the bandwidth of VFO A
-    \param  hz  desired bandwidth, in Hz
+/*! \brief      Set the audio bandwidth of VFO A
+    \param  hz  desired audio bandwidth, in Hz
 */
-  virtual void bandwidth_a(const unsigned int hz) const;
+  inline virtual void bandwidth_a([[maybe_unused]] const unsigned int hz) const
+    { _error_alert("Unimplemented function: rig_interface::bandwidth_a(const unsigned int)"sv); }
 
-/*! \brief      Set the bandwidth of VFO A
-    \param  hz  desired bandwidth, in Hz
+/*! \brief      Set the audio bandwidth of VFO A
+    \param  hz  desired audio bandwidth, in Hz
 */
   inline void bandwidth(const unsigned int hz) const
     { bandwidth_a(hz); }
 
-/*! \brief      Set the bandwidth of VFO B
-    \param  hz  desired bandwidth, in Hz
+/*! \brief      Set the audio bandwidth of VFO B
+    \param  hz  desired audio bandwidth, in Hz
 */
-  virtual void bandwidth_b(const unsigned int hz) const;
+  inline virtual void bandwidth_b([[maybe_unused]] const unsigned int hz) const
+    { _error_alert("Unimplemented function: rig_interface::bandwidth_b(const unsigned int)"sv); }
 
-/// set RIT, split, sub-rx off
+/// set RIT, split and sub-rx off
   virtual void base_state(void) const;
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
-
-    Works only with K3
 */
-  virtual bool rx_ant(void) const;
+  inline virtual bool rx_ant(void) const
+    { return (_error_alert("Unimplemented function: rig_interface::rx_ant()"sv), false); }
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
-
-    Works only with K3
 */
-  virtual void rx_ant(const bool torf) const;
+  inline virtual void rx_ant([[maybe_unused]] const bool torf) const
+    { _error_alert("Unimplemented function: rig_interface::rx_ant(const bool)"sv); }
 
 /// toggle whether the RX antenna is in use
   inline void rx_ant_toggle(void) const
@@ -921,66 +778,32 @@ public:
 
 /*! \brief      Get audio centre frequency, in Hz, as a printable string
     \return     The audio centre frequency, in Hz, as a printable string
-
-    Works only with K3
 */
-  virtual std::string centre_frequency_str(void) const;
+  inline virtual std::string centre_frequency_str(void) const
+    { return ::to_string(centre_frequency()); }
 
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
-
-    Works only with K3
 */
-  virtual unsigned int centre_frequency(void) const;
+  inline virtual unsigned int centre_frequency(void) const
+    { return (_error_alert("Unimplemented function: rig_interface::centre_frequency()"sv), 0); }
 
 /*! \brief      Set audio centre frequency
     \param  fc  the audio centre frequency, in Hz
-
-    Works only with K3
 */
-  virtual void centre_frequency(const unsigned int fc) const;
+  inline virtual void centre_frequency([[maybe_unused]] const unsigned int fc) const
+    { _error_alert("Unimplemented function: rig_interface::centre_frequency(const unsigned int)"sv); }
 
 /*! \brief              Is notch enabled?
-    \param  ds_result   previously-obtained result of a DS command, or empty string
+    \param  ds_result   previously-obtained result of a K3 DS command, or empty string
     \return             whether notch is currently enabled
-
-    Works only with K3
 */
-  virtual bool notch_enabled(const std::string_view ds_result = std::string { }) const;
+  inline virtual bool notch_enabled([[maybe_unused]] const std::string_view ds_result = std::string { }) const
+    { return (_error_alert("Unimplemented function: rig_interface::notch_enabled()"sv), false); }
 
 /*! \brief              Toggle the notch status
-
-    Works only with K3
 */
   virtual void toggle_notch_status(void) const;
-
-/*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
-    \param  cm  command mode
-
-    Works only with K3
-*/
-//  void k3_command_mode(const K3_COMMAND_MODE cm);
-
-/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
-    \return     the K3 command mode
-
-    Works only with K3
-*/
-//  K3_COMMAND_MODE k3_command_mode(void) const;
-
-/*! \brief          Emulate the tapping or holding of a K3 button
-    \param  button  the K3 button to tap or hold
-
-    Works only with K3
-*/
-//  void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
-
-/*! \brief          Emulate double-tapping a K3 button
-    \param  button  the K3 button to tap
-
-    Works only with K3
-*/
-//  void k3_double_tap(const K3_BUTTON_TAP button) const;
 
 /*! \brief      Set audio centre frequency and width
     \param  af  the characteristics to set 
@@ -1209,7 +1032,6 @@ is due to a band change; 0 otherwise
 d Basic RSP format: always 0; K3 Extended RSP format (K31): DATA sub-mode,
 if applicable (0=DATA A, 1=AFSK A, 2= FSK D, 3=PSK D)
 The fixed-value fields (space, 0, and 1) are provided for syntactic compatibility with existing software.
-
 */
 
 class k3_status
@@ -1231,6 +1053,8 @@ protected:
 
 public:
 
+/*! Construct from the response to an "IF;" command
+*/
   explicit k3_status(const std::string_view rsp);
 
   READ(freq);                 // "operating frequency, excluding any RIT/XIT offset"
@@ -1277,6 +1101,11 @@ class elecraft_k3_interface : public rig_interface
 {
 protected:
 
+/*! \brief      Thread used to record an image of the bandscope
+    \param  fn  name of the image file
+*/
+  void _bandscope_screenshot_thread(const std::string fn);
+
 /*! \brief      Set frequency of a VFO
     \param  f   new frequency
     \param  v   VFO
@@ -1305,10 +1134,34 @@ public:
 
 /*! \brief      Set mode
     \param  m   new mode
-
-    If not a K3, then also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
   void rig_mode(const MODE m);
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  expectation     whether a response is expected
+    \return                 the response from the rig, or the empty string
+*/
+  std::string raw_command(const std::string_view cmd, const RESPONSE expectation = RESPONSE::NOT_EXPECTED) const;
+
+/*! \brief                  Send a raw command to the rig
+    \param  cmd             the command to send
+    \param  timeout         the time to wait for a response
+    \param  n_retries       number of retries
+    \return                 the response from the rig, or the empty string
+*/
+  std::string _retried_raw_command(const std::string_view cmd, const std::chrono::milliseconds timeout = 250ms, const int n_retries = 0);
+
+/*! \brief              Set the span of a P3
+    \param  khz_span    span in kHz
+*/
+  void bandscope_span(const unsigned int khz_span) const;
+
+/*! \brief      Record an image of the bandscope
+    \param  fn  name of the image file
+*/
+  inline void bandscope_screenshot(const std::string fn)
+    { std::jthread(&elecraft_k3_interface::_bandscope_screenshot_thread, this, fn).detach(); }    // obtain the screenshot in a separate thread
 
 /*! \brief  Enable split operation
 
@@ -1343,32 +1196,24 @@ public:
   int rit(void) const;
 
 /*! \brief  Turn rit on
-
-    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
   inline void rit_enable(void) const
     { raw_command("RT1;"sv); }          // proper enable for the K3
 
 /*! \brief  Turn rit off
-
-    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
   inline void rit_disable(void) const
-    { raw_command("RT0;"sv); }      // proper disable for the K3
+    { raw_command("RT0;"sv); }          // proper disable for the K3
 
 /// is rit enabled?
   bool rit_enabled(void) const;
 
 /*! \brief  Turn xit on
-
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   inline void xit_enable(void) const
     { raw_command("XT1;"sv); }
 
 /*! \brief  Turn xit off
-
-    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
   inline void xit_disable(void) const
     { raw_command("XT0;"sv); }
@@ -1385,23 +1230,17 @@ public:
 
 /// lock the VFO
   inline void lock(void) const
-  { SAFELOCK(_rig);
-
-    raw_command("LK1;"s, RESPONSE::NOT_EXPECTED);
-  }
+    { raw_command("LK1;"sv); }
 
 /// unlock the VFO
   inline void unlock(void) const
-  { SAFELOCK(_rig);
-
-    raw_command("LK0;"s, RESPONSE::NOT_EXPECTED);
-  }
+    { raw_command("LK0;"sv); }
 
 /*! \brief      Turn sub-receiver on/off
     \param  b   turn sub-receiver on if TRUE, otherwise turn off
 */
   inline void sub_receiver(const bool torf) const
-    { raw_command( (torf ? "SB1;"s : "SB0;"s), RESPONSE::NOT_EXPECTED); }
+    { raw_command(torf ? "SB1;"s : "SB0;"s); }
 
 /// is sub-receiver on?
   bool sub_receiver(void) const;
@@ -1409,7 +1248,8 @@ public:
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
 */
-  void keyer_speed(const int wpm) const;
+  inline void keyer_speed(const int wpm) const
+    { raw_command("KS"s + pad_leftz(wpm, 3) + SEMICOLON); }
 
 /// get the keyer speed in WPM
   int keyer_speed(void) const;
@@ -1434,8 +1274,6 @@ public:
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
-
-    This works only with the K3.
 */
   void test(const bool) const;
 
@@ -1451,78 +1289,56 @@ public:
 
 /*! \brief      Get audio centre frequency, in Hz, as a printable string
     \return     The audio centre frequency, in Hz, as a printable string
-
-    Works only with K3
 */
   std::string centre_frequency_str(void) const;
 
 /*! \brief      Get audio centre frequency, in Hz
     \return     The audio centre frequency, in Hz
-
-    Works only with K3
 */
   unsigned int centre_frequency(void) const;
 
 /*! \brief      Set audio centre frequency
     \param  fc  the audio centre frequency, in Hz
-
-    Works only with K3
 */
   void centre_frequency(const unsigned int fc) const;
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
-
-    Works only with K3
 */
   bool rx_ant(void) const;
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
-
-    Works only with K3
 */
   void rx_ant(const bool torf) const;
 
 /*! \brief              Is notch enabled?
     \param  ds_result   previously-obtained result of a DS command, or empty string
     \return             whether notch is currently enabled
-
-    Works only with K3
 */
   bool notch_enabled(const std::string_view ds_result = std::string { }) const;
 
 /*! \brief              Toggle the notch status
-
-    Works only with K3
 */
   void toggle_notch_status(void) const;
 
 /*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
     \param  cm  command mode
-
-    Works only with K3
 */
   void k3_command_mode(const K3_COMMAND_MODE cm);
 
 /*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
     \return     the K3 command mode
-
-    Works only with K3
 */
   K3_COMMAND_MODE k3_command_mode(void) const;
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
-
-    Works only with K3
 */
   void k3_press(const std::variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const;
 
 /*! \brief          Emulate double-tapping a K3 button
     \param  button  the K3 button to tap
-
-    Works only with K3
 */
   void k3_double_tap(const K3_BUTTON_TAP button) const;
 

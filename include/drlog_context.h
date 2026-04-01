@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 287 2026-03-14 16:15:22Z  $
+// $Id: drlog_context.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -89,6 +89,10 @@ protected:
   COLOUR_TYPE                                  _bandmap_recent_colour                   { COLOUR_BLACK };               ///< colour for bandmap entries that are less than two minutes old
   bool                                         _bandmap_show_marked_frequencies         { true };                       ///< whether to display entries that would be marked
   std::string                                  _bands                                   { "160, 80, 40, 20, 15, 10"s }; ///< comma-delimited list of bands that are legal for the contest
+  bool                                         _bandscope                               { false };                      ///< is a bandscope available?
+  std::string                                  _bandscope_snapshot_file                 { "BANDSCOPE"s };               ///< base name of file for bandscope snapshot
+  unsigned int                                 _bandscope_span_cq                       { 0 };                          ///< bandscope span in CQ mode, in kHz (0 = no default span)
+  unsigned int                                 _bandscope_span_sap                      { 0 };                          ///< bandscope span in SAP mode, in kHz (0 = no default span)
   std::string                                  _batch_messages_file                     { };                            ///< file that contains per-call batch messages
   std::string                                  _best_dx_unit                            { "MILES"s };                   ///< name of unit for the BEST DX window ("MILES" or "KM")
 
@@ -226,11 +230,11 @@ protected:
   STRING_SET                                       _post_monitor_calls       { };               ///< calls to be monitored
   STRING_SET                                       _posted_by_continents     { };               ///< continents for POSTED BY window (empty => all DX continents)
   unsigned int                                     _ptt_delay                { 25 };            ///< PTT delay in milliseconds ( 0 => PTT disabled)
-  bool                                             _p3                       { false };         ///< is a P3 available?
+//  bool                                             _p3                       { false };         ///< is a P3 available?
   bool                                             _p3_ignore_checksum_error { false };         ///< should checksum errors be ignored when acquiring P3 screendumps?
-  std::string                                      _p3_snapshot_file         { "P3"s };         ///< base name of file for P3 snapshot
-  unsigned int                                     _p3_span_cq               { 0 };             ///< P3 span in CQ mode, in kHz (0 = no default span)
-  unsigned int                                     _p3_span_sap              { 0 };             ///< P3 span in SAP mode, in kHz (0 = no default span)
+//  std::string                                      _p3_snapshot_file         { "P3"s };         ///< base name of file for P3 snapshot
+//  unsigned int                                     _p3_span_cq               { 0 };             ///< P3 span in CQ mode, in kHz (0 = no default span)
+//  unsigned int                                     _p3_span_sap              { 0 };             ///< P3 span in SAP mode, in kHz (0 = no default span)
 
   std::string                                  _qsl_message                             { };                            ///< confirmation message at end of QSO
   bool                                         _qso_multiple_bands                      { false };                      ///< whether OK to work station on another band
@@ -411,6 +415,10 @@ public:
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
   CONTEXTREAD(bandmap_show_marked_frequencies);  ///< whether to display entries that would be marked
   CONTEXTREAD(bands);                            ///< comma-delimited list of bands that are legal for the contest
+  CONTEXTREAD(bandscope);                        ///< is a bandscope available?
+  CONTEXTREAD(bandscope_snapshot_file);          ///< base name of file for bandscope snapshot
+  CONTEXTREAD(bandscope_span_cq);                ///< bandscope span in CQ mode, in kHz
+  CONTEXTREAD(bandscope_span_sap);               ///< bandscope span in SAP mode, in kHz
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
   CONTEXTREAD(best_dx_unit);                     ///< name of unit for the BEST DX window ("MILES" or "KM")
 
@@ -555,11 +563,11 @@ public:
   CONTEXTREAD(post_monitor_calls);           ///< calls to be monitored
   CONTEXTREAD(posted_by_continents);         ///< continents for POSTED BY window (empty => all DX continents)
   CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
-  CONTEXTREAD(p3);                           ///< is a P3 available?
+//  CONTEXTREAD(p3);                           ///< is a P3 available?
   CONTEXTREAD(p3_ignore_checksum_error);     ///< should checksum errors be ignored when acquiring P3 screendumps?
-  CONTEXTREAD(p3_snapshot_file);             ///< base name of file for P3 snapshot
-  CONTEXTREAD(p3_span_cq);                   ///< P3 span in CQ mode, in kHz
-  CONTEXTREAD(p3_span_sap);                  ///< P3 span in SAP mode, in kHz
+//  CONTEXTREAD(p3_snapshot_file);             ///< base name of file for P3 snapshot
+//  CONTEXTREAD(p3_span_cq);                   ///< P3 span in CQ mode, in kHz
+//  CONTEXTREAD(p3_span_sap);                  ///< P3 span in SAP mode, in kHz
 
   CONTEXTREAD(qsl_message);                  ///< confirm at end of QSO
   CONTEXTREAD(qso_multiple_bands);           ///< whether OK to work station on another band

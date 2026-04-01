@@ -1,4 +1,4 @@
-// $Id: cty_data.h 271 2025-06-23 16:32:50Z  $
+// $Id: cty_data.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -36,7 +36,7 @@ enum class COUNTRY_LIST { DXCC,     ///< DXCC list
                           WAEDC     ///< DARC WAEDC list
                         };
 
-/// alternative prexies and alternative callsigns are /almost/ the same
+/// alternative prefixes and alternative callsigns are _almost_ the same
 enum class ALTERNATIVES { CALLSIGNS,
                           PREFIXES
                         };
@@ -180,7 +180,6 @@ public:
         
     It is not an error to attempt to remove a call that does not exist
 */
-//  inline void remove_alternative_callsign(const std::string& call)
   inline void remove_alternative_callsign(const std::string_view call)
     { _alt_callsigns -= call; }
 
@@ -189,7 +188,6 @@ public:
         
     It is not an error to attempt to remove a prefix that does not exist
 */
-//  inline void remove_alternative_prefix(const std::string& prefix)
   inline void remove_alternative_prefix(const std::string_view prefix)
     { _alt_prefixes -= prefix; }   
 
@@ -197,7 +195,6 @@ public:
     \param  call    string to check
     \return         whether <i>call</i> is an alternative callsign
 */
-//  inline bool is_alternative_callsign(const std::string& call) const
   inline bool is_alternative_callsign(const std::string_view call) const
     { return _alt_callsigns.contains(call); }
 
@@ -205,7 +202,6 @@ public:
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
-//  inline bool is_alternative_prefix(const std::string& pfx) const
   inline bool is_alternative_prefix(const std::string_view pfx) const
     { return _alt_prefixes.contains(pfx); }
     
@@ -388,9 +384,9 @@ public:
 
 /// archive using boost
    template<typename Archive>
-   void serialize(Archive& ar, const unsigned int version)
-     { unsigned int v { version };   // dummy; for now, version isn't used
-       v = v + 0;
+   void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+     { //unsigned int v { version };   // dummy; for now, version isn't used
+       //v = v + 0;
 
        ar & _canonical_prefix
           & _continent
@@ -519,22 +515,13 @@ public:
   inline decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
-/// create a set of all the canonical prefixes for countries
-//  UNORDERED_STRING_SET countries(void) const;
-
+/// create a container of all the canonical prefixes for countries
   template <typename T>
+    requires is_sus<T> or is_vector<T>
   auto countries(void) const -> T
   { std::lock_guard lg(_location_database_mutex);
 
-//  using RT = std::invoke_result_t<decltype(&location_database::countries())>;
-
-//  RT rv1;
-
-//  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
-    T rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
-
-//  using RT = std::invoke_result_t< decltype(&location_database::countries), decltype(this), void >; // error: 'decltype' cannot resolve address of overloaded function
-//  using RT = std::invoke_result_t< decltype( &((location_database::countries)(void) const)), decltype(this), void >;    // error: expected primary-expression before 'void'
+    T rv { };
 
     for (const auto& [_, li] : _db)
       { rv += li.canonical_prefix(); }
@@ -542,8 +529,18 @@ public:
     return rv;
   }
 
-/// create a set of all the canonical prefixes for a particular continent
-  UNORDERED_STRING_SET countries(const std::string_view cont_target) const;
+/*! \brief                Create a container of all the canonical prefixes for a particular continent
+    \param  cont_target   target continent
+*/
+  template <typename T>
+    requires is_sus<T> or is_vector<T>
+  auto countries(const std::string_view cont_target) const -> T
+  { T rv { };
+
+    std::ranges::copy_if(countries<T>(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const std::string& cp) { return (continent(cp) == cont_target); } );
+
+    return rv;
+  }
 
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)
@@ -593,7 +590,8 @@ public:
     \param  callpart    call (or partial call)
     \return             UTC offset (in minutes) corresponding to <i>callpart</i>
 */
-  inline int utc_offset(const std::string& callpart) const
+//  inline int utc_offset(const std::string& callpart) const
+  inline int utc_offset(const std::string_view callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
 /*! \brief              Get the canonical prefix for a call or partial call

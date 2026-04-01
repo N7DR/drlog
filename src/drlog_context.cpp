@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 287 2026-03-14 16:15:22Z  $
+// $Id: drlog_context.cpp 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -290,6 +290,18 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "BANDS"sv)
       _bands = RHS;
 
+// BANDSCOPE
+    if ( (LHS == "BANDSCOPE"sv) or (LHS == "P3"sv) )
+      _bandscope = is_true;
+
+// BANDSCOPE SPAN CQ
+    if ( (LHS == "BANDSCOPE SPAN CQ"sv) or (LHS == "P3 SPAN CQ"sv) )
+      _bandscope_span_cq = from_string<decltype(_bandscope_span_cq)>(RHS);
+
+// BANDSCOPE SPAN SAP
+    if ( (LHS == "BANDSCOPE SPAN SAP"sv) or (LHS == "P3 SPAN SAP"sv) )
+      _bandscope_span_sap = from_string<decltype(_bandscope_span_sap)>(RHS);
+
 // BATCH MESSAGES FILE
     if (LHS == "BATCH MESSAGES FILE"sv)
       _batch_messages_file = rhs;
@@ -373,7 +385,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
         const string lhs { str_vec[0] };
 
-//        if (!contains(lhs, '[') or contains(lhs, "[*]"s))             // for all bands
         if (!lhs.contains('[') or lhs.contains("[*]"s))             // for all bands
         { string new_str;
 
@@ -504,7 +515,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "EXCHANGE MULTS"sv)
     { _exchange_mults = RHS;
 
-//      if (contains(_exchange_mults, ','))      // if there is more than one exchange mult
       if (_exchange_mults.contains(','))      // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
@@ -640,7 +650,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "MODES"sv)
     { _modes = RHS;
 
-//      if (contains(_modes, ','))        // if more than one mode
       if (_modes.contains(','))        // if more than one mode
         _mark_mode_break_points = true;
       else
@@ -768,24 +777,16 @@ void drlog_context::_process_configuration_file(const string_view filename)
     }
 
 // P3
-    if (LHS == "P3"sv)
-      _p3 = is_true;
+//    if (LHS == "P3"sv)
+//      _p3 = is_true;
 
 // P3 IGNORE CHECKSUM ERROR
     if (LHS == "P3 IGNORE CHECKSUM ERROR"sv)
       _p3_ignore_checksum_error = is_true;
 
 // P3 SNAPSHOT FILE
-    if (LHS == "P3 SNAPSHOT FILE"sv)
-      _p3_snapshot_file = rhs;
-
-// P3 SPAN CQ
-    if (LHS == "P3 SPAN CQ"sv)
-      _p3_span_cq = from_string<decltype(_p3_span_cq)>(RHS);
-
-// P3 SPAN SAP
-    if (LHS == "P3 SPAN SAP"sv)
-      _p3_span_sap = from_string<decltype(_p3_span_sap)>(RHS);
+//    if (LHS == "P3 SNAPSHOT FILE"sv)
+//      _p3_snapshot_file = rhs;
 
 // QSL MESSAGE
     if (LHS == "QSL MESSAGE"sv)

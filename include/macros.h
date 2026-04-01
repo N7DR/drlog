@@ -1,4 +1,4 @@
-// $Id: macros.h 287 2026-03-14 16:15:22Z  $
+// $Id: macros.h 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -328,8 +328,6 @@ using FLAT_STRING_SET = std::flat_set<std::string, std::less<>>;
 // heterogenous lookup for flat maps with string keys
 template <typename ValueType>
 using FLAT_STRING_MAP = std::flat_map<std::string, ValueType, std::less<>>;
-
-// should try to create a string set with custom comparator (CMP) that supports heterogeneous lookup; see string_functions.h for defn of CMP; perhaps CMP() is the right syntax??
 
 // ---------------------------------------------------------------------------
 

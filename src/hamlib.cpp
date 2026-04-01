@@ -1,5 +1,5 @@
  
-// $Id: hamlib.cpp 288 2026-03-14 19:49:46Z  $
+// $Id: hamlib.cpp 290 2026-03-30 15:48:47Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -105,6 +105,9 @@ HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
   exit(-1);
 }
 
+/*! \brief      get a rig's capabilities
+    \param  rp  pointer to a hamlib RIG object
+*/
 void hamlib_capabilities::get_capabilities(RIG* rp)
 { _caps = hamlib_get_capabilities(rp);
 
@@ -138,6 +141,7 @@ void hamlib_capabilities::get_capabilities(RIG* rp)
   }
 }
 
+/// convert to a human-readable string
 string hamlib_capabilities::to_string(void) const
 { string rv { };
 
