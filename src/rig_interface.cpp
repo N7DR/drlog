@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 290 2026-03-30 15:48:47Z  $
+// $Id: rig_interface.cpp 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1524,6 +1524,31 @@ k3_status::k3_status(const string_view rsp)
 
 // ---------------------------------------- elecraft_k3_interface -------------------------
 
+#if 0   // a couple more example ways to calulate the checksum (see note below)
+uint16_t ck(const void* vp, const int len = 131'638)
+{ const uint8_t* cp { static_cast<const uint8_t*>(vp) };
+
+//  uint16_t rv { 0 };
+  uint32_t tmp { 0 };
+
+  for (int n = 0; n < len; ++n)
+    tmp += *(cp + n);
+
+//  return rv;
+  return static_cast<uint16_t>(tmp % 65536);
+}
+
+#include <numeric>    // for accumulate
+
+uint16_t ck1(const std::span<const uint8_t> sp)
+{ uint16_t rv { 0 };
+
+  FOR_ALL(sp, [&rv] (const uint8_t v) { rv += v; });    // can't use std::accumulate because of auto casting of parameters
+
+  return rv;
+}
+#endif
+
 /*! \class  elecraft_k3_interface
     \brief  The interface to a K3 rig
 */
@@ -1536,11 +1561,19 @@ k3_status::k3_status(const string_view rsp)
     and cc is a two-byte checksum. Note that the response does not include the command name and has no
     terminating semicolon. The checksum is the modulo-65,536 sum of all 131,638 bytes, sent least significant
     byte first.
+
+    I note that I have implemented the checksum calculation several ways [I have left some of them here in
+    commented-out code], and I simply _cannot_ get a match between the calculated value and the received value.
+    One byte (the penultimate received byte -- the least significant byte of the checksum) matches, but the other
+    (the final received byte, the most significant byte of the checksum) does not.
+
+    I can only conclude that either the above description of the checksum calculation from the P3 manual is incorrect, or
+    all my attempts to implement the calculation as described above suffer from some slapping-hand-on-head flaw.
+
 */
 void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 { alert("Dumping P3 image"s);
 
-//  const string image { rig.raw_command("#BMP;"s, RESPONSE::EXPECTED) };
   const string image { raw_command("#BMP;"s, RESPONSE::EXPECTED) };
 
 //  write_file(image, "complete-response");
@@ -1564,8 +1597,13 @@ void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 
 //  ost << "components = " << hex << (static_cast<uint8_t>(checksum_str[1]) << 8) << " " << static_cast<uint8_t>(checksum_str[0]) << endl;
 
-  const char c1 { checksum_str[1] };
-  const char c0 { checksum_str[0] };
+//  const char c1 { checksum_str[1] };
+//  const char c0 { checksum_str[0] };
+
+//  const uint8_t b0 { static_cast<uint8_t>(image[image.length() - 2]) };
+//  const uint8_t b1 { static_cast<uint8_t>(image[image.length() - 1]) };
+
+//  ost << "b checksum chars: " << hex << (int)b0 << ", " << (int)b1 << dec << endl;
 
 //  const uint16_t ui1 { static_cast<uint16_t>(c1 << 8) };
 //  const uint16_t ui0 { static_cast<uint16_t>(c0) };
@@ -1576,9 +1614,9 @@ void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 //  ui1 <<= 8;
 
 // the messy casts are needed because bitor by definition converts parameters to int
-  const int      ui1               { static_cast<int>(c1 << 8) };
-  const int      ui0               { static_cast<int>(c0) };
-  const uint16_t received_checksum { static_cast<uint16_t>(ui1 bitor ui0) };
+//  const int      ui1               { static_cast<int>(c1 << 8) };
+//  const int      ui0               { static_cast<int>(c0) };
+ // const uint16_t received_checksum { static_cast<uint16_t>(ui1 bitor ui0) };
 
 //  const uint16_t received_checksum { (static_cast<uint16_t>(checksum_str[1]) << 8) bitor static_cast<uint16_t>(checksum_str[0]) };
 
@@ -1594,8 +1632,8 @@ void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
   calculated_checksum = static_cast<uint16_t>(tmp % 65536);
 //  ost << "tmp: " << tmp << " " << hex << tmp << " " << dec << tmp % 65536 << " " << hex << tmp % 65536 << dec << endl;
 
-#if 0
-  uint16_t received_checksum { 0 };
+#if 1
+  uint16_t received_checksum_1 { 0 };
 
   for (size_t n = 0; n < checksum_str.length(); ++n)
   { const size_t        index { 2 - n - 1 };
@@ -1604,15 +1642,21 @@ void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 
     ost << n << ": " << hex << uint << endl;
 
-    received_checksum = (received_checksum << 8) + uint;  // 256 == << 8
+    received_checksum_1 = (received_checksum_1 << 8) + uint;  // 256 == << 8
   }
 #endif
 
-//  ost << "calculated checksum = " << hex << calculated_checksum << dec << endl;
+  ost << "calculated checksum = " << hex << calculated_checksum << dec << endl;
 //  ost << "received checksum = " << hex << received_checksum << dec << endl;
+  ost << "received checksum_1 = " << hex << received_checksum_1 << dec << endl;
+//  ost << "ck = " << hex << ck(image.data()) << dec << endl;
+
+//  const auto sp = std::span( reinterpret_cast<const uint8_t*>( &image[0] ), 131'638 );
+
+//  ost << "ck1 = " << hex << ck1( sp ) << dec << endl;
 
 //  const string base_filename { context.p3_snapshot_file() + (((calculated_checksum == received_checksum) or context.p3_ignore_checksum_error()) ? ""s : "-error"s) };
-  const string base_filename { fn + (((calculated_checksum == received_checksum) /* or context.p3_ignore_checksum_error() */) ? ""s : "-error"s) };
+  const string base_filename { fn + (((calculated_checksum == received_checksum_1) or _p3_ignore_checksum_error) ? ""s : "-error"s) };
 
   int  index        { 0 };
   bool file_written { false };
@@ -1893,13 +1937,16 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
 
     int counter { 0 };
 
-    constexpr int SCREEN_BITS { 131'640 };
+//    constexpr int SCREEN_BITS { 131'640 };
+    constexpr int SCREEN_BYTES    { 131'638 };
+    constexpr int RESPONSE_LENGTH { SCREEN_BYTES + 2 };
 
     if (response_expected)
     { if (is_p3_screenshot)
-      { array<char, SCREEN_BITS> c_in;    // hide the static array
+      { //array<char, SCREEN_BITS> c_in;    // hide the static array
+        array<char, RESPONSE_LENGTH> c_in;    // hide the static array
 
-        const int n_bits { SCREEN_BITS * 10 };
+        const int n_bits { RESPONSE_LENGTH * 10 };
         const int n_secs { n_bits / static_cast<int>(baud_rate() )};
 
         while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
@@ -1911,13 +1958,13 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
           { if (status == 0)
              ost << "timeout in select() in raw_command: " << cmd << endl;
             else
-            { const ssize_t n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
+            { const ssize_t n_read { read(fd, c_in.data(), RESPONSE_LENGTH - total_read) };
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
                 rcvd.append(c_in.data(), n_read);
 
-                if (rcvd.length() == SCREEN_BITS)
+                if (rcvd.length() == RESPONSE_LENGTH)
                   completed = true;
               }
             }
@@ -1926,7 +1973,7 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
           counter++;
 
           if (!completed)
-          { const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
+          { const int percent { static_cast<int>(rcvd.length() * 100) / RESPONSE_LENGTH };
 
             alert("P3 screendump progress: "s + to_string(percent) + '%');
             sleep_for(1s);      // we have the lock for all this time
@@ -2316,11 +2363,22 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 */
 bool elecraft_k3_interface::rx_ant(void) const
 { if (_rig_connected)
-  { SAFELOCK(_rig);
+  { //SAFELOCK(_rig);
+    constexpr std::chrono::duration RETRY_TIME  { 100ms };       // period between retries for the brain-dead K3
+    constexpr int                   MAX_RETRIES { 2 };
 
-    const string result { raw_command("AR;"sv, RESPONSE::EXPECTED) };
+    int counter { 0 };
 
-    if ( (result != "AR0;"sv) and (result != "AR1;"sv) )
+    string result { };
+
+    while ((result != "AR0;"sv) and (result != "AR1;"sv) and (counter++ <= MAX_RETRIES))
+    { result = raw_command("AR;"sv, RESPONSE::EXPECTED);
+
+      if ( (result != "AR0;"sv) and (result != "AR1;"sv) )
+        sleep_for(RETRY_TIME);
+    }
+
+    if ((result != "AR0;"sv) and (result != "AR1;"sv))
       ost << "ERROR in rx_ant(): result = " << result << endl;
 
     return (result == "AR1;"sv);

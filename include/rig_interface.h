@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 290 2026-03-30 15:48:47Z  $
+// $Id: rig_interface.h 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1101,6 +1101,8 @@ class elecraft_k3_interface : public rig_interface
 {
 protected:
 
+  bool _p3_ignore_checksum_error { false };         ///< should checksum errors be ignored when acquiring P3 screendumps?
+
 /*! \brief      Thread used to record an image of the bandscope
     \param  fn  name of the image file
 */
@@ -1122,6 +1124,14 @@ protected:
   frequency _rig_frequency(const VFO v) const;
 
 public:
+
+/*! \brief                    Constructor
+    \param  p3_ignore_error   whether to ignore checksum errors if a P3 is present
+*/
+  inline elecraft_k3_interface(const bool p3_ignore_error = false) :
+    rig_interface(),
+    _p3_ignore_checksum_error(p3_ignore_error)
+  { }
 
 /// destructor
   inline ~elecraft_k3_interface(void)

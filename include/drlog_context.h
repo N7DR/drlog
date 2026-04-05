@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 290 2026-03-30 15:48:47Z  $
+// $Id: drlog_context.h 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -171,7 +171,8 @@ protected:
   STRING_MAP<std::string>                      _exchange_per_country                    { };                            ///< per-country exchanges; key = prefix-or-call; value = exchange
   STRING_MAP<std::string>                      _exchange_prefill_files                  { };                            ///< external prefill files for exchange fields
   std::string                                  _exchange_sap                            { };                            ///< exchange in SAP mode
-  std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
+//  std::string                                  _execute_at_start                        { };                            ///< string to execute as soon as config file is read
+  std::vector<std::string>                     _execute_at_start                        { };                            ///< commands to execute as soon as config file is read
 
   unsigned int                                 _fast_cq_bandwidth                       { 400 };                        ///< fast CW bandwidth in CQ mode, in Hz
   unsigned int                                 _fast_sap_bandwidth                      { 400 };                        ///< fast CW bandwidth in SAP mode, in Hz
@@ -495,7 +496,7 @@ public:
   CONTEXTREAD(exchange_per_country);             ///< per-country exchanges; key = prefix-or-call; value = exchange
   CONTEXTREAD(exchange_prefill_files);           ///< external prefill files for exchange fields
   CONTEXTREAD(exchange_sap);                     ///< exchange in SAP mode
-  CONTEXTREAD(execute_at_start);                 ///< string to execute as soon as config file is read
+  CONTEXTREAD(execute_at_start);                 ///< commands to execute as soon as config file is read
 
   CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz
   CONTEXTREAD(fast_sap_bandwidth);               ///< fast CW bandwidth in SAP mode, in Hz

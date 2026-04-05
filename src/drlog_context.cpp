@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 290 2026-03-30 15:48:47Z  $
+// $Id: drlog_context.cpp 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -569,7 +569,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // EXECUTE AT START
     if (LHS == "EXECUTE AT START"sv)
-      _execute_at_start = remove_peripheral_spaces <std::string> (rhs);
+//      _execute_at_start = remove_peripheral_spaces <std::string> (rhs);
+      _execute_at_start += remove_peripheral_spaces <std::string> (rhs);
 
 // FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH"sv)

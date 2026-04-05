@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 290 2026-03-30 15:48:47Z  $
+// $Id: drlog.cpp 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -873,11 +873,22 @@ int main(int argc, char** argv)
     }
 
 // run any "execute at start" program
+#if 0
     if (const auto cmd { context.execute_at_start() }; !cmd.empty())
     { ost << "Executing external command: " << cmd << endl
           << "output:" << endl;
 
       ost << run_external_command(cmd) << endl;
+    }
+#endif
+
+    if (const auto cmds { context.execute_at_start() }; !cmds.empty())
+    { for (const string_view cmd : cmds)
+      { ost << "Executing external command: " << cmd << endl
+            << "output: " << endl;
+
+        ost << run_external_command(cmd) << endl;
+      }
     }
 
 // set some immutable variables from the context
@@ -1193,7 +1204,10 @@ int main(int argc, char** argv)
           ost << "rig type: " << rig1_type << endl;
 
           if (rig1_type == "K3"sv)
-          { rig_ptr = new elecraft_k3_interface;
+          { rig_ptr = new elecraft_k3_interface(context.p3_ignore_checksum_error());
+
+ //           rig_ptr -> p3_ignore_checksum_error(context.p3_ignore_checksum_error());  // set value
+
             ost << "rig interface set to K3" << endl;
           }
 
@@ -3037,8 +3051,9 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     CTRL-F        -- find matches for exchange in log
     CTRL-G        -- display QRG of call
     CTRL-I        -- refresh geomagnetic indices
-    CTRL-M        -- Monitor call
-    CTRL-P         -- dump screen
+    CTRL-M        -- monitor call
+    CTRL-N        -- Place NEARBY call into CALL window and update QSL window
+    CTRL-P        -- dump screen
     CTRL-Q        -- swap QSL and QUICK QSL messages
     CTRL-R        -- toggle audio recording
     CTRL-S        -- send to scratchpad
@@ -3090,9 +3105,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // [ and ] (for regex)
   if (!processed and e.is_unmodified() and (e.is_char('[') or e.is_char(']')))
     processed = (win <= e.str(), true);
-//  { win <= e.str();
-//    goto PROCESSED_INPUT;
-//  }
 
 // BACKSPACE
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
@@ -3182,7 +3194,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // if call window is not empty and we are in SAP mode, send the contents of the call window, which is expected to be "call qrg"
     if ((drlog_mode == DRLOG_MODE::SAP) and !call_contents.empty())
-    { if (call_contents.contains(' '))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
+    { if (call_contents.contains(SPACE))         // if it contains a space, just send the contents; currently there is no way for the CALL window to contain a space
       { const bool spot_status { cluster_p -> spot(call_contents) };
 
         if (spot_status)
@@ -3499,7 +3511,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .AC ON|OFF -- control autocorrecting RBN posts
       if (command.starts_with("AC"sv))
-      { const vector<string_view> words { clean_split_string <std::string_view> (command, ' ') };
+      { const vector<string_view> words { clean_split_string <std::string_view> (command, SPACE) };
 
         if (words.size() == 2)
         { if (words[1] == "ON"sv)
@@ -3526,14 +3538,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .BM [band] e.g., .BM 15 or .BM15
       if ( command.starts_with("BM"sv) )
-      { if (command.contains(' '))
-        { const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, command.find(' '))) };
+      { //if (command.contains(' '))
+        if (command.contains(SPACE))
+        { //const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, command.find(' '))) };
+          const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, command.find(SPACE))) };
 
           try
-          { //const BAND b { BAND_FROM_NAME.at(string { bandname }) };     // at() does not yet support heterogeneous lookup
-
-            //bandmap_display_band = b;
-            bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
+          {  bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
           }
 
           catch (...)
@@ -3547,10 +3558,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { const string_view bandname { remove_peripheral_spaces <std::string_view> (substring <std::string_view> (command, 2)) };
 
             try
-            { //const BAND b { BAND_FROM_NAME.at(string { bandname }) };     // at() does not yet support heterogeneous lookup
-
-              //bandmap_display_band = b;
-              bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
+            { bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
             }
 
             catch (...)
@@ -3584,7 +3592,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .CULL <n>
       if (command.starts_with("CULL"sv))
-      { if (const auto posn { command.find(' ') }; posn != string_view::npos)
+      { //if (const auto posn { command.find(' ') }; posn != string_view::npos)
+        if (const auto posn { command.find(SPACE) }; posn != string_view::npos)
           FOR_ALL(bandmaps, [cull_function = from_string<int>(substring <std::string> (command, posn))] (bandmap& bm) { bm.cull_function(cull_function); } );
 
         bandmap& bm { bandmaps[current_band] };
@@ -4779,8 +4788,12 @@ FINISHED_PROCESSING_COMMAND:
   }
 
 // ' -- Place NEARBY call into CALL window and update QSL window
-  if (!processed and e.is_unmodified() and e.symbol() == XK_apostrophe)
-  { if (win_call.empty() and !win_nearby.empty())
+// CTRL-N -- Place NEARBY call into CALL window and update QSL window
+//  if (!processed and e.is_unmodified() and e.symbol() == XK_apostrophe)
+  if (!processed and e.is_control('n'))
+  { //ost << "win_nearby = " << win_nearby.read() << endl;
+
+    if (win_call.empty() and !win_nearby.empty())
     { const string new_call { remove_peripheral_spaces <std::string> (win_nearby.read()) };
 
       win_call < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_call;
@@ -4902,7 +4915,7 @@ FINISHED_PROCESSING_COMMAND:
         win_grid <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
     else
-    { if (const string current_contents { remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH_CHAR) }; current_contents != original_contents)   // remove any \ characters
+    { if (const string current_contents { remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH) }; current_contents != original_contents)   // remove any \ characters
       { display_call_info(current_contents);
 
         if (!in_scp_matching)

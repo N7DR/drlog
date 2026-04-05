@@ -1,4 +1,4 @@
-// $Id: string_functions.h 290 2026-03-30 15:48:47Z  $
+// $Id: string_functions.h 291 2026-04-05 16:53:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,13 +65,15 @@ constexpr std::string_view DIGITS                        { "0123456789"sv };    
 constexpr std::string_view DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };     ///< convenient place to hold all digits and upper case letters
 constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };               ///< convenient place to hold all upper case letters
 
-constexpr char BACKSLASH_CHAR { '\\' };
-constexpr char SPACE_CHAR     { ' ' };
+//constexpr char BACKSLASH_CHAR { '\\' };
+//constexpr char SPACE_CHAR     { ' ' };
 
 constexpr char APOSTROPHE { '\'' };
+constexpr char BACKSLASH  { '\\' };
 constexpr char DOT        { '.' };
 constexpr char SEMICOLON  { ';' };
-  
+constexpr char SPACE      { ' ' };
+
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
                  RIGHT                  ///< pad to the right
