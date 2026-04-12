@@ -1,4 +1,4 @@
-// $Id: string_functions.h 291 2026-04-05 16:53:14Z  $
+// $Id: string_functions.h 292 2026-04-12 17:03:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,7 +70,11 @@ constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRST
 
 constexpr char APOSTROPHE { '\'' };
 constexpr char BACKSLASH  { '\\' };
+constexpr char COLON      { ':' };
+constexpr char COMMA      { ',' };
+constexpr char DASH       { '-' };
 constexpr char DOT        { '.' };
+constexpr char HYPHEN     { DASH };
 constexpr char SEMICOLON  { ';' };
 constexpr char SPACE      { ' ' };
 
@@ -201,7 +205,8 @@ std::string to_string(const T val)
   if (auto [ptr, err_code] = std::to_chars(arr.data(), arr.data() + arr.size(), val); err_code == std::errc())
     return std::string { arr.data(), ptr };
 
-  return ""s;
+//  return ""s;
+  return std::string { };
 }
 
 /*! \brief      Generic conversion to string, for parameters that can be trivially converted

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 291 2026-04-05 16:53:14Z  $
+// $Id: drlog.cpp 292 2026-04-12 17:03:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -191,7 +191,8 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip = 0);                         ///< jump to the next frequency on the visible bandmap
 bool process_change_in_bandmap_column_offset(const KeySym symbol);                                            ///< change the offset of the bandmap
 bool process_backspace(window& win);                                                                          ///< process backspace
-bool process_keypress_F1(const string_view original_contents);                                                ///< process key F1
+//bool process_keypress_F1(const string_view original_contents);                                                ///< process key F1
+void process_keypress_F1(const string_view original_contents);                                                ///< process key F1
 bool process_keypress_F2(void);                                                                               ///< process key F2
 bool process_keypress_F4(void);                                                                               ///< process key F4
 bool process_keypress_F5(void);                                                                               ///< process key F5
@@ -202,11 +203,11 @@ void         rebuild_history(const logbook& logbk,
                              running_statistics& statistics,
                              call_history& q_history,
                              rate_meter& rate);                       ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
-memory_entry recall_memory(const unsigned int n = 0);         ///< recall a memory
+memory_entry recall_memory(const unsigned int n = 0);                 ///< recall a memory
 void         rescore(const contest_rules& rules);                     ///< Rescore the entire contest
 void         restore_data(const string_view archive_filename);        ///< Extract the data from the archive file
 void         rig_error_alert(const string_view msg);                  ///< Alert the user to a rig-related error
-string       run_external_command(const string_view cmd);           ///< run an external command
+string       run_external_command(const string_view cmd);             ///< run an external command
 
 void   send_qtc_entry(const qtc_entry& qe, const bool log_it);                  ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string_view str);                               ///< Send a string to the SCRATCHPAD window
@@ -1141,7 +1142,7 @@ int main(int argc, char** argv)
     permitted_modes     = rules.permitted_modes();
     all_country_mults   = rules.country_mults();
 
-// is it SS?
+// is it SS -- because SS is "special"
     if (rules.n_modes() == 1)
     { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
 
@@ -1417,7 +1418,6 @@ int main(int argc, char** argv)
 // BCALL window
       win_bcall.init(context.window_info("BCALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
       win_bcall < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
-//  win_call.process_input_function(process_CALL_input);
 
 // BEST DX window
       win_best_dx.init(context.window_info("BEST DX"s), WINDOW_NO_CURSOR);
@@ -1472,7 +1472,7 @@ int main(int argc, char** argv)
         { SAFELOCK(individual_messages);
 
           for (const auto& messages_line : to_lines <std::string> (read_file(context_path, context.individual_messages_file())))
-          { const vector<string> fields { clean_split_string <std::string> (messages_line, ':') };
+          { const vector<string> fields { clean_split_string <std::string> (messages_line, COLON) };
 
             if (fields.size() >= 2)
             { const string& f_0 { fields[0] };
@@ -1480,10 +1480,10 @@ int main(int argc, char** argv)
 // is it a date or a call?
               const string& callsign { (is_digits(f_0) ? fields[1] : fields[0]) };
 
-              string_view msg { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, ':')) };
+              string_view msg { remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (messages_line, COLON)) };
 
               if (is_digits(f_0))
-                msg = remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (msg, ':'));
+                msg = remove_peripheral_spaces <std::string_view> (after_first <std::string_view> (msg, COLON));
 
               if (!msg.empty())
                 individual_messages += { callsign, string { msg } };
@@ -1981,10 +1981,10 @@ int main(int argc, char** argv)
       if (clean)                                          // start with clean slate
       { int index { 0 };
 
-        const string target { OUTPUT_FILENAME + '-' + to_string(index) };
+        const string target { OUTPUT_FILENAME + DASH + to_string(index) };
 
         while (file_exists(target))
-          file_delete(OUTPUT_FILENAME + '-' + to_string(index++));
+          file_delete(OUTPUT_FILENAME + DASH + to_string(index++));
 
         file_truncate(context.logfile());
         file_truncate(context.archive_name());
@@ -3071,10 +3071,11 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     ESCAPE
     F1 -- first step in SAP QSO during run
     F4 -- swap contents of CALL and BCALL windows
+    F5 -- second (and final) step in SAP QSO during run
     F10           -- toggle filter_remaining_country_mults
     F11           -- band map filtering
     KP Del        -- remove from bandmap and add to do-not-add list (like .REMOVE)
-    KP-DOWN-ARROW, KP-UP-ARROW: up or down to next stn that matches the N7DR criteria
+    KP-DOWN-ARROW, KP-UP-ARROW -- up or down to next stn that matches the N7DR criteria
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
     KP-              -- toggle 1300:1600/1500:1800 centre/bandwidth if on SSB
@@ -4750,7 +4751,11 @@ FINISHED_PROCESSING_COMMAND:
 //    moves call to BCALL window
 // intent here is to see whether we can hear the station whose call is in the CALL window
   if (!processed and (e.symbol() == XK_F1))
-    processed = process_keypress_F1(original_contents);
+//    processed = process_keypress_F1(original_contents);
+  { jthread(process_keypress_F1, original_contents).detach();
+
+    processed = true;
+  }
 
 // F2 toggle: split and force SAP mode
 // intent here is to be ready to call the station: the TX is on the other station's QRG (which is VFO B)
@@ -8552,53 +8557,46 @@ void update_qsls_window(const string_view str)
                          turn off sub-rx
                          turn off split
                          clear bcall
+
+  This runs in a short-lived thread, for as long as the rig is transmitting. Note that you can get everything
+  into a weird state if the transmission is long and you keep typing too many things (like a new call and ENTER)
+  while awaiting the end of transmission. But if you're sensible, it will do the right things.
 */
-bool process_keypress_F1(const string_view original_contents)
-{ if (original_contents.empty())
+//bool process_keypress_F1(const string_view original_contents)
+void process_keypress_F1(const string_view original_contents)
+{ const duration RETRY_TIME { 100ms };
+
+  if (original_contents.empty())
   { enter_cq_mode();
     win_bcall <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-//    rig.sub_receiver_disable();
-//    rig.split_disable();
     rig_ptr -> sub_receiver_disable();
     rig_ptr -> split_disable();
   }
   else      // there is a call in the CALL window
+  { while (rig_ptr -> is_transmitting())        // there's a race condition here, but it should never be triggered in normal operation
+      sleep_for(RETRY_TIME);
 
-//  if (drlog_mode == DRLOG_MODE::CQ)      // don't do anything in SAP mode
-  { //if (original_contents.empty())      // nothing in CALL: empty bcall and turn off sub-receiver
-    //{ win_bcall <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-    //  rig.sub_receiver_disable();
-    //}
-    //else
-    {
-// assume it's a call -- look for the same call in the current bandmap
-//      bandmap_entry be { bandmaps[current_band][original_contents] };
-      bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
+    bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
 
-      if (be.callsign().empty())          // didn't find an exact match; try a substring search
-//        be = bandmaps[current_band].substr(original_contents);
-        be = bandmaps[bandmap_display_band].substr(original_contents);
+    if (be.callsign().empty())          // didn't find an exact match; try a substring search
+      be = bandmaps[bandmap_display_band].substr(original_contents);
 
-//      const BAND old_b_band { to_BAND(rig.rig_frequency_b()) };
-      const BAND old_b_band { to_BAND(rig_ptr -> rig_frequency_b()) };
+    const BAND old_b_band { to_BAND(rig_ptr -> rig_frequency_b()) };
 
-//      rig.rig_frequency_b(be.freq());
-      rig_ptr -> rig_frequency_b(be.freq());
-      win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();     // put call in BCALL
+    rig_ptr -> rig_frequency_b(be.freq());
+    win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();     // put call in BCALL
 
-      if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
-        sleep_for(100ms);
+    if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
+      sleep_for(RETRY_TIME);
 
-//      rig.sub_receiver_enable();
-      rig_ptr -> sub_receiver_enable();
+    rig_ptr -> sub_receiver_enable();
 
 // clear CALL
-      if (win_bcall.defined() and !win_call.empty())
-        win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-    }
+    if (win_bcall.defined() and !win_call.empty())
+      win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
   }
 
-  return true;
+//  return true;
 }
 
 /*! \brief                    Process an F2 keystroke

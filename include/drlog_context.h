@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 291 2026-04-05 16:53:14Z  $
+// $Id: drlog_context.h 292 2026-04-12 17:03:36Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -297,7 +297,8 @@ protected:
 
   bool                                         _sync_keyer                              { false };                          ///< whether to synchronise the rig keyer speed with the computer
   bool                                         _test                                    { false };                          ///< whether to put rig in TEST mode
-  char                                         _thousands_separator                     { ',' };                            ///< character used as thousands separator in numbers
+//  char                                         _thousands_separator                     { ',' };                            ///< character used as thousands separator in numbers
+  char                                         _thousands_separator                     { COMMA };                            ///< character used as thousands separator in numbers
 
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
