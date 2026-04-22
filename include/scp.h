@@ -59,7 +59,7 @@ public:
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
   inline explicit scp_database(const std::string_view filename)
-    { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')))); }
+    { init_from_calls(to_lines <std::string> (to_upper(remove_char(remove_char(read_file(filename), CR), SPACE)))); }
   
 /// construct from vector of calls
   inline explicit scp_database(const std::vector<std::string>& calls)
@@ -151,12 +151,12 @@ public:
     { add_db(db); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
-//  inline void remove_call(const std::string& call)
   inline void remove_call(const std::string_view call)
     { FIND_IF(_vec, [&call] (auto& db) { return (db -> remove_call(call)); } ); }
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
-  inline void operator-=(const std::string& call)
+//  inline void operator-=(const std::string& call)
+  inline void operator-=(const std::string_view call)
     { remove_call(call); }
 
 /// return matches

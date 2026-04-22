@@ -108,7 +108,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     }
 
     add_all_bands(permitted_bands.size(), qsos_all_bands);
-    rv += (line + LF);
+    rv += (line + LF_STR);
 
 // country mults
     if (_country_multipliers.used())                                         // if countries are mults
@@ -135,7 +135,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
       }
 
       add_all_bands(permitted_bands.size(), total_countries_all_bands);
-      rv += (line + LF);
+      rv += (line + LF_STR);
     }
 
 // callsign mults
@@ -164,7 +164,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
         }
       }
 
-      rv += line + LF;
+      rv += line + LF_STR;
     }
 
 // Exchange mults
@@ -197,7 +197,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
           line += pad_left(mult.n_worked(ANY_BAND, m), FIELD_WIDTH);
       }
 
-      rv += line + LF;
+      rv += line + LF_STR;
     }
 
 // dupes
@@ -224,7 +224,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     }
 
     add_all_bands(permitted_bands.size(), dupes_all_bands);
-    rv += (line + LF);
+    rv += (line + LF_STR);
 
 // QSO points
     if (scoring_enabled)
@@ -255,7 +255,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
     }
 
     if (_include_qtcs)
-    { line = LF + pad_right("QTC QSOs"s, FIRST_FIELD_WIDTH);
+    { line = LF_STR + pad_right("QTC QSOs"s, FIRST_FIELD_WIDTH);
       line += pad_left((to_string(_qtc_qsos_sent) + '|' + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
 
       rv += line;
@@ -595,7 +595,7 @@ string running_statistics::summary_string(const contest_rules& rules)
   if (permitted_bands.size() != 1)
     line += pad_left("All"s, FIELD_WIDTH);
   
-  rv += (line + LF);
+  rv += (line + LF_STR);
       
   line = string(FIRST_FIELD_WIDTH, ' ');
 
@@ -604,7 +604,7 @@ string running_statistics::summary_string(const contest_rules& rules)
   if (permitted_bands.size() != 1)
     line += pad_left("---"s, FIELD_WIDTH);
 
-  rv += (line + LF);
+  rv += (line + LF_STR);
 
 // now create the individual per-mode tables
   const set<MODE> sm { rules.permitted_modes() };
@@ -619,12 +619,12 @@ string running_statistics::summary_string(const contest_rules& rules)
 
   for (const auto& mode_set : vsm)
   { if (vsm.size() != 1)
-      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All"s ) + LF );
+      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All"s ) + LF_STR );
   
     rv += _summary_string(rules, mode_set);
     
     if ( (vsm.size() != 1) and (mode_set.size() == 1) )
-      rv += LF;
+      rv += LF_STR;
   }
 
   return rv;
@@ -728,8 +728,8 @@ STRING_MAP<MULT_SET /* values */ > running_statistics::worked_exchange_mults(con
 void running_statistics::clear_info(void)
 { SAFELOCK(statistics);
 
-  _n_dupes = move(decltype(_n_dupes)( { { } } ));
-  _n_qsos = move(decltype(_n_qsos)( { { } } ));
+  _n_dupes    = move(decltype(_n_dupes)   ( { { } } ));
+  _n_qsos     = move(decltype(_n_qsos)    ( { { } } ));
   _qso_points = move(decltype(_qso_points)( { { } } ));
 
 // clear the mults

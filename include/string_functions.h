@@ -44,20 +44,13 @@ constexpr std::string EOL { "\n"s };            ///< end-of-line marker as strin
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
-constexpr std::string LF     { "\n"s };         ///< LF as string
 constexpr std::string LF_STR { "\n"s };         ///< LF as string
-
-constexpr char LF_CHAR { '\n' };                ///< LF as character
-
-constexpr std::string CR     { "\r"s };         ///< CR as string
 constexpr std::string CR_STR { "\r"s };            ///< CR as string
+constexpr std::string CRLF   { "\r\n"s };          ///< CR followed by LF
 
-constexpr char CR_CHAR { '\r' };                    ///< CR as character
-
-constexpr std::string CRLF { "\r\n"s };          ///< CR followed by LF
-
+constexpr std::string DOT_STR   { "."s };        ///< full stop as string
 constexpr std::string EMPTY_STR { };             ///< an empty string
-constexpr std::string FULL_STOP { "."s };        ///< full stop as string
+//constexpr std::string FULL_STOP { "."s };        ///< full stop as string
 constexpr std::string SPACE_STR { " "s };        ///< space as string
 
 constexpr std::string_view CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"sv };    ///< convenient place to hold all characters that are legal in callsigns
@@ -65,18 +58,42 @@ constexpr std::string_view DIGITS                        { "0123456789"sv };    
 constexpr std::string_view DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };     ///< convenient place to hold all digits and upper case letters
 constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };               ///< convenient place to hold all upper case letters
 
-//constexpr char BACKSLASH_CHAR { '\\' };
-//constexpr char SPACE_CHAR     { ' ' };
+constexpr char APOSTROPHE           { '\'' };
+constexpr char ASTERISK             { '*' };
+constexpr char AT_SIGN              { '@' };
+constexpr char BACKSLASH            { '\\' };
+constexpr char BACKTICK             { '`' };
+constexpr char CARRIAGE_RETURN      { '\r' };
+constexpr char CIRCUMFLEX           { '^' };
+constexpr char COLON                { ':' };
+constexpr char COMAT                { AT_SIGN };
+constexpr char COMMA                { ',' };
+constexpr char CR                   { CARRIAGE_RETURN };
+constexpr char DASH                 { '-' };
+constexpr char DOT                  { '.' };
+constexpr char EQUALS               { '=' };
+constexpr char GREATER_THAN         { '>' };
+constexpr char GT                   { GREATER_THAN };
+constexpr char HYPHEN               { DASH };
+constexpr char LEFT_SQUARE_BRACKET  { '[' };
+constexpr char LESS_THAN            { '<' };
+constexpr char LF                   { '\n' };
+constexpr char LT                   { LESS_THAN };
+constexpr char LINEFEED             { LF };
+constexpr char MINUS                { DASH };
+constexpr char OCTOTHORPE           { '#' };
+constexpr char PERCENT              { '%' };
+constexpr char PIPE                 { '|' };
+constexpr char PLUS                 { '+' };
+constexpr char QUESTION_MARK        { '?' };
+constexpr char QUOTATION_MARK       { '"' };
+constexpr char RIGHT_SQUARE_BRACKET { ']' };
+constexpr char SEMICOLON            { ';' };
+constexpr char SLASH                { '/' };
+constexpr char SPACE                { ' ' };
+constexpr char TAB                  { '\t' };
 
-constexpr char APOSTROPHE { '\'' };
-constexpr char BACKSLASH  { '\\' };
-constexpr char COLON      { ':' };
-constexpr char COMMA      { ',' };
-constexpr char DASH       { '-' };
-constexpr char DOT        { '.' };
-constexpr char HYPHEN     { DASH };
-constexpr char SEMICOLON  { ';' };
-constexpr char SPACE      { ' ' };
+//constexpr char DEGREE          { '°' };
 
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -118,7 +135,7 @@ std::vector<std::string> from_csv(const std::string_view line);
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-std::string duplicate_char(const std::string_view s, const char c = '"');
+std::string duplicate_char(const std::string_view s, const char c = QUOTATION_MARK);
 
 /*! \brief                      Provide a formatted UTC date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
@@ -205,7 +222,6 @@ std::string to_string(const T val)
   if (auto [ptr, err_code] = std::to_chars(arr.data(), arr.data() + arr.size(), val); err_code == std::errc())
     return std::string { arr.data(), ptr };
 
-//  return ""s;
   return std::string { };
 }
 
@@ -257,6 +273,13 @@ inline std::string to_string(T&& val)
 */
   std::string operator+(const std::string_view sv, const char c);
 
+/*! \brief        Append a string to a character
+    \param  c     original character
+    \param  str   string to append to append
+    \return       concatenation of <i>c</i> and <i>str</i>
+*/
+  std::string operator+(const char c, const std::string_view str);
+
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
@@ -291,7 +314,17 @@ inline auto substring(const std::string_view str, const size_t start_posn) -> ST
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-std::string replace_char(const std::string_view s, const char old_char, const char new_char);
+//std::string replace_char(const std::string_view s, const char old_char, const char new_char);
+std::string replace(const std::string_view s, const char old_char, const char new_char);
+
+/*! \brief              Replace every instance of one character with a string
+    \param  s           string on which to operate
+    \param  old_char    character to be replaced
+    \param  new_str     replacement string
+    \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_str</i>
+*/
+//std::string replace_char(const std::string_view s, const char old_char, const char new_char);
+std::string replace(const std::string_view s, const char old_char, const std::string_view new_str);
 
 /*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
@@ -300,6 +333,14 @@ std::string replace_char(const std::string_view s, const char old_char, const ch
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
 std::string replace(const std::string_view s, const std::string_view old_str, const std::string_view new_str);
+
+/*! \brief              Replace every instance of one string with a character
+    \param  s           string on which to operate
+    \param  old_str     string to be replaced
+    \param  new_char    replacement charactyer
+    \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_char</i>
+*/
+std::string replace(const std::string_view s, const std::string_view old_str, const char new_char);
 
 /*! \brief              Replace part of a string with a byte-for-byte copy of an object
     \param  s           string on which to operate
@@ -379,7 +420,7 @@ inline bool contains_digit(const std::string_view str)
     \param  c       character to return if no digit is present in <i>sv</i>
     \return         the first digit in <i>sv</i>, or <i>c</i>
 */
-char first_digit(const std::string_view sv, const char c = ' ');
+char first_digit(const std::string_view sv, const char c = SPACE);
 
 /*! \brief          Does a string contain only digits?
     \param  str     string to test
@@ -406,7 +447,8 @@ inline bool is_digit(const char c)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
+//std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
+std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = SPACE);
 
 /*! \brief              Left pad a string to a particular size
     \param  s           original string
@@ -416,7 +458,8 @@ std::string pad_string(const std::string_view s, const size_t len, const enum PA
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = ' ')
+//inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = ' ')
+inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = SPACE)
   { return pad_string(s, len, PAD::LEFT, pad_char); }
 
   /*! \brief            Left pad a number to a particular size
@@ -429,7 +472,8 @@ inline std::string pad_left(const std::string_view s, const size_t len, const ch
 */
 template <typename T>
   requires (std::is_integral_v<T>)
-inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
+//inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
+inline std::string pad_left(T s, const size_t len, const char pad_char = SPACE)
   { return pad_left(std::string_view { to_string(s) }, len, pad_char); }
 
 /*! \brief      Left pad an integer or string type with zeroes to a particular size
@@ -456,7 +500,7 @@ inline std::string pad_leftz(const std::string_view sv, const size_t len)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-inline std::string pad_right(const std::string_view s, const size_t len, const char pad_char = ' ')
+inline std::string pad_right(const std::string_view s, const size_t len, const char pad_char = SPACE)
   { return pad_string(s, len, PAD::RIGHT, pad_char); }
 
 /*! \brief            Right pad an integer type to a particular size
@@ -467,7 +511,7 @@ inline std::string pad_right(const std::string_view s, const size_t len, const c
 */
 template <typename T>
   requires (std::is_integral_v<T>)
-inline std::string pad_right(T s, const size_t len, const char pad_char = ' ')
+inline std::string pad_right(T s, const size_t len, const char pad_char = SPACE)
   { return pad_right(std::string_view { to_string(s) }, len, pad_char); }
 
 /*! \brief              Read the contents of a file into a single string
@@ -598,7 +642,7 @@ auto remove_leading(const std::string_view cs, const char c) -> STYPE
 */
 template <typename STYPE>
 inline auto remove_leading_spaces(const std::string_view cs) -> STYPE
-  { return remove_leading <STYPE> (cs, ' '); }
+  { return remove_leading <STYPE> (cs, SPACE); }
 
 /*! \brief      Remove all instances of a specific trailing character
     \param  cs  original string
@@ -621,7 +665,7 @@ auto remove_trailing(std::string_view cs, const char c) -> STYPE
 */
 template <typename STYPE>
 inline auto remove_trailing_spaces(std::string_view cs) -> STYPE
-  { return remove_trailing <STYPE> (cs, ' '); }
+  { return remove_trailing <STYPE> (cs, SPACE); }
 
 /*! \brief      Remove trailing instances of a particular character, for all strings in a container
     \param  t   original container of strings
@@ -655,7 +699,7 @@ inline auto remove_trailing(const T& t, const char c) -> std::vector<STYPE>
 template <typename STYPE, typename T>
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_trailing_spaces(const T& t) -> std::vector<STYPE>
-  { return remove_trailing <STYPE> (t, ' '); }
+  { return remove_trailing <STYPE> (t, SPACE); }
 
 /*! \brief      Remove leading and trailing instances of a particular character
     \param  cs  original string
@@ -672,7 +716,7 @@ inline auto remove_peripheral_chars(const std::string_view cs, const char c) -> 
 */
 template <typename STYPE>
 inline auto remove_peripheral_spaces(const std::string_view cs) -> STYPE
-  { return remove_peripheral_chars <STYPE> (cs, ' '); }
+  { return remove_peripheral_chars <STYPE> (cs, SPACE); }
 
 /*! \brief      Remove leading and trailing instances of a particular character from each element in a vector of strings
     \param  t   container of strings
@@ -698,7 +742,7 @@ auto remove_peripheral_chars(const T& t, const char c) -> std::vector<STYPE>
 template <typename STYPE, typename T>
   requires is_vector<T> and is_ssv<typename T::value_type>
 inline auto remove_peripheral_spaces(const T& t) -> std::vector<STYPE>
-  { return remove_peripheral_chars <STYPE> (t, ' '); }
+  { return remove_peripheral_chars <STYPE> (t, SPACE); }
 
 /*! \brief      Remove leading and trailing spaces from each element in a container of strings
     \param  t   container of strings
@@ -749,7 +793,7 @@ auto split_string(const std::string_view cs, const std::string_view separator) -
     Some of the returned elements may be the null string
 */
 template <typename STYPE>
-auto split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+auto split_string(const std::string_view cs, const char separator = COMMA) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   if (cs.empty())
@@ -787,7 +831,7 @@ auto split_string(const std::string_view cs, const char separator = ',') -> std:
     \return             vector containing the separate records
 */
 template <typename STYPE>
-auto split_string_into_records(const std::string_view cs, const char eor_marker = '|', const enum DELIMITERS delim_rule = DELIMITERS::DROP) -> std::vector<STYPE>
+auto split_string_into_records(const std::string_view cs, const char eor_marker = PIPE, const enum DELIMITERS delim_rule = DELIMITERS::DROP) -> std::vector<STYPE>
 { std::vector<STYPE> rv;
 
   if (cs.empty())
@@ -829,7 +873,7 @@ inline auto clean_split_string(const std::string_view cs,const std::string_view 
     \return             vector containing the separate components, with peripheral spaces removed
 */
 template <typename STYPE>
-inline auto clean_split_string(const std::string_view cs, const char separator = ',') -> std::vector<STYPE>
+inline auto clean_split_string(const std::string_view cs, const char separator = COMMA) -> std::vector<STYPE>
   { return remove_peripheral_spaces <STYPE> (split_string <STYPE> (cs, separator)); }
 
 /*! \brief      Squash repeated occurrences of a character
@@ -837,7 +881,7 @@ inline auto clean_split_string(const std::string_view cs, const char separator =
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-std::string squash(const std::string_view cs, const char c = ' ');
+std::string squash(const std::string_view cs, const char c = SPACE);
 
 /*! \brief          Remove empty lines from a vector of lines
     \param  lines   the original vector of lines
@@ -1154,7 +1198,7 @@ inline bool is_maritime_mobile(const std::string& callsign)
 */
 template <typename T>
   requires std::is_integral_v<T>
-std::string separated_string(const T n, const char sep = ',')
+std::string separated_string(const T n, const char sep = COMMA)
 { std::string tmp { to_string(n) };
   std::string rv  { };
 
@@ -1251,7 +1295,7 @@ inline bool is_legal_value(const std::string_view value, const std::string_view 
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const char separator = ',')
+inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const char separator = COMMA)
   { return (contains(split_string <std::string_view> (legal_values, separator), value)); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?

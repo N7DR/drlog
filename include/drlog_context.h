@@ -565,11 +565,7 @@ public:
   CONTEXTREAD(post_monitor_calls);           ///< calls to be monitored
   CONTEXTREAD(posted_by_continents);         ///< continents for POSTED BY window (empty => all DX continents)
   CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
-//  CONTEXTREAD(p3);                           ///< is a P3 available?
   CONTEXTREAD(p3_ignore_checksum_error);     ///< should checksum errors be ignored when acquiring P3 screendumps?
-//  CONTEXTREAD(p3_snapshot_file);             ///< base name of file for P3 snapshot
-//  CONTEXTREAD(p3_span_cq);                   ///< P3 span in CQ mode, in kHz
-//  CONTEXTREAD(p3_span_sap);                  ///< P3 span in SAP mode, in kHz
 
   CONTEXTREAD(qsl_message);                  ///< confirm at end of QSO
   CONTEXTREAD(qso_multiple_bands);           ///< whether OK to work station on another band

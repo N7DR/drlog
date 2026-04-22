@@ -30,14 +30,11 @@ extern int              n_running_threads;      ///< the number of running threa
 extern message_stream   ost;                    ///< for debugging and logging
 extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threads
 
-//extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
 extern void         end_of_thread(const string_view name);      ///< increase the counter for the number of running threads
 
-extern /* const */ string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
-
-extern bool sending_cw(void);                       ///< am I sending Cw?
-//extern void start_of_thread(const string& name);    ///< increase the counter for the number of running threads
-extern void start_of_thread(const string_view name);    ///< increase the counter for the number of running threads
+extern string hhmmss(void);                               ///< obtain the current time in HH:MM:SS format
+extern bool   sending_cw(void);                           ///< am I sending CW?
+extern void   start_of_thread(const string_view name);    ///< increase the counter for the number of running threads
 
 // -----------  audio_recorder  ----------------
 
@@ -341,7 +338,7 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
 void* audio_recorder::_static_capture(void* arg)
 { audio_recorder* arp { static_cast<audio_recorder*>(arg) };
 
-  arp->_capture(nullptr);
+  arp -> _capture(nullptr);
 
   return nullptr;
 }
@@ -365,7 +362,7 @@ void* close_it(void* vp)
 
   wav_file* wfp { (wav_file*)(vp) };
 
-  wfp->close();
+  wfp -> close();
   delete wfp;
 
   end_of_thread("close_WAV"s);
@@ -387,8 +384,8 @@ void* audio_recorder::_capture(void*)
 create_file:
   wav_file* wfp { new wav_file };
 
-  wfp->name(_base_filename + "-"s + date_time_string(SECONDS::INCLUDE));
-  wfp->open();
+  wfp -> name(_base_filename + "-"s + date_time_string(SECONDS::INCLUDE));
+  wfp -> open();
 
 #if 0
 // insert bext chunk
@@ -428,7 +425,7 @@ create_file:
   fmt.sample_rate(_samples_per_second);
   fmt.bits_per_sample(16);               // to match _sample_format
 
-  wfp->add_chunk(fmt);
+  wfp -> add_chunk(fmt);
 
   int64_t remaining_bytes_to_read { _total_bytes_to_read() };
 
@@ -459,11 +456,11 @@ create_file:
 
 // read OK from sound card
     if (first_time_through_loop)            // write data chunk if we've just started
-    { wfp->add_chunk(data_chunk(_audio_buf, f));
+    { wfp -> add_chunk(data_chunk(_audio_buf, f));
       first_time_through_loop = false;
     }
     else                                    // otherwise append the data we just read
-      wfp->append_data(_audio_buf, _period_size_in_bytes);
+      wfp -> append_data(_audio_buf, _period_size_in_bytes);
 
     remaining_bytes_to_read -= c;
   } while ( (remaining_bytes_to_read > 0) and !exiting and !_aborting );
@@ -477,7 +474,7 @@ create_file:
       if (_aborting)
         ost << "_capture thread is aborting" << endl;
 
-      wfp->close();
+      wfp -> close();
 
       ost << "closing status = " << snd_pcm_close(_handle) << endl;
 
@@ -926,7 +923,7 @@ void data_chunk::write_to_file(FILE* fp) const
     \return     string containing the fmt chunk
 */
 string fmt_chunk::to_string(void) const
-{ string rv { "fmt "s + create_string(' ', 20) };
+{ string rv { "fmt "s + create_string(SPACE, 20) };
 
   rv = replace_substring(rv, 4,  _subchunk_1_size);
   rv = replace_substring(rv, 8,  _audio_format);

@@ -914,11 +914,11 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
 */
 russian_data::russian_data(const vector<string>& path, const string_view filename)
 { try
-  { const vector<string> lines { to_lines <std::string> (replace_char(read_file(path, filename), '\t', ' ')) };
+  { const vector<string> lines { to_lines <std::string> (replace(read_file(path, filename), TAB, SPACE)) };
 
     for (const auto& line : lines)
     { if (!line.starts_with("//"s))   // remove comments
-      { const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), ',') };
+      { const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), COMMA) };
 
         FOR_ALL(substrings, [&line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
       }

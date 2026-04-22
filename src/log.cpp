@@ -288,7 +288,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 // specification is silent as to what constitutes an EOL marker. The FAQ (why would a specification need
 // an FAQ if it were properly specified?) implies that the EOL of the underlying OS on the system that creates
 // the Cabrillo file should be accepted by the contest sponsor.
-  const string EOL_STRING { (context.cabrillo_eol() == "CR"sv) ? CR : ( (context.cabrillo_eol() == "CRLF"sv) ? CRLF : LF ) };
+  const string EOL_STRING { (context.cabrillo_eol() == "CR"sv) ? CR_STR : ( (context.cabrillo_eol() == "CRLF"sv) ? CRLF : LF_STR ) };
 
 // this goes first
   rv += "START-OF-LOG: 3.0"s + EOL_STRING;
@@ -419,7 +419,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 void logbook::read_cabrillo(const string_view filename, const string_view cabrillo_qso_template)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
-  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)) };
+  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR)) };
   
 /*
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
@@ -427,7 +427,7 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
   
   vector< vector< string> > individual_values;
 
-  FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <std::string> (tplate_field, ':'); } );
+  FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <std::string> (tplate_field, COLON); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -441,7 +441,7 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
       { const string&      name  { vec[0] };
         const unsigned int posn  { from_string<unsigned int>(vec[1]) - 1 };
         const unsigned int len   { from_string<unsigned int>(vec[2]) };
-        const string       value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string()) };
+        const string       value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string { }) };
       
         _modify_qso_with_name_and_value(qso, name, value);
 
@@ -463,14 +463,14 @@ void logbook::read_cabrillo(const string_view filename, const vector<string>& ca
 
   unsigned int last_qso_number { 0 };
 
-  for (const auto& line : to_lines <std::string> (remove_char(read_file(filename), CR_CHAR)))
+  for (const auto& line : to_lines <std::string> (remove_char(read_file(filename), CR)))
   { if (starts_with(line, qso_markers))     // qso_markers is a vector of strings
     { QSO qso { };
   
-      const vector<string> fields { split_string <std::string> (squash(line.substr(4)), ' ') }; // skip first four characters
+      const vector<string> fields { split_string <std::string> (squash(line.substr(4)), SPACE) }; // skip first four characters
       
       for (unsigned int m { 0 }; m < fields.size(); ++m)
-        ost << m << ": *" << fields[m] << "*" << endl; 
+        ost << m << ": *" << fields[m] << ASTERISK << endl;
 
 // go through the fields
       for (unsigned int n { 0 }; n < cabrillo_fields.size(); ++n)
@@ -562,7 +562,7 @@ STRING_SET logbook::calls(void) const
 
 // https://stackoverflow.com/questions/11554932/how-can-i-get-all-the-unique-keys-in-a-multimap
   for (auto it { _log.cbegin() }; it != _log.cend(); it = _log.upper_bound(it -> first))
-    rv += it->first;
+    rv += it -> first;
 
   return rv;
 }
@@ -671,7 +671,7 @@ void log_extract::match_exchange(const logbook& lgbook, const string_view target
 { const vector<QSO> vec       { lgbook.match_exchange(target) };
   const size_t      n_to_copy { min(vec.size(), _win_size) };
 
-  clear();    // empty the container of QSOs
+  clear();      // empty the container of QSOs
 
   for (size_t n { 0 }; n < n_to_copy; ++n)
     (*this) += vec.at(vec.size() - n_to_copy + n);
@@ -706,7 +706,7 @@ auto old_log::_find_or_create(const string_view call) -> decltype(_olog)::iterat
 unsigned int old_log::n_qsls(const string_view call) const
 { const auto cit { _olog.find(call) };
 
-  return (cit == _olog.cend() ? 0 : get<0>(cit->second));
+  return (cit == _olog.cend() ? 0 : get<0>(cit -> second));
 }
 
 /*! \brief          Increment the number of QSLs from a particular callsign
@@ -756,7 +756,7 @@ unsigned int old_log::increment_n_qsos(const string_view call)
 
   const unsigned int rv { n_qsos(call) + 1 };
 
-  get<1>(it->second) = rv;
+  get<1>(it -> second) = rv;
 
   return rv;
 }

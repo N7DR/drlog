@@ -39,8 +39,8 @@ extern message_stream    ost;           ///< for debugging and logging
     This is actually quite difficult to do properly
 */
 vector<string> from_csv(const string_view line)
-{ constexpr char quote { '"' };
-  constexpr char comma { ',' };
+{ //constexpr char quote { '"' };
+  //constexpr char comma { ',' };
 
   vector<string> rv;
 
@@ -51,14 +51,14 @@ vector<string> from_csv(const string_view line)
   bool inside_value { false };
 
   while (posn < line.size())
-  { if (const char this_char { line[posn] }; this_char == quote)
+  { if (const char this_char { line[posn] }; this_char == QUOTATION_MARK)
     { if (inside_value)               // we're inside a field
       { if (posn < line.size() - 1)   // make sure there's at least one unread character
         { const char next_char { line[posn + 1] };
 
-          if (next_char == quote)     // it's a doubled quote
+          if (next_char == QUOTATION_MARK)     // it's a doubled quote
           { posn += 2;                // skip the next character
-            this_value += quote;
+            this_value += QUOTATION_MARK;
           }
           else                        // it's the end of the value
           { rv += this_value;
@@ -84,9 +84,9 @@ vector<string> from_csv(const string_view line)
         posn++;
       }
       else
-      { if (this_char == comma)
+      { if (this_char == COMMA)
         { if (posn < line.size() - 1)   // make sure there's at least one unread character
-          { if (const char next_char { line[posn + 1] }; next_char == comma)
+          { if (const char next_char { line[posn + 1] }; next_char == COMMA)
             { rv += EMPTY_STR;   // empty value
               posn++;
             }
@@ -135,6 +135,23 @@ std::string operator+(const std::string_view sv, const char c)
   return rv;
 }
 
+/*! \brief        Append a string to a character
+    \param  c     original character
+    \param  str   string to append to append
+    \return       concatenation of <i>c</i> and <i>str</i>
+*/
+std::string operator+(const char c, const std::string_view str)
+{ string rv;
+
+  rv.reserve(str.size() + 1);
+
+  rv += c;
+  rv += str;
+
+  return rv;
+}
+
+
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
@@ -178,9 +195,9 @@ string date_time_string(const SECONDS include_seconds)
 
   const string ascii_time { buf.data(), TIME_BUF_LEN };
   const string _utc       { ascii_time.substr(11, ( (include_seconds == SECONDS::INCLUDE) ? 8 : 5)) };                            // hh:mm[:ss]
-  const string _date      { to_string(structured_time.tm_year + 1900) + "-"s + pad_leftz((structured_time.tm_mon + 1), 2) + "-"s + pad_leftz(structured_time.tm_mday, 2) };   // yyyy-mm-dd
+  const string _date      { to_string(structured_time.tm_year + 1900) + DASH + pad_leftz((structured_time.tm_mon + 1), 2) + DASH + pad_leftz(structured_time.tm_mday, 2) };   // yyyy-mm-dd
 
-  return (_date + "T"s + _utc);
+  return (_date + 'T' + _utc);
 }
 
 /*! \brief          Convert struct tm pointer to formatted string
@@ -218,10 +235,37 @@ char first_digit(const std::string_view sv, const char c)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-string replace_char(const string_view s, const char old_char, const char new_char)
+string replace(const string_view s, const char old_char, const char new_char)
 { string rv { s };
 
-  replace(rv.begin(), rv.end(), old_char, new_char);
+  if (new_char != old_char)
+    replace(rv.begin(), rv.end(), old_char, new_char);
+
+  return rv;
+}
+
+/*! \brief              Replace every instance of one character with a string
+    \param  s           string on which to operate
+    \param  old_char    character to be replaced
+    \param  new_str     replacement string
+    \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_str</i>
+*/
+std::string replace(const std::string_view s, const char old_char, const std::string_view new_str)
+{ if ( (new_str.size() == 1) and (new_str[0] == old_char) )
+    return string { s };
+
+  string rv        { };
+  size_t posn      { 0 };
+  size_t last_posn { 0 };
+
+  const string new_as_str { new_str };
+
+  while ( (posn = s.find(old_char, last_posn)) != string_view::npos )
+  { rv += ( string { s.substr(last_posn, posn - last_posn) } + new_as_str );
+    last_posn = posn + 1;
+  }
+
+  rv += s.substr(last_posn);
 
   return rv;
 }
@@ -241,6 +285,27 @@ string replace(const string_view s, const string_view old_str, const string_view
 
   while ( (posn = s.find(old_str, last_posn)) != string_view::npos )
   { rv += ( string { s.substr(last_posn, posn - last_posn) } + new_as_str );
+    last_posn = posn + old_str.length();
+  }
+
+  rv += s.substr(last_posn);
+
+  return rv;
+}
+
+/*! \brief              Replace every instance of one string with a character
+    \param  s           string on which to operate
+    \param  old_str     string to be replaced
+    \param  new_char    replacement charactyer
+    \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_char</i>
+*/
+string replace(const std::string_view s, const std::string_view old_str, const char new_char)
+{ string rv        { };
+  size_t posn      { 0 };
+  size_t last_posn { 0 };
+
+  while ( (posn = s.find(old_str, last_posn)) != string_view::npos )
+  { rv += ( string { s.substr(last_posn, posn - last_posn) } + new_char );
     last_posn = posn + old_str.length();
   }
 

@@ -70,10 +70,10 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
         field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
       }
 
-      const vector<string> lines { to_lines <std::string> ( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
+      const vector<string> lines { to_lines <std::string> ( to_upper( squash( replace( remove_char(read_file(filename), CR), TAB, SPACE) ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
 
       for (const auto& line : lines)                                // each line should now be space-separated columns
-        if (const vector<string> this_pair { split_string <std::string> (line, ' ') }; this_pair.size() > max(call_column, field_column))
+        if (const vector<string> this_pair { split_string <std::string> (line, SPACE) }; this_pair.size() > max(call_column, field_column))
           call_value_map += { this_pair.at(call_column), this_pair.at(field_column) };
 
       _db += { to_upper(field_name), call_value_map };
@@ -93,7 +93,6 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-//string exchange_field_prefill::prefill_data(const string& field_name, const string_view callsign) const
 string exchange_field_prefill::prefill_data(const string_view field_name, const string_view callsign) const
 { const auto opt { OPT_MUM_VALUE(_db, field_name) };
 
@@ -132,7 +131,6 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name
 */
-//void parsed_exchange_field::name(const string& nm)
 void parsed_exchange_field::name(const string_view nm)
 { _name = string { nm };
   _mult_value = MULT_VALUE(_name, _value);
@@ -141,7 +139,6 @@ void parsed_exchange_field::name(const string_view nm)
 /*! \brief      Set the value and corresponding mult value
     \param  v   new value
 */
-//void parsed_exchange_field::value(const string& v)
 void parsed_exchange_field::value(const string_view v)
 { _value = v;
   _mult_value = MULT_VALUE(_name, _value);
@@ -513,8 +510,6 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     \param  received_values             the received values, in the order that they were received
     \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED? ***
 */
-//parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
-//parsed_exchange::parsed_exchange(const string_view from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
 parsed_exchange::parsed_exchange(const string_view from_callsign, const string_view canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
 _replacement_call(),
   _valid(false)
@@ -555,15 +550,14 @@ _replacement_call(),
   FOR_ALL(exchange_template, [this] (const exchange_field& ef) { _fields += { ef.name(), EMPTY_STRING, ef.is_mult() }; } );
 
 // if there's an explicit . field, use it to replace the call
-  FOR_ALL(received_values, [this] (const auto& received_value) { //if (contains(received_value, '.'))
-                                                                 if (received_value.contains('.'))
-                                                                   _replacement_call = remove_char(received_value, '.');
+  FOR_ALL(received_values, [this] (const auto& received_value) { if (received_value.contains(DOT))
+                                                                   _replacement_call = remove_char(received_value, DOT);
                                                                });
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
   { copy_received_values.clear();
     //ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !contains(str, '.'); } );
-    ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !str.contains('.'); } );
+    ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !str.contains(DOT); } );
   }
 
   {
@@ -581,9 +575,8 @@ _replacement_call(),
       { const string& field_name { field.name() };
 
         try
-        { //if (contains(field_name, '+'))                                           // if it's a CHOICE
-          if (field_name.contains('+'))                                           // if it's a CHOICE
-          { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, '+') ) };
+        { if (field_name.contains(PLUS))                                           // if it's a CHOICE
+          { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, PLUS) ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -691,10 +684,9 @@ _replacement_call(),
 
       catch (...)
       { bool found_map { false };
-
-//        if (contains(name, '+'))                                         // if it's a CHOICE
-        if (name.contains('+'))                                         // if it's a CHOICE
-        { const vector<string> choices_vec { split_string <std::string> (name, '+') };
+                                        // if it's a CHOICE
+        if (name.contains(PLUS))                                         // if it's a CHOICE
+        { const vector<string> choices_vec { split_string <std::string> (name, PLUS) };
 
           for (unsigned int n { 0 }; n < choices_vec.size() and !found_map; ++n)    // typically just a choice of 2
           { try
@@ -750,8 +742,7 @@ vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules
 { vector<parsed_exchange_field> rv;
 
   for (const auto& pef : _fields)
-  { //if (!contains(pef.name(), '+'))             // not a CHOICE
-    if (!pef.name().contains('+'))             // not a CHOICE
+  { if (!pef.name().contains(PLUS))             // not a CHOICE
       rv += pef;
     else                                        // is a CHOICE
     { parsed_exchange_field pef_chosen { pef };
@@ -784,11 +775,10 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
 { if (field_name.empty())
     return string { };
 
-//  if (!contains(field_name, '+'))   // if not a CHOICE
-  if (!field_name.contains('+'))   // if not a CHOICE
+  if (!field_name.contains(PLUS))   // if not a CHOICE
     return string { field_name };
 
-  const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, '+') };
+  const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, PLUS) };
   const STRING_MAP<EFT>     exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
@@ -1200,12 +1190,12 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   { const string contents { read_file(path, filename) };
 
     if (!contents.empty())
-    { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
+    { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR))) };        // in case it's a silly Microsoft-format file
 
       for (int n { 0 }; n < ssize(lines); ++n)
-      { const string line { squash(replace_char(lines[n], '\t', ' '), ' ') };
+      { const string line { squash(replace(lines[n], TAB, SPACE), SPACE) };
 
-        if (const vector<string> tokens { clean_split_string <string> (line, ' ') }; tokens.size() == 2)
+        if (const vector<string> tokens { clean_split_string <string> (line, SPACE) }; tokens.size() == 2)
         { if ( (n == 0) and (tokens[0] == "CALL"sv) )   // possibly ignore this line
             continue;
 
@@ -1219,40 +1209,6 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   {
   }
 }
-
-#if 0
-/*! \brief          Replace cut numbers with real numbers
-    \param  input   string possibly containing cut numbers
-    \return         <i>input</i> but with cut numbers replaced by actual digits
-
-    Replaces [aA], [nN], [tT]
-*/
-//string process_cut_digits(const string& input)
-string process_cut_digits(const string_view input)
-{ string rv { input };
-
-  for (char& c : rv)  // must use reference, as we want to be able to change the value
-  { switch (c)
-    { case 'T' :
-      case 't' :
-        c = '0';
-        break;
-
-      case 'N' :
-      case 'n' :
-        c = '9';
-        break;
-
-      case 'A' :
-      case 'a' :
-        c = '1';
-        break;
-    }
-  }
-
-  return rv;
-}
-#endif
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 

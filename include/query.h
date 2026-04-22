@@ -70,7 +70,6 @@ public:
     
     <i>call<i> is added to the dynamic database iff it is not already present in either database
 */
-//  void operator+=(const std::string& call);
   void operator+=(const std::string_view call);
 
 /*! \brief          Return matches

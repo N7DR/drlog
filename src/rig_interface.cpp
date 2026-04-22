@@ -1739,7 +1739,8 @@ void elecraft_k3_interface::_rig_frequency(const frequency f, const VFO v)
       int n_retries { 0 };
 
       while ( (retry) and (n_retries++ <= MAX_RETRIES) )
-      { raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
+      { //raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
+        raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + SEMICOLON);
 
         const frequency rf { _rig_frequency(v) };
 
@@ -1862,11 +1863,7 @@ void elecraft_k3_interface::rig_mode(const MODE m)
 */
 void elecraft_k3_interface::bandscope_span(const unsigned int khz_span) const
 { if ( (khz_span >= 2) and (khz_span <= 200) )
-  { //const string span_str { pad_leftz((khz_span * 10), 6) };
-
-    //raw_command("#SPN"s + span_str + SEMICOLON);
     raw_command("#SPN"s + pad_leftz((khz_span * 10), 6) + SEMICOLON);
-  }
 }
 
 /*! \brief                  Send a raw command to the rig
@@ -1937,14 +1934,12 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
 
     int counter { 0 };
 
-//    constexpr int SCREEN_BITS { 131'640 };
     constexpr int SCREEN_BYTES    { 131'638 };
     constexpr int RESPONSE_LENGTH { SCREEN_BYTES + 2 };
 
     if (response_expected)
     { if (is_p3_screenshot)
-      { //array<char, SCREEN_BITS> c_in;    // hide the static array
-        array<char, RESPONSE_LENGTH> c_in;    // hide the static array
+      { array<char, RESPONSE_LENGTH> c_in;    // hide the static array
 
         const int n_bits { RESPONSE_LENGTH * 10 };
         const int n_secs { n_bits / static_cast<int>(baud_rate() )};
@@ -2080,9 +2075,7 @@ bool elecraft_k3_interface::split_enabled(void) const
 { if (!_rig_connected)
     return false;
 
-//  SAFELOCK(_rig);
-
-  if ( const string transmit_vfo { raw_command("FT;"sv, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, ';', 3) and contains_at(transmit_vfo, "FT"sv, 0) )
+  if ( const string transmit_vfo { raw_command("FT;"sv, RESPONSE::EXPECTED) }; contains_at(transmit_vfo, SEMICOLON, 3) and contains_at(transmit_vfo, "FT"sv, 0) )
     return (transmit_vfo[2] == '1');
 
   _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -2100,12 +2093,12 @@ void elecraft_k3_interface::rit(const int hz) const
   if (hz == 0)                                // just clear the RIT/XIT
     raw_command("RC;"sv);
   else
-    raw_command("RO"s + ((hz > 0) ? '+' : '-') + pad_leftz(abs(hz), 4) + SEMICOLON);
+    raw_command("RO"s + ((hz > 0) ? PLUS : MINUS) + pad_leftz(abs(hz), 4) + SEMICOLON);
 }
 
 /// get rit offset (in Hz)
 int elecraft_k3_interface::rit(void) const
-{ if ( const string value { raw_command("RO;"sv, RESPONSE::EXPECTED) }; contains_at(value, ';', 7) and contains_at(value, "RO"sv, 0) )
+{ if ( const string value { raw_command("RO;"sv, RESPONSE::EXPECTED) }; contains_at(value, SEMICOLON, 7) and contains_at(value, "RO"sv, 0) )
     return from_string<int>(substring <std::string> (value, 2, 5));
   else
   { _error_alert("Invalid rig response in rit(): "s + value);
@@ -2125,7 +2118,7 @@ bool elecraft_k3_interface::rit_enabled(void) const
 
 /// is xit enabled?
 bool elecraft_k3_interface::xit_enabled(void) const
-{ if ( const string response { raw_command("XT;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 3) and contains_at(response, "XT"sv, 0) )
+{ if ( const string response { raw_command("XT;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 3) and contains_at(response, "XT"sv, 0) )
     return (response[2] == '1');
   else
   { _error_alert("Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
@@ -2159,20 +2152,9 @@ bool elecraft_k3_interface::sub_receiver(void) const
     return (response[2] == '1');
 }
 
-#if 0
-/*! \brief          Set the keyer speed
-    \param  wpm     keyer speed in WPM
-*/
-void elecraft_k3_interface::keyer_speed(const int wpm) const
-{ //const string cmd { "KS"s + pad_leftz(wpm, 3) + SEMICOLON };
-
-  raw_command("KS"s + pad_leftz(wpm, 3) + SEMICOLON);
-}
-#endif
-
 /// get the keyer speed in WPM
 int elecraft_k3_interface::keyer_speed(void) const
-{ if ( const string response { raw_command("KS;"sv, RESPONSE::EXPECTED) }; contains_at(response, ';', 5) and contains_at(response, "KS"sv, 0) )
+{ if ( const string response { raw_command("KS;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 5) and contains_at(response, "KS"sv, 0) )
     return from_string<int>(substring <std::string> (response, 2, 3));
   else
   { _error_alert("Invalid response getting keyer_speed: "s + response);
@@ -2340,8 +2322,6 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 { if (!_rig_connected)
     return;
 
-//  SAFELOCK(_rig);
-
   const string fc_str { pad_leftz(fc, 4) };
 
   if (fc_str.length() != 4)
@@ -2363,8 +2343,7 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 */
 bool elecraft_k3_interface::rx_ant(void) const
 { if (_rig_connected)
-  { //SAFELOCK(_rig);
-    constexpr std::chrono::duration RETRY_TIME  { 100ms };       // period between retries for the brain-dead K3
+  { constexpr std::chrono::duration RETRY_TIME  { 100ms };       // period between retries for the brain-dead K3
     constexpr int                   MAX_RETRIES { 2 };
 
     int counter { 0 };
@@ -2446,19 +2425,14 @@ void elecraft_k3_interface::toggle_notch_status(void) const
     Works only with K3
 */
 void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
-{ //if (_model == RIG_MODEL_K3)
-  {
-  SAFELOCK(_rig);
+{ switch (cm)
+  { case K3_COMMAND_MODE::EXTENDED :
+      raw_command("K31;"sv);
+      break;
 
-  switch (cm)
-    { case K3_COMMAND_MODE::EXTENDED :
-        raw_command("K31;"sv);
-        break;
-
-      case K3_COMMAND_MODE::NORMAL :
-        raw_command("K30;"sv);
-        break;
-    }
+    case K3_COMMAND_MODE::NORMAL :
+      raw_command("K30;"sv);
+      break;
   }
 }
 
@@ -2468,15 +2442,10 @@ void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
     Works only with K3
 */
 K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
-{ //if (_model == RIG_MODEL_K3)
-  {
-  SAFELOCK(_rig);
+{ //const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) };
 
-  const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) };
-
-    if (result == "K31"sv)
-      return K3_COMMAND_MODE::EXTENDED;
-  }
+  if (const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) }; result == "K31"sv)
+    return K3_COMMAND_MODE::EXTENDED;
 
   return K3_COMMAND_MODE::NORMAL;
 }
@@ -2487,9 +2456,7 @@ K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
     Works only with K3
 */
 void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const
-{ //if (_model == RIG_MODEL_K3)
-
-  SAFELOCK(_rig);
+{ SAFELOCK(_rig);
 
   const int    button_int { std::visit([] (auto&& arg) -> int { return static_cast<int>(arg); }, button) };
   const string button_str { pad_leftz(button_int, 2) };
@@ -2501,18 +2468,16 @@ void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD
 /*! \brief          Emulate double-tapping a K3 button
     \param  button  the K3 button to tap
 
-    Works only with K3 this is CURRENTLY UNUSED
+    this is CURRENTLY UNUSED
 */
 void elecraft_k3_interface::k3_double_tap(const K3_BUTTON_TAP button) const
-{ //if (_model == RIG_MODEL_K3)
-  SAFELOCK(_rig);
+{ SAFELOCK(_rig);
 
-  { constexpr std::chrono::duration K3_TIME_BETWEEN_TAPS { 50ms };
+  constexpr std::chrono::duration K3_TIME_BETWEEN_TAPS { 50ms };
 
-    k3_press(button);
-    sleep_for(K3_TIME_BETWEEN_TAPS);
-    k3_press(button);
-  }
+  k3_press(button);
+  sleep_for(K3_TIME_BETWEEN_TAPS);
+  k3_press(button);
 }
 
 /// set RIT, split, sub-rx off
@@ -2536,7 +2501,6 @@ void elecraft_k3_interface::base_state(void) const
     pause();
   }
 }
-
 
 /// Poll the rig for the important status information; only one thread should ever call this function
 polled_status elecraft_k3_interface::poll(void)

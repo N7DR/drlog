@@ -894,7 +894,8 @@ bool window::common_processing(const keyboard_event& e)
     return (win <= e.str(), true);
 
 // /
-  if (e.is_unmodified() and e.is_char('/'))
+//  if (e.is_unmodified() and e.is_char('/'))
+  if (e.is_unmodified() and e.is_char(SLASH))
     return (win <= e.str(), true);
 
 // DELETE
@@ -907,7 +908,8 @@ bool window::common_processing(const keyboard_event& e)
 // END
   if (e.is_unmodified() and e.symbol() == XK_End)
   { const string contents { win.read() };
-    const size_t posn     { contents.find_last_not_of(' ') };
+//    const size_t posn     { contents.find_last_not_of(' ') };
+    const size_t posn     { contents.find_last_not_of(SPACE) };
 
     return (win <= cursor(posn + 1, 0), true);
   }
