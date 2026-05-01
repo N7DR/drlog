@@ -1,4 +1,4 @@
-// $Id: screen.cpp 281 2025-12-07 20:02:13Z  $
+// $Id: screen.cpp 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -348,7 +348,8 @@ window& window::operator<(const vector<string>& v)
         break;
 
     if (remaining_space < int_len)
-      *this < "\n";
+//      *this < "\n";
+      *this < LINEFEED;
 
     *this < str;
 

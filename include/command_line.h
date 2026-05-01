@@ -1,4 +1,4 @@
-// $Id: command_line.h 163 2020-08-06 19:46:33Z  $
+// $Id: command_line.h 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,15 +47,15 @@ public:
   inline command_line(int argc, char** argv) :
     _argc(argc),
     _argv((char**)argv)
-    { _init(); }
+  { _init(); }
 
 /*! \brief      Copy constructor
     \param  cl  object to be copied
 */
-  inline command_line(const command_line& cl) :
+  inline explicit command_line(const command_line& cl) :
     _argc(cl._argc),
     _argv(cl._argv)
-    { _init(); }
+  { _init(); }
 
 /*! \brief  Destructor
 */
@@ -79,8 +79,8 @@ public:
   inline std::string program_name(void) const
     { return _arg[0]; }
 
-/*! \brief  Obtain the base name of the program
-    \return The base name of the program (i.e., with no "/" characters)
+/*! \brief    Obtain the base name of the program
+    \return   the base name of the program (i.e., with no "/" characters)
 */
   std::string base_program_name(void) const;
 
@@ -133,7 +133,8 @@ public:
 
     A "value" is something like a parameter to a -xxx option. If, for example, value_present("-xxx") is TRUE, it means that -xxx is present, and a value follows it
 */
-  bool value_present(const std::string& v) const;
+//  bool value_present(const std::string& v) const;
+  bool value_present(const std::string_view v) const;
 
 /*! \brief          Return a particular value
     \param  v       value to return
@@ -141,7 +142,8 @@ public:
         
     A "value" is something like a parameter to a -xxx option. If, for example, the command line contains "-xxx burble", then value("-xxx") will return "burble"
 */
-  std::string value(const std::string& v) const;
+//  std::string value(const std::string& v) const;
+  std::string value(const std::string_view v) const;
 
 /*! \brief      Is a particular parameter present?
     \param  p   parameter for which to look
@@ -149,7 +151,8 @@ public:
         
     A "parameter" is an actual parameter that appears on the command line.
 */
-  bool parameter_present(const std::string& p) const;
+//  bool parameter_present(const std::string& p) const;
+  bool parameter_present(const std::string_view p) const;
 };
 
 // ---------------------------  exceptions  ----------------------

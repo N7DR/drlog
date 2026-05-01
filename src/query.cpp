@@ -1,4 +1,4 @@
-// $Id: query.cpp 280 2025-12-05 16:40:32Z  $
+// $Id: query.cpp 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

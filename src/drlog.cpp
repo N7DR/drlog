@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 292 2026-04-12 17:03:36Z  $
+// $Id: drlog.cpp 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -221,7 +221,7 @@ void   stop_recording_rbn(void);                                                
 string sunrise_or_sunset(const string_view callsign, const SRSS srss);          ///< Calculate the sunrise or sunset time for a station
 bool   swap_rit_xit(void);                                                      ///< Swap the states of RIT and XIT
 
-char t_char(const unsigned short long_t);                                             ///< the character used to represent a leading T in a servo
+char t_char(const unsigned short long_t);                                             ///< the character used to represent a leading T in a serno
 void test_exchange_templates(const contest_rules&, const string_view test_filename);  ///< Debug exchange templates
 int  time_since_last_qso(const logbook& logbk);                                       ///< time in seconds since the last QSO
 int  time_since_last_qsy(void);                                                       ///< time in seconds since the last QSY
@@ -698,7 +698,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 // change the order within each category if XSCP ordering is to be used
     if (xscp_sort)
     { for (auto matches_p : vector<vector<string>*> { &tmp_exact_matches, &tmp_green_matches, &tmp_ordinary_matches, &tmp_red_matches })    // step through each type of match
-        if (matches_p->size() > 1)
+        if (matches_p -> size() > 1)
           SORT(*matches_p, xscp_order_greater);
     }
 
@@ -732,12 +732,16 @@ inline bool sending_cw(void)
 inline pair<frequency, MODE> get_frequency_and_mode(void)
   { return { rig_ptr -> rig_frequency(), current_mode }; }
 
+/// return the name of the current thread
+inline string my_thread_name(void)
+  { return MUM_VALUE(thread_map, my_thread_id(), "UNKNOWN THREAD NAME"s); }
+
 /*! \brief      Convert a serial number to a string
     \param  n   serial number
     \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
 */
 inline string serial_number_string(const unsigned int n)
-  { return ( (n < 1000) ? pad_leftz(n, 3) : to_string(n) ); }
+  { return ( (n < 1'000) ? pad_leftz(n, 3) : to_string(n) ); }
 
 /*! \brief              Calculate the sunrise time for a station
     \param  callsign    call of the station for which sunset is desired
@@ -756,10 +760,6 @@ inline string sunrise(const string_view callsign)
 */
 inline string sunset(const string_view callsign)
   { return sunrise_or_sunset(callsign, SRSS::SUNSET); }
-
-/// return the name of the current thread
-inline string my_thread_name(void)
-  { return MUM_VALUE(thread_map, my_thread_id(), "UNKNOWN THREAD NAME"s); }
 
 /*! \brief              Update the fuzzy window with matches for a particular call
     \param  callsign    callsign against which to generate the fuzzy matches
@@ -790,19 +790,19 @@ int main(int argc, char** argv)
 {
 // generate version information
   try
-  { const STRING_MAP<string> MONTH_NAME_TO_NUMBER( { { "Jan"s, "01"s },
-                                                     { "Feb"s, "02"s },
-                                                     { "Mar"s, "03"s },
-                                                     { "Apr"s, "04"s },
-                                                     { "May"s, "05"s },
-                                                     { "Jun"s, "06"s },
-                                                     { "Jul"s, "07"s },
-                                                     { "Aug"s, "08"s },
-                                                     { "Sep"s, "09"s },
-                                                     { "Oct"s, "10"s },
-                                                     { "Nov"s, "11"s },
-                                                     { "Dec"s, "12"s }
-                                                   } );
+  { const FLAT_STRING_MAP<string> MONTH_NAME_TO_NUMBER( { { "Jan"s, "01"s },
+                                                          { "Feb"s, "02"s },
+                                                          { "Mar"s, "03"s },
+                                                          { "Apr"s, "04"s },
+                                                          { "May"s, "05"s },
+                                                          { "Jun"s, "06"s },
+                                                          { "Jul"s, "07"s },
+                                                          { "Aug"s, "08"s },
+                                                          { "Sep"s, "09"s },
+                                                          { "Oct"s, "10"s },
+                                                          { "Nov"s, "11"s },
+                                                          { "Dec"s, "12"s }
+                                                        } );
 
     const string compilation_date { __DATE__ };
 
@@ -866,22 +866,11 @@ int main(int argc, char** argv)
 
       const string err_msg { win_name_1 + " + "sv + win_name_2 + EOL };
 
-//      ost << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
-//      cerr << "ERROR: WINDOW OVERLAP: " << win_name_1 << " + " << win_name_2 << endl;
       ost << "ERROR: WINDOW OVERLAP: " << err_msg;
       cerr << "ERROR: WINDOW OVERLAP: " << err_msg;
     }
 
-// run any "execute at start" program
-#if 0
-    if (const auto cmd { context.execute_at_start() }; !cmd.empty())
-    { ost << "Executing external command: " << cmd << endl
-          << "output:" << endl;
-
-      ost << run_external_command(cmd) << endl;
-    }
-#endif
-
+// run any "execute at start" programs
     if (const auto cmds { context.execute_at_start() }; !cmds.empty())
     { for (const string_view cmd : cmds)
       { ost << "Executing external command: " << cmd << endl
@@ -1046,14 +1035,15 @@ int main(int argc, char** argv)
 
 // read the drmaster database; output how long it takes for the database to be created
     try
-    { time_log <std::chrono::milliseconds> tl;
+    { //time_log <std::chrono::milliseconds> tl;
+      time_log <milliseconds> tl;
 
       drm_db = drmaster { context_path, context.drmaster_filename(), context.xscp_cutoff() };
 
       tl.end_now();
 
-      ost << "time taken to prepare drmaster = " << tl.time_span<int>() << " milliseconds" << endl;
-      ost << "drmaster database contains " << css(drm_db.size()) << " entries" << endl;
+      ost << "time taken to prepare drmaster = " << css(tl.time_span<int>()) << " milliseconds" << endl;
+      ost << "drmaster database contains "       << css(drm_db.size())       << " entries" << endl;
 
       if (context.xscp_percent_cutoff())                              // prune the database of low XSCP numbers
       { drm_db = drm_db.prune(context.xscp_percent_cutoff().value());
@@ -1122,7 +1112,7 @@ int main(int argc, char** argv)
     query_db = drm_cdb.unordered_calls();
 
 // possibly build name database from the drmaster information (not the same as the names used in exchanges)
-    if (context.window_info("NAME"s).defined())                   // does the config file define a NAME window?
+    if (context.window_info("NAME"sv).defined())                   // does the config file define a NAME window?
       FOR_ALL(drm_cdb.unordered_calls(), [] (const auto& this_call) { names[this_call] = drm_cdb[this_call].name(); } );
 
 // define the rules for this contest
@@ -1143,13 +1133,13 @@ int main(int argc, char** argv)
 
 // is it SS -- because SS is "special"
     if (rules.n_modes() == 1)
-    { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
+    { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"sv, *(rules.permitted_modes().cbegin())) };
 
       is_ss = ANY_OF(exchange_template, [] (const exchange_field& ef) { return (ef.name() == "PREC"sv); });                // if there's a PREC field, it must be SS
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
-    win_message.init(context.window_info("MESSAGE"s), WINDOW_NO_CURSOR);
+    win_message.init(context.window_info("MESSAGE"sv), WINDOW_NO_CURSOR);
     win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;                                       // use bold in this window
 
 // is there a log of old QSOs? If so, read and process it (in a separate thread)
@@ -1178,11 +1168,11 @@ int main(int argc, char** argv)
 
 // possibly get a list of IARU society exchanges; note that we normally do this with a prefill file instead
       if (!context.society_list_filename().empty())
-        exchange_db.set_values_from_file(context_path, context.society_list_filename(), "SOCIETY"s);
+        exchange_db.set_values_from_file(context_path, context.society_list_filename(), "SOCIETY"sv);
 
 // possibly test regex exchanges; this will exit if it executes
-      if (cl.value_present("-test-exchanges"s))
-        test_exchange_templates(rules, cl.value("-test-exchanges"s));
+      if (cl.value_present("-test-exchanges"sv))
+        test_exchange_templates(rules, cl.value("-test-exchanges"sv));
 
 // real-time statistics
       try
@@ -1261,7 +1251,7 @@ int main(int argc, char** argv)
         }
 
         if (rig_ptr -> valid())
-          cw_p->associate_rig(rig_ptr);
+          cw_p -> associate_rig(rig_ptr);
 
         cwm.init(context.messages());
       }
@@ -1385,10 +1375,10 @@ int main(int argc, char** argv)
         *(swin_p) <= reformat_for_wprintw(contents, swin_p -> width());       // display contents of the static window, working around wprintw weirdness
 
 // BAND/MODE window
-      win_band_mode.init(context.window_info("BAND/MODE"s), WINDOW_NO_CURSOR);
+      win_band_mode.init(context.window_info("BAND/MODE"sv), WINDOW_NO_CURSOR);
 
 // BATCH MESSAGES window
-      win_batch_messages.init(context.window_info("BATCH MESSAGES"s), WINDOW_NO_CURSOR);
+      win_batch_messages.init(context.window_info("BATCH MESSAGES"sv), WINDOW_NO_CURSOR);
 
       if (!context.batch_messages_file().empty())
       { try
@@ -1415,25 +1405,25 @@ int main(int argc, char** argv)
       }
 
 // BCALL window
-      win_bcall.init(context.window_info("BCALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
+      win_bcall.init(context.window_info("BCALL"sv), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
       win_bcall < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
 
 // BEST DX window
-      win_best_dx.init(context.window_info("BEST DX"s), WINDOW_NO_CURSOR);
+      win_best_dx.init(context.window_info("BEST DX"sv), WINDOW_NO_CURSOR);
       win_best_dx.enable_scrolling();
 
 // BEXCHANGE window   -- remove this?
-      win_bexchange.init(context.window_info("BEXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
+      win_bexchange.init(context.window_info("BEXCHANGE"sv), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
       win_bexchange <= WINDOW_ATTRIBUTES::WINDOW_BOLD;
 //  win_exchange.process_input_function(process_EXCHANGE_input);
 
 // CALL window
-      win_call.init(context.window_info("CALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
+      win_call.init(context.window_info("CALL"sv), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
       win_call < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
       win_call.process_input_function(process_CALL_input);
 
 // CALL HISTORY window
-      win_call_history.init(context.window_info("CALL HISTORY"s), WINDOW_NO_CURSOR);
+      win_call_history.init(context.window_info("CALL HISTORY"sv), WINDOW_NO_CURSOR);
       win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                        // make it visible
 
 // CLUSTER LINE window
@@ -5781,11 +5771,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
       if (changed)
       {
 // get the original QSOs that were in the window
-        int number_of_qsos_in_original_window { 0 };
+//        int number_of_qsos_in_original_window { 0 };
 
-        for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
-          if (!remove_peripheral_spaces <std::string_view> (win_log_snapshot[n]).empty())
-            number_of_qsos_in_original_window++;
+//        for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
+//          if (!remove_peripheral_spaces <std::string_view> (win_log_snapshot[n]).empty())
+//            number_of_qsos_in_original_window++;
 
         deque<QSO> original_qsos;
 
@@ -6177,6 +6167,7 @@ string bearing(const string_view callsign)
     ibearing += 360;
 
   return (to_string(ibearing) + degree);
+//  return (to_string(ibearing) + DEGREE);    // doesn't work
 }
 
 /*! \brief                  Calculate the sunrise or sunset time for a station
@@ -7966,7 +7957,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // ENTER - send next QSO or finish
   if (e.is_unmodified() and (e.symbol() == XK_Return))
-  { if (qtcs_sent != total_qtcs_to_send)
+  { using enum WINDOW_ATTRIBUTES;
+
+    if (qtcs_sent != total_qtcs_to_send)
     { if (cw)
         send_qtc_entry(series.entry(qtcs_sent), true);
 
@@ -7975,7 +7968,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         qtc_buf.unsent_to_sent(series.entry(qtcs_sent - 1));
 
       series.mark_as_sent(qtcs_sent++);
-      win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= series;
+      win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= series;
 
       return;
     }
@@ -7989,17 +7982,16 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_buf.unsent_to_sent(series.entry(series.size() - 1));
 
-      win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Sent QTC "s < qtc_id < " to "s <= series.destination();
+      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC "s < qtc_id < " to "s <= series.destination();
       ost << "Sent QTC batch " << qtc_id << " to " << series.destination() << endl;
 
       series.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
-//      series.frequency_str(rig.rig_frequency());
       series.frequency_str(rig_ptr -> rig_frequency());
 
       qtc_db += series;                  // add to database of sent QTCs
 
-      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
+      (*win_active_p) < WINDOW_CLEAR < WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
 // log the QTC series
       append_to_file(context.qtc_filename(), series.complete_output_string());
@@ -8018,19 +8010,20 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // CTRL-X, ALT-X -- Abort and go back to prior window
   if ( e.is_control('x') or e.is_alt('x') )
-  { if (series.n_sent() != 0)
+  { using enum WINDOW_ATTRIBUTES;
+
+    if (series.n_sent() != 0)
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
-      win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Aborted sending QTC "s < qtc_id < " to "s <= series.destination();
+      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Aborted sending QTC "s < qtc_id < " to "s <= series.destination();
 
       series.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
-//      series.frequency_str(rig.rig_frequency());
       series.frequency_str(rig_ptr -> rig_frequency());
 
       qtc_db += series;                  // add to database of sent QTCs
 
-      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
+      (*win_active_p) < WINDOW_CLEAR < WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       append_to_file(context.qtc_filename(), series.complete_output_string());
       set_active_window(last_active_window);
@@ -8041,9 +8034,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       display_statistics(statistics.summary_string(rules));
     }
     else  // none sent
-    { win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Completely aborted; QTC "s < qtc_id < " not sent to "s <= series.destination();
+    { win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Completely aborted; QTC "s < qtc_id < " not sent to "s <= series.destination();
 
-      (*win_active_p) < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
+      (*win_active_p) < WINDOW_CLEAR < WINDOW_NORMAL <= COLOURS(log_extract_fg, log_extract_bg);
 
       set_active_window(last_active_window);
       display_statistics(statistics.summary_string(rules));
@@ -8096,7 +8089,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   if ( e.is_char('n') or e.is_char('s') )
   { if (cw)
     { if (const optional<int> vqn { valid_qtc_nr(qtcs_sent) }; vqn)
-      { const string serno { pad_left(remove_leading <std::string> (remove_peripheral_spaces <std::string> (series[vqn.value()].first.serno()), '0'), 3, 'T') };
+      { const string serno { pad_left(remove_leading <string> (remove_peripheral_spaces <string> (series[vqn.value()].first.serno()), '0'), 3, 'T') };
 
         send_msg(serno);
       }
@@ -8143,7 +8136,6 @@ void cw_speed(const unsigned int new_speed)
 
     try
     { if (context.sync_keyer())
-//        rig.keyer_speed(new_speed);
         rig_ptr -> keyer_speed(new_speed);
     }
 
@@ -8155,17 +8147,19 @@ void cw_speed(const unsigned int new_speed)
 
 /// return the name of the active window in printable form
 string active_window_name(void)
-{ switch (active_window)
-  { case ACTIVE_WINDOW::CALL :
+{ using enum ACTIVE_WINDOW;
+
+  switch (active_window)
+  { case CALL :
       return "CALL"s;
 
-    case ACTIVE_WINDOW::EXCHANGE :
+    case EXCHANGE :
       return "EXCHANGE"s;
 
-    case ACTIVE_WINDOW::LOG :
+    case LOG :
       return "LOG"s;
 
-    case ACTIVE_WINDOW::LOG_EXTRACT :
+    case LOG_EXTRACT :
       return "LOG EXTRACT"s;
   }
 
@@ -8231,7 +8225,7 @@ void test_exchange_templates(const contest_rules& rules, const string_view test_
   ost << "reading file: " << test_filename << endl;
 
   try
-  { const vector<string> targets { to_lines <std::string> (read_file(test_filename)) };
+  { const vector<string> targets { to_lines <string> (read_file(test_filename)) };
 
     ost << "contents: " << endl;
 
@@ -8264,9 +8258,8 @@ void update_mult_value(void)
 { const float        mult_value    { statistics.mult_to_qso_value(rules, current_band, current_mode) };
   const unsigned int mult_value_10 { static_cast<unsigned int>( (mult_value * 10) + 0.5) };
   const string       term_1        { to_string(mult_value_10 / 10) };
-  const string       term_2        { substring <std::string> (to_string(mult_value_10 - (10 * (mult_value_10 / 10) )), 0, 1) };
+  const string       term_2        { substring <string> (to_string(mult_value_10 - (10 * (mult_value_10 / 10) )), 0, 1) };
 
-//  string msg { "M ≡ "s + term_1 + DP + term_2 + "Q"s };
   string msg { "M ≡ "s + term_1 + DP + term_2 + 'Q' };
 
   const pair<unsigned int, unsigned int> qs            { rate.calculate_rate(900 /* seconds */, 3600) };  // rate per hour
@@ -8279,12 +8272,12 @@ void update_mult_value(void)
   if (mins_per_mult < 60)
   { const unsigned int mins_value_10 { static_cast<unsigned int>( (mins_per_mult * 10) + 0.5) };
     const string       term_1_m      { to_string(mins_value_10 / 10) };
-    const string       term_2_m      { substring <std::string> (to_string(mins_value_10 - (10 * (mins_value_10 / 10) )), 0, 1) };
+    const string       term_2_m      { substring <string> (to_string(mins_value_10 - (10 * (mins_value_10 / 10) )), 0, 1) };
 
     mins = term_1_m + DP + term_2_m;
   }
 
-  msg += " ≡ "s + mins + "′"s;
+  msg += (" ≡ "s + mins + "′"s);
 //  msg += (" ≡ "s + mins + '′');   // /home/n7dr/projects/drlog/src/drlog.cpp:8741:26: error: character not encodable in a single execution character code unit [-Werror=pedantic]
 
   try
@@ -8321,41 +8314,25 @@ void auto_screenshot(const string filename)
 /*! \brief                  Display the current statistics
     \param  summary_str     summary string from the global running_statistics object
 */
-//void display_statistics(const string& summary_str)
 void display_statistics(const string_view summary_str)
-{ static const STRING_SET MODE_STRINGS { "CW"s, "SSB"s, "All"s };
+{ using enum WINDOW_ATTRIBUTES;
+
+  static const STRING_SET MODE_STRINGS { "CW"s, "SSB"s, "All"s };
 
 // write the string, but don't refresh the window
-  win_summary < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < summary_str;
+  win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT < summary_str;
 
   if (rules.permitted_modes().size() > 1)
   { for (unsigned int n { 0 }; n < static_cast<unsigned int>(win_summary.height()); ++n)
     {
 // we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
       if (const string line { remove_peripheral_spaces <std::string> (win_summary.getline(n)) }; MODE_STRINGS.contains(line))
-        win_summary < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_REVERSE <  centred_string(line, win_summary.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+        win_summary < cursor(0, n) < WINDOW_REVERSE <  centred_string(line, win_summary.width()) < WINDOW_NORMAL;
     }
   }
 
   win_summary.refresh();        // now OK to refresh
 }
-
-#if 0
-/*! \brief              Set the span of a P3
-    \param  khz_span    span in kHz
-*/
-void p3_span(const unsigned int khz_span)
-{ if (context.p3())
-  { if ( (khz_span >= 2) and (khz_span <= 200) )
-    { const string span_str { pad_leftz((khz_span * 10), 6) };
-
-//      rig.raw_command("#SPN"s + span_str + ";"s);
-//      rig_ptr -> raw_command("#SPN"s + span_str + ";"s);
-      static_cast<elecraft_k3_interface*>(rig_ptr) -> raw_command("#SPN"s + span_str + SEMICOLON);
-    }
-  }
-}
-#endif
 
 /// set CW bandwidth to appropriate value for CQ/SAP mode
 bool fast_cw_bandwidth(void)
@@ -8407,7 +8384,6 @@ bool process_change_in_bandmap_column_offset(const KeySym symbol)
 }
 
 /// get the default mode on a frequency
-//MODE default_mode(const frequency& f)
 MODE default_mode(const frequency f)
 { const BAND b { to_BAND(f) };
 
@@ -8466,9 +8442,9 @@ void update_qsls_window(const string_view str)
         win_qsls.set_colour_pair(new_colour_pair);
 
       win_qsls < pad_leftz(n_qsls, 3)
-               < colour_pair(default_colour_pair) < "/"s
+               < colour_pair(default_colour_pair) < SLASH
                < colour_pair(new_colour_pair) < pad_leftz(n_qsos, 3)
-               < colour_pair(default_colour_pair) < "/"s;
+               < colour_pair(default_colour_pair) < SLASH;
 
       if (n_qsos_this_band_mode != 0)
         win_qsls < colour_pair(colours.add( (confirmed_this_band_mode ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
@@ -8531,8 +8507,6 @@ void process_keypress_F1(const string_view original_contents)
     if (win_bcall.defined() and !win_call.empty())
       win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
   }
-
-//  return true;
 }
 
 /*! \brief                    Process an F2 keystroke
@@ -8542,15 +8516,12 @@ void process_keypress_F1(const string_view original_contents)
   intent here is to be ready to call the station: the TX is on the other station's QRG (which is VFO B)
 */
 bool process_keypress_F2(void)
-{ //if (rig.split_enabled())
-  if (rig_ptr -> split_enabled())
-  { //rig.split_disable();
-    rig_ptr -> split_disable();
+{ if (rig_ptr -> split_enabled())
+  { rig_ptr -> split_disable();
     enter_cq_or_sap_mode(a_drlog_mode);
   }
   else
-  { //rig.split_enable();
-    rig_ptr -> split_enable();
+  { rig_ptr -> split_enable();
     a_drlog_mode = drlog_mode;
     enter_sap_mode();
   }
@@ -8559,12 +8530,14 @@ bool process_keypress_F2(void)
 }
 
 bool process_keypress_F4(void)
-{ if (win_bcall.defined())
+{ using enum WINDOW_ATTRIBUTES;
+
+  if (win_bcall.defined())
   { const string tmp   { win_call.read() };
     const string tmp_b { win_bcall.read() };
 
-    win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
-    win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
+    win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+    win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
 
     const string call_contents { tmp_b };
 
@@ -8574,11 +8547,11 @@ bool process_keypress_F4(void)
     { const string tmp   { win_exchange.read() };
       const string tmp_b { win_bexchange.read() };
 
-      win_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp_b;
+      win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
 
       exchange_contents = tmp_b;
 
-      win_bexchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= tmp;
+      win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
     }
 
 // put cursor in correct window
@@ -8673,8 +8646,7 @@ bool change_cw_speed(const keyboard_event& e)
 */
 //bool send_to_scratchpad(const string& str)
 bool send_to_scratchpad(const string_view str)
-{ //const string scratchpad_str { substring <std::string> (hhmmss(), 0, 5) + SPACE_STR + rig.rig_frequency().display_string() + SPACE_STR + str };
-  const string scratchpad_str { substring <std::string> (hhmmss(), 0, 5) + SPACE_STR + rig_ptr -> rig_frequency().display_string() + SPACE_STR + str };
+{ const string scratchpad_str { substring <std::string> (hhmmss(), 0, 5) + SPACE + rig_ptr -> rig_frequency().display_string() + SPACE + str };
 
   win_scratchpad < WINDOW_ATTRIBUTES::WINDOW_SCROLL_UP < WINDOW_ATTRIBUTES::WINDOW_BOTTOM_LEFT <= scratchpad_str;
 
@@ -8691,7 +8663,6 @@ void print_thread_names(void)
 }
 
 /// decrease the counter for the number of running threads
-//void end_of_thread(const string& name)
 void end_of_thread(const string_view name)
 { SAFELOCK(thread_check);
 
@@ -8721,27 +8692,10 @@ void end_of_thread(const string_view name)
 
     I suspect that there is still a bug in here somewhere, leading to the occasional inconsistent update that (rarely) appears
 */
-//void update_based_on_frequency_change(const frequency& f, const MODE m)
 void update_based_on_frequency_change(const frequency f, const MODE m)
-{ //static frequency last_update_frequency { };
-  //ost << NOW_TP() << ": update_based_on_frequency_change() called from THREAD NAME: " << my_thread_name() << endl;
-
- // if (my_thread_id() == display_rig_status_thread_id)
- //   ost << "update_based_on_frequency_change() called from display_rig_status() thread" << endl;
-
-//  if (debug)
-  //{ ost << "update_based_on_frequency_change() to: " << f.hz() << endl;
- //   ost << "last_update_frequency = " << static_cast<frequency>(last_update_frequency) << endl;
-  //}
-
-  if (f == last_update_frequency)   // don't update if the frequency hasn't changed
-  { //ost << "frequency has not changed: " << f << "; NO UPDATE" << endl;
+{ if (f == last_update_frequency)   // don't update if the frequency hasn't changed
     return;
-  }
 
-    //ost << "updating to: " << f << endl;
-
-//  const frequency mx_f { rig.rig_frequency() };
   const frequency mx_f { rig_ptr -> rig_frequency() };
 
   if (f != mx_f)
@@ -8751,8 +8705,6 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 
     return;
   }
-//  else
-//    ost << "f = mx = " << mx_f.hz() << "; last update = " << static_cast<frequency>(last_update_frequency) << "; looks OK; proceeding" << endl;
 
 // trying to fix problem identified in 2023 LZ DX wherein audio was auto-restarted 2 seconds after it was auto-stopped
 
@@ -8826,9 +8778,8 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
       }
 
       bandmap& displayed_bm { bandmaps[bandmap_display_band] };
-      update_bandmap_window(displayed_bm);
 
-//      update_bandmap_window(bm /*, bm_version */);    // really shouldn't do this if there's been a manual change via, for example, ; or '
+      update_bandmap_window(displayed_bm);
       display_bandmap_filter(bm);
 
 // is there a station close to our frequency?
@@ -8837,9 +8788,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
       const string nearby_callsign { bm.nearest_displayed_callsign(f, context.guard_band(m)) };
 
       if (!nearby_callsign.empty())
-      { //ost << "displaying nearby callsign: " << nearby_callsign << " for QRG: " << f.khz() << endl;
         display_nearby_callsign(nearby_callsign);
-      }
       else                                        // no nearby callsign; possibly clear windows
       { const bool in_call_window { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
@@ -8847,7 +8796,6 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 // see if we are within twice the guard band before we clear the call window
         { const string        call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
           const bandmap_entry be            { bm[call_contents] };
-//          const unsigned int  f_diff        { static_cast<unsigned int>(abs(be.freq().hz() - f.hz())) };
           const frequency     f_diff        { be.freq().difference(f) };
 
           if ( f_diff > (2 * context.guard_band(m)) )
@@ -8893,13 +8841,11 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
   safelock bm_lock(bm._bandmap_mutex);    // hold the lock for this entire routine; this essentially forces this update to occur on-screen
 
-//  const frequency     f_rig { rig.rig_frequency() };
   const frequency     f_rig { rig_ptr -> rig_frequency() };
   const bandmap_entry be    { (bm.*fn_p)( f_rig, dirn, nskip ) };       // get bandmap entry for destination
 
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
-//        << "current actual frequency from rig = " << rig.rig_frequency() << endl
         << "current actual frequency from rig = " << rig_ptr -> rig_frequency() << endl
         << "; bandmap version: " << bm.version_str() << endl
         << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl
@@ -8932,7 +8878,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
     ok_to_poll_rig = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
-//    rig.rig_frequency(be.freq());
     rig_ptr -> rig_frequency(be.freq());
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
@@ -8962,12 +8907,10 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     mbe_copy = my_bandmap_entry;
   }
 
-//  if ( (be.freq() - mbe_copy.freq()) > 100_Hz)   // if we're more than 100Hz from where we expect
   if ( be.freq().difference( mbe_copy.freq() ) > 100_Hz)   // if we're more than 100Hz from where we expect
   { ost << "INCONSISTENT BANDMAP STATE" << endl
         << "be: " << be << endl
         << "mbe = " << mbe_copy << endl
-//        << "actual measured frequency of rig = " << rig.rig_frequency() << endl;
         << "actual measured frequency of rig = " << rig_ptr -> rig_frequency() << endl;
 
     debug = true;     // automatically turn on debugging
@@ -8986,9 +8929,7 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
     This is the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ //time_log <std::chrono::milliseconds> timer;
-
-  constexpr frequency MAX_SKEW { 95_Hz };
+{ constexpr frequency MAX_SKEW { 95_Hz };
 
   bandmap& bm { bandmaps[current_band] };
 
@@ -9012,7 +8953,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   if (!be.empty())  // get and process the next non-empty stn/mult, according to the function; this tests for non-empty callsign
   { ok_to_poll_rig = false;  // since we're going to be updating things anyway, briefly inhibit polling of a K3
 
-//    rig.rig_frequency(be.freq());                                   // QSY to next station
     rig_ptr -> rig_frequency(be.freq());                                   // QSY to next station
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();    // display call of next station
 
@@ -9028,8 +8968,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
     last_call_inserted_with_space = be.callsign();
   }
 
-//  ost << "total time to execute process_bandmap_function = " << timer.click() << "ms" << endl;
-
   return true;
 }
 
@@ -9042,8 +8980,7 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 void possible_mode_change(const frequency f)
 { if (multiple_modes)
   { if (const MODE m { default_mode(f) }; m != current_mode)
-    { //rig.rig_mode(m);
-      rig_ptr -> rig_mode(m);
+    { rig_ptr -> rig_mode(m);
       current_mode = m;
       display_band_mode(win_band_mode, current_band, m);
     }
@@ -9177,7 +9114,7 @@ void get_indices(const string cmd)    ///< Get SFI, A, K
     try
     { const string indices { run_external_command(cmd) };
 
-      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <std::string_view> (hhmmss(), 0, 5) < EOL
+      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <string_view> (hhmmss(), 0, 5) < EOL
                   <= indices;
     }
 
@@ -9231,7 +9168,7 @@ void update_best_dx(const grid_square& dx_gs, const string_view callsign)
       if (distance_in_units >= greatest_distance)
       { string str { pad_left(css(static_cast<int>(distance_in_units + 0.5)), 6) };
 
-        str = pad_right( (str + SPACE_STR + callsign), win_best_dx.width());
+        str = pad_right( (str + SPACE + callsign), win_best_dx.width());
 
         win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN <= str;
 
@@ -9290,7 +9227,7 @@ void populate_win_call_history(const string_view callsign)
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
 //      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
-      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= SPACE_STR;
+      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= SPACE;
     }
   }
 }
@@ -9306,21 +9243,11 @@ void insert_memory(void)
 { if (n_memories)
   { memory_entry me;
 
-//    me.freq(rig.rig_frequency());
     me.freq(rig_ptr -> rig_frequency());
     me.mode(current_mode);
     me.drlog_mode(drlog_mode);
 
 // check that the most recent memory value isn't the same as the one we are about to push
-//    if (memories.size())
-//    { const memory_entry old_me { recall_memory() };
-//
-//      if (old_me != me)
-//        memories.push_front(me);        // NB this deque is pushed to front, popped from back
-//    }
-//    else
-//      memories.push_front(me);        // NB this deque is pushed to front, popped from back
-
     if (memories.empty() or (recall_memory() != me))
       memories.push_front(me);        // NB this deque is pushed to front, popped from back
 
@@ -9370,7 +9297,8 @@ void display_bandmap_filter(bandmap& bm)                                        
   if (bm.cull_function())
     win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
 
-  win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+//  win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+  win_bandmap_filter < LEFT_SQUARE_BRACKET < to_string(bm.column_offset()) < "] "s <= bm.filter();
 }
 
 /*! \brief  Update the SYSTEM MEMORY window
@@ -9408,7 +9336,7 @@ void update_quick_qsy(void)
   quick_qsy_map[BAND(f)] = quick_qsy_info;
 
   win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                <= pad_left(f.display_string(), 7) + SPACE_STR + MODE_NAME[m];
+                <= pad_left(f.display_string(), 7) + SPACE + MODE_NAME[m];
 }
 
 /// update the window containing the sizes of the bandmaps
@@ -9421,9 +9349,6 @@ void update_bandmap_size_window(void)
 
     for (const auto b : permitted_bands)
     { const cursor c_posn { 0, line_nr++ };
-
-//      win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)                    // low band is on bottom
-//                       < pad_left(bandmaps[b].displayed_entries().size(), 5);
 
       win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)                    // low band is on bottom
                        < pad_left(bandmaps[b].count_displayed_entries_no_markers(), 5);
@@ -9532,7 +9457,8 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
  if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
-{ time_log <std::chrono::milliseconds> tl;
+{ //time_log <std::chrono::milliseconds> tl;
+  time_log <milliseconds> tl;
 
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
   const string dts            { date_time_string(SECONDS::NO_INCLUDE) };
@@ -9638,7 +9564,7 @@ void send_qtc_entry(const qtc_entry& qe, const bool log_it)
 { if (cw_p)
   { const string space        { (context.qtc_double_space() ? "  "s : SPACE_STR) };
     const char   char_to_send { t_char(qtc_long_t) };
-    const string serno_str    { pad_left(remove_leading <std::string> (remove_peripheral_spaces <std::string> (qe.serno()), '0'), 3, char_to_send) };
+    const string serno_str    { pad_left(remove_leading <string> (remove_peripheral_spaces <string> (qe.serno()), '0'), 3, char_to_send) };
     const string msg          { qe.utc() + space + qe.callsign() + space + serno_str };
 
     (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed would be back to full speed before the message is sent
@@ -9823,13 +9749,13 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
     \return     the calls in the DO NOT SHOW file for band <i>b</i>
 */
 STRING_SET calls_from_do_not_show_file(const BAND b)
-{ const string filename_suffix { (b == ALL_BANDS) ? EMPTY_STR : "-"s + BAND_NAME[b] };
+{ const string filename_suffix { (b == ALL_BANDS) ? EMPTY_STR : (DASH + BAND_NAME[b]) };
   const string filename        { context.do_not_show_filename() + filename_suffix };
 
   STRING_SET rv;
 
   try
-  { FOR_ALL( remove_peripheral_spaces <std::string_view> (to_lines <std::string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
+  { FOR_ALL( remove_peripheral_spaces <string_view> (to_lines <string_view> (to_upper(read_file(context_path, filename)))), [&rv] (const auto& callsign) { rv += callsign; } );
   }
 
   catch (...)     // not an error if a do-not-show file does not exist
@@ -9850,7 +9776,7 @@ void calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b)
     return;
 
   const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };    // define the ordering to be callsign order
-  const string   filename_suffix { (b == ALL_BANDS) ? string { } : "-"s + BAND_NAME[b] };
+  const string   filename_suffix { (b == ALL_BANDS) ? string { } : (DASH + BAND_NAME[b]) };
   const string   filename        { context.do_not_show_filename() + filename_suffix };
 
   ofstream outfile(filename);
@@ -9860,7 +9786,7 @@ void calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b)
 
 /*! \brief          Obtain the char used to represent a leading zero in a serial number
     \param  long_t  the value of the length of the T
-    \return         the char to represent a leading zer
+    \return         the char to represent a leading zero
 */
 char t_char(const unsigned short long_t)
 { constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
@@ -9884,18 +9810,20 @@ char t_char(const unsigned short long_t)
 
 // temporary
 void update_bandmap_window(bandmap& bm )
-{ const int    highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
+{ using enum WINDOW_ATTRIBUTES;
+
+  const int    highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
   const int    original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
   const string win_contents     { win_bandmap_filter.read() };
   const char   first_char       { (win_contents.empty() ? SPACE : win_contents[0]) };
 
 // mark that we are processing on the screen
-  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
+  win_bandmap_filter < CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
 
   win_bandmap <= bm;
 
 // clear the mark that we are processing
-  win_bandmap_filter < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= win_contents;
+  win_bandmap_filter < CURSOR_START_OF_LINE < WINDOW_CLEAR <= win_contents;
 }
 
 /*! \brief                              Is a particular frequency within any marked range?
@@ -9965,7 +9893,7 @@ string expected_received_exchange(const string_view callsign)
     if ((exf.name() == "GRID"sv))
       return exchange_db.guess_value(callsign, "GRID"sv);
 
-    { if (!variable_exchange_fields.contains(exf.name()))    // if not a variable field (i.e., currently, not SERNO)
+    { if (!variable_exchange_fields.contains(exf.name()))           // if not a variable field (i.e., currently, not SERNO)
       { if (const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(callsign, exf.name())) }; !guess.empty())
           return guess;
       }
@@ -10023,10 +9951,10 @@ void start_recording_rbn(void)
 { if (!rbn_file.is_open())
   { if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )    // append "-" and a number to the given filename
     { int    counter       { 0 };
-      string this_filename { rbn_filename + '-' + to_string(counter++) };
+      string this_filename { rbn_filename + DASH + to_string(counter++) };
 
       while (file_exists(this_filename))
-        this_filename = rbn_filename + '-' + to_string(counter++);
+        this_filename = rbn_filename + DASH+ to_string(counter++);
 
       rbn_file.open(this_filename, std::ofstream::app);     // open in append mode (although this should probably be changed now that we have "-n" naming)
     }
@@ -10057,7 +9985,8 @@ string build_rit_xit_str(const polled_status& status)
   if (status.rit_enabled())
     rv += 'R';
 
-  const string offset_str { ((status.rit_offset() < 0) ? "-"s : "+"s) + ::to_string(abs(status.rit_offset())) };
+//  const string offset_str { ((status.rit_offset() < 0) ? "-"s : "+"s) + ::to_string(abs(status.rit_offset())) };
+  const string offset_str { ((status.rit_offset() < 0) ? MINUS : PLUS) + ::to_string(abs(status.rit_offset())) };
 
   rv = (status.rit_enabled() or status.xit_enabled()) ? pad_left(rv + offset_str, RIT_XIT_DISPLAY_LENGTH)
                                                       : space_string(RIT_XIT_DISPLAY_LENGTH);

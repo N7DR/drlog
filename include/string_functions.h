@@ -1,4 +1,4 @@
-// $Id: string_functions.h 292 2026-04-12 17:03:36Z  $
+// $Id: string_functions.h 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,13 +44,12 @@ constexpr std::string EOL { "\n"s };            ///< end-of-line marker as strin
 
 constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
 
-constexpr std::string LF_STR { "\n"s };         ///< LF as string
-constexpr std::string CR_STR { "\r"s };            ///< CR as string
-constexpr std::string CRLF   { "\r\n"s };          ///< CR followed by LF
+constexpr std::string LF_STR { "\n"s };           ///< LF as string
+constexpr std::string CR_STR { "\r"s };           ///< CR as string
+constexpr std::string CRLF   { "\r\n"s };         ///< CR followed by LF
 
 constexpr std::string DOT_STR   { "."s };        ///< full stop as string
 constexpr std::string EMPTY_STR { };             ///< an empty string
-//constexpr std::string FULL_STOP { "."s };        ///< full stop as string
 constexpr std::string SPACE_STR { " "s };        ///< space as string
 
 constexpr std::string_view CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"sv };    ///< convenient place to hold all characters that are legal in callsigns
@@ -58,6 +57,7 @@ constexpr std::string_view DIGITS                        { "0123456789"sv };    
 constexpr std::string_view DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };     ///< convenient place to hold all digits and upper case letters
 constexpr std::string_view UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"sv };               ///< convenient place to hold all upper case letters
 
+constexpr char AMPERSAND            { '&' };
 constexpr char APOSTROPHE           { '\'' };
 constexpr char ASTERISK             { '*' };
 constexpr char AT_SIGN              { '@' };
@@ -70,11 +70,17 @@ constexpr char COMAT                { AT_SIGN };
 constexpr char COMMA                { ',' };
 constexpr char CR                   { CARRIAGE_RETURN };
 constexpr char DASH                 { '-' };
+constexpr char DOLLAR               { '$' };
 constexpr char DOT                  { '.' };
 constexpr char EQUALS               { '=' };
+constexpr char EXCLAMATION_MARK     { '!' };
 constexpr char GREATER_THAN         { '>' };
 constexpr char GT                   { GREATER_THAN };
 constexpr char HYPHEN               { DASH };
+constexpr char LEFT_BRACE           { '{' };
+constexpr char LEFT_CURLY_BRACKET   { LEFT_BRACE };
+constexpr char LEFT_PAREN           { '(' };
+constexpr char LEFT_PARENTHESIS     { LEFT_PAREN };
 constexpr char LEFT_SQUARE_BRACKET  { '[' };
 constexpr char LESS_THAN            { '<' };
 constexpr char LF                   { '\n' };
@@ -87,13 +93,20 @@ constexpr char PIPE                 { '|' };
 constexpr char PLUS                 { '+' };
 constexpr char QUESTION_MARK        { '?' };
 constexpr char QUOTATION_MARK       { '"' };
+constexpr char RIGHT_BRACE          { '}' };
+constexpr char RIGHT_CURLY_BRACKET  { RIGHT_BRACE };
+constexpr char RIGHT_PAREN          { ')' };
+constexpr char RIGHT_PARENTHESIS    { RIGHT_PAREN };
 constexpr char RIGHT_SQUARE_BRACKET { ']' };
 constexpr char SEMICOLON            { ';' };
 constexpr char SLASH                { '/' };
 constexpr char SPACE                { ' ' };
 constexpr char TAB                  { '\t' };
+constexpr char UNDERSCORE           { '_' };
 
 //constexpr char DEGREE          { '°' };
+
+//constexpr char DEGREE { "°"s [0] }; // doesn't work
 
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left

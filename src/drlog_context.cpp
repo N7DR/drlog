@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 292 2026-04-12 17:03:36Z  $
+// $Id: drlog_context.cpp 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -768,7 +768,13 @@ void drlog_context::_process_configuration_file(const string_view filename)
       const FLAT_STRING_SET continent_abbreviations { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };
 
       if (LHS == "POSTED BY CONTINENTS"sv)    // multiple continents
-        FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+//        FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
+      { const vector<string> tokens { clean_split_string <string> (RHS) };
+
+        for (const string& co : tokens)
+          if (continent_abbreviations.contains(co))
+            _posted_by_continents += co;
+      }
       else                                    // single continent
       { if (continent_abbreviations.contains(RHS))
           _posted_by_continents += RHS;             // _posted_by_continents now contains single value

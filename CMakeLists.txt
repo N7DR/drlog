@@ -55,7 +55,8 @@ set ( SOURCE_FILES
                    src/x_error.cpp
     )
 
-set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror" )
+#set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror" )
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall -Wno-reorder -pipe -std=c++26 -Wextra -pedantic -Werror -freflection" )
 
 #link_directories(/usr/local/programs/gcc-15.1.0/lib64)
 

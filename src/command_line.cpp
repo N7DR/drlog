@@ -1,4 +1,4 @@
-// $Id: command_line.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: command_line.cpp 293 2026-04-26 14:17:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,11 +133,13 @@ void command_line::toupper(const unsigned int n)
 
     A "value" is something like a parameter to a -xxx option. If, for example, value_present("-xxx") is TRUE, it means that -xxx is present, and a value follows it
 */
-bool command_line::value_present(const string& s) const
+//bool command_line::value_present(const string& s) const
+bool command_line::value_present(const string_view s) const
 { bool rv { false };
   
-  for (int n = 1; n < n_parameters(); n++)    // < because last might be the actual value
-    rv = (rv || (parameter(n) == s));
+  for (int n { 1 }; n < n_parameters(); n++)    // < because last might be the actual value
+//    rv = (rv or (parameter(n) == s));
+    rv |= (parameter(n) == s);
 
   return rv;
 }
@@ -148,13 +150,14 @@ bool command_line::value_present(const string& s) const
 
     A "value" is something like a parameter to a -xxx option. If, for example, the command line contains "-xxx burble", then value("-xxx") will return "burble"
 */
-string command_line::value(const string& s) const
+//string command_line::value(const string& s) const
+string command_line::value(const string_view s) const
 { if (!value_present(s))
-    return string();
+    return string { };
 
   string rv;
 
-  for (int n = 1; n < n_parameters(); n++)    // < because last might be the actual value
+  for (int n { 1 }; n < n_parameters(); n++)    // < because last word might be the actual value; last occurrence on the line is used
   { if (parameter(n) == s)
       rv = parameter(n + 1);
   }
@@ -168,11 +171,13 @@ string command_line::value(const string& s) const
 
     A "parameter" is an actual parameter that appears on the command line.
 */
-bool command_line::parameter_present(const string& s) const
+//bool command_line::parameter_present(const string& s) const
+bool command_line::parameter_present(const string_view s) const
 { bool rv { false };
   
-  for (int n = 1; n <= n_parameters(); n++)
-    rv = (rv or (parameter(n) == s));
+  for (int n { 1 }; n <= n_parameters(); n++)
+//    rv = (rv or (parameter(n) == s));
+    rv |= (parameter(n) == s);
 
   return rv;
 }
