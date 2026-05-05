@@ -42,7 +42,6 @@ extern MINUTES_TYPE                  now_minutes;                               
 extern map<MODE, vector<pair<frequency, frequency>>> marked_frequency_ranges;   ///< the ranges of frequencies to be marked as red (i.e., not to be used in the ocntest)
 extern message_stream                ost;                                       ///< debugging/logging output
 
-//extern const STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 extern const FLAT_STRING_SET CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 
 extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency>>>& marked_frequency_ranges, const MODE m, const frequency f); ///< Is a particular frequency within any marked range?
@@ -56,7 +55,7 @@ extern bool is_marked_frequency(const map<MODE, vector<pair<frequency, frequency
 extern string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign);
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
-constexpr frequency     MAX_FREQUENCY_SKEW { 250_Hz };       ///< maximum separation to be treated as same frequency
+constexpr frequency     MAX_FREQUENCY_SKEW { 250_Hz };    ///< maximum separation to be treated as same frequency
 
 constexpr string MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
 constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
@@ -192,13 +191,13 @@ string n_posters_database::to_string(void) const
   lock_guard<recursive_mutex> lg(_mtx);
 
   for (const auto& [t, cp] : _data)
-  { rv += ::to_string(t) + ":"s + EOL;
+  { rv += ::to_string(t) + COLON + EOL;
 
     for (const auto& [c, p] : cp)
     { rv += "  "s + ::to_string(c) + "  :"s + EOL;
 
       for (const auto& poster : p)
-        rv += "    "s + poster + " "s;
+        rv += "    "s + poster + SPACE;
       
       rv += EOL;
       rv += "n_posters = "s + ::to_string(p.size()) + EOL;
@@ -215,7 +214,7 @@ string n_posters_database::to_string(void) const
     CALL_SET ordered_known_good_calls;
 
     FOR_ALL(_known_good_calls,        [&ordered_known_good_calls] (const string& call) { ordered_known_good_calls += call; } );
-    FOR_ALL(ordered_known_good_calls, [&rv]                       (const string& call) { rv += (call + " "s); } );
+    FOR_ALL(ordered_known_good_calls, [&rv]                       (const string& call) { rv += (call + SPACE); } );
 
     rv += EOL + "Number of known good calls = "s + ::to_string(ordered_known_good_calls.size()) + EOL;
   }
@@ -400,7 +399,7 @@ MODE bandmap_entry::putative_mode(void) const
     return MODE_CW;
 
   try
-  { return ( (_freq < MODE_BREAK_POINT.at(band()) ) ? MODE_CW : MODE_SSB);
+  { return ( (_freq < MODE_BREAK_POINT.at(band()) ) ? MODE_CW : MODE_SSB);  // CW at the bottom of the band
   }
 
   catch (...)
@@ -535,8 +534,7 @@ void bandmap::_insert(const bandmap_entry& be)
 
 // insert it in the right place in the list
   for (BM_ENTRIES::iterator it { _entries.begin() }; (!inserted and (it != _entries.end())); ++it)
-  { //if (it->freq().hz() > ber.freq().hz())
-    if (it -> freq() > ber.freq())
+  { if (it -> freq() > ber.freq())
       inserted = ( _entries += { it, ber }, true );
   }
 
@@ -784,7 +782,6 @@ bandmap_entry bandmap::operator[](const string_view str) const
 bandmap_entry bandmap::substr(const string_view pcall) const
 { SAFELOCK(_bandmap);
 
-//  return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return contains(be.callsign(), pcall); });
   return VALUE_IF(_entries, [&pcall] (const bandmap_entry& be) { return be.callsign().contains(pcall); });
 }
 
@@ -1159,7 +1156,7 @@ bandmap_entry bandmap::next_displayed_be(const frequency f, const enum BANDMAP_D
   switch (dirn)
   { case UP :
     { for (BM_ENTRIES::const_iterator cit { fe.cbegin() }; cit != fe.cend(); ++cit)
-      { if ( (cit->freq() - max_skew) >= f)                 // stn
+      { if ( ( (cit -> freq()) - max_skew) >= f)                 // stn
         { for (int16_t skip { 0 }; skip < nskip; ++skip)
           { ++cit;
 
@@ -1176,7 +1173,7 @@ bandmap_entry bandmap::next_displayed_be(const frequency f, const enum BANDMAP_D
 
     case DOWN :
     { for (BM_ENTRIES::const_reverse_iterator crit { fe.crbegin() }; crit != fe.crend(); ++crit)
-      { if ( (crit->freq() + max_skew) <= f)
+      { if ( ((crit -> freq()) + max_skew) <= f)
         { for (int16_t skip { 0 }; skip < nskip; ++skip)
           { ++crit;
 
@@ -1357,7 +1354,7 @@ window& bandmap::write_to_window(window& win)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string      entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
+    { const string      entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
       const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
       const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
       const bool        is_marker     { be.is_marker() };
@@ -1441,7 +1438,7 @@ window& bandmap::write_to_window(window& win)
       if (reverse)
         win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
-      win < colour_pair(status_colour) < SPACE_STR
+      win < colour_pair(status_colour) < SPACE
           < colour_pair(cpu) < callsign_str;
     }
 

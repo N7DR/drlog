@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 293 2026-04-26 14:17:23Z  $
+// $Id: drlog_context.cpp 294 2026-05-03 15:14:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -764,17 +764,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // POSTED BY CONTINENTS (default is anything other than my own continent)
     if ( (LHS == "POSTED BY CONTINENTS"sv) or (LHS == "POSTED BY CONTINENT"sv) )
-    { //const UNORDERED_STRING_SET continent_abbreviations { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };
-      const FLAT_STRING_SET continent_abbreviations { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };
+    { const FLAT_STRING_SET continent_abbreviations { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };
 
       if (LHS == "POSTED BY CONTINENTS"sv)    // multiple continents
-//        FOR_ALL(clean_split_string <string> (RHS), [continent_abbreviations, this] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
-      { const vector<string> tokens { clean_split_string <string> (RHS) };
-
-        for (const string& co : tokens)
-          if (continent_abbreviations.contains(co))
-            _posted_by_continents += co;
-      }
+        FOR_ALL(clean_split_string <string> (RHS), [this, &continent_abbreviations] (const string& co) { if (continent_abbreviations.contains(co)) _posted_by_continents += co; } );
       else                                    // single continent
       { if (continent_abbreviations.contains(RHS))
           _posted_by_continents += RHS;             // _posted_by_continents now contains single value
@@ -1354,7 +1347,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             }                                                       // end verbatim
             else                                                    // read from file
             { const string&        contents { swin_contents };
-              const vector<string> lines    { to_lines <std::string> (contents) };
+              const vector<string> lines    { to_lines <string> (contents) };
 
               winfo.w(longest(lines).length());
               winfo.h(lines.size());
@@ -1428,7 +1421,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 
     if (LHS == "MESSAGE CQ 1"sv)
-    { const vector<string> tokens { split_string <std::string> (testline, EQUALS) };
+    { const vector<string> tokens { split_string <string> (testline, EQUALS) };
 
       if (tokens.size() != 2)
         print_error_and_exit(testline);
@@ -1437,12 +1430,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 
     if (LHS == "MESSAGE CQ 2"sv)
-    { const vector<string> tokens { split_string <std::string> (testline, EQUALS) };
+    { const vector<string> tokens { split_string <string> (testline, EQUALS) };
 
       if (tokens.size() != 2)
         print_error_and_exit(testline);
 
-      if (tokens.size() == 2)
+//      if (tokens.size() == 2)
         _message_cq_2 = move(tokens[1]);
     }
   }
@@ -1467,7 +1460,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { for ( const auto& str : clean_split_string <std::string> (bands()) )
+  { for ( const auto& str : clean_split_string <string> (bands()) )
     { try
       { _call_history_bands += BAND_FROM_NAME.at(str);    // heterogeneous lookup not yet supported
       }
@@ -1479,7 +1472,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"sv) or (_cabrillo_qso_template == "CQ WW"sv) )
-  { static const FLAT_STRING_SET cabrillo_templated_contests { "ARRL DX"s, "CQ WW"s, "JIDX"s};
+  { static const FLAT_STRING_SET cabrillo_templated_contests { "ARRL DX"s, "CQ WW"s, "JIDX"s };
 
     const vector<string_view> actual_modes { clean_split_string <string_view> (_modes) };
 
@@ -1513,10 +1506,9 @@ drlog_context::drlog_context(const string_view filename)
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { //for (const auto& band_name : clean_split_string <string> (_bands))
-    for (const auto band_name : clean_split_string <string_view> (_bands)) // doesn't work in g++12; fails when at() is called
+  { for (const auto band_name : clean_split_string <string_view> (_bands))
     { try
-      { _score_bands += BAND_FROM_NAME.at(band_name);       // heteogeneous lookup is not yet implemented for at()
+      { _score_bands += BAND_FROM_NAME.at(band_name);
       }
 
       catch (...)

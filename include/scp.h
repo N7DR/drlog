@@ -66,8 +66,8 @@ public:
     { init_from_calls(calls); }
 
 /// construct from a master_dta
-  inline explicit scp_database(const master_dta& md)
-    { init_from_calls(md.calls()); }
+//  inline explicit scp_database(const master_dta& md)
+//    { init_from_calls(md.calls()); }
 
 /// construct from a drmaster object
   inline explicit scp_database(const drmaster& drm)

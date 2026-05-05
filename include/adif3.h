@@ -111,21 +111,16 @@ protected:
   void _verify(void) const;
 
 // private objects and collections providing legal values
-
-//  const static UNORDERED_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
   const static FLAT_STRING_MAP<ADIF3_DATA_TYPE /* corresponding data type */>   _element_type;             ///< map from field name to type
 
   static STRING_MAP<std::pair<int, int> /* minimum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
 // soi-disant "enumeration" values (actually typically strings)
-//  const static UNORDERED_STRING_SET _ENUMERATION_BAND;     ///< band values
   const static FLAT_STRING_SET _ENUMERATION_BAND;     ///< band values
-//  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */,
-//                                                            std::string /* canonical prefix */,
-//                                                            ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+
   const static std::flat_map<int /* country number */, std::tuple<std::string /*country name */,
-                                                            std::string /* canonical prefix */,
-                                                            ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+                                                                  std::string /* canonical prefix */,
+                                                                  ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
   static UNORDERED_STRING_SET _ENUMERATION_MODE;            ///< mode values
   static STRING_SET           _ENUMERATION_QSL_RECEIVED;    ///< legal values of QSL_RCVD
@@ -154,8 +149,8 @@ public:
 
     Returns empty string if either the name or the value is empty
 */
-  inline std::string to_string(const std::string_view append_str = "\n"sv) const
-    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( "<"s + _name + ':' + ::to_string(_value.length()) +'>' + _value + append_str) ); }
+  inline std::string to_string(const std::string_view append_str = EOL_STR) const
+    { return ( (_name.empty() or _value.empty()) ? std::string { } : ( LEFT_ANGLE_BRACKET + _name + COLON + ::to_string(_value.length()) + RIGHT_ANGLE_BRACKET + _value + append_str) ); }
 
 /*! \brief                  Import name and value from string, and return location past the end of the used part of the string
     \param  str             string from which to read

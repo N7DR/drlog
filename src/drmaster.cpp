@@ -58,6 +58,8 @@ typename C::value_type value_line(const C& values, const int pc)
   return ordered_vector.at(idx);
 }
 
+#if 0
+
 // -----------------------------------------------------  master_dta  ---------------------------------
 
 /*! \class  master_dta
@@ -116,6 +118,12 @@ master_dta::master_dta(const string_view filename)
   ranges::copy(tmp_calls.begin(), pos, back_inserter(_calls));          // put calls into the permanent container
 }
 
+#endif
+
+// 260505: support for TRMASTER ASCII and binary files removed
+
+#if 0
+
 // -----------------------------------------------------  trmaster_line  ---------------------------------
 
 /*! \class  trmaster_line
@@ -129,14 +137,13 @@ master_dta::master_dta(const string_view filename)
 
     Returns empty string if there is no value associated with <i>param</i>
 */
-//string __extract_value(const string_view line, const string& param)
 string __extract_value(const string_view line, const string_view param)
 { if (!line.contains(param))
     return string { };
 
   const size_t      start_position { line.find(param) };
   const string_view short_line     { substring <std::string_view> (line, start_position + param.length()) };
-  const size_t      space_posn     { short_line.find(' ') };
+  const size_t      space_posn     { short_line.find(SPACE) };
   const size_t      end_position   { ( (space_posn == string_view::npos) ? short_line.length() : space_posn ) };
 
   return substring <std::string> (short_line, 0, end_position);
@@ -187,7 +194,7 @@ trmaster_line::trmaster_line(const string_view line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-  const size_t length_of_call { (line.contains(' ') ? line.find(' ') : line.length()) };
+  const size_t length_of_call { (line.contains(SPACE) ? line.find(SPACE) : line.length()) };
 
   _call = to_upper(substring <std::string> (line, 0, length_of_call));
 
@@ -208,7 +215,7 @@ trmaster_line::trmaster_line(const string_view line)
   for (unsigned int n_user_parameter { 0 }; n_user_parameter < TRMASTER_N_USER_PARAMETERS; ++n_user_parameter)
   { char marker[3];
 
-    marker[0] = '=';
+    marker[0] = EQUALS;
     marker[1] = user_parameter;
     marker[2] = 0;                // marker == "=x"
 
@@ -300,8 +307,10 @@ trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
   if (trml.cq_zone() != 0)
     rv.cq_zone(trml.cq_zone());
 
-  if ((!trml.itu_zone().empty()))
-    rv.itu_zone(trml.itu_zone());
+  INSERT_IF_EMPTY(itu_zone);
+
+//  if ((!trml.itu_zone().empty()))
+//    rv.itu_zone(trml.itu_zone());
 
   if ((!trml.section().empty()))
     rv.section(trml.section());
@@ -335,6 +344,10 @@ ostream& operator<<(ostream& ost, const trmaster_line& trml)
 { ost << trml.to_string();
   return ost;
 }
+
+#endif
+
+#if 0
 
 // -----------------------------------------------------  trmaster  ---------------------------------
 
@@ -575,6 +588,8 @@ vector<string> trmaster::calls(void) const
   return rv;
 }
 
+#endif
+
 // -----------------------------------------------------  drmaster_line  ---------------------------------
 
 /*! \class  drmaster_line
@@ -684,7 +699,7 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 { if (line_or_call.empty())
     return;
 
-  size_t space_posn { line_or_call.find(' ') };
+  size_t space_posn { line_or_call.find(SPACE) };
 
   if (space_posn == string::npos) // no space
   { _call = line_or_call;
@@ -696,8 +711,8 @@ drmaster_line::drmaster_line(const string_view line_or_call)
 
 // all the other fields
   while (space_posn != string::npos)
-  { if (const size_t eq_posn { line_or_call.find('=', space_posn) }; eq_posn != string::npos)      // found an equals
-    { space_posn = line_or_call.find(' ', eq_posn);
+  { if (const size_t eq_posn { line_or_call.find(EQUALS, space_posn) }; eq_posn != string::npos)      // found an equals
+    { space_posn = line_or_call.find(SPACE, eq_posn);
 
       const string_view next_field { (space_posn == string::npos) ? substring <string_view> (line_or_call, eq_posn)
                                                                   : substring <string_view> (line_or_call, eq_posn, space_posn - eq_posn) };
@@ -967,7 +982,7 @@ string drmaster::to_string(void) const
     If there's already an entry for <i>call</i>, then does nothing
 */
 void drmaster::operator+=(const string_view call)
-{ if (!call.contains(' ') and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
+{ if (!call.contains(SPACE) and !_records.contains(call))     // basic sanity check for a call, and whether is already in the database
   { const string call_str { call };
 
     _records += { call, static_cast<drmaster_line>(call) };    // cast needed in order to keep the temporary around long enough to use

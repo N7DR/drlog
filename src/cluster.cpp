@@ -360,15 +360,15 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 // there seem to be two formats for postings: the sh/dx format and the ordinary post format; deal with the sh/dx first
 // first non-space sharacter is a digit and last character is ">"
 // parsing failures are trapped
-  if (last_char(received_info) == '>')
-  { string_view copy { remove_leading_spaces <std::string_view> (received_info) };
+  if (last_char(received_info) == RIGHT_ANGLE_BRACKET)
+  { string_view copy { remove_leading_spaces <string_view> (received_info) };
   
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
     { type_1_post_counter++;
 
       try
-      { size_t char_posn  { copy.find(' ') };
+      { size_t char_posn  { copy.find(SPACE) };
         size_t space_posn { };
 
         if (char_posn != string_view::npos)
@@ -376,8 +376,8 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
           _freq = frequency(_frequency_str);
 
           if (_valid_hf_frequency())                            // we are interested only in HF posts
-          { char_posn = copy.find_first_not_of(' ', char_posn);
-            space_posn = copy.find_first_of(' ', char_posn);
+          { char_posn = copy.find_first_not_of(SPACE, char_posn);
+            space_posn = copy.find_first_of(SPACE, char_posn);
 
             _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -386,15 +386,15 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             _canonical_prefix = li.canonical_prefix();
             _continent = li.continent();
 
-            char_posn = copy.find_first_not_of(' ', space_posn);
-            space_posn = copy.find_first_of(' ', char_posn);
+            char_posn = copy.find_first_not_of(SPACE, space_posn);
+            space_posn = copy.find_first_of(SPACE, char_posn);
 
 // skip the date
-            char_posn = copy.find_first_not_of(' ', space_posn);
-            space_posn = copy.find_first_of(' ', char_posn);
-            char_posn = copy.find_first_not_of(' ', space_posn);
+            char_posn = copy.find_first_not_of(SPACE, space_posn);
+            space_posn = copy.find_first_of(SPACE, char_posn);
+            char_posn = copy.find_first_not_of(SPACE, space_posn);
 
-            if (const size_t bra_posn { copy.find_last_of('<') }; bra_posn != string_view::npos)
+            if (const size_t bra_posn { copy.find_last_of(LEFT_ANGLE_BRACKET) }; bra_posn != string_view::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
               _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
               _poster_continent = db.info(_poster).continent();
@@ -427,12 +427,12 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
   { if (received_info.length() <= 70)
       ost << "received short post: " << received_info << endl;
 
-    if ( (substring <std::string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
+    if ( (substring <string_view> (received_info, 0, 6) == "DX de "sv) and (received_info.length() > 70) )
     { type_2_post_counter++;
 
       try
       { if (post_source == POSTING_SOURCE::RBN)
-        { const vector<string> fields { split_string <std::string> (squash(received_info), ' ') };
+        { const vector<string> fields { split_string <std::string> (squash(received_info), SPACE) };
 
           if (fields.size() >= 6)
           { _poster = substring <std::string> (fields[2], 0, fields[2].length() - 1);      // remove colon
@@ -460,20 +460,20 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
         if (!_valid)
         { const string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
   
-          if (const size_t colon_posn { copy.find(':') }; colon_posn != string_view::npos)
+          if (const size_t colon_posn { copy.find(COLON) }; colon_posn != string_view::npos)
           { _poster = copy.substr(0, colon_posn);
             _poster_continent = db.info(_poster).continent();
 
-            size_t char_posn  { copy.find_first_not_of(' ', colon_posn + 1) };
-            size_t space_posn { copy.find_first_of(' ', char_posn) };
+            size_t char_posn  { copy.find_first_not_of(SPACE, colon_posn + 1) };
+            size_t space_posn { copy.find_first_of(SPACE, char_posn) };
 
             _frequency_str = copy.substr(char_posn, space_posn - char_posn);
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
             if (_valid_hf_frequency())                            // we are interested only in HF posts
-            { char_posn = copy.find_first_not_of(' ', space_posn);
-              space_posn = copy.find_first_of(' ', char_posn);
+            { char_posn = copy.find_first_not_of(SPACE, space_posn);
+              space_posn = copy.find_first_of(SPACE, char_posn);
 
               _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -482,8 +482,8 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
 
-              char_posn = copy.find_first_not_of(' ', space_posn);
-              space_posn = copy.find_last_of(' ');
+              char_posn = copy.find_first_not_of(SPACE, space_posn);
+              space_posn = copy.find_last_of(SPACE);
 
               _comment = copy.substr(char_posn);
               _valid = true;
@@ -579,8 +579,8 @@ bool monitored_posts::is_monitored(const std::string_view callsign) const
 void monitored_posts::operator+=(const dx_post& post)
 { const monitored_posts_entry mpe           { post };
 
-  bool                  stop_search         { false };
-  bool                  found_call_and_band { false };
+  bool stop_search         { false };
+  bool found_call_and_band { false };
 
   SAFELOCK(monitored_posts);
 

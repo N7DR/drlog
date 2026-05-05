@@ -34,21 +34,21 @@ void memory_information::_get_meminfo(const bool force)
   const system_clock::time_point now { system_clock::now() };
 
   if ( force or ( (now - _last_update_time) >  _minimum_interval) )      // update only of forced or if enough time has passed
-  { const vector<string> file_lines { to_lines <std::string> (squash(read_file("/proc/meminfo"s))) };  // amazingly, opening the file can fail and throw an exception! I've seen it happen
+  { const vector<string> file_lines { to_lines <string> (squash(read_file("/proc/meminfo"s))) };  // amazingly, opening the file can fail and throw an exception! I've seen it happen
 
     _last_update_time = now;                                // update the time of last update
 
     lock_guard<mutex> memory_lock(_memory_mutex);
 
     for (const auto& line : file_lines)
-    { const vector<string_view> fields { split_string <std::string_view> (line, ' ') };
+    { const vector<string_view> fields { split_string <string_view> (line, SPACE) };
 
       if ( (fields.size() < 2) or (fields.size() > 3) )
       { cerr << "Fatal error in memory_information::_get_meminfo(void)" << endl;
         exit(-1);
       }
 
-      string_view name { substring <std::string_view> (fields[0], 0, fields[0].length() - 1) };    // remove the terminating colon
+      string_view name { substring <string_view> (fields[0], 0, fields[0].length() - 1) };    // remove the terminating colon
       string_view unit { (fields.size() == 3) ? fields[2] : string_view { EMPTY_STR } };
 
       if (!unit.empty() and unit != "kB"sv)
@@ -65,14 +65,6 @@ void memory_information::_get_meminfo(const bool force)
     }
   }
 }
-
-/*! \brief              Constructor
-    \param  min_int     the minimum interval between reads of /proc/meminfo
-*/
-memory_information::memory_information(const std::chrono::system_clock::duration min_int) :
-  _minimum_interval(min_int),
-  _last_update_time { std::chrono::system_clock::now() - (2 * min_int) }        // force update when _get_meminfo() is called
-{ _get_meminfo(); }
 
 /*! \brief          Convert to printable string
     \param  force   whether to force reading of /proc/meminfo regardless of <i>_last_update_time</i> and <i>_minimum_interval</i>

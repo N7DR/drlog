@@ -27,7 +27,6 @@ using namespace std;
 
 pt_mutex rules_mutex { "RULES"s };      ///< mutex for the contest_rules object
 
-//extern const STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
 extern const FLAT_STRING_SET CONTINENT_SET; ///< the abbreviations for the continents
 
 extern message_stream    ost;           ///< for debugging and logging
@@ -712,13 +711,13 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     if (read_file_ok)
     { STRING_MAP<STRING_SET> map_canonical_to_all;    // key = canonical value; value = all the equivaletn values; perhaps make this an unordered map?
 
-      for ( const auto line : split_string <std::string_view> (entire_file, EOL_CHAR) )
+      for ( const auto line : split_string <string_view> (entire_file, EOL) )
       { string     lhs;
         STRING_SET equivalent_values;    // includes the canonical
 
-        if (!line.empty() and (line[0] != ';') and !line.starts_with("//"sv)) // ";" and "//" introduce comments
-        { if (line.contains('=') )
-          { const vector<string_view> lhsrhs { split_string <std::string_view> (line, '=') };
+        if (!line.empty() and (line[0] != SEMICOLON) and !line.starts_with("//"sv)) // ";" and "//" introduce comments
+        { if (line.contains(EQUALS) )
+          { const vector<string_view> lhsrhs { split_string <std::string_view> (line, EQUALS) };
 
             lhs = remove_peripheral_spaces <std::string> (lhsrhs[0]);
             equivalent_values += lhs;                  // canonical value
@@ -826,7 +825,7 @@ vector<string> contest_rules::exch_canonical_values(const string_view field_name
 
     for (const auto& ev : _exch_values)
     { if (ev.name() == field_name)
-      { for (const auto& [ canonical_value, legal_values ] : ev.values())
+      { for (const auto& [ canonical_value, _ ] : ev.values())
           rv += canonical_value;
 
         SORT(rv);
@@ -908,7 +907,7 @@ bool contest_rules::exchange_field_is_regex(const string_view field_name) const
 { SAFELOCK(rules);
 
   if (const auto it { _exchange_field_eft.find(field_name) }; it != _exchange_field_eft.end())    // at() not yet supported for heterogeneous lookup
-  { const EFT& eft { it->second };
+  { const EFT& eft { it -> second };
 
     return eft.regex_str().empty();
   }
@@ -998,64 +997,6 @@ void contest_rules::add_permitted_band(const BAND b)
 
   _permitted_bands += b;
 }
-
-/// get the next band up
-#if 0
-BAND contest_rules::next_band_up(const BAND current_band) const
-{ SAFELOCK(rules);
-
-  auto cit { find(_permitted_bands.begin(), _permitted_bands.end(), current_band) };  // stupid C++: vector has no find member
-
-  if (cit == _permitted_bands.cend())    // might happen if rig has been manually QSYed to a non-contest band
-  { int band_nr { static_cast<int>(current_band) };
-
-// find first permitted band higher than the current band
-    const set<BAND> pbs { permitted_bands_set() };
-
-    for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
-    { if (++band_nr > MAX_BAND)
-        band_nr = MIN_BAND;
-
-      if (const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) }; is_permitted)
-        return (static_cast<BAND>(band_nr));
-    }
-
-// should never get here
-    return *(_permitted_bands.cbegin());    // return first element
-  }
-
-  return (++cit == _permitted_bands.cend() ? *(_permitted_bands.cbegin()) : *cit);
-}
-#endif
-
-#if 0
-/// get the next band down
-BAND contest_rules::next_band_down(const BAND current_band) const
-{ SAFELOCK(rules);
-
-  auto cit { find(_permitted_bands.begin(), _permitted_bands.end(), current_band) };
-
-  if (cit == _permitted_bands.end())    // might happen if rig has been manually QSYed to a non-contest band
-  { int band_nr { static_cast<int>(current_band) };
-
-// find first permitted band higher than the current one
-    const set<BAND> pbs { permitted_bands_set()};
-
-    for (int counter { static_cast<int>(MIN_BAND) }; counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
-    { if (--band_nr < MIN_BAND)
-        band_nr = MAX_BAND;
-
-      if (const bool is_permitted { pbs.contains(static_cast<BAND>(band_nr)) }; is_permitted)
-        return (static_cast<BAND>(band_nr));
-    }
-
-// should never get here
-    return *(prev(_permitted_bands.cend()));
-  }
-
-  return ( (cit == _permitted_bands.begin()) ? _permitted_bands[_permitted_bands.size() - 1] : *(--cit));
-}
-#endif
 
 /*! \brief                  Points for a particular QSO
     \param  qso             QSO for which the points are to be calculated
@@ -1354,7 +1295,7 @@ string wpx_prefix(const string_view call)
   if (!contains_digit(callsign))
     return (substring <std::string> (callsign, 0, 2) + '0');
 
-  size_t slash_posn { callsign.find('/') };
+  size_t slash_posn { callsign.find(SLASH) };
 
   if ( (slash_posn == string::npos) or (slash_posn == callsign.length() - 1) )
   { const size_t last_digit_posn { callsign.find_last_of(DIGITS) };
@@ -1390,7 +1331,7 @@ string wpx_prefix(const string_view call)
   string rv { designator };
 
   if (rv.length() == 1)
-  { if (rv[0] == call[0])  // if just the first character, add the next character (to deal with 7QAA)
+  { if (rv[0] == call[0])                         // if just the first character, add the next character (to deal with 7QAA)
       rv = substring <std::string> (call, 0, 2);
   }
 

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 293 2026-04-26 14:17:23Z  $
+// $Id: drlog.cpp 294 2026-05-03 15:14:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -5771,12 +5771,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
       if (changed)
       {
 // get the original QSOs that were in the window
-//        int number_of_qsos_in_original_window { 0 };
-
-//        for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
-//          if (!remove_peripheral_spaces <std::string_view> (win_log_snapshot[n]).empty())
-//            number_of_qsos_in_original_window++;
-
         deque<QSO> original_qsos;
 
         unsigned int qso_number  { static_cast<unsigned int>(logbk.size()) };
@@ -5937,9 +5931,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
       set_active_window(ACTIVE_WINDOW::CALL);
 
-      const string call_contents { remove_trailing_spaces <std::string> (win_call.read()) };
+//      const string call_contents { remove_trailing_spaces <string> (win_call.read()) };
 
-      win_call.move_cursor(call_contents.size(), 0);
+//      win_call.move_cursor(call_contents.size(), 0);  // move cursor to end
+      win_call.move_cursor( remove_trailing_spaces <string> (win_call.read()) .size(), 0);  // move cursor to end
       win_call.refresh();
     }
 
@@ -5958,7 +5953,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   {
 // go back to CALL window, without making any changes
     set_active_window(ACTIVE_WINDOW::CALL);
-
     win_log.hide_cursor();
     editable_log.recent_qsos(logbk, LOG_EXTRACT::DISPLAY);
 
@@ -6153,7 +6147,7 @@ void update_remaining_exchange_mults_windows(running_statistics& statistics, con
     cty.dat
 */
 string bearing(const string_view callsign)
-{ static constexpr string degree { "°"s };
+{ static constexpr string DEGREE_STR { "°"s };
 
   if (callsign.empty())
     return string { };
@@ -6166,7 +6160,7 @@ string bearing(const string_view callsign)
   if (ibearing < 0)
     ibearing += 360;
 
-  return (to_string(ibearing) + degree);
+  return (to_string(ibearing) + DEGREE_STR);
 //  return (to_string(ibearing) + DEGREE);    // doesn't work
 }
 
@@ -6198,16 +6192,16 @@ void populate_win_info(const string_view callsign)
     populate_win_call_history(callsign);
 
   if (send_qtcs)
-  { const string qtc_str { "["s + to_string(qtc_db.n_qtcs_sent_to(callsign)) + "]"s };
+  { const string qtc_str { LEFT_SQUARE_BRACKET + to_string(qtc_db.n_qtcs_sent_to(callsign)) + RIGHT_SQUARE_BRACKET };
 
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
-    win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= pad_left(qtc_str, 4);   // right justify
+    win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= pad_left(qtc_str, 4);                 // right justify
   }
   else
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
   
   if (display_grid)
-  { const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
+  { const string grid_name { exchange_db.guess_value(callsign, "GRID"sv) };
 
     win_grid < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
@@ -6231,14 +6225,14 @@ void populate_win_info(const string_view callsign)
   if (to_upper(name_str) != "NONE"sv)
   { const string sunrise_time { sunrise(callsign) };
     const string sunset_time  { sunset(callsign) };
-    const string current_time { substring <std::string> (hhmmss(), 0, 5) };
+    const string current_time { substring <string> (hhmmss(), 0, 5) };
     const bool   daylight     { is_daylight(sunrise_time, sunset_time, current_time) };
 
     win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "s
                                                 < pad_left(bearing(callsign), 5)         < SPACE
                                                 < sunrise_time                           < SLASH      < sunset_time
                                                 < (daylight ? "(D)"s : "(N)"s);
-    const string name_plus_continent_str { name_str + " ["s + location_db.continent(callsign) + "]"s };
+    const string name_plus_continent_str { name_str + " ["s + location_db.continent(callsign) + RIGHT_SQUARE_BRACKET };
     const size_t len                     { name_plus_continent_str.size() };
 
     win_info < cursor(win_info.width() - len, win_info.height() - 2) <= name_plus_continent_str;
@@ -6246,9 +6240,10 @@ void populate_win_info(const string_view callsign)
     constexpr unsigned int FIRST_FIELD_WIDTH { 15 };     // "QTHX[ON] [XXX*]", for UBA contest
     constexpr unsigned int FIELD_WIDTH       { 4 };      // width of other fields
 
-    int next_y_value { win_info.height() - 3 };                 // keep track of where we are vertically in the window
+//    int next_y_value { win_info.height() - 3 };                 // keep track of where we are vertically in the window
 
-    for (const auto this_mode : rules.permitted_modes())
+//    for (const auto this_mode : rules.permitted_modes())
+    for (int next_y_value { win_info.height() - 3 }; const auto this_mode : rules.permitted_modes())                // keep track of where we are vertically in the window
     { if (n_modes > 1)
         win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
@@ -6267,7 +6262,7 @@ void populate_win_info(const string_view callsign)
       { if (all_country_mults.contains(canonical_prefix) )                                          // all_country_mults is from rules, and has all the valid mults for the contest
         { const MULT_SET known_country_mults { statistics.known_country_mults() };
 
-          line = pad_right("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH);
+          line = pad_right("Country ["s + canonical_prefix + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
 
           for (const BAND b : permitted_bands)
           { const string per_band_indicator { known_country_mults.contains(canonical_prefix) ? (statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? BAND_NAME[b] : "-"s )
@@ -6286,7 +6281,7 @@ void populate_win_info(const string_view callsign)
       { if (const bool output_this_mult { rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix) }; output_this_mult)
         { const string exch_mult_value { exchange_db.guess_value(callsign, exch_mult_field) };      // make best guess as to the value of this field
 
-          line = pad_right(exch_mult_field + " ["s + exch_mult_value + "]"s, FIRST_FIELD_WIDTH);
+          line = pad_right(exch_mult_field + " ["s + exch_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
 
           for (const BAND b : permitted_bands)
             line += pad_left( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-"s ), FIELD_WIDTH);
@@ -6298,7 +6293,7 @@ void populate_win_info(const string_view callsign)
 // PUTATIVE EXCHANGE window
       if (win_putative_exchange.valid())
       { if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
-        { const string msg { centred_string("["s + expected_exchange + "]"s, win_putative_exchange.width()) };
+        { const string msg { centred_string("["s + expected_exchange + RIGHT_SQUARE_BRACKET, win_putative_exchange.width()) };
         
           win_putative_exchange < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
         }
@@ -6333,7 +6328,7 @@ void populate_win_info(const string_view callsign)
         SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"sv), wpx_prefix, callsign);                                                          // WPX
 
         if (!callsign_mult_value.empty())
-        { line = pad_right(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH);
+        { line = pad_right(callsign_mult + " ["s + callsign_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
 
           for (const BAND b : bands)
             line += pad_left( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-"s ), FIELD_WIDTH);
@@ -6392,16 +6387,13 @@ string expand_cw_message(const string_view msg)
       }
     }
     
-//    octothorpe_replaced = replace(msg, "#"s, octothorpe_str);
     octothorpe_replaced = replace(msg, OCTOTHORPE, octothorpe_str);
   }
 
-//  const string at_replaced { replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), "@"s, at_call) };
   const string at_replaced { replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), COMAT, at_call) };
 
   SAFELOCK(last_exchange);
 
-//  const string asterisk_replaced { replace(at_replaced, "*"s, last_exchange) };
   const string asterisk_replaced { replace(at_replaced, ASTERISK, last_exchange) };
 
   return asterisk_replaced;
@@ -6457,11 +6449,10 @@ void simulator_thread(string filename, int max_n_qsos)
   const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : qso_lines.size()) };    // either apply a limit or run them all
 
   for (unsigned int n { 1 }; n <= n_qso_limit; ++n)
-  { const string& line { qso_lines[n - 1] };
-    const QSO     qso  { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
-    const QSO&    rec   { qso };
-
-    const string     str_frequency { rec.freq() };
+  { const string& line          { qso_lines[n - 1] };
+    const QSO     qso           { allow_for_callsign_mults( QSO { context, line, rules, statistics } ) };
+    const QSO&    rec           { qso };
+    const string  str_frequency { rec.freq() };
 
     if (str_frequency != last_frequency)
     { rig_ptr -> rig_frequency(frequency(str_frequency));
@@ -6540,7 +6531,7 @@ void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT fo
     return;
 
 // local function to perform the update
-  auto perform_update = [force_known] (const string& callsign_mult_name, const string& prefix)    // must be string, not string_view because of [] operator used below
+  auto perform_update = [force_known] (const string_view callsign_mult_name, const string& prefix)    // must be string, not string_view because of [] operator used below
     { if (!prefix.empty())          // because sac_prefix() can return an empty string
       { bool is_known;              // we use the is_known variable because we don't want to perform a window update while holding a lock
 
@@ -6569,17 +6560,17 @@ void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT fo
     const string      country        { location_db.canonical_prefix(callsign) };
     const STRING_SET  callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
-    if ((continent == "AS"sv) and callsign_mults.contains("AAPX"s))
-      perform_update("AAPX"s, wpx_prefix(callsign));
+    if (const string_view pfx_type { "AAPX"sv }; (continent == "AS"sv) and callsign_mults.contains(pfx_type))
+      perform_update(pfx_type, wpx_prefix(callsign));
 
-    if ((continent == "OC"sv) and callsign_mults.contains("OCPX"s))
-      perform_update("OCPX"s, wpx_prefix(callsign));
+    if (const string_view pfx_type { "OCPX"sv }; (continent == "OC"sv) and callsign_mults.contains(pfx_type))
+      perform_update(pfx_type, wpx_prefix(callsign));
 
-    if (callsign_mults.contains("SACPX"s))
-      perform_update("SACPX"s, sac_prefix(callsign));
+    if (const string_view pfx_type { "SACPX"sv }; callsign_mults.contains(pfx_type))
+      perform_update(pfx_type, sac_prefix(callsign));
 
-    if ((country == "ON"sv) and callsign_mults.contains("UBAPX"s))
-      perform_update("UBAPX"s, wpx_prefix(callsign));
+    if (const string_view pfx_type { "UBAPX"sv }; (country == "ON"sv) and callsign_mults.contains(pfx_type))
+      perform_update(pfx_type, wpx_prefix(callsign));
   }
 }
 
@@ -6591,7 +6582,6 @@ void update_known_callsign_mults(const string_view callsign, const KNOWN_MULT fo
     Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file,
     and if the accumulator has reached the threshold
 */
-//bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known)
 bool update_known_country_mults(const string_view callsign, const KNOWN_MULT force_known)
 { if (callsign.empty())
     return false;
@@ -6661,7 +6651,6 @@ void archive_data(void)
 /*! \brief                      Extract the data from the archive file
     \param  archive_filename    name of the file that contains the archive
 */
-//void restore_data(const string& archive_filename)
 void restore_data(const string_view archive_filename)
 { if (file_exists(archive_filename))
   { try

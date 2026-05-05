@@ -178,7 +178,6 @@ string hamlib_capabilities::to_string(void) const
 
 #pragma pop_macro("LOCK")
 
-//  WRITE_CAPABILITY(LOCK);
   WRITE_CAPABILITY(MUTE);
   WRITE_CAPABILITY(VSC);
   WRITE_CAPABILITY(REV);

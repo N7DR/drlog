@@ -65,6 +65,8 @@ protected:
   unsigned int                                                      _qtc_qsos_sent   { 0 };     ///< total number of QSOs sent in QTCs
   unsigned int                                                      _qtc_qsos_unsent { 0 };     ///< total number of (legal) QSOs available but not yet sent in QTCs
 
+  mutable pt_mutex _statistics_mutex { "STATISTICS"s };                                                           ///< mutex for statistics
+
 /*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
@@ -110,10 +112,8 @@ public:
   void prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
 
   SAFEREAD(callsign_mults_used, statistics);                ///< are callsign mults used?
-
   SAFEREAD(country_multipliers, statistics);                ///< country multipliers
   SAFEREAD(country_mults_used, statistics);                 ///< are country mults used?
-
   SAFEREAD(exchange_mults_used, statistics);                ///< are exchange mults used?
 
 /*! \brief          How many QSOs have been made?

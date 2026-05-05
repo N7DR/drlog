@@ -40,13 +40,14 @@ using namespace std::literals::string_view_literals;
 
 // see https://stackoverflow.com/questions/44636549/why-is-there-no-support-for-concatenating-stdstring-and-stdstring-view
 // brain-dead: cannot perform s + sv until at least C++26
-constexpr std::string EOL { "\n"s };            ///< end-of-line marker as string
+//constexpr std::string EOL { "\n"s };            ///< end-of-line marker as string
 
-constexpr char EOL_CHAR { '\n' };                   ///< end-of-line marker as character
+//constexpr char EOL { '\n' };                   ///< end-of-line marker as character
 
 constexpr std::string LF_STR { "\n"s };           ///< LF as string
 constexpr std::string CR_STR { "\r"s };           ///< CR as string
 constexpr std::string CRLF   { "\r\n"s };         ///< CR followed by LF
+constexpr std::string EOL_STR { "\n"s };            ///< end-of-line marker as string
 
 constexpr std::string DOT_STR   { "."s };        ///< full stop as string
 constexpr std::string EMPTY_STR { };             ///< an empty string
@@ -72,17 +73,19 @@ constexpr char CR                   { CARRIAGE_RETURN };
 constexpr char DASH                 { '-' };
 constexpr char DOLLAR               { '$' };
 constexpr char DOT                  { '.' };
+constexpr char EOL                  { '\n' };
 constexpr char EQUALS               { '=' };
 constexpr char EXCLAMATION_MARK     { '!' };
 constexpr char GREATER_THAN         { '>' };
 constexpr char GT                   { GREATER_THAN };
 constexpr char HYPHEN               { DASH };
+constexpr char LEFT_ANGLE_BRACKET   { '<' };
 constexpr char LEFT_BRACE           { '{' };
 constexpr char LEFT_CURLY_BRACKET   { LEFT_BRACE };
 constexpr char LEFT_PAREN           { '(' };
 constexpr char LEFT_PARENTHESIS     { LEFT_PAREN };
 constexpr char LEFT_SQUARE_BRACKET  { '[' };
-constexpr char LESS_THAN            { '<' };
+constexpr char LESS_THAN            { LEFT_ANGLE_BRACKET };
 constexpr char LF                   { '\n' };
 constexpr char LT                   { LESS_THAN };
 constexpr char LINEFEED             { LF };
@@ -93,6 +96,7 @@ constexpr char PIPE                 { '|' };
 constexpr char PLUS                 { '+' };
 constexpr char QUESTION_MARK        { '?' };
 constexpr char QUOTATION_MARK       { '"' };
+constexpr char RIGHT_ANGLE_BRACKET  { GREATER_THAN };
 constexpr char RIGHT_BRACE          { '}' };
 constexpr char RIGHT_CURLY_BRACKET  { RIGHT_BRACE };
 constexpr char RIGHT_PAREN          { ')' };
@@ -103,10 +107,6 @@ constexpr char SLASH                { '/' };
 constexpr char SPACE                { ' ' };
 constexpr char TAB                  { '\t' };
 constexpr char UNDERSCORE           { '_' };
-
-//constexpr char DEGREE          { '°' };
-
-//constexpr char DEGREE { "°"s [0] }; // doesn't work
 
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -327,7 +327,6 @@ inline auto substring(const std::string_view str, const size_t start_posn) -> ST
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-//std::string replace_char(const std::string_view s, const char old_char, const char new_char);
 std::string replace(const std::string_view s, const char old_char, const char new_char);
 
 /*! \brief              Replace every instance of one character with a string
@@ -336,7 +335,6 @@ std::string replace(const std::string_view s, const char old_char, const char ne
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_str</i>
 */
-//std::string replace_char(const std::string_view s, const char old_char, const char new_char);
 std::string replace(const std::string_view s, const char old_char, const std::string_view new_str);
 
 /*! \brief              Replace every instance of one string with another
@@ -460,7 +458,6 @@ inline bool is_digit(const char c)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
 std::string pad_string(const std::string_view s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = SPACE);
 
 /*! \brief              Left pad a string to a particular size
@@ -471,7 +468,6 @@ std::string pad_string(const std::string_view s, const size_t len, const enum PA
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = ' ')
 inline std::string pad_left(const std::string_view s, const size_t len, const char pad_char = SPACE)
   { return pad_string(s, len, PAD::LEFT, pad_char); }
 
@@ -485,7 +481,6 @@ inline std::string pad_left(const std::string_view s, const size_t len, const ch
 */
 template <typename T>
   requires (std::is_integral_v<T>)
-//inline std::string pad_left(T s, const size_t len, const char pad_char = ' ')
 inline std::string pad_left(T s, const size_t len, const char pad_char = SPACE)
   { return pad_left(std::string_view { to_string(s) }, len, pad_char); }
 
@@ -910,7 +905,7 @@ std::vector<std::string> remove_empty_lines(const std::vector<std::string>& line
     \return             vector containing the separate lines
 */
 template <typename STYPE>
-inline auto to_lines(const std::string_view cs, const std::string_view eol_marker = EOL) -> std::vector<STYPE>
+inline auto to_lines(const std::string_view cs, const std::string_view eol_marker = EOL_STR) -> std::vector<STYPE>
   { return split_string <STYPE> (cs, eol_marker); }
 
 /*! \brief      Remove peripheral instances of a specific character
@@ -1394,10 +1389,10 @@ std::string longest(T&& strs)
     This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
     Still needed in 15.1
 */
-template <typename T>
- requires is_container_of_strings<T>
-inline void STRC_ERASE(T& c, const std::string& str)
-  { c.erase(str); }
+//template <typename T>
+// requires is_container_of_strings<T>
+//inline void STRC_ERASE(T& c, const std::string& str)
+//  { c.erase(str); }
 
 /*! \brief        Erase a string from a container of strings
     \param  c     target container
@@ -1406,12 +1401,12 @@ inline void STRC_ERASE(T& c, const std::string& str)
     This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
     Still needed in 15.1
 */
-template <typename T>
- requires is_container_of_strings<T>
-inline void STRC_ERASE(T& c, const std::string_view sv)
-{ if ( const auto posn { c.find(sv) }; posn != c.end() )
-    c.erase(posn);
-}
+//template <typename T>
+// requires is_container_of_strings<T>
+//inline void STRC_ERASE(T& c, const std::string_view sv)
+//{ if ( const auto posn { c.find(sv) }; posn != c.end() )
+//    c.erase(posn);
+//}
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
@@ -1444,7 +1439,8 @@ inline std::string remove_substring(const std::string_view cs, const std::string
     \return     string of <i>n</i> space characters
 */
 inline std::string space_string(const int n)
-  { return (n > 0 ? create_string((char)32, n) : std::string { }); }
+//  { return (n > 0 ? create_string((char)32, n) : std::string { }); }
+  { return (n > 0 ? create_string(SPACE, n) : std::string { }); }
 
 /*! \brief          Write a <i>vector<string></i> object to an output stream
     \param  ost     output stream

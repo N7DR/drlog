@@ -145,9 +145,6 @@ public:
 
 #pragma pop_macro("LOCK")
 
-//  inline bool LOCK(void) const
-//    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::LOCK) ); }
-
   HAS_CAPABILITY(MUTE);
   HAS_CAPABILITY(VSC);
   HAS_CAPABILITY(REV);
@@ -180,10 +177,6 @@ public:
   HAS_CAPABILITY(SEND_VOICE_MEM);
   HAS_CAPABILITY(OVF_STATUS);
   HAS_CAPABILITY(SYNC);
-
-
-//  inline bool FAGC(void) const
-//    { return ( _caps bitand static_cast<HAMLIB_CAPABILITIES_TYPE>(HAMLIB_CAPABILITY::FAGC) ); }
 
 #undef HAS_CAPABILITY
 

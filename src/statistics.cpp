@@ -883,7 +883,7 @@ unsigned int running_statistics::n_worked_country_mults(const contest_rules& rul
 
   SAFELOCK(statistics);
 
-  FOR_ALL(score_bands, [&per_band_country_mult_factor, &rv, this] (const BAND b) { rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b)); } );
+  FOR_ALL(score_bands, [this, &per_band_country_mult_factor, &rv] (const BAND b) { rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b)); } );
 
   return rv;
 }
@@ -1069,7 +1069,7 @@ bool call_history::worked_on_another_band_and_mode(const string_view s, const BA
   for (const auto& [call, sbm] : _history)
   { if (s == call)
     { if (ANY_OF(sbm, [b, m] (const auto& bm) { return ((bm.first != b) and (bm.second != m)); }) )
-      //if (ANY_OF(sbm, [b, m] (const auto& [ban, mod]) { return ((ban != b) and (mod != m)); }) )    // still not valid, even in C++23. Or C++26.
+      //if (ANY_OF(sbm, [b, m] (const auto& [ban, mod]) { return ((ban != b) and (mod != m)); }) )    // still not valid, even in C++23. Or C++26. Last tested: gcc 16.1.
         return true;
     }
   }

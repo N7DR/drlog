@@ -56,7 +56,7 @@ string autocorrect_database::corrected_call(const string_view str) const
   if (const string from_cache { MUM_VALUE(_cache, str) }; !from_cache.empty())
     return from_cache;
 
-  const bool present { contains(str) };
+  const bool present { contains(str) };   // whether str is a known good call
   const bool absent  {!present };
 
 // return known good call
@@ -66,14 +66,13 @@ string autocorrect_database::corrected_call(const string_view str) const
 // absent should always be true from this point on; but let's not assume it in case we change something later
 
 // long call ends with a bust of "TEST"
-//  static const STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
   static const FLAT_STRING_SET broken_TEST { "EAE"s, "EETE"s, "EST"s, "NST"s, "TEAT"s, "TEET"s, "TEIT"s, "TENT"s, "TETT"s, "TRT"s, "TUT"s };
 
   for ( const auto& broken_suffix : broken_TEST )
   { const size_t broken_length { broken_suffix.size() };
 
     if ( absent and (str.size() >= (broken_length + 3)) and str.ends_with(broken_suffix) )
-    { if (const string call_to_test { substring <std::string> (str, 0, str.size() - broken_length) }; contains(call_to_test))
+    { if (const string call_to_test { substring <string> (str, 0, str.size() - broken_length) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -83,28 +82,28 @@ string autocorrect_database::corrected_call(const string_view str) const
 //   T in front of a US K call
 //   T in front of a US N call
   if (absent and (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv)))
-  { if (const string call_to_test { substring <std::string> (str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { substring <string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // PA copied as GA
   if (absent and str.starts_with("GA"sv))
   { if (absent)
-    { if (const string call_to_test { "PA"s + substring <std::string> (str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "PA"s + substring <string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
 
 // US N call copied as I#
   if (absent and str.starts_with('I') and (str.length() > 1) and isdigit(str[1]))
-  { if (const string call_to_test { "N"s + substring <std::string> (str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { "N"s + substring <string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // JA miscopied as JT
   if (str.starts_with("JT"sv))
   { if (absent)
-    { if (const string call_to_test { "JA"s + substring <std::string> (str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "JA"s + substring <string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -112,7 +111,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 // initial K or initial W copied as an initial M; if both K and W are valid, then we simply choose K
   if (str.starts_with('M'))
   { if (absent)
-    { const string sub { substring <std::string> (str, 1) };
+    { const string sub { substring <string> (str, 1) };
 
       if (const string call_to_test { "K"s + sub }; contains(call_to_test))
         return insert(str, call_to_test);
@@ -125,7 +124,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 // initial L copied as an initial D
   if (str.starts_with('D'))
   { if (absent)
-    { if (const string call_to_test { "L"s + substring <std::string> (str, 1) }; contains(call_to_test))
+    { if (const string call_to_test { "L"s + substring <string> (str, 1) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -133,7 +132,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 // UA copied as MA
   if (str.starts_with("MA"sv))
   { if (absent)
-    { if (const string call_to_test { "UA"s + substring <std::string> (str, 2) }; contains(call_to_test))
+    { if (const string call_to_test { "UA"s + substring <string> (str, 2) }; contains(call_to_test))
         return insert(str, call_to_test);
     }
   }
@@ -158,7 +157,7 @@ string autocorrect_database::corrected_call(const string_view str) const
       case 'R' :
       case 'S' :
         
-        if (const string call_to_test { "J"s + substring <std::string> (str, 1) }; contains(call_to_test))
+        if (const string call_to_test { "J"s + substring <string> (str, 1) }; contains(call_to_test))
           return insert(str, call_to_test);
 
       default :
@@ -168,31 +167,31 @@ string autocorrect_database::corrected_call(const string_view str) const
 
 // US K call copied as TT#
   if (absent and str.starts_with("TT"sv) and (str.length() > 2) and isdigit(str[2]))
-  { if (const string call_to_test { "K"s + substring <std::string> (str, 2) }; contains(call_to_test))
+  { if (const string call_to_test { "K"s + substring <string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // US N call copied as T#
   if (absent and str.starts_with('T') and (str.length() > 1) and isdigit(str[1]))
-  { if (const string call_to_test { "N"s + substring <std::string> (str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { "N"s + substring <string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // initial PY copied as initial TM
   if (absent and str.starts_with("TM"sv))
-  { if (const string call_to_test { "PY"s + substring <std::string> (str, 2) }; contains(call_to_test))
+  { if (const string call_to_test { "PY"s + substring <string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // initial YB copied as initial TI
   if (absent and str.starts_with("TI"sv))
-  { if (const string call_to_test { "YB"s + substring <std::string> (str, 2) }; contains(call_to_test))
+  { if (const string call_to_test { "YB"s + substring <string> (str, 2) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
 // /P is quite often reported by the RBN as /W, especially in NFD
   if (absent and str.ends_with("/W"sv))
-  { const string base_call_to_test { substring <std::string> (str, 0, str.length() - 2) };
+  { const string base_call_to_test { substring <string> (str, 0, str.length() - 2) };
 
     if (contains(base_call_to_test) or contains(base_call_to_test + "/P"s))
       return insert(str, base_call_to_test + "/P"s);
@@ -222,7 +221,7 @@ void band_dynamic_autocorrect_database::prune(const int n_minutes)
     if (time_in_minutes <= target_min)
       keys_to_remove += time_in_minutes;
 
-  FOR_ALL(keys_to_remove, [this] (const time_t key_to_remove) { _data_map_map_map -= key_to_remove; }); // actually perform the removal
+  FOR_ALL(keys_to_remove, [this] (const time_t key_to_remove) { _data_map_map_map -= key_to_remove; }); // perform the removal
 }
 
 /*! \brief      Set the value of the band
@@ -315,8 +314,8 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     ost << this -> to_string() << endl;
   }
   else
-  { string best_match; // { hits.begin()->first };
-    int    highest_n;  //  { hits.begin()->second };
+  { string best_match;
+    int    highest_n;
 
     tie(best_match, highest_n) = *(hits.begin());
 //    auto [ best_match, highest_n ] { *(hits.begin()) };   // this makes the new values const; presumably because the key is const
@@ -344,13 +343,12 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
 string band_dynamic_autocorrect_database::to_string(const int n_spaces) const
 { string rv;
 
-  const string leading_spaces { (n_spaces == 0) ? ""s : create_string(' ', n_spaces) };
+  const string leading_spaces { (n_spaces == 0) ? string { } : create_string(SPACE, n_spaces) };
 
   lock_guard<recursive_mutex> lg(_mtx);
 
   for (const auto& [t, fcn] : _data_map_map_map)
-  { //rv += leading_spaces + ::to_string(t) + ":"s + EOL;
-    rv += leading_spaces + ::to_string(t) + ':' + EOL;
+  { rv += leading_spaces + ::to_string(t) + COLON + EOL;
 
     for (const auto& [f, cn] : fcn)
     { rv += leading_spaces + "  "s + ::to_string(f) + "  :"s + EOL;
@@ -445,8 +443,7 @@ string dynamic_autocorrect_database::to_string(void) const
   const set<BAND> bands { _known_bands() };
 
   for (const BAND b : bands)
-  { // rv += "band: "s + BAND_NAME.at(b) + "m"s + EOL;
-    rv += "band: "s + BAND_NAME.at(b) + 'm' + EOL;
+  { rv += "band: "s + BAND_NAME.at(b) + 'm' + EOL;
     rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "N_SPACES" means to prepend each line with N_SPACES spaces
   }
 

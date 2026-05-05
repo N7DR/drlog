@@ -39,10 +39,7 @@ extern message_stream    ost;           ///< for debugging and logging
     This is actually quite difficult to do properly
 */
 vector<string> from_csv(const string_view line)
-{ //constexpr char quote { '"' };
-  //constexpr char comma { ',' };
-
-  vector<string> rv;
+{ vector<string> rv;
 
   size_t posn { 0 };
 
@@ -499,8 +496,8 @@ string centred_string(const string_view str, const unsigned int width)
   if (len == width)
     return string { str };
 
-  const string l { create_string(' ', (width - len) / 2) };
-  const string r { create_string(' ', width - len - l.length()) };
+  const string l { create_string(SPACE, (width - len) / 2) };
+  const string r { create_string(SPACE, width - len - l.length()) };
 
   return (l + string { str } + r);
 }
@@ -580,7 +577,7 @@ vector<size_t> starts_of_words(const string_view s)
     return rv;
 
 // start of first word
-  size_t posn { s.find_first_not_of(' ', 0) };
+  size_t posn { s.find_first_not_of(SPACE, 0) };
 
   if (posn == string::npos)
     return rv;
@@ -589,12 +586,12 @@ vector<size_t> starts_of_words(const string_view s)
 
 // next space
   while (true)
-  { posn = s.find_first_of(' ', posn);
+  { posn = s.find_first_of(SPACE, posn);
 
     if (posn == string::npos)
       return rv;
 
-    posn = s.find_first_not_of(' ', posn);
+    posn = s.find_first_not_of(SPACE, posn);
 
     if (posn == string::npos)
       return rv;
@@ -614,14 +611,14 @@ size_t next_word_posn(const string_view str, const size_t current_posn)
 { if (str.length() <= current_posn)
     return string::npos;
 
-  const bool is_space { (str[current_posn] == ' ') };
+  const bool is_space { (str[current_posn] == SPACE) };
 
   if (is_space)
-    return ( str.find_first_not_of(' ', current_posn) );
+    return ( str.find_first_not_of(SPACE, current_posn) );
 
 // we are inside a word
-  const size_t space_posn { str.find_first_of(' ', current_posn) };
-  const size_t word_posn  { str.find_first_not_of(' ', space_posn) };
+  const size_t space_posn { str.find_first_of(SPACE, current_posn) };
+  const size_t word_posn  { str.find_first_not_of(SPACE, space_posn) };
 
   return word_posn;
 }
@@ -685,7 +682,7 @@ size_t n_chars(const string_view str)
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 bool is_legal_ipv4_address(const string_view cs)
-{ const vector<string_view> fields { split_string <std::string_view> (cs, '.') };
+{ const vector<string_view> fields { split_string <std::string_view> (cs, DOT) };
 
   if (fields.size() != 4)
     return false;
@@ -721,7 +718,7 @@ string convert_to_dotted_decimal(const uint32_t val)
   for (int n { 0 }; n < (N_BYTES - 1); n++)
   { const unsigned char c { cp[n] };
   
-    rv += to_string(static_cast<int>(c)) + '.';
+    rv += to_string(static_cast<int>(c)) + DOT;
   }
 
   const unsigned char c { cp[N_BYTES - 1] };
@@ -839,7 +836,7 @@ string reformat_for_wprintw(const string_view str, const int width)
   for (size_t posn { 0 }; posn < str.length(); ++posn)
   { const char c { str[posn] };
 
-    if (c != EOL_CHAR)
+    if (c != EOL)
     { rv += c;
       since_last_newline++;
     }
@@ -914,10 +911,10 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
     For example, a call such as VP9/G4AMJ/P returns G4AMJ.
 */
 string base_call(const string_view callsign)
-{ if (!callsign.contains('/'))
+{ if (!callsign.contains(SLASH))
     return string { callsign };
 
-  return longest( split_string <std::string_view> (callsign, '/') );
+  return longest( split_string <std::string_view> (callsign, SLASH) );
 }
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
@@ -1080,7 +1077,7 @@ string read_until(istream& in, const string_view delimiter, const DELIMITERS kee
   { string temp;
 
     getline(in, temp, delim);
-    cr += temp + delim;
+    cr += (temp + delim);
     tot = cr.size();
   } while ( (tot < sz) or (cr.substr(tot - sz, sz) != delimiter) );
 
@@ -1097,7 +1094,7 @@ string hex_string(const string_view str)
   stream << hex << setfill('0');
 
   for (const auto c : str)
-    stream << setw(2) << static_cast<int>(static_cast<unsigned char>(c)) << ' ';  // setw needs to be sent for every character!
+    stream << setw(2) << static_cast<int>(static_cast<unsigned char>(c)) << SPACE;  // setw needs to be sent for every character!
 
   return stream.str();
 }

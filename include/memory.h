@@ -20,10 +20,13 @@
 
 #include <chrono>
 #include <mutex>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 
 using namespace std::literals::chrono_literals;
 using namespace std::literals::string_literals;
+using namespace std::literals::string_view_literals;
 
 // -----------  memory_information ----------------
 
@@ -38,7 +41,6 @@ protected:
   std::chrono::system_clock::time_point _last_update_time;         ///< time at which /proc/meminfo was last read
   std::chrono::system_clock::duration   _minimum_interval;         ///< minimum interval between unforced reads of /proc/meminfo
 
-//  std::unordered_map<std::string /* name */, uint64_t /* value */> _values; ///< all the values from /proc/meminfo; see "man free", "man procfs"
   UNORDERED_STRING_MAP<uint64_t /* value */> _values; ///< all the values from /proc/meminfo; see "man free", "man procfs"; key = name
 
 /*! \brief          Possibly read /proc/meminfo
@@ -53,13 +55,17 @@ public:
 /*! \brief              Constructor
     \param  min_int     the minimum interval between reads of /proc/meminfo
 */
-  memory_information(const std::chrono::system_clock::duration min_int = 1s);
+  inline explicit memory_information(const std::chrono::system_clock::duration min_int = 1s) :
+    _minimum_interval(min_int),
+    _last_update_time { std::chrono::system_clock::now() - (2 * min_int) }        // force update when _get_meminfo() is called
+  { _get_meminfo(); }
+
 
   READ_AND_WRITE(minimum_interval);         ///< minimum interval between unforced reads of /proc/meminfo
 
 /// get MemTotal
   inline uint64_t mem_total(const bool force = false)
-    { return ( _get_meminfo(force), _values.at("MemTotal"s) ); }             // MemTotal:        8178256 kB
+    { return ( _get_meminfo(force), _values.at("MemTotal"sv) ); }             // MemTotal:        8178256 kB
 
 /// get MemFree
   inline uint64_t mem_free(const bool force = false)

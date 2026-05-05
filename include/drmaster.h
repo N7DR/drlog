@@ -28,6 +28,8 @@
 #include <unordered_map>
 #include <vector>
 
+#if 0
+
 // -----------------------------------------------------  master_dta  ---------------------------------
 
 /*! \class  master_dta
@@ -62,6 +64,10 @@ public:
   inline std::vector<std::string> calls(void) const
     { return _calls; }
 };
+
+#endif
+
+#if 0
 
 // -----------------------------------------------------  trmaster_line  ---------------------------------
 
@@ -163,6 +169,10 @@ public:
 */
 std::ostream& operator<<(std::ostream& ost, const trmaster_line& trml);
 
+#endif
+
+#if 0
+
 // -----------------------------------------------------  trmaster  ---------------------------------
 
 /*! \class  trmaster
@@ -197,11 +207,15 @@ public:
   std::vector<std::string> calls(void) const;
 };
 
+#endif
+
 // -----------------------------------------------------  drmaster_line  ---------------------------------
 
 /*! \class  drmaster_line
     \brief  Manipulate a line from a drmaster file
 */
+
+constexpr unsigned int TRMASTER_N_USER_PARAMETERS { 5 };      ///< the number of user parameters in a TRMASTER file
 
 class drmaster_line
 {
