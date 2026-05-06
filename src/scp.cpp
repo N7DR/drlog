@@ -38,14 +38,15 @@ void scp_database::operator+=(const string_view call)
     \param  call    call to remove
     \return         whether <i>call</i> was actually removed
 */
-bool scp_database::remove_call(const std::string_view call)
+bool scp_database::remove_call(const string_view call)
 { bool rv { false };
 
   if (call.length() >= 2)
   { for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
-    { SCP_SET& ss { _db[substring <std::string> (call, start_index, 2)] };
+    { SCP_SET& ss { _db[substring <string> (call, start_index, 2)] };
 
-      rv = (ss.erase(string(call)) == 1);       // key remains, regardless of whether the set of matches is empty; erase does not yet support string_view
+//      rv = (ss.erase(string(call)) == 1);       // key remains, regardless of whether the set of matches is empty; erase does not yet support string_view
+      rv = (ss.erase(call) == 1);       // key remains, regardless of whether the set of matches is empty; erase does not yet support string_view
     }
   }
 
@@ -55,7 +56,7 @@ bool scp_database::remove_call(const std::string_view call)
 /*! \brief          Remove a call from the database
     \param  call    call to remove
 */
-void scp_database::operator-=(const std::string_view call)
+void scp_database::operator-=(const string_view call)
 { if (call.length() >= 2)
     for ( auto start_index : RANGE<unsigned int>(0, call.length() - 1) )
       _db[substring <std::string> (call, start_index, 2)].erase(string(call));       // key remains, regardless of whether the set of matches is empty; erase does not yet support string_view
@@ -63,7 +64,7 @@ void scp_database::operator-=(const std::string_view call)
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call
-    \return         whether <i>call</i> was actually removed
+    \return         all the partial matches for <i>key</i>
 */
 SCP_SET scp_database::operator[](const string_view key)
 { if (key.length() < 2)
@@ -93,7 +94,7 @@ SCP_SET scp_database::operator[](const string_view key)
   }
   
 // cache miss
-  const SCP_SET& calls { _db[substring <std::string> (key, 0, 2)] };
+  const SCP_SET& calls { _db[substring <string> (key, 0, 2)] };
 
   SCP_SET rv;
 
@@ -133,7 +134,7 @@ void scp_databases::add_db(scp_database& db)
 /// return matches
 SCP_SET scp_databases::operator[](const string_view key)
 { if (key.length() < 2)
-    return SCP_SET();
+    return SCP_SET { };
 
   if (key.length() == 2)         // trivial lookup
   { _last_key = key;
@@ -168,7 +169,7 @@ SCP_SET scp_databases::operator[](const string_view key)
   for (auto& db_p : _vec)
   { scp_database& db { *(db_p) };
 
-    const SCP_SET& calls { db[substring <std::string> (key, 0, 2)] };
+    const SCP_SET& calls { db[substring <string> (key, 0, 2)] };
 
     for (const auto& callsign : calls)
       if (callsign.contains(key))
@@ -185,7 +186,7 @@ SCP_SET scp_databases::operator[](const string_view key)
 void scp_databases::clear_cache(void)
 { clear_cache_no_children();
 
-  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
+  FOR_ALL(_vec, [] (scp_database* db_p) { db_p -> clear_cache(); } );
 }
 
 /// clear the cache without clearing the caches of any children

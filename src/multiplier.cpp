@@ -31,7 +31,6 @@ pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the
 
     Returns false if the value <i>str</i> was already known
 */
-//bool multiplier::add_known(const std::string& str)
 bool multiplier::add_known(const string_view str)
 { SAFELOCK(multiplier);
 
@@ -40,7 +39,7 @@ bool multiplier::add_known(const string_view str)
 
   const auto [_, rv] { _known.insert(string { str }) };       // .insert() returns whether it was successful in second parameter
 
-  if (rv and _all_values_are_mults and str.contains('*'))        // did we just add the first non-mult value?
+  if (rv and _all_values_are_mults and str.contains(ASTERISK))        // did we just add the first non-mult value?
     _all_values_are_mults = false;
 
   return rv;
@@ -55,14 +54,9 @@ void multiplier::remove_known(const string_view str)
 { SAFELOCK(multiplier);
 
   if (_used)
-  { //STRC_ERASE(_known, str);
+    _known.erase(str);
 
-    _known.erase(str);      // should work in C++23, but not yet supported (P2077R3): https://gcc.gnu.org/onlinedocs/gcc-14.2.0/libstdc++/manual/manual/status.html#status.iso.2023
-                              // still not available: https://gcc.gnu.org/onlinedocs/gcc-15.1.0/libstdc++/manual/manual/status.html#status.iso.2020
-  }
-
-//  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !contains(known_value, '*'); } );
-  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !known_value.contains('*'); } );
+  _all_values_are_mults = ALL_OF(_known, [] (const string& known_value) { return !known_value.contains(ASTERISK); } );
 }
 
 /*! \brief          Is a particular value a known multiplier value?
@@ -138,7 +132,6 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
     const int m_nr { static_cast<int>(m) };
 
     _worked[m_nr][b_nr].erase(str);
-//    STRC_ERASE(_worked[m_nr][b_nr], str);
 
 // is it still present in any band for this mode?
     bool present { false };
@@ -148,7 +141,6 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
-//      STRC_ERASE(_worked[m_nr][ANY_BAND], str);
 
 // is it still present in any mode for this band?
     present = false;
@@ -158,14 +150,12 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
-//      STRC_ERASE(_worked[ANY_MODE][b_nr], str);
 
 // is it still present in any band and any mode?
     present = (_worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str) );
 
     if (!present)
       _worked[ANY_MODE][ANY_BAND].erase(str);
-//      STRC_ERASE(_worked[ANY_MODE][ANY_BAND], str);
   }
 }
 

@@ -243,7 +243,9 @@ template<typename STYPE>
     \param  putative_value  value to test
     \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-  bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const;
+//  bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const;
+  inline bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const
+    { return ( is_legal_canonical_value(cv) ? _values.at(cv).contains(putative_value) : false );  }
 
 /// serialise
   template<typename Archive>
@@ -564,9 +566,6 @@ public:
     Does nothing if <i>b</i> is already permitted
 */
   void add_permitted_band(const BAND b);
-
-/// get the next band that is lower in frequency than a given band
-//  BAND next_band_down(const BAND current_band) const;
   
   RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
 

@@ -268,12 +268,12 @@ adif3_field::adif3_field(const string_view field_name, const string_view field_v
     Returns string::npos if reads past the end of <i>str</i>
 */
 size_t adif3_field::import_and_eat(const string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const STRING_SET& accept_fields)
-{ const auto posn_1 { str.find('<', start_posn) };
+{ const auto posn_1 { str.find(LEFT_ANGLE_BRACKET, start_posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
 
-  const auto posn_2          { str.find('>', posn_1) };
+  const auto posn_2          { str.find(RIGHT_ANGLE_BRACKET, posn_1) };
   const bool pointing_at_eor { (posn_2 == end_posn) };
 
   if (pointing_at_eor)
@@ -284,7 +284,7 @@ size_t adif3_field::import_and_eat(const string_view str, const size_t start_pos
 
 // if it's the EOR, then jump out
   const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
-  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, ':') };
+  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, COLON) };
 
   if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
     return string::npos;
@@ -495,7 +495,7 @@ adif3_file::adif3_file(const string_view filename, const STRING_SET& accept_fiel
 adif3_file::adif3_file(const vector<string>& path, const string_view filename, const STRING_SET& accept_fields)
 { for (const auto& this_path : path)
   { try
-    { *this = adif3_file { this_path + '/' + filename, accept_fields };
+    { *this = adif3_file { this_path + SLASH + filename, accept_fields };
       return;
     }
 

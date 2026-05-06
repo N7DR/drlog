@@ -38,15 +38,9 @@
 using namespace std::literals::string_literals;
 using namespace std::literals::string_view_literals;
 
-// see https://stackoverflow.com/questions/44636549/why-is-there-no-support-for-concatenating-stdstring-and-stdstring-view
-// brain-dead: cannot perform s + sv until at least C++26
-//constexpr std::string EOL { "\n"s };            ///< end-of-line marker as string
-
-//constexpr char EOL { '\n' };                   ///< end-of-line marker as character
-
-constexpr std::string LF_STR { "\n"s };           ///< LF as string
-constexpr std::string CR_STR { "\r"s };           ///< CR as string
-constexpr std::string CRLF   { "\r\n"s };         ///< CR followed by LF
+constexpr std::string LF_STR  { "\n"s };           ///< LF as string
+constexpr std::string CR_STR  { "\r"s };           ///< CR as string
+constexpr std::string CRLF    { "\r\n"s };         ///< CR followed by LF
 constexpr std::string EOL_STR { "\n"s };            ///< end-of-line marker as string
 
 constexpr std::string DOT_STR   { "."s };        ///< full stop as string
@@ -1382,32 +1376,6 @@ std::string longest(T&& strs)
   return rv;
 }
 
-/*! \brief        Erase a string from a container of strings
-    \param  c     target container
-    \param  str   string to erase
-
-    This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
-    Still needed in 15.1
-*/
-//template <typename T>
-// requires is_container_of_strings<T>
-//inline void STRC_ERASE(T& c, const std::string& str)
-//  { c.erase(str); }
-
-/*! \brief        Erase a string from a container of strings
-    \param  c     target container
-    \param  str   atring to erase
-
-    This should be removed once .erase() has been implemented for string_view types in the GNU C++ library
-    Still needed in 15.1
-*/
-//template <typename T>
-// requires is_container_of_strings<T>
-//inline void STRC_ERASE(T& c, const std::string_view sv)
-//{ if ( const auto posn { c.find(sv) }; posn != c.end() )
-//    c.erase(posn);
-//}
-
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
     \param  width   width of line in destination window
@@ -1439,7 +1407,6 @@ inline std::string remove_substring(const std::string_view cs, const std::string
     \return     string of <i>n</i> space characters
 */
 inline std::string space_string(const int n)
-//  { return (n > 0 ? create_string((char)32, n) : std::string { }); }
   { return (n > 0 ? create_string(SPACE, n) : std::string { }); }
 
 /*! \brief          Write a <i>vector<string></i> object to an output stream

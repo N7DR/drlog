@@ -58,10 +58,10 @@ void choice_equivalents::operator+=(const pair<string, string>& ch1_ch2)
     Throws exception if <i>ch1_ch2<i> appears to be malformed
 */
 void choice_equivalents::operator+=(const string_view ch1_ch2)
-{ if (number_of_occurrences(ch1_ch2, '+') != 1)
+{ if (number_of_occurrences(ch1_ch2, PLUS) != 1)
     throw exception();
 
-  const vector<string> vec { clean_split_string <string> (ch1_ch2, '+') };
+  const vector<string> vec { clean_split_string <string> (ch1_ch2, PLUS) };
 
   *this += { vec[0], vec[1] };
 }
@@ -72,7 +72,7 @@ void choice_equivalents::operator+=(const string_view ch1_ch2)
     If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
 */
 void choice_equivalents::add_if_choice(const string_view ch1_ch2)  // add "FIELD1+FIELD2"
-{ if (number_of_occurrences(ch1_ch2, '+') == 1)
+{ if (number_of_occurrences(ch1_ch2, PLUS) == 1)
     *this += ch1_ch2;
 }
 
@@ -118,25 +118,10 @@ void exchange_field_values::add_value(const string_view cv, const string_view v)
 STRING_SET exchange_field_values::canonical_values(void) const
 { STRING_SET rv;
 
-  for (const auto& [ cv, set_of_values ] : _values)
+  for (const auto& [ cv, _ ] : _values)
     rv += cv;
 
   return rv;
-}
-
-/*! \brief                  Is a particular value legal for a given canonical value?
-    \param  cv              canonical value
-    \param  putative_value  value to test
-    \return                 whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
-*/
-bool exchange_field_values::is_legal_value(const string_view cv, const string_view putative_value) const
-{ if (!is_legal_canonical_value(cv))
-    return false;
-
-  const auto& [ _, values ] { *(_values.find(cv)) };            // must be != cend() if we get here; at() not yet supported for heterogeneous lookup
-//  const auto values { _values.at(cv) };
-
-  return values.contains(putative_value);
 }
 
 // -------------------------  exchange_field  ---------------------------
@@ -230,15 +215,13 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
       exchange_field_values qthx;
 
- //     qthx.name(string("QTHX["s) + canonical_prefix + "]"s);
- //     qthx.name("QTHX["s + canonical_prefix + "]"s);
-      qthx.name("QTHX["s + canonical_prefix + ']');
+      qthx.name("QTHX["s + canonical_prefix + RIGHT_SQUARE_BRACKET);
 
       for (const auto& this_value : ss)
-      { if (!this_value.contains('|'))
+      { if (!this_value.contains(PIPE))
           qthx.add_canonical_value(this_value);
         else
-        { const vector<string> equivalent_values { clean_split_string <string> (this_value, '|') };
+        { const vector<string> equivalent_values { clean_split_string <string> (this_value, PIPE) };
 
           if (!equivalent_values.empty())
             qthx.add_canonical_value(equivalent_values[0]);
@@ -279,7 +262,8 @@ vector<exchange_field> contest_rules::_exchange_fields(const string_view canonic
   SAFELOCK(rules);
 
   try
-  { // the next line can throw an exception if rig has been set to a mode that is not supported by the contest
+  {
+// the next line can throw an exception if rig has been set to a mode that is not supported by the contest
     const STRING_MAP<vector<exchange_field>>& exchange { ((expand_choices == CHOICES::EXPAND) ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ) };
 
     auto cit { exchange.find(canonical_prefix) };
@@ -308,10 +292,10 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     const bool is_opt    { field_name.contains("OPT:"sv) };
 
     if (is_choice)
-    { const vector<string> choice_vec { split_string <std::string> (field_name, ':') };
+    { const vector<string> choice_vec { split_string <string> (field_name, COLON) };
 
       if (choice_vec.size() == 2)       // true if legal
-      { vector<string> choice_fields { clean_split_string <std::string> (choice_vec[1], '/') };
+      { vector<string> choice_fields { clean_split_string <string> (choice_vec[1], SLASH) };
 
         vector<exchange_field> choices;
 
@@ -322,9 +306,9 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
         string full_name;                 // A+B pseudo name of the choice
 
-        FOR_ALL(choice_fields, [&full_name] (auto& choice_field_name) { full_name += (choice_field_name + '+'); });
+        FOR_ALL(choice_fields, [&full_name] (auto& choice_field_name) { full_name += (choice_field_name + PLUS); });
 
-        exchange_field this_field(substring <std::string> (full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
+        exchange_field this_field(substring <string> (full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
         this_field.choice(choices);
         rv += this_field;
@@ -333,7 +317,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 
     if (is_opt)
     { try
-      { const string_view name { split_string <std::string_view> (field_name, ':').at(1) };
+      { const string_view name { split_string <std::string_view> (field_name, COLON).at(1) };
 
         rv += exchange_field(name, contains(exchange_mults_vec, name), is_opt);
       }
@@ -371,18 +355,18 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   { STRING_SET ss;
 
     for (auto str : clean_split_string <string> (allowed_exchange_values))
-    { str = remove_from_start <std::string> (str, "CHOICE:"sv);
+    { str = remove_from_start <string> (str, "CHOICE:"sv);
 
-      FOR_ALL(clean_split_string <string> (str, '/'), [&ss] (const string& s) { ss += s; } );
+      FOR_ALL(clean_split_string <string> (str, SLASH), [&ss] (const string& s) { ss += s; } );
     }
 
     _per_country_exchange_fields += { canonical_prefix, ss };
   }
 
 // add the ordinary exchange to the permitted exchange fields
-  permitted_exchange_fields += { string { }, clean_split_string <std::string> (context.exchange()) };  // no canonical prefix for the default ordinary exchange
+  permitted_exchange_fields += { string { }, clean_split_string <string> (context.exchange()) };  // no canonical prefix for the default ordinary exchange
 
-  const vector<string> exchange_mults_vec { clean_split_string <std::string> (context.exchange_mults()) };
+  const vector<string> exchange_mults_vec { clean_split_string <string> (context.exchange_mults()) };
 
   STRING_MAP<vector<exchange_field>> single_mode_rv_rst;
   STRING_MAP<vector<exchange_field>> single_mode_rv_rs;
@@ -498,7 +482,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
 
 // add the permitted bands
-  for (const auto& str : clean_split_string <std::string> (context.bands()))
+  for (const auto& str : clean_split_string <string> (context.bands()))
   { try
     { _permitted_bands += BAND_FROM_NAME.at(str);
     }
@@ -513,7 +497,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
   _parse_context_exchange(context);                                                              // define the legal receive exchanges, and which fields are mults
-  _exchange_mults = clean_split_string <std::string> (context.exchange_mults());
+  _exchange_mults = clean_split_string <string> (context.exchange_mults());
 
 // DOKs are a single letter; create the complete set if they aren't in auto mode
   if ( const string DOK { "DOK"s }; contains(_exchange_mults, DOK)  and !context.auto_remaining_exchange_mults(DOK) )
@@ -529,7 +513,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { if (!unexpanded_exchange_mult_name.starts_with("CHOICE:"sv))            // not a choice
       _expanded_exchange_mults += unexpanded_exchange_mult_name;
     else
-    { const vector<string> expanded_choice { clean_split_string <std::string> (remove_from_start <std::string> (unexpanded_exchange_mult_name, "CHOICE:"sv)) };
+    { const vector<string> expanded_choice { clean_split_string <string> (remove_from_start <string> (unexpanded_exchange_mult_name, "CHOICE:"sv)) };
 
       FOR_ALL(expanded_choice, [this] (const string& ex_name) { if (!contains(_expanded_exchange_mults, ex_name))
                                                                   _expanded_exchange_mults += ex_name;
@@ -592,7 +576,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
       string context_points { context.points_string(b, m) };
 
-      static const STRING_SET special_points_set { "IARU"s, "STEW"s };
+      static const FLAT_STRING_SET special_points_set { "IARU"s, "STEW"s };
 
       const bool is_special_points { ( special_points_set.contains(context_points) ) };
 
@@ -606,10 +590,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       else                              // ordinary points structure
       {
 // remove commas inside the delimiters, because commas separate the point triplets
-        context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
+        context_points = remove_char_from_delimited_substrings(context_points, COMMA, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
 
         for (const string& points_str : clean_split_string <string> (context_points))
-        { const vector<string> fields { split_string <std::string> (points_str, ':') };
+        { const vector<string> fields { split_string <string> (points_str, COLON) };
           //const vector<string_view> fields { split_string <std::string_view> (points_str, ':') };
 
 // default?
@@ -626,12 +610,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // country
               if (!processed and !fields[1].empty())
-              { //if (contains(fields[1], '['))    // possible multiple countries
-                if (fields[1].contains('['))    // possible multiple countries
-                { const string countries { delimited_substring <std::string> (fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
+              { if (fields[1].contains(LEFT_SQUARE_BRACKET))    // possible multiple countries
+                { const string countries { delimited_substring <string> (fields[1], LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
-                  { const vector<string> country_vec { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(countries)), ' ') };  // use space instead of comma because we've already split on commas
+                  { const vector<string> country_vec { clean_split_string <string> (remove_peripheral_spaces <string> (squash(countries)), SPACE) };  // use space instead of comma because we've already split on commas
 
                     FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) 
                              { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
@@ -656,7 +639,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // [field-name]:points
           if (fields.size() == 2)
           { const string& f0                     { fields[0] };
-            const string  inside_square_brackets { delimited_substring <std::string> (f0, '[', ']', DELIMITERS::DROP) };
+            const string  inside_square_brackets { delimited_substring <string> (f0, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
 
             if (!inside_square_brackets.empty())
             { const STRING_SET all_exchange_field_names { exchange_field_names() };
@@ -717,9 +700,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
         if (!line.empty() and (line[0] != SEMICOLON) and !line.starts_with("//"sv)) // ";" and "//" introduce comments
         { if (line.contains(EQUALS) )
-          { const vector<string_view> lhsrhs { split_string <std::string_view> (line, EQUALS) };
+          { const vector<string_view> lhsrhs { split_string <string_view> (line, EQUALS) };
 
-            lhs = remove_peripheral_spaces <std::string> (lhsrhs[0]);
+            lhs = remove_peripheral_spaces <string> (lhsrhs[0]);
             equivalent_values += lhs;                  // canonical value
 
             if (lhsrhs.size() != 1)
@@ -729,7 +712,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
             }
           }
           else    // no "="
-          { if (const string str { remove_peripheral_spaces <std::string> (line) }; !str.empty())
+          { if (const string str { remove_peripheral_spaces <string> (line) }; !str.empty())
               map_canonical_to_all += { str, STRING_SET { str } };
           }
         }
@@ -886,7 +869,7 @@ bool contest_rules::is_legal_value(const string_view field_name, const string_vi
 { SAFELOCK(rules);
 
   if (const auto it { _exchange_field_eft.find(field_name) }; it != _exchange_field_eft.end())    // at() not yet supported for heterogeneous lookup
-  { const EFT& eft { it->second };
+  { const EFT& eft { it -> second };
 
     return eft.is_legal_value(putative_value);
   }
@@ -1271,7 +1254,7 @@ string wpx_prefix(const string_view call)
   callsign = remove_string_from_end <std::string> (callsign, "/QRP"sv);
 
 // remove portable designators
-  if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
+  if ((callsign.length() >= 2) and (penultimate_char(callsign) == SLASH))
   { static const string portables { "AEJMP"sv };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
@@ -1279,21 +1262,21 @@ string wpx_prefix(const string_view call)
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
-        callsign = remove_n_chars_from_end <std::string> (callsign, 2u);
+        callsign = remove_n_chars_from_end <string> (callsign, 2u);
       }
   }
 
 // /MM, /MA, /AM
-  if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
+  if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == SLASH))
   { static const FLAT_STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last <string_view> (callsign, 2)))
-      callsign = remove_n_chars_from_end <std::string> (callsign, 3u);
+      callsign = remove_n_chars_from_end <string> (callsign, 3u);
   }
 
 // trivial -- and almost unknown -- case first: no digits
   if (!contains_digit(callsign))
-    return (substring <std::string> (callsign, 0, 2) + '0');
+    return (substring <string> (callsign, 0, 2) + '0');
 
   size_t slash_posn { callsign.find(SLASH) };
 
@@ -1303,13 +1286,13 @@ string wpx_prefix(const string_view call)
     if (portable_district)
       callsign[last_digit_posn] = portable_district;      // this means that callsign can't be a string_view
 
-    return substring <std::string> (callsign, 0, min(callsign.length(), last_digit_posn + 1));
+    return substring <string> (callsign, 0, min(callsign.length(), last_digit_posn + 1));
   }
 
 // we have a (meaningful) slash in the call
-  const string_view left       { substring <std::string_view> (callsign, 0, slash_posn) };
+  const string_view left       { substring <string_view> (callsign, 0, slash_posn) };
   const size_t      left_size  { left.size() };
-  const string_view right      { substring <std::string_view> (callsign, slash_posn + 1) };
+  const string_view right      { substring <string_view> (callsign, slash_posn + 1) };
   const size_t      right_size { right.size() };
 
   if (left_size == right_size)
@@ -1332,7 +1315,7 @@ string wpx_prefix(const string_view call)
 
   if (rv.length() == 1)
   { if (rv[0] == call[0])                         // if just the first character, add the next character (to deal with 7QAA)
-      rv = substring <std::string> (call, 0, 2);
+      rv = substring <string> (call, 0, 2);
   }
 
   return rv;

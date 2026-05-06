@@ -293,7 +293,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  adif3_file(const std::string_view filename, const STRING_SET& accept_fields = { });
+  adif3_file(const std::string_view filename, const STRING_SET& accept_fields = { }); // perhaps FLAT_STRING_SET?
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
@@ -301,7 +301,7 @@ public:
 
     Returns empty object if a problem occurs
 */
-  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const STRING_SET& accept_fields = { });
+  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const STRING_SET& accept_fields = { }); // perhaps FLAT_STRING_SET?
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match

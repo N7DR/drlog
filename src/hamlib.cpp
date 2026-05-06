@@ -30,17 +30,40 @@
 #include "hamlib.h"
 #include "log_message.h"
 
+#include <meta>
+
 extern message_stream ost;                  ///< for debugging, info
 
 using namespace std;
 
-HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
-{ using enum HAMLIB_CAPABILITY;
+// generate the uint64_t representation of all possible capabilities
+consteval HAMLIB_CAPABILITIES_TYPE possible_capabilities(void)
+{ HAMLIB_CAPABILITIES_TYPE rv { 0 };
 
-  HAMLIB_CAPABILITIES_TYPE requested_capabilities { 0 };
+  for (auto this_enum : std::meta::enumerators_of(^^HAMLIB_CAPABILITY))
+    { rv += static_cast<HAMLIB_CAPABILITIES_TYPE>(std::meta::extract<HAMLIB_CAPABILITY>(this_enum)); }
+
+  return rv;
+}
+
+// instantiate a constant representing all possible capabilities
+//constexpr auto possible { possible_capabilities() };
+
+/*! \brief  Get all the capabilities of a rig
+    \param  rigp  pointer to rig
+    \return       representation of all the implemented HAMLIB capabilties on the rig <i>*rigp</i>
+*/
+HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
+{ //using enum HAMLIB_CAPABILITY;
+
+//  HAMLIB_CAPABILITIES_TYPE requested_capabilities { 0 };
 
   if (rigp)
-  { requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(FAGC);
+  { constexpr HAMLIB_CAPABILITIES_TYPE requested_capabilities { possible_capabilities() };
+
+    //requested_capabilities = possible;
+#if 0
+    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(FAGC);
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(NB);
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(COMP);
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(VOX);
@@ -89,6 +112,7 @@ HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SEND_VOICE_MEM);
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(OVF_STATUS);
     requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SYNC);
+#endif
 
     ost << "requesting capabilities = " << requested_capabilities << endl;
     ost << "binary: " << std::bitset<8*sizeof(requested_capabilities)>(requested_capabilities) << endl;
@@ -141,9 +165,52 @@ void hamlib_capabilities::get_capabilities(RIG* rp)
   }
 }
 
+#if 1
+//#include <meta>
+
+template <typename E>
+struct enum_item
+{ std::string_view name;
+
+  E value;
+};
+
+template <typename E>
+consteval auto get_enum_data(void)
+{ std::array<enum_item<E>, std::meta::enumerators_of(^^E).size()> result;
+
+  for (int k { 0 }; auto mem : std::meta::enumerators_of(^^E))
+    result[k++] = enum_item<E>{ std::meta::identifier_of(mem), std::meta::extract<E>(mem) };
+
+  return result;
+}
+
+//consteval auto enums(void)
+//  { return std::meta::enumerators_of(^^HAMLIB_CAPABILITY); };
+
+template <typename E>
+consteval auto enums1(void)
+  { return std::meta::enumerators_of(^^E); };
+
+//constexpr auto v = enums();
+
+//constexpr auto v = enums1 <HAMLIB_CAPABILITY> ();
+//  constexpr auto v2 = std::meta::enumerators_of(^^HAMLIB_CAPABILITY);
+
+#endif
+
 /// convert to a human-readable string
 string hamlib_capabilities::to_string(void) const
 { string rv { };
+
+#if 1
+  for ([[maybe_unused]] auto x : get_enum_data<HAMLIB_CAPABILITY>())
+//  for ([[maybe_unused]] auto x : enums1<HAMLIB_CAPABILITY>())
+    { }
+#endif
+
+//  consteval auto enums(void)
+//    { return std::meta::enumerators_of(^^HAMLIB_CAPABILITY) };
 
 #define WRITE_CAPABILITY(y) \
   { std::string msg { }; \

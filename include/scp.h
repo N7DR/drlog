@@ -65,10 +65,6 @@ public:
   inline explicit scp_database(const std::vector<std::string>& calls)
     { init_from_calls(calls); }
 
-/// construct from a master_dta
-//  inline explicit scp_database(const master_dta& md)
-//    { init_from_calls(md.calls()); }
-
 /// construct from a drmaster object
   inline explicit scp_database(const drmaster& drm)
     { init_from_calls(drm.calls()); }
@@ -84,13 +80,11 @@ public:
     \param  call    call to remove
     \return         whether <i>call</i> was actually removed
 */
-//  bool remove_call(const std::string& call);
   bool remove_call(const std::string_view call);
 
 /*! \brief          Remove a call from the database
     \param  call    call to remove
 */
-//  void operator-=(const std::string& call);
   void operator-=(const std::string_view call);
 
 /*! \brief        Is a call in the database?
@@ -99,13 +93,12 @@ public:
 
     Actually tests only the set of calls for the first pair of characters in <i>call</i>
 */
-//  inline bool contains(const std::string& call)
   inline bool contains(const std::string_view call)
     { return (call.empty() ? false : (_db[substring <std::string> (call, 0, SCP_KEY_SIZE)].contains(call))); }
 
 /*! \brief          Return all the matches for a partial call
     \param  key     partial call
-    \return         whether <i>call</i> was actually removed
+    \return         all the partial matches for <i>key</i>
 */
   SCP_SET operator[](const std::string_view key);
 
@@ -160,7 +153,6 @@ public:
     { remove_call(call); }
 
 /// return matches
-//  SCP_SET operator[](const std::string& key);
   SCP_SET operator[](const std::string_view key);
 
 /// clear the cache; also clear the caches of any children

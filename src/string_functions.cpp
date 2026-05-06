@@ -747,10 +747,10 @@ bool compare_calls(const string_view call1, const string_view call2)
     { if (c1 == c2)
         return false;
 
-      if ( (c1 == '/') or (c1 == '-') )
+      if ( (c1 == SLASH) or (c1 == DASH) )
         return false;
 
-      if ( (c2 == '/') or (c2 == '-') )
+      if ( (c2 == SLASH) or (c2 == DASH) )
         return true;
 
       if (isalpha(c1) and isdigit(c2))
@@ -809,7 +809,7 @@ bool compare_mults(const string_view mult1, const string_view mult2)
 string decimal_places(const string_view str, const int n)
 {
 // for now, assume that it's a number
-  if ( (str.length() >= 2) and (penultimate_char(str) != '.') )
+  if ( (str.length() >= 2) and (penultimate_char(str) != DOT) )
   { const float fl { from_string<float>(str) };
 
     ostringstream stream;
@@ -876,7 +876,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 { unsigned int idx { 0 };
 
   for (const auto& str : vec)
-  { ost << "[" << idx++ << "]: " << str;
+  { ost << LEFT_SQUARE_BRACKET << idx++ << "]: " << str;
 
     if (idx != vec.size())
       ost << endl;
@@ -1039,7 +1039,7 @@ string to_printable_string(const string_view str)
   { if (is_printable(c))
       rv += c;
     else
-    { rv += '|';
+    { rv += PIPE;
 
       rv += (c bitand 0b10000000) ? '1' : '0';
       rv += (c bitand 0b01000000) ? '1' : '0';
@@ -1050,7 +1050,7 @@ string to_printable_string(const string_view str)
       rv += (c bitand 0b00000010) ? '1' : '0';
       rv += (c bitand 0b00000001) ? '1' : '0';
 
-      rv += '|';
+      rv += PIPE;
     }
   }
 

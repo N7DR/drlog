@@ -1323,7 +1323,9 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
     \return         the window
 */
 window& bandmap::write_to_window(window& win)
-{ constexpr time_t      GREEN_TIME                 { 120 };             // time in seconds for which calls are marked in green
+{ using enum WINDOW_ATTRIBUTES;
+
+  constexpr time_t      GREEN_TIME                 { 120 };             // time in seconds for which calls are marked in green
   constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
   constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
@@ -1345,7 +1347,7 @@ window& bandmap::write_to_window(window& win)
   const BM_ENTRIES entries                               { displayed_entries() };    // automatically filter
   const size_t     start_entry                           { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
 
-  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
+  win < WINDOW_CLEAR < (bandmap_frequency_up ? CURSOR_BOTTOM_LEFT : CURSOR_TOP_LEFT);
 
   size_t index { 0 };    // keep track of where we are in the bandmap
 
@@ -1431,12 +1433,12 @@ window& bandmap::write_to_window(window& win)
       win < cursor(x, y) < colour_pair( is_marked_entry ? colours.add(MARKED_FG_COLOUR, MARKED_BG_COLOUR) : cpu );
 
       if (reverse)
-        win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
+        win < WINDOW_REVERSE;
 
       win < frequency_str;
 
       if (reverse)
-        win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+        win < WINDOW_NORMAL;
 
       win < colour_pair(status_colour) < SPACE
           < colour_pair(cpu) < callsign_str;

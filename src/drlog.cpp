@@ -6744,7 +6744,7 @@ string hhmmss(void)
   gmtime_r(&now, &structured_time);          // convert to UTC in a thread-safe manner
   asctime_r(&structured_time, buf.data());   // convert to ASCII
 
-  return substring <std::string> (string(buf.data(), 26), 11, 8);
+  return substring <string> (string(buf.data(), 26), 11, 8);
 }
 
 /*! \brief              Alert the user
@@ -6753,7 +6753,6 @@ string hhmmss(void)
 
     Also logs the message (always with the time)
 */
-//void alert(const string& msg, const SHOW_TIME show_time)
 void alert(const string_view msg, const SHOW_TIME show_time)
 {
   { SAFELOCK(alert);
@@ -6776,7 +6775,6 @@ void alert(const string_view msg, const SHOW_TIME show_time)
 
     Also alerts on the screen if <i>context.display_communication_errors()</i> is <i>true</i>
 */
-//void rig_error_alert(const string& msg)
 void rig_error_alert(const string_view msg)
 { ost << "Rig error: " << msg << endl;
 
@@ -6786,7 +6784,9 @@ void rig_error_alert(const string_view msg)
 
 /// update the QSO and score values in <i>win_rate</i>
 void update_rate_window(void)
-{ constexpr int RATE_PERIOD_WIDTH { 3 };
+{ using enum WINDOW_ATTRIBUTES;
+
+  constexpr int RATE_PERIOD_WIDTH { 3 };
   constexpr int QS_WIDTH          { 3 };
   constexpr int SCORE_WIDTH       { 10 };
   
@@ -6810,12 +6810,11 @@ void update_rate_window(void)
     if (scoring_enabled)
       str += pad_left(separated_string(points, TS), SCORE_WIDTH);
 
-//    rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? EMPTY_STR : LF) );      // LF is added automatically if a string fills a line
     rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? EMPTY_STR : LF_STR) );      // LF is added automatically if a string fills a line
   }
 
-  win_rate < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < centre("RATE"s, win_rate.height() - 1)
-           < WINDOW_ATTRIBUTES::CURSOR_DOWN < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= rate_str;
+  win_rate < WINDOW_CLEAR < CURSOR_TOP_LEFT < centre("RATE"s, win_rate.height() - 1)
+           < CURSOR_DOWN <CURSOR_START_OF_LINE <= rate_str;
 }
 
 /// Thread function to reset the RBN or cluster connection
@@ -6872,11 +6871,10 @@ bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
     \param  statistics  global statistics
     \param  q_history   history of QSOs
     \param  rate        QSO and point rates
+
+    All the parameters may be changed by execution of this function
 */
-void rebuild_history(const logbook& logbk, const contest_rules& rules,
-                     running_statistics& statistics,
-                     call_history& q_history,
-                     rate_meter& rate)
+void rebuild_history(const logbook& logbk, const contest_rules& rules, running_statistics& statistics, call_history& q_history, rate_meter& rate)
 {
 // clear the histories
   statistics.clear_info();
@@ -6917,15 +6915,13 @@ void auto_backup(const string dir, const string log_filename, const string qtc_f
 
     try
     { const string dts           { date_time_string(SECONDS::NO_INCLUDE) };
-      const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
-//      const string complete_name { dir + "/"s + log_filename + "-"s + suffix };
+      const string suffix        { dts.substr(0, 13) + DASH + dts.substr(14) }; // replace : with -
       const string complete_name { dir + SLASH + log_filename + DASH + suffix };
 
       ofstream(complete_name) << ifstream( string { log_filename } ).rdbuf();          // perform the copy
 
       if (!qtc_filename.empty())
-      { //const string qtc_complete_name { dir + "/"s + qtc_filename + "-"s + suffix };
-        const string qtc_complete_name { dir + SLASH + qtc_filename + DASH + suffix };
+      { const string qtc_complete_name { dir + SLASH + qtc_filename + DASH + suffix };
 
         ofstream(qtc_complete_name) << ifstream( string { qtc_filename } ).rdbuf();  // perform copy of QTC file
       }
@@ -6950,12 +6946,11 @@ void update_local_time(void)
     localtime_r(&now, &structured_local_time);                     // convert to local time
     asctime_r(&structured_local_time, buf_local_time.data());      // and now to ASCII
 
-    win_local_time < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= substring <std::string_view> (string(buf_local_time.data(), 26), 11, 5);  // extract HH:MM and display it
+    win_local_time < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= substring <string_view> (string { buf_local_time.data(), 26 }, 11, 5);  // extract HH:MM and display it
   }
 }
 
 /// Increase the counter for the number of running threads
-//void start_of_thread(const string& name)
 void start_of_thread(const string_view name)
 { ost << "thread [" << name  << "] is starting" << endl;
 
@@ -6965,7 +6960,7 @@ void start_of_thread(const string_view name)
 
   const string name_str { name };
 
-  const auto [ it, success ] { thread_names.insert(name_str) };
+  const auto [ _, success ] { thread_names.insert(name_str) };
 
   if (!success)
     ost << "failed to insert thread name: " << name << endl;
@@ -7055,9 +7050,10 @@ string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE 
 { string new_callsign { };
 
   if (matches.size() == 1)
-  { const auto& only_match { matches[0] };
+  { //const auto& only_match { matches[0] };
 
-    if ( const auto& [ only_call, only_colour_pair_number] { only_match }; colours.fg(only_colour_pair_number) != REJECT_COLOUR )
+//    if ( const auto& [ only_call, only_colour_pair_number ] { only_match }; colours.fg(only_colour_pair_number) != REJECT_COLOUR )
+    if ( const auto& [only_call, only_colour_pair_number] { matches[0] }; colours.fg(only_colour_pair_number) != REJECT_COLOUR )
       if (do_not_return != only_call)
         new_callsign = only_call;
   }
@@ -7089,10 +7085,11 @@ string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE 
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
 bool is_needed_qso(const string_view callsign, const BAND b, const MODE m)
-{ if (const bool worked_at_all { q_history.worked(callsign) }; !worked_at_all)
+{ //if (const bool worked_at_all { q_history.worked(callsign) }; !worked_at_all)
+  if (!q_history.worked(callsign))        // if not worked at all
     return true;
 
-  if (const bool worked_this_band_mode { q_history.worked(callsign, b, m) }; worked_this_band_mode)
+  if (q_history.worked(callsign, b, m))   // if worked on this band and mode
     return false;
 
 // worked on same band, different mode
@@ -7140,15 +7137,13 @@ bool shift_control(const keyboard_event& e)
     }
     else  // main frequency, not RIT
     { if (active_window == ACTIVE_WINDOW::CALL)         // don't do anything if we aren't in the CALL window
-      { //frequency last_qrg { rig.rig_frequency() };
-        frequency last_qrg { rig_ptr -> rig_frequency() };
+      { frequency last_qrg { rig_ptr -> rig_frequency() };
 
         ok_to_poll_rig = false;                // stop polling a K3
 
         do
         { const frequency new_qrg { static_cast<double>(last_qrg.hz() + change) };
 
-//          rig.rig_frequency(new_qrg);
           rig_ptr -> rig_frequency(new_qrg);
           last_qrg = new_qrg;
 
@@ -7172,20 +7167,7 @@ bool shift_control(const keyboard_event& e)
 /// switch the states of RIT and XIT
 bool swap_rit_xit(void)
 { try
-  { //if (rig.rit_enabled())
-    //{ rig.xit_enable();
-    //  rig.rit_disable();
-    //}
-   // else
-    //{ if (rig.xit_enabled())
-   //   { rig.rit_enable();
-   //     rig.xit_disable();
-   //   }
-    //  else
-   //     rig.rit_enable();
-    //}
-
-   if (rig_ptr -> rit_enabled())
+  { if (rig_ptr -> rit_enabled())
     { rig_ptr -> xit_enable();
       rig_ptr -> rit_disable();
     }
@@ -7237,19 +7219,21 @@ void add_qso(const QSO& qso)
     Clears the window if there is no individual message associated with <i>callsign</i>
 */
 void update_individual_messages_window(const string_view callsign)
-{ bool message_written { false };
+{ using enum WINDOW_ATTRIBUTES;
+
+  bool message_written { false };
 
   if (!callsign.empty())
   { SAFELOCK(individual_messages);
 
     if ( const string msg { MUM_VALUE(individual_messages, callsign) }; !msg.empty() )
-    { win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= msg;
+    { win_individual_messages < WINDOW_CLEAR < CURSOR_START_OF_LINE <= msg;
       message_written = true;
     }
   }
 
   if (!message_written and !win_individual_messages.empty())
-    win_individual_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+    win_individual_messages < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
 }
 
 /*! \brief              Update the batch_messages window with the message (if any) associated with a call
@@ -7258,9 +7242,10 @@ void update_individual_messages_window(const string_view callsign)
     Clears the window if there is no batch message associated with <i>callsign</i>. Reverses the
     colours of the window if there is a message, in order to make it stand out.
 */
-//void update_batch_messages_window(const string& callsign)
 void update_batch_messages_window(const string_view callsign)
-{ bool message_written { false };
+{ using enum WINDOW_ATTRIBUTES;
+
+  bool message_written { false };
 
   if (!callsign.empty())
   { SAFELOCK(batch_messages);       // this is really overkill, as it should be immutable once we're up and running
@@ -7268,15 +7253,15 @@ void update_batch_messages_window(const string_view callsign)
     if ( const string msg { MUM_VALUE(batch_messages, callsign) }; !msg.empty() )
     { const string spaces { create_string(SPACE, win_batch_messages.width()) };
 
-      win_batch_messages < WINDOW_ATTRIBUTES::WINDOW_REVERSE < WINDOW_ATTRIBUTES::WINDOW_CLEAR < spaces < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                         < msg <= WINDOW_ATTRIBUTES::WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
+      win_batch_messages < WINDOW_REVERSE < WINDOW_CLEAR < spaces < CURSOR_START_OF_LINE
+                         < msg <= WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
 
       message_written = true;
     }
   }
 
   if (!message_written and !win_batch_messages.empty())
-    win_batch_messages < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+    win_batch_messages < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
 }
 
 /*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
@@ -7286,8 +7271,6 @@ void update_batch_messages_window(const string_view callsign)
 
     Returns the empty string if no sensible result can be returned
 */
-//string callsign_mult_value(const string& callsign_mult_name, const string& callsign)
-//string callsign_mult_value(const string_view callsign_mult_name, const string& callsign)
 string callsign_mult_value(const string_view callsign_mult_name, const string_view callsign)
 { if ( (callsign_mult_name == "AAPX"sv) and (location_db.continent(callsign) == "AS"sv) )  // All Asian
     return wpx_prefix(callsign);
@@ -7318,7 +7301,6 @@ string callsign_mult_value(const string_view callsign_mult_name, const string_vi
       extract
       QSLs
  */
-//void display_call_info(const string& callsign, const bool display_extract)
 void display_call_info(const string_view callsign, const bool display_extract)
 { populate_win_info( callsign );
   update_batch_messages_window( callsign );
@@ -7331,126 +7313,6 @@ void display_call_info(const string_view callsign, const bool display_extract)
 
   update_qsls_window(callsign);
 }
-
-#if 0
-/*! \brief Start a thread to take a snapshot of a P3.
-
-    Even though we use a separate thread to obtain the actual screenshot, it takes so long to transfer the data to the computer
-    that one should not use this function except when it will be OK for communication with the rig to be paused for ~30 seconds.
-
-    The user should check that a P3 is available (context.p3()) before calling this function.
-*/
-bool p3_screenshot(void)
-{ jthread(p3_screenshot_thread).detach();
-
-  return true;
-}
-#endif
-
-#if 0
-
-/// Thread function to generate a screenshot of a P3 and store it in a BMP file
-// #BMP (Bitmap upload, GET only)
-//RSP format: [bmp]cc where [bmp] is 131,638 bytes of binary image data in standard .BMP file format
-//and cc is a two-byte checksum. Note that the response does not include the command name and has no
-//terminating semicolon. The checksum is the modulo-65,536 sum of all 131,638 bytes, sent least significant
-//byte first.
-
-/*
-
- */
-void p3_screenshot_thread(void)
-{ alert("Dumping P3 image"s);
-
-//  const string image { rig.raw_command("#BMP;"s, RESPONSE::EXPECTED) };
-  const string image { static_cast<elecraft_k3_interface*>(rig_ptr) -> raw_command("#BMP;"s, RESPONSE::EXPECTED) };
-
-//  write_file(image, "complete-response");
-
-//  const string checksum_str { image.substr(image.length() - 2, 2) };
-  const string checksum_str { substring <string> (image, image.length() - 2, 2) };
-
-//  ost << "image length with checksum = " << image.length() << endl;
-//  ost << "image length without checksum = " << image.length() - 2 << endl;
-
-//  const unsigned char c0 = static_cast<unsigned char>(checksum_str[0]);
-//  const unsigned char c1 = static_cast<unsigned char>(checksum_str[1]);
-
-//  ost << "chars as numbers: " << dec << static_cast<unsigned int>(static_cast<uint8_t>(c0)) << " " << static_cast<unsigned int>(static_cast<uint8_t>(c1)) << endl;
-
-//  ost << "chars: " << hex << static_cast<uint8_t>(c0) << " " << static_cast<uint8_t>(c1) << dec << endl;
-
-// print most significant byte first
-//  const uint16_t received_checksum = (static_cast<uint8_t>(checksum_str[1]) << 8) + static_cast<uint8_t>(checksum_str[0]);
-//  ost << "received checksum = " << hex << received_checksum << dec << endl;
-
-//  ost << "components = " << hex << (static_cast<uint8_t>(checksum_str[1]) << 8) << " " << static_cast<uint8_t>(checksum_str[0]) << endl;
-
-  const char c1 { checksum_str[1] };
-  const char c0 { checksum_str[0] };
-
-//  const uint16_t ui1 { static_cast<uint16_t>(c1 << 8) };
-//  const uint16_t ui0 { static_cast<uint16_t>(c0) };
-
-//  uint16_t ui1 { static_cast<unsigned char>(checksum_str[1]) };
-//  uint16_t ui0 { checksum_str[0] };
-
-//  ui1 <<= 8;
-
-// the messy casts are needed because bitor by definition converts parameters to int
-  const int      ui1               { static_cast<int>(c1 << 8) };
-  const int      ui0               { static_cast<int>(c0) };
-  const uint16_t received_checksum { static_cast<uint16_t>(ui1 bitor ui0) };
-
-//  const uint16_t received_checksum { (static_cast<uint16_t>(checksum_str[1]) << 8) bitor static_cast<uint16_t>(checksum_str[0]) };
-
-
-//  ost << "received checksum bitor = " << hex << received_checksum_bitor << dec << endl;
-
-  uint16_t calculated_checksum { 0 };
-  long     tmp                 { 0 };
-
-  for (size_t n = 0; n < image.length() - 2; ++n)
-    tmp += static_cast<int>(static_cast<unsigned char>(image[n]));
-
-  calculated_checksum = static_cast<uint16_t>(tmp % 65536);
-//  ost << "tmp: " << tmp << " " << hex << tmp << " " << dec << tmp % 65536 << " " << hex << tmp % 65536 << dec << endl;
-
-#if 0
-  uint16_t received_checksum { 0 };
-
-  for (size_t n = 0; n < checksum_str.length(); ++n)
-  { const size_t        index { 2 - n - 1 };
-    const unsigned char uch   { static_cast<unsigned char>(checksum_str[index]) };
-    const uint16_t      uint  { static_cast<uint16_t>(uch) };
-
-    ost << n << ": " << hex << uint << endl;
-
-    received_checksum = (received_checksum << 8) + uint;  // 256 == << 8
-  }
-#endif
-
-//  ost << "calculated checksum = " << hex << calculated_checksum << dec << endl;
-//  ost << "received checksum = " << hex << received_checksum << dec << endl;
-
-  const string base_filename { context.p3_snapshot_file() + (((calculated_checksum == received_checksum) or context.p3_ignore_checksum_error()) ? ""s : "-error"s) };
-
-  int  index        { 0 };
-  bool file_written { false };
-
-  while (!file_written)
-  { if (const string filename { base_filename + "-"s + to_string(index) }; !file_exists(filename))
-    { //write_file(image.substr(0, image.length() - 2), filename);
-      write_file(substring <string> (image, 0, image.length() - 2), filename);
-      file_written = true;
-
-      alert("P3 image file "s + filename + " written"s);
-    }
-    else
-      ++index;
-  }
-}
-#endif
 
 /// Thread function to spawn the cluster
 void spawn_dx_cluster(void)
@@ -7508,7 +7370,7 @@ void spawn_rbn(void)
   { try
     { rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
 
-      ost << "RBN connection: " << rbn_p->connection_status() << endl;
+      ost << "RBN connection: " << rbn_p -> connection_status() << endl;
       rbn_started = true;
     }
 
@@ -7547,22 +7409,6 @@ void spawn_rbn(void)
   win_rbn_line < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "CONNECTED"s;
 
   start_recording_rbn();
-#if 0
-  if ( const string rbn_filename { context.rbn_file() }; !rbn_filename.empty() )    // append "-" and a number to the given filename
-  { int    counter       { 0 };
-    string this_filename { rbn_filename + '-' + to_string(counter++) };
-
-//    this_filename = rbn_filename + '-' + to_string(counter++);
-
-    while (file_exists(this_filename))
-      this_filename = rbn_filename + '-' + to_string(counter++);
-
-    rbn_file.open(this_filename, std::ofstream::app);     // open in append mode (although this should probably be changed now that we have "-n" naming)
-
-
-//    rbn_file.open(rbn_filename, std::ofstream::app);
-  }
-#endif
 
   jthread(get_cluster_info, rbn_p).detach();
   jthread(process_rbn_info, &win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps).detach();
@@ -7599,7 +7445,6 @@ bool debug_dump(void)
     If <i>dump_filename</i> is empty, then a base name is taken
     from the context and a string "-<n>" is appended.
 */
-//string dump_screen(const string& dump_filename)
 string dump_screen(const string_view dump_filename)
 { const bool multithreaded { keyboard.x_multithreaded() };
 
@@ -7711,10 +7556,10 @@ string dump_screen(const string_view dump_filename)
 
     int index { 0 };
 
-    filename = base_filename + "-"s + to_string(index++);
+    filename = base_filename + DASH + to_string(index++);
 
     while (file_exists(filename))
-      filename = base_filename + "-"s + to_string(index++);
+      filename = base_filename + DASH + to_string(index++);
   }
   else
     filename = dump_filename;
@@ -7828,7 +7673,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   { ost << "processing ALT-Q to send QTC" << endl;
 
 // destination for the QTC is the callsign in the CALL window; or, if the window is empty, the call of the last logged EU QSO
-    const string call_window_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
+    const string call_window_contents { remove_peripheral_spaces <string> (win_call.read()) };
 
     string destination_callsign { call_window_contents };
 
@@ -7899,7 +7744,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
         const unsigned int number_of_qtc { static_cast<unsigned int>(qtc_db.size() + 1) };
 
-        qtc_id = to_string(number_of_qtc) + "/"s + to_string(qtc_entries_to_send.size());
+        qtc_id = to_string(number_of_qtc) + SLASH + to_string(qtc_entries_to_send.size());
         series.id(qtc_id);
 
         if (cw)
@@ -7974,7 +7819,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC "s < qtc_id < " to "s <= series.destination();
       ost << "Sent QTC batch " << qtc_id << " to " << series.destination() << endl;
 
-      series.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
+      series.date(substring <string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig_ptr -> rig_frequency());
 
@@ -8006,7 +7851,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Aborted sending QTC "s < qtc_id < " to "s <= series.destination();
 
-      series.date(substring <std::string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
+      series.date(substring <string> (date_time_string(SECONDS::NO_INCLUDE), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig_ptr -> rig_frequency());
 
@@ -8163,11 +8008,13 @@ string active_window_name(void)
       QSL information 
 */
 void display_nearby_callsign(const string_view callsign)
-{ if (callsign.empty())
-  { win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+{ using enum WINDOW_ATTRIBUTES;
+
+  if (callsign.empty())
+  { win_nearby <= WINDOW_CLEAR;
 
     if (win_call.empty() and context.nearby_extract())
-      win_log_extract <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      win_log_extract <= WINDOW_CLEAR;
   }
   else
   { const bool dupe       { logbk.is_dupe(callsign, current_band, current_mode, rules) };
@@ -8184,7 +8031,7 @@ void display_nearby_callsign(const string_view callsign)
     if (dupe)
       colour_pair_number = colours.add(REJECT_COLOUR,  background);
 
-    win_nearby < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+    win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
     win_nearby.set_colour_pair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
 
@@ -8463,7 +8310,6 @@ void update_qsls_window(const string_view str)
   into a weird state if the transmission is long and you keep typing too many things (like a new call and ENTER)
   while awaiting the end of transmission. But if you're sensible, it will do the right things.
 */
-//bool process_keypress_F1(const string_view original_contents)
 void process_keypress_F1(const string_view original_contents)
 { const duration RETRY_TIME { 100ms };
 
@@ -8633,7 +8479,6 @@ bool change_cw_speed(const keyboard_event& e)
     \param  str     string to add
     \return         true
 */
-//bool send_to_scratchpad(const string& str)
 bool send_to_scratchpad(const string_view str)
 { const string scratchpad_str { substring <std::string> (hhmmss(), 0, 5) + SPACE + rig_ptr -> rig_frequency().display_string() + SPACE + str };
 
@@ -8783,7 +8628,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 
         if (in_call_window)
 // see if we are within twice the guard band before we clear the call window
-        { const string        call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
+        { const string        call_contents { remove_peripheral_spaces <string> (win_call.read()) };
           const bandmap_entry be            { bm[call_contents] };
           const frequency     f_diff        { be.freq().difference(f) };
 
@@ -8924,7 +8769,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 
   safelock bm_lock(bm._bandmap_mutex);
 
-//  const frequency     f_rig { rig.rig_frequency() };
   const frequency     f_rig { rig_ptr -> rig_frequency() };
   const bandmap_entry be    { bm.next_displayed_be(f_rig, dirn, nskip, MAX_SKEW) };   // get next displayed be
 
@@ -9041,16 +8885,17 @@ void stop_recording(audio_recorder& audio)
     \return     <i>true</i>
 */
 bool update_rx_ant_window(void)
-{ if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
-  { //const bool   rx_ant_in_use   { rig.rx_ant() };
-    const bool   rx_ant_in_use   { rig_ptr -> rx_ant() };
+{ using enum WINDOW_ATTRIBUTES;
+
+  if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
+  { const bool   rx_ant_in_use   { rig_ptr -> rx_ant() };
     const string window_contents { win_rx_ant.read() };
 
     if ( rx_ant_in_use and (window_contents != "RX"sv) )
-      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "RX"s;
+      win_rx_ant < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "RX"s;
 
     if ( !rx_ant_in_use and (window_contents != "TX"sv) )
-      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "TX"s;
+      win_rx_ant < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "TX"s;
   }
 
   return true;
@@ -9173,10 +9018,12 @@ void update_best_dx(const grid_square& dx_gs, const string_view callsign)
     Also handles the colour of the QTC HINT window if that window exists
 */
 void populate_win_call_history(const string_view callsign)
-{ static const set<MODE> call_history_modes { MODE_CW, MODE_SSB };
+{ using enum WINDOW_ATTRIBUTES;
+
+  static const set<MODE> call_history_modes { MODE_CW, MODE_SSB };
 
   if (win_call_history.valid())              // check even though it should have been checked before being called
-  { win_call_history < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_call_history.height() - 1);    // write the (partial) callsign
+  { win_call_history < WINDOW_CLEAR <= centre(callsign, win_call_history.height() - 1);    // write the (partial) callsign
 
     const int  bg                  { win_call_history.bg() };
     const auto default_colour_pair { colours.add(win_call_history.fg(), bg) };
@@ -9215,8 +9062,7 @@ void populate_win_call_history(const string_view callsign)
       const int  window_colour    { send_qtc ? win_qtc_hint_fg : win_qtc_hint_bg };
       const auto this_colour_pair { colours.add(window_colour, window_colour) };
 
-//      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= " "s;
-      win_qtc_hint < colour_pair(this_colour_pair) < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= SPACE;
+      win_qtc_hint < colour_pair(this_colour_pair) < CURSOR_START_OF_LINE < WINDOW_CLEAR <= SPACE;
     }
   }
 }
@@ -9446,12 +9292,11 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
  if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
-{ //time_log <std::chrono::milliseconds> tl;
-  time_log <milliseconds> tl;
+{ time_log <milliseconds> tl;
 
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
   const string dts            { date_time_string(SECONDS::NO_INCLUDE) };
-  const string today          { substring <std::string> (dts, 0, 4) + substring <std::string> (dts, 5, 2) + substring <std::string> (dts, 8, 2) };
+  const string today          { substring <string> (dts, 0, 4) + substring <string> (dts, 5, 2) + substring <string> (dts, 8, 2) };
   const int    itoday         { from_string<int>(today) };
   const auto   old_qso_limit  { context.old_qso_age_limit() };          // number of years
   const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10'000)) }; // date before which QSOs don't count
@@ -9473,6 +9318,7 @@ void adif3_build_old_log(void)
 
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
+// try with FLAT_STRING_SET?
   try
   { const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
