@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 291 2026-04-05 16:53:14Z  $
+// $Id: rig_interface.h 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,6 +29,7 @@
 
 #include <chrono>
 #include <map>
+#include <meta>
 #include <string>
 #include <utility>
 #include <variant>
@@ -68,6 +69,34 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
                             AUDIO_CENTRE,       ///< centre frequency of audio can be controlled
                             BANDSCOPE           ///< has a controllable band scope
                           };
+
+/*  So far, I have been unable to figure out a way to use reflection to generate a mapping between the name
+    of a RIG_MODEL enum and its integer representation so that I can say, for example:
+          auto value = name_to_enum_map[name]
+    There are plenty of somewhat similar examples, but nothing that actually helps. The problem is that
+    a consteval function can't return a map, because it's not a literal type; I'm unsure how to get around that.
+    (And I've tried a LOT of attempted work-arounds.)
+
+    https://stackoverflow.com/questions/21787488/can-have-definition-variable-of-non-literal-type-in-constexpr-function-body-c1
+
+    (One can create and use a map, but it has to be deleted at compile time.)
+
+    I'd be delighted to be told how to make this (or something equivalent) work.
+
+    Actually, it's even worse: one can't return a simple ordinary std::string from a consteval function. This, as far
+    as I can tell, means that a huge percentage of the cases where one might think that reflection would be of help
+    in fact can't be implemented.
+
+    So, far from being "a completely new language", C++ with reflection appears to be, in its current state, something not
+    even worth thinking about except in exceptional cases. I have looked at the places where I (reluctantly) use macros in the current drlog
+    code, and found only one place where the macro can be replaced by reflection -- and that's only because I'm forced to interface with
+    the C-style programming in hamlib (which is ironic, as hamlib heavily uses macros... so one still ends up having to use macros *somewhere*).
+
+    Reflection seems therefore to join the growing list of recently-added C++ features that sound great at first blush, but in the end turn out to
+    be troublesome to the point of being not worth the effort except in a small percentage of cases where one would naively have expected
+    them to be useful.
+
+*/
 
 using DRLOG_CLOCK = std::chrono::system_clock;
 
@@ -121,7 +150,7 @@ public:
       LOCK_B
       etc.
 */
-  rig_capabilities(const std::vector<std::string>& path, const std::string& fn);
+  rig_capabilities(const std::vector<std::string>& path, const std::string_view fn);
 
 /*! \brief        Construct from a file
     \param  fn    filename containing capabilities
@@ -133,7 +162,7 @@ public:
       LOCK_B
       etc.
 */
-  explicit rig_capabilities(const std::string& fn);
+  explicit rig_capabilities(const std::string_view fn);
 
 /*! \brief      Construct from a container of rig capabilities
     \param  s   container of capabilities
@@ -143,6 +172,9 @@ public:
   explicit inline rig_capabilities(const C& s)
     { FOR_ALL(s, [this] (const RIG_CAPABILITY rc) { set(rc); }); }
 
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define FNS(y)  \
   inline bool y(void) const \
     { return ( _caps bitand (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITY::y)) ); } \
@@ -177,11 +209,16 @@ public:
 */
   void set(const RIG_CAPABILITY rc);
 
+/*  \brief      Clear a single capability
+    \param  rc  capability to clear
+*/
   void clear(const RIG_CAPABILITY rc);
 
+/// Return whether all capabilities are unset
   inline bool empty(void) const
     { return !_caps; }
 
+/// convert to human-readable string
   std::string to_string(void) const;
 };
 
@@ -201,46 +238,50 @@ protected:
   bool      _rit_enabled { false };   ///< whether RIT is enabled
   bool      _xit_enabled { false };   ///< whether XIT is enabled
 
-  int       _rit_offset { 0 };
-  int       _xit_offset { 0 };
+  int       _rit_offset { 0 };        ///< RIT offset, in Hz
+  int       _xit_offset { 0 };        ///< XIT offset, in Hz
 
-  bool      _split_enabled  { false };
-  bool      _is_locked      { false };
-  bool      _sub_rx_enabled { false };
-  bool      _test_mode      { false };
-  bool      _rx_ant         { false };
+  bool      _split_enabled  { false };   ///< whether split is enabled
+  bool      _is_locked      { false };   ///< whether the VFO is locked
+  bool      _sub_rx_enabled { false };   ///< whether the sub receiver is enabled
+  bool      _test_mode      { false };   ///< whether the rig is in TEST mode
+  bool      _rx_ant         { false };   ///< whether the receive antenna is enabled
 
-  std::string _mode_str { "UNK"s };
+  std::string _mode_str { "UNK"s };     ///< current mode of the rig, as a string
 
   MODE      _m;            ///< mode
 
-  bool _notch { false };
+  bool _notch { false };  ///< whether auto-notch is enabled
 
-  std::string _bw_str     { };
-  std::string _centre_str { };
+  std::string _bw_str     { };  ///< the audio bandwidth, in Hz
+  std::string _centre_str { };  ///< the centre of the audio passband, in Hz
 
 public:
 
-  READ_AND_WRITE(f_a);
-  READ_AND_WRITE(f_b);
-  READ_AND_WRITE(m);
-  READ_AND_WRITE(notch);
-  READ_AND_WRITE(mode_str);
-  READ_AND_WRITE(rit_enabled);
-  READ_AND_WRITE(xit_enabled);
-  READ_AND_WRITE(rit_offset);
-  READ_AND_WRITE(xit_offset);
-  READ_AND_WRITE(split_enabled);
-  READ_AND_WRITE(bw_str);
-  READ_AND_WRITE(centre_str);
-  READ_AND_WRITE(is_locked);
-  READ_AND_WRITE(sub_rx_enabled);
-  READ_AND_WRITE(test_mode);
-  READ_AND_WRITE(rx_ant);
+  READ_AND_WRITE(f_a);               ///< frequency of VFO A
+  READ_AND_WRITE(f_b);               ///< frequency of VFO B
+  READ_AND_WRITE(m);                 ///< mode
+  READ_AND_WRITE(notch);             ///< whether auto-notch is enabled
+  READ_AND_WRITE(mode_str);          ///< current mode of the rig, as a string
+  READ_AND_WRITE(rit_enabled);       ///< whether RIT is enabled
+  READ_AND_WRITE(xit_enabled);       ///< whether XIT is enabled
+  READ_AND_WRITE(rit_offset);        ///< RIT offset, in Hz
+  READ_AND_WRITE(xit_offset);        ///< XIT offset, in Hz
+  READ_AND_WRITE(split_enabled);     ///< whether split is enabled
+  READ_AND_WRITE(bw_str);            ///< the audio bandwidth, in Hz
+  READ_AND_WRITE(centre_str);        ///< the centre of the audio passband, in Hz
+  READ_AND_WRITE(is_locked);         ///< whether the VFO is locked
+  READ_AND_WRITE(sub_rx_enabled);    ///< whether the sub receiver is enabled
+  READ_AND_WRITE(test_mode);         ///< whether the rig is in TEST mode
+  READ_AND_WRITE(rx_ant);            ///< whether the receive antenna is enabled
 
+/// polled_status == polled_status
   bool operator==(const polled_status& ps)  const = default;
+
+/// other comparisons
   bool operator<=>(const polled_status& ps) const = default;
 
+/// convert to human-readable string
   std::string to_string(void) const;
 };
 
@@ -379,6 +420,10 @@ public:
   SAFE_READ_AND_WRITE(hcaps, _rig);
   SAFE_READ_AND_WRITE(rcaps, _rig);
 
+
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 // note that this does not lock the object, because there really doesn't seem to be any need for that
 #define HAS_CAPABILITY(y) \
   inline bool y(void) const \
@@ -628,9 +673,6 @@ public:
   inline void enable_xit(void) const
     { xit_enable(); }
 
-/// get the rig's frequency and mode
-//  rig_status status(void);                              // most recent rig status
-
 /// is the VFO locked?
   virtual bool is_locked(void) const;
 
@@ -719,8 +761,7 @@ public:
 /*! \brief Is the rig transmitting?
 */
   inline virtual bool is_transmitting(void) const
-//    { return ( _error_alert("Unimplemented function: rig_interface::is_transmitting()"sv), false ); }
-    { return false; }   // don't write anything, because this can get called a lot
+    { return false; }   // don't call _error_alert(), because this can get called a lot
 
 /// pause until the rig is no longer transmitting
   void wait_until_not_busy(void) const;
@@ -1128,7 +1169,7 @@ public:
 /*! \brief                    Constructor
     \param  p3_ignore_error   whether to ignore checksum errors if a P3 is present
 */
-  inline elecraft_k3_interface(const bool p3_ignore_error = false) :
+  inline explicit elecraft_k3_interface(const bool p3_ignore_error = false) :
     rig_interface(),
     _p3_ignore_checksum_error(p3_ignore_error)
   { }

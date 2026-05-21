@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 293 2026-04-26 14:17:23Z  $
+// $Id: rig_interface.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -189,6 +189,9 @@ void rig_interface::prepare(const drlog_context& context)
 
   const string rig_type { to_upper(context.rig1_type()) };
 
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define       STR_TO_MODEL(y) \
   { #y, y }
 
@@ -715,7 +718,8 @@ void rig_interface::rig_mode(const MODE m)
     has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
     to do for various values of the permitted parameters. There is general agreement on the reflector
     that the call contained herein *should* do the "right" thing -- but since there's no precise definition
-    of any of this in hamlib, not all rigs are guaranteed to behave the same.
+    of any of this in hamlib, not all rigs are guaranteed to behave the same. Which rather defeats the purpose
+    of all this.
 */
 void rig_interface::split_enable(void) const
 { if (!_rig_connected)
@@ -1174,8 +1178,6 @@ void rig_interface::get_rig_memory(const int rig_memory_nr) const
 /// Poll the rig for the important status information; only one thread should ever call this function
 polled_status rig_interface::poll(void)
 {
-
-
 // NB I may be mistaken about some of these; the documentation for HAMLIB is, shall we say, sparse
 // I welcome corrections, particularly about capabilities that really are supported by HAMLIB
 // (and if a capability *is* incorrectly noted below as unsupported by HAMLIB, PLEASE EXPLAIN HOW TO READ
@@ -1278,7 +1280,7 @@ polled_status rig_interface::poll(void)
 // ---------------------------------------- Elecraft K3 -------------------------
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
- * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
+ * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in theversion of hamlib I tested).
  *
  * Anyway, as a result of this, we use explicit K3 control commands where appropriate. This may be changed if/when hamlib proves
  * itself sufficiently robust.
@@ -1316,8 +1318,8 @@ polled_status rig_interface::poll(void)
  *   including the rig's frequency, in order to build an accurate, stable bandmap.
  *
  *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
- *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
- *   protocols could be run over, for example, SLIP.
+ *   protocols are still being used to exchange information with rigs. Baud rates have long been sufficiently fast that, even for serial
+ *   lines, real protocols could be run over, for example, SLIP.
 */
 
 constexpr size_t K3_STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters in response to "IF;" request
@@ -1374,11 +1376,11 @@ k3_status::k3_status(const string_view rsp)
   const char rit_positive_char { rsp[RIT_POSITIVE_POSN] };
 
   switch (rit_positive_char)
-  { case '+' :
+  { case PLUS :
       _rit_positive = true;   // not actually necessary
       break;
 
-    case '-' :
+    case MINUS :
       _rit_positive = false;
       break;
 
@@ -1436,36 +1438,38 @@ k3_status::k3_status(const string_view rsp)
   const char op_mode_char { rsp[OP_MODE_POSN] };
 
   switch (op_mode_char)
-  { case '1' :
-      _op_mode = K3_OPERATING_MODE::LSB;
+  { using enum K3_OPERATING_MODE;
+
+    case '1' :
+      _op_mode = LSB;
       break;
 
     case '2' :
-      _op_mode = K3_OPERATING_MODE::USB;
+      _op_mode = USB;
       break;
 
     case '3' :
-      _op_mode = K3_OPERATING_MODE::CW;
+      _op_mode = CW;
       break;
 
     case '4' :
-      _op_mode = K3_OPERATING_MODE::FM;
+      _op_mode = FM;
       break;
 
     case '5' :
-      _op_mode = K3_OPERATING_MODE::AM;
+      _op_mode = AM;
       break;
 
     case '6' :
-      _op_mode = K3_OPERATING_MODE::DATA;
+      _op_mode = DATA;
       break;
 
     case '7' :
-      _op_mode = K3_OPERATING_MODE::CWREV;
+      _op_mode = CWREV;
       break;
 
     case '9' :                                  // there is no '8'
-      _op_mode = K3_OPERATING_MODE::DATA_REV;
+      _op_mode = DATA_REV;
       break;
 
     default :
@@ -1569,7 +1573,6 @@ uint16_t ck1(const std::span<const uint8_t> sp)
 
     I can only conclude that either the above description of the checksum calculation from the P3 manual is incorrect, or
     all my attempts to implement the calculation as described above suffer from some slapping-hand-on-head flaw.
-
 */
 void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 { alert("Dumping P3 image"s);
@@ -1676,12 +1679,9 @@ void elecraft_k3_interface::_bandscope_screenshot_thread(const string fn)
 
 /*! \brief                  Send a raw command to the rig
     \param  cmd             the command to send
-    \param  expectation     whether a response is expected
-    \param  expected_len    expected length of response
+    \param  timeout         the time to wait for a response
+    \param  n_retries       number of retries
     \return                 the response from the rig, or the empty string
-
-    Currently any expected length is ignored; the routine looks for the concluding ";" instead
-    C++ does not allow a generic std::chrono::duration to be a parameter
 */
 string elecraft_k3_interface::_retried_raw_command(const string_view cmd, const milliseconds timeout, const int n_retries)
 { string rv;
@@ -1690,9 +1690,9 @@ string elecraft_k3_interface::_retried_raw_command(const string_view cmd, const 
   bool completed { false };
 
   while (!completed and (counter != n_retries))
-  { rv = raw_command(cmd, RESPONSE::EXPECTED/*, expected_len*/);    // issue the command each time
+  { rv = raw_command(cmd, RESPONSE::EXPECTED);    // issue the command each time
 
-    completed = (rv.empty() ? false : last_char(rv) == ';');
+    completed = (rv.empty() ? false : last_char(rv) == SEMICOLON);    // look for the trailing semicolon
 
     if (!completed)
     { counter++;
@@ -1716,7 +1716,7 @@ string elecraft_k3_interface::_retried_raw_command(const string_view cmd, const 
     Attempts to confirm that the frequency was actually set to <i>f</i>.
 */
 void elecraft_k3_interface::_rig_frequency(const frequency f, const VFO v)
-{ constexpr std::chrono::duration RETRY_TIME { 100ms };      // period between retries
+{ constexpr duration RETRY_TIME { 100ms };      // period between retries
 
   if (f.is_within_ham_band())
   { switch (v)
@@ -1739,8 +1739,7 @@ void elecraft_k3_interface::_rig_frequency(const frequency f, const VFO v)
       int n_retries { 0 };
 
       while ( (retry) and (n_retries++ <= MAX_RETRIES) )
-      { //raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + ';');
-        raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + SEMICOLON);
+      { raw_command( ((v == VFO::A) ? "FA"s : "FB"s) + pad_leftz(to_string(f.hz()), 11) + SEMICOLON);
 
         const frequency rf { _rig_frequency(v) };
 
@@ -1773,8 +1772,8 @@ frequency elecraft_k3_interface::_rig_frequency(const VFO v) const
 { if (!_rig_connected)
     return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
 
-  constexpr int                   MAX_RETRIES { 2 };
-  constexpr std::chrono::duration RETRY_TIME  { 100ms };      // period between retries
+  constexpr int      MAX_RETRIES { 2 };
+  constexpr duration RETRY_TIME  { 100ms };      // period between retries
 
   int       counter { 0 };
   frequency rv      { 0 };
@@ -1804,6 +1803,7 @@ void elecraft_k3_interface::prepare(const drlog_context& context)
 
   using enum RIG_CAPABILITY;
 
+// the K3 has these capabilities
   _rcaps = rig_capabilities(std::set<RIG_CAPABILITY> { VFO_A,      VFO_B,    RIT,         XIT,  EQUAL_RIT_XIT_QRG,
                                                        SPLIT,      LOCK_A,   SUB_RX,      TEST, RX_ANT,
                                                        AUTO_NOTCH, AUDIO_BW, AUDIO_CENTRE
@@ -1819,9 +1819,9 @@ void elecraft_k3_interface::prepare(const drlog_context& context)
     \param  m   new mode
 */
 void elecraft_k3_interface::rig_mode(const MODE m)
-{ constexpr chrono::duration RETRY_TIME          { 10ms };   // wait time if a retry is necessary; decreasing this makes little difference
-  constexpr chrono::duration K3_MODE_CHANGE_TIME { 500ms };  // time for a K3 to change mode
-  constexpr int              MAX_ATTEMPTS        { 10 };     // maximum number of attempts
+{ constexpr duration RETRY_TIME          { 10ms };   // wait time if a retry is necessary; decreasing this makes little difference
+  constexpr duration K3_MODE_CHANGE_TIME { 500ms };  // time for a K3 to change mode
+  constexpr int      MAX_ATTEMPTS        { 10 };     // maximum number of attempts
 
   _last_commanded_mode = m;
 
@@ -1970,7 +1970,7 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
           if (!completed)
           { const int percent { static_cast<int>(rcvd.length() * 100) / RESPONSE_LENGTH };
 
-            alert("P3 screendump progress: "s + to_string(percent) + '%');
+            alert("P3 screendump progress: "s + to_string(percent) + PERCENT);
             sleep_for(1s);      // we have the lock for all this time
           }
         }
@@ -2135,11 +2135,7 @@ void elecraft_k3_interface::xit(const int hz) const
 { if (hz == 0)                                // just clear the RIT/XIT
     raw_command("RC;"sv);
   else
-  { const int    positive_hz { abs(hz) };
-    const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_leftz(positive_hz, 4) };
-
-    raw_command("RO"s + hz_str + SEMICOLON);
-  }
+    raw_command("RO"s + ((hz >= 0) ? PLUS : MINUS) + pad_leftz(abs(hz), 4) + SEMICOLON);
 }
 
 /// is sub-receiver on?
@@ -2296,7 +2292,7 @@ string elecraft_k3_interface::centre_frequency_str(void) const
   SAFELOCK(_rig);
 
   if ( const string response { raw_command("IS;"sv, RESPONSE::EXPECTED) }; contains_at(response, SEMICOLON, 7) and contains_at(response, "IS"sv, 0) )
-    return remove_leading <std::string> (substring <std::string_view> (response, 3, 4), '0');
+    return remove_leading <string> (substring <string_view> (response, 3, 4), '0');
   else
   { _error_alert("Invalid response getting centre frequency: "s + response);
     return string { };
@@ -2438,13 +2434,9 @@ void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 
 /*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
     \return     the K3 command mode
-
-    Works only with K3
 */
 K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
-{ //const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) };
-
-  if (const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) }; result == "K31"sv)
+{ if (const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) }; result == "K31"sv)
     return K3_COMMAND_MODE::EXTENDED;
 
   return K3_COMMAND_MODE::NORMAL;
@@ -2452,8 +2444,6 @@ K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
-
-    Works only with K3
 */
 void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD>& button) const
 { SAFELOCK(_rig);
@@ -2473,7 +2463,7 @@ void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD
 void elecraft_k3_interface::k3_double_tap(const K3_BUTTON_TAP button) const
 { SAFELOCK(_rig);
 
-  constexpr std::chrono::duration K3_TIME_BETWEEN_TAPS { 50ms };
+  constexpr duration K3_TIME_BETWEEN_TAPS { 50ms };
 
   k3_press(button);
   sleep_for(K3_TIME_BETWEEN_TAPS);
@@ -2482,7 +2472,7 @@ void elecraft_k3_interface::k3_double_tap(const K3_BUTTON_TAP button) const
 
 /// set RIT, split, sub-rx off
 void elecraft_k3_interface::base_state(void) const
-{ constexpr std::chrono::duration K3_INTERCOMMAND_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
+{ constexpr duration K3_INTERCOMMAND_TIME { 1s };      // the K3 is awfully slow; this should allow plenty of time between commands
 
   auto pause { [ K3_INTERCOMMAND_TIME, this] (void) { sleep_for(K3_INTERCOMMAND_TIME); } };
 
@@ -2573,8 +2563,11 @@ polled_status elecraft_k3_interface::poll(void)
       LOCK_B
       etc.
 */
-rig_capabilities::rig_capabilities(const std::string& fn)
+rig_capabilities::rig_capabilities(const std::string_view fn)
 {
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define READ_CAPABILITY(y) \
   if (sv == #y) \
   { set(RIG_CAPABILITY::y);  \
@@ -2688,7 +2681,7 @@ rig_capabilities::rig_capabilities(const hamlib_capabilities& hcaps)
       LOCK_B
       etc.
 */
-rig_capabilities::rig_capabilities(const std::vector<std::string>& path, const std::string& fn)
+rig_capabilities::rig_capabilities(const std::vector<std::string>& path, const std::string_view fn)
 { const string valid_filename { find_file(path, fn) };
 
   if (!valid_filename.empty())
@@ -2700,6 +2693,9 @@ rig_capabilities::rig_capabilities(const std::vector<std::string>& path, const s
 */
 void rig_capabilities::set(const RIG_CAPABILITY rc)
 {
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define SET_CAPABILITY(y) \
     case RIG_CAPABILITY::y : \
       y##_set(); \
@@ -2735,6 +2731,9 @@ void rig_capabilities::set(const RIG_CAPABILITY rc)
 */
 void rig_capabilities::clear(const RIG_CAPABILITY rc)
 {
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define CLEAR_CAPABILITY(y) \
     case RIG_CAPABILITY::y : \
       y##_clear(); \
@@ -2770,6 +2769,9 @@ void rig_capabilities::clear(const RIG_CAPABILITY rc)
 string rig_capabilities::to_string(void) const
 { string rv { };
 
+/*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
+    I'd be happy to be proved wrong.
+*/
 #define WRITE_OUT(y) rv += ""s #y " IS "s + (y() ? ""s : "NOT "s) + "set"s + EOL;
 
   WRITE_OUT(VFO_A);

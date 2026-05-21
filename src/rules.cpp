@@ -1,4 +1,4 @@
-// $Id: rules.cpp 290 2026-03-30 15:48:47Z  $
+// $Id: rules.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -868,6 +868,15 @@ bool contest_rules::is_canonical_value(const string_view field_name, const strin
 bool contest_rules::is_legal_value(const string_view field_name, const string_view putative_value) const
 { SAFELOCK(rules);
 
+  try
+  { return _exchange_field_eft.at(field_name).is_legal_value(putative_value);
+  }
+
+  catch (...)
+  { ost << "ERROR: unknown field name in contest_rules::is_legal_value( " << field_name << ", " << putative_value << RIGHT_PARENTHESIS << endl;
+    return false;
+  }
+#if 0
   if (const auto it { _exchange_field_eft.find(field_name) }; it != _exchange_field_eft.end())    // at() not yet supported for heterogeneous lookup
   { const EFT& eft { it -> second };
 
@@ -878,6 +887,7 @@ bool contest_rules::is_legal_value(const string_view field_name, const string_vi
 
     return false;
   }
+#endif
 }
 
 /*! \brief              Is a particular exchange field a regex?
@@ -889,6 +899,16 @@ bool contest_rules::is_legal_value(const string_view field_name, const string_vi
 bool contest_rules::exchange_field_is_regex(const string_view field_name) const
 { SAFELOCK(rules);
 
+  try
+  { return _exchange_field_eft.at(field_name).regex_str().empty();
+  }
+
+  catch (...)
+  { ost << "ERROR: unknown field name in contest_rules::exchange_field_is_regex( " << field_name << RIGHT_PARENTHESIS << endl;
+    return false;
+  }
+
+#if 0
   if (const auto it { _exchange_field_eft.find(field_name) }; it != _exchange_field_eft.end())    // at() not yet supported for heterogeneous lookup
   { const EFT& eft { it -> second };
 
@@ -899,6 +919,7 @@ bool contest_rules::exchange_field_is_regex(const string_view field_name) const
 
     return false;
   }
+#endif
 }
 
 /*! \brief              The permitted values for a field
@@ -949,7 +970,8 @@ string contest_rules::canonical_value(const string_view field_name, const string
   
   const string def_value { actual_value };
 
-  return MUM_VALUE(_permitted_to_canonical.at(string { field_name }), def_value, def_value);  // we don't get here if field_name isn't valid; at() doesn't yet support heterogeneous lookup
+//  return MUM_VALUE(_permitted_to_canonical.at(string { field_name }), def_value, def_value);  // we don't get here if field_name isn't valid; at() doesn't yet support heterogeneous lookup
+  return MUM_VALUE(_permitted_to_canonical.at(field_name), def_value, def_value);  // we don't get here if field_name isn't valid; at() doesn't yet support heterogeneous lookup
 }
 
 /*! \brief                  Get the next mode in sequence

@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 293 2026-04-26 14:17:23Z  $
+// $Id: string_functions.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -682,7 +682,7 @@ size_t n_chars(const string_view str)
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 bool is_legal_ipv4_address(const string_view cs)
-{ const vector<string_view> fields { split_string <std::string_view> (cs, DOT) };
+{ const vector<string_view> fields { split_string <string_view> (cs, DOT) };
 
   if (fields.size() != 4)
     return false;
@@ -914,7 +914,7 @@ string base_call(const string_view callsign)
 { if (!callsign.contains(SLASH))
     return string { callsign };
 
-  return longest( split_string <std::string_view> (callsign, SLASH) );
+  return longest( split_string <string_view> (callsign, SLASH) );
 }
 
 /*! \brief      Provide a formatted date string: YYYYMMDD
@@ -950,13 +950,13 @@ string remove_substrings(const string_view cs, const vector<string>& vs)
 size_t find_and_go_to_end_of(const string_view str, const string_view target)
 { const size_t posn { str.find(target) };
 
-  if (posn == string::npos)
-    return string::npos;
+  if (posn == string_view::npos)
+    return string_view::npos;
 
   const size_t ts { target.size() };
 
   if ( (posn + ts) == str.size())
-    return string::npos;
+    return string_view::npos;
 
   return (posn + ts);
 }

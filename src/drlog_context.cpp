@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 294 2026-05-03 15:14:40Z  $
+// $Id: drlog_context.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -913,9 +913,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { for (const auto& band_str : clean_split_string <string> (rhs))
+    { //for (const auto& band_str : clean_split_string <string> (rhs))
+      for (const auto band_str : clean_split_string <string_view> (rhs))
       { try
-        { _score_bands += BAND_FROM_NAME.at(band_str);  // .at() does not yet support heterogenwous lookup
+        { _score_bands += BAND_FROM_NAME.at(band_str);
         }
 
         catch (...)
@@ -1279,14 +1280,15 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     static STRING_MAP<bool /* whether verbatim */> verbatim;   // key = name
 
     if (LHS == "STATIC WINDOW"sv)
-    { const vector<string> fields { clean_split_string <string> (rhs) };       // avoid heterogeneous lookup (see below)
+    { //const vector<string> fields { clean_split_string <string> (rhs) };       // avoid heterogeneous lookup (see below)
+      const vector<string_view> fields { clean_split_string <string_view> (rhs) };
 
       if (fields.size() == 2)  // name, contents
-      { const string& name { fields[0] };
+      { const string_view name { fields[0] };
 
         string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
 
-        verbatim[name] = fields[1].contains(QUOTATION_MARK);     // verbatim if contains quotation mark; operator [] does not yet support heterogeneous lookup
+        verbatim[name] = fields[1].contains(QUOTATION_MARK);     // verbatim if contains quotation mark
 
         if (file_exists(contents))
           contents = read_file(contents);
@@ -1297,7 +1299,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (LHS == "STATIC WINDOW INFO"sv)  // must come after the corresponding STATIC WINDOW command
-    { const vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, EQUALS)[1], COMMA) };
+    { const vector<string> window_info { clean_split_string <string> (split_string <string> (testline, EQUALS)[1], COMMA) };
 
       if (!window_info.empty())
       { const string& name { window_info[0] };
@@ -1326,8 +1328,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
               vector<string> lines { to_lines <std::string> (contents) };
 
-              const string contents_1 { replace(contents, "\\n"s, EOL) };
- //             const string contents_1 { replace(contents, LINEFEED, EOL) };
+              const string contents_1 { replace(contents, "\\n"s, EOL) };   // look for backslash followed by n
 
               lines = to_lines <std::string> (contents_1);
 
@@ -1385,8 +1386,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         if (const auto& cit { key_names.find(target) }; cit != key_names.cend())    // key_names, defined in keyboard.cpp, maps names to keysyms
         { try
           { const auto&          [ keyname_str, key_symbol ] { *cit };
-            const vector<string> vec_str                     { split_string <std::string> (testline, EQUALS) };
-            const string         str                         { remove_leading_spaces <std::string> (vec_str.at(1)) };
+            const vector<string> vec_str                     { split_string <string> (testline, EQUALS) };
+            const string         str                         { remove_leading_spaces <string> (vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
             _messages += { key_symbol, str };
@@ -1435,8 +1436,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       if (tokens.size() != 2)
         print_error_and_exit(testline);
 
-//      if (tokens.size() == 2)
-        _message_cq_2 = move(tokens[1]);
+      _message_cq_2 = move(tokens[1]);
     }
   }
 
@@ -1460,9 +1460,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
   if (_call_history_bands.empty())
-  { for ( const auto& str : clean_split_string <string> (bands()) )
+  { for ( const auto str : clean_split_string <string_view> (bands()) )
     { try
-      { _call_history_bands += BAND_FROM_NAME.at(str);    // heterogeneous lookup not yet supported
+      { _call_history_bands += BAND_FROM_NAME.at(str);
       }
 
       catch (...)

@@ -1,4 +1,4 @@
-// $Id: adif3.cpp 286 2026-03-09 00:55:25Z  $
+// $Id: adif3.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -70,23 +70,25 @@ void adif3_field::_normalise(void)
 void adif3_field::_verify(void) const
 { using enum ADIF3_DATA_TYPE;
 
+  const string_view COLON_SPACE { ": "sv };
+
   switch (_type)
   { case DATE :                                      // YYYYMMDD
     { if (_value.find_first_not_of(DIGITS) != string::npos)
-        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + COLON_SPACE + _value);
         
       if (_value.length() != 8)
-        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + COLON_SPACE + _value);
 
       const string_view year { substring <string_view> (_value, 0, 4) };
       
       if (year < "1930"sv)
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid year in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid year in "s + _name + COLON_SPACE + _value);
         
       const int month { from_string<int>(substring <string_view> (_value, 4, 2)) };
       
       if ( (month < 1) or (month > 12) )
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid month in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid month in "s + _name + COLON_SPACE + _value);
 
       const int day { from_string<int>(substring <string_view> (_value, 6, 2)) };
       
@@ -102,34 +104,34 @@ void adif3_field::_verify(void) const
       }
         
       if ( (day < 1) or (day > days_in_month) )
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid day number in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid day number in "s + _name + COLON_SPACE + _value);
     }
     break;
       
     case ENUMERATION_BAND :
     { if (!_ENUMERATION_BAND.contains(to_lower(_value)))
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
     }
     break;
 
     case ENUMERATION_DXCC_ENTITY_CODE :
     { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + COLON_SPACE + _value);
 
       if (!(_ENUMERATION_DXCC_ENTITY_CODE.contains(from_string<int>(_value))))
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid DXCC entity code in "s + _name + COLON_SPACE + _value);
     }
     break;
     
     case ENUMERATION_MODE :
     { if (!(_ENUMERATION_MODE.contains(to_upper(_value))))
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
     }
     break;
  
     case ENUMERATION_QSL_RECEIVED :
     { if (!( _ENUMERATION_QSL_RECEIVED.contains(to_upper(_value))))
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
     }
     break;
  
@@ -141,61 +143,61 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 */
     case GRID_SQUARE :
     { if ( (_value.size() != 2) and (_value.size() != 4) and (_value.size() != 6) and (_value.size() != 8) )
-        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + COLON_SPACE + _value);
         
       const string uc { to_upper(_value) };      // ADIF spec says case-insensitive!
         
       if ( (uc[0] < 'A' or uc[0] > 'R') or
             (uc[1] < 'A' or uc[1] > 'R') )
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
 
       if (_value.size() > 2)
       { if ( (uc[2] < '0' or uc[2] > '9') or
               (uc[3] < '0' or uc[3] > '9') )
-          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
       }
         
       if (_value.size() > 4)
       { if ( (uc[4] < 'A' or uc[4] > 'X') or
               (uc[5] < 'A' or uc[5] > 'X') )
-          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
       }
  
       if (_value.size() > 6)
       { if ( (uc[6] < '0' or uc[6] > '9') or
               (uc[7] < '0' or uc[7] > '9') )
-          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
       }
     }
     break;
 
     case NUMBER :                               // a sequence of one or more Digits representing a decimal number, optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)
     { if (_value.empty())
-        throw adif3_error(ADIF3_EMPTY_VALUE, "Empty value in "s + _name + ": "s + _value);   
+        throw adif3_error(ADIF3_EMPTY_VALUE, "Empty value in "s + _name + COLON_SPACE + _value);
         
       if (!isdigit(_value[0]) and (_value[0] != '-') and (_value[0] != '.'))
-        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid initial character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid initial character in "s + _name + COLON_SPACE + _value);
 
 // only one decimal point is allowed
       if (count(_value.begin(), _value.end(), '.') > 1)
-        throw adif3_error(ADIF3_INVALID_VALUE, "More than one decimal point in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "More than one decimal point in "s + _name + COLON_SPACE + _value);
         
 // check that only legal characters occur        
       if (_value.find_first_not_of("01234567879."s, 1) != string::npos)
-        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + COLON_SPACE + _value);
     }
     break;
     
     case POSITIVE_INTEGER :      // an unsigned sequence of one or more Digits representing a decimal integer that has a value greater than 0.  Leading zeroes are allowed.
     { if (!is_digits(_value))
-        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + COLON_SPACE + _value);
 
 // CQZ : 1..40
       if (const auto cit { _positive_integer_range.find(_name) }; cit != _positive_integer_range.cend())
       { const auto [min_value, max_value] = cit->second;
         
         if (const int zone { from_string<int>(_value) }; ((zone < min_value) or (zone > max_value)) )
-          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
+          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + COLON_SPACE + _value);
       }
     }
     break; 
@@ -203,7 +205,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     case STRING :        // amazingly (but nothing about this should amaze me), a "sequence of": ASCII character whose code lies in the range of 32 through 126, inclusive
     { for (const char c : _value)
         if ( int intval { static_cast<int>(c) }; (intval < 32) or (intval > 126) )
-          throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
+          throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + COLON_SPACE + _value);
     }
     break;
 
@@ -211,20 +213,20 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     { const string& utc { _value };
       
       if (!is_digits(utc))
-        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + COLON_SPACE + _value);
  
       if ( (utc.length() != 4) and (utc.length() != 6) )
-        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_LENGTH, "Invalid length in "s + _name + COLON_SPACE + _value);
  
       if (const int hours { from_string<int>(substring <string_view> (utc, 0, 2)) }; hours > 23)
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid hours value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid hours value in "s + _name + COLON_SPACE + _value);
 
       if (const int minutes { from_string<int>(substring <string_view> (utc, 2, 2)) }; minutes > 59)
-        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid minutes value in "s + _name + ": "s + _value);
+        throw adif3_error(ADIF3_INVALID_VALUE, "Invalid minutes value in "s + _name + COLON_SPACE + _value);
 
       if (utc.length() == 6)
       { if (const int seconds { from_string<int>(substring <string_view> (utc, 4, 2)) }; seconds > 59)
-          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid seconds value in "s + _name + ": "s + _value);   
+          throw adif3_error(ADIF3_INVALID_VALUE, "Invalid seconds value in "s + _name + COLON_SPACE + _value);
       }
     }
     break;
@@ -245,7 +247,6 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 adif3_field::adif3_field(const string_view field_name, const string_view field_value)
 { _name = to_upper(field_name);
   
-//  const auto opt { OPT_MUM_VALUE(_element_type, _name) };
   const auto opt { OPT_ANYMAP_VALUE(_element_type, _name) };
 
   if (!opt)
@@ -267,7 +268,7 @@ adif3_field::adif3_field(const string_view field_name, const string_view field_v
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-size_t adif3_field::import_and_eat(const string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const STRING_SET& accept_fields)
+size_t adif3_field::import_and_eat(const string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const FLAT_STRING_SET& accept_fields)
 { const auto posn_1 { str.find(LEFT_ANGLE_BRACKET, start_posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
@@ -284,7 +285,7 @@ size_t adif3_field::import_and_eat(const string_view str, const size_t start_pos
 
 // if it's the EOR, then jump out
   const string_view         descriptor_str { substring <string_view> (str, posn_1 + 1, posn_2 - posn_1 -1) };
-  const vector<string_view> fields         { split_string <std::string_view> (descriptor_str, COLON) };
+  const vector<string_view> fields         { split_string <string_view> (descriptor_str, COLON) };
 
   if ( (fields.size() < 2) or (fields.size() > 3) )     // wrong number of fields
     return string::npos;
@@ -301,7 +302,6 @@ size_t adif3_field::import_and_eat(const string_view str, const size_t start_pos
       _name = uc_name;                                // force name to UC
 
     const string contents { str.substr(posn_2 + 1, n_chars) };
-//    const auto   atype    { OPT_MUM_VALUE(_element_type, _name) };
     const auto   atype    { OPT_ANYMAP_VALUE(_element_type, _name) };
 
     if (!atype)
@@ -343,10 +343,10 @@ int adif3_record::_fast_string_to_int(const string_view str) const
 
     Returns string::npos if reads past the end of <i>str</i>
 */ 
-size_t adif3_record::import_and_eat(const string_view str, const size_t posn, const STRING_SET& accept_fields)
-{ 
+size_t adif3_record::import_and_eat(const string_view str, const size_t posn, const FLAT_STRING_SET& accept_fields)
+{
 // extract the text from the first "<" to the end of the first "eor"
-  const auto posn_1 { str.find('<', posn) };
+  const auto posn_1 { str.find(LEFT_ANGLE_BRACKET, posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
@@ -360,11 +360,9 @@ size_t adif3_record::import_and_eat(const string_view str, const size_t posn, co
 
 // this is a little faster than the above
 #if 1
-//  static int counter { 0 };
-
   size_t posn_2 { posn_1 };
 
-  auto posn_3 { str.find('>', posn_1) };
+  auto posn_3 { str.find(RIGHT_ANGLE_BRACKET, posn_1) };
 
   if (posn_3 == string::npos)        // could not find end-of-record marker
     return string::npos;
@@ -373,12 +371,12 @@ size_t adif3_record::import_and_eat(const string_view str, const size_t posn, co
 
   while (!found_it)
   { while ( (posn_3 - posn_2  != 4) )
-    { posn_2 = str.find('<', posn_3 + 1);
+    { posn_2 = str.find(LEFT_ANGLE_BRACKET, posn_3 + 1);
 
       if (posn_2 == string::npos)        // could not find end-of-record marker
         return string::npos;
 
-      posn_3 = { str.find('>', posn_2 + 1) };
+      posn_3 = { str.find(RIGHT_ANGLE_BRACKET, posn_2 + 1) };
 
       if (posn_3 == string::npos)        // could not find end-of-record marker
         return string::npos;
@@ -400,7 +398,7 @@ size_t adif3_record::import_and_eat(const string_view str, const size_t posn, co
     start_posn = element.import_and_eat(str, start_posn, posn_2, accept_fields);             // name is forced to upper case
     
     if (!element.empty())
-      if ( auto [it, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
+      if ( auto [_, inserted] { _elements.insert( { element.name(), element } ) }; !inserted)     // should always be inserted
         throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
   }
   
@@ -416,7 +414,7 @@ size_t adif3_record::import_and_eat(const string_view str, const size_t posn, co
 string adif3_record::to_string(void) const
 { string rv { };
 
-  for (const auto& [name, field] : _elements)
+  for (const auto& [_, field] : _elements)
   { if (const ADIF3_DATA_TYPE dt { field.type() }; !( _import_only.contains(dt) ) )       // don't output if this type is import-only
       rv += field.to_string();    // output without any checks
   }
@@ -435,8 +433,8 @@ string adif3_record::to_string(void) const
     <i>field_value</i> is validated and converted to standardised format (if applicable)
 */
 bool adif3_record::value(const string_view field_name, const string_view field_value)
-{ const adif3_field element        { field_name, field_value };
-  const auto        [it, inserted] { _elements.insert( { element.name(), element } ) };
+{ const adif3_field element       { field_name, field_value };
+  const auto        [_, inserted] { _elements.insert( { element.name(), element } ) };
  
   return inserted;
 }
@@ -469,7 +467,7 @@ bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
 
     Throws exception if something goes wrong when reading the file
 */
-adif3_file::adif3_file(const string_view filename, const STRING_SET& accept_fields)
+adif3_file::adif3_file(const string_view filename, const FLAT_STRING_SET& accept_fields)
 { const string contents { read_file(filename) };            // this might throw
   
   size_t start_posn { skip_adif3_header(contents) };
@@ -492,7 +490,7 @@ adif3_file::adif3_file(const string_view filename, const STRING_SET& accept_fiel
 
     Returns empty object if a problem occurs
 */
-adif3_file::adif3_file(const vector<string>& path, const string_view filename, const STRING_SET& accept_fields)
+adif3_file::adif3_file(const vector<string>& path, const string_view filename, const FLAT_STRING_SET& accept_fields)
 { for (const auto& this_path : path)
   { try
     { *this = adif3_file { this_path + SLASH + filename, accept_fields };
@@ -517,8 +515,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string_view callsign, 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
   FOR_ALL(begin_it, end_it, [b, m, &rv] (const auto& map_entry)
-    { //const adif3_record& rec { map_entry.second };
-      const auto& [_, rec] { map_entry };
+    { const auto& [_, rec] { map_entry };
 
       if ( (rec.band() == b) and (rec.mode() == m) )
         rv += rec;
@@ -548,12 +545,13 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string_view callsign) 
 size_t skip_adif3_header(const std::string_view str)
 { const auto posn_1 { case_insensitive_find(str, "<EOH>"sv) };
 
-  return ( (posn_1 == string_view::npos) ? 0 : (str.find('<', posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
+  return ( (posn_1 == string_view::npos) ? 0 : (str.find(LEFT_ANGLE_BRACKET, posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
 }
 
 using enum ADIF3_DATA_TYPE;
 
 /// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
+/// Note that "STRING" doesn't mean "string"... it's limited to ASCII characters!
 const FLAT_STRING_MAP<ADIF3_DATA_TYPE> adif3_field::_element_type
 { { "ADDRESS"s,                   MULTILINE_STRING },
   { "AGE"s,                       NUMBER },
@@ -715,7 +713,6 @@ STRING_MAP<pair<int, int>> adif3_field::_positive_integer_range
 };
 
 /// band values
-//const UNORDERED_STRING_SET adif3_field::_ENUMERATION_BAND
 const FLAT_STRING_SET adif3_field::_ENUMERATION_BAND
 { "2190m"s, "630m"s, "560m"s, "160m"s, "80m"s,    "60m"s, "40m"s,   "30m"s,   "20m"s,  "17m"s,
   "15m"s,   "12m"s,  "10m"s,  "6m"s,   "4m"s,     "2m"s,  "1.25m"s, "70cm"s,  "33cm"s, "23cm"s,
@@ -725,7 +722,6 @@ const FLAT_STRING_SET adif3_field::_ENUMERATION_BAND
 /// mapping between country code and country info
 using enum ADIF3_COUNTRY_STATUS;
 
-//const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 const flat_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, ADIF3_COUNTRY_STATUS /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 { {  1  , { "CANADA"s,                                  "VE"s,    CURRENT } },
   {  2  , { "ABU AIL IS."s,                             ""s,      DELETED } },
@@ -1132,7 +1128,8 @@ const flat_map<int /* country number */, tuple<string /*country name */, string 
 };
 
 /// mode values
-UNORDERED_STRING_SET adif3_field::_ENUMERATION_MODE
+//const UNORDERED_STRING_SET adif3_field::_ENUMERATION_MODE
+const FLAT_STRING_SET adif3_field::_ENUMERATION_MODE
 { "AM"s,       "ARDOP"s,    "ATV"s,     "C4FM"s,   "CHIP"s,    "CLO"s,     "CONTESTI"s, "CW"s,       "DIGITALVOICE"s, "DOMINO"s, 
   "DSTAR"s,    "FAX"s,      "FM"s,      "FSK441"s, "FT8"s,     "HELL"s,    "ISCAT"s,    "JT4"s,      "JT6M"s,         "JT9"s, 
   "JT44"s,     "JT65"s,     "MFSK"s,    "MSK144"s, "MT63"s,    "OLIVIA"s,  "OPERA"s,    "PAC"s,      "PAX"s,          "PKT"s, 
@@ -1145,7 +1142,8 @@ UNORDERED_STRING_SET adif3_field::_ENUMERATION_MODE
 };
 
 /// legal values of QSL_RCVD
-STRING_SET adif3_field::_ENUMERATION_QSL_RECEIVED { "Y"s, "N"s, "R"s, "I"s, "V"s };
+//const STRING_SET adif3_field::_ENUMERATION_QSL_RECEIVED { "Y"s, "N"s, "R"s, "I"s, "V"s };
+const FLAT_STRING_SET adif3_field::_ENUMERATION_QSL_RECEIVED { "Y"s, "N"s, "R"s, "I"s, "V"s };
 
 /// fields that are not to be output
 set<ADIF3_DATA_TYPE> adif3_record::_import_only

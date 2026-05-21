@@ -1,4 +1,4 @@
-// $Id: adif3.h 286 2026-03-09 00:55:25Z  $
+// $Id: adif3.h 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -122,8 +122,10 @@ protected:
                                                                   std::string /* canonical prefix */,
                                                                   ADIF3_COUNTRY_STATUS /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
 
-  static UNORDERED_STRING_SET _ENUMERATION_MODE;            ///< mode values
-  static STRING_SET           _ENUMERATION_QSL_RECEIVED;    ///< legal values of QSL_RCVD
+//  const static UNORDERED_STRING_SET _ENUMERATION_MODE;            ///< mode values
+  const static FLAT_STRING_SET _ENUMERATION_MODE;            ///< mode values
+//  const static STRING_SET           _ENUMERATION_QSL_RECEIVED;    ///< legal values of QSL_RCVD
+  const static FLAT_STRING_SET           _ENUMERATION_QSL_RECEIVED;    ///< legal values of QSL_RCVD
 
 public:
 
@@ -161,7 +163,7 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const STRING_SET& accept_fields = { });
+  size_t import_and_eat(const std::string_view str, const size_t start_posn, const size_t end_posn /* one past <EOR> */, const FLAT_STRING_SET& accept_fields = { });
 
 /// is the field empty?
   inline bool empty(void) const
@@ -201,7 +203,7 @@ public:
 
     Returns string::npos if reads past the end of <i>str</i>
 */
-  size_t import_and_eat(const std::string_view str, const size_t posn, const STRING_SET& accept_fields = { });
+  size_t import_and_eat(const std::string_view str, const size_t posn, const FLAT_STRING_SET& accept_fields = { });
 
 /*! \brief      Convert to printable string
     \return     the canonical textual representation of the record
@@ -293,7 +295,7 @@ public:
 
     Throws exception if something goes wrong when reading the file
 */
-  adif3_file(const std::string_view filename, const STRING_SET& accept_fields = { }); // perhaps FLAT_STRING_SET?
+  explicit adif3_file(const std::string_view filename, const FLAT_STRING_SET& accept_fields = { });
 
 /*! \brief              Construct from file name
     \param  path        vector of directories in which to look
@@ -301,7 +303,7 @@ public:
 
     Returns empty object if a problem occurs
 */
-  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const STRING_SET& accept_fields = { }); // perhaps FLAT_STRING_SET?
+  adif3_file(const std::vector<std::string>& path, const std::string_view filename, const FLAT_STRING_SET& accept_fields = { });
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match

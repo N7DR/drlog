@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 286 2026-03-09 00:55:25Z  $
+// $Id: autocorrect.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

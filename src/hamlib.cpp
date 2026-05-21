@@ -1,5 +1,5 @@
  
-// $Id: hamlib.cpp 290 2026-03-30 15:48:47Z  $
+// $Id: hamlib.cpp 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,83 +41,23 @@ consteval HAMLIB_CAPABILITIES_TYPE possible_capabilities(void)
 { HAMLIB_CAPABILITIES_TYPE rv { 0 };
 
   for (auto this_enum : std::meta::enumerators_of(^^HAMLIB_CAPABILITY))
-    { rv += static_cast<HAMLIB_CAPABILITIES_TYPE>(std::meta::extract<HAMLIB_CAPABILITY>(this_enum)); }
+    { rv += static_cast<HAMLIB_CAPABILITIES_TYPE>(std::meta::extract<HAMLIB_CAPABILITY>(this_enum)); }  // basically, or the bits
 
   return rv;
 }
 
-// instantiate a constant representing all possible capabilities
-//constexpr auto possible { possible_capabilities() };
-
-/*! \brief  Get all the capabilities of a rig
+/*! \brief        Get all the capabilities of a rig
     \param  rigp  pointer to rig
     \return       representation of all the implemented HAMLIB capabilties on the rig <i>*rigp</i>
 */
 HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
-{ //using enum HAMLIB_CAPABILITY;
-
-//  HAMLIB_CAPABILITIES_TYPE requested_capabilities { 0 };
-
-  if (rigp)
+{ if (rigp)
   { constexpr HAMLIB_CAPABILITIES_TYPE requested_capabilities { possible_capabilities() };
-
-    //requested_capabilities = possible;
-#if 0
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(FAGC);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(NB);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(COMP);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(VOX);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(TONE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(TSQL);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SBKIN);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(FBKIN);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(ANF);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(NR);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(AIP);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(APF);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(MON);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(MN);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(RF);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(ARO);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(LOCK);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(MUTE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(VSC);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(REV);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SQL);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(ABM);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(BC);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(MBC);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(RIT);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(AFC);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SATMODE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SCOPE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(RESUME);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(TBURST);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(TUNER);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(XIT);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(NB2);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(CSQL);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(AFLT);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(ANL);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(BC2);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(DUAL_WATCH);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(DIVERSITY);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(DSQL);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SCEN);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SLICE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(TRANSCEIVE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SPECTRUM);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SPECTRUM_HOLD);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SEND_MORSE);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SEND_VOICE_MEM);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(OVF_STATUS);
-    requested_capabilities += static_cast<HAMLIB_CAPABILITIES_TYPE>(SYNC);
-#endif
 
     ost << "requesting capabilities = " << requested_capabilities << endl;
     ost << "binary: " << std::bitset<8*sizeof(requested_capabilities)>(requested_capabilities) << endl;
 
-    HAMLIB_CAPABILITIES_TYPE rv { rig_has_get_func(rigp, requested_capabilities) };
+    const HAMLIB_CAPABILITIES_TYPE rv { rig_has_get_func(rigp, requested_capabilities) };
 
     ost << "returned capabilties = " << rv << endl;
     ost << "binary: " << std::bitset<8*sizeof(rv)>(rv) << endl;
@@ -128,6 +68,12 @@ HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp)
   ost << "Error: hamlib_get_capabilities() called with nullptr" << endl;
   exit(-1);
 }
+
+// ---------------------------------------------------  hamlib_capabilities -----------------------------------------
+
+/*! \class  hamlib_capabilities
+    \brief  class to handle hamlib capabilities
+*/
 
 /*! \brief      get a rig's capabilities
     \param  rp  pointer to a hamlib RIG object
@@ -165,52 +111,9 @@ void hamlib_capabilities::get_capabilities(RIG* rp)
   }
 }
 
-#if 1
-//#include <meta>
-
-template <typename E>
-struct enum_item
-{ std::string_view name;
-
-  E value;
-};
-
-template <typename E>
-consteval auto get_enum_data(void)
-{ std::array<enum_item<E>, std::meta::enumerators_of(^^E).size()> result;
-
-  for (int k { 0 }; auto mem : std::meta::enumerators_of(^^E))
-    result[k++] = enum_item<E>{ std::meta::identifier_of(mem), std::meta::extract<E>(mem) };
-
-  return result;
-}
-
-//consteval auto enums(void)
-//  { return std::meta::enumerators_of(^^HAMLIB_CAPABILITY); };
-
-template <typename E>
-consteval auto enums1(void)
-  { return std::meta::enumerators_of(^^E); };
-
-//constexpr auto v = enums();
-
-//constexpr auto v = enums1 <HAMLIB_CAPABILITY> ();
-//  constexpr auto v2 = std::meta::enumerators_of(^^HAMLIB_CAPABILITY);
-
-#endif
-
 /// convert to a human-readable string
 string hamlib_capabilities::to_string(void) const
 { string rv { };
-
-#if 1
-  for ([[maybe_unused]] auto x : get_enum_data<HAMLIB_CAPABILITY>())
-//  for ([[maybe_unused]] auto x : enums1<HAMLIB_CAPABILITY>())
-    { }
-#endif
-
-//  consteval auto enums(void)
-//    { return std::meta::enumerators_of(^^HAMLIB_CAPABILITY) };
 
 #define WRITE_CAPABILITY(y) \
   { std::string msg { }; \

@@ -1,4 +1,4 @@
- // $Id: hamlib.h 290 2026-03-30 15:48:47Z  $
+ // $Id: hamlib.h 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -93,16 +93,23 @@ enum class HAMLIB_CAPABILITY : HAMLIB_CAPABILITIES_TYPE { FAGC           = RIG_F
                                                           SYNC           = RIG_FUNC_SYNC            // Synchronize VFOS -- FTDX101D/MP for now SY command
                                                         };
 
+// forward declarations
 HAMLIB_CAPABILITIES_TYPE hamlib_get_capabilities(RIG* rigp);    // NB hamlib requires a non-const pointer
+
+// ---------------------------------------------------  hamlib_capabilities -----------------------------------------
+
+/*! \class  hamlib_capabilities
+    \brief  class to handle hamlib capabilities
+*/
 
 class hamlib_capabilities
 {
 protected:
 
-  HAMLIB_CAPABILITIES_TYPE _caps { 0 };        // uint64_t mask of capabilities
+  HAMLIB_CAPABILITIES_TYPE _caps { 0 };       // uint64_t mask of capabilities
 
-  std::string              _vfos_str { };      // output from rig_get_vfo_list()
-  std::set<VFO>            _vfos     { };
+  std::string              _vfos_str { };     // output from rig_get_vfo_list()
+  std::set<VFO>            _vfos     { };     // which VFOs are present?
 
 public:
 
@@ -114,6 +121,10 @@ public:
 /// are the capabilities uninitialised?
   inline bool empty(void) const
     { return ( _caps == static_cast<HAMLIB_CAPABILITIES_TYPE>(0) ); }
+
+/*  It rather goes against the grain to use bits instead of a set of enums; but since hamlib
+    encodes capabilities as bits, we'll just do it the way they want us to.
+*/
 
 #define HAS_CAPABILITY(y) \
   inline bool y(void) const \
@@ -180,9 +191,10 @@ public:
 
 #undef HAS_CAPABILITY
 
-  READ(vfos);
-  READ(vfos_str);
+  READ(vfos);          // which VFOs are present?
+  READ(vfos_str);      // output from rig_get_vfo_list()
 
+/// convert to human-readable form
   std::string to_string(void) const;
 };
 

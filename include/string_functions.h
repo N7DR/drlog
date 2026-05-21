@@ -1,4 +1,4 @@
-// $Id: string_functions.h 293 2026-04-26 14:17:23Z  $
+// $Id: string_functions.h 295 2026-05-17 12:40:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,9 +43,10 @@ constexpr std::string CR_STR  { "\r"s };           ///< CR as string
 constexpr std::string CRLF    { "\r\n"s };         ///< CR followed by LF
 constexpr std::string EOL_STR { "\n"s };            ///< end-of-line marker as string
 
-constexpr std::string DOT_STR   { "."s };        ///< full stop as string
-constexpr std::string EMPTY_STR { };             ///< an empty string
-constexpr std::string SPACE_STR { " "s };        ///< space as string
+constexpr std::string DEGREE_STR { "°"s };        ///< degree sign
+constexpr std::string DOT_STR    { "."s };        ///< full stop as string
+constexpr std::string EMPTY_STR  { };             ///< an empty string
+constexpr std::string SPACE_STR  { " "s };        ///< space as string
 
 constexpr std::string_view CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"sv };    ///< convenient place to hold all characters that are legal in callsigns
 constexpr std::string_view DIGITS                        { "0123456789"sv };                               ///< convenient place to hold all digits
@@ -761,6 +762,47 @@ auto remove_peripheral_spaces(T&& t) -> std::vector<STYPE>
 
   return rv;
 }
+
+/*! \brief        split a string into words
+    \param  str   the string to split
+    \return       vector of words from <i>str</i>
+
+    This is logically equivalent to squashing on SPACE, followed by splitting on SPACE
+*/
+template <typename STYPE>
+auto words(const std::string_view str) -> std::vector<STYPE>
+{ std::vector<STYPE> rv;
+
+  if (str.empty())
+    return rv;
+
+// start of first word
+  size_t sow_posn { str.find_first_not_of(SPACE, 0) };
+
+  if (sow_posn == std::string_view::npos)
+    return rv;
+
+// next space
+  while (true)
+  { const size_t posn { str.find_first_of(SPACE, sow_posn) };
+
+    if (posn == std::string_view::npos)   // no more spaces
+    { rv += substring <STYPE> (str, sow_posn);
+      return rv;
+    }
+
+// posn is at a space following a word
+    rv += substring <STYPE> (str, sow_posn, posn - sow_posn);
+
+    sow_posn = str.find_first_not_of(SPACE, posn);
+
+    if (posn == std::string_view::npos) // no more words
+      return rv;
+  }
+
+  return rv;    // should be unreachable
+}
+
 
 /*! \brief              Split a string into components
     \param  cs          original string
