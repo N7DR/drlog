@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 295 2026-05-17 12:40:09Z  $
+// $Id: drlog.cpp 296 2026-06-01 07:01:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2436,17 +2436,17 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
           if (status.test_mode())
             win_rig < "T ";
 
-          if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)
+          if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)    // mark X in bold yellow, because it's good to emphasise when XIT is in use
             win_rig < rit_xit_str < "  ";
           else
-            win_rig < substring <std::string> (rit_xit_str, 0, x_posn) < WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < 'X'
-                    < WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring <std::string> (rit_xit_str, x_posn + 1) < "  ";
+            win_rig < substring <string> (rit_xit_str, 0, x_posn) < WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < 'X'
+                    < WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring <string> (rit_xit_str, x_posn + 1) < "  ";
 
           win_rig < centre_str;
 
 // don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
           if (bandwidth_str.size() <= 4)
-          { win_rig < ':' < bandwidth_str;
+          { win_rig < COLON < bandwidth_str;
 
             if (notch)
               win_rig < " N"s;    // effectively, the notch status is part of the bandwidth; we can't just write the N, because we might not have written a bandwidth
@@ -8681,7 +8681,6 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
   }                 // end of changed frequency
 }
 
-#if 1
 /*! \brief          Process a bandmap function, to jump to the next frequency returned by the function
     \param  fn_p    pointer to function
     \param  dirn    direction in which the function is to be applied
@@ -8754,7 +8753,8 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
 // check that we aren't somehow in an inconsistent state:
 // in 2024 CQ WPX CW I noticed a few times that the rig didn't seem to move,
-// although the CALL window had the contents as if it had moved
+// although the CALL window had the contents as if it had moved. This should now be fixed,
+// but we might as well check the state.
   bandmap_entry mbe_copy;
 
   { SAFELOCK(my_bandmap_entry);
@@ -8773,7 +8773,6 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 
   return true;
 }
-#endif
 
 /*! \brief          Jump to the next frequency up or down on the displayed bandmap, possibly skipping some entries
     \param  dirn    direction in which the function is to be applied
@@ -8922,9 +8921,9 @@ bool update_rx_ant_window(void)
   return true;
 }
 
-/*! \brief          Process backspace
-    \param  win     window
-    \return         <i>true</i>
+/*! \brief        Process backspace
+    \param  win   window
+    \return       <i>true</i>
  */
 bool process_backspace(window& win)
 { win.delete_character(win.cursor_position().x() - 1);
@@ -8933,9 +8932,9 @@ bool process_backspace(window& win)
   return true;
 }
 
-/*! \brief          Run an external command
-    \param  cmd     command to run
-    \return         output of command <i>cmd</i?
+/*! \brief        Run an external command
+    \param  cmd   command to run
+    \return       output of command <i>cmd</i?
 
     https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
     note that the code there contains an extra right curly bracket
@@ -8947,7 +8946,7 @@ string run_external_command(const string_view cmd)
 
   string rv { };
 
-//  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose); // gives warning in trixie gcc
+//  unique_ptr<FILE, decltype(&pclose)> pipe(popen(string(cmd).c_str(), "r"), pclose); // gives warning in trixie gcc; still true in 16.1
   unique_ptr<FILE, int(*)(FILE*)> pipe(popen(string(cmd).c_str(), "r"), pclose);    // https://stackoverflow.com/questions/76867698/what-does-ignoring-attributes-on-template-argument-mean-in-this-context
 
   if (!pipe)
@@ -8963,13 +8962,14 @@ string run_external_command(const string_view cmd)
     \param  cmd   the command to run
 */
 void get_indices(const string cmd)    ///< Get SFI, A, K
-{
+{ using enum WINDOW_ATTRIBUTES;
+
   { start_of_thread("get indices"s);
 
     try
     { const string indices { run_external_command(cmd) };
 
-      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring <string_view> (hhmmss(), 0, 5) < EOL
+      win_indices < WINDOW_CLEAR < CURSOR_TOP_LEFT < "Last lookup at: " < substring <string_view> (hhmmss(), 0, 5) < EOL
                   <= indices;
     }
 
@@ -9014,7 +9014,7 @@ void update_best_dx(const grid_square& dx_gs, const string_view callsign)
 { static const string INVALID_GRID { "AA00"s };                 // the way to mark a bad grid in the log; don't calculate distance to this square
 
   if (win_best_dx.valid())              // check even though it should have been checked before being called
-  { if (!dx_gs.designation().empty() and dx_gs.designation() != INVALID_GRID)
+  { if (!dx_gs.designation().empty() and (dx_gs.designation() != INVALID_GRID))
     { float distance_in_units { ( my_grid - grid_square { dx_gs.designation() } ) };    // km
 
       if (best_dx_is_in_miles)
@@ -9136,10 +9136,12 @@ void display_memories(void)
     \param  score   the score to write to the window
 */
 void update_score_window(const unsigned int score)
-{ if (scoring_enabled)
+{ using enum WINDOW_ATTRIBUTES;
+
+  if (scoring_enabled)
   { const static string RUBRIC { "Score: "s };
 
-    win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
+    win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < RUBRIC
               <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
   }
 }
@@ -9148,19 +9150,22 @@ void update_score_window(const unsigned int score)
     \param  bm  the bandmap that contains the filter information to be written
 */
 void display_bandmap_filter(bandmap& bm)                                                       ///< display the bandmap cull/filter information in win_bandmap_filter
-{ win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+{ using enum WINDOW_ATTRIBUTES;
+
+  win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE;
 
   if (bm.cull_function())
     win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
 
-//  win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
   win_bandmap_filter < LEFT_SQUARE_BRACKET < to_string(bm.column_offset()) < "] "s <= bm.filter();
 }
 
 /*! \brief  Update the SYSTEM MEMORY window
 */
 void update_system_memory(void)
-{ static procfs proc_fs;
+{ using enum WINDOW_ATTRIBUTES;
+
+  static procfs proc_fs;
 
   static const long page_size { sysconf(_SC_PAGESIZE) };
 
@@ -9170,7 +9175,7 @@ void update_system_memory(void)
     const auto   mem_total     { meminfo.mem_total() / MILLION };
     const string contents      { to_string(rss) + "M / "s + to_string(mem_available) + "M / "s + to_string(mem_total) + 'M' };
 
-    win_system_memory < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= centre(contents, 0);
+    win_system_memory < WINDOW_CLEAR < CURSOR_START_OF_LINE <= centre(contents, 0);
   }
 
   catch (const string_function_error& e)        // in 2019 RDA, the open in read_file() failed and threw an exception!!
@@ -9186,12 +9191,14 @@ void update_system_memory(void)
 
 /// update value of <i>quick_qsy_info</i> and write it to <i>win_quick_qsy</i>
 void update_quick_qsy(void)
-{ const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
+{ using enum WINDOW_ATTRIBUTES;
+
+  const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
   const auto                  [ f, m ]       { quick_qsy_info };
 
   quick_qsy_map[BAND(f)] = quick_qsy_info;
 
-  win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+  win_quick_qsy < WINDOW_CLEAR < CURSOR_START_OF_LINE
                 <= pad_left(f.display_string(), 7) + SPACE + MODE_NAME[m];
 }
 
@@ -9339,10 +9346,8 @@ void adif3_build_old_log(void)
 
   alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
-// try with FLAT_STRING_SET?
   try
-  { //const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
-    const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), FLAT_STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
+  { const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), FLAT_STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
     alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
@@ -9420,7 +9425,7 @@ void adif3_build_old_log(void)
 void send_qtc_entry(const qtc_entry& qe, const bool log_it)
 { if (cw_p)
   { const string space        { (context.qtc_double_space() ? "  "s : SPACE_STR) };
-    const char   char_to_send { t_char(qtc_long_t) };
+    const char   char_to_send { t_char(qtc_long_t) };                               // character to send for leading zeroes
     const string serno_str    { pad_left(remove_leading <string> (remove_peripheral_spaces <string> (qe.serno()), '0'), 3, char_to_send) };
     const string msg          { qe.utc() + space + qe.callsign() + space + serno_str };
 
@@ -9632,7 +9637,7 @@ void calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b)
 { if (callsigns.empty())
     return;
 
-  const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };    // define the ordering to be callsign order
+  const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };        // define the ordering to be callsign order
   const string   filename_suffix { (b == ALL_BANDS) ? string { } : (DASH + BAND_NAME[b]) };
   const string   filename        { context.do_not_show_filename() + filename_suffix };
 
@@ -9833,18 +9838,23 @@ void stop_recording_rbn(void)
 string build_rit_xit_str(const polled_status& status)
 { constexpr unsigned int RIT_XIT_DISPLAY_LENGTH  { 7 }; // display length of RIT/XIT info
 
-  string rv { };
+  string rv         { };
+  string offset_str { };
+
+  auto offset_as_string { [] (const auto v) { return dirn_char(v) + ::to_string(abs(v)); } };
 
   if (status.xit_enabled())
-    rv += 'X';
+  { rv += 'X';
+    offset_str = offset_as_string(status.xit_offset());
+  }
 
   if (status.rit_enabled())
-    rv += 'R';
+  { rv += 'R';
+    offset_str = offset_as_string(status.rit_offset());
+  }
 
-  const string offset_str { ((status.rit_offset() < 0) ? MINUS : PLUS) + ::to_string(abs(status.rit_offset())) };
-
-  rv = (status.rit_enabled() or status.xit_enabled()) ? pad_left(rv + offset_str, RIT_XIT_DISPLAY_LENGTH)
-                                                      : space_string(RIT_XIT_DISPLAY_LENGTH);
+  rv = (offset_str.empty() ? space_string(RIT_XIT_DISPLAY_LENGTH)
+                           : pad_left(rv + offset_str, RIT_XIT_DISPLAY_LENGTH));
 
   return rv;
 }

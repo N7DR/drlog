@@ -1,4 +1,4 @@
-// $Id: string_functions.h 295 2026-05-17 12:40:09Z  $
+// $Id: string_functions.h 296 2026-06-01 07:01:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -572,7 +572,7 @@ inline std::string create_string(const char c, const int n = 1)
 template <typename T>
 inline bool starts_with(const std::string_view cs, const T& ss)
   requires ( (is_string<typename T::value_type>) or (is_string_view<typename T::value_type>) )
-  { return ANY_OF(ss, [cs] (const std::string_view str) { return cs.starts_with(str); }); }
+{ return ANY_OF(ss, [cs] (const std::string_view str) { return cs.starts_with(str); }); }
 
 /*! \brief      Remove specific string from the start of a string if it is present
     \param  s   original string
@@ -803,7 +803,6 @@ auto words(const std::string_view str) -> std::vector<STYPE>
   return rv;    // should be unreachable
 }
 
-
 /*! \brief              Split a string into components
     \param  cs          original string
     \param  separator   separator string (typically a single character)
@@ -845,7 +844,7 @@ auto split_string(const std::string_view cs, const char separator = COMMA) -> st
 
   std::vector<size_t> posns;
 
-  for (size_t n = 0; n < cs.size(); ++n)
+  for (size_t n { 0 }; n < cs.size(); ++n)
     if (cs[n] == separator)
       posns += n;
 
@@ -1113,10 +1112,10 @@ auto delimited_substrings(const std::string_view cs, const char delim_1, const c
 
   size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
 
-  while ( (start_posn < cs.length() and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
+  while ( ((start_posn < cs.length()) and !substring <std::string> (cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
   { std::string_view sstring { substring <std::string_view> (cs, start_posn) };
 
-    const size_t delim_1_posn  { sstring.find(delim_1) };
+    const size_t delim_1_posn { sstring.find(delim_1) };
 
     if (delim_1_posn == std::string_view::npos)             // no more starting delimiters
       return rv;
@@ -1614,7 +1613,7 @@ inline std::string operator+(const std::string_view sv1, const std::string& s2)
 
 /*! \brief                Read an istream until a string delimiter is reached
     \param  in            istream from which to read
-    \param  delimiter     the delimiter that mars the end of a record
+    \param  delimiter     the delimiter that marks the end of a record
     \param  keep_or_drop  whether to keep or drop the delimiter in the returned string
     \return               the contents if <i>in</i> from the current point to the delimiter
 
@@ -1622,18 +1621,26 @@ inline std::string operator+(const std::string_view sv1, const std::string& s2)
 */
 std::string read_until(std::istream& in, const std::string_view delimiter, const DELIMITERS keep_or_drop = DELIMITERS::DROP);
 
-/*! \brief          Convert string to hex characters
-    \param  str     string to convert
-    \return         <i>str</i> as a series of hex characters
+/*! \brief        Convert string to hex characters
+    \param  str   string to convert
+    \return       <i>str</i> as a series of hex characters
 */
 std::string hex_string(const std::string_view str);
 
-/*! \brief              Add trailing slash to a directory name, if necessary
-    \param  dirname     name of directory
-    \return             <i>dirname</i>, but with a slash appended if it does not have one at the end
+/*! \brief            Add trailing slash to a directory name, if necessary
+    \param  dirname   name of directory
+    \return           <i>dirname</i>, but with a slash appended if it does not have one at the end
 */
 inline std::string dirname_with_slash(const std::string_view dirname)
-  { return ( dirname + ( (last_char(dirname) == '/') ? std::string { } : "/"s ) ); }
+  { return ( (last_char(dirname) == SLASH) ? std::string { dirname } : (dirname + SLASH) ); }
+
+/*! \brief      Obtain PLUS or MINUS character from a value
+    \param  v   value to use to determine the returned character
+    \return     MINUS if <i>v</i> is less than zero, PLUS otherwise
+*/
+template <typename T>
+inline char dirn_char(const T v)
+  { return ((v < 0) ? MINUS : PLUS); }
 
 /// a standard hash function for strings (the DJB function)
 //constexpr long unsigned int STR_HASH(const char* str, int off = 0)

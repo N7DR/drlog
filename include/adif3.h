@@ -1,4 +1,4 @@
-// $Id: adif3.h 295 2026-05-17 12:40:09Z  $
+// $Id: adif3.h 296 2026-06-01 07:01:30Z  $
 
 // Released under the GNU Public License, version 2
 

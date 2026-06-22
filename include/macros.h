@@ -1,4 +1,4 @@
-// $Id: macros.h 290 2026-03-30 15:48:47Z  $
+// $Id: macros.h 297 2026-06-22 12:56:53Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1909,7 +1909,7 @@ inline int N_SECONDS(const D dur)
 #if 0
 // not used
 /*! \brief          Return the first element number of a span with a given value
-    \param  idx     sp the target span
+    \param  sp      the target span
     \param  val     the target value
     \return         the first element number of <i>sp</i> with the value <i>val</i>, or an unset optional
 */
