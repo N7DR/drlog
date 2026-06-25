@@ -4975,16 +4975,17 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-// F1 -- abort first step in SAP QSO during run
-  if (!processed and (e.symbol() == XK_F1))
-  { const string call_contents { remove_peripheral_spaces <std::string> (win_call.read()) };
+// F1 or F5 -- abort first step in SAP QSO during run
+  if (!processed and ( (e.symbol() == XK_F1) or (e.symbol() == XK_F5) ))
+  { //const string_view call_contents { remove_peripheral_spaces <string_view> (win_call.read()) };
 
-    win_bcall < WINDOW_CLEAR <= call_contents;
-
-    win_call <= WINDOW_CLEAR;
+//    win_bcall    <  WINDOW_CLEAR <= call_contents;
+    win_bcall    <  WINDOW_CLEAR <= remove_peripheral_spaces <string_view> (win_call.read());
+    win_call     <= WINDOW_CLEAR;
     win_exchange <= WINDOW_CLEAR;
 
     rig_ptr -> split_disable();
+    rig_ptr -> sub_receiver_disable();
 
     set_active_window(ACTIVE_WINDOW::CALL);
     enter_cq_mode();
@@ -8310,7 +8311,10 @@ void process_keypress_F1(const string_view original_contents)
   const duration RETRY_TIME { 100ms };
 
   if (original_contents.empty())
-  { enter_cq_mode();
+  { while (rig_ptr -> is_transmitting())        // there's a race condition here, but it should never be triggered in normal operation
+      sleep_for(RETRY_TIME);
+
+    enter_cq_mode();
     win_bcall <= WINDOW_CLEAR;
     rig_ptr -> sub_receiver_disable();
     rig_ptr -> split_disable();
@@ -8319,24 +8323,34 @@ void process_keypress_F1(const string_view original_contents)
   { while (rig_ptr -> is_transmitting())        // there's a race condition here, but it should never be triggered in normal operation
       sleep_for(RETRY_TIME);
 
-    bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
+    if (rig_ptr -> split_enabled())             // if we're partway through... have pressed F5 but not actually transmitted
+    { win_bcall < WINDOW_CLEAR <= remove_peripheral_spaces <string_view> (win_call.read());
+      win_call <= WINDOW_CLEAR;
 
-    if (be.callsign().empty())          // didn't find an exact match; try a substring search
-      be = bandmaps[bandmap_display_band].substr(original_contents);
+      enter_cq_mode();
 
-    const BAND old_b_band { to_BAND(rig_ptr -> rig_frequency_b()) };
+      rig_ptr -> split_disable();
+    }
+    else
+    { bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
 
-    rig_ptr -> rig_frequency_b(be.freq());
-    win_bcall < WINDOW_CLEAR <= be.callsign();     // put call in BCALL
+      if (be.callsign().empty())          // didn't find an exact match; try a substring search
+        be = bandmaps[bandmap_display_band].substr(original_contents);
 
-    if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
-      sleep_for(RETRY_TIME);
+      const BAND old_b_band { to_BAND(rig_ptr -> rig_frequency_b()) };
 
-    rig_ptr -> sub_receiver_enable();
+      rig_ptr -> rig_frequency_b(be.freq());
+      win_bcall < WINDOW_CLEAR <= be.callsign();     // put call in BCALL
+
+      if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows the following sub-receiver command if it's changed bands; may be able to remove this now
+        sleep_for(RETRY_TIME);
+
+      rig_ptr -> sub_receiver_enable();
 
 // clear CALL
-    if (win_bcall.defined() and !win_call.empty())
-      win_call <= WINDOW_CLEAR;
+      if (win_bcall.defined() and !win_call.empty())
+        win_call <= WINDOW_CLEAR;
+    }
   }
 }
 
