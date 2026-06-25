@@ -3530,7 +3530,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { auto set_bandmap_display_band = [&command] (const size_t posn) { const string_view bandname { remove_peripheral_spaces <string_view> (substring <string_view> (command, posn)) };
 
                                                                          try
-                                                                         { bandmap_display_band = BAND_FROM_NAME.at(bandname);    // at() does not yet support heterogeneous lookup
+                                                                         { bandmap_display_band = BAND_FROM_NAME.at(bandname);
                                                                          }
 
                                                                          catch (...)
@@ -3539,39 +3539,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                                                                       };
 
         if (command.contains(SPACE))
-        { set_bandmap_display_band(command.find(SPACE));
-#if 0
-          const string_view bandname { remove_peripheral_spaces <string_view> (substring <string_view> (command, command.find(SPACE))) };
-
-          try
-          { //bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
-            bandmap_display_band = BAND_FROM_NAME.at(bandname);    // at() does not yet support heterogeneous lookup
-          }
-
-          catch (...)
-          { alert("Unable to switch to bandmap: "s + bandname);
-          }
-#endif
-        }
+          set_bandmap_display_band(command.find(SPACE));
         else
         { if (command == "BM"sv)                // switch to current band
             bandmap_display_band = cur_band;
           else
-          { set_bandmap_display_band(2);
-
-#if 0
-            const string_view bandname { remove_peripheral_spaces <string_view> (substring <string_view> (command, 2)) };
-
-            try
-            { //bandmap_display_band = BAND_FROM_NAME.at(string { bandname });    // at() does not yet support heterogeneous lookup
-              bandmap_display_band = BAND_FROM_NAME.at(bandname);
-            }
-
-            catch (...)
-            { alert("Unable to switch to bandmap: "s + bandname);
-            }
-#endif
-          }
+            set_bandmap_display_band(2);    // start at command[2]
         }
 
         win_bandmap <= bandmaps[bandmap_display_band];
@@ -3651,9 +3624,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (command == "QUIT"sv)
         exit_drlog();
 
-// .R[n] : recall memory and go there
-      if ( ((command.size() == 2) and (command[0] == 'R')) or (command == "R"sv) )
-      { const unsigned int number { (command.size() == 2 ? from_string<unsigned int>(create_string(command[1])) : 0) };
+// .R[n] or .MR[n]: recall memory and go there
+//      if ( ((command.size() == 2) and (command[0] == 'R')) or (command == "R"sv) )
+      if ( ((command.size() == 2) and (command[0] == 'R')) or (command == "R"sv) or command.starts_with("MR"sv))
+      { const string_view cmd { command.starts_with("MR"sv) ? substring <string_view> (command, 1) : command };
+
+//        const unsigned int number { (command.size() == 2 ? from_string<unsigned int>(create_string(command[1])) : 0) };
+        const unsigned int number { (cmd.size() == 2 ? from_string<unsigned int>(create_string(command[1])) : 0) };
         const memory_entry me     { recall_memory(number) };
         const frequency&   freq   { me.freq() };
 
