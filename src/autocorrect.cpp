@@ -197,6 +197,18 @@ string autocorrect_database::corrected_call(const string_view str) const
       return insert(str, base_call_to_test + "/P"s);
   }
 
+// various busts of "HQ" at the end of a call
+  static const FLAT_STRING_SET broken_HQ { "EIQ"s, "HMT"s, "IEQ"s };
+
+  for (const string& bust_HQ : broken_HQ)
+  { if (absent and str.ends_with(bust_HQ))
+    { const string base_call_to_test { substring <string> (str, 0, str.length() - bust_HQ.length()) + "HQ"sv };
+
+      if (contains(base_call_to_test))
+        return insert(str, base_call_to_test);
+    }
+  }
+
   return insert(str, str );
 }
 

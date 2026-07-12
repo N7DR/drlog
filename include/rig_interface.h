@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 295 2026-05-17 12:40:09Z  $
+// $Id: rig_interface.h 298 2026-07-12 20:04:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -883,6 +883,15 @@ public:
 */
 //  void get_rig_memory(const int rig_memory_nr = 0) const;
 
+
+
+/// Poll the rig for the important status information
+  virtual polled_status poll(void);
+
+};
+
+// ---------------------------------------- Elecraft K3 -------------------------
+
 /*
  Table 7 from the K3 Programmers Reference Manual
 
@@ -929,15 +938,7 @@ CMP/PWR          MON         56
 SPD/MIC          DELAY       57
 SHIFT/LO         NORM        58
 WIDTH/HI         I/II        59
-
 */
-
-/// Poll the rig for the important status information
-  virtual polled_status poll(void);
-
-};
-
-// ---------------------------------------- Elecraft K3 -------------------------
 
 enum class K3_COMMAND_MODE { NORMAL,
                              EXTENDED
@@ -1094,7 +1095,7 @@ protected:
 
 public:
 
-/*! Construct from the response to an "IF;" command
+/*! \brief Construct from the response to an "IF;" command
 */
   explicit k3_status(const std::string_view rsp);
 
@@ -1125,7 +1126,7 @@ public:
 
 /// return whether the R/XIT direction is positive or negative
   inline char rit_dirn_char(void) const
-    { return (_rit_positive ? '+' : '-'); }
+    { return (_rit_positive ? PLUS : MINUS); }
 
 /// return R/XIT value in Hz as a string, including the direction
   inline std::string rit_str(void) const
@@ -1210,9 +1211,12 @@ public:
 
 /*! \brief      Record an image of the bandscope
     \param  fn  name of the image file
+
+    This spawns a separate thread, as the P3 is excruciatingly slow: it sends an uncompressed raw bitmap over the
+    slow serial channel.
 */
   inline void bandscope_screenshot(const std::string fn)
-    { std::jthread(&elecraft_k3_interface::_bandscope_screenshot_thread, this, fn).detach(); }    // obtain the screenshot in a separate thread
+    { std::jthread(&elecraft_k3_interface::_bandscope_screenshot_thread, this, fn).detach(); }
 
 /*! \brief  Enable split operation
 

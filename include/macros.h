@@ -1,4 +1,4 @@
-// $Id: macros.h 297 2026-06-22 12:56:53Z  $
+// $Id: macros.h 298 2026-07-12 20:04:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -55,6 +55,8 @@ enum class SHOW_TIME { SHOW,
 
 /// Syntactic sugar for read/write access
 // See: "C++ Move Semantics", p. 81; 5.1.3 Using Move Semantics to Solve the Dilemma
+
+// I note that, at least as of C++26, there seems to be no way to perform these functions using reflection
 
 #if (!defined(READ_AND_WRITE))
 
@@ -340,6 +342,8 @@ using FLAT_STRING_MAP = std::flat_map<std::string, ValueType, std::less<>>;
 // we could access with something like obj.at<name>, but that would mean a different access
 // style for this kind of object as compared to ordinary classes using the READ and READ_AND_WRITE
 // macros
+
+// I note that, at least as of C++26, there seems to be no way to perform any of this using reflection
 
 /// tuple class (1) -- complete overkill
 #define WRAPPER_1(nm, a0, a1)                          \
@@ -905,7 +909,7 @@ template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
 { const auto cit { m.find(k) };
 
-  return ( (cit == m.cend()) ? d : cit->second );
+  return ( (cit == m.cend()) ? d : cit -> second );
 }
 
 /*! \brief      Is an object a key of a map, unordered map or flat map; if so return the value, otherwise return a provided default
@@ -1905,7 +1909,6 @@ template <typename D>
 inline int N_SECONDS(const D dur)
   { return duration_cast<std::chrono::seconds>(dur).count(); }
 
-
 #if 0
 // not used
 /*! \brief          Return the first element number of a span with a given value
@@ -1927,6 +1930,5 @@ std::optional<size_t> SPAN_IDX(const std::span<T> sp, const T& val)
   return rv;
 }
 #endif
-
 
 #endif    // MACROS_H

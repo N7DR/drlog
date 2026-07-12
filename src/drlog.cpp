@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 296 2026-06-01 07:01:30Z  $
+// $Id: drlog.cpp 298 2026-07-12 20:04:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8786,7 +8786,6 @@ bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
   if (debug)
   { ost << "DEBUG process_bandmap_function(): " << endl
         << "f_rig = " << f_rig
-//        << "; current actual frequency from rig = " << rig.rig_frequency()
         << "; current actual frequency from rig = " << rig_ptr -> rig_frequency()
         << "; bandmap version: " << bm.version_str() << endl
         << "; my bandmap entry(): " << bm.my_bandmap_entry().to_brief_string() << endl

@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 293 2026-04-26 14:17:23Z  $
+// $Id: exchange.cpp 298 2026-07-12 20:04:25Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,9 +46,11 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
     \param  prefill_filename_map    map of fields to filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string /* filename */>& prefill_filename_map)
-{ for (const auto& this_pair : prefill_filename_map)
-  { const string& field_name { this_pair.first };
-    string_view   filename   { truncate_before_first <std::string_view> (this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two
+{ //for (const auto& this_pair : prefill_filename_map)
+  for (const auto& [ field_name, fn ] : prefill_filename_map)
+  { //const string& field_name { this_pair.first };
+//    string_view   filename   { truncate_before_first <std::string_view> (this_pair.second, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
+    const string_view filename { truncate_before_first <std::string_view> (fn, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
 
     try
     { UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
@@ -57,9 +59,10 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
-//      if (contains(this_pair.second, ':'))
-      if (this_pair.second.contains(':'))
-      { const vector<string_view> fields { split_string <std::string_view> (this_pair.second, ':') };
+//      if (this_pair.second.contains(COLON))
+      if (fn.contains(COLON))
+      { //const vector<string_view> fields { split_string <std::string_view> (this_pair.second, COLON) };
+        const vector<string_view> fields { split_string <std::string_view> (fn, COLON) };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
