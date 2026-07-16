@@ -1205,16 +1205,18 @@ template <typename C, typename F = std::less<>>
 inline void SORT(C& v, F f = F())
   { std::ranges::sort(v, f); }
 
-/*! \brief              Add an element to a set or unordered set
+/*! \brief              Add an element to any set or multiset
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */
 template <typename C, typename E>
-  requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
+//  requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
+//  requires (is_anyset<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
+  requires (is_anyset<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
 inline void operator+=(C& sus, E&& element)
   { sus.insert(std::forward<E>(element)); }
 
-/*! \brief              Add an element to a set or unordered set
+/*! \brief              Add an element to any set
     \param  sus         destination set or unordered set
     \param  element     element to insert
 */

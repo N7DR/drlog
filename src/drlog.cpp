@@ -1069,6 +1069,22 @@ int main(int argc, char** argv)
 
     location_db.add_russian_database(context_path, context.russian_filename());  // add Russian information
 
+// create the set of blocked canonical prefixes
+    for (const auto& blocked_country : context.blocked_posts())
+      dx_post::blocked_posts += location_db.canonical_prefix(blocked_country);
+
+    if (!dx_post::blocked_posts.empty())
+    { ost << "blocked canonical prefixes: ";
+
+      for (auto it { dx_post::blocked_posts.begin() }; it != dx_post::blocked_posts.end(); ++it)
+      { ost << *it;
+        if (it != prev(dx_post::blocked_posts.end()))
+          ost << ", ";
+      }
+
+      ost << endl;
+    }
+
 // build super check partial database from the drmaster information
     try
     { scp_db.init_from_calls(drm_cdb.calls());

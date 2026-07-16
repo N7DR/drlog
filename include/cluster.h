@@ -201,6 +201,8 @@ public:
 /// was the RBN the source of the post?
   inline bool from_rbn(void) const
     { return (_source == POSTING_SOURCE::RBN); }
+
+  static FLAT_STRING_SET blocked_posts;
 };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream

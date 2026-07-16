@@ -61,6 +61,7 @@ constexpr string MODE_MARKER { "********"s };          ///< string to mark the m
 constexpr string MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
+vector<bandmap_filter_type> BMF_vec;                ///< the global bandmap filter
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry

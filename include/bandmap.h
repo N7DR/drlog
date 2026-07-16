@@ -51,6 +51,7 @@ class bandmap_entry;
 class bandmap_filter_type;
 
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
+extern std::vector<bandmap_filter_type> BMF_vec;                ///< the global bandmap filter
 extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
@@ -293,7 +294,7 @@ class bandmap_filter_type
 {
 protected:
 
-  using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixe
+  using GROUP_TYPE = CALL_SET;    // container type to hold continents or canonical prefixes
 
   GROUP_TYPE  _continents  { };           ///< continents to filter
   bool        _enabled     { false };     ///< is bandmap filtering enabled?
@@ -717,6 +718,7 @@ protected:
   std::vector<COLOUR_TYPE>          _fade_colours;                                        ///< the colours to use as entries age
   decltype(_entries)                _filtered_entries       { };                          ///< entries, with the filter applied
   bandmap_filter_type*              _filter_p               { &BMF };                     ///< pointer to a bandmap filter
+  std::vector<bandmap_filter_type>*              _filters_p               { &BMF_vec };                     ///< pointer to a bandmap filter
   frequency                         _mode_marker_frequency  { frequency(0) };             ///< the frequency of the mode marker
   uint8_t                           _rbn_threshold          { 1 };                        ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)                _rbn_threshold_and_filtered_entries { };              ///< entries, with the filter and RBN threshold applied

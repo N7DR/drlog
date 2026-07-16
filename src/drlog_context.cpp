@@ -231,6 +231,22 @@ void drlog_context::_process_configuration_file(const string_view filename)
       }
     }
 
+#if 0
+// BAND MAP FILTER n
+    if ( (LHS == "BAND MAP FILTER 1"sv) or (LHS == "BANDMAP FILTER 1"sv) )
+    { if (!RHS.empty())
+      { vector<string> filters { clean_split_string <string> (RHS) };
+
+        SORT(filters, compare_calls);    // put the entries into callsign order
+
+        _bandmap_filter_vec += _bandmap_filter;   // the zeroth filter
+        _bandmap_filter_vec += filters;
+
+        _bandmap_filter_show_vec += _bandmap_filter_show;
+      }
+    }
+#endif
+
 // BAND MAP FILTER COLOURS
     if ( (LHS == "BAND MAP FILTER COLOURS"sv) or (LHS == "BAND MAP FILTER COLORS"sv) or
          (LHS == "BANDMAP FILTER COLOURS"sv) or (LHS == "BANDMAP FILTER COLORS"sv) )
@@ -258,6 +274,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // BAND MAP FILTER MODE
     if ( (LHS == "BAND MAP FILTER MODE"sv) or (LHS == "BANDMAP FILTER MODE"sv) )
       _bandmap_filter_show = (RHS == "SHOW"sv);
+
+// BAND MAP FILTER MODE n
+//    if ( (LHS == "BAND MAP FILTER MODE 1"sv) or (LHS == "BANDMAP FILTER MODE 1"sv) )
+//      _bandmap_filter_show = (RHS == "SHOW"sv);
 
 // BAND MAP FREQUENCY UP
     if ( (LHS == "BAND MAP FREQUENCY UP"sv) or (LHS == "BANDMAP FREQUENCY UP"sv) )
@@ -307,6 +327,10 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // BEST DX UNIT
     if ( (LHS == "BEST DX UNIT"sv) or (LHS == "BEST DX UNITS"sv) )
       _best_dx_unit = RHS;
+
+// BLOCKED POSTS
+    if (LHS == "BLOCKED POSTS"sv)
+      _blocked_posts = SR::to<FLAT_STRING_SET>(clean_split_string <string> (RHS, COMMA));
 
 // CABRILLO FILENAME
     if (LHS == "CABRILLO FILENAME"sv)
@@ -433,6 +457,15 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // CQ AUTO RIT
     if (LHS == "CQ AUTO RIT"sv)
       _cq_auto_rit = is_true;
+
+// CUSTOM GROUP
+// CUSTOM GROUP = NAME : ENTRY1, ENTRY2, ... ENTRYN
+    if (LHS == "CUSTOM GROUP"sv)
+    { //const vector<string> tokens { clean_split_string <string> (RHS, COLON) };
+
+      if (const vector<string> tokens { clean_split_string <string> (RHS, COLON) }; tokens.size() == 2)
+        _custom_groups[tokens[0]] = SR::to<STRING_SET> (clean_split_string <string> (tokens[1], COMMA) );
+    }
 
 // CW BANDWIDTH
     if (LHS == "CW BANDWIDTH"sv)
@@ -1439,6 +1472,11 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       _message_cq_2 = move(tokens[1]);
     }
   }
+
+// possibly use custom groups for filter
+// or should we keep track of the name of the group and display that?
+  if ( (_bandmap_filter.size() == 1) and _custom_groups.contains(_bandmap_filter[0]) )
+    _bandmap_filter = SR::to<vector<string>>(_custom_groups[_bandmap_filter[0]]);
 
 // now that we've processed the file, set some new defaults if we haven't explicitly set them
   if (_cabrillo_contest.empty())

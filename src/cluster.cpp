@@ -384,24 +384,28 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
             const location_info li { db.info(_callsign) };
 
             _canonical_prefix = li.canonical_prefix();
-            _continent = li.continent();
 
-            char_posn = copy.find_first_not_of(SPACE, space_posn);
-            space_posn = copy.find_first_of(SPACE, char_posn);
+// check that it's not blocked
+//            if (!blocked_posts.contains(_canonical_prefix))
+            { _continent = li.continent();
+
+              char_posn = copy.find_first_not_of(SPACE, space_posn);
+              space_posn = copy.find_first_of(SPACE, char_posn);
 
 // skip the date
-            char_posn = copy.find_first_not_of(SPACE, space_posn);
-            space_posn = copy.find_first_of(SPACE, char_posn);
-            char_posn = copy.find_first_not_of(SPACE, space_posn);
+              char_posn = copy.find_first_not_of(SPACE, space_posn);
+              space_posn = copy.find_first_of(SPACE, char_posn);
+              char_posn = copy.find_first_not_of(SPACE, space_posn);
 
-            if (const size_t bra_posn { copy.find_last_of(LEFT_ANGLE_BRACKET) }; bra_posn != string_view::npos)
-            { _comment = copy.substr(char_posn, bra_posn - char_posn);
-              _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
-              _poster_continent = db.info(_poster).continent();
+              if (const size_t bra_posn { copy.find_last_of(LEFT_ANGLE_BRACKET) }; bra_posn != string_view::npos)
+              { _comment = copy.substr(char_posn, bra_posn - char_posn);
+                _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
+                _poster_continent = db.info(_poster).continent();
 
-              _valid = true;
-              _time_processed = ::time(NULL);
-              _time_processed_1 = NOW_TP();
+                _valid = true;
+                _time_processed = ::time(NULL);
+                _time_processed_1 = NOW_TP();
+              }
             }
           }
         }
@@ -448,15 +452,20 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
               const location_info li { db.info(_callsign) };
 
               _canonical_prefix = li.canonical_prefix();
-              _continent = li.continent();
-              _mode_str = fields[5];
-              _valid = true;
-              _time_processed = ::time(NULL);
-              _time_processed_1 = std::chrono::system_clock::now();
+
+// check that it's not blocked
+//              if (!blocked_posts.contains(_canonical_prefix))
+              { _continent = li.continent();
+                _mode_str = fields[5];
+                _valid = true;
+                _time_processed = ::time(NULL);
+                _time_processed_1 = std::chrono::system_clock::now();
+              }
             }
           }
         }
 
+//        if ( !_valid and !blocked_posts.contains(_canonical_prefix) )
         if (!_valid)
         { const string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
   
@@ -508,10 +517,16 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
   if (_valid)
     _valid = (_callsign.find_first_not_of(CALLSIGN_CHARS) == string::npos);
 
+// check that it's not blocked
+  if (_valid and blocked_posts.contains(_canonical_prefix))
+    _valid = false;
+
 // add the band
   if (_valid)
     _band = static_cast<BAND>(_freq);
 }
+
+FLAT_STRING_SET dx_post::blocked_posts { };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream
     \param  ost     output stream

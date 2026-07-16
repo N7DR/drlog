@@ -79,11 +79,13 @@ protected:
   unsigned int                                 _bandmap_decay_time_rbn                  { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
   std::vector<COLOUR_TYPE>                     _bandmap_fade_colours                    { 255, 200, 150, 100 };         ///< the colours calls adopt as they fade
   std::vector<std::string>                     _bandmap_filter                          { };                            ///< the strings in the bandmap filter
+//  std::vector<std::vector<std::string>>                     _bandmap_filter_vec;                            ///< the strings in the bandmap filter
   COLOUR_TYPE                                  _bandmap_filter_disabled_colour          { COLOUR_BLACK };               ///< background colour when bandmap filter is disabled
   bool                                         _bandmap_filter_enabled                  { false };                      ///< is the bandmap filter enabled?
   COLOUR_TYPE                                  _bandmap_filter_foreground_colour        { COLOUR_WHITE };               ///< colour of foreground in the bandmap filter
   COLOUR_TYPE                                  _bandmap_filter_hide_colour              { COLOUR_RED };                 ///< background colour when bandmap filter is in hide mode
   bool                                         _bandmap_filter_show                     { false };                      ///< is the bandmap filter set to show? (If not, then it's set to hide)
+//  std::vector<uint8_t>                         _bandmap_filter_show_vec;
   COLOUR_TYPE                                  _bandmap_filter_show_colour              { COLOUR_GREEN };               ///< background colour when bandmap filter is in show mode
   bool                                         _bandmap_frequency_up                    { false };                      ///< should increasing frequency go upwards in the bandmap?
   COLOUR_TYPE                                  _bandmap_recent_colour                   { COLOUR_BLACK };               ///< colour for bandmap entries that are less than two minutes old
@@ -95,7 +97,7 @@ protected:
   unsigned int                                 _bandscope_span_sap                      { 0 };                          ///< bandscope span in SAP mode, in kHz (0 = no default span)
   std::string                                  _batch_messages_file                     { };                            ///< file that contains per-call batch messages
   std::string                                  _best_dx_unit                            { "MILES"s };                   ///< name of unit for the BEST DX window ("MILES" or "KM")
-
+  FLAT_STRING_SET                              _blocked_posts                           { };                            ///< canonical prefixes from cluster or RBN that will be blocked
   std::string                                  _cabrillo_eol                            { "LF"s };                      ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   std::string                                  _cabrillo_filename                       { "cabrillo"s };                ///< name of Cabrillo log
   bool                                         _cabrillo_include_score                  { true };                       ///< is the CLAIMED-SCORE line included in the Cabrillo file?
@@ -147,6 +149,7 @@ protected:
   bool                                         _cq_auto_lock                            { false };                      ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit                             { false };                      ///< whether to enable RIT in CQ mode
   std::string                                  _cty_filename                            { "cty.dat"s };                 ///< filename for country data
+  STRING_MAP<STRING_SET>                       _custom_groups                           { };                            ///< custom groups for the bandmap filter
   int                                          _cw_bandwidth_narrow                     { 100 };                        ///< narrow CW bandwidth (Hz)
   int                                          _cw_bandwidth_wide                       { 400 };                        ///< wide CW bandwidth (Hz)
   int                                          _cw_priority                             { -1 };                         ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
@@ -423,6 +426,7 @@ public:
   CONTEXTREAD(bandscope_span_sap);               ///< bandscope span in SAP mode, in kHz
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
   CONTEXTREAD(best_dx_unit);                     ///< name of unit for the BEST DX window ("MILES" or "KM")
+  CONTEXTREAD(blocked_posts);                    ///< canonical prefixes from cluster or RBN that will be blocked
 
   CONTEXTREAD(cabrillo_address_1);               ///< first ADDRESS: line
   CONTEXTREAD(cabrillo_address_2);               ///< second ADDRESS: line
@@ -473,6 +477,7 @@ public:
   CONTEXTREAD(cq_auto_lock);                     ///< whether to lock the transmitter in CQ mode
   CONTEXTREAD(cq_auto_rit);                      ///< whether to enable RIT in CQ mode
   CONTEXTREAD(cty_filename);                     ///< filename of country file (default = "cty.dat")
+  CONTEXTREAD(custom_groups);                    ///< custom groups for the bandmap filter
   CONTEXTREAD(cw_bandwidth_narrow);              ///< narrow CW bandwidth (Hz)
   CONTEXTREAD(cw_bandwidth_wide);                ///< wide CW bandwidth (Hz)
   CONTEXTREAD(cw_priority);                      ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
