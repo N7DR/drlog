@@ -1,4 +1,4 @@
-// $Id: bands-modes.cpp 286 2026-03-09 00:55:25Z  $
+// $Id: bands-modes.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,10 +13,9 @@
 
 using namespace std;
 
-extern message_stream ost;              ///< for debugging and logging
+extern message_stream ost;                        ///< for debugging and logging
 extern string         FREQUENCY_STRING_POINT;
 
-//constexpr frequency BAND_EDGE_GUARD { 25_Hz };    // just to keep us a bit away from the lower band edge
 constexpr frequency BAND_EDGE_GUARD { 30_Hz };    // just to keep us a bit away from the lower band edge; turns out that it needs to be a multiple of 10 Hz on the K3 in default resolution
 
 /// default frequencies for bands and modes
@@ -70,7 +69,7 @@ string frequency::display_string(void) const
     hhz = 0;
   }
 
-  return (to_string(khz) + "."s + to_string(hhz));
+  return (to_string(khz) + DOT + to_string(hhz));
 }
 
 /*! \brief      Return frequency in MHz as string (with 3 dp)
@@ -82,7 +81,7 @@ string frequency::display_string_MHz(void) const
   const string       mhz_str { to_string(mhz) };
   const string       khz_str { pad_leftz(khz, 3) };
 
-  return mhz_str + "."s + khz_str;
+  return mhz_str + DOT + khz_str;
 }
 
 /// return lower band edge that corresponds to frequency
@@ -100,7 +99,6 @@ frequency frequency::lower_band_edge(void) const
                                                     { BAND_6,   50.0_MHz }
                                                   };
 
-//  return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
   return ANYMAP_VALUE(edge_map, BAND(*this), frequency { });
 }
 

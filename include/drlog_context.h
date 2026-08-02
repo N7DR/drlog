@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 293 2026-04-26 14:17:23Z  $
+// $Id: drlog_context.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -656,7 +656,7 @@ public:
   inline std::string points_string(const BAND b, const MODE m) const
   { SAFELOCK(_context);
 
-    return MUM_VALUE(_per_band_points[m], b);
+    return MUM_VALUE(_per_band_points[to_uint(m)], b);
   }
 
 /*! \brief          Get the information pertaining to a particular window

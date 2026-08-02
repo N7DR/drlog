@@ -1,4 +1,4 @@
-// $Id: statistics.h 295 2026-05-17 12:40:09Z  $
+// $Id: statistics.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,7 +39,8 @@ extern pt_mutex statistics_mutex;       ///< mutex for statistics
 */
 
 class running_statistics
-{
+{ using NTYPE = unsigned int;       // type used for counting numbers of QSOs
+
 protected:
   
   STRING_MAP<multiplier>                                            _callsign_multipliers;              ///< callsign multipliers (supports more than one); key = mult name
@@ -57,13 +58,21 @@ protected:
 
   location_database                                                 _location_db;               ///< database for location-based lookups
 
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes    { {} };         ///< number of dupes, per band and mode; Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos     { {} };         ///< number of QSOs, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_ON_qsos  { {} };         ///< number of ON QSOs, per band and mode -- for UBA
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _qso_points { {} };         ///< number of QSO points, per band and mode
+//  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes    { {} };         ///< number of dupes, per band and mode; Josuttis 2nd ed., p.262 -- initializes all elements with zero
+//  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos     { {} };         ///< number of QSOs, per band and mode
+//  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_ON_qsos  { {} };         ///< number of ON QSOs, per band and mode -- for UBA
+//  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _qso_points { {} };         ///< number of QSO points, per band and mode
 
-  unsigned int                                                      _qtc_qsos_sent   { 0 };     ///< total number of QSOs sent in QTCs
-  unsigned int                                                      _qtc_qsos_unsent { 0 };     ///< total number of (legal) QSOs available but not yet sent in QTCs
+  std::array<std::array<NTYPE, N_BANDS>, N_MODES>            _n_dupes    { {} };         ///< number of dupes, per band and mode; Josuttis 2nd ed., p.262 -- initializes all elements with zero
+  std::array<std::array<NTYPE, N_BANDS>, N_MODES>            _n_qsos     { {} };         ///< number of QSOs, per band and mode
+  std::array<std::array<NTYPE, N_BANDS>, N_MODES>            _n_ON_qsos  { {} };         ///< number of ON QSOs, per band and mode -- for UBA
+  std::array<std::array<NTYPE, N_BANDS>, N_MODES>            _qso_points { {} };         ///< number of QSO points, per band and mode
+
+//  unsigned int                                                      _qtc_qsos_sent   { 0 };     ///< total number of QSOs sent in QTCs
+//  unsigned int                                                      _qtc_qsos_unsent { 0 };     ///< total number of (legal) QSOs available but not yet sent in QTCs
+
+  NTYPE                                                      _qtc_qsos_sent   { 0 };     ///< total number of QSOs sent in QTCs
+  NTYPE                                                      _qtc_qsos_unsent { 0 };     ///< total number of (legal) QSOs available but not yet sent in QTCs
 
   mutable pt_mutex _statistics_mutex { "STATISTICS"s };                                                           ///< mutex for statistics
 
@@ -76,7 +85,7 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-  void _insert_callsign_mult(const std::string_view mult_name, const std::string_view mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+  void _insert_callsign_mult(const std::string_view mult_name, const std::string_view mult_value, const BAND b = ALL_BANDS, const MODE m = ALL_MODES);
 
 /*! \brief          Generate a summary string for display
     \param  rules   rules for this contest
@@ -203,7 +212,7 @@ public:
 
     Doesn't add if the value <i>field_value</i> is unknown.
 */
-  bool add_worked_exchange_mult(const std::string_view field_name, const std::string_view field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
+  bool add_worked_exchange_mult(const std::string_view field_name, const std::string_view field_value, const BAND b = ALL_BANDS, const MODE m = ALL_MODES);
 
 /*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
     \param  rules   rules for this contest
@@ -308,9 +317,9 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+    { //unsigned int v { version };   // dummy; for now, version isn't used
+      //v = v + 0;
 
       SAFELOCK(statistics);
 
@@ -415,9 +424,9 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+    { //unsigned int v { version };   // dummy; for now, version isn't used
+      //v = v + 0;
 
       SAFELOCK(_history);
 

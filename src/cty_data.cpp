@@ -251,21 +251,25 @@ ostream& operator<<(ostream& ost, const cty_record& rec)
     <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
     is optional
 */
-alternative_country_info::alternative_country_info(const string_view record, const string& canonical_prefix) :
+alternative_country_info::alternative_country_info(const string_view record, const string_view canonical_prefix) :
   _country(canonical_prefix)
 { if (const size_t end_identifier { record.find_first_of("(["s) }; end_identifier == string::npos)
     _identifier = record;                                // no change
   else
-  { _identifier = substring <std::string> (record, 0, end_identifier);      // read up to the first delimiter
+  { _identifier = substring <string> (record, 0, end_identifier);      // read up to the first delimiter
   
-    if (const string_view cq_zone_str { delimited_substring <std::string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+//    if (const string_view cq_zone_str { delimited_substring <string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
+//    if (const string_view cq_zone_str { delimited_substring <string_view> (record, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, DELIMITERS::DROP) }; !cq_zone_str.empty())
+    if (const string_view cq_zone_str { delimited_substring <string_view> (record, PARENTHESES, DELIMITERS::DROP) }; !cq_zone_str.empty())
     { auto_from_string(cq_zone_str, _cq_zone);
 
-      if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
+      if ( (_cq_zone < MIN_CQ_ZONE) or (_cq_zone > MAX_CQ_ZONE) )
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-    if (const string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+//    if (const string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
+//    if (const string_view itu_zone_str { delimited_substring <string_view> (record, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) }; !itu_zone_str.empty())
+    if (const string_view itu_zone_str { delimited_substring <string_view> (record, SQUARE_BRACKETS, DELIMITERS::DROP) }; !itu_zone_str.empty())
     { auto_from_string(itu_zone_str, _itu_zone);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
@@ -297,11 +301,11 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-cty_data::cty_data(const string_view filename)
-{ const vector<string_view> records { split_string <std::string_view> ( remove_chars(read_file(filename), CRLF), ';') };                  // read file, remove EOL markers and split into records
-
-  FOR_ALL(records, [this] (const string_view record_str) { emplace_back(cty_record { record_str }); } );    // applies to base class
-}
+//cty_data::cty_data(const string_view filename)
+//{ const vector<string_view> records { split_string <string_view> ( remove_chars(read_file(filename), CRLF), SEMICOLON) };                  // read file, remove EOL markers and split into records
+//
+//  FOR_ALL(records, [this] (const string_view record_str) { emplace_back(cty_record { record_str }); } );    // applies to base class
+//}
 
 // -----------  location_info  ----------------
 
@@ -369,7 +373,7 @@ unsigned int get_call_area(const string_view call)
 
   constexpr unsigned int rv { 0 };    // default
 
-  const auto n_slashes { std::ranges::count(call, '/') };
+  const auto n_slashes { std::ranges::count(call, SLASH) };
 
   switch (n_slashes)
   { case 0 :
@@ -381,7 +385,7 @@ unsigned int get_call_area(const string_view call)
     default :  // find the shortest one with a digit
     {
 // all the parts that contains a digit
-      const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, '/'), [] (const string_view sv) { return (::contains_digit(sv)); }) };
+      const vector<string_view> parts_with_digit { CREATE_AND_FILL <vector<string_view>> (split_string <string_view> (call, SLASH), [] (const string_view sv) { return (::contains_digit(sv)); }) };
 
       switch (parts_with_digit.size())
       { case 0 :                              // should never happen
@@ -602,7 +606,7 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \return             location information corresponding to <i>call</i>
 */
 location_info location_database::info(const string_view callpart) const
-{ const string original_callsign { remove_peripheral_spaces <std::string> (callpart) };
+{ const string original_callsign { remove_peripheral_spaces <string> (callpart) };
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
@@ -620,13 +624,13 @@ location_info location_database::info(const string_view callpart) const
     return opt.value();
   }
 
-  auto insert_best_info = [&callsign, this] (const location_info& li) { _db_checked += { callsign, li };
+  auto insert_best_info = [this, &callsign] (const location_info& li) { _db_checked += { callsign, li };
                                                                         return li;
                                                                       };
 
 // see if it's some guy already in the db but now signing /QRP
   if ( (callsign.length() >= 5) and callsign.ends_with("/QRP"sv) )
-  { const string_view target { remove_n_chars_from_end <std::string_view> (callsign, 4u) };    // remove "/QRP"
+  { const string_view target { remove_n_chars_from_end <string_view> (callsign, 4u) };    // remove "/QRP"
 
     if (const auto opt { OPT_MUM_VALUE(_db_checked, target) }; opt)
       return insert_best_info(opt.value());
@@ -643,7 +647,7 @@ location_info location_database::info(const string_view callpart) const
     return insert_best_info(location_info());
   
 // try to determine the canonical prefix
-  if (!callsign.contains('/') or ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') ))    // "easy" -- no portable indicator
+  if (!callsign.contains(SLASH) or ( (callsign.length() >= 2) and (penultimate_char(callsign) == SLASH) ))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
@@ -655,12 +659,12 @@ location_info location_database::info(const string_view callpart) const
 
     unsigned int len { 1 };
 
-    if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n; this changes callsign
-    { const size_t last_digit_posn { substring <std::string_view> (callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
+    if ( (callsign.length() >= 2) and (penultimate_char(callsign) == SLASH) and isdigit(last_char(callsign)) )    // if /n; this changes callsign
+    { const size_t last_digit_posn { substring <string_view> (callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
 
       if (last_digit_posn != string::npos)
       { callsign[last_digit_posn] = last_char(callsign);
-        callsign = substring <std::string> (callsign, 0, callsign.length() - 2);
+        callsign = substring <string> (callsign, 0, callsign.length() - 2);
       }
     }
 
@@ -687,7 +691,7 @@ location_info location_database::info(const string_view callpart) const
       tie(best_fit, best_info) = redefine_best("K"sv);
     
 // special stuff for Greek call areas
-    if ( (best_fit == "SV"sv) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )
+    if ( (best_fit == "SV"sv) and (penultimate_char(callsign) == SLASH) and isdigit(last_char(callsign)) )
     { const char lc { last_char(callsign) };
     
       if (lc == '5')
@@ -698,7 +702,7 @@ location_info location_database::info(const string_view callpart) const
     }
     
 // and Ecuador
-    if ( (best_fit == "HC"sv) and (penultimate_char(callsign) == '/') and (last_char(callsign) == '8') )
+    if ( (best_fit == "HC"sv) and (penultimate_char(callsign) == SLASH) and (last_char(callsign) == '8') )
       tie(best_fit, best_info) = redefine_best("HC8"sv);
     
     if (found_any_hits)                                 // return the best fit
@@ -735,11 +739,11 @@ location_info location_database::info(const string_view callpart) const
 
 // it looks like maybe it's a reciprocal license
 
-  if (callsign.starts_with('/') or callsign.ends_with('/'))   // slash is first or last character
+  if (callsign.starts_with(SLASH) or callsign.ends_with(SLASH))   // slash is first or last character
     return location_info { };
 
 // how many slashes are there?
-  const vector<string_view> parts { split_string <std::string_view> (callsign, '/') };
+  const vector<string_view> parts { split_string <string_view> (callsign, SLASH) };
 
   if (parts.size() > 3)
     throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: "s + callsign);
@@ -753,7 +757,7 @@ location_info location_database::info(const string_view callpart) const
     const bool                            found_1   { (db_posn_1 != _db.end()) };
 
     if (found_0 and !found_1)                        // first part had an exact match
-      return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+      return insert_best_info( guess_zones(callsign, db_posn_0 -> second) );
 
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat;
 // add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
@@ -827,7 +831,7 @@ location_info location_database::info(const string_view callpart) const
   if (parts.size() == 3)        // two slashes
   {
 // ignore the second slash and everything after it (assume W0/G4AMJ/P or G4AMJ/VP9/M)
-    const string        target    { (parts[2].length() == 1) ? (parts[0] + '/' + parts[1]) : parts[0] };
+    const string        target    { (parts[2].length() == 1) ? (parts[0] + SLASH + parts[1]) : parts[0] };
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
     _db_checked -= target;

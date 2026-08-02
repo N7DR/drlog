@@ -1,4 +1,4 @@
-// $Id: autocorrect.h 286 2026-03-09 00:55:25Z  $
+// $Id: autocorrect.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -215,7 +215,7 @@ public:
     Returns the same string for (call1, call2) and (call2, call1)
 */
 inline std::string pair_index(const std::string_view call1, const std::string& call2)
-  { return (call1 < call2) ? (call1 + '+' + call2) : (call2 + '+' + call1); }
+  { return (call1 < call2) ? (call1 + PLUS + call2) : (call2 + PLUS + call1); }
 
 class busts_database
 {

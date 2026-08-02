@@ -223,26 +223,36 @@ bool logbook::is_dupe(const string_view call, const BAND b, const enum MODE m, c
   return is_dupe(qso, rules);
 }
 
+#if 0
 /// return time-ordered list of qsos
 list<QSO> logbook::as_list(void) const
-{ list<QSO> rv;
+{ //list<QSO> rv;
 
-  { SAFELOCK(_log);
-  
-    FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv += q.second; } );
-  }
+  //{ SAFELOCK(_log);
+  //
+  //  FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv += q.second; } );
+  //}
 
-  rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&); should be a NOP, though
+  //rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&); should be a NOP, though
 
-  return rv;
+  SAFELOCK(_log);
+
+  return SR::to<list>(_log_vec);
+
+  //list<QSO> = SR::to<list>(_log)
+
+ // return rv;
 }
+#endif
 
+#if 0
 /// return time-ordered vector of qsos
 vector<QSO> logbook::as_vector(void) const
 { SAFELOCK(_log);
 
   return _log_vec;
 }
+#endif
 
 /*! \brief          Recalculate the dupes
     \param  rules   rules for the contest
@@ -419,7 +429,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 void logbook::read_cabrillo(const string_view filename, const string_view cabrillo_qso_template)
 { static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
-  const vector<string> lines { to_lines <std::string> (remove_char(read_file(filename), CR)) };
+  const vector<string> lines { to_lines <string> (remove_char(read_file(filename), CR)) };
   
 /*
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
@@ -427,7 +437,7 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
   
   vector< vector< string> > individual_values;
 
-  FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <std::string> (tplate_field, COLON); } );
+  FOR_ALL(clean_split_string <string_view> (cabrillo_qso_template), [&individual_values] (const string_view tplate_field) { individual_values += split_string <string> (tplate_field, COLON); } );
 
   unsigned int last_qso_number { 0 };
    
@@ -441,7 +451,7 @@ void logbook::read_cabrillo(const string_view filename, const string_view cabril
       { const string&      name  { vec[0] };
         const unsigned int posn  { from_string<unsigned int>(vec[1]) - 1 };
         const unsigned int len   { from_string<unsigned int>(vec[2]) };
-        const string       value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <std::string> (line.substr(posn, len)) : string { }) };
+        const string       value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces <string> (line.substr(posn, len)) : string { }) };
       
         _modify_qso_with_name_and_value(qso, name, value);
 
@@ -463,11 +473,11 @@ void logbook::read_cabrillo(const string_view filename, const vector<string>& ca
 
   unsigned int last_qso_number { 0 };
 
-  for (const auto& line : to_lines <std::string> (remove_char(read_file(filename), CR)))
+  for (const auto& line : to_lines <string> (remove_char(read_file(filename), CR)))
   { if (starts_with(line, qso_markers))     // qso_markers is a vector of strings
     { QSO qso { };
   
-      const vector<string> fields { split_string <std::string> (squash(line.substr(4)), SPACE) }; // skip first four characters
+      const vector<string> fields { split_string <string> (squash(line.substr(4)), SPACE) }; // skip first four characters
       
       for (unsigned int m { 0 }; m < fields.size(); ++m)
         ost << m << ": *" << fields[m] << ASTERISK << endl;
@@ -475,7 +485,7 @@ void logbook::read_cabrillo(const string_view filename, const vector<string>& ca
 // go through the fields
       for (unsigned int n { 0 }; n < cabrillo_fields.size(); ++n)
       { const string& name  { cabrillo_fields[n] };
-        const string  value { (n < fields.size() ? remove_peripheral_spaces <std::string> (fields[n]) : string { }) };
+        const string  value { (n < fields.size() ? remove_peripheral_spaces <string> (fields[n]) : string { }) };
 
         _modify_qso_with_name_and_value(qso, name, value);
 
@@ -617,7 +627,9 @@ void log_extract::operator+=(const QSO& qso)
     allows, only the most recent QSOs are displayed.
 */
 void log_extract::display(void)
-{ vector<QSO> vec;
+{ using enum WINDOW_ATTRIBUTES;
+
+  vector<QSO> vec;
 
   { SAFELOCK(_extract);
 
@@ -625,7 +637,7 @@ void log_extract::display(void)
   }
 
   if (vec.size() < _win_size)
-    _win < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    _win < WINDOW_CLEAR;
 
   if (!vec.empty())
   { const size_t n_to_display { min(vec.size(), _win_size) };
@@ -633,11 +645,11 @@ void log_extract::display(void)
     for (size_t n { 0 }; n < n_to_display; ++n)
     { const size_t index { vec.size() - 1 - n };              // write so that most recent is at the bottom
 
-      _win < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < cursor(0, n) < vec[index].log_line();
+      _win < cursor(0, n) < WINDOW_CLEAR_TO_EOL < cursor(0, n) < vec[index].log_line();
     }
   }
 
-  _win < WINDOW_ATTRIBUTES::WINDOW_REFRESH;
+  _win < WINDOW_REFRESH;
 }
 
 /*! \brief              Get recent QSOs from a log, and possibly display them

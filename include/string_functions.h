@@ -1,4 +1,4 @@
-// $Id: string_functions.h 298 2026-07-12 20:04:25Z  $
+// $Id: string_functions.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -102,6 +102,11 @@ constexpr char SLASH                { '/' };
 constexpr char SPACE                { ' ' };
 constexpr char TAB                  { '\t' };
 constexpr char UNDERSCORE           { '_' };
+
+constexpr std::pair<char, char> ANGLE_BRACKETS  { LEFT_ANGLE_BRACKET,  RIGHT_ANGLE_BRACKET };
+constexpr std::pair<char, char> BRACES          { LEFT_BRACE,          RIGHT_BRACE };
+constexpr std::pair<char, char> PARENTHESES     { LEFT_PARENTHESIS,    RIGHT_PARENTHESIS };
+constexpr std::pair<char, char> SQUARE_BRACKETS { LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET };
 
 /// directions in which a string can be padded
 enum class PAD { LEFT,                  ///< pad to the left
@@ -1033,6 +1038,20 @@ auto delimited_substring(const std::string_view cs, const char delim_1, const ch
 
 /*! \brief                      Obtain a delimited substring
     \param  cs                  original string
+    \param  delims              opening and closing delimiters
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+template <typename STYPE>
+inline auto delimited_substring(const std::string_view cs, const std::pair<char, char>& delims, const DELIMITERS return_delimiters) -> STYPE
+  { return delimited_substring <STYPE> (cs, delims.first, delims.second, return_delimiters); }
+
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
     \param  delim_1             opening delimiter
     \param  delim_2             closing delimiter
     \param  return_delimiters   whether to keep delimiters in the returned value
@@ -1136,6 +1155,16 @@ auto delimited_substrings(const std::string_view cs, const char delim_1, const c
   return rv;
 }
 
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delims              opening and closing delimiters
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
+*/
+template <typename STYPE>
+inline auto delimited_substrings(const std::string_view cs, const std::pair<char, char> delims, const DELIMITERS return_delimiters) -> std::vector<STYPE>
+  { return delimited_substrings <STYPE> (cs, delims.first, delims.second, return_delimiters);  }
+
 /*! \brief          Join the elements of a container of strings, using a provided separator
     \param  ct      container of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
@@ -1155,6 +1184,23 @@ std::string join(const T& ct, const U sep)
 
   return rv;
 }
+
+#if 1
+template <typename T, typename U>
+std::string join(const T& ct, const U sep)
+ requires ( !is_string<typename T::value_type> and has_to_string<typename T::value_type> )
+{ std::string rv { };
+
+  for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)
+  { if (cit != ct.cbegin())               // add separator before all elements except the first
+      rv += sep;
+
+    rv += ::to_string(*cit);    // need to get the value instead
+  }
+
+  return rv;
+}
+#endif
 
 /*! \brief          Centre a string
     \param  str     string to be centred
@@ -1479,6 +1525,23 @@ auto remove_trailing_comment(const std::string_view str, const std::string_view 
 */
 inline std::string delimit(const std::string_view str, const std::string_view delim_1, const std::string_view delim_2)
   { return (std::string { delim_1 } + str + delim_2); }
+
+/*! \brief              Add delimiters to a string
+    \param  str         string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
+*/
+inline std::string delimit(const std::string_view str, const char delim_1, const char delim_2)
+  { return (delim_1 + str + delim_2); }
+
+/*! \brief              Add delimiters to a string
+    \param  str         string
+    \param  delims      opening and closing delimiters
+    \return             <i>str</i> preceded by <i>delims.first</i> and followed by <i>delims.second</i>
+*/
+inline std::string delimit(const std::string_view str, const std::pair<char, char>& delims)
+  { return (delims.first + str + delims.second); }
 
 /*! \brief              Perform a case-insensitive search for a substring
     \param  str         string to search

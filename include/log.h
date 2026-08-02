@@ -75,7 +75,7 @@ protected:
   inline auto _LB(const std::string_view call) const
     { return _log.lower_bound(call); }
 
-/*! \brief          Obtain iterator to the last location of QSOs with a given call
+/*! \brief          Obtain iterator to the (one past the) last location of QSOs with a given call
     \param  call    target callsign
     \return         iterator to one past the last entry in the multimap for callsign <i>call</i>
 
@@ -158,10 +158,10 @@ public:
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
   inline bool qso_b4(const std::string_view call, const BAND b) const
-  { SAFELOCK(_log);
+    { SAFELOCK(_log);
 
-    return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
-  }
+      return ANY_OF(_LB(call), _UB(call), [b] (const auto& pr) { return (pr.second.band() == b); });
+    }
 
 /*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign
@@ -169,10 +169,10 @@ public:
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
   inline bool qso_b4(const std::string_view call, const MODE m) const
-  { SAFELOCK(_log);
+    { SAFELOCK(_log);
 
-    return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
-  }
+      return ANY_OF(_LB(call), _UB(call), [m] (const auto& pr) { return (pr.second.mode() == m); });
+    }
 
 /*! \brief          Has a call been worked on a particular band and mode?
     \param  call    target callsign
@@ -181,10 +181,10 @@ public:
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
   inline bool qso_b4(const std::string_view call, const BAND b, const MODE m) const
-  { SAFELOCK(_log);
+    { SAFELOCK(_log);
 
-    return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return (pr.second.band() == b) and (pr.second.mode() == m); });
-  }
+      return ANY_OF(_LB(call), _UB(call), [b, m] (const auto& pr) { return ((pr.second.band() == b) and (pr.second.mode() == m)); });
+    }
 
 /*! \brief          Get a string list of bands on which a call is needed
     \param  call    target callsign
@@ -209,12 +209,20 @@ public:
 */
   bool is_dupe(const std::string_view call, const BAND b, const MODE m, const contest_rules& rules) const;
 
-/// return time-ordered container of QSOs
-  std::list<QSO> as_list(void) const;
+/// return time-ordered container of QSOs as list
+  inline std::list<QSO> as_list(void) const
+    { SAFELOCK(_log);
 
-/// return time-ordered container of QSOs
-  std::vector<QSO> as_vector(void) const;
-  
+      return SR::to<std::list>(_log_vec);
+    }
+
+/// return time-ordered container of QSOs as vector
+  inline std::vector<QSO> as_vector(void) const
+    { SAFELOCK(_log);
+
+      return _log_vec;
+    }
+
 /*! \brief          Return the QSOs, filtered by some criterion
     \param  pred    predicate to apply
     \return         the QSOs for which <i>pred</i> is true
@@ -260,12 +268,14 @@ public:
 /// clear the logbook
   inline void clear(void)
     { SAFELOCK(_log);
+
       _log.clear();
     }
 
 /// how many QSOs are in the log?
   inline size_t size(void) const
     { SAFELOCK(_log);
+
       return _log.size();
     }
 
@@ -276,6 +286,7 @@ public:
 /// is the log empty?
   inline bool empty(void) const
     { SAFELOCK(_log);
+
       return _log.empty();
     }
 
@@ -286,15 +297,12 @@ public:
 
     Returns empty string if anything goes wrong.
 */
-//  std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
-//  std::string exchange_field_value(const std::string_view callsign, const std::string& exchange_field_name);
   std::string exchange_field_value(const std::string_view callsign, const std::string_view exchange_field_name);
 
 /*! \brief          Return all the QSOs that contain an exchange field that matches a target
     \param  target  target string for exchange fields
     \return         all the QSOs that contain an exchange field that matches a target
 */
-//  std::vector<QSO> match_exchange(const std::string& target) const;
   std::vector<QSO> match_exchange(const std::string_view target) const;
 
 /*! \brief          Return all the calls in the log
@@ -317,11 +325,8 @@ public:
 
 /// serialise logbook
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  { unsigned int v { version };   // dummy; for now, version isn't used
-    v = v + 0;
-
-    SAFELOCK(_log);
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+  { SAFELOCK(_log);
 
     ar & _log
        & _log_vec;
@@ -423,7 +428,6 @@ public:
     Displayed in order from oldest to newest. If the extract contains more QSOs than the window
     allows, only the most recent QSOs are displayed.
 */
-//  void match_exchange(const logbook& lgbook, const std::string& target);
   void match_exchange(const logbook& lgbook, const std::string_view target);
 
 /// log_extract = <i>container of QSOs</i>

@@ -1,4 +1,4 @@
-// $Id: log_message.h 196 2021-11-14 21:39:45Z  $
+// $Id: log_message.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,8 @@ public:
 /*! \brief          Write a generic object to a <i>message_stream</i> object
     \param  obj     object to write
     \return         the <i>message_stream</i> object
+
+    *** try adding another version with template requiring ::to_string
 */
   template <typename T>
   message_stream& operator<<(const T obj)

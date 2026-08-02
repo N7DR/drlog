@@ -1,4 +1,4 @@
-// $Id: multiplier.h 280 2025-12-05 16:40:32Z  $
+// $Id: multiplier.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,7 +62,7 @@ protected:
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
   inline MULT_SET _filter_asterisks(const MULT_SET& mv) const
-    { return SR::to<MULT_SET>(mv | SRV::filter([] (const std::string& str) { return !str.contains('*'); })); }
+    { return SR::to<MULT_SET>(mv | SRV::filter([] (const std::string& str) { return !str.contains(ASTERISK); })); }
 
 public:
 
@@ -192,7 +192,7 @@ public:
 
     Includes any non-mult values
 */
-  MULT_SET worked(const int b, const int m) const;
+  MULT_SET worked(const BAND b, const MODE m) const;
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)
@@ -205,11 +205,8 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  { unsigned int v { version };   // dummy; for now, version isn't used
-    v = v + 0;
-
-    ar & _known
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+  { ar & _known
        & _per_band
        & _per_mode
        & _used

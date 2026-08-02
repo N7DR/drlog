@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 295 2026-05-17 12:40:09Z  $
+// $Id: cluster.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -254,7 +254,8 @@ bool dx_cluster::send(const std::string_view msg)
 */
 bool dx_cluster::spot(const string_view dx, const string_view freq, const string_view comment)
 { const string dx_cmd { _test_spots ? "DXT"s : "DX"s };
-  const string msg    { dx_cmd + " "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
+//  const string msg    { dx_cmd + " "s + dx + " "s + freq + " "s + comment + CRLF };          // DXT is a test spot
+  const string msg    { dx_cmd + SPACE + dx + SPACE + freq + SPACE + comment + CRLF };         // DXT is a test spot
 
   ost << "sending spot: " << msg;
 
@@ -265,9 +266,10 @@ bool dx_cluster::spot(const string_view dx, const string_view freq, const string
     \param  msg   the message to be sent
     \return       whether the attempt to post was successful
 */
-bool dx_cluster::spot(const std::string_view msg)
+bool dx_cluster::spot(const string_view msg)
 { const string dx_cmd   { _test_spots ? "DXT"s : "DX"s };       // DXT is a test spot
-  const string spot_msg { dx_cmd + " "s + msg + CRLF };
+//  const string spot_msg { dx_cmd + " "s + msg + CRLF };
+  const string spot_msg { dx_cmd + SPACE + msg + CRLF };
 
   ost << "sending spot: " << spot_msg;
 
@@ -403,8 +405,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
                 _poster_continent = db.info(_poster).continent();
 
                 _valid = true;
-                _time_processed = ::time(NULL);
-                _time_processed_1 = NOW_TP();
+                _time_processed = NOW_TP();
               }
             }
           }
@@ -436,10 +437,10 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
       try
       { if (post_source == POSTING_SOURCE::RBN)
-        { const vector<string> fields { split_string <std::string> (squash(received_info), SPACE) };
+        { const vector<string> fields { split_string <string> (squash(received_info), SPACE) };
 
           if (fields.size() >= 6)
-          { _poster = substring <std::string> (fields[2], 0, fields[2].length() - 1);      // remove colon
+          { _poster = substring <string> (fields[2], 0, fields[2].length() - 1);      // remove colon
             _poster_continent = db.info(_poster).continent();
 
             _frequency_str = fields[3];
@@ -458,8 +459,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
               { _continent = li.continent();
                 _mode_str = fields[5];
                 _valid = true;
-                _time_processed = ::time(NULL);
-                _time_processed_1 = std::chrono::system_clock::now();
+                _time_processed = NOW_TP();
               }
             }
           }
@@ -467,7 +467,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
 //        if ( !_valid and !blocked_posts.contains(_canonical_prefix) )
         if (!_valid)
-        { const string_view copy{ remove_leading_spaces <std::string_view> (substring <std::string_view> (received_info, 6)) };
+        { const string_view copy{ remove_leading_spaces <string_view> (substring <string_view> (received_info, 6)) };
   
           if (const size_t colon_posn { copy.find(COLON) }; colon_posn != string_view::npos)
           { _poster = copy.substr(0, colon_posn);
@@ -496,8 +496,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
 
               _comment = copy.substr(char_posn);
               _valid = true;
-              _time_processed = ::time(NULL);
-              _time_processed_1 = std::chrono::system_clock::now();
+              _time_processed = NOW_TP();
             }
           }
         }
@@ -526,6 +525,7 @@ dx_post::dx_post(const string_view received_info, location_database& db, const e
     _band = static_cast<BAND>(_freq);
 }
 
+/// canonical prefixes for which stations will be blocked
 FLAT_STRING_SET dx_post::blocked_posts { };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream
@@ -535,7 +535,7 @@ FLAT_STRING_SET dx_post::blocked_posts { };
 */
 ostream& operator<<(ostream& ost, const dx_post& dxp)
 { ost << "Post: " << endl
-      << "  band: " << BAND_NAME[dxp.band()] << endl
+      << "  band: " << to_string(dxp.band()) << endl
       << "  callsign: " << dxp.callsign() << endl
       << "  canonical prefix: " << dxp.canonical_prefix() << endl
       << "  comment: " << dxp.comment() << endl
@@ -546,7 +546,6 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
       << "  poster: " << dxp.poster() << endl
       << "  source: " << ( (dxp.source() == POSTING_SOURCE::RBN) ? "RBN" : "Cluster") << endl
       << "  time processed: " << dxp.time_processed() << endl
-      << "  time processed 1: " << dxp.time_processed_1() << endl
       << "  valid: " << dxp.valid();
 
   return ost;
@@ -592,7 +591,7 @@ bool monitored_posts::is_monitored(const std::string_view callsign) const
     \param  post    post to be tested
 */
 void monitored_posts::operator+=(const dx_post& post)
-{ const monitored_posts_entry mpe           { post };
+{ const monitored_posts_entry mpe { post };
 
   bool stop_search         { false };
   bool found_call_and_band { false };

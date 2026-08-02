@@ -1,4 +1,4 @@
-// $Id: cluster.h 286 2026-03-09 00:55:25Z  $
+// $Id: cluster.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,7 +45,6 @@ class dx_cluster
 protected:
 
   tcp_socket     _connection;                   ///< TCP socket for communication with the network
-  TIME_POINT     _time_last_data_received { };  ///< time point of last data received
   std::string    _login_id;                     ///< my login identifier
   std::string    _my_ip;                        ///< my IP address
   int            _n_posts { 0 };                ///< number of posts that have been read from this cluster
@@ -53,6 +52,7 @@ protected:
   std::string    _server;                       ///< name or IP address of the server
   POSTING_SOURCE _source;                        ///< source for postings
   bool           _test_spots { false };         ///< whether sent spots are sent in test (DXT) mode
+  TIME_POINT     _time_last_data_received { };  ///< time point of last data received
   unsigned int   _timeout;                      ///< timeout in seconds (defaults to 2)
   std::string    _unprocessed_input;            ///< buffer for messages from the network
 
@@ -160,8 +160,8 @@ protected:
   std::string           _poster;            ///< call of poster
   std::string           _poster_continent;  ///< continent of <i>_poster</i>
   enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
-  time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
-  TIME_POINT            _time_processed_1;  ///< time at which we processed the post
+//  time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
+  TIME_POINT            _time_processed;    ///< time at which we processed the post
   bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
@@ -188,8 +188,8 @@ public:
   READ(poster);                 ///< call of poster
   READ(poster_continent);       ///< continent of <i>_poster</i>
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
-  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
-  READ(time_processed_1);       ///< time at which we processed the post
+//  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(time_processed);         ///< time at which we processed the post
   READ(valid);                  ///< is it a valid post?
 
 // syntactic sugar
@@ -202,6 +202,7 @@ public:
   inline bool from_rbn(void) const
     { return (_source == POSTING_SOURCE::RBN); }
 
+/// canonical prefixes for which stations will be blocked
   static FLAT_STRING_SET blocked_posts;
 };
 
@@ -236,7 +237,7 @@ public:
   explicit monitored_posts_entry(const dx_post& post) :
     _callsign(post.callsign()),
     _frequency_str(post.frequency_str()),
-    _expiration(post.time_processed_1() + MONITORED_POSTS_DURATION),
+    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
     _band(post.band())
   { }
 
@@ -247,7 +248,7 @@ public:
 
 /// convert to a string suitable for display in a window
   inline std::string to_string(void) const
-    { return ( pad_left(_frequency_str, 7) + SPACE_STR + _callsign ); }
+    { return ( pad_left(_frequency_str, 7) + SPACE + _callsign ); }
 };
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream

@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 295 2026-05-17 12:40:09Z  $
+// $Id: multiplier.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -82,19 +82,19 @@ bool multiplier::add_worked(const string_view str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if ((_used) and is_known(str))                                          // add only known mults
-  { const int b_nr { static_cast<int>(b) };
-    const int m_nr { static_cast<int>(m) };
+  { const int b_nr { to_int(b) };
+    const int m_nr { to_int(m) };
 
     auto& pb       { _worked[m_nr] };
     auto [ _, rv ] { pb[b_nr].insert(string { str }) };  // BAND, MODE; the return value is required
 
     if (rv)
-    { pb[ANY_BAND] += str;        // ANY_BAND, MODE
+    { pb[to_uint(ANY_BAND)] += str;        // ANY_BAND, MODE
 
-      auto& pb_any { _worked[ANY_MODE] };
+      auto& pb_any { _worked[to_uint(ANY_MODE)] };
 
-      pb_any[b_nr] += str;        // BAND, ANY_MODE
-      pb_any[ANY_BAND] += str;    // ANY_BAND, ANY_MODE
+      pb_any[b_nr] += str;                 // BAND, ANY_MODE
+      pb_any[to_uint(ANY_BAND)] += str;    // ANY_BAND, ANY_MODE
     }
 
     return rv;
@@ -128,34 +128,34 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
 { SAFELOCK(multiplier);
 
   if (_used)
-  { const int b_nr { static_cast<int>(b) };
-    const int m_nr { static_cast<int>(m) };
+  { const int b_nr { to_int(b) };
+    const int m_nr { to_int(m) };
 
     _worked[m_nr][b_nr].erase(str);
 
 // is it still present in any band for this mode?
     bool present { false };
 
-    for (int n {MIN_BAND}; !present and (n <= MAX_BAND); ++n)
+    for (int n {to_int(MIN_BAND)}; !present and (n <= to_int(MAX_BAND)); ++n)
       present = _worked[m_nr][n].contains(str);
 
     if (!present)
-      _worked[m_nr][ANY_BAND].erase(str);
+      _worked[m_nr][to_uint(ANY_BAND)].erase(str);
 
 // is it still present in any mode for this band?
     present = false;
 
-    for (int n {MIN_MODE}; !present and (n <= MAX_MODE); ++n)
+    for (int n { to_int(MIN_MODE) }; !present and (n <= to_int(MAX_MODE)); ++n)
       present = _worked[n][b_nr].contains(str);
 
     if (!present)
-      _worked[ANY_MODE][b_nr].erase(str);
+      _worked[to_uint(ANY_MODE)][b_nr].erase(str);
 
 // is it still present in any band and any mode?
-    present = (_worked[m_nr][ANY_BAND].contains(str) or _worked[ANY_MODE][b_nr].contains(str) );
+    present = (_worked[m_nr][to_uint(ANY_BAND)].contains(str) or _worked[to_uint(ANY_MODE)][b_nr].contains(str) );
 
     if (!present)
-      _worked[ANY_MODE][ANY_BAND].erase(str);
+      _worked[to_uint(ANY_MODE)][to_uint(ANY_BAND)].erase(str);
   }
 }
 
@@ -171,8 +171,8 @@ bool multiplier::is_worked(const string_view str, const BAND b, const MODE m) co
   if (!_used)
     return false;
 
-  const auto&     pb               { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
-  const MULT_SET& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
+  const auto&     pb               { _worked[ (_per_mode ? to_int(m) : to_int(ANY_MODE)) ] };
+  const MULT_SET& worked_this_band { pb[ to_uint(_per_band ? b : ANY_BAND) ] };
 
   return worked_this_band.contains(str);
 }
@@ -188,8 +188,8 @@ size_t multiplier::n_worked(const BAND b, const MODE m) const
   if (!_used)
     return 0;
 
-  const int   b_nr { static_cast<int>(b) };
-  const int   m_nr { static_cast<int>(m) };
+  const int   b_nr { to_int(b) };
+  const int   m_nr { to_int(m) };
   const auto& pb   { _worked[m_nr] };
 
   if (_all_values_are_mults)
@@ -209,13 +209,13 @@ size_t multiplier::n_worked(const BAND b) const
   if (!_used)
     return 0;
 
-  const auto& pb { _worked[ N_MODES ] };
+  const auto& pb { _worked[N_MODES] };
 
   if (_all_values_are_mults)
-    return pb[ (_per_band ? static_cast<unsigned int>(b) : N_BANDS) ].size();
+    return pb[ (_per_band ? to_uint(b) : N_BANDS) ].size();
 
 // some values are not mults (e.g., XXX* in UBA contest)
-  return _filter_asterisks(pb[ (_per_band ? static_cast<unsigned int>(b) : N_BANDS) ]).size();
+  return _filter_asterisks(pb[ (_per_band ? to_uint(b) : N_BANDS) ]).size();
 }
 
 /*! \brief      All the mults worked on a particular band and mode
@@ -225,15 +225,15 @@ size_t multiplier::n_worked(const BAND b) const
 
     Includes any non-mult values
 */
-MULT_SET multiplier::worked(const int b, const int m) const
+MULT_SET multiplier::worked(const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 
   if (!_used)
     return MULT_SET { };
 
-  const auto& pb { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
+  const auto& pb { _worked[ (_per_mode ? to_int(m) : to_int(ANY_MODE)) ] };
 
-  return pb[ (_per_band ? b : ANY_BAND) ];
+  return pb[to_uint(_per_band ? b : ANY_BAND)];
 }
 
 /*! \brief          Write a <i>multiplier</i> object to an output stream
@@ -248,12 +248,13 @@ ostream& operator<<(ostream& ost, const multiplier& m)
       << "multiplier is per-band = " << boolalpha << m.per_band() << endl
       << "worked multipliers:" << endl;
 
+// as of C++26, there still doesn't seem to be a way to iterate easily over enums
   for (size_t nm { 0 }; nm <= N_MODES; ++nm)
   { for (size_t n { 0 }; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
-      for (const auto& worked : m.worked(n, static_cast<MODE>(nm)))
-        ost << worked << " ";
+      for (const auto& worked : m.worked(static_cast<BAND>(n), static_cast<MODE>(nm)))
+        ost << worked << SPACE;
 
       ost << endl;
     }
@@ -262,10 +263,9 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   ost << "known multipliers: ";
 
   for (const auto& known : m.known())
-    ost << known << " ";
+    ost << known << SPACE;
 
   ost << "multiplier is used = " << m.used() << endl;
-
   ost.flags(flags);
 
   return ost;

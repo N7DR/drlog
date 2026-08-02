@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 298 2026-07-12 20:04:25Z  $
+// $Id: drlog.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,7 +47,7 @@
 #include "time_log.h"
 #include "version.h"
 
-//import <chrono>;  // not yet supported
+//import <chrono>;  // import not yet supported
 
 #include <chrono>
 #include <fstream>
@@ -60,7 +60,7 @@
 
 #include <png++/png.hpp>
 
-//import std;  // not yet supported
+//import std;  // import not yet supported
 
 using namespace std;
 using namespace   chrono;        // std::chrono; NB g++10 library does not yet implement utc_clock
@@ -68,6 +68,8 @@ using namespace   this_thread;   // std::this_thread
 
 using PING_TABLE_ELEMENT = pair<string, icmp_socket*>;    // label, pointer to ICMP socket
 using PING_TABLE         = vector<PING_TABLE_ELEMENT>;
+
+using enum WINDOW_ATTRIBUTES;   // save some typing
 
 extern const FLAT_STRING_SET CONTINENT_SET;     ///< two-letter abbreviations of continents
 
@@ -90,14 +92,15 @@ enum class KNOWN_MULT { FORCE_KNOWN,
 
 time_log <std::chrono::milliseconds> global_timer;        // so that we have access to how long we've been running, if we need it
 
+// write the value of the global timer (in milliseconds) to the logfile
 inline void log_timer(const string_view str)
   { ost << str << " at time: " << css(static_cast<int>(global_timer.click())) << "ms" << endl; }
 
 // needed for WRAPPER_3 definition of memory_entry
-ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
-{ ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
+inline ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
+{ return (ost << ( (dm == DRLOG_MODE::CQ) ? 'C' : 'S' ));
 
-  return ost;
+//  return ost;
 }
 
 constexpr string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
@@ -310,7 +313,7 @@ COLOUR_TYPE log_extract_bg;                 ///< background colour of LOG EXTRAC
 pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
 time_t    time_last_qsy          { time_t(NULL) };              ///< time of last QSY
 
-pt_mutex            thread_check_mutex { "THREAD CHECK"s };   ///< mutex for controlling threads; both the following variables are under this mutex
+pt_mutex            thread_check_mutex { "THREAD CWINDOW_ATTRIBUTES::HECK"s };   ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads { 0 };                  ///< how many additional threads are running?
 atomic<bool>        exiting { false };                        ///< is the program exiting?
 bool                exiting_rig_status { false };             ///< turn off the display-rig_status thread first
@@ -451,8 +454,10 @@ string                  self_spotting_text    { };          ///< text in comment
 int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
 int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
 unsigned int            shift_poll           { 0 };         ///< polling interval for SHIFT keys
-int                     ssb_bandwidth_narrow { 1600 };      ///< narrow SSB bandwidth, in Hz
-int                     ssb_bandwidth_wide   { 1800 };      ///< wide SSB bandwidth, in Hz
+//int                     ssb_bandwidth_narrow { 1600 };      ///< narrow SSB bandwidth, in Hz
+frequency               ssb_bandwidth_narrow { 1600_Hz };   ///< narrow SSB bandwidth
+//int                     ssb_bandwidth_wide   { 1800 };      ///< wide SSB bandwidth, in Hz
+frequency               ssb_bandwidth_wide   { 1800_Hz };   ///< narrow SSB bandwidth
 int                     ssb_centre_narrow    { 1300 };      ///< narrow SSB bandwidth centre frequency, in Hz
 int                     ssb_centre_wide      { 1500 };      ///< wide SSB bandwidth centre frequency, in Hz
 running_statistics      statistics;                         ///< all the QSO statistics to date
@@ -990,8 +995,8 @@ int main(int argc, char** argv)
     shift_delta_cw                  = static_cast<int>(context.shift_delta_cw());   // forced positive int
     shift_delta_ssb                 = static_cast<int>(context.shift_delta_ssb());  // forced positive int
     shift_poll                      = context.shift_poll();
-    ssb_bandwidth_narrow            = context.ssb_bandwidth_narrow();
-    ssb_bandwidth_wide              = context.ssb_bandwidth_wide();
+    ssb_bandwidth_narrow            = frequency(context.ssb_bandwidth_narrow());
+    ssb_bandwidth_wide              = frequency(context.ssb_bandwidth_wide());
     ssb_centre_narrow               = context.ssb_centre_narrow();
     ssb_centre_wide                 = context.ssb_centre_wide();
 
@@ -1070,20 +1075,10 @@ int main(int argc, char** argv)
     location_db.add_russian_database(context_path, context.russian_filename());  // add Russian information
 
 // create the set of blocked canonical prefixes
-    for (const auto& blocked_country : context.blocked_posts())
-      dx_post::blocked_posts += location_db.canonical_prefix(blocked_country);
+    dx_post::blocked_posts = SR::to<FLAT_STRING_SET>( context.blocked_posts() | SRV::transform([] (const string& blocked_post) { return location_db.canonical_prefix(blocked_post); }) );
 
     if (!dx_post::blocked_posts.empty())
-    { ost << "blocked canonical prefixes: ";
-
-      for (auto it { dx_post::blocked_posts.begin() }; it != dx_post::blocked_posts.end(); ++it)
-      { ost << *it;
-        if (it != prev(dx_post::blocked_posts.end()))
-          ost << ", ";
-      }
-
-      ost << endl;
-    }
+      ost << "blocked canonical prefixes: " << join(dx_post::blocked_posts, ", "sv) << endl;
 
 // build super check partial database from the drmaster information
     try
@@ -1322,7 +1317,7 @@ int main(int argc, char** argv)
 
 // now the individual bands
         for (BAND b { MIN_BAND }; b <= MAX_BAND; b = (BAND)((int)b + 1))
-          FOR_ALL(calls_from_do_not_show_file(b), [&bm = bandmaps[b]] (const auto& callsign) { bm.do_not_add(callsign); });
+          FOR_ALL(calls_from_do_not_show_file(b), [&bm = bandmaps[static_cast<unsigned int>(b)]] (const auto& callsign) { bm.do_not_add(callsign); });
       }
 
 // set the RBN threshold for each bandmap
@@ -1341,7 +1336,7 @@ int main(int argc, char** argv)
 
 // add my marker to each bandmap
       for (const auto b : permitted_bands)
-      { bandmap&      bm { bandmaps[b] };
+      { bandmap&      bm { bandmaps[static_cast<unsigned int>(b)] };
         bandmap_entry be { my_bandmap_entry };
 
         if (b == current_band)
@@ -1355,7 +1350,7 @@ int main(int argc, char** argv)
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
       if (context.mark_mode_break_points())
       { for (const auto b : permitted_bands)
-        { bandmap& bm { bandmaps[b] };
+        { bandmap& bm { bandmaps[ static_cast<unsigned int>(b)] };
 
           bandmap_entry be;
 
@@ -1577,7 +1572,7 @@ int main(int argc, char** argv)
       { const auto& [ freq, m ] { quick_qsy_map.at(current_band) };
 
         win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                      <= pad_left(freq.display_string(), 7) + SPACE_STR + MODE_NAME[m];
+                      <= pad_left(freq.display_string(), 7) + SPACE + ::to_string(m);
       }
   
 // QSLs window
@@ -1643,22 +1638,38 @@ int main(int argc, char** argv)
 
 // SCORE BANDS window
       win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
-      { string bands_str { };
+#if 0
+      { //string bands_str { };
 
-        FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+//        FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+        //FOR_ALL(rules.score_bands(), [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE); } );
         //const string bands_str { SR::fold_left(rules.score_bands(), string { }, [] (const BAND b) { return (BAND_NAME[b] + SPACE_STR); } ) };   // but how to define plus?
+
+        const string bands_str = join( SR::to<vector>(rules.score_bands() | SRV::transform([] (const BAND b) { return BAND_NAME[b]; })), SPACE );
+
 
         win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
       }
+#endif
+//      win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s
+//                      <= join( SR::to<vector>(rules.score_bands() | SRV::transform([] (const BAND b) { return BAND_NAME[static_cast<unsigned int>(b)]; })), SPACE );
+//      win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= join(SR::to<vector>(rules.score_bands()), SPACE);
+      win_score_bands < CURSOR_START_OF_LINE < "Score Bands: "s <= join(rules.score_bands(), SPACE);
 
 // SCORE MODES window
       win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
+#if 0
       { string modes_str { };
 
-        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+//        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE); } );
 
         win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
       }
+#endif
+//      win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= join( SR::to<vector>(rules.score_modes() | SRV::transform([] (const MODE m) { return MODE_NAME[m]; })), SPACE );
+//      win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= join(SR::to<vector>(rules.score_modes()), SPACE);
+      win_score_modes < CURSOR_START_OF_LINE < "Score Modes: "s <= join(rules.score_modes(), SPACE);
 
 // SCP window
       win_scp.init(context.window_info("SCP"s), WINDOW_NO_CURSOR);
@@ -1766,8 +1777,8 @@ int main(int argc, char** argv)
       BAND cur_band { current_band };
       MODE cur_mode { current_mode };
 
-      if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
-      { bandmap& bm { bandmaps[cur_band] };                   // use map for current band, so column offset is correct
+      if (bandmaps.size() > static_cast<unsigned int>(cur_band))     // should always be true; test is to ensure next line is OK
+      { bandmap& bm { bandmaps[static_cast<unsigned int>(cur_band)] };                   // use map for current band, so column offset is correct
 
         bm.filter_enabled(context.bandmap_filter_enabled());
         bm.filter_hide(context.bandmap_filter_hide());
@@ -2131,7 +2142,7 @@ int main(int argc, char** argv)
     \param  b       band
     \param  m       mode
 */
-void display_band_mode(window& win, const BAND b, const enum MODE m)
+void display_band_mode(window& win, const BAND b, const MODE m)
 { static constinit BAND last_band  { BAND_20 };  // start band
   static constinit MODE last_mode  { MODE_CW };  // start mode
   static constinit bool first_time { true };
@@ -2143,7 +2154,9 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
     last_band = b;
     last_mode = m;
 
-    win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= (BAND_NAME[b] + SPACE_STR + MODE_NAME[m]);
+//    win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= (BAND_NAME[b] + SPACE_STR + MODE_NAME[m]);
+//    win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (BAND_NAME[static_cast<unsigned int>(b)] + SPACE + MODE_NAME[m]);
+    win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= to_string(b) + SPACE + to_string(m);
   }
 }
 
@@ -2585,10 +2598,12 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
     { const auto time_since_data_last_received { rbn.time_since_data_last_received() };
 
       if (time_since_data_last_received > 60s)
-      { const string  msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
-        const int     bg_colour { cluster_line_win.bg() };
-        const int     fg_colour { cluster_line_win.fg() };
-        const seconds timeout   { is_rbn ? context.rbn_timeout() : context.cluster_timeout() };
+      { //const string  msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
+        const int     bg_colour     { cluster_line_win.bg() };
+        const int     fg_colour     { cluster_line_win.fg() };
+        const seconds timeout       { is_rbn ? context.rbn_timeout() : context.cluster_timeout() };
+        const seconds time_to_reset { timeout - time_since_data_last_received };
+        const string  msg           { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS; RESET IN "s + to_string(N_SECONDS(time_to_reset)) + " SECONDS"};
 
         ost << to_upper(type_str) << ": " << msg << endl;
 
@@ -2685,7 +2700,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
               post.callsign(dad.autocorrect(post));       // replace call in the post, so that subsequent reads return the possibly-autocorrected call
 
               if (post.callsign() != old_call)
-                ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << BAND_NAME[post.band()] << "m" << endl;
+//                ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << BAND_NAME[static_cast<unsigned int>(post.band())] << "m" << endl;
+                ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << to_string(post.band()) << "m" << endl;
             }
 
             const BAND                    cur_band    { current_band };
@@ -2720,7 +2736,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
             }
 
 // record as the most recent QRG for this station
-            const int band_nr { static_cast<int>(BAND(post.freq())) };
+            const int band_nr { to_int(BAND(post.freq())) };
 
             UNORDERED_STRING_MAP<string>& qrg_map { last_posted_qrg[band_nr] };
 
@@ -2789,7 +2805,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                     while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
                       --recent_mult_calls;
 
-                    cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
+                    cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
 
                     const int bg_colour { cluster_mult_win.bg() };
                     const int fg_colour { cluster_mult_win.fg() };
@@ -2801,10 +2817,10 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // highlight it if it's on our current band
                     if ( (dx_band == cur_band) or is_me)
-                      cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT;       // swaps fg/bg
+                      cluster_mult_win < WINDOW_HIGHLIGHT;       // swaps fg/bg
 
                     if (is_me)
-                      cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_BOLD;            // call in bold darkish blue
+                      cluster_mult_win < WINDOW_BOLD;            // call in bold darkish blue
 
                     cluster_mult_win < pad_right(frequency_str + SPACE + dx_callsign, cluster_mult_win.width());  // display it -- removed refresh
 
@@ -2812,14 +2828,14 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
                       cluster_mult_win < COLOURS(fg_colour, bg_colour);
 
                     if ( (dx_band == cur_band) or is_me)
-                      cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+                      cluster_mult_win < WINDOW_NORMAL;
                   }
                 }
               }
 
 // add the post to the correct bandmap unless it's a marked frequency
               if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
-              { auto insert_be { [&changed_bands] (const BAND dx_band, const bandmap_entry& be) { bandmap_insertion_queues[dx_band] += be;
+              { auto insert_be { [&changed_bands] (const BAND dx_band, const bandmap_entry& be) { bandmap_insertion_queues[static_cast<unsigned int>(dx_band)] += be;
                                                                                                   changed_bands += dx_band;      // mark band as changed
                                                                                                 } };
 
@@ -2867,14 +2883,14 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
         displayed_band = bandmap_display_band;
 
         if (b == displayed_band)
-          bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
+          bandmaps[to_uint(b)].process_insertion_queue(bandmap_insertion_queues[to_uint(b)], bandmap_win);
         else
         { ost << "Displayed band appears to have changed; not writing to window; displayed band now = " << displayed_band << endl;
-          bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
+          bandmaps[to_uint(b)].process_insertion_queue(bandmap_insertion_queues[to_uint(b)]);
         }
       }
       else
-        bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
+        bandmaps[to_uint(b)].process_insertion_queue(bandmap_insertion_queues[to_uint(b)]);
     }
 
     if (cluster_mult_win_was_changed)    // update the window on the screen
@@ -3001,7 +3017,14 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
   while (1)
   { FOR_ALL(bandmaps, [] (bandmap& bm) { bm.prune(); } );             // prune all bandmaps
 
-    bandmap_win <= bandmaps[bandmap_display_band];                    // display the pruned bandmap for the displayed band
+//    bandmap_win <= bandmaps[bandmap_display_band];                    // display the pruned bandmap for the displayed band
+//    const BAND b = bandmap_display_band;
+//    const unsigned int tmp = static_cast<unsigned int>(b);   // bandmap_display_band is atomic
+
+//    bandmap_win <= bandmaps[tmp];                    // display the pruned bandmap for the displayed band
+
+//    bandmap_win <= bandmaps[static_cast<unsigned int>(bandmap_display_band.load())];                    // display the pruned bandmap for the displayed band
+    bandmap_win <= bandmaps[at_uint(bandmap_display_band)];                    // display the pruned bandmap for the displayed band
 
     for ( [[maybe_unused]] auto _ : RANGE(1, PRUNE_INTERVAL_SEC) )    // check once per second for a minute
     {
@@ -3028,7 +3051,7 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
     ALT-KPDel     -- Add call to single-band DO NOT SHOW list
     ALT-C         -- send post to cluster
     ALT-D         -- screenshot and dump all bandmaps to output file [for debugging purposes]
-    ALT-G go to the frequency in win_last_qrg
+    ALT-G         -- go to the frequency in win_last_qrg
     ALT-K         -- toggle CW
     ALT-M         -- change mode
     ALT-N         -- toggle notch status if on SSB
@@ -3092,7 +3115,6 @@ void prune_bandmap(window* win_bandmap_p, array<bandmap, NUMBER_OF_BANDS>* bandm
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 { using enum BANDMAP_DIRECTION;
-  using enum WINDOW_ATTRIBUTES;
 
   window& win { *wp };                  // syntactic sugar
 
@@ -3127,7 +3149,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_unmodified() and e.is_char(EQUALS))
     processed = (win <= QUESTION_MARK, true);
 
-  const string call_contents { remove_peripheral_spaces <std::string> (win.read()) };
+  const string call_contents { remove_peripheral_spaces <string> (win.read()) };
   const BAND   cur_band      { current_band };
   const MODE   cur_mode      { current_mode };
 
@@ -3293,7 +3315,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // check that we're about to go to the correct band
         if (BAND(last_frequency) != new_band)
-        { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[new_band] << ", new frequency = " << last_frequency << endl;
+        { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[static_cast<unsigned int>(new_band)] << ", new frequency = " << last_frequency << endl;
           alert("FREQUENCY ERROR WHEN CHANGING BAND");
         }
 
@@ -3303,11 +3325,16 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         { const auto f { rig_ptr -> rig_frequency() };
 
           ost << "new frequency we have moved to appears to be: " << f << endl;
-          ost << "new band is supposed to be: " << new_band << ", band name = " << BAND_NAME[new_band] << "m" << endl;
-          ost << "new band is actually: " << BAND(f) << ", band name = " << BAND_NAME[BAND(f)] << "m" << endl;
+//          ost << "new band is supposed to be: " << new_band << ", band name = " << BAND_NAME[static_cast<unsigned int>(new_band)] << "m" << endl;
+//          ost << "new band is actually: " << BAND(f) << ", band name = " << BAND_NAME[static_cast<unsigned int>(BAND(f))] << "m" << endl;
+          ost << "new band is supposed to be: " << new_band << ", band name = " << to_string(new_band) << "m" << endl;
+          ost << "new band is actually: " << BAND(f) << ", band name = " << to_string(BAND(f)) << "m" << endl;
+
           ost << "the value of current_band is: " << static_cast<BAND>(current_band) << endl;
-          ost << "the value of the current mode is: " << MODE_NAME.at(cur_mode) << endl;
-          ost << "the value of the mode after band change is: " << MODE_NAME.at(rig_ptr -> rig_mode()) << endl;
+//          ost << "the value of the current mode is: " << MODE_NAME.at(cur_mode) << endl;
+//          ost << "the value of the mode after band change is: " << MODE_NAME.at(rig_ptr -> rig_mode()) << endl;
+          ost << "the value of the current mode is: " << ::to_string(cur_mode) << endl;
+          ost << "the value of the mode after band change is: " << to_string(rig_ptr -> rig_mode()) << endl;
         }
 
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
@@ -3315,7 +3342,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rig_ptr -> rig_mode(dest_mode);
         current_mode = dest_mode;
 
-        ost << "the value of the mode after explicitly setting it to " << MODE_NAME[dest_mode] << " is: " << MODE_NAME.at(rig_ptr -> rig_mode()) << endl;
+//        ost << "the value of the mode after explicitly setting it to " << MODE_NAME[dest_mode] << " is: " << MODE_NAME.at(rig_ptr -> rig_mode()) << endl;
+        ost << "the value of the mode after explicitly setting it to " << to_string(dest_mode) << " is: " << to_string(rig_ptr -> rig_mode()) << endl;
 
         enter_sap_mode();
         rig_ptr -> base_state();    // turn off RIT, split and sub-rx
@@ -3327,9 +3355,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // update bandmap
         FOR_ALL(bandmaps, [] (bandmap& bm) { bm.increment_version(); });  // to handle case of multiple quick band changes
 
-        bandmap& bm { bandmaps[new_band] };
+        bandmap& bm { bandmaps[static_cast<unsigned int>(new_band)] };
 
-        ost << "displaying band map for band: " << BAND_NAME[new_band] << 'm' << endl;
+        ost << "displaying band map for band: " << BAND_NAME[static_cast<unsigned int>(new_band)] << 'm' << endl;
 
         bandmap_display_band = new_band;
 
@@ -3448,7 +3476,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.symbol() == XK_F11))
   { const string contents { remove_peripheral_spaces <string> (win.read()) };  // can't use string_view here
 
-    bandmap& bm = bandmaps[cur_band];        // use current bandmap to make it easier to display column offset
+    bandmap& bm = bandmaps[static_cast<unsigned int>(cur_band)];        // use current bandmap to make it easier to display column offset
 
     if (contents.empty())     // cycle amongst OFF / HIDE / SHOW
     { if (bm.filter_enabled() and bm.filter_show())
@@ -3563,7 +3591,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             set_bandmap_display_band(2);    // start at command[2]
         }
 
-        win_bandmap <= bandmaps[bandmap_display_band];
+ //       BAND b = bandmap_display_band;   //bdb is atomic
+//        unsigned int tmp = static_cast<unsigned int>(b);
+
+        win_bandmap <= bandmaps[at_int(bandmap_display_band)];
 
         goto FINISHED_PROCESSING_COMMAND;
       }
@@ -3591,7 +3622,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { if (const auto posn { command.find(SPACE) }; posn != string_view::npos)
           FOR_ALL(bandmaps, [cull_function = from_string<int>(substring <string> (command, posn))] (bandmap& bm) { bm.cull_function(cull_function); } );
 
-        bandmap& bm { bandmaps[current_band] };
+//        BAND b = current_band;        // current_band is atomic
+//        unsigned int tmp = static_cast<unsigned int>(b);
+
+//        bandmap& bm { bandmaps[static_cast<unsigned int>(current_band.load())] };
+        bandmap& bm { bandmaps[at_uint(current_band)] };
 
         win_bandmap <= bm;
         display_bandmap_filter(bm);
@@ -3708,7 +3743,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           do_not_show(callsign);
 
-          win_bandmap <= bandmaps[current_band];
+//          BAND b = current_band;        // current_band is atomic
+//          unsigned int tmp = static_cast<unsigned int>(b);
+
+          win_bandmap <= bandmaps[at_uint(current_band)];
         }
 
         goto FINISHED_PROCESSING_COMMAND;
@@ -3721,7 +3759,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           set<BAND> score_bands;
 
-//          for (const auto& band_str : clean_split_string <string> (rhs))
           for (const auto band_str : clean_split_string <string_view> (rhs))
           { try
             { score_bands += BAND_FROM_NAME.at(band_str);
@@ -3740,11 +3777,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no band information
           rules.restore_original_score_bands();
 
-        string bands_str { };
+//        string bands_str { };
 
-        FOR_ALL(rules.score_bands(), [&bands_str] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE); } );
+//        FOR_ALL(rules.score_bands(), [&bands_str] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE); } );
 
-        win_score_bands < WINDOW_CLEAR < "Score Bands: "s <= bands_str;
+//        win_score_bands < WINDOW_CLEAR < "Score Bands: "s <= bands_str;
+//        win_score_bands < WINDOW_CLEAR < "Score Bands: "s <= join( SR::to<vector>(rules.score_bands() | SRV::transform([] (const BAND b) { return BAND_NAME[static_cast<unsigned int>(b)]; })), SPACE );
+        win_score_bands < WINDOW_CLEAR < "Score Bands: "s <= join(rules.score_bands(), SPACE);
 
         rescore(rules);
         update_rate_window();
@@ -3759,7 +3798,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { if (const auto posn { command.find(SPACE) }; posn != string::npos)
         { set<MODE> score_modes;
 
-//          for (const auto& mode_str : clean_split_string <string> (substring <string> (command, posn)))
           for (const auto mode_str : clean_split_string <string_view> (substring <string> (command, posn)))
           { try
             { score_modes += MODE_FROM_NAME.at(mode_str);
@@ -3778,11 +3816,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         else    // no mode information
           rules.restore_original_score_modes();
 
-        string modes_str { };
+//        string modes_str { };
 
-        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE); } );
+//        FOR_ALL(rules.score_modes(), [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE); } );
 
-        win_score_modes < WINDOW_CLEAR < "Score Modes: "s <= modes_str;
+//
+//        win_score_modes < WINDOW_CLEAR < "Score Modes: "s <= join( SR::to<vector>(rules.score_modes() | SRV::transform([] (const MODE m) { return MODE_NAME[m]; })), SPACE );
+        win_score_modes < WINDOW_CLEAR < "Score Modes: "s <= join(rules.score_modes(), SPACE);
 
         rescore(rules);
         update_rate_window();
@@ -3929,7 +3969,7 @@ FINISHED_PROCESSING_COMMAND:
 
               current_band = new_band;
 
-              bandmap& bm { bandmaps[new_band] };
+              bandmap& bm { bandmaps[static_cast<unsigned int>(new_band)] };
               win_bandmap <= bm;
 
 // update displays of needed mults
@@ -3978,7 +4018,7 @@ FINISHED_PROCESSING_COMMAND:
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.calculate_mult_status(rules, statistics);
 
-        bandmap& bandmap_this_band { bandmaps[cur_band] };
+        bandmap& bandmap_this_band { bandmaps[static_cast<unsigned int>(cur_band)] };
 
         bandmap_this_band += be;
         win_bandmap <= bandmap_this_band;
@@ -4104,7 +4144,7 @@ FINISHED_PROCESSING_COMMAND:
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.calculate_mult_status(rules, statistics);
 
-        bandmap& bandmap_this_band { bandmaps[be.band()] };
+        bandmap& bandmap_this_band { bandmaps[static_cast<unsigned int>(be.band())] };
 
         const bandmap_entry old_be { bandmap_this_band[callsign] };
 
@@ -4139,7 +4179,10 @@ FINISHED_PROCESSING_COMMAND:
 // assume it's a call -- look for the same call in the current bandmap, as displayed
     bandmap_entry be;               // default entry
 
-    const BM_ENTRIES entries { bandmaps[current_band].displayed_entries() };
+//    BAND b = current_band;
+//    unsigned int tmp = static_cast<unsigned int>(b);
+
+    const BM_ENTRIES entries { bandmaps[at_uint(current_band)].displayed_entries() };
 
     if (const auto cit { FIND_IF(entries, [&original_contents] (const bandmap_entry& be) { return (be.callsign() == original_contents); }) }; cit != entries.cend())
     { found_call = true;
@@ -4185,7 +4228,7 @@ FINISHED_PROCESSING_COMMAND:
   { string results;
 
     for (const auto& b : permitted_bands_set)
-    { bandmap& bm { bandmaps[b] };            // use current bandmap to make it easier to display column offset
+    { bandmap& bm { bandmaps[static_cast<unsigned int>(b)] };            // use current bandmap to make it easier to display column offset
 
       if (const bandmap_entry be { bm[original_contents] }; !be.empty())
       { if (!results.empty())
@@ -4210,13 +4253,13 @@ FINISHED_PROCESSING_COMMAND:
     {
 // possibly put a bandmap call into the call window
       if (original_contents.empty() and (drlog_mode == DRLOG_MODE::SAP))
-      { if (const string nearby_contents { remove_peripheral_spaces <std::string> (win_nearby.read()) }; !nearby_contents.empty())
+      { if (const string nearby_contents { remove_peripheral_spaces <string> (win_nearby.read()) }; !nearby_contents.empty())
         { win < CURSOR_START_OF_LINE <= nearby_contents;
           display_call_info(nearby_contents);
         }
       }
 
-      const string current_contents { remove_peripheral_spaces <std::string> (win.read()) };    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
+      const string current_contents { remove_peripheral_spaces <string> (win.read()) };    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
 
 // dupe check; put call into bandmap
       if (!current_contents.empty() and (drlog_mode == DRLOG_MODE::SAP) and !current_contents.contains(" DUPE"sv))
@@ -4244,7 +4287,7 @@ FINISHED_PROCESSING_COMMAND:
         be.calculate_mult_status(rules, statistics);
         be.is_needed(is_needed);
 
-        bandmap& bandmap_this_band { bandmaps[cur_band] };
+        bandmap& bandmap_this_band { bandmaps[static_cast<unsigned int>(cur_band)] };
 
         bandmap_this_band += be;
         win_bandmap <= bandmap_this_band;
@@ -4337,7 +4380,7 @@ FINISHED_PROCESSING_COMMAND:
       ignore_next_process_insertion_queue = true;
       update_quick_qsy();
 
-      const int16_t nskip { static_cast<int16_t>( (bandmaps[cur_band].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
+      const int16_t nskip { static_cast<int16_t>( (bandmaps[static_cast<unsigned int>(cur_band)].cull_function() == 1) ? (win_bandmap.height() - 1) : 24 ) };
 
       processed = process_bandmap_function(e.is_alt(SEMICOLON) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP, nskip);  // move by (nskip + 1) stations
     }
@@ -4396,12 +4439,15 @@ FINISHED_PROCESSING_COMMAND:
                                                      bm += be; 
                                                  });
 
-          if (&bm == &(bandmaps[bandmap_display_band]))   // re-display currently displayed bandmap
+//          const BAND b = bandmap_display_band;
+//          const unsigned int tmp = static_cast<unsigned int>(b);
+
+          if (&bm == &(bandmaps[at_uint(bandmap_display_band)]))   // re-display currently displayed bandmap
             win_bandmap <= bm;
         }
 
 // remove the last line from the log on disk
-        const vector<string> disk_log_lines { to_lines <std::string> (read_file(context.logfile())) };
+        const vector<string> disk_log_lines { to_lines <string> (read_file(context.logfile())) };
 
         if (!disk_log_lines.empty())
         { FILE* fp { fopen(context.logfile().c_str(), "w") };
@@ -4508,7 +4554,7 @@ FINISHED_PROCESSING_COMMAND:
         { if (scp_index == -1)
           { scp_index = 0;                                // go to first call
           
-            if (all_matches[scp_index] == remove_peripheral_spaces <std::string> (win.read()))               // there was a best match and it's the same as the first SCP/fuzzy match
+            if (all_matches[scp_index] == remove_peripheral_spaces <string> (win.read()))               // there was a best match and it's the same as the first SCP/fuzzy match
               scp_index = min(scp_index + 1, static_cast<int>(all_matches.size() - 1));
           }
           else
@@ -4560,14 +4606,20 @@ FINISHED_PROCESSING_COMMAND:
   if (!processed and e.symbol() == XK_KP_Delete and e.is_unmodified())
   { do_not_show(original_contents);
 
-    processed = ( win_bandmap <= (bandmaps[current_band]), true );
+//    BAND b = current_band;
+//    unsigned int tmp = static_cast<unsigned int>(b);
+
+    processed = ( win_bandmap <= (bandmaps[at_uint(current_band)]), true );
   }
 
 // Alt KP Del -- remove from bandmap and add to do-not-add list and file, for this band only
   if (!processed and e.symbol() == XK_KP_Delete and e.is_alt())
   { do_not_show(original_contents, current_band);
 
-    processed = ( win_bandmap <= (bandmaps[current_band]), true );
+//    BAND b = current_band;
+//    unsigned int tmp = static_cast<unsigned int>(b);
+
+    processed = ( win_bandmap <= (bandmaps[at_uint(current_band)]), true );
   }
 
 // ` -- SWAP RIT and XIT
@@ -4688,12 +4740,12 @@ FINISHED_PROCESSING_COMMAND:
     { const BAND band_b { to_BAND(f_b) };
 
 // assume it's a call -- look for the same call in the VFO B bandmap
-      bandmap_entry be { bandmaps[band_b][original_contents] };
+      bandmap_entry be { bandmaps[static_cast<unsigned int>(band_b)][original_contents] };
 
       if (!(be.callsign().empty()))
         rig_ptr -> rig_frequency_b(be.freq());
       else                                          // didn't find an exact match; try a substring search
-      { be = bandmaps[band_b].substr(original_contents);
+      { be = bandmaps[static_cast<unsigned int>(band_b)].substr(original_contents);
 
         if (!(be.callsign().empty()))
         { rig_ptr -> rig_frequency_b(be.freq());
@@ -4784,7 +4836,7 @@ FINISHED_PROCESSING_COMMAND:
 // CTRL-N -- Place NEARBY call into CALL window and update QSL window
   if (!processed and e.is_control('n'))
   { if (win_call.empty() and !win_nearby.empty())
-    { const string new_call { remove_peripheral_spaces <std::string> (win_nearby.read()) };
+    { const string new_call { remove_peripheral_spaces <string> (win_nearby.read()) };
 
       win_call < CURSOR_START_OF_LINE <= new_call;
       update_qsls_window(new_call);
@@ -4803,7 +4855,7 @@ FINISHED_PROCESSING_COMMAND:
     processed = update_rx_ant_window();
   }
   
-// CTRL-= -- quick QSY (should this be based on displayed band istead of current band?)
+// CTRL-= -- quick QSY (should this be based on displayed band instead of current band?)
   if (!processed and (e.is_control(EQUALS)))
   { auto [old_frequency, old_mode] { quick_qsy_map.at(current_band) };
 
@@ -4815,12 +4867,18 @@ FINISHED_PROCESSING_COMMAND:
     quick_qsy_map[current_band] = pair { f, m };
 
     win_quick_qsy < WINDOW_CLEAR < CURSOR_START_OF_LINE
-                  <= pad_left(f.display_string(), 7) + SPACE_STR + MODE_NAME[m];
-    
-//    update_based_on_frequency_change(old_frequency, old_mode);
-    bandmap& bm { bandmaps[current_band] };
+//                  <= pad_left(f.display_string(), 7) + SPACE + MODE_NAME[m];
+                  <= pad_left(f.display_string(), 7) + SPACE + to_string(m);
 
-    win_bandmap <= bm;
+//    update_based_on_frequency_change(old_frequency, old_mode);
+
+//    const BAND b = current_band;
+//    const unsigned int tmp = static_cast<unsigned int>(b);
+
+//    bandmap& bm { bandmaps[at_uint(current_band)] };
+
+//    win_bandmap <= bm;
+    win_bandmap <= bandmaps[at_uint(current_band)];
 
     processed = true;
   }
@@ -4859,7 +4917,9 @@ FINISHED_PROCESSING_COMMAND:
 
 // CTRL-G -- display QRG of call
   if (!processed and (e.is_control('g')))
-  { const int band_nr { static_cast<int>(current_band) };
+  { const BAND b = current_band;
+
+    const int band_nr { static_cast<int>(b) };
 
     lock_guard lg(last_posted_qrg_mutex[band_nr]);
 
@@ -4876,11 +4936,14 @@ FINISHED_PROCESSING_COMMAND:
   { const string contents { win_last_qrg.read() };
 
     if (const size_t posn { contents.find(COLON) }; (posn != string::npos) and (posn != (contents.size() - 1)))
-    { const frequency f { remove_peripheral_spaces <std::string> (substring <std::string> (contents, posn + 1)) };
+    { const frequency f { remove_peripheral_spaces <string> (substring <string> (contents, posn + 1)) };
 
       rig_ptr -> rig_frequency(f);
 
-      bandmap& bm { bandmaps[current_band] };
+//      const BAND b = current_band;
+//      const unsigned int tmp = static_cast<unsigned int>(b);
+
+      bandmap& bm { bandmaps[at_uint(current_band)] };
 
       win_bandmap <= bm;
     }
@@ -4905,7 +4968,7 @@ FINISHED_PROCESSING_COMMAND:
         win_grid <= WINDOW_CLEAR;
     }
     else
-    { if (const string current_contents { remove_char(remove_peripheral_spaces <std::string> (win.read()), BACKSLASH) }; current_contents != original_contents)   // remove any \ characters
+    { if (const string current_contents { remove_char(remove_peripheral_spaces <string> (win.read()), BACKSLASH) }; current_contents != original_contents)   // remove any \ characters
       { display_call_info(current_contents);
 
         if (!in_scp_matching)
@@ -5078,7 +5141,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       size_t word_length;
 
       word_length = ( ( (next_space == string::npos) ? exchange_contents.length() : (next_space - 1) ) - last_apostrophe );
-      new_rst     = substring <std::string> (exchange_contents, last_apostrophe + 1, word_length);
+      new_rst     = substring <string> (exchange_contents, last_apostrophe + 1, word_length);
 
 // remove all fields containing an apostrophe
       const vector<string> fields { split_string <string> (exchange_contents, SPACE) };
@@ -5163,7 +5226,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
             if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))    // in CQ mode, he does so care
-            { const vector<string> call_contents_fields { split_string <std::string> (call_contents, SPACE) };
+            { const vector<string> call_contents_fields { split_string <string> (call_contents, SPACE) };
               const string         original_callsign    { call_contents_fields[call_contents_fields.size() - 1] };
 
               string callsign { original_callsign };
@@ -5295,6 +5358,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                   statistics.add_known_exchange_mult(name, MULT_VALUE(name, value));
 
                 if (statistics.add_worked_exchange_mult(name, value, qso.band(), qso.mode()))
+//                if (statistics.add_worked_exchange_mult(name, value, to_int(qso.band()), to_int(qso.mode())))
                   qso.set_exchange_mult(name);
               }
             }
@@ -5387,7 +5451,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // perform any changes to the bandmaps
 
 // if we are in CQ mode, then remove this call if it's present elsewhere in the bandmap ... we assume he isn't CQing and SAPing simultaneously on the same band
-          bandmap& bandmap_this_band { bandmaps[cur_band] };
+          bandmap& bandmap_this_band { bandmaps[to_uint(cur_band)] };
 
           if (drlog_mode == DRLOG_MODE::CQ)
           { bandmap_this_band -= qso.callsign();
@@ -5483,7 +5547,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     }
 
 // if on SSB and using RIT, centre the RIT
-    if ( (current_mode == MODE_SSB) and rig_ptr -> rit_enabled() )
+    if ( (current_mode == MODE_SSB) and (rig_ptr -> rit_enabled()) )
       rig_ptr -> rit(0);
   }        // end ENTER [log_the_qso]
 
@@ -5661,8 +5725,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   if (!processed and (e.symbol() == XK_F2))
   { if (rig_ptr -> split_enabled())
     { rig_ptr -> split_disable();
-
-
       (a_drlog_mode == DRLOG_MODE::CQ) ? enter_cq_mode() : enter_sap_mode();
     }
     else
@@ -5699,10 +5761,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       }
 
 // put cursor in correct window
-      if (remove_peripheral_spaces <std::string> (win_exchange.read()).empty())        // go to the CALL window
-      { const size_t posn { call_contents.find(SPACE) };            // first empty space
+      if (remove_peripheral_spaces <string> (win_exchange.read()).empty())        // go to the CALL window
+      { //const size_t posn { call_contents.find(SPACE) };            // first empty space
 
-        win_call.move_cursor(posn, 0);
+        win_call.move_cursor(call_contents.find(SPACE), 0);            // first empty space
         win_call.refresh();
         set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
@@ -5735,8 +5797,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     \param  e   keyboard event to process
 */
 void process_LOG_input(window* wp, const keyboard_event& e)
-{ using enum WINDOW_ATTRIBUTES;
-
+{
 // syntactic sugar
   window& win { *wp };
 
@@ -5781,7 +5842,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // get the original QSOs that were in the window
         deque<QSO> original_qsos;
 
-        unsigned int qso_number  { static_cast<unsigned int>(logbk.size()) };
+        unsigned int qso_number  { static_cast<unsigned int>(logbk.size()) };   // size() returns a long unsigned int
         unsigned int n_to_remove { 0 };
 
         for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
@@ -5854,7 +5915,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // pretend that we just entered this station on the bandmap by hand
 // do this just for QSOs that have changed
             if (!contains(original_qsos, qso))
-            { bandmap& bm { bandmaps[qso.band()] };
+            { bandmap& bm { bandmaps[static_cast<unsigned int>(qso.band())] };
 
               bandmap_entry be;                       // defaults to manual entry
 
@@ -5932,7 +5993,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             }
           }
 
-          if (&bm == &(bandmaps[current_band]))
+          if (&bm == &(bandmaps[at_uint(current_band)]))
             win_bandmap <= bm;
         }
       }
@@ -5979,8 +6040,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 /// enter CQ mode
 void enter_cq_mode(void)
-{ using enum WINDOW_ATTRIBUTES;
-
+{
   { SAFELOCK(drlog_mode);  // don't use SAFELOCK_SET because we want to set the frequency and the mode as an atomic operation
 
     cq_mode_frequency = rig_ptr -> rig_frequency();  // nested inside other lock
@@ -6011,9 +6071,7 @@ void enter_cq_mode(void)
 
 /// enter SAP mode
 void enter_sap_mode(void)
-{ using enum WINDOW_ATTRIBUTES;
-
-  SAFELOCK_SET(drlog_mode_mutex, drlog_mode, DRLOG_MODE::SAP);
+{ SAFELOCK_SET(drlog_mode_mutex, drlog_mode, DRLOG_MODE::SAP);
   win_drlog_mode < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "SAP"s;
 
   try
@@ -6057,9 +6115,7 @@ void enter_cq_or_sap_mode(const DRLOG_MODE new_mode)
     \param  m           current mode
 */
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string_view mult_name, const BAND b, const MODE m)
-{ using enum WINDOW_ATTRIBUTES;
-
-  const MULT_SET worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
+{ const MULT_SET worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
 
 // the original list of callsign mults
   STRING_SET original;
@@ -6091,9 +6147,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     \param  m           current mode
 */
 void update_remaining_country_mults_window(running_statistics& statistics, const BAND b, const MODE m)
-{ using enum WINDOW_ATTRIBUTES;
-
-  const MULT_SET worked_country_mults { statistics.worked_country_mults(b, m) };
+{ const MULT_SET worked_country_mults { statistics.worked_country_mults(b, m) };
   const MULT_SET known_country_mults  { statistics.known_country_mults() };
 
 // put in right order and get the colours right
@@ -6119,9 +6173,7 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
     Does nothing if there is no window for this exchange mult
 */
 void update_remaining_exch_mults_window(const string_view exch_mult_name, running_statistics& statistics, const BAND b, const MODE m)
-{ using enum WINDOW_ATTRIBUTES;
-
-  if (!win_remaining_exch_mults_p.contains(exch_mult_name))
+{ if (!win_remaining_exch_mults_p.contains(exch_mult_name))
     return;
 
   const MULT_SET       known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
@@ -6161,9 +6213,7 @@ void update_remaining_exchange_mults_windows(running_statistics& statistics, con
     cty.dat
 */
 string bearing(const string_view callsign)
-{ //static constexpr string DEGREE_STR { "°"s };
-
-  if (callsign.empty())
+{ if (callsign.empty())
     return string { };
 
   const auto  [lat2, long2] { latitude_and_longitude(callsign) };
@@ -6201,13 +6251,12 @@ string sunrise_or_sunset(const string_view callsign, const SRSS srss)
       PUTATIVE EXCHANGE
  */
 void populate_win_info(const string_view callsign)
-{ using enum WINDOW_ATTRIBUTES;
-
-  if (win_call_history.valid())
+{ if (win_call_history.valid())
     populate_win_call_history(callsign);
 
   if (send_qtcs)
-  { const string qtc_str { LEFT_SQUARE_BRACKET + to_string(qtc_db.n_qtcs_sent_to(callsign)) + RIGHT_SQUARE_BRACKET };
+  { //const string qtc_str { LEFT_SQUARE_BRACKET + to_string(qtc_db.n_qtcs_sent_to(callsign)) + RIGHT_SQUARE_BRACKET };
+    const string qtc_str { delimit(to_string(qtc_db.n_qtcs_sent_to(callsign)), SQUARE_BRACKETS) };
 
     win_info < WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
     win_individual_qtc_count < WINDOW_CLEAR <= pad_left(qtc_str, 4);                 // right justify
@@ -6257,13 +6306,13 @@ void populate_win_info(const string_view callsign)
 
     for (int next_y_value { win_info.height() - 3 }; const auto this_mode : rules.permitted_modes())                // keep track of where we are vertically in the window
     { if (n_modes > 1)
-        win_info < cursor(0, next_y_value--) < WINDOW_REVERSE < centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_NORMAL;
+        win_info < cursor(0, next_y_value--) < WINDOW_REVERSE < centred_string(to_string(this_mode), win_info.width()) < WINDOW_NORMAL;
 
 // QSOs
       string line { pad_right("QSO"sv, FIRST_FIELD_WIDTH) };
 
       for (const BAND b : permitted_bands)
-        line += pad_left( ( q_history.worked(callsign, b, this_mode) ? "-"s : BAND_NAME[b] ), FIELD_WIDTH);
+        line += pad_left( ( q_history.worked(callsign, b, this_mode) ? "-"s : to_string(b) ), FIELD_WIDTH);
 
       win_info < cursor(0, next_y_value--) < line;
 
@@ -6274,11 +6323,15 @@ void populate_win_info(const string_view callsign)
       { if (all_country_mults.contains(canonical_prefix) )                                          // all_country_mults is from rules, and has all the valid mults for the contest
         { const MULT_SET known_country_mults { statistics.known_country_mults() };
 
-          line = pad_right("Country ["s + canonical_prefix + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+//          line = pad_right("Country ["s + canonical_prefix + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+          line = pad_right("Country "s + delimit(canonical_prefix, SQUARE_BRACKETS), FIRST_FIELD_WIDTH);
 
           for (const BAND b : permitted_bands)
-          { const string per_band_indicator { known_country_mults.contains(canonical_prefix) ? (statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? BAND_NAME[b] : "-"s )
-                                                                                             : BAND_NAME.at(b)
+//          { const string per_band_indicator { known_country_mults.contains(canonical_prefix) ? (statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? BAND_NAME[static_cast<unsigned int>(b)] : "-"s )
+//                                                                                             : BAND_NAME.at(static_cast<unsigned int>(b))
+//                                            };
+          { const string per_band_indicator { known_country_mults.contains(canonical_prefix) ? (statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? to_string(b) : "-"s )
+                                                                                             : to_string(b)
                                             };
 
             line += pad_left(per_band_indicator, FIELD_WIDTH);
@@ -6293,10 +6346,12 @@ void populate_win_info(const string_view callsign)
       { if (const bool output_this_mult { rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix) }; output_this_mult)
         { const string exch_mult_value { exchange_db.guess_value(callsign, exch_mult_field) };      // make best guess as to the value of this field
 
-          line = pad_right(exch_mult_field + " ["s + exch_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+//          line = pad_right(exch_mult_field + " ["s + exch_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+          line = pad_right(exch_mult_field + SPACE + delimit(exch_mult_value, SQUARE_BRACKETS), FIRST_FIELD_WIDTH);
 
           for (const BAND b : permitted_bands)
-            line += pad_left( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-"s ), FIELD_WIDTH);
+//            line += pad_left( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(static_cast<unsigned int>(b)) : "-"s ), FIELD_WIDTH);
+            line += pad_left( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? to_string(b) : "-"s ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
@@ -6305,8 +6360,9 @@ void populate_win_info(const string_view callsign)
 // PUTATIVE EXCHANGE window
       if (win_putative_exchange.valid())
       { if (const string expected_exchange { expected_received_exchange(callsign) }; !expected_exchange.empty())
-        { const string msg { centred_string(LEFT_SQUARE_BRACKET + expected_exchange + RIGHT_SQUARE_BRACKET, win_putative_exchange.width()) };
-        
+        { //const string msg { centred_string(LEFT_SQUARE_BRACKET + expected_exchange + RIGHT_SQUARE_BRACKET, win_putative_exchange.width()) };
+          const string msg { centred_string(delimit(expected_exchange, SQUARE_BRACKETS), win_putative_exchange.width()) };
+
           win_putative_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= msg;
         }
         else
@@ -6331,7 +6387,7 @@ void populate_win_info(const string_view callsign)
       const vector<BAND> bands { ( rules.callsign_mults_per_band() ? permitted_bands : vector<BAND> { current_band } ) };  // the bands that have callsign mults
 
       for (const string& callsign_mult : callsign_mults)
-      { string callsign_mult_value;
+      { string callsign_mult_value { };
 
         SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX"sv) and (location_db.continent(callsign) == "AS"sv), wpx_prefix, callsign);           // All Asian
         SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX"sv) and (location_db.continent(callsign) == "OC"sv), wpx_prefix, callsign);           // Oceania
@@ -6340,10 +6396,12 @@ void populate_win_info(const string_view callsign)
         SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"sv), wpx_prefix, callsign);                                                          // WPX
 
         if (!callsign_mult_value.empty())
-        { line = pad_right(callsign_mult + " ["s + callsign_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+        { //line = pad_right(callsign_mult + " ["s + callsign_mult_value + RIGHT_SQUARE_BRACKET, FIRST_FIELD_WIDTH);
+          line = pad_right(callsign_mult + SPACE + delimit(callsign_mult_value, SQUARE_BRACKETS), FIRST_FIELD_WIDTH);
 
           for (const BAND b : bands)
-            line += pad_left( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-"s ), FIELD_WIDTH);
+//            line += pad_left( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[static_cast<unsigned int>(b)] : "-"s ), FIELD_WIDTH);
+            line += pad_left( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? to_string(b) : "-"s ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
@@ -6773,13 +6831,13 @@ void alert(const string_view msg, const SHOW_TIME show_time)
 
   const string now { hhmmss() };
 
-  win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+  win_message < WINDOW_CLEAR;
 
   if (show_time == SHOW_TIME::SHOW)
-    { win_message < now < SPACE_STR; }
+    { win_message < now < SPACE; }
 
   win_message <= msg;
-  ost << "ALERT: " << now << " " << css(static_cast<int>(global_timer.click())) << "ms: " << msg << endl;
+  ost << "ALERT: " << now << SPACE << css(static_cast<int>(global_timer.click())) << "ms: " << msg << endl;
 }
 
 /*! \brief          Logs a rig-related error
@@ -6796,9 +6854,7 @@ void rig_error_alert(const string_view msg)
 
 /// update the QSO and score values in <i>win_rate</i>
 void update_rate_window(void)
-{ using enum WINDOW_ATTRIBUTES;
-
-  constexpr int RATE_PERIOD_WIDTH { 3 };
+{ constexpr int RATE_PERIOD_WIDTH { 3 };
   constexpr int QS_WIDTH          { 3 };
   constexpr int SCORE_WIDTH       { 10 };
   
@@ -6835,7 +6891,7 @@ void reset_connection(dx_cluster* rbn_p)
 
 // no start_of_thread for this one, as it's all asynchronous
   if (rbn_p)
-  { rbn_p-> reset_connection();
+  { rbn_p -> reset_connection();
     ost << "RBN/cluster connection has been reset" << endl;
   }
   else
@@ -7114,7 +7170,8 @@ bool is_needed_qso(const string_view callsign, const BAND b, const MODE m)
     return ( rules.work_if_different_band() and rules.work_if_different_mode() );
 
 // should never get here
-  ost << "ERROR in is_needed_qso for " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
+//  ost << "ERROR in is_needed_qso for " << callsign << ", " << BAND_NAME[static_cast<unsigned int>(b)] << ", " << MODE_NAME[m] << endl;
+  ost << "ERROR in is_needed_qso for " << callsign << ", " << to_string(b) << ", " << to_string(m) << endl;
 
   return false;
 }
@@ -8199,7 +8256,10 @@ bool fast_cw_bandwidth(void)
     Performs an immediate update on the screen
 */
 bool process_change_in_bandmap_column_offset(const KeySym symbol)
-{ bandmap& bm { bandmaps[current_band] };
+{ //const BAND b = current_band;
+  //const unsigned int tmp = static_cast<unsigned int>(b);
+
+  bandmap& bm { bandmaps[at_uint(current_band)] };
 
   const bool is_increment { ( (symbol == XK_KP_6) or (symbol == XK_KP_Right) ) };
 
@@ -8348,10 +8408,15 @@ void process_keypress_F1(const string_view original_contents)
       rig_ptr -> split_disable();
     }
     else
-    { bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
+    { //const BAND b = bandmap_display_band;
+      //const unsigned int tmp = static_cast<unsigned int>(b);
+
+//      bandmap_entry be { bandmaps[bandmap_display_band][original_contents] };   // K3 requires VFO IND to be set to YES
+      bandmap_entry be { bandmaps[at_uint(bandmap_display_band)][original_contents] };   // K3 requires VFO IND to be set to YES
 
       if (be.callsign().empty())          // didn't find an exact match; try a substring search
-        be = bandmaps[bandmap_display_band].substr(original_contents);
+//        be = bandmaps[bandmap_display_band].substr(original_contents);
+        be = bandmaps[at_uint(bandmap_display_band)].substr(original_contents);
 
       const BAND old_b_band { to_BAND(rig_ptr -> rig_frequency_b()) };
 
@@ -8394,7 +8459,7 @@ bool process_keypress_F2(void)
     \return   always returns <i>true</i>
 */
 bool process_keypress_F4(void)
-{ using enum WINDOW_ATTRIBUTES;
+{ //using enum WINDOW_ATTRIBUTES;
 
   if (win_bcall.defined())
   { const string tmp   { win_call.read() };
@@ -8419,7 +8484,7 @@ bool process_keypress_F4(void)
     }
 
 // put cursor in correct window
-    if (remove_peripheral_spaces <std::string> (win_exchange.read()).empty())        // go to CALL window
+    if (remove_peripheral_spaces <string> (win_exchange.read()).empty())        // go to CALL window
     { win_call.move_cursor(call_contents.find(SPACE), 0);               // first empty space
       win_call.refresh();
       set_active_window(ACTIVE_WINDOW::CALL);
@@ -8449,7 +8514,7 @@ bool process_keypress_F5(void)
 
 /// update the QTC QUEUE window
 void update_qtc_queue_window(void)
-{ win_qtc_queue < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+{ win_qtc_queue < WINDOW_CLEAR;
 
   if (qtc_buf.n_unsent_qsos())
   { const unsigned int      win_height          { static_cast<unsigned int>(win_qtc_queue.height()) };
@@ -8555,7 +8620,9 @@ void end_of_thread(const string_view name)
     If the relevant bandmap has changed, but my frequency hasn't changed since the last time that this was called, THEN DO NOTHING
 */
 void update_based_on_frequency_change(const frequency f, const MODE m)
-{ if (f == last_update_frequency)   // don't update if the frequency hasn't changed
+{ using enum WINDOW_ATTRIBUTES;
+
+  if (f == last_update_frequency)   // don't update if the frequency hasn't changed
     return;
 
   const frequency mx_f { rig_ptr -> rig_frequency() };
@@ -8627,7 +8694,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 // really need a way to say that if a pre-emptive change (; or ') has occurred since we started the routine, we should
 // abort and not display anything.
 
-      bandmap& bm { bandmaps[mbe_copy.band()] };
+      bandmap& bm { bandmaps[static_cast<unsigned int>(mbe_copy.band())] };
       safelock bm_lock(bm._bandmap_mutex);             // attempt to stop race condition with ; and '
 
       display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
@@ -8639,7 +8706,10 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
         my_bandmap_entry = mbe_copy;
       }
 
-      bandmap& displayed_bm { bandmaps[bandmap_display_band] };
+ //     const BAND b = bandmap_display_band;
+//      const unsigned int tmp = static_cast<unsigned int>(b);
+
+      bandmap& displayed_bm { bandmaps[at_uint(bandmap_display_band)] };
 
       update_bandmap_window(displayed_bm);
       display_bandmap_filter(bm);
@@ -8662,7 +8732,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
 
           if ( f_diff > (2 * context.guard_band(m)) )
           { if (!win_nearby.empty())
-              win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+              win_nearby <= WINDOW_CLEAR;
 
             if (!call_contents.empty())
             { string last_call;
@@ -8673,7 +8743,7 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
               }
 
               if ((call_contents == last_call) or (call_contents == (last_call + " DUPE"s)) )
-                win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+                win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
             }
           }
         }
@@ -8698,7 +8768,10 @@ void update_based_on_frequency_change(const frequency f, const MODE m)
     This is NOT the version of process_bandmap_function() that is used with the ";" and "'" keys.
 */
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn, const int16_t nskip)
-{ bandmap& bm { bandmaps[current_band] };
+{ //const BAND b = current_band;
+  //const unsigned int tmp = static_cast<unsigned int>(b);
+
+  bandmap& bm { bandmaps[at_uint(current_band)] };
 
   safelock bm_lock(bm._bandmap_mutex);    // hold the lock for this entire routine; this essentially forces this update to occur on-screen
 
@@ -8792,7 +8865,10 @@ bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION di
 bool process_bandmap_function(const BANDMAP_DIRECTION dirn, const int16_t nskip)
 { constexpr frequency MAX_SKEW { 95_Hz };
 
-  bandmap& bm { bandmaps[current_band] };
+  //const BAND b = current_band;
+  //const unsigned int tmp = static_cast<unsigned int>(b);
+
+  bandmap& bm { bandmaps[at_uint(current_band)] };
 
   safelock bm_lock(bm._bandmap_mutex);
 
@@ -9064,7 +9140,7 @@ void populate_win_call_history(const string_view callsign)
     for (const auto b : call_history_bands)
     { const cursor c_posn { 0, line_nr++ };
 
-      win_call_history < c_posn < pad_left(BAND_NAME[b], 3);            // low band is on bottom
+      win_call_history < c_posn < pad_left(BAND_NAME[static_cast<unsigned int>(b)], 3);            // low band is on bottom
 
       for (const auto m : call_history_modes)
       { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
@@ -9122,7 +9198,7 @@ void insert_memory(void)
 
 /// display all the memories
 void display_memories(void)
-{ win_memories < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+{ win_memories < WINDOW_CLEAR;
 
   WIN_INT_TYPE line_nr { static_cast<WIN_INT_TYPE>(win_memories.height() - 1) };
   int          number  { 0 };
@@ -9130,8 +9206,9 @@ void display_memories(void)
   for (const auto& me : memories)
   { const cursor c_posn { 0, line_nr-- };
 
-    win_memories < c_posn < to_string(number++) < SPACE_STR < (me.freq()).display_string()
-                          < pad_left(MODE_NAME[me.mode()], 5)
+    win_memories < c_posn < to_string(number++) < SPACE < (me.freq()).display_string()
+//                          < pad_left(MODE_NAME[me.mode()], 5)
+                          < pad_left(to_string(me.mode()), 5)
                           < (me.drlog_mode() == DRLOG_MODE::CQ ? "  CQ"s : "  SAP"s);
   }
 
@@ -9142,9 +9219,7 @@ void display_memories(void)
     \param  score   the score to write to the window
 */
 void update_score_window(const unsigned int score)
-{ using enum WINDOW_ATTRIBUTES;
-
-  if (scoring_enabled)
+{ if (scoring_enabled)
   { const static string RUBRIC { "Score: "s };
 
     win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < RUBRIC
@@ -9156,9 +9231,7 @@ void update_score_window(const unsigned int score)
     \param  bm  the bandmap that contains the filter information to be written
 */
 void display_bandmap_filter(bandmap& bm)                                                       ///< display the bandmap cull/filter information in win_bandmap_filter
-{ using enum WINDOW_ATTRIBUTES;
-
-  win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE;
+{ win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE;
 
   if (bm.cull_function())
     win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
@@ -9169,9 +9242,7 @@ void display_bandmap_filter(bandmap& bm)                                        
 /*! \brief  Update the SYSTEM MEMORY window
 */
 void update_system_memory(void)
-{ using enum WINDOW_ATTRIBUTES;
-
-  static procfs proc_fs;
+{ static procfs proc_fs;
 
   static const long page_size { sysconf(_SC_PAGESIZE) };
 
@@ -9197,15 +9268,14 @@ void update_system_memory(void)
 
 /// update value of <i>quick_qsy_info</i> and write it to <i>win_quick_qsy</i>
 void update_quick_qsy(void)
-{ using enum WINDOW_ATTRIBUTES;
-
-  const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
+{ const pair<frequency, MODE> quick_qsy_info { get_frequency_and_mode() };
   const auto                  [ f, m ]       { quick_qsy_info };
 
   quick_qsy_map[BAND(f)] = quick_qsy_info;
 
   win_quick_qsy < WINDOW_CLEAR < CURSOR_START_OF_LINE
-                <= pad_left(f.display_string(), 7) + SPACE + MODE_NAME[m];
+//                <= pad_left(f.display_string(), 7) + SPACE + MODE_NAME[m];
+                <= pad_left(f.display_string(), 7) + SPACE + to_string(m);
 }
 
 /// update the window containing the sizes of the bandmaps
@@ -9219,8 +9289,11 @@ void update_bandmap_size_window(void)
     for (const auto b : permitted_bands)
     { const cursor c_posn { 0, line_nr++ };
 
-      win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)                    // low band is on bottom
-                       < pad_left(bandmaps[b].count_displayed_entries_no_markers(), 5);
+//      win_bandmap_size < c_posn < pad_left(BAND_NAME[static_cast<unsigned int>(b)], 3)                    // low band is on bottom
+//                       < pad_left(bandmaps[static_cast<unsigned int>(b)].count_displayed_entries_no_markers(), 5);
+
+      win_bandmap_size < c_posn < pad_left(to_string(b), 3)                           // low band is on bottom
+                       < pad_left(bandmaps[to_uint(b)].count_displayed_entries_no_markers(), 5);
     }
 
     win_bandmap_size.refresh();
@@ -9258,7 +9331,7 @@ void do_not_show(const string_view callsign, const BAND b)
   if (b == ALL_BANDS)
     FOR_ALL(bandmaps, [&dns] (bandmap& bm) { dns(bm); });
   else                          // single band
-    dns(bandmaps[b]);
+    dns(bandmaps[static_cast<unsigned int>(b)]);
 
   calls_to_do_not_show_file(calls_from_do_not_show_file(b) + callsign, b);
 }
@@ -9355,8 +9428,9 @@ void adif3_build_old_log(void)
   try
   { const adif3_file old_adif3_log { context_path,  context.old_adif_log_name(), FLAT_STRING_SET { "BAND"s, "CALL"s, "MODE"s, "QSL_RCVD"s, "QSO_DATE"s } };    // this is not necessarily in chronological order; takes about 3--5 seconds to execute for 100,000 records
 
-    alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
-    
+//    alert("read "s + comma_separated_string(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
+    alert("read "s + css(old_adif3_log.size()) + " ADIF records from file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
+
     if (!limit_old_qsos)
       FOR_ALL(old_adif3_log, [&add_record_to_olog] (const adif3_record& rec) { add_record_to_olog(rec); });
     else                                  // limit old QSOs
@@ -9421,7 +9495,7 @@ void adif3_build_old_log(void)
   tl.end_now();
   ost << "time taken to prepare old log = " << css(tl.time_span<int>()) << " milliseconds" << endl;
 
-  win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;       // clear the MESSAGE window
+  win_message <= WINDOW_CLEAR;       // clear the MESSAGE window
 }
 
 /*! \brief          Send a single QTC entry (on CW)
@@ -9596,13 +9670,13 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
 
 // use the current time rather than relying on any timestamp in the data -- 
 // this should be roughly the same time as the timestamp we've put in the dx_post
-    new_contents += substring <std::string> (hhmmss(), 0, 5) + SPACE + post.frequency_str() + "  "s + post.poster();
+    new_contents += substring <string> (hhmmss(), 0, 5) + SPACE + post.frequency_str() + "  "s + post.poster();
   }
 
   if (static_cast<int>(new_contents.size()) < win_height)
     new_contents += win_posted_by.snapshot();
 
-  win_posted_by < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+  win_posted_by < WINDOW_CLEAR;
 
   int y { win_height - 1 };
 
@@ -9617,7 +9691,7 @@ void update_win_posted_by(const vector<dx_post>& post_vec)
     \return     the calls in the DO NOT SHOW file for band <i>b</i>
 */
 STRING_SET calls_from_do_not_show_file(const BAND b)
-{ const string filename_suffix { (b == ALL_BANDS) ? EMPTY_STR : (DASH + BAND_NAME[b]) };
+{ const string filename_suffix { (b == ALL_BANDS) ? EMPTY_STR : (DASH + BAND_NAME[static_cast<unsigned int>(b)]) };
   const string filename        { context.do_not_show_filename() + filename_suffix };
 
   STRING_SET rv;
@@ -9638,18 +9712,18 @@ STRING_SET calls_from_do_not_show_file(const BAND b)
 
     The file is written in the current directory
 */
-
 void calls_to_do_not_show_file(const STRING_SET& callsigns, const BAND b)
 { if (callsigns.empty())
     return;
 
-  const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };        // define the ordering to be callsign order
-  const string   filename_suffix { (b == ALL_BANDS) ? string { } : (DASH + BAND_NAME[b]) };
+//  const CALL_SET output_set      { SR::to<CALL_SET>(callsigns) };        // define the ordering to be callsign order
+//  const string   filename_suffix { (b == ALL_BANDS) ? string { } : (DASH + BAND_NAME[static_cast<unsigned int>(b)]) };
+  const string   filename_suffix { (b == ALL_BANDS) ? string { } : (DASH + to_string(b)) };
   const string   filename        { context.do_not_show_filename() + filename_suffix };
 
   ofstream outfile(filename);
 
-  FOR_ALL(output_set, [&outfile] (const auto& callsign) { outfile << callsign << endl; });
+  FOR_ALL(SR::to<CALL_SET>(callsigns), [&outfile] (const auto& callsign) { outfile << callsign << endl; });
 }
 
 /*! \brief          Obtain the char used to represent a leading zero in a serial number
@@ -9678,9 +9752,7 @@ char t_char(const unsigned short long_t)
 
 // temporary
 void update_bandmap_window(bandmap& bm )
-{ using enum WINDOW_ATTRIBUTES;
-
-  const int    highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
+{ const int    highlight_colour { static_cast<int>(colours.add(COLOUR_YELLOW, COLOUR_WHITE)) };             // colour that will mark that we are processing an update
   const int    original_colour  { static_cast<int>(colours.add(win_bandmap_filter.fg(), win_bandmap_filter.bg())) };
   const string win_contents     { win_bandmap_filter.read() };
   const char   first_char       { (win_contents.empty() ? SPACE : win_contents[0]) };
@@ -9821,7 +9893,7 @@ void start_recording_rbn(void)
       string this_filename { rbn_filename + DASH + to_string(counter++) };
 
       while (file_exists(this_filename))
-        this_filename = rbn_filename + DASH+ to_string(counter++);
+        this_filename = rbn_filename + DASH + to_string(counter++);
 
       rbn_file.open(this_filename, std::ofstream::app);     // open in append mode (although this should probably be changed now that we have "-n" naming)
     }

@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 290 2026-03-30 15:48:47Z  $
+// $Id: bands-modes.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,38 +29,41 @@ enum class FREQUENCY_UNIT { HZ,
                           };
 
 /// bands that drlog knows about; it would be cleaner to implement a BAND class, but the code would be a lot less efficient
-enum BAND { BAND_160 = 0,
-            BAND_80,
-            BAND_60,
-            BAND_40,
-            BAND_30,
-            BAND_20,
-            BAND_17,
-            BAND_15,
-            BAND_12,
-            BAND_10,
-            BAND_6,
-            ANY_BAND,
-            ALL_BANDS = ANY_BAND,
-            MIN_BAND = BAND_160,
-            MAX_BAND = BAND_6
-          };                        // these MUST be in order of increasing frequency
+enum class BAND { BAND_160 = 0,
+                  BAND_80,
+                  BAND_60,
+                  BAND_40,
+                  BAND_30,
+                  BAND_20,
+                  BAND_17,
+                  BAND_15,
+                  BAND_12,
+                  BAND_10,
+                  BAND_6,
+                  ANY_BAND,
+                  ALL_BANDS = ANY_BAND,
+                  MIN_BAND = BAND_160,
+                  MAX_BAND = BAND_6
+                };                        // these MUST be in order of increasing frequency
 
-constexpr unsigned int NUMBER_OF_BANDS { MAX_BAND + 1 };                          ///< how many bands does drlog know about?
-constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                       ///< how many bands does drlog know about?
+using enum BAND;  // save typing and confusing naming wherever BAND is used
 
-static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
-                                                                    "80"s,
-                                                                    "60"s,
-                                                                    "40"s,
-                                                                    "30"s,
-                                                                    "20"s,
-                                                                    "17"s,
-                                                                    "15"s,
-                                                                    "12"s,
-                                                                    "10"s,
-                                                                    "6"s
-                                                                 } };         ///< names of bands
+constexpr unsigned int NUMBER_OF_BANDS { to_uint(MAX_BAND) + 1 };           ///< how many bands does drlog know about?
+constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                 ///< how many bands does drlog know about?
+
+// make this a const flat map?
+static const std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { "160"s,
+                                                                  "80"s,
+                                                                  "60"s,
+                                                                  "40"s,
+                                                                  "30"s,
+                                                                  "20"s,
+                                                                  "17"s,
+                                                                  "15"s,
+                                                                  "12"s,
+                                                                  "10"s,
+                                                                  "6"s
+                                                                };         ///< names of bands
 
 static FLAT_STRING_MAP<BAND> BAND_FROM_NAME { { "160"s, BAND_160 },       // [] is used, so not const
                                               { "80"s,  BAND_80 },
@@ -88,24 +91,41 @@ static FLAT_STRING_MAP<BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },      
                                                     { "6m"s,   BAND_6 }
                                                   };                    ///< map an ADIF3 band to a band
 
+// convert from BAND to string
+inline std::string to_string(const BAND b)
+  { return BAND_NAME.at(to_uint(b)); }
+
+/// ostream << BAND
+inline std::ostream& operator<<(std::ostream& ost, const BAND b)
+  { return (ost << to_string(b)); }
+
+//inline std::string_view to_string_view(const BAND b)
+//  { return std::string_view { BAND_NAME.at(b) }; }    // does this work?
+
 /// modes that drlog knows about
-enum MODE { MODE_CW = 0,
+enum  class  MODE { MODE_CW = 0,
             MODE_SSB,
             MODE_RTTY,
             ANY_MODE,
+            ALL_MODES = ANY_MODE,
             MIN_MODE = MODE_CW,
             MAX_MODE = ANY_MODE - 1
           };
 
-constexpr unsigned int NUMBER_OF_MODES { MAX_MODE + 1 };        ///< how many modes does drlog know about?
-constexpr unsigned int N_MODES         { NUMBER_OF_MODES };     ///< how many modes does drlog know about?
-constexpr unsigned int ALL_MODES       { N_MODES };             ///< indicator used to mean "all modes"
+using enum MODE;  // save typing and confusing naming wherever MODE is used
+
+constexpr unsigned int NUMBER_OF_MODES { to_uint(MAX_MODE) + 1 };       ///< how many modes does drlog know about?
+constexpr unsigned int N_MODES         { NUMBER_OF_MODES };             ///< how many modes does drlog know about?
+//constexpr unsigned int ALL_MODES       { N_MODES };                     ///< indicator used to mean "all modes"
 
 /// mode names
 static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
                                                                     "SSB"s,
                                                                     "RTTY"s
                                                                   };
+
+inline std::string to_string(const MODE m)
+  { return MODE_NAME.at(to_uint(m)); }
 
 /// generate the mode from a name
 static const FLAT_STRING_MAP<MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },

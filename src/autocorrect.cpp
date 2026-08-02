@@ -1,4 +1,4 @@
-// $Id: autocorrect.cpp 295 2026-05-17 12:40:09Z  $
+// $Id: autocorrect.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -82,7 +82,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 //   T in front of a US K call
 //   T in front of a US N call
   if (absent and (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv)))
-  { if (const string call_to_test { substring <string> (str, 1) }; contains(call_to_test))
+  { if (const string_view call_to_test { substring <string_view> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
@@ -204,7 +204,7 @@ string autocorrect_database::corrected_call(const string_view str) const
   { if (absent and str.ends_with(bust_HQ))
     { const string base_call_to_test { substring <string> (str, 0, str.length() - bust_HQ.length()) + "HQ"sv };
 
-      if (contains(base_call_to_test))
+      if (contains(base_call_to_test))    // if xxxxHQ is present and xxxx<bust> is not
         return insert(str, base_call_to_test);
     }
   }
@@ -330,7 +330,6 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
     int    highest_n;
 
     tie(best_match, highest_n) = *(hits.begin());
-//    auto [ best_match, highest_n ] { *(hits.begin()) };   // this makes the new values const; presumably because the key is const
 
     for (auto it { next(hits.begin()) }; it != hits.end(); ++it)
     { const auto& [ possible_best_match, possible_highest_n ] { *it };
@@ -455,7 +454,7 @@ string dynamic_autocorrect_database::to_string(void) const
   const set<BAND> bands { _known_bands() };
 
   for (const BAND b : bands)
-  { rv += "band: "s + BAND_NAME.at(b) + 'm' + EOL;
+  { rv += "band: "s + ::to_string(b) + 'm' + EOL;
     rv += _per_band_db.at(b).to_string(N_SPACES) + EOL;    // the "N_SPACES" means to prepend each line with N_SPACES spaces
   }
 

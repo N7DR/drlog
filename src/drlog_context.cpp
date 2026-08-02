@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 296 2026-06-01 07:01:30Z  $
+// $Id: drlog_context.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,7 +68,7 @@ void drlog_context::_set_points(const string_view command, const MODE m)
 { if (command.empty())
     return;
 
-  const vector<string_view> str_vec { split_string <std::string_view> (command, '=') };
+  const vector<string_view> str_vec { split_string <string_view> (command, EQUALS) };
 
   if (str_vec.size() != 2)
   { ost << "Invalid command in _set_points(): " << command << endl;
@@ -77,25 +77,26 @@ void drlog_context::_set_points(const string_view command, const MODE m)
     exit(0);
   }
 
-  const string RHS { to_upper(remove_peripheral_spaces <std::string_view> (str_vec[1])) };
+  const string RHS { to_upper(remove_peripheral_spaces <string_view> (str_vec[1])) };
 
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
 
 //    if (auto& pbb { _per_band_points[m] }; !contains(lhs, '[') or contains(lhs, "[*]"s))            // for all bands
-    if (auto& pbb { _per_band_points[m] }; (!lhs.contains('[') or lhs.contains("[*]"s)))            // for all bands
+//    if (auto& pbb { _per_band_points[m] }; (!lhs.contains('[') or lhs.contains("[*]"s)))            // for all bands
+    if (auto& pbb { _per_band_points[to_uint(m)] }; (!lhs.contains(LEFT_SQUARE_BRACKET) or lhs.contains("[*]"sv)))            // for all bands
     { for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
         pbb += { static_cast<BAND>(n), RHS };
     }
     else                                                        // not all bands
-    { const size_t left_bracket_posn  { lhs.find('[') };
-      const size_t right_bracket_posn { lhs.find(']') };
+    { const size_t left_bracket_posn  { lhs.find(LEFT_SQUARE_BRACKET) };
+      const size_t right_bracket_posn { lhs.find(RIGHT_SQUARE_BRACKET) };
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { const string_view bands_str { delimited_substring <std::string_view> (lhs, '[', ']', DELIMITERS::DROP) };
+      { const string_view bands_str { delimited_substring <string_view> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
 
-        FOR_ALL(clean_split_string <std::string> (bands_str), [&pbb, &RHS] (const auto& b_str) { pbb += { BAND_FROM_NAME[b_str ], RHS }; } );   // keep string
+        FOR_ALL(clean_split_string <string> (bands_str), [&pbb, &RHS] (const auto& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );   // keep string
       }
     }
   }
@@ -329,7 +330,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _best_dx_unit = RHS;
 
 // BLOCKED POSTS
-    if (LHS == "BLOCKED POSTS"sv)
+    if ( (LHS == "BLOCKED POSTS"sv) or (LHS == "BLOCK POSTS"sv) )
       _blocked_posts = SR::to<FLAT_STRING_SET>(clean_split_string <string> (RHS, COMMA));
 
 // CABRILLO FILENAME
@@ -339,7 +340,14 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"sv)
       FOR_ALL(clean_split_string <string> (rhs), [this] (const string& band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; });
-//      FOR_ALL(clean_split_string <string_view> (rhs), [this] (const string_view band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; }); // [] not yet supported
+//      FOR_ALL(clean_split_string <string_view> (rhs), [this] (const string_view band_str) { _call_history_bands += BAND_FROM_NAME[band_str]; }); // [] not yet supported; not sure why this still doesn't work
+
+// I think that this is a bug in gcc
+
+//    { const string_view sv = "160"sv;
+//
+//      const BAND b = BAND_FROM_NAME[sv];
+//    }
 
 // CALL OK NOW MESSAGE
     if (LHS == "CALL OK NOW MESSAGE"sv)
@@ -407,7 +415,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
         const string lhs { str_vec[0] };
 
-        if (!lhs.contains('[') or lhs.contains("[*]"sv))             // for all bands
+//        if (!lhs.contains('[') or lhs.contains("[*]"sv))             // for all bands
+        if (!lhs.contains(LEFT_SQUARE_BRACKET) or lhs.contains("[*]"sv))             // for all bands
         { string new_str;
 
           for (unsigned int n { 1 }; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -423,7 +432,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
             _per_band_country_mult_factor += { static_cast<BAND>(n), from_string<int>(tmp_str) };
         }
         else    // not all bands
-        { const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
+        { //const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
+          const string bands_str { delimited_substring <std::string> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
 
           for (const auto& b_str: clean_split_string <string> (bands_str))
           { string new_str;
@@ -461,9 +471,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // CUSTOM GROUP
 // CUSTOM GROUP = NAME : ENTRY1, ENTRY2, ... ENTRYN
     if (LHS == "CUSTOM GROUP"sv)
-    { //const vector<string> tokens { clean_split_string <string> (RHS, COLON) };
-
-      if (const vector<string> tokens { clean_split_string <string> (RHS, COLON) }; tokens.size() == 2)
+    { if (const vector<string> tokens { clean_split_string <string> (RHS, COLON) }; tokens.size() == 2)
         _custom_groups[tokens[0]] = SR::to<STRING_SET> (clean_split_string <string> (tokens[1], COMMA) );
     }
 

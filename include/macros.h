@@ -1,4 +1,4 @@
-// $Id: macros.h 298 2026-07-12 20:04:25Z  $
+// $Id: macros.h 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -265,6 +265,9 @@ template <class T> concept ANYSET = is_anyset<T>;
 
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
+template <class T> concept has_to_string = requires(T a)
+  { { to_string(a) } -> std::same_as<std::string>; };
+
 // chrono durations
 // https://www.reddit.com/r/cpp_questions/comments/mqx6jo/c_constraints_testing_for_stdchronoduration/
 
@@ -327,9 +330,43 @@ using CUSTOM_STRING_SET = std::set<std::string, Comparison>;
 // heterogenous lookup for flat sets of strings
 using FLAT_STRING_SET = std::flat_set<std::string, std::less<>>;
 
-// heterogenous lookup for flat maps with string keys
+// heterogenous lookup for flat maps with string keys -- I think that this is buggy in gcc; calling with a string_view key causes a compilation error; see drlog_context.cpp
 template <typename ValueType>
 using FLAT_STRING_MAP = std::flat_map<std::string, ValueType, std::less<>>;
+
+// access atomics, returned as designated types
+template <typename T, typename U>
+inline auto at_val(const std::atomic<U>& atv) -> T   // must use reference because atomics have no copy constructor
+  { return static_cast<T>(atv.load()); };
+
+template <typename U>
+inline int at_int(const std::atomic<U>& atv)
+  { return at_val <int> (atv); };
+
+template <typename U>
+inline unsigned int at_uint(const std::atomic<U>& atv)
+  { return at_val <unsigned int> (atv); };
+
+// access enums, returned as designated types
+template <typename T>
+  requires (std::is_enum_v<T>)
+inline constexpr int to_int(const T b)
+  { return static_cast<int>(b); }
+
+template <typename T>
+  requires (std::is_enum_v<T>)
+inline constexpr int to_uint(const T b)
+  { return static_cast<unsigned int>(b); }
+
+template <typename T>
+  requires (std::is_enum_v<T>) and (has_to_string<T>)
+inline std::ostream& operator<<(std::ostream& ost, const T v)
+  { return (ost << to_string(v)); }
+
+template <typename T>
+  requires (std::is_enum_v<T>) and (!has_to_string<T>)
+inline std::ostream& operator<<(std::ostream& ost, const T v)
+  { return (ost << to_int(v)); }
 
 // ---------------------------------------------------------------------------
 

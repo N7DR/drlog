@@ -102,11 +102,8 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
-
-      ar & _choices;
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+    { ar & _choices;
     }
 };
 
@@ -211,8 +208,8 @@ template<typename STYPE>
   auto all_values(void) const -> STYPE
   { STYPE rv;
 
-    for (const auto& [ cp, equivalent_values ] : _values)
-      COPY_ALL(equivalent_values, inserter(rv, rv.begin()));
+    for (const auto& [ _, equivalent_values ] : _values)
+      rv += equivalent_values;
 
     return rv;
   }
@@ -243,17 +240,13 @@ template<typename STYPE>
     \param  putative_value  value to test
     \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-//  bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const;
   inline bool is_legal_value(const std::string_view cv, const std::string_view putative_value) const
     { return ( is_legal_canonical_value(cv) ? _values.at(cv).contains(putative_value) : false );  }
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
-
-      ar & _name
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+    { ar & _name
          & _values;
     }
 };
@@ -308,7 +301,7 @@ public:
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices
 */
- std::vector<exchange_field> expand(void) const;
+  std::vector<exchange_field> expand(void) const;
 
 /// exchange_field < exchange_field
   inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to be valid
@@ -319,11 +312,8 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
-
-      ar & _name
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+    { ar & _name
          & _is_mult
          & _is_optional
          & _choice;
@@ -364,11 +354,8 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-  { unsigned int v { version };   // dummy; for now, version isn't used
-    v = v + 0;
-
-    ar & _continent_points
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+  { ar & _continent_points
        & _country_points
        & _default_points
        & _points_type;
@@ -448,6 +435,7 @@ protected:
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
   std::set<BAND>                               _original_score_bands;   ///< bands that were originally used to calculate score (from the configuration file)
+//  std::flat_set<BAND>                          _original_score_bands;   ///< bands that were originally used to calculate score (from the configuration file)
 
   std::set<MODE>                               _score_modes;            ///< modes currently used to calculate score
   std::set<MODE>                               _original_score_modes;   ///< modes that were originally used to calculate score (from the configuration file)
@@ -654,7 +642,7 @@ public:
 /// Restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)
     { SAFELOCK(rules);
-      _score_bands = _original_score_bands;
+      _score_bands = SR::to<std::set>(_original_score_bands);
     }
 
 /// Restore the original set of modes to be scored (from the configuration file)
@@ -816,7 +804,7 @@ public:
 
 /// get the permitted bands as a set
   inline std::set<BAND> permitted_bands_set(void) const
-    { return std::ranges::to<std::set<BAND>> ( _permitted_bands ); }
+    { return SR::to<std::set<BAND>> ( _permitted_bands ); }
 
 /*! \brief                      Is a particular field used for QSOs with a particular country?
     \param  field_name          name of exchange field to test
@@ -837,11 +825,8 @@ public:
 
 /// read from and write to disk
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
-
-      SAFELOCK(rules);
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+    { SAFELOCK(rules);
 
       ar & _bonus_countries
          & _callsign_mults

@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 298 2026-07-12 20:04:25Z  $
+// $Id: exchange.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,11 +46,8 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
     \param  prefill_filename_map    map of fields to filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string /* filename */>& prefill_filename_map)
-{ //for (const auto& this_pair : prefill_filename_map)
-  for (const auto& [ field_name, fn ] : prefill_filename_map)
-  { //const string& field_name { this_pair.first };
-//    string_view   filename   { truncate_before_first <std::string_view> (this_pair.second, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
-    const string_view filename { truncate_before_first <std::string_view> (fn, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
+{ for (const auto& [ field_name, fn ] : prefill_filename_map)
+  { const string_view filename { truncate_before_first <string_view> (fn, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
 
     try
     { UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
@@ -59,10 +56,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
-//      if (this_pair.second.contains(COLON))
       if (fn.contains(COLON))
-      { //const vector<string_view> fields { split_string <std::string_view> (this_pair.second, COLON) };
-        const vector<string_view> fields { split_string <std::string_view> (fn, COLON) };
+      { const vector<string_view> fields { split_string <string_view> (fn, COLON) };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
@@ -73,10 +68,9 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
         field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
       }
 
-      const vector<string> lines { to_lines <std::string> ( to_upper( squash( replace( remove_char(read_file(filename), CR), TAB, SPACE) ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
-
-      for (const auto& line : lines)                                // each line should now be space-separated columns
-        if (const vector<string> this_pair { split_string <std::string> (line, SPACE) }; this_pair.size() > max(call_column, field_column))
+// read, remove CRs, tabs to spaces, squash, to lines; each line is then space-separated columns
+      for (const string& line : to_lines <string> ( to_upper( squash( replace( remove_char(read_file(filename), CR), TAB, SPACE) ) ) ))
+        if ( const vector<string> this_pair { split_string <string> (line, SPACE) }; (this_pair.size() > max(call_column, field_column)) )
           call_value_map += { this_pair.at(call_column), this_pair.at(field_column) };
 
       _db += { to_upper(field_name), call_value_map };
@@ -175,7 +169,6 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-//bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
 { if (!contains_digit(str))
     return false;
@@ -191,7 +184,7 @@ bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
   if (rv)
   { const char lchar { last_char(str) };
 
-    rv = isdigit(lchar) or legal_prec.contains(lchar);
+    rv = (isdigit(lchar) or legal_prec.contains(lchar));
   }
 
   return rv;
@@ -469,7 +462,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, STRING_SET>& t) cons
   ost << "  { ";
 
   for (const auto& s : ss)
-    ost << s << " ";
+    ost << s << SPACE;
 
   ost << "}" << endl;
 }
@@ -559,7 +552,6 @@ _replacement_call(),
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
   { copy_received_values.clear();
-    //ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !contains(str, '.'); } );
     ranges::copy_if(received_values, back_inserter(copy_received_values), [] (const string& str) { return !str.contains(DOT); } );
   }
 
@@ -781,23 +773,14 @@ string parsed_exchange::resolve_choice(const string_view field_name, const strin
   if (!field_name.contains(PLUS))   // if not a CHOICE
     return string { field_name };
 
-  const vector<string_view> choices_vec        { split_string <std::string_view> (field_name, PLUS) };
+  const vector<string_view> choices_vec        { split_string <string_view> (field_name, PLUS) };
   const STRING_MAP<EFT>     exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded; key = field name
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
-  { //try
-    { //if (exchange_field_eft.at(choice).is_legal_value(received_value))   // heterogeneous lookup doesn't support at()!!!
-      //  return choice;
-
-      if (const auto opt { OPT_MUM_VALUE(exchange_field_eft, choice) }; opt)
-      { if (opt.value().is_legal_value(received_value))
-          return string { choice };
-      }
+  { if (const auto opt { OPT_MUM_VALUE(exchange_field_eft, choice) }; opt)
+    { if (opt.value().is_legal_value(received_value))
+        return string { choice };
     }
-
-    //catch (...)
-    //{ ost << "Cannot find EFT for choice: " << choice << endl;
-    //}
   }
 
   return string { };
@@ -861,7 +844,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 
 // if it's a QTHX, then don't go any further if the country doesn't match
   if ( field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv) )
-  { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
+  { const string canonical_prefix { delimited_substring <std::string> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db += { { string { callsign }, string { field_name } }, EMPTY_STR };                     // so that it can be found immediately in future
@@ -989,7 +972,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   if (field_name == "GRID"sv)
   { const string grid_value { drm_line.grid() };
 
-    return insert_value( (grid_value.length() > 4) ? substring <std::string> (grid_value, 0, 4) : grid_value );
+    return insert_value( (grid_value.length() > 4) ? substring <string> (grid_value, 0, 4) : grid_value );
   }
 
   if (field_name == "HADXC"sv)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
@@ -1082,13 +1065,11 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
-  static const STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
+  static const FLAT_STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
 
   if ( (field_name == "JAPREF"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth());
 
-//  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
-//  if ( (field_name == "KCJ"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
   if ( (field_name == "KCJ"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth2());    // I think that this should work
 
@@ -1099,7 +1080,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
+  { const string_view canonical_prefix { delimited_substring <string_view> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "QTHX: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
@@ -1110,7 +1091,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
-  { static const STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
+  { static const FLAT_STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
 
@@ -1193,12 +1174,13 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   { const string contents { read_file(path, filename) };
 
     if (!contents.empty())
-    { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR))) };        // in case it's a silly Microsoft-format file
+    { const vector<string> lines { to_lines <string> (to_upper(remove_char(contents, CR))) };        // in case it's a silly Microsoft-format file
 
       for (int n { 0 }; n < ssize(lines); ++n)
       { const string line { squash(replace(lines[n], TAB, SPACE), SPACE) };
 
-        if (const vector<string> tokens { clean_split_string <string> (line, SPACE) }; tokens.size() == 2)
+//        if (const vector<string> tokens { clean_split_string <string> (line, SPACE) }; tokens.size() == 2)
+        if (const vector<string_view> tokens { clean_split_string <string_view> (line, SPACE) }; tokens.size() == 2)
         { if ( (n == 0) and (tokens[0] == "CALL"sv) )   // possibly ignore this line
             continue;
 

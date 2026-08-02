@@ -51,6 +51,7 @@ enum class RESPONSE { EXPECTED,
                       NOT_EXPECTED
                     };
 
+#if 0
 /// rig capabilities
 enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievably, hamlib doesn't have standard naming; it calls this "Main" on some rigs
                             VFO_B,              ///< has VFO B    // unbelievably, hamlib doesn't have standard naming; it calls this "Sub" on some rigs
@@ -67,6 +68,26 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
                             AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
                             AUDIO_BW,           ///< audio bandwidth can be controlled
                             AUDIO_CENTRE,       ///< centre frequency of audio can be controlled
+                            BANDSCOPE           ///< has a controllable band scope
+                          };
+#endif
+
+/// rig capabilities
+enum class RIG_CAPABILITY { AUDIO_BW = 0,       ///< audio bandwidth can be controlled
+                            AUDIO_CENTRE,       ///< centre frequency of audio can be controlled
+                            VFO_A,              ///< has VFO A    // unbelievably, hamlib doesn't have standard naming; it calls this "Main" on some rigs
+                            VFO_B,              ///< has VFO B    // unbelievably, hamlib doesn't have standard naming; it calls this "Sub" on some rigs
+                            RIT,                ///< has RIT
+                            XIT,                ///< has XIT
+                            EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
+                            SPLIT,              ///< can split; TX is VFO B; RX is VFO A
+                            REVERSE_SPLIT,      ///< can split; TX is VFO A; RX is VFO B
+                            LOCK_A,             ///< VFO A can be locked
+                            LOCK_B,             ///< VFO B can be locked
+                            SUB_RX,             ///< has a sub-receiver
+                            TEST,               ///< has a TEST mode that inhibits transmission
+                            RX_ANT,             ///< has a receive antenna
+                            AUTO_NOTCH,         ///< has an automatic notch filter (for SSB)
                             BANDSCOPE           ///< has a controllable band scope
                           };
 
@@ -95,7 +116,6 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
     Reflection seems therefore to join the growing list of recently-added C++ features that sound great at first blush, but in the end turn out to
     be troublesome to the point of being not worth the effort except in a small percentage of cases where one would naively have expected
     them to be useful.
-
 */
 
 using DRLOG_CLOCK = std::chrono::system_clock;
@@ -173,7 +193,7 @@ public:
     { FOR_ALL(s, [this] (const RIG_CAPABILITY rc) { set(rc); }); }
 
 /*  I don't believe that there's any way to replace the following macro with reflection in C++ 26.
-    I'd be happy to be proved wrong.
+    I'd be happy to be proven wrong.
 */
 #define FNS(y)  \
   inline bool y(void) const \
@@ -185,6 +205,8 @@ public:
   inline void y##_clear(void) \
     { _caps = _caps ^ (static_cast<INT_TYPE>(1) << static_cast<INT_TYPE>(RIG_CAPABILITY::y)); }   // ^ is bitwise XOR
 
+    FNS(AUDIO_BW);
+    FNS(AUDIO_CENTRE);
     FNS(VFO_A);
     FNS(VFO_B);
     FNS(RIT);
@@ -198,8 +220,6 @@ public:
     FNS(TEST);
     FNS(RX_ANT);
     FNS(AUTO_NOTCH);
-    FNS(AUDIO_BW);
-    FNS(AUDIO_CENTRE);
     FNS(BANDSCOPE);
 
 #undef FNS
@@ -1373,7 +1393,7 @@ public:
 */
   bool notch_enabled(const std::string_view ds_result = std::string { }) const;
 
-/*! \brief              Toggle the notch status
+/*! \brief  Toggle the notch status
 */
   void toggle_notch_status(void) const;
 
@@ -1382,10 +1402,11 @@ public:
 */
   void k3_command_mode(const K3_COMMAND_MODE cm);
 
-/*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
-    \return     the K3 command mode
+/*! \brief    Get the K3 command mode (either NORMAL or EXTENDED)
+    \return   the K3 command mode
 */
-  K3_COMMAND_MODE k3_command_mode(void) const;
+  inline K3_COMMAND_MODE k3_command_mode(void) const
+    { return ( (raw_command("K3;"sv, RESPONSE::EXPECTED) == "K31"sv) ? K3_COMMAND_MODE::EXTENDED : K3_COMMAND_MODE::NORMAL ); }
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold

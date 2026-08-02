@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 295 2026-05-17 12:40:09Z  $
+// $Id: rig_interface.cpp 299 2026-07-26 20:18:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,7 +65,8 @@ string polled_status::to_string(void) const
   rv += "  RX ant IS " + (_rx_ant ? ""s : "NOT "s) + "in USE" + EOL;
 
   rv += "  mode_str: " + _mode_str + EOL;
-  rv += "  mode name: " + MODE_NAME[_m] + EOL;
+//  rv += "  mode name: " + MODE_NAME[_m] + EOL;
+  rv += "  mode name: " + ::to_string(_m) + EOL;
 
   rv += "  notch IS " + (_notch ? ""s : "NOT "s) + "enabled" + EOL;
 
@@ -1854,7 +1855,8 @@ void elecraft_k3_interface::rig_mode(const MODE m)
     }
 
     if (counter > MAX_ATTEMPTS)
-      _error_alert("Error setting mode: commanded mode = "s + MODE_NAME[m] + "; but rig is in mode: " + MODE_NAME[last_tested_mode]);
+//      _error_alert("Error setting mode: commanded mode = "s + MODE_NAME[m] + "; but rig is in mode: " + MODE_NAME[last_tested_mode]);
+      _error_alert("Error setting mode: commanded mode = "s + ::to_string(m) + "; but rig is in mode: " + ::to_string(last_tested_mode));
   }
 }
 
@@ -1978,7 +1980,7 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
       else                                              // not a P3 screenshot; keep reading until we receive at least one ";"
       { static int rig_communication_failures { 0 };
 
-        while (!completed and (counter < MAX_ATTEMPTS) )
+        while (!completed and (counter < MAX_ATTEMPTS))
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
@@ -2334,8 +2336,6 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
-
-    Works only with K3
 */
 bool elecraft_k3_interface::rx_ant(void) const
 { if (_rig_connected)
@@ -2364,8 +2364,6 @@ bool elecraft_k3_interface::rx_ant(void) const
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
-
-    Works only with K3
 */
 void elecraft_k3_interface::rx_ant(const bool torf) const
 { if (_rig_connected)
@@ -2379,10 +2377,11 @@ void elecraft_k3_interface::rx_ant(const bool torf) const
     \param  ds_result   previously-obtained result of a DS command, or empty string
     \return             whether notch is currently enabled
 
-    Works only with K3
+    See section K3 Programmer's Reference, § "DS (VFO A and Basic Icon Read; GET only)"
 */
 bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
-{ constexpr char K3_NOTCH_BIT { 0b00000010 };
+{ constexpr char K3_NOTCH_BIT       { 0b00000010 };
+  constexpr int  K3_ICON_FLASH_DATA { 11 };
 
   if (!_rig_connected)
     return false;
@@ -2397,7 +2396,7 @@ bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
     return false;
   }
   else
-  { const char c         { result[11] };              // icon flash data
+  { const char c         { result[K3_ICON_FLASH_DATA] };              // get the char representing the icon flash data
     const bool notch_bit { (c bitand K3_NOTCH_BIT) == K3_NOTCH_BIT };
 
     return notch_bit;
@@ -2405,11 +2404,9 @@ bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
 }
 
 /*! \brief  Toggle the notch status
-
-    Works only with K3
 */
 void elecraft_k3_interface::toggle_notch_status(void) const
-{ if (AUTO_NOTCH())
+{ if (AUTO_NOTCH())                   // should always be true
     k3_press(K3_BUTTON_TAP::NOTCH);
   else
     ost << "Attempt to control notch status on rig without AUTO_NOTCH capability" << endl;
@@ -2417,8 +2414,6 @@ void elecraft_k3_interface::toggle_notch_status(void) const
 
 /*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
     \param  cm  command mode
-
-    Works only with K3
 */
 void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 { switch (cm)
@@ -2435,12 +2430,14 @@ void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 /*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
     \return     the K3 command mode
 */
+#if 0
 K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
 { if (const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) }; result == "K31"sv)
     return K3_COMMAND_MODE::EXTENDED;
 
   return K3_COMMAND_MODE::NORMAL;
 }
+#endif
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
@@ -2461,9 +2458,9 @@ void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD
     this is CURRENTLY UNUSED
 */
 void elecraft_k3_interface::k3_double_tap(const K3_BUTTON_TAP button) const
-{ SAFELOCK(_rig);
+{ constexpr duration K3_TIME_BETWEEN_TAPS { 50ms };
 
-  constexpr duration K3_TIME_BETWEEN_TAPS { 50ms };
+  SAFELOCK(_rig);
 
   k3_press(button);
   sleep_for(K3_TIME_BETWEEN_TAPS);
