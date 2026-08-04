@@ -591,7 +591,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       else                              // ordinary points structure
       {
 // remove commas inside the delimiters, because commas separate the point triplets
-        context_points = remove_char_from_delimited_substrings(context_points, COMMA, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
+//        context_points = remove_char_from_delimited_substrings(context_points, COMMA, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET);
+        context_points = remove_char_from_delimited_substrings(context_points, COMMA, SQUARE_BRACKETS);
 
         for (const string& points_str : clean_split_string <string> (context_points))
         { const vector<string> fields { split_string <string> (points_str, COLON) };
@@ -611,14 +612,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // country
               if (!processed and !fields[1].empty())
               { if (fields[1].contains(LEFT_SQUARE_BRACKET))    // possible multiple countries
-                { const string countries { delimited_substring <string> (fields[1], LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
+                { const string countries { delimited_substring <string> (fields[1], SQUARE_BRACKETS, DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
-                  { //const vector<string> country_vec { clean_split_string <string> (remove_peripheral_spaces <string> (squash(countries)), SPACE) };  // use space instead of comma because we've already split on commas
+                  { //const vector<string> country_vec { words <string> (countries) };  // use space instead of comma because we've already split on commas
 
-                    const vector<string> country_vec { words <string> (countries) };  // use space instead of comma because we've already split on co
-
-                    FOR_ALL(country_vec, [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) 
+                    FOR_ALL(words <string> (countries), [f2 = from_string<unsigned int>(fields[2]), &country_points_this_band, &location_db] (const string& country) // use space instead of comma because we've already split on commas
                              { country_points_this_band += { location_db.canonical_prefix(country), f2 }; } );
                   }
                 }
@@ -640,10 +639,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // [field-name-condition]:points // [IOTA != ------]:15 ... not yet supported
 // [field-name]:points
           if (fields.size() == 2)
-          { //const string& f0                     { fields[0] };
-//            const string  inside_square_brackets { delimited_substring <string> (f0, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
-//            const string inside_square_brackets { delimited_substring <string> (fields[0], SQUARE_BRACKETS, DELIMITERS::DROP) };
-            const string_view inside_square_brackets { delimited_substring <string_view> (fields[0], SQUARE_BRACKETS, DELIMITERS::DROP) };
+          { const string_view inside_square_brackets { delimited_substring <string_view> (fields[0], SQUARE_BRACKETS, DELIMITERS::DROP) };
 
             if (!inside_square_brackets.empty())
             { const STRING_SET all_exchange_field_names { exchange_field_names() };
@@ -675,7 +671,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
   for (const auto& ef : leaves_set)               // make unique (and put into callsign order)
-  { static const STRING_SET no_canonical_values { "RS"s, "RST"s, "SERNO"s };    // some field values don't have canonical values
+  { static const FLAT_STRING_SET no_canonical_values { "RS"s, "RST"s, "SERNO"s };    // some field values don't have canonical values
 
     const string& field_name { ef.name() };
 
@@ -723,11 +719,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       }
 
 // processed all lines
-      _exch_values += { field_name, map_canonical_to_all };         // pair<string, map<string, set<string> > >
+      _exch_values += { field_name, map_canonical_to_all };                 // pair<string, map<string, set<string> > >
     }
     else
     { if (NONE_OF(_exch_values, [&field_name] (const auto& ev) { return (ev.name() == field_name); }))
-        _exch_values += { field_name, STRING_MAP<STRING_SET> { } };  // pair<string, map<string, set<string> > >
+        _exch_values += { field_name, STRING_MAP<STRING_SET> { } };         // pair<string, map<string, set<string> > >
     }
   }
 

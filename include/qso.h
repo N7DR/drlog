@@ -16,6 +16,7 @@
     Classes and functions related to QSO information
 */
 
+#include "bands-modes.h"
 #include "drlog_context.h"
 #include "macros.h"
 #include "rules.h"
@@ -97,9 +98,9 @@ public:
 
 
 template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version }; /* dummy; for now, version isn't used */
-      v = v + 0;
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+    { //unsigned int v { version }; /* dummy; for now, version isn't used */
+      //v = v + 0;
 
       ar & std::get<0>(*this)
          & std::get<1>(*this)
@@ -129,7 +130,7 @@ class QSO
 {
 protected:
   
-  enum BAND                                         _band;                          ///< band
+  BAND                                              _band;                          ///< band
   std::string                                       _callsign;                      ///< call
   std::string                                       _canonical_prefix;              ///< canonical prefix of country; NOT automatically set when callsign is set
   std::string                                       _comment;                       ///< comment to be carried with QSO (unused)
@@ -142,7 +143,7 @@ protected:
   bool                                              _is_dupe         { false };     ///< is this QSO a dupe?
   bool                                              _is_prefix_mult  { false };     ///< is this QSO a prefix mult?
   std::vector<std::string>                          _log_line_fields;               ///< separate fields from the log line
-  enum MODE                                         _mode;                          ///< mode
+  MODE                                              _mode;                          ///< mode
   std::string                                       _my_call;                       ///< my call
   unsigned int                                      _number;                        ///< qso number
   unsigned int                                      _points          { 1 };         ///< points for this QSO (unused)
@@ -275,8 +276,9 @@ public:
     
 /// return a single date-and-time string
   inline std::string date_and_time(void) const
-    { return (_date + "T"s + _utc); }
-    
+//    { return (_date + "T"s + _utc); }
+    { return (_date + 'T' + _utc); }
+
 /// is this QSO earlier than another one? 
   inline bool earlier_than(const QSO& qso) const
     { return (_epoch_time < qso.epoch_time()); }
@@ -392,9 +394,9 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+    { //unsigned int v { version };   // dummy; for now, version isn't used
+      //v = v + 0;
 
       ar & _band
          & _callsign

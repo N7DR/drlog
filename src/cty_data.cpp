@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+extern const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 //constinit const FLAT_STRING_SET CONTINENT_SET { "AF"s, "AN"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s };  ///< abbreviations for continents;
 
 constexpr unsigned int   CTY_FIELDS_PER_RECORD { 9 };                                                           ///< Number of fields in a single CTY record
@@ -104,7 +104,8 @@ cty_record::cty_record(const string_view record)
 // map prefixes if they collide with a continent
   static const STRING_MAP<string> map_prefix { { "EU"s, "EW"s } };
 
-  const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
+//  const vector<string> fields { remove_peripheral_spaces <std::string> (split_string <std::string> ( remove_chars(record, CRLF), ':' )) };   // split the record into fields instead of lines
+  const vector<string> fields { remove_peripheral_spaces <string> (split_string <string> ( remove_chars(record, CRLF), COLON )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
   { ost << " Error constructing cty_record; record = " << remove_chars(record, CRLF) << endl
@@ -158,8 +159,9 @@ cty_record::cty_record(const string_view record)
   if (_prefix == "*"s)
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is '*' in record for "s + _country_name);
 
-  _waedc_country_only = (_prefix[0] == '*');    // is this only on the WAEDC list?
-  
+//  _waedc_country_only = (_prefix[0] == '*');    // is this only on the WAEDC list?
+  _waedc_country_only = (_prefix[0] == ASTERISK);    // is this only on the WAEDC list?
+
   if (_waedc_country_only)
     _prefix = _prefix.substr(1);        // remove the asterisk
    
@@ -167,7 +169,6 @@ cty_record::cty_record(const string_view record)
   vector<string> alt_callsigns;
   vector<string> alt_prefixes;
   
-//  for (const auto& candidate : presumptive_prefixes)
   for (auto candidate : clean_split_string <string_view> (fields[CTY_ALTS]))
   { vector<string>* vsp { (candidate.contains('=') ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
@@ -189,16 +190,14 @@ cty_record::cty_record(const string_view record)
   { alternative_country_info aci(alt_prefix, _prefix);  // alternative prefix, canonical prefix
 
     set_zone_info(aci, _cq_zone, _itu_zone);  
-    
     _alt_prefixes += { aci.identifier(), aci };
   }
 
 // do the same for the alternative callsigns
   for (const auto& alt_callsign : alt_callsigns)                   // alternative callsign, prefixed with "="
-  { alternative_country_info aci(remove_char(alt_callsign, '='));  // remove the '=' from the alternative call
+  { alternative_country_info aci(remove_char(alt_callsign, EQUALS));  // remove the '=' from the alternative call
 
     set_zone_info(aci, _cq_zone, _itu_zone);
-  
     _alt_callsigns += { aci.identifier(), aci };
   }
 
@@ -258,8 +257,6 @@ alternative_country_info::alternative_country_info(const string_view record, con
   else
   { _identifier = substring <string> (record, 0, end_identifier);      // read up to the first delimiter
   
-//    if (const string_view cq_zone_str { delimited_substring <string_view> (record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
-//    if (const string_view cq_zone_str { delimited_substring <string_view> (record, LEFT_PARENTHESIS, RIGHT_PARENTHESIS, DELIMITERS::DROP) }; !cq_zone_str.empty())
     if (const string_view cq_zone_str { delimited_substring <string_view> (record, PARENTHESES, DELIMITERS::DROP) }; !cq_zone_str.empty())
     { auto_from_string(cq_zone_str, _cq_zone);
 
@@ -267,8 +264,6 @@ alternative_country_info::alternative_country_info(const string_view record, con
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-//    if (const string_view itu_zone_str { delimited_substring <std::string_view> (record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
-//    if (const string_view itu_zone_str { delimited_substring <string_view> (record, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) }; !itu_zone_str.empty())
     if (const string_view itu_zone_str { delimited_substring <string_view> (record, SQUARE_BRACKETS, DELIMITERS::DROP) }; !itu_zone_str.empty())
     { auto_from_string(itu_zone_str, _itu_zone);
 
@@ -857,20 +852,21 @@ russian_data_per_substring::russian_data_per_substring(const string_view ss, con
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string_view> (line, '[', ']', DELIMITERS::DROP), ',') };
+//  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string_view> (line, '[', ']', DELIMITERS::DROP), ',') };
+  const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string_view> (line, SQUARE_BRACKETS, DELIMITERS::DROP), COMMA) };
 
   if (!contains(substrings, ss))
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
-  const size_t posn_1 { line.find(']') };
-  const size_t posn_2 { line.find(':') };
+  const size_t posn_1 { line.find(RIGHT_SQUARE_BRACKET) };
+  const size_t posn_2 { line.find(COLON) };
 
   if (posn_1 == posn_2)
     throw russian_error(RUSSIAN_INVALID_FORMAT, "Delimiter not found"s);
 
   _region_name = ::substring <std::string> (line, posn_1 + 1, posn_2 - posn_1 - 1);
 
-  const vector<string> fields { clean_split_string <std::string> (remove_peripheral_spaces <std::string> (squash(line.substr(posn_2 + 1), ' ')), ' ') };
+  const vector<string> fields { clean_split_string <string> (remove_peripheral_spaces <string> (squash(line.substr(posn_2 + 1), SPACE)), SPACE) };
 
   try
   { _region_abbreviation = fields.at(0);
@@ -918,11 +914,12 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
 */
 russian_data::russian_data(const vector<string>& path, const string_view filename)
 { try
-  { const vector<string> lines { to_lines <std::string> (replace(read_file(path, filename), TAB, SPACE)) };
+  { const vector<string> lines { to_lines <string> (replace(read_file(path, filename), TAB, SPACE)) };
 
     for (const auto& line : lines)
     { if (!line.starts_with("//"s))   // remove comments
-      { const vector<string> substrings { clean_split_string <std::string> (delimited_substring <std::string> (line, '[', ']', DELIMITERS::DROP), COMMA) };
+      { //const vector<string> substrings { clean_split_string <string> (delimited_substring <string> (line, '[', ']', DELIMITERS::DROP), COMMA) };
+        const vector<string> substrings { clean_split_string <string> (delimited_substring <string> (line, SQUARE_BRACKETS, DELIMITERS::DROP), COMMA) };
 
         FOR_ALL(substrings, [&line, this] (const auto& sstring) { _data += { sstring, russian_data_per_substring(sstring, line) }; });
       }

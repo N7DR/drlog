@@ -542,20 +542,6 @@ void keyboard_queue::push_key_press(const KeySym ks)
 
 /*! \brief              Emulate the pressing of a sequence of characters
     \param  str         pressed string
-    \param  ms_delay    delay in milliseconds between each character in <i>str</i>
-*/
-void keyboard_queue::push_key_press(const string_view str, const int ms_delay)
-{ for (size_t n { 0 }; n < str.length(); ++n)
-  { push_key_press(str[n]);
-
-    if (n != str.length() - 1)
-      sleep_for(milliseconds(ms_delay));
-  }
-}
-
-
-/*! \brief              Emulate the pressing of a sequence of characters
-    \param  str         pressed string
     \param  ms_delay    delay between each character in <i>str</i>
 */
 void keyboard_queue::push_key_press(const string_view str, const std::chrono::milliseconds delay)
@@ -572,7 +558,6 @@ void keyboard_queue::push_key_press(const string_view str, const std::chrono::mi
     This is used to decode access to the correct CW messages when a key is pressed
     See the file drlog_context.cpp to see this in use
 */
-//const UNORDERED_STRING_MAP<int> key_names = { { "kp_0"s,      XK_KP_0 },
 const FLAT_STRING_MAP<int> key_names { { "kp_0"s,      XK_KP_0 },
                                        { "kp_1"s,      XK_KP_1 },
                                        { "kp_2"s,      XK_KP_2 },
@@ -596,7 +581,6 @@ const FLAT_STRING_MAP<int> key_names { { "kp_0"s,      XK_KP_0 },
                                      };
 
 /// key names that are equivalent to one another
-//const UNORDERED_STRING_MAP<string> equivalent_key_names = { { "kp_0"s, "kp_insert"s },
 const FLAT_STRING_MAP<string> equivalent_key_names { { "kp_0"s, "kp_insert"s },
                                                      { "kp_1"s, "kp_end"s },
                                                      { "kp_2"s, "kp_down"s },
@@ -610,6 +594,7 @@ const FLAT_STRING_MAP<string> equivalent_key_names { { "kp_0"s, "kp_insert"s },
                                                    };
 
 /// names of keys on the keypad
-const unordered_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
-                                             XK_KP_Insert, XK_KP_End, XK_KP_Down, XK_KP_Next, XK_KP_Left, XK_KP_Begin, XK_KP_Right, XK_KP_Home, XK_KP_Up, XK_KP_Prior
-                                           };
+//const unordered_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
+const flat_set<KeySym> keypad_numbers { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4, XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
+                                        XK_KP_Insert, XK_KP_End, XK_KP_Down, XK_KP_Next, XK_KP_Left, XK_KP_Begin, XK_KP_Right, XK_KP_Home, XK_KP_Up, XK_KP_Prior
+                                      };

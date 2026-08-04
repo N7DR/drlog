@@ -32,7 +32,8 @@
 
 extern const FLAT_STRING_MAP<int>         key_names;              ///< The names of the keys on the keyboard; maps names to X KeySyms
 extern const FLAT_STRING_MAP<std::string> equivalent_key_names;   ///< names that are equivalent
-extern const std::unordered_set<KeySym>   keypad_numbers;         ///< the keypad numbers and their equivalents
+//extern const std::unordered_set<KeySym>   keypad_numbers;         ///< the keypad numbers and their equivalents
+extern const std::flat_set<KeySym>        keypad_numbers;         ///< the keypad numbers and their equivalents
 
 extern message_stream ost;                  ///< for debugging, info
 
@@ -266,12 +267,6 @@ public:
     \param  ks  KeySym to add
 */
   void push_key_press(const KeySym ks);
-
-/*! \brief              Emulate the pressing of a sequence of characters
-    \param  str         pressed string
-    \param  ms_delay    delay in milliseconds between each character in <i>str</i>
-*/
-  void push_key_press(const std::string_view str, const int ms_delay = 0);
 
 /*! \brief              Emulate the pressing of a sequence of characters
     \param  str         pressed string

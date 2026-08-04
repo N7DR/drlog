@@ -75,12 +75,12 @@ enum class RIG_CAPABILITY { VFO_A = 0,          ///< has VFO A    // unbelievabl
 /// rig capabilities
 enum class RIG_CAPABILITY { AUDIO_BW = 0,       ///< audio bandwidth can be controlled
                             AUDIO_CENTRE,       ///< centre frequency of audio can be controlled
+                            EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
+                            RIT,                ///< has RIT
+                            SPLIT,              ///< can split; TX is VFO B; RX is VFO A
                             VFO_A,              ///< has VFO A    // unbelievably, hamlib doesn't have standard naming; it calls this "Main" on some rigs
                             VFO_B,              ///< has VFO B    // unbelievably, hamlib doesn't have standard naming; it calls this "Sub" on some rigs
-                            RIT,                ///< has RIT
                             XIT,                ///< has XIT
-                            EQUAL_RIT_XIT_QRG,  ///< single frequency covers both RIT and XIT
-                            SPLIT,              ///< can split; TX is VFO B; RX is VFO A
                             REVERSE_SPLIT,      ///< can split; TX is VFO A; RX is VFO B
                             LOCK_A,             ///< VFO A can be locked
                             LOCK_B,             ///< VFO B can be locked
@@ -207,12 +207,12 @@ public:
 
     FNS(AUDIO_BW);
     FNS(AUDIO_CENTRE);
+    FNS(EQUAL_RIT_XIT_QRG);
+    FNS(RIT);
+    FNS(SPLIT);
     FNS(VFO_A);
     FNS(VFO_B);
-    FNS(RIT);
     FNS(XIT);
-    FNS(EQUAL_RIT_XIT_QRG);
-    FNS(SPLIT);
     FNS(REVERSE_SPLIT);
     FNS(LOCK_A);
     FNS(LOCK_B);

@@ -982,8 +982,8 @@ public:
     { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
-     \param target_frequency_in_khz     target frequency
-     \param guard_band_in_hz            guard band
+     \param   target_frequency_in_khz   target frequency
+     \param   guard_band_in_hz          guard band
      \return                            call of closest bandmap entry (if any) to the target frequency and within the guard band
 
      Applies filtering and the RBN threshold before searching for the station. Returns the
@@ -1204,9 +1204,9 @@ public:
 
 /// serialize using boost
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
+  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
+    { //unsigned int v { version };   // dummy; for now, version isn't used
+      //v = v + 0;
 
       SAFELOCK(_bandmap);
 

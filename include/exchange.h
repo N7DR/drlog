@@ -44,7 +44,7 @@ class exchange_field_prefill
 {
 protected:
 
-  STRING_MAP<UNORDERED_STRING_MAP<std::string /* value */>> _db;  ///< all values are upper case; key = field_name; value: key = callsign; value = value
+  STRING_MAP<UNORDERED_STRING_MAP<std::string /* value */>> _db;  ///< all values are upper case; key = field_name; then: value: key = callsign; value = value
 
 public:
 

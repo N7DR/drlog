@@ -363,7 +363,7 @@ bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
     return (_callsign == be._callsign);
 
-  return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));  // neither bandmap_entry is at my QRG
+  return ( (_callsign == be._callsign) or (_frequency_str == be._frequency_str) );  // neither bandmap_entry is at my QRG
 }
 
 /*! \brief              Re-mark the need/mult status
@@ -372,7 +372,8 @@ bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
     \param  statistics  statistics for the contest so far
     \return             whether there are any changes in needed/mult status
 
-    <i>statistics</i> must be updated to be current before this is called
+    <i>statistics</i> must be updated to be current before this is called.
+    <i>statistics</i> might be updated by this function.
 */
 bool bandmap_entry::remark(contest_rules& rules, const call_history& q_history, running_statistics& statistics)
 { const bool original_is_needed { _is_needed };
@@ -391,7 +392,7 @@ bool bandmap_entry::remark(contest_rules& rules, const call_history& q_history, 
   calculate_mult_status(rules, statistics);
 
   return ( (original_is_needed != _is_needed) or (original_is_needed_callsign_mult != is_needed_callsign_mult()) or
-           (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
+           (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()) );
 }
 
 /// guess the mode, based on the frequency
@@ -1357,9 +1358,9 @@ window& bandmap::write_to_window(window& win)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string      entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE + substring <std::string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
-      const string_view frequency_str { substring <std::string_view> (entry_str, 0, 7) };
-      const string_view callsign_str  { substring <std::string_view> (entry_str, 8) };
+    { const string      entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE + substring <string> (be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
+      const string_view frequency_str { substring <string_view> (entry_str, 0, 7) };
+      const string_view callsign_str  { substring <string_view> (entry_str, 8) };
       const bool        is_marker     { be.is_marker() };
 
       if (!found_my_marker and be.is_my_marker())

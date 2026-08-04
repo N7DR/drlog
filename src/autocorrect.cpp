@@ -286,7 +286,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
 
 //  std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
 
-  for (auto& [minutes, freq_map] : _data_map_map_map)
+  for (auto& [_, freq_map] : _data_map_map_map)
   {
 // test only if frequency is in range
     const auto lb { freq_map.lower_bound(low_target) };

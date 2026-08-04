@@ -318,10 +318,7 @@ public:
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
-    { //unsigned int v { version };   // dummy; for now, version isn't used
-      //v = v + 0;
-
-      SAFELOCK(statistics);
+    { SAFELOCK(statistics);
 
       ar & _callsign_multipliers
          & _callsign_mults_used
@@ -425,10 +422,7 @@ public:
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, [[ maybe_unused ]] const unsigned int version)
-    { //unsigned int v { version };   // dummy; for now, version isn't used
-      //v = v + 0;
-
-      SAFELOCK(_history);
+    { SAFELOCK(_history);
 
       ar & _history;
     }

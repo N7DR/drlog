@@ -1010,6 +1010,15 @@ std::string remove_chars(const std::string_view s, const std::string_view chars_
 */
 std::string remove_char_from_delimited_substrings(const std::string_view cs, const char char_to_remove, const char delim_1, const char delim_2);
 
+/*! \brief                  Remove all instances of a particular char from all delimited substrings
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
+    \param  delims          delimiters
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delims</i>
+*/
+inline std::string remove_char_from_delimited_substrings(const std::string_view cs, const char char_to_remove, const std::pair<char, char>& delims)
+  { return remove_char_from_delimited_substrings(cs, char_to_remove, delims.first, delims.second); }
+
 /*! \brief                      Obtain a delimited substring
     \param  cs                  original string
     \param  delim_1             opening delimiter

@@ -2579,12 +2579,14 @@ rig_capabilities::rig_capabilities(const std::string_view fn)
       const string_view sv { remove_peripheral_spaces <string_view> (remove_trailing_comment <string_view> (uc)) };
 
       if (!sv.empty())
-      { READ_CAPABILITY(VFO_A);
-        READ_CAPABILITY(VFO_B);
-        READ_CAPABILITY(RIT);
-        READ_CAPABILITY(XIT);
+      { READ_CAPABILITY(AUDIO_BW);
+        READ_CAPABILITY(AUDIO_CENTRE);
         READ_CAPABILITY(EQUAL_RIT_XIT_QRG);
+        READ_CAPABILITY(RIT);
         READ_CAPABILITY(SPLIT);
+        READ_CAPABILITY(VFO_A);
+        READ_CAPABILITY(VFO_B);
+        READ_CAPABILITY(XIT);
         READ_CAPABILITY(REVERSE_SPLIT);
         READ_CAPABILITY(LOCK_A);
         READ_CAPABILITY(LOCK_B);
@@ -2592,8 +2594,6 @@ rig_capabilities::rig_capabilities(const std::string_view fn)
         READ_CAPABILITY(TEST);
         READ_CAPABILITY(RX_ANT);
         READ_CAPABILITY(AUTO_NOTCH);
-        READ_CAPABILITY(AUDIO_BW);
-        READ_CAPABILITY(AUDIO_CENTRE);
         READ_CAPABILITY(BANDSCOPE);
 
 end_test:

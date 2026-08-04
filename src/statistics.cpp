@@ -434,10 +434,10 @@ bool running_statistics::add_known_country_mult(const string_view str, const con
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
   
-  const BAND&        b       { qso.band() };
-  const unsigned int band_nr { static_cast<unsigned int>(b) };
-  const MODE&        mo      { qso.mode() };
-  const unsigned int mode_nr { static_cast<unsigned int>(mo) };
+  const BAND         b       { qso.band() };
+  const unsigned int band_nr { to_uint(b) };
+  const MODE         mo      { qso.mode() };
+  const unsigned int mode_nr { to_uint(mo) };
 
 // increment the number of QSOs
   auto& pb { _n_qsos[mode_nr] };
@@ -451,7 +451,9 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   if (!_callsign_multipliers.empty() and !(qso.prefix().empty()) )
   { auto& [ mult_name, m ] { *(_callsign_multipliers.begin()) };
 
-    m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+//    m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+//    m.unconditional_add_worked(qso.prefix(), b, static_cast<MODE>(mo));
+    m.unconditional_add_worked(qso.prefix(), b, mo);
 
     _callsign_multipliers[mult_name] = m;
   }
@@ -460,7 +462,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   const string& call             { qso.callsign() };
   const string& canonical_prefix { _location_db.canonical_prefix(call) };
 
-  _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+//  _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+  _country_multipliers.add_worked(canonical_prefix, b, mo);
 
 // exchange mults
   for (auto& exchange_multiplier : _exchange_multipliers)
@@ -470,15 +473,17 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     const string  mv    { MULT_VALUE(field_name, value) };            // the mult value of the received field
 
     if (!value.empty())
-      mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+//      mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+      mult.unconditional_add_worked(mv, b, mo);
   }
 
   const bool is_dupe { log.is_dupe(qso, rules) };
 
   if (is_dupe)
-  { auto& pb { _n_dupes[mode_nr] };
+  { //auto& pb { _n_dupes[mode_nr] };
 
-    pb[band_nr]++;
+    //pb[band_nr]++;
+    _n_dupes[mode_nr][band_nr]++;
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
   {
@@ -489,8 +494,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
     if (rules.uba_bonus())
-    { //if (rules.bonus_countries() > canonical_prefix)
-      if ( rules.bonus_countries().contains(canonical_prefix) )
+    { if ( rules.bonus_countries().contains(canonical_prefix) )
         _n_ON_qsos[mode_nr][band_nr]++;
     }
   }

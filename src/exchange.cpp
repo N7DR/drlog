@@ -105,15 +105,17 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 
   ost << "Number of field names = " << db.size() << endl;
 
-  for (const auto& element : db)
-  { ost << "Field name = " << element.first << endl;
+//  for (const auto& element : db)
+  for (const auto& [ field_name, mapping ] : db)
+  { //ost << "Field name = " << element.first << endl;
+    ost << "Field name = " << field_name << endl;
 
-    const auto& um { element.second };
+//    const auto& um { element.second };
 
-    ost << "  Number of callsigns = " << um.size() << endl;
+    ost << "  Number of callsigns = " << mapping.size() << endl;
 
-    for (const auto& ss : um)
-      ost << "    Callsign: " << ss.first << "; Value: " << ss.second << endl;
+    for (const auto& [ cs, val ] : mapping)
+      ost << "    Callsign: " << cs << "; Value: " << val << endl;
   }
 
   return ost;
@@ -571,7 +573,7 @@ _replacement_call(),
 
         try
         { if (field_name.contains(PLUS))                                           // if it's a CHOICE
-          { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, PLUS) ) };
+          { const STRING_SET choices { SR::to<STRING_SET>( split_string <string> (field_name, PLUS) ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -681,7 +683,7 @@ _replacement_call(),
       { bool found_map { false };
                                         // if it's a CHOICE
         if (name.contains(PLUS))                                         // if it's a CHOICE
-        { const vector<string> choices_vec { split_string <std::string> (name, PLUS) };
+        { const vector<string> choices_vec { split_string <string> (name, PLUS) };
 
           for (unsigned int n { 0 }; n < choices_vec.size() and !found_map; ++n)    // typically just a choice of 2
           { try
@@ -844,12 +846,13 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 
 // if it's a QTHX, then don't go any further if the country doesn't match
   if ( field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv) )
-  { const string canonical_prefix { delimited_substring <std::string> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+  { //const string canonical_prefix { delimited_substring <std::string> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+    const string canonical_prefix { delimited_substring <string> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db += { { string { callsign }, string { field_name } }, EMPTY_STR };                     // so that it can be found immediately in future
  
-      return EMPTY_STR;
+      return string { };
     }
   }
 
@@ -1048,7 +1051,6 @@ string exchange_field_database::guess_value(const string_view callsign, const st
                                                            { "9H"s,   "EU023"s }
                                                         };
 
-
         rv = MUM_VALUE(iota_map, location_db.canonical_prefix(callsign)); 
       }
 
@@ -1080,7 +1082,8 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string_view canonical_prefix { delimited_substring <string_view> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+  { //const string_view canonical_prefix { delimited_substring <string_view> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+    const string_view canonical_prefix { delimited_substring <string_view> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "QTHX: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
@@ -1145,7 +1148,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 // give up
   _db += { { string { callsign }, string { field_name } }, EMPTY_STR };  // so we find it next time
 
-  return EMPTY_STR;
+  return string { };
 }
 
 /*! \brief              Set a value in the database
@@ -1214,7 +1217,7 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
   static const EFT prec_eft    { rules.exchange_field_eft("PREC"sv) };
   static const EFT section_eft { rules.exchange_field_eft("SECTION"sv) };
 
-  const vector<string> r_vec { remove_peripheral_spaces <std::string> (split_string <std::string> (received_exchange, SPACE_STR)) };
+  const vector<string> r_vec { remove_peripheral_spaces <string> (split_string <string> (received_exchange, SPACE_STR)) };
 
 //  const static regex check_regex("^[[:digit:]][[:digit:]]$");
 //  const static regex serno_regex("^([[:digit:]])+$");
