@@ -2493,9 +2493,7 @@ void display_rig_status(const milliseconds poll_period, rig_interface* rigp)
     pulls the data from the cluster object [and removes those data from it]
 */
 void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_statistics* statistics_p, location_database* location_database_p, window* win_bandmap_p, BANDMAPS* bandmaps_p)
-{ using enum WINDOW_ATTRIBUTES;
-
-  const string THREAD_NAME { "process rbn info"s };
+{ const string THREAD_NAME { "process rbn info"s };
 
   start_of_thread(THREAD_NAME);
 
@@ -2544,7 +2542,7 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
     if (is_cluster and !new_input.empty())
     { const string              no_cr { remove_char(new_input, CR) };
-      const vector<string_view> lines { to_lines <std::string_view> (no_cr) };
+      const vector<string_view> lines { to_lines <string_view> (no_cr) };
 
 // I don't understand why the scrolling occurs automatically... in particular, I don't know what causes it to scroll
       for (size_t n { 0 }; n < lines.size(); ++n)
@@ -2564,11 +2562,14 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
       if (time_since_data_last_received > 60s)
       { //const string  msg       { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS"s };
-        const int     bg_colour     { cluster_line_win.bg() };
-        const int     fg_colour     { cluster_line_win.fg() };
-        const seconds timeout       { is_rbn ? context.rbn_timeout() : context.cluster_timeout() };
-        const seconds time_to_reset { timeout - time_since_data_last_received };
-        const string  msg           { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS; RESET IN "s + to_string(N_SECONDS(time_to_reset)) + " SECONDS"};
+        const int     bg_colour      { cluster_line_win.bg() };
+        const int     fg_colour      { cluster_line_win.fg() };
+        const seconds timeout        { is_rbn ? context.rbn_timeout() : context.cluster_timeout() };
+        const seconds time_to_reset  { timeout - time_since_data_last_received };
+        const string  reset_unit_str { (N_SECONDS(time_to_reset) == 1) ? " SECOND"s : " SECONDS"s };
+
+//        const string  msg           { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS; RESET IN "s + to_string(N_SECONDS(time_to_reset)) + " SECONDS"};
+        const string  msg           { "NO DATA RECEIVED FOR "s + to_string(N_SECONDS(time_since_data_last_received)) + " SECONDS; RESET IN "s + to_string(N_SECONDS(time_to_reset)) + reset_unit_str};
 
         ost << to_upper(type_str) << ": " << msg << endl;
 
@@ -2665,7 +2666,6 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
               post.callsign(dad.autocorrect(post));       // replace call in the post, so that subsequent reads return the possibly-autocorrected call
 
               if (post.callsign() != old_call)
-//                ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << BAND_NAME[static_cast<unsigned int>(post.band())] << "m" << endl;
                 ost << "RBN DX call " << old_call << " autocorrected to " << post.callsign() << " on " << to_string(post.band()) << "m" << endl;
             }
 
@@ -2800,7 +2800,8 @@ void process_rbn_info(window* wclp, window* wcmp, dx_cluster* dcp, running_stati
 
 // add the post to the correct bandmap unless it's a marked frequency
               if ( is_interesting_mode and (bandmap_show_marked_frequencies or !is_marked_frequency(marked_frequency_ranges, be.mode(), be.freq())) )
-              { auto insert_be { [&changed_bands] (const BAND dx_band, const bandmap_entry& be) { bandmap_insertion_queues[static_cast<unsigned int>(dx_band)] += be;
+              { auto insert_be { [&changed_bands] (const BAND dx_band, const bandmap_entry& be) { //bandmap_insertion_queues[static_cast<unsigned int>(dx_band)] += be;
+                                                                                                  bandmap_insertion_queues[to_uint(dx_band)] += be;
                                                                                                   changed_bands += dx_band;      // mark band as changed
                                                                                                 } };
 
@@ -3241,7 +3242,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       ost << "Band change commanded: BAND " << (e.is_alt('b') ? "UP"s : "DOWN"s) << endl;
 
-      time_log <std::chrono::milliseconds> tl;
+//      time_log <std::chrono::milliseconds> tl;
+      time_log<milliseconds> tl;
 
       try
       { const frequency set_last_f { rig_ptr -> rig_frequency() };
@@ -3274,7 +3276,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // check that we're about to go to the correct band
         if (BAND(last_frequency) != new_band)
-        { ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[static_cast<unsigned int>(new_band)] << ", new frequency = " << last_frequency << endl;
+        { //ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << BAND_NAME[static_cast<unsigned int>(new_band)] << ", new frequency = " << last_frequency << endl;
+          ost << "Error when attempting to change band; new band = " << new_band << ", band name = " << ::to_string(new_band) << ", new frequency = " << last_frequency << endl;
           alert("FREQUENCY ERROR WHEN CHANGING BAND");
         }
 
@@ -6387,13 +6390,131 @@ void populate_win_info(const string_view callsign)
 
     As written, this function is simple but inefficient.
 
-    # maps to octothorpe_str
+    # maps to octothorpe string
     @ maps to at_call
     * maps to last_exchange
+    % maps to octothorpe string with cut numbers
 */
 string expand_cw_message(const string_view msg)
-{ string octothorpe_replaced;
+{
+/*! \brief          replace initial zeroes in serno with t_char
+    \param  msg     the original message
+    \return         <i>msg</i> with special characters replaced by their intended values
+*/
+  auto processed_serno = [] (const int octothorpe)
+  { string octo_str { to_string(octothorpe) };
 
+    if (!context.short_serno())
+      octo_str = pad_left(octo_str, (octothorpe < 1000 ? 3 : 4), 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
+
+    if (serno_spaces)
+    { const string spaces { create_string(CIRCUMFLEX, serno_spaces) };
+      const string tmp    { octo_str };
+
+      octo_str.clear();
+
+      for_each(tmp.cbegin(), prev(tmp.cend()), [spaces, &octo_str] (const char c) { octo_str += (c + spaces); } );  // add spaces after all except last character
+
+      octo_str += tmp[tmp.size() - 1];  // add last character
+    }
+
+// replace initial zeroes with initial t_chars
+    if ( (long_t > 0) and (octothorpe < 100) )
+    { const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };    // number of initial zeroes to find
+      const char char_to_send { t_char(long_t) };               // insert the correct char
+
+      bool found_all { false };
+      int  n_found   { 0 };
+
+      for (size_t n { 0 }; !found_all and (n < octo_str.size() - 1); ++n)
+      { if ( !found_all and (octo_str[n] == 'T') )
+        { octo_str[n] = char_to_send;
+          found_all = (++n_found == n_to_find);
+        }
+      }
+    }
+
+    return octo_str;
+  };
+
+  string percent_replaced { };
+
+  if (msg.contains(PERCENT))
+  { string percent_str { processed_serno(octothorpe) };
+
+//    for (size_t n { 0 }; n < percent_str.size(); ++n)
+//    { if (percent_str[n] == '9')
+//        percent_str[n] = 'N';
+//
+//      if (percent_str[n] == '0')
+//        percent_str[n] = t_char(long_t);
+//    }
+    percent_str = replace(percent_str, '9', 'N');
+    percent_str = replace(percent_str, '0', t_char(long_t));
+
+    percent_replaced = replace(msg, PERCENT, percent_str);
+  }
+
+#if 0
+  if (msg.contains(PERCENT))
+  { string percent_str { to_string(octothorpe) };
+
+    if (!context.short_serno())
+      percent_str = pad_left(percent_str, (octothorpe < 1000 ? 3 : 4), 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
+
+    if (serno_spaces)
+    { const string spaces { create_string(CIRCUMFLEX, serno_spaces) };
+      const string tmp    { percent_str };
+
+      percent_str.clear();
+
+      for_each(tmp.cbegin(), prev(tmp.cend()), [spaces, &percent_str] (const char c) { percent_str += (c + spaces); } );  // add spaces after all except last character
+
+      percent_str += tmp[tmp.size() - 1];
+    }
+
+    if ( (long_t > 0) and (octothorpe < 100) )
+    { const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
+      const char char_to_send { t_char(long_t) };               // insert the correct char
+
+      bool found_all { false };
+      int  n_found   { 0 };
+
+      for (size_t n { 0 }; !found_all and (n < percent_str.size() - 1); ++n)
+      { if ( !found_all and (percent_str[n] == 'T') )
+        { percent_str[n] = char_to_send;
+          found_all = (++n_found == n_to_find);
+        }
+      }
+    }
+
+    for (size_t n { 0 }; n < percent_str.size(); ++n)
+    { if (percent_str[n] == '9')
+        percent_str[n] = 'N';
+
+      if (percent_str[n] == '0')
+        percent_str[n] = t_char(long_t);
+    }
+
+    percent_replaced = replace(msg, PERCENT, percent_str);
+  }
+#endif
+
+  string octothorpe_replaced { };
+
+  if (msg.contains(OCTOTHORPE))
+  { string octothorpe_str { processed_serno(octothorpe) };
+
+//    for (size_t n { 0 }; n < octothorpe_str.size(); ++n)
+//    { if (octothorpe_str[n] == '0')
+//        octothorpe_str[n] = t_char(long_t);
+//    }
+    octothorpe_str = replace(octothorpe_str, '0', t_char(long_t));
+
+    octothorpe_replaced = replace((percent_replaced.empty() ? msg : percent_replaced), OCTOTHORPE, octothorpe_str);
+  }
+
+#if 0
   if (msg.contains(OCTOTHORPE))
   { string octothorpe_str { to_string(octothorpe) };
 
@@ -6426,8 +6547,10 @@ string expand_cw_message(const string_view msg)
       }
     }
     
-    octothorpe_replaced = replace(msg, OCTOTHORPE, octothorpe_str);
+//    octothorpe_replaced = replace(msg, OCTOTHORPE, octothorpe_str);
+    octothorpe_replaced = replace((percent_replaced.empty() ? msg : percent_replaced), OCTOTHORPE, octothorpe_str);
   }
+#endif
 
   const string at_replaced { replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), COMAT, at_call) };
 

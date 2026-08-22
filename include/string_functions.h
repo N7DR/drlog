@@ -87,6 +87,7 @@ constexpr char LINEFEED             { LF };
 constexpr char MINUS                { DASH };
 constexpr char OCTOTHORPE           { '#' };
 constexpr char PERCENT              { '%' };
+constexpr char PER_CENT             { PERCENT };
 constexpr char PIPE                 { '|' };
 constexpr char PLUS                 { '+' };
 constexpr char QUESTION_MARK        { '?' };
@@ -1090,6 +1091,20 @@ auto delimited_substring(const std::string_view cs, const std::string_view delim
   return STYPE { cs.substr(delim_1_posn + length_to_skip, length_to_return) };
 }
 
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim               opening and closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between the delimiters, possibly including the delimiters
+
+    Returns the empty string if the delimiters do not exist, or if
+    there is no second occurrence of <i>delim</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+template <typename STYPE>
+inline auto delimited_substring(const std::string_view cs, const char delim, const DELIMITERS return_delimiters) -> STYPE
+  { return delimited_substring <STYPE> (cs, delim, delim, return_delimiters); }
+
 /*! \brief                      Obtain all occurrences of a delimited substring
     \param  cs                  original string
     \param  delim_1             opening delimiter
@@ -1194,7 +1209,11 @@ std::string join(const T& ct, const U sep)
   return rv;
 }
 
-#if 1
+/*! \brief          Join the elements of a container of elements convertible to strings, using a provided separator
+    \param  ct      container of elements convertible to strings
+    \param  sep     separator inserted between the elements of <i>vec</i>
+    \return         all the elements of <i>ct</i>, converted to strings and concatenated, but with <i>sep</i> inserted between elements
+*/
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
  requires ( !is_string<typename T::value_type> and has_to_string<typename T::value_type> )
@@ -1209,7 +1228,6 @@ std::string join(const T& ct, const U sep)
 
   return rv;
 }
-#endif
 
 /*! \brief          Centre a string
     \param  str     string to be centred

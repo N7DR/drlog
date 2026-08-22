@@ -287,21 +287,6 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
   return ost;
 }
 
-// -----------  cty_data  ----------------
-
-/*! \class  cty_data
-    \brief  All the data from a CTY.DAT file
-*/
-
-/*! \brief              Construct from a file
-    \param  filename    name of file
-*/
-//cty_data::cty_data(const string_view filename)
-//{ const vector<string_view> records { split_string <string_view> ( remove_chars(read_file(filename), CRLF), SEMICOLON) };                  // read file, remove EOL markers and split into records
-//
-//  FOR_ALL(records, [this] (const string_view record_str) { emplace_back(cty_record { record_str }); } );    // applies to base class
-//}
-
 // -----------  location_info  ----------------
 
 /*! \class  location_info

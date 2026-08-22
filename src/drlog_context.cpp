@@ -1088,7 +1088,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
     { if (rhs.ends_with(PERCENT))           // if percentage
-        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_char_from_end <std::string> (rhs, PERCENT)), 0, 100);
+        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_char_from_end <string> (rhs, PERCENT)), 0, 100);
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
     }
@@ -1116,7 +1116,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"sv);
 
       if (_auto_remaining_callsign_mults)
-      { if (const vector<string_view> tokens { split_string <std::string_view> (RHS, SPACE) }; tokens.size() == 2)
+      { if (const vector<string_view> tokens { split_string <string_view> (RHS, SPACE) }; tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
@@ -1128,13 +1128,13 @@ void drlog_context::_process_configuration_file(const string_view filename)
     { _auto_remaining_country_mults = RHS.contains("AUTO"sv);
 
       if (_auto_remaining_country_mults)
-      { const vector<string_view> tokens { split_string <std::string_view> (RHS, SPACE) };
+      { const vector<string_view> tokens { split_string <string_view> (RHS, SPACE) };
 
         if (tokens.size() == 2)
           _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
-        _remaining_country_mults_list = std::ranges::to<STRING_SET>(clean_split_string <string_view> (RHS));
+        _remaining_country_mults_list = SR::to<STRING_SET>(clean_split_string <string_view> (RHS));
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
@@ -1299,7 +1299,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (LHS == "WINDOW"sv)
-    { if (vector<string> window_info { clean_split_string <string> (split_string <std::string> (testline, EQUALS)[1]) }; window_info.size() >= 5)
+    { if (vector<string> window_info { clean_split_string <string> (split_string <string> (testline, EQUALS)[1]) }; window_info.size() >= 5)
       { string             name  { window_info[0] };
         window_information winfo { from_string<WIN_INT_TYPE>(window_info[1]), from_string<WIN_INT_TYPE>(window_info[2]), from_string<WIN_INT_TYPE>(window_info[3]), from_string<WIN_INT_TYPE>(window_info[4]) };
 
@@ -1365,13 +1365,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { string contents { swin_contents };
 
               if (contents.size() >= 2)
-                contents = delimited_substring <std::string> (contents, QUOTATION_MARK, QUOTATION_MARK, DELIMITERS::DROP);
+//                contents = delimited_substring <string> (contents, QUOTATION_MARK, QUOTATION_MARK, DELIMITERS::DROP);
+                contents = delimited_substring <string> (contents, QUOTATION_MARK, DELIMITERS::DROP);
 
-              vector<string> lines { to_lines <std::string> (contents) };
+              vector<string> lines { to_lines <string> (contents) };
 
               const string contents_1 { replace(contents, "\\n"s, EOL) };   // look for backslash followed by n
 
-              lines = to_lines <std::string> (contents_1);
+              lines = to_lines <string> (contents_1);
 
               winfo.w(longest(lines).length());
               winfo.h(lines.size());

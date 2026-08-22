@@ -846,8 +846,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 
 // if it's a QTHX, then don't go any further if the country doesn't match
   if ( field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv) )
-  { //const string canonical_prefix { delimited_substring <std::string> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
-    const string canonical_prefix { delimited_substring <string> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
+  { const string canonical_prefix { delimited_substring <string> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db += { { string { callsign }, string { field_name } }, EMPTY_STR };                     // so that it can be found immediately in future
@@ -1082,8 +1081,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { //const string_view canonical_prefix { delimited_substring <string_view> (field_name, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
-    const string_view canonical_prefix { delimited_substring <string_view> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
+  { const string_view canonical_prefix { delimited_substring <string_view> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "QTHX: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
@@ -1102,7 +1100,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     { rv = drm_line.qth();
 
       if ( (field_name == "RD2"sv) and (rv.length() > 2) )     // allow for case when full 4-character RDA is in the drmaster file
-        rv = substring <std::string> (rv, 0, 2);
+        rv = substring <string> (rv, 0, 2);
 
       return insert_value(rv); 
     }

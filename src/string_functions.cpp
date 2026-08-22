@@ -451,11 +451,11 @@ string remove_char_from_delimited_substrings(const string_view cs, const char ch
 
 // if there is no matching second delimiter, pretend second delimiter is at end
     if (delim_2_posn == string_view::npos)
-      return (rv + remove_char(substring <std::string> (cs, delim_1_posn), char_to_remove));
+      return (rv + remove_char(substring <string> (cs, delim_1_posn), char_to_remove));
 
 // we have matching delimiters
     const size_t substr_length   { delim_2_posn - delim_1_posn + 1 };
-    const string modified_substr { remove_char(substring <std::string> (cs, delim_1_posn, substr_length), char_to_remove) };  // keeps the delimiters in the string
+    const string modified_substr { remove_char(substring <string> (cs, delim_1_posn, substr_length), char_to_remove) };  // keeps the delimiters in the string
 
     rv += ( string { cs.substr(start_posn, delim_1_posn) } + modified_substr );
 
@@ -491,7 +491,7 @@ string centred_string(const string_view str, const unsigned int width)
 { const size_t len { str.length() };
 
   if (len > width)
-    return substring <std::string> (str, 0, width);
+    return substring <string> (str, 0, width);
 
   if (len == width)
     return string { str };
@@ -876,7 +876,8 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 { unsigned int idx { 0 };
 
   for (const auto& str : vec)
-  { ost << LEFT_SQUARE_BRACKET << idx++ << "]: " << str;
+  { //ost << LEFT_SQUARE_BRACKET << idx++ << "]: " << str;
+    ost << delimit(::to_string(idx++), SQUARE_BRACKETS) << ": " << str;
 
     if (idx != vec.size())
       ost << endl;

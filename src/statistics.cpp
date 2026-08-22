@@ -542,7 +542,6 @@ MULT_SET running_statistics::known_exchange_mult_values(const string_view name)
 
     Doesn't add if the value <i>field_value</i> is unknown.
 */
-//bool running_statistics::add_worked_exchange_mult(const string_view field_name, const string_view field_value, const int band_nr, const int mode_nr)
 bool running_statistics::add_worked_exchange_mult(const string_view field_name, const string_view field_value, const BAND b, const MODE m)
 { if (!field_value.empty())
   { const string mv { MULT_VALUE(field_name, field_value) };  // the mult value of the received field
@@ -551,7 +550,6 @@ bool running_statistics::add_worked_exchange_mult(const string_view field_name, 
 
     for (auto& [ fn, mult ] : _exchange_multipliers)   // std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;
     { if (fn == field_name)
-//        return ( mult.add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr)) );
         return ( mult.add_worked(mv, b, m) );
     }
   }
@@ -602,16 +600,17 @@ string running_statistics::summary_string(const contest_rules& rules)
 { string rv;
 
 // write the bands and underline them
-  string line(FIRST_FIELD_WIDTH, ' ');
+  string line(FIRST_FIELD_WIDTH, SPACE);
 
   const vector<BAND>& permitted_bands { rules.permitted_bands() };
 
-  FOR_ALL(permitted_bands, [&line] (const BAND b) { line += pad_left(BAND_NAME[static_cast<unsigned int>(b)], FIELD_WIDTH); } );
+//  FOR_ALL(permitted_bands, [&line] (const BAND b) { line += pad_left(BAND_NAME[static_cast<unsigned int>(b)], FIELD_WIDTH); } );
+  FOR_ALL(permitted_bands, [&line] (const BAND b) { line += pad_left(::to_string(b), FIELD_WIDTH); } );
 
   if (permitted_bands.size() != 1)
     line += pad_left("All"s, FIELD_WIDTH);
   
-  rv += (line + LF_STR);
+  rv += (line + LF);
       
 //  line = string(FIRST_FIELD_WIDTH, ' ');
   line = string(FIRST_FIELD_WIDTH, SPACE);
@@ -621,7 +620,7 @@ string running_statistics::summary_string(const contest_rules& rules)
   if (permitted_bands.size() != 1)
     line += pad_left("---"s, FIELD_WIDTH);
 
-  rv += (line + LF_STR);
+  rv += (line + LF);
 
 // now create the individual per-mode tables
   const set<MODE> sm { rules.permitted_modes() };
@@ -636,7 +635,6 @@ string running_statistics::summary_string(const contest_rules& rules)
 
   for (const auto& mode_set : vsm)
   { if (vsm.size() != 1)
-//      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All"s ) + LF_STR );
       rv += ( ( (mode_set.size() == 1) ? ::to_string(*(mode_set.cbegin())) : "All"s ) + LF );
 
     rv += _summary_string(rules, mode_set);

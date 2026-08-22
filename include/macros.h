@@ -337,48 +337,6 @@ using FLAT_STRING_SET = std::flat_set<std::string, std::less<>>;
 template <typename ValueType>
 using FLAT_STRING_MAP = std::flat_map<std::string, ValueType, std::less<>>;
 
-// access atomics, returned as designated types
-//template <typename T, typename U>
-//inline auto at_val(const std::atomic<U>& atv) -> T   // must use reference because atomics have no copy constructor
-//  { return static_cast<T>(atv.load()); };
-
-//template <typename U>
-//inline int at_int(const std::atomic<U>& atv)
-//  { return at_val <int> (atv); };
-
-//template <typename U>
-//inline unsigned int at_uint(const std::atomic<U>& atv)
-//  { return at_val <unsigned int> (atv); };
-
-// access enums, returned as designated types
-//template <typename T>
-//  requires (std::is_enum_v<T>)
-//inline constexpr int to_int(const T b)
-//  { return static_cast<int>(b); }
-
-#if 0
-template <typename T>
-  requires (std::is_enum_v<T>)
-/*inline */constexpr unsigned int to_uint(const T b)
-  { if constexpr(std::is_atomic<T>::value)    // no such trait
-      return static_cast<unsigned int>(b.load());
-
-      return static_cast<unsigned int>(b); }
-  }
-#endif
-
-
-#if 0
-// https://www.think-cell.com/en/career/devblog/if-constexpr-requires-requires-requires
-template <typename T>
-  requires (std::is_enum_v<T>)            //           • the expression ‘is_enum_v<T> [with T = std::atomic<BAND>]’ evaluated to ‘false’
-inline constexpr unsigned int to_uint(const T b)
-  { if constexpr (requires { requires is_atomic<T>; })
-      return static_cast<unsigned int>(b.load());
-
-    return static_cast<unsigned int>(b);
-  }
-#else
 template <typename T>
   requires (std::is_enum_v<T>)
 inline constexpr unsigned int to_uint(const T b)
@@ -387,9 +345,7 @@ inline constexpr unsigned int to_uint(const T b)
 template <typename U>
   requires (std::is_enum_v<U>)
 inline constexpr unsigned int to_uint(const std::atomic<U>& atv)  // must use reference because atomics have no copy constructor
-//  { return static_cast<unsigned int>(atv.load()); }
   { return to_uint(atv.load()); }
-#endif
 
 template <typename T>
   requires (std::is_enum_v<T>)
@@ -399,7 +355,7 @@ inline constexpr int to_int(const T b)
 template <typename U>
   requires (std::is_enum_v<U>)
 inline constexpr int to_int(const std::atomic<U>& atv)  // must use reference because atomics have no copy constructor
-  { return static_cast<int>(atv.load()); }
+  { return to_int(atv.load()); }
 
 template <typename T>
   requires (std::is_enum_v<T>) and (has_to_string<T>)

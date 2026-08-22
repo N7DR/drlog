@@ -1247,14 +1247,14 @@ string wpx_prefix(const string_view call)
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-  callsign = remove_string_from_end <std::string> (callsign, "/QRP"sv);
+  callsign = remove_string_from_end <string> (callsign, "/QRP"sv);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == SLASH))
   { static const string portables { "AEJMP"sv };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
-      callsign = remove_n_chars_from_end <std::string> (callsign, 2u);
+      callsign = remove_n_chars_from_end <string> (callsign, 2u);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
@@ -1349,7 +1349,7 @@ string sac_prefix(const string_view call)
 
 // working from the end, find the first non-digit
   const size_t last_letter_posn { wpx.find_last_not_of(DIGITS) };
-  const string digits           { substring <std::string> (wpx, last_letter_posn + 1) };
+  const string digits           { substring <string> (wpx, last_letter_posn + 1) };
 
   if (digits.empty())
     return string { };    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
@@ -1378,7 +1378,7 @@ string MULT_VALUE(const string_view field_name, const string_view received_value
   }
 
   if ( (field_name == "IOTA"sv) and (received_value.size() > 2) )
-    return (substring <std::string> (received_value, 0, 2) + pad_leftz(substring <std::string> (received_value, 2), 3));  // XXnnn
+    return (substring <string> (received_value, 0, 2) + pad_leftz(substring <string> (received_value, 2), 3));  // XXnnn
 
   return string { received_value };
 }
