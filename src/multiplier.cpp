@@ -128,8 +128,8 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
 { SAFELOCK(multiplier);
 
   if (_used)
-  { const int b_nr { to_int(b) };
-    const int m_nr { to_int(m) };
+  { const int b_nr { static_cast<int>(b) };
+    const int m_nr { static_cast<int>(m) };
 
     _worked[m_nr][b_nr].erase(str);
 
@@ -140,7 +140,7 @@ void multiplier::remove_worked(const string_view str, const BAND b, const MODE m
       present = _worked[m_nr][n].contains(str);
 
     if (!present)
-      _worked[m_nr][to_uint(ANY_BAND)].erase(str);
+      _worked[m_nr][static_cast<unsigned int>(ANY_BAND)].erase(str);
 
 // is it still present in any mode for this band?
     present = false;
@@ -188,8 +188,8 @@ size_t multiplier::n_worked(const BAND b, const MODE m) const
   if (!_used)
     return 0;
 
-  const int   b_nr { to_int(b) };
-  const int   m_nr { to_int(m) };
+  const int   b_nr { static_cast<int>(b) };
+  const int   m_nr { static_cast<int>(m) };
   const auto& pb   { _worked[m_nr] };
 
   if (_all_values_are_mults)
@@ -209,7 +209,7 @@ size_t multiplier::n_worked(const BAND b) const
   if (!_used)
     return 0;
 
-  const auto& pb { _worked[N_MODES] };
+  const auto& pb { _worked[ N_MODES ] };
 
   if (_all_values_are_mults)
     return pb[ (_per_band ? to_uint(b) : N_BANDS) ].size();
@@ -225,6 +225,8 @@ size_t multiplier::n_worked(const BAND b) const
 
     Includes any non-mult values
 */
+//MULT_SET multiplier::worked(const int b, const int m) const
+//MULT_SET multiplier::worked(const BAND b, const int m) const
 MULT_SET multiplier::worked(const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 
@@ -233,7 +235,7 @@ MULT_SET multiplier::worked(const BAND b, const MODE m) const
 
   const auto& pb { _worked[ (_per_mode ? to_int(m) : to_int(ANY_MODE)) ] };
 
-  return pb[to_uint(_per_band ? b : ANY_BAND)];
+  return pb[ to_uint(_per_band ? b : ANY_BAND) ];
 }
 
 /*! \brief          Write a <i>multiplier</i> object to an output stream
@@ -248,13 +250,13 @@ ostream& operator<<(ostream& ost, const multiplier& m)
       << "multiplier is per-band = " << boolalpha << m.per_band() << endl
       << "worked multipliers:" << endl;
 
-// as of C++26, there still doesn't seem to be a way to iterate easily over enums
   for (size_t nm { 0 }; nm <= N_MODES; ++nm)
   { for (size_t n { 0 }; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
+//      for (const auto& worked : m.worked(n, static_cast<MODE>(nm)))
       for (const auto& worked : m.worked(static_cast<BAND>(n), static_cast<MODE>(nm)))
-        ost << worked << SPACE;
+        ost << worked << " ";
 
       ost << endl;
     }
@@ -263,9 +265,10 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   ost << "known multipliers: ";
 
   for (const auto& known : m.known())
-    ost << known << SPACE;
+    ost << known << " ";
 
   ost << "multiplier is used = " << m.used() << endl;
+
   ost.flags(flags);
 
   return ost;

@@ -31,23 +31,24 @@ extern int              QSO_MULT_WIDTH;             ///< controls width of zone 
 /// example: cabrillo qso = template: CQ WW
 
 // [contest, cabrillo template]
-static const STRING_MAP<string> cabrillo_qso_templates { { "ARRL DX"s, "ARRL DX"s }, // placeholder; mode chosen before we exit this function
-                                                          { "ARRL DX CW"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1"s },
-                                                          { "ARRL DX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1"s },
+static const FLAT_STRING_MAP<string> cabrillo_qso_templates
+                  { { "ARRL DX"s,     "ARRL DX"s }, // placeholder; mode chosen before we exit this function
+                    { "ARRL DX CW"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1"s },
+                    { "ARRL DX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1"s },
 
-                                                          { "CQ WW"s,      "CQ WW"s }, // placeholder; mode chosen before we exit this function
-                                                          { "CQ WW CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
-                                                          { "CQ WW SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
+                    { "CQ WW"s,     "CQ WW"s }, // placeholder; mode chosen before we exit this function
+                    { "CQ WW CW"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
+                    { "CQ WW SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
 
-                                                          { "JIDX"s,      "JIDX"s }, // placeholder; mode chosen before we exit this function
-                                                          { "JIDX CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s },
-                                                          { "JIDX SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s }
-                                                        };
+                    { "JIDX"s,     "JIDX"s }, // placeholder; mode chosen before we exit this function
+                    { "JIDX CW"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s },
+                    { "JIDX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s }
+                  };
 
 /*! \brief          Write an error message to the output file, then exit
     \param  line    the line that caused the error
 */
-void print_error_and_exit(const string& line)
+void print_error_and_exit(const string_view line)
 { ost << "Parse error in line: " << line << endl;
   exit(-1);
 }
@@ -82,8 +83,6 @@ void drlog_context::_set_points(const string_view command, const MODE m)
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
 
-//    if (auto& pbb { _per_band_points[m] }; !contains(lhs, '[') or contains(lhs, "[*]"s))            // for all bands
-//    if (auto& pbb { _per_band_points[m] }; (!lhs.contains('[') or lhs.contains("[*]"s)))            // for all bands
     if (auto& pbb { _per_band_points[to_uint(m)] }; (!lhs.contains(LEFT_SQUARE_BRACKET) or lhs.contains("[*]"sv)))            // for all bands
     { for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
         pbb += { static_cast<BAND>(n), RHS };
@@ -94,7 +93,8 @@ void drlog_context::_set_points(const string_view command, const MODE m)
       const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { const string_view bands_str { delimited_substring <string_view> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+      { //const string_view bands_str { delimited_substring <string_view> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+        const string_view bands_str { delimited_substring <string_view> (lhs, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
         FOR_ALL(clean_split_string <string> (bands_str), [&pbb, &RHS] (const auto& b_str) { pbb += { BAND_FROM_NAME[b_str], RHS }; } );   // keep string
       }
@@ -232,22 +232,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
       }
     }
 
-#if 0
-// BAND MAP FILTER n
-    if ( (LHS == "BAND MAP FILTER 1"sv) or (LHS == "BANDMAP FILTER 1"sv) )
-    { if (!RHS.empty())
-      { vector<string> filters { clean_split_string <string> (RHS) };
-
-        SORT(filters, compare_calls);    // put the entries into callsign order
-
-        _bandmap_filter_vec += _bandmap_filter;   // the zeroth filter
-        _bandmap_filter_vec += filters;
-
-        _bandmap_filter_show_vec += _bandmap_filter_show;
-      }
-    }
-#endif
-
 // BAND MAP FILTER COLOURS
     if ( (LHS == "BAND MAP FILTER COLOURS"sv) or (LHS == "BAND MAP FILTER COLORS"sv) or
          (LHS == "BANDMAP FILTER COLOURS"sv) or (LHS == "BANDMAP FILTER COLORS"sv) )
@@ -276,10 +260,6 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if ( (LHS == "BAND MAP FILTER MODE"sv) or (LHS == "BANDMAP FILTER MODE"sv) )
       _bandmap_filter_show = (RHS == "SHOW"sv);
 
-// BAND MAP FILTER MODE n
-//    if ( (LHS == "BAND MAP FILTER MODE 1"sv) or (LHS == "BANDMAP FILTER MODE 1"sv) )
-//      _bandmap_filter_show = (RHS == "SHOW"sv);
-
 // BAND MAP FREQUENCY UP
     if ( (LHS == "BAND MAP FREQUENCY UP"sv) or (LHS == "BANDMAP FREQUENCY UP"sv) )
       _bandmap_frequency_up = is_true;
@@ -298,7 +278,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if ( (LHS == "BAND MAP RECENT COLOUR"sv) or (LHS == "BANDMAP RECENT COLOUR"sv) or
          (LHS == "BANDMAP RECENT COLOR"sv) or (LHS == "BANDMAP RECENT COLOR"sv) )
     { if (!RHS.empty())
-        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces <std::string_view> (RHS));
+        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces <string_view> (RHS));
     }
 
 // BAND MAP SHOW MARKED FREQUENCIES
@@ -408,14 +388,13 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // COUNTRY MULT FACTOR
     if (LHS == "COUNTRY MULT FACTOR"sv)  // there may be an "=" in the points definitions
-    { const vector<string> str_vec { split_string <std::string> (line, EQUALS) };
+    { const vector<string> str_vec { split_string <string> (line, EQUALS) };
 
       if (!str_vec.empty())
       { string tmp_str;
 
         const string lhs { str_vec[0] };
 
-//        if (!lhs.contains('[') or lhs.contains("[*]"sv))             // for all bands
         if (!lhs.contains(LEFT_SQUARE_BRACKET) or lhs.contains("[*]"sv))             // for all bands
         { string new_str;
 
@@ -426,14 +405,15 @@ void drlog_context::_process_configuration_file(const string_view filename)
               new_str += EQUALS;
           }
 
-          tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
+          tmp_str = to_upper(remove_peripheral_spaces <string> (new_str));
 
           for (unsigned int n { 0 }; n < NUMBER_OF_BANDS; ++n)
             _per_band_country_mult_factor += { static_cast<BAND>(n), from_string<int>(tmp_str) };
         }
         else    // not all bands
         { //const string bands_str { delimited_substring <std::string> (lhs, '[', ']', DELIMITERS::DROP) };
-          const string bands_str { delimited_substring <std::string> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+          //const string bands_str { delimited_substring <std::string> (lhs, LEFT_SQUARE_BRACKET, RIGHT_SQUARE_BRACKET, DELIMITERS::DROP) };
+          const string bands_str { delimited_substring <string> (lhs, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
           for (const auto& b_str: clean_split_string <string> (bands_str))
           { string new_str;
@@ -445,7 +425,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
                 new_str += EQUALS;
             }
 
-            tmp_str = to_upper(remove_peripheral_spaces <std::string> (new_str));
+            tmp_str = to_upper(remove_peripheral_spaces <string> (new_str));
             _per_band_country_mult_factor += { BAND_FROM_NAME[b_str], from_string<decltype(_per_band_country_mult_factor)::mapped_type>(tmp_str) };
           }
         }
@@ -537,7 +517,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // EXCHANGE[
     if (testline.starts_with("EXCHANGE["sv))
-    { const string_view country_list { delimited_substring <std::string_view> (LHS, '[', ']', DELIMITERS::DROP) };
+    { //const string_view country_list { delimited_substring <std::string_view> (LHS, '[', ']', DELIMITERS::DROP) };
+      const string_view country_list { delimited_substring <string_view> (LHS, SQUARE_BRACKETS, DELIMITERS::DROP) };
 
       FOR_ALL(clean_split_string <string_view> (country_list), [RHS, this] (const string_view str) { _exchange_per_country += { str, RHS }; } );
     }
@@ -569,8 +550,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE"sv) or (LHS == "EXCHANGE PREFILL FILES"sv) )
-    { for (const auto& file : vector<string> { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) })
-      { if (const vector<string> fields { clean_split_string <std::string> (file) }; fields.size() == 2)
+    { //for (const auto& file : vector<string> { remove_peripheral_spaces <std::string> (delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP)) })
+      for (const auto& file : vector<string> { remove_peripheral_spaces <string> (delimited_substrings <string> (rhs, SQUARE_BRACKETS, DELIMITERS::DROP)) })
+      { if (const vector<string> fields { clean_split_string <string> (file) }; fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
       }
     }
@@ -580,8 +562,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
       _exchange_sap = RHS;
 
     auto update_sent_exchange = [line, testline] (auto& exchange)
-      { const string              comma_delimited_list { to_upper(clean_split_string <std::string_view> (line, EQUALS)[1]) };    // RST:599, CQZONE:4
-        const vector<string_view> fields               { split_string <std::string_view> (comma_delimited_list) };
+      { const string              comma_delimited_list { to_upper(clean_split_string <string_view> (line, EQUALS)[1]) };    // RST:599, CQZONE:4
+        const vector<string_view> fields               { split_string <string_view> (comma_delimited_list) };
 
         for (const auto& this_field : fields)
         { const vector<string_view> field { clean_split_string <string_view> (this_field, COLON) };
@@ -608,7 +590,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // EXECUTE AT START
     if (LHS == "EXECUTE AT START"sv)
-      _execute_at_start += remove_peripheral_spaces <std::string> (rhs);
+      _execute_at_start += remove_peripheral_spaces <string> (rhs);
 
 // FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH"sv)
@@ -689,7 +671,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "MODES"sv)
     { _modes = RHS;
 
-      if (_modes.contains(','))        // if more than one mode
+      if (_modes.contains(COMMA))        // if more than one mode
         _mark_mode_break_points = true;
       else
       { if (_modes == "SSB"sv)
@@ -772,8 +754,9 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // PING = [ target1, label1 ], [target2, label2] ...
     if ( (LHS == "PING"sv) and (!rhs.empty()) )
-    { for (const auto& target : delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP))
-      { const vector<string> target_info { clean_split_string <string> (target) };;
+    { //for (const auto& target : delimited_substrings <std::string> (rhs, '[', ']', DELIMITERS::DROP))
+      for (const auto& target : delimited_substrings <std::string> (rhs, SQUARE_BRACKETS, DELIMITERS::DROP))
+      { const vector<string> target_info { clean_split_string <string> (target) };
 
         if (target_info.size() == 2)
           _ping_targets += { target_info[0], target_info[1] };
@@ -861,7 +844,8 @@ void drlog_context::_process_configuration_file(const string_view filename)
     { const vector<string_view> fields { clean_split_string <string_view> (testline, EQUALS) };
 
       if (fields.size() == 2)
-      { const string canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
+      { //const string canonical_prefix { delimited_substring <std::string> (fields[0], '[', ']', DELIMITERS::DROP) };
+        const string canonical_prefix { delimited_substring <string> (fields[0], SQUARE_BRACKETS, DELIMITERS::DROP) };
 
         _qthx += { canonical_prefix, ranges::to<STRING_SET>(clean_split_string <string> (RHS)) };
       }
@@ -871,7 +855,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
     if (LHS == "RATE"sv)
     { vector<unsigned int> new_rates;
 
-      FOR_ALL(clean_split_string <std::string_view> (rhs), [&new_rates] (const auto str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
+      FOR_ALL(clean_split_string <string_view> (rhs), [&new_rates] (const auto str) { new_rates += from_string<decltype(_rate_periods)::value_type>(str); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
@@ -883,7 +867,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // RBN FILE
     if (LHS == "RBN FILE"sv)
-    { _rbn_file = remove_peripheral_spaces <std::string> (rhs);
+    { _rbn_file = remove_peripheral_spaces <string> (rhs);
 
       ost << "RBN stream will be written to: " << _rbn_file << endl;
     }
@@ -954,8 +938,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 
 // SCORE BANDS
     if (testline.starts_with("SCORE BANDS"sv))
-    { //for (const auto& band_str : clean_split_string <string> (rhs))
-      for (const auto band_str : clean_split_string <string_view> (rhs))
+    { for (const auto band_str : clean_split_string <string_view> (rhs))
       { try
         { _score_bands += BAND_FROM_NAME.at(band_str);
         }
@@ -1088,7 +1071,7 @@ void drlog_context::_process_configuration_file(const string_view filename)
 // XSCP CUTOFF
     if ( (LHS == "XSCP CUTOFF"sv) or (LHS == "XSCP LIMIT"sv) or (LHS == "XSCP MINIMUM"sv) )
     { if (rhs.ends_with(PERCENT))           // if percentage
-        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_char_from_end <string> (rhs, PERCENT)), 0, 100);
+        _xscp_percent_cutoff = clamp(from_string<decltype(_xscp_cutoff)>(remove_from_end <string> (rhs, PERCENT)), 0, 100);
       else
         _xscp_cutoff = from_string<decltype(_xscp_cutoff)>(rhs);    // remains at default value (== 1) if % is present
     }
@@ -1321,8 +1304,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     static STRING_MAP<bool /* whether verbatim */> verbatim;   // key = name
 
     if (LHS == "STATIC WINDOW"sv)
-    { //const vector<string> fields { clean_split_string <string> (rhs) };       // avoid heterogeneous lookup (see below)
-      const vector<string_view> fields { clean_split_string <string_view> (rhs) };
+    { const vector<string_view> fields { clean_split_string <string_view> (rhs) };
 
       if (fields.size() == 2)  // name, contents
       { const string_view name { fields[0] };
@@ -1365,7 +1347,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { string contents { swin_contents };
 
               if (contents.size() >= 2)
-//                contents = delimited_substring <string> (contents, QUOTATION_MARK, QUOTATION_MARK, DELIMITERS::DROP);
                 contents = delimited_substring <string> (contents, QUOTATION_MARK, DELIMITERS::DROP);
 
               vector<string> lines { to_lines <string> (contents) };
@@ -1416,7 +1397,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
     if (testline.starts_with("MESSAGE KEY"sv))
-    { const vector<string_view> message_info { split_string <std::string_view> (testline, SPACE) };
+    { const vector<string_view> message_info { split_string <string_view> (testline, SPACE) };
 
       if ( (message_info.size() >= 5) and testline.contains(EQUALS) )
       {
@@ -1444,7 +1425,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               const string& alternative { equiv_keyname_str };
 
               if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
-              { const auto& [ alt_keyname_str, alt_key_symbol ] { *cit };
+              { const auto& [ _, alt_key_symbol ] { *cit };
 
                 if (!_messages.contains(alt_key_symbol))  // only if there is no message for this key
                 {  ost << "message associated with equivalent key is: " << str << endl;
@@ -1463,23 +1444,19 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       }
     }
 
+    auto cq_msg = [&testline] (void) { const vector<string> tokens { split_string <string> (testline, EQUALS) };
+
+                                       if (tokens.size() != 2)
+                                         print_error_and_exit(testline);
+
+                                       return tokens[1];
+                                     };
+
     if (LHS == "MESSAGE CQ 1"sv)
-    { const vector<string> tokens { split_string <string> (testline, EQUALS) };
-
-      if (tokens.size() != 2)
-        print_error_and_exit(testline);
-
-      _message_cq_1 = move(tokens[1]);
-    }
+      _message_cq_1 = cq_msg();
 
     if (LHS == "MESSAGE CQ 2"sv)
-    { const vector<string> tokens { split_string <string> (testline, EQUALS) };
-
-      if (tokens.size() != 2)
-        print_error_and_exit(testline);
-
-      _message_cq_2 = move(tokens[1]);
-    }
+      _message_cq_2 = cq_msg();
   }
 
 // possibly use custom groups for filter

@@ -83,8 +83,7 @@ public:
     <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
     is optional
 */
-//  alternative_country_info(const std::string_view record, const std::string& canonical_prefix = std::string { });
-  alternative_country_info(const std::string_view record, const std::string_view canonical_prefix = std::string_view { });
+  alternative_country_info(const std::string_view record, const std::string& canonical_prefix = std::string { });
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -235,20 +234,14 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-  inline explicit cty_data(const std::string_view filename = "cty.dat"sv)   // somewhere along the way the default name changed from CTY.DAT
-    { //const vector<string_view> records { split_string <string_view> ( remove_chars(read_file(filename), CRLF), SEMICOLON) };                  // read file, remove EOL markers and split into records
-
-      FOR_ALL(split_string <std::string_view> (remove_chars(read_file(filename), CRLF), SEMICOLON),
-                [this] (const std::string_view record_str) { emplace_back(cty_record { record_str }); } );    // // read file, remove EOL markers and split into records, then apply to base class
-    }
+  explicit cty_data(const std::string_view filename = "cty.dat"sv);   // somewhere along the way the default name changed from CTY.DAT
 
 /*! \brief              Construct from a file
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
   inline explicit cty_data(const std::vector<std::string>& path, const std::string_view filename = "cty.dat"sv)  // somewhere along the way the default name changed from CTY.DAT
-    { FOR_ALL(split_string_into_records <std::string_view> (remove_chars(read_file(path, filename), CRLF), SEMICOLON, DELIMITERS::DROP),
-                [this] (const std::string_view rec) { emplace_back(cty_record { rec }); }); }    // applies to base class
+    { FOR_ALL(split_string_into_records <std::string_view> (remove_chars(read_file(path, filename), CRLF), ';', DELIMITERS::DROP), [this] (const std::string_view rec) { emplace_back(cty_record { rec }); }); }    // applies to base class
 
 /// how many countries are present?
   inline unsigned int n_countries(void) const
@@ -256,7 +249,7 @@ public:
   
 /// return a record by number, wrt 0, with range checking
   inline cty_record operator[](const unsigned int n) const
-    { return (this -> at(n)); }
+    { return this->at(n); }
 };
 
 // -----------  russian_data_per_substring  ----------------
@@ -300,7 +293,7 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, [[ maybe_unused ]] const unsigned version)
+  void serialize(Archive& ar, const unsigned version)
     { ar & _sstring
          & _continent
          & _cq_zone
@@ -460,7 +453,7 @@ protected:
     \param  rec         the record to process
     \param  alt_type    type of alternatives to process
 */
-  void _process_alternative(const cty_record& rec, const ALTERNATIVES alt_type);
+  void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
 
 public:
 
@@ -506,7 +499,7 @@ public:
 
     Overwrites any extant entry with <i>call</i> as the key
 */
-  inline void add_alt_call(const std::string_view call, const location_info& li)
+  inline void add_alt_call(const std::string& call, const location_info& li)
     { _alt_call_db += { call, li }; }
 
 /*! \brief              Get location information for a particular call or partial call
@@ -539,7 +532,13 @@ public:
   template <typename T>
     requires is_sus<T> or is_vector<T>
   inline auto countries_in_continent(const std::string_view cont_target) const -> T
-    { return SR::to<T>( countries<T>() | SRV::filter([cont_target, this] (const std::string& cp) { return (continent(cp) == cont_target); }) ); }
+  { //T rv { };
+
+    //std::ranges::copy_if(countries<T>(), inserter(rv, rv.begin()), [cont_target, this, &rv] (const std::string& cp) { return (continent(cp) == cont_target); } );
+    return SR::to<T>( countries<T>() | SRV::filter([cont_target, this] (const std::string& cp) { return (continent(cp) == cont_target); }) );
+
+//    return rv;
+  }
 
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)
@@ -628,8 +627,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
-    { std::lock_guard lg(_location_database_mutex);
+  void serialize(Archive& ar, const unsigned int version)
+    { unsigned int v { version };   // dummy; for now, version isn't used
+      v = v + 0;
+
+      std::lock_guard lg(_location_database_mutex);
 
       ar & _db
          & _alt_call_db

@@ -1,4 +1,4 @@
-// $Id: log_message.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: log_message.cpp 243 2024-07-15 19:38:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

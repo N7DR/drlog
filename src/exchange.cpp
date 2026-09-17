@@ -46,8 +46,11 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
     \param  prefill_filename_map    map of fields to filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string /* filename */>& prefill_filename_map)
-{ for (const auto& [ field_name, fn ] : prefill_filename_map)
-  { const string_view filename { truncate_before_first <string_view> (fn, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
+{ //for (const auto& this_pair : prefill_filename_map)
+  for (const auto& [ field_name, fn ] : prefill_filename_map)
+  { //const string& field_name { this_pair.first };
+//    string_view   filename   { truncate_before_first <std::string_view> (this_pair.second, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
+    const string_view filename { truncate_before_first <std::string_view> (fn, COLON) };  // ":" is used to define the columns to read, if they aren't the first two
 
     try
     { UNORDERED_STRING_MAP<string /* prefill value */> call_value_map;  // key = call
@@ -56,8 +59,9 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
       unsigned int call_column  { 0 };
       unsigned int field_column { 1 };
 
+//      if (this_pair.second.contains(COLON))
       if (fn.contains(COLON))
-      { const vector<string_view> fields { split_string <string_view> (fn, COLON) };
+      { const vector<string_view> fields { split_string <std::string_view> (fn, COLON) };
 
         if (fields.size() != 3)
         { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
@@ -68,9 +72,10 @@ void exchange_field_prefill::insert_prefill_filename_map(const STRING_MAP<string
         field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
       }
 
-// read, remove CRs, tabs to spaces, squash, to lines; each line is then space-separated columns
-      for (const string& line : to_lines <string> ( to_upper( squash( replace( remove_char(read_file(filename), CR), TAB, SPACE) ) ) ))
-        if ( const vector<string> this_pair { split_string <string> (line, SPACE) }; (this_pair.size() > max(call_column, field_column)) )
+      const vector<string> lines { to_lines <std::string> ( to_upper( squash( replace( remove_char(read_file(filename), CR), TAB, SPACE) ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
+
+      for (const auto& line : lines)                                // each line should now be space-separated columns
+        if (const vector<string> this_pair { split_string <std::string> (line, SPACE) }; this_pair.size() > max(call_column, field_column))
           call_value_map += { this_pair.at(call_column), this_pair.at(field_column) };
 
       _db += { to_upper(field_name), call_value_map };
@@ -105,17 +110,15 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 
   ost << "Number of field names = " << db.size() << endl;
 
-//  for (const auto& element : db)
-  for (const auto& [ field_name, mapping ] : db)
-  { //ost << "Field name = " << element.first << endl;
-    ost << "Field name = " << field_name << endl;
+  for (const auto& element : db)
+  { ost << "Field name = " << element.first << endl;
 
-//    const auto& um { element.second };
+    const auto& um { element.second };
 
-    ost << "  Number of callsigns = " << mapping.size() << endl;
+    ost << "  Number of callsigns = " << um.size() << endl;
 
-    for (const auto& [ cs, val ] : mapping)
-      ost << "    Callsign: " << cs << "; Value: " << val << endl;
+    for (const auto& ss : um)
+      ost << "    Callsign: " << ss.first << "; Value: " << ss.second << endl;
   }
 
   return ost;
@@ -186,7 +189,7 @@ bool parsed_ss_exchange::_is_possible_serno(const string_view str) const
   if (rv)
   { const char lchar { last_char(str) };
 
-    rv = (isdigit(lchar) or legal_prec.contains(lchar));
+    rv = isdigit(lchar) or legal_prec.contains(lchar);
   }
 
   return rv;
@@ -464,7 +467,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, STRING_SET>& t) cons
   ost << "  { ";
 
   for (const auto& s : ss)
-    ost << s << SPACE;
+    ost << s << " ";
 
   ost << "}" << endl;
 }
@@ -573,7 +576,7 @@ _replacement_call(),
 
         try
         { if (field_name.contains(PLUS))                                           // if it's a CHOICE
-          { const STRING_SET choices { SR::to<STRING_SET>( split_string <string> (field_name, PLUS) ) };
+          { const STRING_SET choices { SR::to<STRING_SET>( split_string <std::string> (field_name, PLUS) ) };
 
             for (auto it { choices.begin() }; it != choices.end(); )    // see Josuttis 2nd edition, p. 343
             { if (exchange_field_eft.at(*it).is_legal_value(received_value))
@@ -683,7 +686,7 @@ _replacement_call(),
       { bool found_map { false };
                                         // if it's a CHOICE
         if (name.contains(PLUS))                                         // if it's a CHOICE
-        { const vector<string> choices_vec { split_string <string> (name, PLUS) };
+        { const vector<string> choices_vec { split_string <std::string> (name, PLUS) };
 
           for (unsigned int n { 0 }; n < choices_vec.size() and !found_map; ++n)    // typically just a choice of 2
           { try
@@ -846,12 +849,12 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 
 // if it's a QTHX, then don't go any further if the country doesn't match
   if ( field_name.starts_with("QTHX["sv) or field_name.starts_with("QTH2X["sv) )
-  { const string canonical_prefix { delimited_substring <string> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
+  { const string canonical_prefix { delimited_substring <std::string> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db += { { string { callsign }, string { field_name } }, EMPTY_STR };                     // so that it can be found immediately in future
  
-      return string { };
+      return EMPTY_STR;
     }
   }
 
@@ -974,7 +977,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   if (field_name == "GRID"sv)
   { const string grid_value { drm_line.grid() };
 
-    return insert_value( (grid_value.length() > 4) ? substring <string> (grid_value, 0, 4) : grid_value );
+    return insert_value( (grid_value.length() > 4) ? substring <std::string> (grid_value, 0, 4) : grid_value );
   }
 
   if (field_name == "HADXC"sv)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
@@ -1050,6 +1053,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
                                                            { "9H"s,   "EU023"s }
                                                         };
 
+
         rv = MUM_VALUE(iota_map, location_db.canonical_prefix(callsign)); 
       }
 
@@ -1066,11 +1070,13 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(location_db.itu_zone(callsign), INSERT_CANONICAL_VALUE);
   }
 
-  static const FLAT_STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
+  static const STRING_SET JAs { "JA"s, "JD/M"s, "JD/O"s };
 
   if ( (field_name == "JAPREF"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth());
 
+//  if ( (field_name == "KCJ"sv) and ( (set<string> { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
+//  if ( (field_name == "KCJ"sv) and ( (STRING_SET { "JA"s, "JD/M"s, "JD/O"s }).contains(location_db.canonical_prefix(callsign))) )
   if ( (field_name == "KCJ"sv) and JAs.contains(location_db.canonical_prefix(callsign)) )
     return insert_value(drm_line.qth2());    // I think that this should work
 
@@ -1081,7 +1087,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (field_name.starts_with("QTHX["sv))     // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string_view canonical_prefix { delimited_substring <string_view> (field_name, SQUARE_BRACKETS, DELIMITERS::DROP) };
+  { const string_view canonical_prefix { delimited_substring <std::string_view> (field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "QTHX: Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
@@ -1092,7 +1098,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
   }
 
   if ((field_name == "RDA"sv) or (field_name == "RD2"sv))
-  { static const FLAT_STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
+  { static const STRING_SET countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
 
@@ -1100,7 +1106,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
     { rv = drm_line.qth();
 
       if ( (field_name == "RD2"sv) and (rv.length() > 2) )     // allow for case when full 4-character RDA is in the drmaster file
-        rv = substring <string> (rv, 0, 2);
+        rv = substring <std::string> (rv, 0, 2);
 
       return insert_value(rv); 
     }
@@ -1146,7 +1152,7 @@ string exchange_field_database::guess_value(const string_view callsign, const st
 // give up
   _db += { { string { callsign }, string { field_name } }, EMPTY_STR };  // so we find it next time
 
-  return string { };
+  return EMPTY_STR;
 }
 
 /*! \brief              Set a value in the database
@@ -1175,13 +1181,12 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   { const string contents { read_file(path, filename) };
 
     if (!contents.empty())
-    { const vector<string> lines { to_lines <string> (to_upper(remove_char(contents, CR))) };        // in case it's a silly Microsoft-format file
+    { const vector<string> lines { to_lines <std::string> (to_upper(remove_char(contents, CR))) };        // in case it's a silly Microsoft-format file
 
       for (int n { 0 }; n < ssize(lines); ++n)
       { const string line { squash(replace(lines[n], TAB, SPACE), SPACE) };
 
-//        if (const vector<string> tokens { clean_split_string <string> (line, SPACE) }; tokens.size() == 2)
-        if (const vector<string_view> tokens { clean_split_string <string_view> (line, SPACE) }; tokens.size() == 2)
+        if (const vector<string> tokens { clean_split_string <string> (line, SPACE) }; tokens.size() == 2)
         { if ( (n == 0) and (tokens[0] == "CALL"sv) )   // possibly ignore this line
             continue;
 
@@ -1215,7 +1220,7 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
   static const EFT prec_eft    { rules.exchange_field_eft("PREC"sv) };
   static const EFT section_eft { rules.exchange_field_eft("SECTION"sv) };
 
-  const vector<string> r_vec { remove_peripheral_spaces <string> (split_string <string> (received_exchange, SPACE_STR)) };
+  const vector<string> r_vec { remove_peripheral_spaces <std::string> (split_string <std::string> (received_exchange, SPACE_STR)) };
 
 //  const static regex check_regex("^[[:digit:]][[:digit:]]$");
 //  const static regex serno_regex("^([[:digit:]])+$");

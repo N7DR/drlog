@@ -62,7 +62,7 @@ protected:
     \return     <i>mv</i>, but without any values that contain an asterisk
 */
   inline MULT_SET _filter_asterisks(const MULT_SET& mv) const
-    { return SR::to<MULT_SET>(mv | SRV::filter([] (const std::string& str) { return !str.contains(ASTERISK); })); }
+    { return SR::to<MULT_SET>(mv | SRV::filter([] (const std::string& str) { return !str.contains('*'); })); }
 
 public:
 
@@ -192,6 +192,8 @@ public:
 
     Includes any non-mult values
 */
+//  MULT_SET worked(const int b, const int m) const;
+//  MULT_SET worked(const BAND b, const int m) const;
   MULT_SET worked(const BAND b, const MODE m) const;
 
 /// Set all bands and modes to state in which no mults have been worked
@@ -205,8 +207,11 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
-  { ar & _known
+  void serialize(Archive& ar, const unsigned int version)
+  { unsigned int v { version };   // dummy; for now, version isn't used
+    v = v + 0;
+
+    ar & _known
        & _per_band
        & _per_mode
        & _used

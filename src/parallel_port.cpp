@@ -18,6 +18,7 @@
 
 #include "log_message.h"
 #include "parallel_port.h"
+#include "string_functions.h"
 
 #include <iostream>
 
@@ -36,7 +37,8 @@ extern message_stream ost;                                  ///< for debugging, 
 /*! \brief              Open a port
     \param  filename    name of the port to open
 */
-parallel_port::parallel_port(const string& filename)
+//parallel_port::parallel_port(const string& filename)
+parallel_port::parallel_port(const string_view filename)
 { int status { ieee1284_find_ports(&_list_from_library, 0) };
 
   if (status != E1284_OK)
@@ -49,7 +51,7 @@ parallel_port::parallel_port(const string& filename)
   bool found_match { false };
 
   for (unsigned int n = 0; !found_match and n < n_ports; ++n)
-  { if (static_cast<string>(_list_from_library.portv[n]->filename) == filename)
+  { if (static_cast<string>(_list_from_library.portv[n] -> filename) == filename)
     { const int status { ieee1284_open(_list_from_library.portv[n], 0, &capabilities) };
 
       if (status == E1284_INIT)
@@ -68,7 +70,8 @@ parallel_port::parallel_port(const string& filename)
         ost << "Error opening parallel port: E1284_SYS" << endl;
 
       if (status != E1284_OK)
-        throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port "s + filename + "."s);
+//        throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port "s + filename + "."s);
+        throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port "s + filename + FULL_STOP);
 
       found_match = true;
       _port_nr = n;
@@ -90,5 +93,6 @@ parallel_port::parallel_port(const string& filename)
     ost << "Error claiming parallel port: E1284_SYS" << endl;
 
   if (status != E1284_OK)
-    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port "s + filename + "."s);
+//    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port "s + filename + "."s);
+    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port "s + filename + FULL_STOP);
 }

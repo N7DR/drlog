@@ -99,24 +99,24 @@ inline std::string to_string(const BAND b)
 inline std::ostream& operator<<(std::ostream& ost, const BAND b)
   { return (ost << to_string(b)); }
 
-//inline std::string_view to_string_view(const BAND b)
-//  { return std::string_view { BAND_NAME.at(b) }; }    // does this work?
+// convert from BAND to string_view
+inline std::string_view to_string_view(const BAND b)
+  { return std::string_view { BAND_NAME.at(to_uint(b)) }; }    // does this work?
 
 /// modes that drlog knows about
-enum  class  MODE { MODE_CW = 0,
-            MODE_SSB,
-            MODE_RTTY,
-            ANY_MODE,
-            ALL_MODES = ANY_MODE,
-            MIN_MODE = MODE_CW,
-            MAX_MODE = ANY_MODE - 1
-          };
+enum class MODE { MODE_CW = 0,
+                  MODE_SSB,
+                  MODE_RTTY,
+                  ANY_MODE,
+                  ALL_MODES = ANY_MODE,
+                  MIN_MODE = MODE_CW,
+                  MAX_MODE = ANY_MODE - 1
+                };
 
 using enum MODE;  // save typing and confusing naming wherever MODE is used
 
 constexpr unsigned int NUMBER_OF_MODES { to_uint(MAX_MODE) + 1 };       ///< how many modes does drlog know about?
 constexpr unsigned int N_MODES         { NUMBER_OF_MODES };             ///< how many modes does drlog know about?
-//constexpr unsigned int ALL_MODES       { N_MODES };                     ///< indicator used to mean "all modes"
 
 /// mode names
 static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
@@ -124,6 +124,7 @@ static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
                                                                     "RTTY"s
                                                                   };
 
+// convert from MODE to string
 inline std::string to_string(const MODE m)
   { return MODE_NAME.at(to_uint(m)); }
 
@@ -330,9 +331,9 @@ public:
 
 /// serialise
   template<typename Archive>
-  void serialize(Archive& ar, const unsigned int version)
-    { unsigned int v { version };   // dummy; for now, version isn't used
-      v = v + 0;
+  void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
+    { //unsigned int v { version };   // dummy; for now, version isn't used
+      //v = v + 0;
 
       ar & _hz;
     }

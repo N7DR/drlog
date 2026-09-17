@@ -1247,18 +1247,19 @@ string wpx_prefix(const string_view call)
 // make sure we deal with AA1AA/M/QRP
 
 // /QRP -- deal with this first
-  callsign = remove_string_from_end <string> (callsign, "/QRP"sv);
+//  callsign = remove_string_from_end <string> (callsign, "/QRP"sv);
+  callsign = remove_from_end <string> (callsign, "/QRP"sv);
 
 // remove portable designators
   if ((callsign.length() >= 2) and (penultimate_char(callsign) == SLASH))
   { static const string portables { "AEJMP"sv };                 // concluding characters that might mean "portable"
 
     if (portables.find(last_char(callsign)) != string::npos)
-      callsign = remove_n_chars_from_end <string> (callsign, 2u);
+      callsign = remove_n_chars_from_end <string> (callsign, 2);
     else
       if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
-        callsign = remove_n_chars_from_end <string> (callsign, 2u);
+        callsign = remove_n_chars_from_end <string> (callsign, 2);
       }
   }
 
@@ -1267,7 +1268,7 @@ string wpx_prefix(const string_view call)
   { static const FLAT_STRING_SET mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles.contains(last <string_view> (callsign, 2)))
-      callsign = remove_n_chars_from_end <string> (callsign, 3u);
+      callsign = remove_n_chars_from_end <string> (callsign, 3);
   }
 
 // trivial -- and almost unknown -- case first: no digits

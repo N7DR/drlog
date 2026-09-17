@@ -59,8 +59,9 @@ constexpr char ASTERISK             { '*' };
 constexpr char AT_SIGN              { '@' };
 constexpr char BACKSLASH            { '\\' };
 constexpr char BACKTICK             { '`' };
+constexpr char CARET                { '^' };
 constexpr char CARRIAGE_RETURN      { '\r' };
-constexpr char CIRCUMFLEX           { '^' };
+constexpr char CIRCUMFLEX           { CARET };
 constexpr char COLON                { ':' };
 constexpr char COMAT                { AT_SIGN };
 constexpr char COMMA                { ',' };
@@ -71,6 +72,7 @@ constexpr char DOT                  { '.' };
 constexpr char EOL                  { '\n' };
 constexpr char EQUALS               { '=' };
 constexpr char EXCLAMATION_MARK     { '!' };
+constexpr char FULL_STOP            { DOT };
 constexpr char GREATER_THAN         { '>' };
 constexpr char GT                   { GREATER_THAN };
 constexpr char HYPHEN               { DASH };
@@ -384,7 +386,7 @@ std::string replace_substring(const std::string_view s, const size_t start_posn,
     \param  posn    putative start position of <i>ss</i>
     \return         whether <i>s</i> contains the substring <i>ss</i>, starting at position <i>posn</i>
 */
-inline bool contains_at(std::string_view s, std::string_view ss, const size_t posn)
+inline bool contains_at(const std::string_view s, const std::string_view ss, const size_t posn)
   { return (s.length() >= posn + ss.length()) and (substring <std::string_view> (s, posn, ss.length()) == ss); }
 
 /*! \brief          Does a vector of strings contain an element that is equivalent to a particular string_view?
@@ -616,7 +618,7 @@ inline auto remove_n_chars_from_end(const std::string_view s, const unsigned int
     If <i>e</i> is not present, just returns <i>s</i>
 */
 template <typename STYPE>
-inline auto remove_string_from_end(const std::string_view s, const std::string_view e) -> STYPE
+inline auto remove_from_end(const std::string_view s, const std::string_view e) -> STYPE
   { return ( s.ends_with(e) ? remove_n_chars_from_end <STYPE> (s, e.length()) : STYPE { s } ); }
 
 /*! \brief      Remove character if present at the end of a string
@@ -627,8 +629,8 @@ inline auto remove_string_from_end(const std::string_view s, const std::string_v
     If <i>c</i> is not present, just returns <i>s</i>
 */
 template <typename STYPE>
-inline auto remove_char_from_end(const std::string_view s, const char c) -> STYPE
-  { return ( s.ends_with(c) ? remove_n_chars_from_end <STYPE> (s, 1u) : STYPE { s } ); }
+inline auto remove_from_end(const std::string_view s, const char c) -> STYPE
+  { return ( s.ends_with(c) ? remove_n_chars_from_end <STYPE> (s, 1) : STYPE { s } ); }
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -1020,6 +1022,15 @@ std::string remove_char_from_delimited_substrings(const std::string_view cs, con
 inline std::string remove_char_from_delimited_substrings(const std::string_view cs, const char char_to_remove, const std::pair<char, char>& delims)
   { return remove_char_from_delimited_substrings(cs, char_to_remove, delims.first, delims.second); }
 
+/*! \brief                  Remove all instances of a particular char from all delimited substrings
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
+    \param  delim           delimiter
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delims</i>
+*/
+inline std::string remove_char_from_delimited_substrings(const std::string_view cs, const char char_to_remove, const char delim)
+  { return remove_char_from_delimited_substrings(cs, char_to_remove, delim, delim); }
+
 /*! \brief                      Obtain a delimited substring
     \param  cs                  original string
     \param  delim_1             opening delimiter
@@ -1216,7 +1227,7 @@ std::string join(const T& ct, const U sep)
 */
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
- requires ( !is_string<typename T::value_type> and has_to_string<typename T::value_type> )
+ requires ( !is_string<typename T::value_type> and globally_stringable<typename T::value_type> )
 { std::string rv { };
 
   for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)
@@ -1302,8 +1313,11 @@ inline std::string to_lower(const std::string_view cs)
     \param  callsign    call to test
     \return             whether <i>callsign</i> appears to be a maritime mobile
 */
-inline bool is_maritime_mobile(const std::string& callsign)
-  { return to_upper(callsign).ends_with("/MM"sv); }
+inline bool is_maritime_mobile(const std::string_view callsign)
+  { return (callsign.length() >= 6) and (antepenultimate_char(callsign) == SLASH) and
+             ( (penultimate_char(callsign) == 'M') or (penultimate_char(callsign) == 'm') ) and
+             ( (last_char(callsign) == 'M') or (last_char(callsign) == 'm') );
+  }
 
 /*! \brief          Convert an integer to a character-separated string
     \param  n       number to convert
@@ -1412,7 +1426,7 @@ inline bool is_legal_value(const std::string_view value, const std::string_view 
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
 inline bool is_legal_value(const std::string_view value, const std::string_view legal_values, const char separator = COMMA)
-  { return (contains(split_string <std::string_view> (legal_values, separator), value)); }
+  { return contains(split_string <std::string_view> (legal_values, separator), value); }
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call
@@ -1432,7 +1446,7 @@ bool compare_mults(const std::string_view mult1, const std::string_view mult2);
 
 // *** https://www.fluentcpp.com/2017/06/09/search-set-another-type-key/ see discussion of is_transparent
 
-/*! \brief  structure to sort strings
+/*! \brief      Structure to sort strings
     \param  PF  pointer to the function to perform the sorting
 */
 template<bool (*PF)(const std::string_view, const std::string_view)>    // (sv, sv) => heterogeneous lookup automatically supported

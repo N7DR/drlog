@@ -82,7 +82,7 @@ string autocorrect_database::corrected_call(const string_view str) const
 //   T in front of a US K call
 //   T in front of a US N call
   if (absent and (str.starts_with("EK"sv) or str.starts_with("TK"sv) or str.starts_with("TN"sv)))
-  { if (const string_view call_to_test { substring <string_view> (str, 1) }; contains(call_to_test))
+  { if (const string call_to_test { substring <string> (str, 1) }; contains(call_to_test))
       return insert(str, call_to_test);
   }
 
@@ -286,7 +286,7 @@ string band_dynamic_autocorrect_database::autocorrect(const dx_post& post)
 
 //  std::map<time_t, std::map<F100_TYPE /* f_100 */, UNORDERED_STRING_MAP<size_t /* number of appearances */>>> _data_map_map_map; // time in minutes, f_100, callsign, number of times the
 
-  for (auto& [_, freq_map] : _data_map_map_map)
+  for (auto& [minutes, freq_map] : _data_map_map_map)
   {
 // test only if frequency is in range
     const auto lb { freq_map.lower_bound(low_target) };

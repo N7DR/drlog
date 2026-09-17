@@ -122,7 +122,7 @@ string operator+(const string& s, const string_view sv)
     \param  c   character to append
     \return     concatenation of <i>sv</i> and <i>c</i>
 */
-std::string operator+(const std::string_view sv, const char c)
+string operator+(const string_view sv, const char c)
 { string rv;
 
   rv.reserve(sv.size() + 1);
@@ -137,7 +137,7 @@ std::string operator+(const std::string_view sv, const char c)
     \param  str   string to append to append
     \return       concatenation of <i>c</i> and <i>str</i>
 */
-std::string operator+(const char c, const std::string_view str)
+string operator+(const char c, const string_view str)
 { string rv;
 
   rv.reserve(str.size() + 1);
@@ -147,7 +147,6 @@ std::string operator+(const char c, const std::string_view str)
 
   return rv;
 }
-
 
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
@@ -647,7 +646,7 @@ string nth_word(const string_view s, const unsigned int n, const unsigned int wr
   const size_t posn_1 { starts[actual_word_number] };
   const size_t posn_2 { ( (actual_word_number + 1) >= starts.size() ? string::npos : starts[actual_word_number + 1] ) };
 
-  rv = remove_peripheral_spaces <std::string> (substring <std::string> (s, posn_1, posn_2 - posn_1));
+  rv = remove_peripheral_spaces <string> (substring <string> (s, posn_1, posn_2 - posn_1));
 
   return rv;
 }
@@ -876,8 +875,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 { unsigned int idx { 0 };
 
   for (const auto& str : vec)
-  { //ost << LEFT_SQUARE_BRACKET << idx++ << "]: " << str;
-    ost << delimit(::to_string(idx++), SQUARE_BRACKETS) << ": " << str;
+  { ost << delimit(::to_string(idx++), SQUARE_BRACKETS) << ": " << str;
 
     if (idx != vec.size())
       ost << endl;
@@ -894,7 +892,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
     
     Returns string::npos if <i>target</i> cannot be found
 */
-size_t case_insensitive_find(const std::string_view str, const std::string_view target, const size_t start_posn)
+size_t case_insensitive_find(const string_view str, const string_view target, const size_t start_posn)
 { auto it { str.cbegin() };
 
   if (start_posn != 0)
@@ -902,7 +900,7 @@ size_t case_insensitive_find(const std::string_view str, const std::string_view 
   
   const auto posn { search(it, str.cend (), target.cbegin(), target.cend(), [] (const char ch1, const char ch2) { return toupper(ch1) == toupper(ch2); } ) };
 
-  return ( (posn == str.cend()) ? string::npos : distance(it, posn) + start_posn);
+  return ( (posn == str.cend()) ? string_view::npos : distance(it, posn) + start_posn);
 }
 
 /*! \brief              Get the base portion of a call
@@ -985,9 +983,9 @@ bool is_bust_call(const string_view call1, const string_view call2) noexcept
 
 // is the bust in the form of an additional character somewhere in the call?
     for (size_t posn { 1 }; posn < longer.length() - 1; ++posn)
-    { const string tmp { longer.substr(0, posn) + longer.substr(posn + 1) };    // have to use a string here
+    { //const string tmp { longer.substr(0, posn) + longer.substr(posn + 1) };    // have to use a string here
 
-      if (tmp == shorter)
+      if ( (longer.substr(0, posn) + longer.substr(posn + 1)) == shorter)
         return true;
     }
 

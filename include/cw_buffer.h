@@ -92,7 +92,8 @@ public:
     \param  wpm_speed       speed in WPM
     \param  cw_priority     priority of the thread that sends CW
 */
-  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority);
+//  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority);
+  cw_buffer(const std::string_view filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority);
 
 /// no copy constructor
   cw_buffer(const cw_buffer& cwb) = delete;

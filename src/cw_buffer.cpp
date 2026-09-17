@@ -59,21 +59,11 @@ extern message_stream ost;              ///< for debugging, info
     negative values represent key up;
     zero represents the start of an embedded command
 */
-#if 0
-void cw_buffer::_add_action(const int n)
-{ //SAFELOCK(_key_buffer);
-
-  _key_buffer += n;
-}
-#endif
-
-#if 1
 void cw_buffer::_add_action(const int n)
 { SAFELOCK(_key_buffer);
 
   _key_buffer += n;
 }
-#endif
 
 /*! \brief          Wrapper function to play the buffer
     \param  arg     "this" pointer
@@ -82,7 +72,7 @@ void cw_buffer::_add_action(const int n)
 void* cw_buffer::_static_play(void* arg)              // arg is the "this" pointer, in order to allow static member access to a real object
 { cw_buffer* bufp { static_cast<cw_buffer*>(arg) };
 
-  bufp->_play(nullptr);
+  bufp -> _play(nullptr);
 
   return nullptr;
 }
@@ -148,7 +138,8 @@ void* cw_buffer::_play(void*)
         {
 // possibly we should leave PTT asserted for a millisecond
           _port.control(PTT);         // key up but keep PT asserted
-          sleep_for(microseconds(1000));
+//          sleep_for(microseconds(1000));
+          sleep_for(1ms);
 
           _port.control(0);
           ptt_asserted = false;
@@ -176,7 +167,8 @@ void* cw_buffer::_play(void*)
         if (buffer_is_empty)      // did we empty the buffer?
         {
 // leave PTT asserted for a millisecond
-          sleep_for(microseconds(1000));
+//          sleep_for(microseconds(1000));
+          sleep_for(1ms);
 
           _port.control(0);
           ptt_asserted = false;
@@ -200,7 +192,8 @@ void* cw_buffer::_play(void*)
           }
 
           if (buffer_is_empty)
-          { sleep_for(microseconds(1000));  // wait for one millisecond; this should never happen: it means that we got a command indicator without a command
+          { //sleep_for(microseconds(1000));  // wait for one millisecond; this should never happen: it means that we got a command indicator without a command
+            sleep_for(1ms);  // wait for one millisecond; this should never happen: it means that we got a command indicator without a command
 
             time_out_counter++;
           }
@@ -218,7 +211,7 @@ void* cw_buffer::_play(void*)
         { switch (command)
           { case CMD_CLEAR_RIT :
               if (_rigp)
-                _rigp->rit(0);
+                _rigp -> rit(0);
               break;
 
             case CMD_SLOWER :
@@ -247,8 +240,7 @@ void* cw_buffer::_play(void*)
         {
 // possibly we should leave PTT asserted for a millisecond
           _port.control(PTT);         // key up but keep PTT asserted
-//          sleep_for(microseconds(1000));
-          sleep_for(1000us);
+          sleep_for(1ms);
 
           _port.control(0);
           ptt_asserted = false;
@@ -292,7 +284,8 @@ void* cw_buffer::_play(void*)
     \param  wpm_speed       speed in WPM
     \param  cw_priority     priority of the thread that sends CW
 */
-cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
+//cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
+cw_buffer::cw_buffer(const string_view filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
   _port(filename),
   _ptt_delay(delay),
   _rigp(nullptr)
@@ -632,56 +625,56 @@ void cw_buffer::add(const char c, const int character_space)
       DAH; DAH; DAH; DAH; DAH;
       break;
 
-    case ' ' :
-    case '_' :
+    case SPACE :
+    case UNDERSCORE :
       space = 0;       // ??? yes?
       key_up(400);                            // 100 from last character + 200 = 300
       break;
 
-    case '/' :
+    case SLASH :
       DAH; DIT; DIT; DAH; DIT;
       break;
 
-    case '?' :
+    case QUESTION_MARK :
       DIT; DIT; DAH; DAH; DIT; DIT;
       break;
 
-    case ',' :
+    case COMMA :
       DAH; DAH; DIT; DIT; DAH; DAH;
       break;
 
-    case '.' :
+    case FULL_STOP :
       DIT; DAH; DIT; DAH; DIT; DAH;
       break;
 
-    case '@' :
+    case COMAT :
       DIT; DAH; DAH; DIT; DAH; DIT;
       break;
 
-    case '\'' :
+    case APOSTROPHE :
       DIT; DAH; DAH; DAH; DAH; DIT;
       break;
 
-    case '^' :                              // half-length space
+    case CARET :                            // half-length space
       space = 0;
       key_up(150);                          // 100 from last character + 50 = 150 = (300 / 2)
       break;
 
-    case '!' :                              // quarter-length space (not available in TR)
+    case EXCLAMATION_MARK :                              // quarter-length space (not available in TR)
       space = 0;
       key_up(25);
       break;
 
 // prosigns; compatible with TRLOG
-    case '(' :                              // AR  '+' in TRLOG
+    case LEFT_PARENTHESIS :                              // AR  '+' in TRLOG
       DIT; DAH; DIT; DAH; DIT;
       break;
 
-    case '<' :                              // SK
+    case LESS_THAN :                              // SK
       DIT; DIT; DIT; DAH; DIT; DAH;
       break;
 
-    case '=' :                              // Pause (BT)
+    case EQUALS :                              // Pause (BT)
       DAH; DIT; DIT; DIT; DAH;
       break;
 
@@ -748,19 +741,19 @@ void cw_buffer::add(const char c, const int character_space)
       break;
 
 // special commands
-    case '>' :                               // clear RIT
+    case GREATER_THAN :                               // clear RIT
       space = 0;
       _key_buffer += 0;                   // command
       _key_buffer += CMD_CLEAR_RIT;
       break;
 
-    case '-' :                               // slower by 1 WPM (not compatible with TRLOG)
+    case MINUS :                               // slower by 1 WPM (not compatible with TRLOG)
       space = 0;
       _key_buffer += 0;                   // command
       _key_buffer += CMD_SLOWER;
       break;
 
-    case '+' :                               // faster by 1 WPM (not compatible with TRLOG)
+    case PLUS :                               // faster by 1 WPM (not compatible with TRLOG)
       space = 0;
       _key_buffer += 0;                   // command
       _key_buffer += CMD_FASTER;

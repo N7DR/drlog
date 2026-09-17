@@ -118,7 +118,8 @@ public:
 /*! \brief  Open a port
     \param  filename    name of the port to open
 */
-  explicit parallel_port(const std::string& filename);
+//  explicit parallel_port(const std::string& filename);
+  explicit parallel_port(const std::string_view filename);
 
 /// destructor -- closes the port
   inline ~parallel_port(void)

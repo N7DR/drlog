@@ -1980,7 +1980,7 @@ string elecraft_k3_interface::raw_command(const string_view cmd, const RESPONSE 
       else                                              // not a P3 screenshot; keep reading until we receive at least one ";"
       { static int rig_communication_failures { 0 };
 
-        while (!completed and (counter < MAX_ATTEMPTS))
+        while (!completed and (counter < MAX_ATTEMPTS) )
         { set_timeout(0, TIMEOUT_MICROSECONDS);
 
           if (counter)                          // we've already slept the first time through
@@ -2336,6 +2336,8 @@ void elecraft_k3_interface::centre_frequency(const unsigned int fc) const
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
+
+    Works only with K3
 */
 bool elecraft_k3_interface::rx_ant(void) const
 { if (_rig_connected)
@@ -2364,6 +2366,8 @@ bool elecraft_k3_interface::rx_ant(void) const
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
+
+    Works only with K3
 */
 void elecraft_k3_interface::rx_ant(const bool torf) const
 { if (_rig_connected)
@@ -2377,11 +2381,10 @@ void elecraft_k3_interface::rx_ant(const bool torf) const
     \param  ds_result   previously-obtained result of a DS command, or empty string
     \return             whether notch is currently enabled
 
-    See section K3 Programmer's Reference, § "DS (VFO A and Basic Icon Read; GET only)"
+    Works only with K3
 */
 bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
-{ constexpr char K3_NOTCH_BIT       { 0b00000010 };
-  constexpr int  K3_ICON_FLASH_DATA { 11 };
+{ constexpr char K3_NOTCH_BIT { 0b00000010 };
 
   if (!_rig_connected)
     return false;
@@ -2396,7 +2399,7 @@ bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
     return false;
   }
   else
-  { const char c         { result[K3_ICON_FLASH_DATA] };              // get the char representing the icon flash data
+  { const char c         { result[11] };              // icon flash data
     const bool notch_bit { (c bitand K3_NOTCH_BIT) == K3_NOTCH_BIT };
 
     return notch_bit;
@@ -2404,9 +2407,11 @@ bool elecraft_k3_interface::notch_enabled(const string_view ds_result) const
 }
 
 /*! \brief  Toggle the notch status
+
+    Works only with K3
 */
 void elecraft_k3_interface::toggle_notch_status(void) const
-{ if (AUTO_NOTCH())                   // should always be true
+{ if (AUTO_NOTCH())
     k3_press(K3_BUTTON_TAP::NOTCH);
   else
     ost << "Attempt to control notch status on rig without AUTO_NOTCH capability" << endl;
@@ -2414,6 +2419,8 @@ void elecraft_k3_interface::toggle_notch_status(void) const
 
 /*! \brief      Set the K3 command mode (either NORMAL or EXTENDED)
     \param  cm  command mode
+
+    Works only with K3
 */
 void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 { switch (cm)
@@ -2430,14 +2437,12 @@ void elecraft_k3_interface::k3_command_mode(const K3_COMMAND_MODE cm)
 /*! \brief      Get the K3 command mode (either NORMAL or EXTENDED)
     \return     the K3 command mode
 */
-#if 0
 K3_COMMAND_MODE elecraft_k3_interface::k3_command_mode(void) const
 { if (const string result { raw_command("K3;"sv, RESPONSE::EXPECTED) }; result == "K31"sv)
     return K3_COMMAND_MODE::EXTENDED;
 
   return K3_COMMAND_MODE::NORMAL;
 }
-#endif
 
 /*! \brief          Emulate the tapping or holding of a K3 button
     \param  button  the K3 button to tap or hold
@@ -2458,9 +2463,9 @@ void elecraft_k3_interface::k3_press(const variant<K3_BUTTON_TAP, K3_BUTTON_HOLD
     this is CURRENTLY UNUSED
 */
 void elecraft_k3_interface::k3_double_tap(const K3_BUTTON_TAP button) const
-{ constexpr duration K3_TIME_BETWEEN_TAPS { 50ms };
+{ SAFELOCK(_rig);
 
-  SAFELOCK(_rig);
+  constexpr duration K3_TIME_BETWEEN_TAPS { 50ms };
 
   k3_press(button);
   sleep_for(K3_TIME_BETWEEN_TAPS);
@@ -2579,21 +2584,21 @@ rig_capabilities::rig_capabilities(const std::string_view fn)
       const string_view sv { remove_peripheral_spaces <string_view> (remove_trailing_comment <string_view> (uc)) };
 
       if (!sv.empty())
-      { READ_CAPABILITY(AUDIO_BW);
-        READ_CAPABILITY(AUDIO_CENTRE);
-        READ_CAPABILITY(EQUAL_RIT_XIT_QRG);
-        READ_CAPABILITY(LOCK_A);
-        READ_CAPABILITY(REVERSE_SPLIT);
-        READ_CAPABILITY(RIT);
-        READ_CAPABILITY(SPLIT);
-        READ_CAPABILITY(VFO_A);
+      { READ_CAPABILITY(VFO_A);
         READ_CAPABILITY(VFO_B);
+        READ_CAPABILITY(RIT);
         READ_CAPABILITY(XIT);
+        READ_CAPABILITY(EQUAL_RIT_XIT_QRG);
+        READ_CAPABILITY(SPLIT);
+        READ_CAPABILITY(REVERSE_SPLIT);
+        READ_CAPABILITY(LOCK_A);
         READ_CAPABILITY(LOCK_B);
         READ_CAPABILITY(SUB_RX);
         READ_CAPABILITY(TEST);
         READ_CAPABILITY(RX_ANT);
         READ_CAPABILITY(AUTO_NOTCH);
+        READ_CAPABILITY(AUDIO_BW);
+        READ_CAPABILITY(AUDIO_CENTRE);
         READ_CAPABILITY(BANDSCOPE);
 
 end_test:

@@ -160,8 +160,8 @@ protected:
   std::string           _poster;            ///< call of poster
   std::string           _poster_continent;  ///< continent of <i>_poster</i>
   enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
-//  time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
-  TIME_POINT            _time_processed;    ///< time at which we processed the post
+  time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
+  TIME_POINT            _time_processed_1;  ///< time at which we processed the post
   bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
@@ -188,8 +188,8 @@ public:
   READ(poster);                 ///< call of poster
   READ(poster_continent);       ///< continent of <i>_poster</i>
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
-//  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
-  READ(time_processed);         ///< time at which we processed the post
+  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(time_processed_1);       ///< time at which we processed the post
   READ(valid);                  ///< is it a valid post?
 
 // syntactic sugar
@@ -237,7 +237,7 @@ public:
   explicit monitored_posts_entry(const dx_post& post) :
     _callsign(post.callsign()),
     _frequency_str(post.frequency_str()),
-    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+    _expiration(post.time_processed_1() + MONITORED_POSTS_DURATION),
     _band(post.band())
   { }
 
@@ -248,6 +248,7 @@ public:
 
 /// convert to a string suitable for display in a window
   inline std::string to_string(void) const
+//    { return ( pad_left(_frequency_str, 7) + SPACE_STR + _callsign ); }
     { return ( pad_left(_frequency_str, 7) + SPACE + _callsign ); }
 };
 

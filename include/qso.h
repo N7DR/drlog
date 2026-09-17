@@ -276,7 +276,6 @@ public:
     
 /// return a single date-and-time string
   inline std::string date_and_time(void) const
-//    { return (_date + "T"s + _utc); }
     { return (_date + 'T' + _utc); }
 
 /// is this QSO earlier than another one? 
@@ -395,10 +394,7 @@ public:
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, [[maybe_unused]] const unsigned int version)
-    { //unsigned int v { version };   // dummy; for now, version isn't used
-      //v = v + 0;
-
-      ar & _band
+    { ar & _band
          & _callsign
          & _canonical_prefix
          & _comment

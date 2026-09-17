@@ -268,7 +268,8 @@ template <class T> concept ANYSET = is_anyset<T>;
 
 template <class T> concept is_container_of_strings = (is_sus<T> or is_ssuss<T> or is_vector<T> or is_list<T>) and is_ssv<typename T::value_type>;
 
-template <class T> concept has_to_string = requires(T a)
+//template <class T> concept has_to_string = requires(T a)
+template <class T> concept globally_stringable = requires(T a)
   { { to_string(a) } -> std::same_as<std::string>; };
 
 // chrono durations
@@ -358,12 +359,14 @@ inline constexpr int to_int(const std::atomic<U>& atv)  // must use reference be
   { return to_int(atv.load()); }
 
 template <typename T>
-  requires (std::is_enum_v<T>) and (has_to_string<T>)
+//  requires (std::is_enum_v<T>) and (has_to_string<T>)
+  requires (std::is_enum_v<T>) and (globally_stringable<T>)
 inline std::ostream& operator<<(std::ostream& ost, const T v)
   { return (ost << to_string(v)); }
 
 template <typename T>
-  requires (std::is_enum_v<T>) and (!has_to_string<T>)
+//  requires (std::is_enum_v<T>) and (!has_to_string<T>)
+  requires (std::is_enum_v<T>) and (!globally_stringable<T>)
 inline std::ostream& operator<<(std::ostream& ost, const T v)
   { return (ost << to_int(v)); }
 
@@ -1054,50 +1057,27 @@ template <typename C, typename K, typename V>
 inline void operator+=(C& mum, std::pair<K, V>&& element)
   { mum.emplace(std::pair<std::string, typename C::mapped_type> { std::string {element.first}, element.second }); }
 
-/*! \brief          Write a map to an output stream
-    \param  ost     output stream
-    \param  mp      object to write
-    \return         the output stream
-*/
-template <class T>
-  requires is_map<T>
-std::ostream& operator<<(std::ostream& ost, const T& mp)
-{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
-    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
-
-  return ost;
-}
-
-/*! \brief          Write an unordered map to an output stream
-    \param  ost     output stream
-    \param  mp      object to write
-    \return         the output stream
-    
-    Note that the output order is, unsurprisingly, effectively random
-    This works with unordered maps that support heterogeneous lookup
-*/
-template <class T>
-  requires is_unordered_map<T>
-std::ostream& operator<<(std::ostream& ost, const T& mp)
-{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
-    ost << "unordered_map[" << cit -> first << "]: " << cit -> second << std::endl;
-
-  return ost;
-}
-
-
-/*! \brief          Write a flat map to an output stream
+/*! \brief          Write any map type to an output stream
     \param  ost     output stream
     \param  mp      object to write
     \return         the output stream
 
-    This should work with flat maps that support heterogeneous lookup
+    This works with flat maps that support heterogeneous lookup.
+    Note that for unordered maps the output order is, unsurprisingly, effectively random
 */
 template <class T>
-  requires is_flat_map<T>
+  requires is_anymap<T>
 std::ostream& operator<<(std::ostream& ost, const T& mp)
-{ for (auto cit = mp.cbegin(); cit != mp.cend(); ++cit)
-    ost << "flat_map[" << cit -> first << "]: " << cit -> second << std::endl;
+{ std::string maptype { };
+
+  if constexpr (is_unordered_map<T>)
+    maptype = "unordered_";
+
+  if constexpr (is_flat_map<T>)
+    maptype = "flat_";
+
+  for (auto cit { mp.cbegin() }; cit != mp.cend(); ++cit)
+    ost << maptype << '[' << cit -> first << "]: " << cit -> second << std::endl; // LEFT_SQUARE_BRACKET is not defined at this point
 
   return ost;
 }
@@ -1246,8 +1226,6 @@ inline void SORT(C& v, F f = F())
     \param  element     element to insert
 */
 template <typename C, typename E>
-//  requires (is_sus<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
-//  requires (is_anyset<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
   requires (is_anyset<C> or is_ssuss<C>) and (std::convertible_to<base_type<E>, typename C::value_type>)
 inline void operator+=(C& sus, E&& element)
   { sus.insert(std::forward<E>(element)); }
